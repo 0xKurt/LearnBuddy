@@ -4,7 +4,7 @@
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { useState, type ReactNode, type KeyboardEvent, type WheelEvent } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, RefreshControl, ScrollView, View } from 'react-native';
 
@@ -78,36 +78,7 @@ export function HomeThread({
         }}
         keyboardShouldPersistTaps="handled"
         onScroll={follow.onScroll}
-        onScrollBeginDrag={follow.interrupt}
-        onTouchMove={follow.interrupt}
-        {...(Platform.OS === 'web'
-          ? {
-              onWheel: (event: WheelEvent<HTMLElement>) => {
-                if (!event.ctrlKey && event.deltaY !== 0) follow.interrupt();
-              },
-              onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
-                if (event.defaultPrevented) return;
-                const target = event.target;
-                if (
-                  target instanceof HTMLElement &&
-                  target.closest('input, textarea, [contenteditable="true"]')
-                )
-                  return;
-                if (
-                  event.key === ' ' &&
-                  target instanceof HTMLElement &&
-                  target.closest('button, [role="button"], [role="checkbox"], [role="radio"], a')
-                )
-                  return;
-                if (
-                  ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(
-                    event.key,
-                  )
-                )
-                  follow.interrupt();
-              },
-            }
-          : {})}
+        {...follow.inputProps}
         scrollEventThrottle={CHAT.scrollThrottle}
         onLayout={follow.onLayout}
         onContentSizeChange={follow.follow}

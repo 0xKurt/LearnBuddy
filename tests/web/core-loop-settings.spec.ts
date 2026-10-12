@@ -4,6 +4,7 @@
 // part 1 checks that way). This stack has no natural voices, so there is no voice to choose
 // (issue #526).
 
+import buddyDe from '../../apps/mobile/locales/de/buddy.json';
 import { expect, test, type Page } from '@playwright/test';
 
 import { freshEmail, openMenu as openMenuOf, planTest, signUpMia } from './coreLoop';
@@ -63,7 +64,7 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   // which on #191627 is a bright disc, not a glow. The caption sits on the brightest part
   // of it, so the contrast check at every shot is what holds this.
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
-  await expect(page.getByText('GESPRÄCH')).toBeVisible();
+  await expect(page.getByText(buddyDe.talk.title, { exact: true })).toBeVisible();
   await shot(page, '15i-talk-night');
   await page.getByRole('button', { name: 'Beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();

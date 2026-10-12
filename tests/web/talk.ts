@@ -112,7 +112,7 @@ export async function onboardTalker(page: Page, tag: string): Promise<void> {
 export async function sayOneThing(page: Page, firstTime: boolean): Promise<void> {
   if (firstTime) {
     await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
-    await expect(page.getByText('GESPRÄCH')).toBeVisible();
+    await expect(page.getByText('Gespräch', { exact: true })).toBeVisible();
   }
   await expect(page.getByText('Ich höre zu.')).toBeVisible();
   await page.waitForTimeout(1200);

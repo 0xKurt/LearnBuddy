@@ -294,11 +294,13 @@
     "slow": "Ci vuole di più – la risposta arriverà nella chat.",
     "end": "Termina",
     "speak": "Parla",
+    "interrupt_short": "Interrompi",
     "interrupt": "Interrompi e parla",
     "photo": "Foto",
     "photo_label": "Mostra una foto",
     "tap_orb": "Tocca Buddy e ti ascolta.",
-    "barge_sub": "Parla pure, ti ascolta."
+    "barge_sub": "Parla pure, ti ascolta.",
+    "finish": "Fatto"
   },
   "thread": {
     "title": "Chat con Buddy",

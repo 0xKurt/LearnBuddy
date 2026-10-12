@@ -294,11 +294,13 @@
     "slow": "Está tardando más – la respuesta aparecerá en el chat.",
     "end": "Terminar",
     "speak": "Hablar",
+    "interrupt_short": "Interrumpir",
     "interrupt": "Interrumpir y hablar",
     "photo": "Foto",
     "photo_label": "Enseñar una foto",
     "tap_orb": "Toca a Buddy y te escucha.",
-    "barge_sub": "Habla sin más y te escucha."
+    "barge_sub": "Habla sin más y te escucha.",
+    "finish": "Listo"
   },
   "thread": {
     "title": "Chat con Buddy",

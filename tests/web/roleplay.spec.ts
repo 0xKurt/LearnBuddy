@@ -4,6 +4,7 @@
 // the conversation mode, her tap on "end" and the feedback per key point — no new screen.
 // Shots at both phone sizes, light and dark (tests/web/fit.ts).
 
+import buddyDe from '../../apps/mobile/locales/de/buddy.json';
 import { expect, test, type Page } from '@playwright/test';
 
 import { shot } from './fit';
@@ -87,7 +88,7 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
 
   // ── By voice in the conversation mode: it listens in English while the scene runs ──
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
-  await expect(page.getByText('GESPRÄCH')).toBeVisible();
+  await expect(page.getByText(buddyDe.talk.title, { exact: true })).toBeVisible();
   await expect(page.getByText('Ich höre zu.')).toBeVisible();
   const transcribed = page.waitForRequest((r) => r.url().endsWith('/v1/voice/transcribe'));
   await page.waitForTimeout(1500);
