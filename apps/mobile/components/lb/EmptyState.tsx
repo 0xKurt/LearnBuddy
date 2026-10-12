@@ -6,15 +6,10 @@ import { Text, View } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { EMPTY_STATE } from '../../lib/theme/states.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BuddyOrb } from './BuddyOrb.js';
-
-/**
- * The title: a step above TYPE.title, the one line the empty screen has to say.
- * token-exempt: 20/26, between TYPE.title and TYPE.prompt.
- */
-const TITLE = { fontSize: 20, lineHeight: 26 } as const;
 
 export function EmptyState({
   orb = false,
@@ -43,19 +38,26 @@ export function EmptyState({
     >
       {orb ? (
         <View style={{ marginBottom: SPACE.xs }}>
-          <BuddyOrb size={64} />
+          <BuddyOrb size={EMPTY_STATE.orb} />
         </View>
       ) : null}
-      <Text accessibilityRole="header" style={[TYPE.title, TITLE, { textAlign: 'center' }]}>
+      <Text
+        accessibilityRole="header"
+        style={[TYPE.title, EMPTY_STATE.title, { textAlign: 'center' }]}
+      >
         {title}
       </Text>
       {body ? (
-        <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center', maxWidth: 320 }]}>
+        <Text
+          style={[
+            TYPE.body,
+            { color: palette.ink2, textAlign: 'center', maxWidth: EMPTY_STATE.bodyWidth },
+          ]}
+        >
           {body}
         </Text>
       ) : null}
-      {/* token-exempt: the way on set 6 further apart than the lines above it */}
-      {action ? <View style={{ marginTop: 6 }}>{action}</View> : null}
+      {action ? <View style={{ marginTop: EMPTY_STATE.actionGap }}>{action}</View> : null}
     </View>
   );
 }

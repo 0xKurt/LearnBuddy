@@ -1,15 +1,17 @@
-// A surface for one thing. White paper cards float on a soft shadow (no hairline
-// box); tinted cards (a subject pastel, the accent tint) sit flat on the page.
+// A surface for one thing (components/core/Card.jsx). White paper cards float on a soft shadow
+// (no hairline box); `selected` (Buddy's state, a choice) and `sunken` (a quiet group) sit flat on
+// the page, like the tinted cards from before the redesign.
 
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
 import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { CARD_PAD } from '../../lib/theme/space.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
-type Tone = 'paper' | 'bg' | 'primary' | 'primaryLt' | 'selected' | 'sunken' | SubjectTone;
+/** The design's three, then the names from before the redesign (aliases, owner rule 6). */
+type Tone = 'paper' | 'selected' | 'sunken' | 'bg' | 'primary' | 'primaryLt' | SubjectTone;
 
 type Props = {
   children: React.ReactNode;
@@ -22,37 +24,33 @@ type Props = {
   accessibilityHint?: string;
 };
 
-function backgroundFor(
-  tone: Tone,
-  p: Palette,
-  toneBg: Record<SubjectTone, string>,
-): { bg: string; color?: string } {
-  if (tone === 'paper') return { bg: p.paper };
-  if (tone === 'bg') return { bg: p.bg };
-  if (tone === 'primary') return { bg: p.primary, color: p.paper };
-  if (tone === 'sunken') return { bg: p.canvas };
-  if (tone === 'selected' || tone === 'primaryLt') return { bg: p.primaryLt };
-  return { bg: toneBg[tone] };
+function backgroundFor(tone: Tone, p: Palette, toneBg: Record<SubjectTone, string>): string {
+  if (tone === 'paper') return p.paper;
+  if (tone === 'selected' || tone === 'primaryLt') return p.primaryLt;
+  if (tone === 'sunken') return p.canvas;
+  if (tone === 'bg') return p.bg;
+  if (tone === 'primary') return p.primary;
+  return toneBg[tone];
 }
 
 export function Card({
   children,
   tone = 'paper',
   onPress,
-  padding = CARD_PAD.base,
+  padding = CARD_PAD.card,
   radius = RADIUS.lg,
   style,
   accessibilityLabel,
   accessibilityHint,
 }: Props) {
   const { palette, tones } = useTheme();
-  const { bg } = backgroundFor(tone, palette, tones.bg);
-  const isPaper = tone === 'paper';
   const baseStyle: ViewStyle = {
-    backgroundColor: bg,
+    backgroundColor: backgroundFor(tone, palette, tones.bg),
     borderRadius: radius,
     padding,
-    ...(isPaper ? SHADOW.soft : null),
+    // Its parts stand `--space-md` apart (Card.jsx:11); a caller's `style` may say otherwise.
+    gap: SPACE.md,
+    ...(tone === 'paper' ? SHADOW.soft : null),
   };
   if (onPress) {
     return (
@@ -63,7 +61,7 @@ export function Card({
         accessibilityHint={accessibilityHint}
       >
         {({ pressed }) => (
-          <View style={[baseStyle, style, pressed ? { opacity: UI.pressedOpacity } : null]}>
+          <View style={[baseStyle, style, pressed ? { opacity: UI.pressed.surface } : null]}>
             {children}
           </View>
         )}

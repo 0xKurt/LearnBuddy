@@ -27,7 +27,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { UI } from '../../lib/theme/components.js';
 import { ACTIVE_MOTION, DURATION, EASE, SPRING, useMotionReduced } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { bottomRoom, RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 import { dismissedBySwipe } from '../../lib/gestures.js';
@@ -36,7 +36,8 @@ import { useA11ySettings } from '../../lib/a11ySettings.js';
 
 type Props = {
   visible: boolean;
-  title: string;
+  /** Optional, as in components/core/Sheet.jsx: a sheet whose content names itself needs none. */
+  title?: string;
   closeLabel: string;
   onClose: () => void;
   children: ReactNode;
@@ -54,8 +55,9 @@ type Props = {
 export const SHEET_MAX = UI.sheet.maxFraction;
 /** The sheet's top corners: rounder than a card, it rises from the screen's edge. */
 const CORNER = UI.sheet.radius;
-/** Its side margin, a little wider than a card's padding (Card.tsx 18). */
+/** Its side margin and the room between its parts (Sheet.jsx: `padding: 10px 16px 30px`, gap 16). */
 const SIDE = SPACE.lg;
+const PARTS = SPACE.lg;
 
 export function Sheet({
   visible,
@@ -198,7 +200,8 @@ export function Sheet({
                   backgroundColor: palette.bg,
                   borderTopLeftRadius: CORNER,
                   borderTopRightRadius: CORNER,
-                  paddingBottom: bottomRoom(insets.bottom, SPACE.sm),
+                  // 30 under the last part; a home indicator taller than that keeps its room.
+                  paddingBottom: Math.max(UI.sheet.bottomPad, bottomRoom(insets.bottom, SPACE.sm)),
                   maxHeight: `${SHEET_MAX * 100}%`,
                   ...SHADOW.float,
                 },
@@ -211,7 +214,8 @@ export function Sheet({
                   style={{
                     paddingTop: UI.sheet.topPad,
                     paddingHorizontal: SIDE,
-                    paddingBottom: SPACE.md,
+                    paddingBottom: PARTS,
+                    gap: PARTS,
                   }}
                 >
                   <View
@@ -223,12 +227,16 @@ export function Sheet({
                       height: UI.sheet.handleHeight,
                       borderRadius: UI.sheet.handleRadius,
                       backgroundColor: palette.ink4,
-                      marginBottom: RHYTHM.stack,
                     }}
                   />
-                  <Text accessibilityRole="header" style={TYPE.title}>
-                    {title}
-                  </Text>
+                  {title ? (
+                    <Text
+                      accessibilityRole="header"
+                      style={[TYPE.title, { paddingHorizontal: SPACE.xs }]}
+                    >
+                      {title}
+                    </Text>
+                  ) : null}
                 </View>
               </GestureDetector>
               <ScrollView
@@ -243,8 +251,8 @@ export function Sheet({
                 contentContainerStyle={{
                   paddingHorizontal: SIDE,
                   // The sheet's rhythm: between its parts and under the last.
-                  paddingBottom: RHYTHM.stack,
-                  gap: RHYTHM.stack,
+                  paddingBottom: PARTS,
+                  gap: PARTS,
                 }}
                 keyboardShouldPersistTaps="handled"
               >

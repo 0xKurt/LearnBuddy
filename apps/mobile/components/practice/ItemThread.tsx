@@ -26,7 +26,7 @@ import { versionsOf, wordCount } from '../../lib/practice/essay.js';
 import { CHAT } from '../../lib/theme/chat.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION } from '../../lib/theme/motion.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { Btn } from '../lb/Btn.js';
@@ -219,7 +219,7 @@ export function ItemThread({
               <VerdictTag verdict={verdict} label={t(`verdict.${verdict}`)} fresh={fresh} />
             ) : null}
             {!mine && turn.essay ? (
-              <Card style={{ alignSelf: 'stretch' }}>
+              <Card padding={CARD_PAD.thread} style={{ alignSelf: 'stretch' }}>
                 <EssayFeedback feedback={turn.essay} />
               </Card>
             ) : null}

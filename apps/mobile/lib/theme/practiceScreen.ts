@@ -31,6 +31,11 @@ export const PRACTICE_SCREEN = {
   thumbnailSlop: 10,
   thumbnailPressed: UI.pressed.surface,
   viewerStartScale: 0.92,
+  /** While the fingers are down a pinch may pass the range by this much; it springs back after. */
+  pinchUnder: 0.8,
+  pinchOver: 1.25,
+  /** From here on the picture counts as zoomed: a drag moves it instead of closing the viewer. */
+  zoomedFrom: 1.01,
   pullVeilDistance: 400,
   pullChromeDistance: 160,
   pullScaleDistance: 1600,

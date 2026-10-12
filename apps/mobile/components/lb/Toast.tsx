@@ -9,24 +9,20 @@
 
 import { usePathname } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  type LayoutChangeEvent,
-  Pressable,
-  StyleSheet,
-  Text,
-  type TextStyle,
-  View,
-} from 'react-native';
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { announce } from '../../lib/announce.js';
 import { keyboardOverlap } from '../../lib/keyboard.js';
 import { useKeyboardHeight } from '../../lib/useKeyboardHeight.js';
 import { MAX_FONT_SCALE } from './Btn.js';
+import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
-import { RHYTHM } from '../../lib/theme/space.js';
+import { RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { TOAST } from '../../lib/theme/states.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
+import { fontFace } from '../../lib/theme/type.js';
 import {
   barHeight,
   registerToastBar,
@@ -85,12 +81,6 @@ export function ToastHost() {
   );
 }
 
-/**
- * The toast's words and its offer, light on the dark pill. token-exempt: TYPE.small's 15/21
- * without its ink and its Bold Text weight, which the toast never had.
- */
-const WORDS: TextStyle = { fontSize: 15, lineHeight: 21 };
-
 function Pill({
   message,
   tone,
@@ -112,8 +102,8 @@ function Pill({
       accessibilityRole="alert"
       style={{
         position: 'absolute',
-        left: 16,
-        right: 16,
+        left: SPACE.lg,
+        right: SPACE.lg,
         bottom,
         alignItems: 'center',
       }}
@@ -124,11 +114,11 @@ function Pill({
           alignItems: 'center',
           gap: RHYTHM.parts,
           backgroundColor: palette.ink,
-          // token-exempt: round at one line (13 + 21 + 13), a soft box at two
-          borderRadius: 26,
-          paddingHorizontal: 20, // token-exempt: the pill's ends need more room than its top
-          paddingVertical: 13, // token-exempt: the pill's height (above)
-          maxWidth: 520,
+          borderRadius: TOAST.radius,
+          // The pill's ends need more room than its top.
+          paddingHorizontal: SPACE.gutter,
+          paddingVertical: TOAST.padY,
+          maxWidth: TOAST.maxWidth,
           ...SHADOW.float,
         }}
       >
@@ -139,8 +129,8 @@ function Pill({
             style={{
               // min sizes: large system text grows the mark into a bigger circle
               // instead of clipping the "!" in a fixed box (audit M-84, issue #73).
-              minWidth: 22,
-              minHeight: 22,
+              minWidth: TOAST.mark,
+              minHeight: TOAST.mark,
               borderRadius: RADIUS.round,
               backgroundColor: palette.peachDeep,
               alignItems: 'center',
@@ -149,22 +139,21 @@ function Pill({
           >
             <Text
               maxFontSizeMultiplier={MAX_FONT_SCALE}
-              style={{
-                color: palette.ink,
-                fontSize: 14, // token-exempt: the "!" fills the 22 pt mark
-                lineHeight: 18, // token-exempt: the mark's line (above)
-                fontWeight: '700',
-              }}
+              // The "!" fills the mark.
+              style={{ ...fontFace('700'), ...TOAST.markSign, color: palette.ink }}
             >
               !
             </Text>
           </View>
         ) : null}
-        <Text style={[WORDS, { flexShrink: 1, color: palette.paper }]}>{message}</Text>
+        {/* The toast's words and its offer, light on the dark pill. */}
+        <Text style={{ ...fontFace('400'), ...TOAST.words, flexShrink: 1, color: palette.paper }}>
+          {message}
+        </Text>
         {action ? (
           <Pressable
             onPress={() => toast.act()}
-            hitSlop={12}
+            hitSlop={SPACE.md}
             accessibilityRole="button"
             accessibilityLabel={action.label}
             // The pill is as tall as its text; the target grows outwards through hitSlop.
@@ -174,10 +163,10 @@ function Pill({
               <Text
                 maxFontSizeMultiplier={MAX_FONT_SCALE}
                 style={{
-                  ...WORDS,
+                  ...fontFace('700'),
+                  ...TOAST.words,
                   color: palette.paper,
-                  opacity: pressed ? 0.6 : 1,
-                  fontWeight: '700',
+                  opacity: pressed ? UI.pressed.link : 1,
                   // Not colour alone: the offer is also the only underlined word here.
                   textDecorationLine: 'underline',
                 }}

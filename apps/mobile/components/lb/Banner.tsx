@@ -31,16 +31,7 @@ export function Banner({ children, tone = 'gray' }: { children: string; tone?: T
         borderRadius: RADIUS.note,
       }}
     >
-      <Text
-        style={{
-          color: t.color,
-          fontSize: TYPE.small.fontSize,
-          fontWeight: '500',
-          lineHeight: TYPE.small.lineHeight,
-        }}
-      >
-        {children}
-      </Text>
+      <Text style={[TYPE.metaMedium, { color: t.color }]}>{children}</Text>
     </View>
   );
 }

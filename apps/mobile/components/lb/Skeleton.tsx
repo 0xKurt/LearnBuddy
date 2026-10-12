@@ -19,16 +19,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
+import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
+import { SKELETON } from '../../lib/theme/states.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 import { Appear } from './Motion.js';
-
-/** One sweep across a block, then a short rest: slow enough to feel calm. */
-const SWEEP_MS = 1400;
-/** How wide the light is, relative to the block. */
-const LIGHT = 0.7;
 
 const Sweep = createContext<SharedValue<number> | null>(null);
 
@@ -45,7 +42,7 @@ export function SkeletonGroup({ label, children, style }: GroupProps) {
   useEffect(() => {
     if (reduced) return;
     progress.value = withRepeat(
-      withTiming(1, { duration: SWEEP_MS, easing: Easing.inOut(Easing.quad) }),
+      withTiming(1, { duration: SKELETON.sweepMs, easing: Easing.inOut(Easing.quad) }),
       -1,
       false,
     );
@@ -78,11 +75,17 @@ type BoneProps = {
 };
 
 /** One placeholder block. */
-export function Bone({ width = '100%', height, radius = 10, tone = 'lilac', style }: BoneProps) {
+export function Bone({
+  width = '100%',
+  height,
+  radius = SKELETON.radius,
+  tone = 'lilac',
+  style,
+}: BoneProps) {
   const progress = useContext(Sweep);
   const [w, setW] = useState(0);
   const id = useSvgId('sk');
-  const light = w * LIGHT;
+  const light = w * SKELETON.light;
   const sweep = useAnimatedStyle(() => {
     if (!progress) return { opacity: 0 };
     return {
@@ -112,7 +115,7 @@ export function Bone({ width = '100%', height, radius = 10, tone = 'lilac', styl
             <Defs>
               <LinearGradient id={id} x1="0" y1="0" x2="1" y2="0">
                 <Stop offset="0" stopColor="#ffffff" stopOpacity={0} />
-                <Stop offset="0.5" stopColor="#ffffff" stopOpacity={0.7} />
+                <Stop offset="0.5" stopColor="#ffffff" stopOpacity={SKELETON.lightPeak} />
                 <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
               </LinearGradient>
             </Defs>
@@ -127,9 +130,9 @@ export function Bone({ width = '100%', height, radius = 10, tone = 'lilac', styl
 /** A few lines of text, the last one shorter. */
 export function BoneLines({
   lines = 3,
-  height = 12,
-  gap = 9,
-  last = '62%',
+  height = SKELETON.text.meta.height,
+  gap = SKELETON.lineGap,
+  last = SKELETON.lastLine,
   tone,
 }: {
   lines?: number;
@@ -164,7 +167,7 @@ export function BoneCard({ children, style }: { children: ReactNode; style?: Vie
           borderRadius: RADIUS.card,
           padding: CARD_PAD.base,
           gap: SPACE.md,
-          borderWidth: 1,
+          borderWidth: UI.border,
           borderColor: palette.hairline,
         },
         style,

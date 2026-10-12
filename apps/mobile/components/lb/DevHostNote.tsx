@@ -20,14 +20,13 @@ import { ENV } from '../../lib/env.js';
 import { fadeIn, fadeOut } from '../../lib/theme/enter.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { DEV_NOTE } from '../../lib/theme/states.js';
+import { fontFace } from '../../lib/theme/type.js';
 
 declare const __DEV__: boolean;
 
 /** localhost, 127.0.0.1 and the Android emulator's host loopback are this machine. */
 const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?$/;
-
-/** Long enough to read the host while the app settles, short enough to stay out of the way. */
-const SHOWN_MS = 6000;
 
 export function DevHostNote() {
   const insets = useSafeAreaInsets();
@@ -36,7 +35,8 @@ export function DevHostNote() {
   const remote = dev && !LOCAL.test(ENV.API_URL);
   useEffect(() => {
     if (!remote) return;
-    const t = setTimeout(() => setGone(true), SHOWN_MS);
+    // Long enough to read the host while the app settles, short enough to stay out of the way.
+    const t = setTimeout(() => setGone(true), DEV_NOTE.shownMs);
     return () => clearTimeout(t);
   }, [remote]);
   if (!remote || gone) return null;
@@ -59,13 +59,11 @@ export function DevHostNote() {
         left: SPACE.lg,
         backgroundColor: 'rgba(178,58,58,0.92)',
         borderRadius: RADIUS.round,
-        // token-exempt: developer's note, tiny on purpose; never in a release build
-        paddingHorizontal: 9,
-        paddingVertical: 2, // token-exempt: the same tiny developer's note
+        paddingHorizontal: DEV_NOTE.padX,
+        paddingVertical: DEV_NOTE.padY,
       }}
     >
-      {/* token-exempt: tiny on purpose, the developer's note is no part of the design */}
-      <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '700' }}>
+      <Text style={{ ...fontFace('700'), color: '#ffffff', fontSize: DEV_NOTE.fontSize }}>
         {`Dev-Build → ${host}`}
       </Text>
     </Animated.View>

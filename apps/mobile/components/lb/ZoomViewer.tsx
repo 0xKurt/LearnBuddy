@@ -155,7 +155,11 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
     .onUpdate((e) => {
       const from = start.value;
       // A little beyond the range while the fingers are down; it springs back after.
-      const s = clamp(from.scale * e.scale, MIN_SCALE * 0.8, MAX_SCALE * 1.25);
+      const s = clamp(
+        from.scale * e.scale,
+        MIN_SCALE * PRACTICE_SCREEN.pinchUnder,
+        MAX_SCALE * PRACTICE_SCREEN.pinchOver,
+      );
       scale.value = s;
       x.value = offsetAroundFocal(from.fx, from.x, from.scale, s);
       y.value = offsetAroundFocal(from.fy, from.y, from.scale, s);
@@ -170,7 +174,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
       start.value = { ...start.value, x: x.value, y: y.value };
     })
     .onUpdate((e) => {
-      if (scale.value <= 1.01) {
+      if (scale.value <= PRACTICE_SCREEN.zoomedFrom) {
         // Not zoomed: a pull down closes the viewer.
         pull.value = Math.max(0, e.translationY);
         return;
@@ -183,7 +187,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
       y.value = rubberBand(start.value.y + e.translationY, my);
     })
     .onEnd((e) => {
-      if (scale.value <= 1.01) {
+      if (scale.value <= PRACTICE_SCREEN.zoomedFrom) {
         if (dismissedBySwipe(e.translationY, e.velocityY)) runOnJS(requestClose)();
         else pull.value = spring(0);
         return;
@@ -194,7 +198,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .onEnd((e) => {
-      if (scale.value > 1.01) {
+      if (scale.value > PRACTICE_SCREEN.zoomedFrom) {
         scale.value = spring(1);
         x.value = spring(0);
         y.value = spring(0);

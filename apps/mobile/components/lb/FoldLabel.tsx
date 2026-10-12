@@ -6,6 +6,7 @@
 
 import { Text, View } from 'react-native';
 
+import { UI } from '../../lib/theme/components.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -24,14 +25,14 @@ export function FoldLabel({ icon, title, action, open }: Props) {
   const { palette } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-      <Icon name={icon} size={18} color={palette.primaryDk} />
+      <Icon name={icon} size={UI.fold.icon} color={palette.primaryDk} />
       <Text numberOfLines={1} style={[TYPE.label, { flex: 1, color: palette.ink }]}>
         {title}
       </Text>
       <Text style={[TYPE.label, { color: palette.primaryDk }]}>{action}</Text>
       {open === undefined ? null : (
         <View style={{ transform: [{ rotate: open ? '-90deg' : '90deg' }] }}>
-          <Icon name="chevron" size={16} color={palette.primaryDk} />
+          <Icon name="chevron" size={UI.fold.chevron} color={palette.primaryDk} />
         </View>
       )}
     </View>

@@ -99,6 +99,9 @@ function typeOf(p: Palette) {
       color: p.ink,
     },
     voiceChoice: { ...fontFace('600'), fontSize: 15, lineHeight: 20, color: p.ink },
+    /** A list row's value at its end and the letter on its tile (components/core/List.jsx). */
+    listValue: { ...fontFace('400'), fontSize: 15, lineHeight: 20, color: p.ink2 },
+    listTile: { ...fontFace('700'), fontSize: 15, lineHeight: 15, color: p.ink },
     /** The composer's text: one step under body so five lines still fit. */
     input,
     paragraph: input,

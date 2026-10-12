@@ -6,6 +6,7 @@
 
 import { View, type ViewStyle } from 'react-native';
 
+import { UI } from '../../lib/theme/components.js';
 import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon, type IconName } from './Icon.js';
@@ -41,7 +42,7 @@ export function IconDisc({
         height: size,
         borderRadius: circle(size),
         backgroundColor: tint.fill,
-        ...(tint.edge ? { borderWidth: 1, borderColor: tint.edge } : null),
+        ...(tint.edge ? { borderWidth: UI.border, borderColor: tint.edge } : null),
         alignItems: 'center',
         justifyContent: 'center',
       }}
