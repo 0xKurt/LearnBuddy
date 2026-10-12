@@ -58,6 +58,12 @@ const CORNER = UI.sheet.radius;
 /** Its side margin and the room between its parts (Sheet.jsx: `padding: 10px 16px 30px`, gap 16). */
 const SIDE = SPACE.lg;
 const PARTS = SPACE.lg;
+/**
+ * How far a sheet's words stand in from its side: the title, and any loose line of text a caller
+ * puts under it (Sheet.jsx:11 and `Lead` in ui_kits/app/More.jsx:13, both `padding: 0 4px`). A
+ * list or a card keeps the full width.
+ */
+export const SHEET_TEXT = { paddingHorizontal: SPACE.xs } as const;
 
 export function Sheet({
   visible,
@@ -230,10 +236,7 @@ export function Sheet({
                     }}
                   />
                   {title ? (
-                    <Text
-                      accessibilityRole="header"
-                      style={[TYPE.title, { paddingHorizontal: SPACE.xs }]}
-                    >
+                    <Text accessibilityRole="header" style={[TYPE.title, SHEET_TEXT]}>
                       {title}
                     </Text>
                   ) : null}

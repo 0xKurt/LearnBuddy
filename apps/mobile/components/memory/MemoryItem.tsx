@@ -15,7 +15,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { formatLastDay } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
 import { Row, ListGroup } from '../lb/ListGroup.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { SHEET_SWAP_MS } from '../buddy/StartSheets.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 
@@ -154,7 +154,7 @@ export function MemoryItem({
         closeLabel={t('cancel')}
         onClose={() => setMenuOpen(false)}
       >
-        <Text style={TYPE.body}>{memory.statement}</Text>
+        <Text style={[TYPE.body, SHEET_TEXT]}>{memory.statement}</Text>
         <ListGroup>
           <Row
             icon="pencil"

@@ -11,7 +11,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHEET_SWAP_MS } from '../buddy/StartSheets.js';
 import { ListGroup, Row } from '../lb/ListGroup.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { MaterialRow } from './MaterialRow.js';
 import { materialPrimaryOf } from './materialPresentation.js';
 
@@ -122,8 +122,10 @@ export function MaterialCard({
         closeLabel={t('common:actions.close')}
         onClose={() => setMenuOpen(false)}
       >
-        {note ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{note}</Text> : null}
-        {missed ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{missed}</Text> : null}
+        {note ? <Text style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}>{note}</Text> : null}
+        {missed ? (
+          <Text style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}>{missed}</Text>
+        ) : null}
         <ListGroup>
           {m.status === 'ready' ? (
             <Row

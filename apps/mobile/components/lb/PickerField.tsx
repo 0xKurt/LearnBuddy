@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
-import { Sheet } from './Sheet.js';
+import { Sheet, SHEET_TEXT } from './Sheet.js';
 import { ChoiceOptions } from './ChoiceOptions.js';
 
 /**
@@ -83,7 +83,7 @@ export function PickerField<T extends string>({
         // The sixteen are a list she browses: it may scroll, and it says so by name.
         scrollTestID="scroll-list"
       >
-        {body ? <Text style={TYPE.small}>{body}</Text> : null}
+        {body ? <Text style={[TYPE.small, SHEET_TEXT]}>{body}</Text> : null}
         <ChoiceOptions
           selectedVariant="primary"
           unselectedVariant="outline"

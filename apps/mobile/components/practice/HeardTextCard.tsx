@@ -7,7 +7,7 @@
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 
-import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
@@ -18,7 +18,7 @@ export function HeardTextCard({ text }: { text: string }) {
   return (
     <Card tone="sky" padding={CARD_PAD.roomy} radius={24}>
       <Text style={[TYPE.bodyStrong, { color: palette.ink2 }]}>{t('listen.transcript_title')}</Text>
-      <Text style={[TYPE.bodyStrong, { marginTop: SPACE.xs }]}>{text}</Text>
+      <Text style={TYPE.bodyStrong}>{text}</Text>
     </Card>
   );
 }

@@ -18,6 +18,11 @@ type Props = {
   tone?: Tone;
   onPress?: () => void;
   padding?: number;
+  /**
+   * Its parts touch: a bar that unfolds, whose second part brings its own edge and room
+   * (components/buddy/SlimBar.tsx). Without it they stand `--space-md` apart.
+   */
+  joined?: boolean;
   radius?: number;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
@@ -38,6 +43,7 @@ export function Card({
   tone = 'paper',
   onPress,
   padding = CARD_PAD.card,
+  joined = false,
   radius = RADIUS.lg,
   style,
   accessibilityLabel,
@@ -49,7 +55,7 @@ export function Card({
     borderRadius: radius,
     padding,
     // Its parts stand `--space-md` apart (Card.jsx:11); a caller's `style` may say otherwise.
-    gap: SPACE.md,
+    ...(joined ? null : { gap: SPACE.md }),
     ...(tone === 'paper' ? SHADOW.soft : null),
   };
   if (onPress) {

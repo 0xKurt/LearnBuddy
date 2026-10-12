@@ -20,7 +20,7 @@ import { LbTextInput } from '../../components/lb/LbTextInput.js';
 import { LoadFailed } from '../../components/lb/LoadFailed.js';
 import { QuestionsSkeleton } from '../../components/lb/Skeletons.js';
 import { Screen } from '../../components/lb/Screen.js';
-import { Sheet } from '../../components/lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../../components/lb/Sheet.js';
 import { toast } from '../../components/lb/Toast.js';
 import { MathText } from '../../components/math/MathText.js';
 import { ApiError } from '../../lib/api/client.js';
@@ -305,7 +305,7 @@ export default function MaterialScreen() {
             <MathText text={target.item.prompt} style={TYPE.body} />
           </Card>
         ) : null}
-        <Text style={TYPE.body}>{t('library:item_delete_sheet.body')}</Text>
+        <Text style={[TYPE.body, SHEET_TEXT]}>{t('library:item_delete_sheet.body')}</Text>
         <ErrorNote text={deleteError} />
         <Btn variant="danger" pill full busy={deleting} onPress={() => void confirmDelete()}>
           {t('library:item_delete_sheet.confirm')}

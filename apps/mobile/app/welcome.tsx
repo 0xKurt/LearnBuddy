@@ -272,18 +272,9 @@ export default function Welcome() {
           {confirmSent ? (
             <Card tone="mint">
               <Text style={TYPE.title}>{t('welcome.confirm_title')}</Text>
-              <Text style={[TYPE.body, { marginTop: SPACE.xs }]}>
-                {t('welcome.confirm_body', { email: confirmEmail })}
-              </Text>
-              <Text style={[TYPE.small, { marginTop: SPACE.xs }]}>{t('welcome.confirm_spam')}</Text>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  gap: SPACE.sm,
-                  marginTop: SPACE.sm,
-                }}
-              >
+              <Text style={TYPE.body}>{t('welcome.confirm_body', { email: confirmEmail })}</Text>
+              <Text style={TYPE.small}>{t('welcome.confirm_spam')}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
                 <Btn
                   variant="outline"
                   size="sm"

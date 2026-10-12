@@ -59,7 +59,7 @@ export const SKELETON = {
   headRule: 4,
   headGap: 10,
   progressGap: 10,
-  /** A tinted card (the question, a memory): its padding, and the question card's own corner. */
+  /** A tinted card (the question, a memory): the padding its bones were drawn with (18, not a card's 20), and the question card's own corner. */
   tintPad: 18,
   questionRadius: 24,
   questionGap: 14,

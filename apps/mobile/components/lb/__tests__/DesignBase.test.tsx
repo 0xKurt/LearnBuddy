@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import { pressedStyle, UI } from '../../../lib/theme/components.js';
 import { paletteOf } from '../../../lib/theme/palettes.js';
-import { CARD_PAD, SPACE } from '../../../lib/theme/space.js';
+import { CARD_PAD } from '../../../lib/theme/space.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { toast } from '../../../lib/toast.js';
 import { Banner } from '../Banner.js';
@@ -20,7 +20,8 @@ import { Chip } from '../Chip.js';
 import { IconBtn } from '../IconBtn.js';
 import { ListGroup, Row } from '../ListGroup.js';
 import { Segmented } from '../Segmented.js';
-import { Sheet } from '../Sheet.js';
+import { Sheet, SHEET_TEXT } from '../Sheet.js';
+import { BoneCard } from '../Skeleton.js';
 import { Slot } from '../Slot.js';
 import { ToastHost } from '../Toast.js';
 
@@ -81,10 +82,11 @@ describe('IconBtn (components/core/Btn.jsx:37)', () => {
         <IconBtn icon="close" accessibilityLabel="Schließen" onPress={() => undefined} />
       </>,
     );
-    expect(glyph('Senden')).toBe(String(UI.iconButton.actionGlyph));
-    expect(glyph('Gespräch')).toBe(String(UI.iconButton.actionGlyph));
-    expect(glyph('Stopp')).toBe(String(UI.iconButton.glyph));
-    expect(glyph('Schließen')).toBe(String(UI.iconButton.glyph));
+    // Btn.jsx:43 — `icon === 'voice' || icon === 'send' ? 22 : 20`.
+    expect(glyph('Senden')).toBe('22');
+    expect(glyph('Gespräch')).toBe('22');
+    expect(glyph('Stopp')).toBe('20');
+    expect(glyph('Schließen')).toBe('20');
   });
 
   it('paints no edge of its own', () => {
@@ -103,9 +105,7 @@ describe('Chip (components/core/Chip.jsx)', () => {
       </>,
     );
     for (const label of ['Tipp', 'Mit Beispiel', 'Noch 3 Min.']) {
-      expect(own(screen.getByText(label).parentElement!).borderTopWidth, label).toBe(
-        `${UI.border}px`,
-      );
+      expect(own(screen.getByText(label).parentElement!).borderTopWidth, label).toBe('1px');
     }
   });
 
@@ -113,9 +113,10 @@ describe('Chip (components/core/Chip.jsx)', () => {
     renderInApp(<Chip onPress={() => undefined}>Tipp</Chip>);
     const target = styleOf(screen.getByRole('button', { name: 'Tipp' }));
     expect(target.minHeight).toBe('44px');
-    expect(target.marginTop).toBe(`-${UI.chip.reach}px`);
-    expect(target.marginBottom).toBe(`-${UI.chip.reach}px`);
-    expect(UI.chip.height + 2 * UI.chip.reach).toBe(44);
+    // 44 − 34 (`--chip-h`) = 5 above and 5 below: the row is as tall as the chip.
+    expect(target.marginTop).toBe('-5px');
+    expect(target.marginBottom).toBe('-5px');
+    expect(styleOf(screen.getByText('Tipp').parentElement!).minHeight).toBe('34px');
   });
 
   it('draws a receipt on canvas with its sign and the undo glyph inside the pill', () => {
@@ -126,9 +127,10 @@ describe('Chip (components/core/Chip.jsx)', () => {
     );
     const pill = screen.getByText('Termin Fr 14.11.').parentElement!;
     expect(styleOf(pill).backgroundColor).toBe(rgb(light.canvas));
-    expect(styleOf(pill).minHeight).toBe(`${UI.chip.height}px`);
+    expect(styleOf(pill).minHeight).toBe('34px');
     const sizes = Array.from(pill.querySelectorAll('svg')).map((svg) => svg.getAttribute('width'));
-    expect(sizes).toEqual([String(UI.chip.icon), String(UI.chip.endIcon)]);
+    // Chip.jsx:16 (icon 16) and core.card.html:26 (undo at 15).
+    expect(sizes).toEqual(['16', '15']);
     // One target: the glyph is part of the chip, not a second button beside it.
     expect(screen.getAllByRole('button')).toHaveLength(1);
   });
@@ -142,8 +144,28 @@ describe('Card (components/core/Card.jsx)', () => {
       </Card>,
     );
     const card = styleOf(screen.getByLabelText('Karte'));
-    expect(card.padding).toBe(`${CARD_PAD.card}px`);
-    expect(card.gap).toBe(`${SPACE.md}px`);
+    // tokens/space.css `--card-pad: 20px`, `--space-md: 12px`.
+    expect(card.padding).toBe('20px');
+    expect(card.gap).toBe('12px');
+  });
+
+  it('lets a card whose second part brings its own edge keep its parts together', () => {
+    renderInApp(
+      <Card accessibilityLabel="Leiste" padding={0} joined>
+        <Text>Zeile</Text>
+        <Text>Mehr</Text>
+      </Card>,
+    );
+    expect(own(screen.getByLabelText('Leiste')).gap).toBe('');
+  });
+
+  it('pads the skeleton’s card like the card that arrives (components/core/States.jsx)', () => {
+    renderInApp(
+      <BoneCard>
+        <Text>Knochen</Text>
+      </BoneCard>,
+    );
+    expect(styleOf(screen.getByText('Knochen').parentElement!).padding).toBe('20px');
   });
 
   it('takes the conversation’s padding only when the caller names it', () => {
@@ -152,7 +174,7 @@ describe('Card (components/core/Card.jsx)', () => {
         <Text>Inhalt</Text>
       </Card>,
     );
-    expect(styleOf(screen.getByLabelText('Karte')).padding).toBe(`${CARD_PAD.thread}px`);
+    expect(styleOf(screen.getByLabelText('Karte')).padding).toBe('16px');
   });
 
   it('paints the design’s tones and their old names alike', () => {
@@ -251,6 +273,8 @@ describe('Sheet (components/core/Sheet.jsx)', () => {
     );
     const title = screen.getByRole('heading', { name: 'Mehr' });
     expect(styleOf(title).paddingLeft).toBe('4px');
+    // A caller's loose line of text takes the same inset, so both start on one edge.
+    expect(SHEET_TEXT).toEqual({ paddingHorizontal: 4 });
     const head = styleOf(title.parentElement!);
     expect(head.gap).toBe('16px');
     expect(head.paddingBottom).toBe('16px');
