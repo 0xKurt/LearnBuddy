@@ -48,22 +48,21 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
       // The shared header receives the switch through its sound slot.
       'app/practice/[id].tsx',
       'components/buddy/Header.tsx',
-      // Card passes and drill rounds retain their existing header adapter (#434).
+      'components/practice/DrillRound.tsx',
+      // Card passes retain their existing header adapter (#434).
       'components/practice/HeadActions.tsx',
     ]);
   });
 
   it('is in the head of every practice: a question, a Kopfrechnen round, a card pass (#434)', () => {
-    expect(holders(/<HeadActions\b/)).toEqual([
-      'components/practice/CardPass.tsx',
-      'components/practice/DrillRound.tsx',
-    ]);
+    expect(holders(/<HeadActions\b/)).toEqual(['components/practice/CardPass.tsx']);
   });
 
   it('passes exactly one speaker through the shared header sound slot', () => {
     expect(holders(/sound=\{<ReadAloudSwitch\s*\/>\}/)).toEqual([
       'app/practice/[id].tsx',
       'components/buddy/Header.tsx',
+      'components/practice/DrillRound.tsx',
     ]);
     const source = (file: string) => app.find((s) => s.file === file)!.text;
     expect(source('components/buddy/Header.tsx')).toMatch(/<BuddyHeader\b/);

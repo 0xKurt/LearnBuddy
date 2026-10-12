@@ -110,12 +110,13 @@ beforeEach(async () => {
 });
 
 describe('die Runde', () => {
-  it('zeigt eine Aufgabe, einen Ziffernblock und „Prüfen“ — sonst nichts', () => {
+  it('zeigt eine Aufgabe und ein numerisches Textfeld und „Prüfen“ — sonst nichts', () => {
     show();
     expect(screen.getByText('7 · 8')).toBeTruthy();
     for (const d of ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Löschen']) {
-      expect(key(d)).toBeTruthy();
+      expect(screen.queryByRole('button', { name: d })).toBeNull();
     }
+    expect(screen.getAllByRole('textbox', { name: 'Deine Antwort' })).toHaveLength(1);
     // Ganze Zahlen: kein Bruchstrich auf dem Block.
     expect(screen.queryByRole('button', { name: 'Bruchstrich' })).toBeNull();
     for (const gone of ['Tipp', 'Lösung zeigen', 'Überspringen', 'Weiter']) {
@@ -128,11 +129,18 @@ describe('die Runde', () => {
     show();
     const check = key('Prüfen');
     expect(check.getAttribute('aria-disabled')).toBe('true');
-    fireEvent.click(key('5'));
-    fireEvent.click(key('4'));
-    expect(screen.getByLabelText('Deine Antwort: 54')).toBeTruthy();
-    fireEvent.click(key('Löschen'));
-    expect(screen.getByLabelText('Deine Antwort: 5')).toBeTruthy();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Deine Antwort' }), {
+      target: { value: '54' },
+    });
+    expect(
+      (screen.getByRole('textbox', { name: 'Deine Antwort' }) as HTMLTextAreaElement).value,
+    ).toBe('54');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Deine Antwort' }), {
+      target: { value: '5' },
+    });
+    expect(
+      (screen.getByRole('textbox', { name: 'Deine Antwort' }) as HTMLTextAreaElement).value,
+    ).toBe('5');
     expect(key('Prüfen').getAttribute('aria-disabled')).not.toBe('true');
   });
 
@@ -140,8 +148,9 @@ describe('die Runde', () => {
     let resolve: (v: SessionView) => void = () => undefined;
     answerDrill.mockReturnValue(new Promise<SessionView>((r) => (resolve = r)));
     const { onChange } = show();
-    fireEvent.click(key('5'));
-    fireEvent.click(key('4'));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Deine Antwort' }), {
+      target: { value: '54' },
+    });
     fireEvent.click(key('Prüfen'));
     // Ohne auf den Server zu warten: die nächste Aufgabe steht da.
     expect(await screen.findByText('6 · 7')).toBeTruthy();
@@ -170,20 +179,29 @@ describe('die Runde', () => {
         },
       }),
     );
-    expect(screen.getByText('Das war:')).toBeTruthy();
-    expect(screen.getByText('7 · 8 = 56')).toBeTruthy();
+    expect(screen.getByTestId('drill-last').textContent).toContain('Das war: 7 · 8 = 56');
     expect(screen.queryByText(/falsch/i)).toBeNull();
   });
 
   it('Brüche bekommen den Bruchstrich, einmal und nie zuerst', () => {
     show(round({ drill: { ...round().drill!, input: 'fraction' } }));
+    const input = screen.getByRole('textbox', { name: 'Deine Antwort' }) as HTMLTextAreaElement;
+    expect(key('Bruchstrich').getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(key('Bruchstrich'));
-    expect(screen.getByLabelText('Deine Antwort: –')).toBeTruthy();
-    fireEvent.click(key('3'));
+    expect(input.value).toBe('');
+    fireEvent.change(input, { target: { value: '3' } });
     fireEvent.click(key('Bruchstrich'));
+    expect(input.value).toBe('3/');
+    expect(key('Bruchstrich').getAttribute('aria-disabled')).toBe('true');
+    expect(key('Prüfen').getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(key('Bruchstrich'));
-    fireEvent.click(key('4'));
-    expect(screen.getByLabelText('Deine Antwort: 3/4')).toBeTruthy();
+    expect(input.value).toBe('3/');
+    fireEvent.change(input, { target: { value: '3/4' } });
+    expect(input.value).toBe('3/4');
+    expect(key('Prüfen').getAttribute('aria-disabled')).not.toBe('true');
+    answerDrill.mockReturnValue(new Promise<SessionView>(() => undefined));
+    fireEvent.click(key('Prüfen'));
+    expect(answerDrill).toHaveBeenCalledWith(round().id, A, '3/4');
   });
 
   it('endet mit einem Satz über eine Reihe — keine Zahl der Fehler — und „Noch eine Runde“', () => {
@@ -203,9 +221,18 @@ describe('die Runde', () => {
       }),
     );
     expect(screen.getByText('Geschafft!')).toBeTruthy();
-    expect(screen.getByText('Die 7er sitzen jetzt besser.')).toBeTruthy();
+    expect(screen.getByTestId('drill-line').textContent).toBe('Die 7er sitzen jetzt besser.');
     expect(screen.queryByText(/\d+\s+(von|falsch|Fehler)/)).toBeNull();
     expect(key('Noch eine Runde')).toBeTruthy();
     expect(key('Zurück zu Buddy')).toBeTruthy();
+  });
+  it('keeps an abandoned round factual with no finished lead or another-round offer', () => {
+    const { onClose } = show(round({ status: 'abandoned' }));
+    expect(screen.getByRole('heading', { name: 'Diese Übung ist schon beendet.' })).toBeTruthy();
+    expect(screen.queryByTestId('drill-line')).toBeNull();
+    expect(screen.queryByText('Geschafft!')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Noch eine Runde' })).toBeNull();
+    key('Zurück zu Buddy').click();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

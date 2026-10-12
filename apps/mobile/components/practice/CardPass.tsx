@@ -129,7 +129,12 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
   if (!current) {
     const finished = session.status === 'finished';
     return (
-      <Screen title={title}>
+      <Screen
+        title={title}
+        subtitle={finished ? t('practice:summary.finished') : undefined}
+        state={finished ? 'happy' : undefined}
+        leading={{ icon: 'close', label: t('practice:cards.end_label'), onPress: onClose }}
+      >
         <PassEnd
           finished={finished}
           title={t('practice:cards.done_title')}

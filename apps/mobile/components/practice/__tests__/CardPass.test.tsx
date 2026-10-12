@@ -225,6 +225,15 @@ describe('die Karte', () => {
     expect(screen.queryByText('Frage 1 von 2')).toBeNull();
   });
 
+  it('keeps an abandoned pass factual and offers its original exit', () => {
+    const { onClose } = show(pass({ status: 'abandoned', current_item_id: null, items: [] }));
+    expect(screen.getByRole('heading', { name: 'Diese Übung ist schon beendet.' })).toBeTruthy();
+    expect(screen.queryByText('Durch!')).toBeNull();
+    expect(screen.queryByText('Fertig für heute')).toBeNull();
+    screen.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('endet ohne Zahl und mit einem Weg zurück', () => {
     const { onClose } = show(
       pass({

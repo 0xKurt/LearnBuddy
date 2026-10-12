@@ -268,13 +268,9 @@
   "drill": {
     "progress": "Calcolo {{current}} di {{total}}",
     "end_hint": "Torna da Buddy. Quello che hai calcolato resta salvato.",
-    "typed": "La tua risposta: {{value}}",
-    "delete": "Cancella",
     "slash": "Linea di frazione",
     "right": "Giusto: {{task}}",
     "was": "Era: {{task}}",
-    "right_short": "Giusto:",
-    "was_short": "Era:",
     "done_title": "Fatto!",
     "again": "Un altro giro",
     "line": {
