@@ -1,31 +1,11 @@
-// Multiple choice: every option is a paper Option with its letter in a circular badge of
-// its own (A, B, C – the letters voice mode reads out). Options that each fit one line of half
-// a screen stand two by two, all others one under the other, full width – which of the two it
-// is, is arithmetic, see "what fits half a line" below. A fraction or term on its own is set
-// large and centred. An option that was already tried (and wasn't it) stays visible but can't
-// be picked again: it fades, its letter turns into a quiet dash and "Schon ausprobiert" stands
-// under it (never colour alone) – the conversation above says what happened with it. Choices
-// may hold math ($…$).
-// Several right answers (issue #240, `SelectAllAnswer`): the same tiles, but each one a checkbox
-// she ticks and unticks — a square box in the letter's column instead of the letter, the tile
-// tinted while ticked (the box's check mark says it too, never colour alone). Up to six short
-// options stand two by two; "Prüfen" sends the set.
-// The lines of a worked solution whose wrong line she taps (Fehlerdetektiv, issue #260,
-// `FindErrorAnswer`): the same tiles, one under the other, each with its line's number in the
-// letter's column; the one she picks stays picked (a radio, the tile tinted) while she writes it
-// right below. The task itself stands above them, numbered the same, but no tile: it is not one to
-// pick.
-// The lines of a program whose failing line she taps (Informatik, issue #262, `CodeLineAnswer`):
-// the same tiles one under the other, numbered, each line in monospace with its indentation kept
-// and never read as math — a tap selects, and the separate Check submits the saved line.
-// In a conversation (issue #386) the bar is the conversation row (`CheckBar`, `Talk`): what she
-// says is sent as a text answer (the server matches it to a choice by its text).
-// Once the question is closed (issue #521) the options stay where they were, read only, so a
-// question that does not name them itself ("Welcher Bruch ist größer?") still reads: hers is
-// tinted and says "Deine Wahl", after a check or a cross where verdicts are shown; the right
-// one, where the server sent it, says "Lösung" after a check; the others step back like a tried
-// one (`choiceMarks`). No letters: they name an option to choose. Words and shapes, never colour
-// alone.
+// Ordinary choices are full-width vertical Option rows, with left-aligned text and the
+// factual letter in a circular badge. Selecting drafts an answer; the Composer submits it.
+// Settled rows stay read-only: correct/wrong replace the left letter with a check/cross,
+// while their native hints retain ownership and verdict information. Real tried/unjudged
+// states keep their factual caption; ordinary verdicts do not repeat it below the answer.
+// Checkbox, figure and code/numbered-line choices retain their separate presentation and
+// payload paths. Mathematical text still uses the shared renderer, without enlarging or
+// centring ordinary choices. No grading or session state is inferred here.
 
 import { SELECT_MAX, type Figure } from '@learnbuddy/shared-types/contracts';
 import { useMemo, useState } from 'react';
@@ -143,19 +123,17 @@ function TextChoices({
   const { palette } = useTheme();
   const words = useSpokenWords();
   const said = useMarkWords();
-  // Short options (a word, a number, a fraction) sit two by two — but only when EVERY one of
-  // them fits one line of half a screen, so the tiles of the grid are equally tall (issue #288).
-  // What fits is arithmetic, not a feeling (see "what fits half a line" below). Options to tick
-  // may be six: three rows of short ones (contracts/structured.ts, SELECT_MAX).
-  // Lines to pick from are read top to bottom: never two by two, never set large and centred.
+  // Ordinary choices are full-width vertical rows. The separate checkbox branch retains its
+  // short-option grid when every option fits; SELECT_MAX bounds its six selections.
+  // Code and numbered lines retain their own vertical presentation.
   const lines = picked !== undefined || code;
-  const grid = !lines && twoColumnChoices(choices, ticked ? SELECT_MAX : CHOICE_GRID_MAX);
+  const grid = Boolean(ticked) && !lines && twoColumnChoices(choices, SELECT_MAX);
   return (
     <View
       style={
         grid
           ? { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP }
-          : { gap: lines ? PRACTICE.boardLineGap : CARD_GAP }
+          : { gap: lines ? PRACTICE.boardLineGap : ticked ? CARD_GAP : PRACTICE.optionRowGap }
       }
     >
       {lead ? (
@@ -179,12 +157,12 @@ function TextChoices({
       ) : null}
       {choices.map((choice, index) => {
         const state = markOf(choice, index, tried, settled);
-        const { back, mine } = standing(state);
+        const { mine } = standing(state);
         const on = (ticked?.has(index) ?? false) || picked === index || selected === index;
         const note = said(state);
-        // A fraction or a term on its own is the thing to look at: set large and centred, at
-        // least as large as the question's own line (issue #288, finding 4).
-        const big = !lines && mathOnly(choice);
+        // The separate checkbox branch retains its large centred mathematical choices.
+        // Ordinary mathematical choices use the same left-aligned option role as plain text.
+        const big = Boolean(ticked) && !lines && mathOnly(choice);
         const mark = marks?.[index];
         if (lines) {
           return (
@@ -247,7 +225,7 @@ function TextChoices({
             checked={on || mine}
             radio={!ticked}
             readOnly={settled !== null || state === 'tried'}
-            disabled={disabled}
+            disabled={disabled && settled === null}
             style={grid ? { flexBasis: PRACTICE.gridBasis, flexGrow: 1 } : null}
             onPress={() => onChoose?.(index, choice)}
             accessibilityHint={note?.hint}
@@ -256,7 +234,7 @@ function TextChoices({
                 ? `${mark.label}: ${code ? choice.trim() : speakMathText(choice, words)}`
                 : speakMathText(choice, words)
             }
-            letter={ticked || settled ? undefined : (mark?.mark ?? letterFor(index))}
+            letter={ticked ? undefined : (mark?.mark ?? letterFor(index))}
           >
             <View
               style={{
@@ -285,13 +263,15 @@ function TextChoices({
                     style={[
                       {
                         ...(big ? TYPE.question : TYPE.option),
-                        color: back ? palette.ink2 : palette.ink,
+                        color: palette.ink,
                       },
                       wholeWordsFit(choice, grid) ? WHOLE_WORDS : null,
                     ]}
                   />
                 )}
-                {note ? <MarkWords state={state} text={note.text} /> : null}
+                {note && (ticked || state === 'tried' || state === 'mine') ? (
+                  <MarkWords state={state} text={note.text} />
+                ) : null}
               </View>
             </View>
           </Option>
@@ -430,25 +410,9 @@ function FigureChoices({
 // So two by two only when EVERY option fits ONE line of half a screen; otherwise one under the
 // other, full width, where a longer option has a whole line.
 //
-// The arithmetic, on the NARROW phone, because the same decision has to hold on both sizes of
-// CLAUDE.md rule 16 (what fits 360 fits 390):
-//
-//     360 pt                 the small Android
-//   −   2 × 16 pt            the padding around the options (app/practice/[id].tsx)
-//   −       8 pt             the gap between the two tiles of a row
-//   ───────────── / 2
-//   =     160 pt             one tile
-//   −   2 × 12 pt            the tile's padding (PRACTICE.optionPadding)
-//   −      16 pt             the letter's column (LETTER_COL)
-//   −      12 pt             letter to text (LETTER_GAP)
-//   ─────────────
-//   =     108 pt             the text's own room, in one line
-//
-// At 0.64 em per character (EM_PER_CHAR) and 17 pt type that is 108 / 10.88 = 9.9 → an option of
-// at most nine characters is certain to fit one line. A math-only option is set larger
-// (TYPE.question.fontSize) and measured at that size.
-
-/** The option's own type: 17 pt semibold (`CHOICE_WEIGHT` is what EM_PER_CHAR was measured at). */
+// The conservative room budget follows actual theme geometry on the narrow phone: the page
+// gutters and grid gap, asymmetric control padding, maximum selected border, badge and gap.
+// Plain text uses TYPE.option; mathematical expressions keep TYPE.question.
 
 /**
  * A math-only option ($\frac{2}{3}$, $x^{2}$): larger than the question's own 21 pt line, so a
@@ -484,20 +448,26 @@ const EM_PER_CHAR = PRACTICE.optionCharacterEm;
 /** The room an option's text has in one line, by variant, on the narrow phone. */
 const GRID_TEXT_ROOM =
   (NARROW_PHONE - 2 * SCREEN_PAD - CARD_GAP) / 2 -
-  2 * PRACTICE.optionPadding -
+  (PRACTICE.optionPaddingStart + PRACTICE.optionPaddingEnd) -
+  2 * PRACTICE.selectedBorder -
   LETTER_COL -
   LETTER_GAP;
 const LIST_TEXT_ROOM =
-  NARROW_PHONE - 2 * SCREEN_PAD - 2 * PRACTICE.optionPadding - LETTER_COL - LETTER_GAP;
+  NARROW_PHONE -
+  2 * SCREEN_PAD -
+  (PRACTICE.optionPaddingStart + PRACTICE.optionPaddingEnd) -
+  2 * PRACTICE.selectedBorder -
+  LETTER_COL -
+  LETTER_GAP;
 
 /** How many single-choice options may stand two by two (two rows). */
 const CHOICE_GRID_MAX = PRACTICE.gridChoiceMax;
 
-/** The longest option that still fits ONE line of a grid tile: 9 characters. */
+/** The longest plain option that fits one line of a grid tile. */
 export function gridCharsMax(): number {
   return Math.floor(GRID_TEXT_ROOM / (TYPE.option.fontSize * EM_PER_CHAR));
 }
-/** The longest word that fits one line of a full-width tile: 22 characters. */
+/** The full-width word budget uses the same actual control geometry. */
 
 /**
  * Do these options go two by two? Only up to `max` of them (four to choose one, six to tick), and

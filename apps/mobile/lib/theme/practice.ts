@@ -40,6 +40,10 @@ export const PRACTICE = {
   disabledOpacity: 0.45,
   contentGap: SPACE.md,
   optionPadding: SPACE.md,
+  optionPaddingStart: 10,
+  optionPaddingEnd: 14,
+  optionRowGap: 10,
+  optionDimOpacity: 0.6,
   optionGap: SPACE.sm,
   figureChoiceHeight: 120,
   figureChoiceShare: 0.12,
@@ -133,9 +137,9 @@ export function optionLook(p: Palette, state: OptionState): ViewStyle {
     state === 'selected'
       ? p.primaryLt
       : state === 'correct'
-        ? tint(p.success, PRACTICE.successTint)
+        ? p.mint
         : state === 'wrong'
-          ? tint(p.danger, PRACTICE.dangerTint)
+          ? p.blush
           : p.paper;
   const borderColor =
     state === 'selected'
@@ -153,7 +157,8 @@ export function optionLook(p: Palette, state: OptionState): ViewStyle {
     borderWidth,
     borderColor,
     backgroundColor,
-    paddingHorizontal: PRACTICE.optionPadding - (borderWidth - PRACTICE.border),
+    paddingLeft: PRACTICE.optionPaddingStart,
+    paddingRight: PRACTICE.optionPaddingEnd,
     paddingVertical: SPACE.sm,
   };
 }
