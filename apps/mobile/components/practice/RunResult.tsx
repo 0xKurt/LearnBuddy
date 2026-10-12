@@ -4,8 +4,10 @@
 
 import type { SessionView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
-import { ScrollView } from 'react-native';
+import { Platform, ScrollView } from 'react-native';
 
+import { DURATION } from '../../lib/theme/motion.js';
+import { RESULT } from '../../lib/theme/results.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
 import { Appear } from '../lb/Motion.js';
@@ -42,24 +44,47 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
                 .filter((t): t is string => t !== undefined && t.length > 0),
             ),
           ];
+  const screen = session.mode !== 'test';
   return (
-    <Screen title={title}>
+    <Screen
+      title={title}
+      subtitle={screen ? t('practice:summary.finished') : undefined}
+      state={screen ? 'happy' : undefined}
+      leading={
+        screen ? { icon: 'close', label: t('practice:back_to_buddy'), onPress: onBack } : undefined
+      }
+    >
       <ScrollView
         testID="scroll-list"
-        contentContainerStyle={{ padding: SPACE.lg, paddingBottom: SPACE.xl }}
+        tabIndex={Platform.OS === 'web' ? 0 : undefined}
+        contentContainerStyle={{
+          padding: SPACE.lg,
+          paddingTop: screen ? RESULT.top : SPACE.lg,
+          paddingBottom: SPACE.xl,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <SessionSummary
+          presentation={screen ? 'screen' : 'legacy'}
           celebrate={celebrate}
           summary={summary}
           mode={session.mode}
-          review={session.mode === 'test' ? session.items : null}
+          review={session.items}
           // The time ran out (issue #241): how far she got, open questions not answered.
           ranOut={session.timer?.ran_out === true}
         />
       </ScrollView>
       <BottomBar>
-        <Appear delay={celebrate ? 900 : 0} style={{ gap: SPACE.sm }}>
+        <Appear
+          animate={!screen}
+          delay={screen ? 0 : celebrate ? DURATION.summaryActions : 0}
+          style={{ gap: SPACE.sm }}
+        >
+          {screen ? (
+            <Btn size="lg" pill full onPress={onBack}>
+              {t('practice:back_to_buddy')}
+            </Btn>
+          ) : null}
           {/* Weiterüben ist immer einen Tipp entfernt (issue #47): das Wacklige zuerst,
               sonst mehr vom Sitzenden — und wenn die Zusammenfassung keine Themen kennt,
               die der Fragen selbst. Eine Übung endet nie in einer Sackgasse. */}
@@ -72,7 +97,7 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
           {session.card_pass_offered ? (
             <Btn
               size="lg"
-              variant="soft"
+              variant={screen ? 'ghost' : 'soft'}
               pill
               icon="practice"
               full
@@ -84,15 +109,18 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
             </Btn>
           ) : session.mode !== 'help' && againTopics.length > 0 ? (
             <AgainButton
+              quiet={screen}
               {...(summary.shaky_topics.length > 0 ? {} : { kind: 'harder' as const })}
               title={session.title}
               topics={againTopics}
               sessionId={session.id}
             />
           ) : null}
-          <Btn size="lg" pill full onPress={onBack}>
-            {t('practice:back_to_buddy')}
-          </Btn>
+          {screen ? null : (
+            <Btn size="lg" pill full onPress={onBack}>
+              {t('practice:back_to_buddy')}
+            </Btn>
+          )}
         </Appear>
       </BottomBar>
     </Screen>

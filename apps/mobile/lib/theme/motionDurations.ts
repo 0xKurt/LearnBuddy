@@ -13,4 +13,12 @@ export const DURATION = {
   voicePulse: 1200,
   recordingPulse: 700,
   wordRevealLag: 700,
+  /** Legacy completion phases; live reduced motion skips their arrival delay. */
+  summaryTitle: 260,
+  summaryCard: 460,
+  summaryLine: 140,
+  summaryReview: 900,
+  summaryActions: 900,
+  /** Lead between the legacy result heading and its first card. */
+  resultCardLead: 60,
 } as const;

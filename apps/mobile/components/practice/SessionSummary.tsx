@@ -6,9 +6,9 @@
 // to are marked as such, not as wrong (audit M-36) — in the one result list the roleplay's
 // feedback uses too (lb/ResultList.tsx, issue #384).
 //
-// A warm, calm moment: Buddy's orb, the headline, the sentences on a white card – no
-// confetti, nothing that counts what is left. They arrive one after the other: the orb
-// with a soft halo, then the headline, then each sentence (reduce motion: all at once).
+// Screen completion groups factual sentences and results beneath the shared header.
+// Legacy cards retain their protected Orb and staggered arrival; live reduced motion
+// settles the existing arrival delay immediately.
 // A session that just ended here also feels like one (a success haptic, once).
 
 import type {
@@ -20,19 +20,12 @@ import { useEffect, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
-
 import { haptic } from '../../lib/haptics.js';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE } from '../../lib/theme/motion.js';
-import { circle, RADIUS } from '../../lib/theme/radius.js';
+import { DURATION, useMotionReduced } from '../../lib/theme/motion.js';
+import { RESULT } from '../../lib/theme/results.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -45,6 +38,7 @@ import { timeUpLines } from '../../lib/practice/testClock.js';
 import { ResultList, type ResultRow } from '../lb/ResultList.js';
 
 type Props = {
+  presentation?: 'legacy' | 'screen';
   summary: PracticeSummary;
   mode: SessionMode;
   /** A practice test: the questions to go through, with their solutions. */
@@ -58,13 +52,8 @@ type Props = {
   ranOut?: boolean;
 };
 
-/** When each part arrives (ms after the summary appears). */
-const AT = { title: 260, card: 460, line: 140, review: 900 } as const;
-
-/** Buddy's orb as it arrives, and the halo behind it. */
-const ORB = 96;
-
 export function SessionSummary({
+  presentation = 'legacy',
   summary,
   mode,
   review = null,
@@ -101,13 +90,41 @@ export function SessionSummary({
       ? [{ key: 'shaky', text: t('summary.shaky', { topics: shaky.join(', ') }), strong: false }]
       : []),
   ];
+  if (presentation === 'screen') {
+    return (
+      <View style={{ gap: RHYTHM.sections }}>
+        <View style={{ gap: RESULT.introGap }}>
+          <Text accessibilityRole="header" style={TYPE.display}>
+            {homework
+              ? t('summary_help.title')
+              : mode === 'test'
+                ? t(ranOut ? 'summary_test.time_up_title' : 'summary_test.title')
+                : t('summary.title')}
+          </Text>
+          {sentences.map((line) => (
+            <Text key={line.key} style={[TYPE.body, { color: palette.ink2 }]}>
+              {line.text}
+            </Text>
+          ))}
+        </View>
+        {review && review.length > 0 ? (
+          <ResultList
+            variant="rows"
+            title={t('summary_test.review')}
+            rows={review.map((row, n) => reviewRow(row, n + 1, ranOut, t))}
+            animate={false}
+          />
+        ) : null}
+      </View>
+    );
+  }
   return (
     <View style={{ gap: RHYTHM.sections }}>
       {/* token-exempt: room above the orb, the celebrating moon flies up to about 0.75 × its
           size */}
-      <View style={{ alignItems: 'center', gap: RHYTHM.stack, paddingTop: 36 }}>
+      <View style={{ alignItems: 'center', gap: RHYTHM.stack, paddingTop: RESULT.legacyOrbTop }}>
         <OrbArrival celebrate={celebrate} />
-        <Rise slow delay={AT.title}>
+        <Rise slow delay={DURATION.summaryTitle}>
           <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
             {homework
               ? t('summary_help.title')
@@ -118,12 +135,10 @@ export function SessionSummary({
         </Rise>
       </View>
       {sentences.length > 0 ? (
-        <Rise slow delay={AT.card} style={[softCard(palette), { gap: SPACE.sm }]}>
+        <Rise slow delay={DURATION.summaryCard} style={[softCard(palette), { gap: SPACE.sm }]}>
           {sentences.map((line, i) => (
-            <Rise key={line.key} slow delay={AT.card + (i + 1) * AT.line}>
-              <Text style={[TYPE.body, line.strong ? { fontWeight: '600' } : null]}>
-                {line.text}
-              </Text>
+            <Rise key={line.key} slow delay={DURATION.summaryCard + (i + 1) * DURATION.summaryLine}>
+              <Text style={[TYPE.body, line.strong ? TYPE.bodyStrong : null]}>{line.text}</Text>
             </Rise>
           ))}
         </Rise>
@@ -133,7 +148,7 @@ export function SessionSummary({
           <ResultList
             title={t('summary_test.review')}
             rows={review.map((r, n) => reviewRow(r, n + 1, ranOut, t))}
-            delay={AT.review}
+            delay={DURATION.summaryReview}
           />
         </View>
       ) : null}
@@ -141,61 +156,16 @@ export function SessionSummary({
   );
 }
 
-/**
- * Buddy's orb arrives: it grows in softly while a pastel halo breathes out behind it. A
- * session that just ended here is a "Geschafft" moment: once the orb is there, his moon
- * spirals up and bursts into sparkles (lib/buddy/moon.ts, happy).
- */
+/** Keep only Buddy's own celebration; the surrounding result presentation stays calm. */
 function OrbArrival({ celebrate }: { celebrate: boolean }) {
-  const { palette } = useTheme();
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   const [moon, setMoon] = useState<MoonState>('idle');
   useEffect(() => {
     if (!celebrate) return;
     const go = setTimeout(() => setMoon('happy'), reduced ? 0 : DURATION.gentle);
     return () => clearTimeout(go);
   }, [celebrate, reduced]);
-  const orb = useSharedValue(reduced ? 1 : 0);
-  const halo = useSharedValue(reduced ? 1 : 0);
-  useEffect(() => {
-    if (reduced) return;
-    orb.value = withTiming(1, { duration: DURATION.gentle + 120, easing: EASE.celebrate });
-    halo.value = withDelay(
-      DURATION.quick,
-      withTiming(1, { duration: DURATION.gentle * 3, easing: EASE.standard }),
-    );
-  }, [reduced, orb, halo]);
-  const orbStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(1, orb.value * 1.5),
-    transform: [{ scale: 0.7 + orb.value * 0.3 }],
-  }));
-  const haloStyle = useAnimatedStyle(() => ({
-    opacity: reduced ? 0 : 0.55 * (1 - halo.value),
-    transform: [{ scale: 0.9 + halo.value * 0.7 }],
-  }));
-  return (
-    <View
-      style={{ width: ORB, height: ORB, alignItems: 'center', justifyContent: 'center' }}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            width: ORB,
-            height: ORB,
-            borderRadius: circle(ORB),
-            backgroundColor: palette.lavenderDeep,
-          },
-          haloStyle,
-        ]}
-      />
-      <Animated.View style={orbStyle}>
-        <BuddyOrb size={ORB} state={moon} />
-      </Animated.View>
-    </View>
-  );
+  return <BuddyOrb size={RESULT.legacyOrb} state={moon} />;
 }
 
 /** One question of a practice test as a row of the result list: its state and its solution. */
@@ -218,6 +188,7 @@ function reviewRow(row: SessionItemView, number: number, ranOut: boolean, t: TFu
   return {
     key: row.item.id,
     right,
+    status: row.status,
     label: `${number} · ${status}`,
     text: row.item.prompt,
     detail: answer !== null && !right ? t('summary_test.solution', { answer }) : null,
@@ -231,7 +202,7 @@ function reviewRow(row: SessionItemView, number: number, ranOut: boolean, t: TFu
 const softCard = (p: Palette) =>
   ({
     backgroundColor: p.paper,
-    borderRadius: RADIUS.card,
+    borderRadius: RADIUS.lg,
     padding: CARD_PAD.base,
     ...SHADOW.soft,
   }) as const;

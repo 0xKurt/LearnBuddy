@@ -50,4 +50,27 @@ describe('SessionSummary — the Probetest review', () => {
     expect(screen.queryByText('6 · 7 = 42, weil 6 · 7 = 7 · 6.')).toBeNull();
     expect(screen.getByText('Lösung: 18')).toBeTruthy();
   });
+
+  it('passes factual open and revealed states into the grouped screen review without changing solutions', () => {
+    renderInApp(
+      <SessionSummary
+        presentation="screen"
+        summary={SUMMARY}
+        mode="test"
+        ranOut
+        review={[
+          { ...row('open', 'Noch offen', 'open', '', null), answer: null },
+          row('shown', 'Lösung angeschaut', 'revealed', '12', 'Drei Gruppen mit vier.'),
+        ]}
+      />,
+    );
+    expect(screen.getByText('1 · Nicht beantwortet')).toBeDefined();
+    expect(screen.getByText('Lösung: 12')).toBeDefined();
+    expect(screen.getByText('Drei Gruppen mit vier.')).toBeDefined();
+    const paths = Array.from(document.querySelectorAll('svg path')).map((path) =>
+      path.getAttribute('d'),
+    );
+    expect(paths).toContain('M12 7v5l3 2');
+    expect(paths).toContain('M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z');
+  });
 });
