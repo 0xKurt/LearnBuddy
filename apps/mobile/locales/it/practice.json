@@ -214,6 +214,7 @@
     "tapped_other": "{{count}} colpi battuti"
   },
   "summary": {
+    "finished": "Finito",
     "title": "Ce l'hai fatta!",
     "secure": "Oggi senza aiuto: {{topics}}",
     "shaky": "Lo rivediamo insieme: {{topics}}"

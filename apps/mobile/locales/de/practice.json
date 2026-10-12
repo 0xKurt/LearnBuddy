@@ -214,6 +214,7 @@
     "tapped_other": "{{count}} Schläge geklopft"
   },
   "summary": {
+    "finished": "Fertig",
     "title": "Geschafft!",
     "secure": "Heute ohne Tipp geschafft: {{topics}}",
     "shaky": "Schauen wir nochmal an: {{topics}}"

@@ -18,12 +18,14 @@ export function AgainButton({
   topics,
   sessionId,
   kind = 'shaky',
+  quiet = false,
 }: {
   title: string;
   topics: readonly string[];
   /** The finished session: the new questions stay in its world (issue #58). */
   sessionId: string;
   kind?: 'shaky' | 'harder';
+  quiet?: boolean;
 }) {
   const { t } = useTranslation(['practice', 'common']);
   const { state, start } = useStartTopic();
@@ -52,7 +54,7 @@ export function AgainButton({
       {state.status === 'not_usable' ? null : (
         <Btn
           size="lg"
-          variant="soft"
+          variant={quiet ? 'ghost' : 'soft'}
           pill
           icon="practice"
           full

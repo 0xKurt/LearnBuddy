@@ -214,6 +214,7 @@
     "tapped_other": "{{count}} coups tapés"
   },
   "summary": {
+    "finished": "Terminé",
     "title": "C'est fait !",
     "secure": "Réussi aujourd’hui sans indice : {{topics}}",
     "shaky": "On revoit ça ensemble : {{topics}}"

@@ -214,6 +214,7 @@
     "tapped_other": "Tapped {{count}} times"
   },
   "summary": {
+    "finished": "Finished",
     "title": "Done!",
     "secure": "Managed today without a hint: {{topics}}",
     "shaky": "Worth another look: {{topics}}"
