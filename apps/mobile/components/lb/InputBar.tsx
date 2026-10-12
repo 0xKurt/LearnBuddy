@@ -30,12 +30,12 @@
 
 import { forwardRef, type ReactNode } from 'react';
 import { Platform, ScrollView } from 'react-native';
-import { SPACE } from '../../lib/theme/space.js';
 import { useTranslation } from 'react-i18next';
 
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { COMPOSER } from '../../lib/theme/composer.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import type { VoiceInput } from '../voice/useVoiceInput.js';
 import { Chip } from './Chip.js';
@@ -66,8 +66,12 @@ type Controls = {
   after?: ReactNode;
   /** Above the pill: what goes with the text (the pages she attached). */
   above?: ReactNode;
-  /** Bounds all accessory content together; the editable caption and tools stay pinned. */
-  accessoriesMaxHeight?: number;
+  /**
+   * What stands above the field gives way when the room is too short (the keyboard is up): it
+   * scrolls inside itself, the field and its tools stay whole and pinned (rules 16 and 19). With
+   * room enough it is laid out as without this. The bar around it must yield too (`BottomBar`).
+   */
+  aboveYields?: boolean;
   disabled?: boolean;
   /** A long text (issue #258): a taller pill that, while she writes, grows further. */
   tall?: 'writing' | 'resting' | null;
@@ -92,7 +96,7 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     action = null,
     after = null,
     above = null,
-    accessoriesMaxHeight,
+    aboveYields = false,
     disabled = false,
     tall = null,
   } = props;
@@ -112,7 +116,7 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
     action: _action,
     after: _after,
     above: _above,
-    accessoriesMaxHeight: _accessoriesMaxHeight,
+    aboveYields: _aboveYields,
     disabled: _disabled,
     tall: _tall,
     ...field
@@ -126,12 +130,12 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
   );
   return (
     <>
-      {accessoriesMaxHeight !== undefined ? (
+      {aboveYields ? (
         <ScrollView
           testID="scroll-list"
           tabIndex={Platform.OS === 'web' ? 0 : undefined}
           keyboardShouldPersistTaps="handled"
-          style={{ maxHeight: accessoriesMaxHeight, flexGrow: 0, flexShrink: 1 }}
+          style={{ flexGrow: 0, flexShrink: 1 }}
           contentContainerStyle={{ gap: SPACE.sm }}
         >
           {accessories}

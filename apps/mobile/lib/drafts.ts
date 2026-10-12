@@ -24,24 +24,6 @@ const SAVE_AFTER_MS = 400;
  * reads this first; the device copy is for after a restart.
  */
 const memory = new Map<string, string>();
-const listeners = new Map<string, Set<(text: string) => void>>();
-let generation = 0;
-
-/** The existing account-wipe lifetime of shared text. */
-export const draftGeneration = () => generation;
-
-function publish(key: string, text: string): void {
-  memory.set(key, text);
-  listeners.get(key)?.forEach((receive) => receive(text));
-}
-
-/** An outcome may update the shared field without a mounted editor. */
-export function updateDraft(name: string, update: (current: string) => string): void {
-  const key = PREFIX + name;
-  const next = update(memory.get(key) ?? '');
-  publish(key, next);
-  persist(key, next);
-}
 
 async function remember(key: string): Promise<void> {
   const kept = (await readItem(INDEX_KEY)) ?? '';
@@ -53,10 +35,7 @@ async function remember(key: string): Promise<void> {
 
 /** Deletes every kept draft (sign-out, another learner signs in). */
 export async function clearDrafts(): Promise<void> {
-  generation += 1;
-  // Empty tombstones also prevent a concurrent device read from restoring the old account.
-  memory.forEach((_text, key) => memory.set(key, ''));
-  listeners.forEach((receivers) => receivers.forEach((receive) => receive('')));
+  memory.clear();
   const kept = (await readItem(INDEX_KEY)) ?? '';
   await Promise.all(kept.split('\n').map((key) => (key ? writeItem(key, null) : undefined)));
   await writeItem(INDEX_KEY, null);
@@ -68,11 +47,8 @@ export async function clearDrafts(): Promise<void> {
  * would miss them (review 28.09.).
  */
 function persist(key: string, text: string): void {
-  const owner = generation;
-  if (text.trim().length > 0)
-    void remember(key).then(() => {
-      if (owner === generation && memory.get(key) === text) return writeItem(key, text);
-    });
+  memory.set(key, text);
+  if (text.trim().length > 0) void remember(key).then(() => writeItem(key, text));
   else void writeItem(key, null);
 }
 
@@ -93,43 +69,50 @@ export function useDraft(name: string): {
 
   useEffect(() => {
     let alive = true;
-    const owner = generation;
-    const receive = (next: string) => {
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = null;
-      latest.current = next;
-      setValue(next);
-    };
-    const receivers = listeners.get(key) ?? new Set<(text: string) => void>();
-    receivers.add(receive);
-    listeners.set(key, receivers);
-    receive(memory.get(key) ?? '');
-    if (!memory.has(key)) {
-      void readItem(key).then((kept) => {
-        if (alive && owner === generation && kept && !memory.has(key)) publish(key, kept);
-      });
+    // A new key is a new field: the previous one's text must not stay on screen
+    // (a session's answer draft in the next session, review 28.09.).
+    // What this process already holds wins: it is newer than anything on the device.
+    const held = memory.get(key);
+    latest.current = held ?? '';
+    setValue(held ?? '');
+    if (held !== undefined) {
+      return () => {
+        if (timer.current) clearTimeout(timer.current);
+        persist(key, latest.current);
+      };
     }
+    void readItem(key).then((kept) => {
+      // Whatever she typed before the read finished wins over the old draft.
+      if (alive && kept && latest.current.length === 0) {
+        latest.current = kept;
+        memory.set(key, kept);
+        setValue(kept);
+      }
+    });
     return () => {
       alive = false;
-      receivers.delete(receive);
-      if (receivers.size === 0) listeners.delete(key);
       if (timer.current) clearTimeout(timer.current);
-      // Other editors and an account wipe are authoritative, never this old instance.
-      if (owner === generation && memory.has(key)) persist(key, memory.get(key)!);
+      persist(key, latest.current);
     };
   }, [key]);
 
   const setText = (value: string | ((current: string) => string)) => {
-    const next = typeof value === 'function' ? value(memory.get(key) ?? latest.current) : value;
-    publish(key, next);
-    const owner = generation;
+    const next = typeof value === 'function' ? value(latest.current) : value;
+    latest.current = next;
+    memory.set(key, next);
+    setValue(next);
+    if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      if (owner === generation && memory.get(key) === next) persist(key, next);
+      void remember(key);
+      void writeItem(key, next.trim().length > 0 ? next : null);
     }, SAVE_AFTER_MS);
   };
 
   const clear = () => {
-    publish(key, '');
+    latest.current = '';
+    memory.set(key, '');
+    setValue('');
+    if (timer.current) clearTimeout(timer.current);
     void writeItem(key, null);
   };
 

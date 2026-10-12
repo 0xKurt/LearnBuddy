@@ -66,6 +66,7 @@
     "keyboard": "Clavier",
     "attach": {
       "title": "Que veux-tu joindre ?",
+      "camera": "Prendre une photo",
       "library": "Depuis la galerie",
       "files": "Depuis les fichiers"
     }

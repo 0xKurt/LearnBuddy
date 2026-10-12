@@ -66,6 +66,7 @@
     "keyboard": "Teclado",
     "attach": {
       "title": "¿Qué quieres adjuntar?",
+      "camera": "Hacer una foto",
       "library": "De la galería",
       "files": "De archivos"
     }

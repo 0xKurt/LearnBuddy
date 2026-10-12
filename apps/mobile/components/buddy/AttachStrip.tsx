@@ -1,9 +1,22 @@
-// Capture's wrapping portrait previews: tap to zoom, remove through an inside 44 pt target.
-// The real photo/PDF and quality review remain authoritative; no preview stand-ins.
+// The pages attached to the message she is writing (issue #82): small squares above
+// the field, like every messenger — a tap shows one full screen, the ✕ takes it out
+// again. The ✕ looks small and is a full 44 pt to hit.
+//
+// The square must show the photo (issue #294: on the phone it stayed an empty dark box,
+// while the same file showed at once in the card after sending). The tile is now built
+// like the two thumbnails that DO show on the phone: the shadow on an outer view and the
+// clipping on an inner one (Android draws an elevated
+// view that also clips its children unreliably), the image at a fixed size and without a
+// cross-fade (the sent card, components/buddy/SlimBar.tsx). Under the image lies a camera
+// mark, so a photo that never paints is never an empty box; one that cannot be read says so
+// in words under the strip.
+//
+// After a photo from the camera the strip ends in a square "Noch ein Foto" (issue #519): the
+// camera again, so a sheet of several pages is taken one after another, right here.
 
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -43,26 +56,28 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
 
   return (
     <View style={{ gap: SPACE.xs }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: CAPTURE.previewGap,
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          gap: SPACE.sm,
+          paddingHorizontal: CAPTURE.shadowInset,
+          paddingVertical: SPACE.xs,
         }}
       >
         {uris.map((uri, i) => {
           const label = pdfs[uri]
             ? t('files.pdf_label', { index: i + 1, total: uris.length, name: pdfs[uri] })
-            : `${t('photo_label', { index: i + 1, total: uris.length })}${flagged.has(uri) ? `: ${t('quality.flag')}` : ''}`;
+            : t('photo_label', { index: i + 1, total: uris.length });
           return (
-            <View key={uri} style={{ width: THUMB.width, height: THUMB.height }}>
+            <View key={uri} style={{ width: THUMB, height: THUMB }}>
               {/* The shadow out here, the clipping inside: one view doing both is what
                   Android does not draw reliably. */}
               <View
                 style={{
-                  width: THUMB.width,
-                  height: THUMB.height,
-                  borderRadius: RADIUS.md,
+                  width: THUMB,
+                  height: THUMB,
+                  borderRadius: RADIUS.tile,
                   backgroundColor: palette.canvas,
                   ...SHADOW.soft,
                 }}
@@ -70,9 +85,9 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                 <View
                   testID="attach-tile"
                   style={{
-                    width: THUMB.width,
-                    height: THUMB.height,
-                    borderRadius: RADIUS.md,
+                    width: THUMB,
+                    height: THUMB,
+                    borderRadius: RADIUS.tile,
                     overflow: 'hidden',
                     backgroundColor: palette.canvas,
                   }}
@@ -91,13 +106,10 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                         backgroundColor: palette.lavender,
                       }}
                     >
-                      <Icon name="file" size={CAPTURE.addGlyph} color={palette.primaryDk} />
+                      <Icon name="file" size={CAPTURE.glyph} color={palette.primaryDk} />
                       <Text
                         numberOfLines={2}
-                        style={[
-                          CAPTURE.addLabelType,
-                          { color: palette.primaryDk, textAlign: 'center' },
-                        ]}
+                        style={[TYPE.small, { color: palette.primaryDk, textAlign: 'center' }]}
                       >
                         {pdfs[uri]}
                       </Text>
@@ -109,7 +121,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                       accessibilityLabel={`${label}: ${t('preview_failed')}`}
                       style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
                     >
-                      <Icon name="eye-off" size={CAPTURE.addGlyph} color={palette.ink3} />
+                      <Icon name="eye-off" size={CAPTURE.glyph} color={palette.ink3} />
                     </View>
                   ) : (
                     <>
@@ -128,7 +140,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                           justifyContent: 'center',
                         }}
                       >
-                        <Icon name="camera" size={CAPTURE.addGlyph} color={palette.ink3} />
+                        <Icon name="camera" size={CAPTURE.glyph} color={palette.ink3} />
                       </View>
                       <ZoomablePhoto uri={uri} label={label} fill>
                         <Image
@@ -137,49 +149,35 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                           accessibilityLabel={label}
                           contentFit="cover"
                           onError={() => setBroken((was) => new Set(was).add(uri))}
-                          style={{ width: THUMB.width, height: THUMB.height }}
+                          style={{ width: THUMB, height: THUMB }}
                         />
                       </ZoomablePhoto>
                     </>
                   )}
-                  <View
-                    pointerEvents="none"
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                    aria-hidden
-                    style={{
-                      position: 'absolute',
-                      top: CAPTURE.pageNumber.inset,
-                      left: CAPTURE.pageNumber.inset,
-                      width: CAPTURE.pageNumber.size,
-                      height: CAPTURE.pageNumber.size,
-                      borderRadius: RADIUS.round,
-                      backgroundColor: palette.primary,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text style={[CAPTURE.pageNumberType, { color: palette.onPrimary }]}>
-                      {i + 1}
-                    </Text>
-                  </View>
                   {flagged.has(uri) ? (
+                    // Never colour alone: the word stands under the strip, this only points at it.
                     <View
-                      pointerEvents="none"
-                      aria-hidden
                       accessibilityElementsHidden
                       importantForAccessibility="no-hide-descendants"
                       style={{
                         position: 'absolute',
-                        top: 0,
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        borderRadius: RADIUS.md,
-                        borderWidth: CAPTURE.warningBorder,
-                        borderColor: palette.warning,
+                        paddingVertical: CAPTURE.flagInset,
+                        backgroundColor: palette.butter,
+                        alignItems: 'center',
                       }}
-                    />
+                    >
+                      <Text
+                        style={{
+                          ...CAPTURE.flagType,
+                          color: palette.warningText,
+                        }}
+                      >
+                        {t('quality.flag')}
+                      </Text>
+                    </View>
                   ) : null}
                 </View>
               </View>
@@ -191,8 +189,8 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
                 accessibilityLabel={t('remove_label', { index: i + 1 })}
                 style={{
                   position: 'absolute',
-                  top: 0,
-                  right: 0,
+                  top: CAPTURE.closeOffset,
+                  right: CAPTURE.closeOffset,
                   width: TOUCH,
                   height: TOUCH,
                   alignItems: 'center',
@@ -201,19 +199,16 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
               >
                 <View
                   style={{
-                    position: 'absolute',
-                    top: CAPTURE.closeInset,
-                    right: CAPTURE.closeInset,
                     width: CLOSE,
                     height: CLOSE,
                     borderRadius: circle(CLOSE),
-                    backgroundColor: palette.photoOverlay,
-                    opacity: disabled ? UI.disabledOpacity : 1,
+                    backgroundColor: palette.ink,
+                    opacity: disabled ? UI.disabledOpacity : CAPTURE.closeOpacity,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon name="close" size={CAPTURE.closeGlyph} color={palette.onPhotoOverlay} />
+                  <Icon name="close" size={CAPTURE.closeGlyph} color={palette.paper} />
                 </View>
               </PressArea>
             </View>
@@ -224,37 +219,38 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
             onPress={onMore}
             disabled={disabled}
             accessibilityRole="button"
-            accessibilityLabel={t('page.more')}
-            style={{ width: THUMB.width, height: THUMB.height }}
+            accessibilityLabel={t('camera_more')}
+            style={{ width: THUMB, height: THUMB }}
           >
             {(pressed) => (
               <View
                 style={{
-                  width: THUMB.width,
-                  height: THUMB.height,
-                  borderRadius: RADIUS.md,
+                  width: THUMB,
+                  height: THUMB,
+                  borderRadius: RADIUS.tile,
                   borderWidth: CAPTURE.border,
                   borderStyle: 'dashed',
-                  borderColor: palette.hairlineStrong,
+                  borderColor: palette.primary,
+                  backgroundColor: palette.lavender,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: CAPTURE.addGap,
+                  gap: CAPTURE.shadowInset,
                   padding: SPACE.xs,
                   opacity: disabled ? UI.disabledOpacity : pressed ? UI.pressedOpacity : 1,
                 }}
               >
-                <Icon name="plus" size={CAPTURE.addGlyph} color={palette.primaryDk} />
+                <Icon name="camera" size={CAPTURE.glyph} color={palette.primaryDk} />
                 <Text
                   numberOfLines={2}
-                  style={[CAPTURE.addLabelType, { color: palette.primaryDk, textAlign: 'center' }]}
+                  style={[TYPE.small, { color: palette.primaryDk, textAlign: 'center' }]}
                 >
-                  {t('page.page')}
+                  {t('camera_more')}
                 </Text>
               </View>
             )}
           </PressArea>
         ) : null}
-      </View>
+      </ScrollView>
       {/* In words, not only as a crossed-out eye: a box she cannot check is not a fault of hers,
           and she should know before she sends it (issue #294). */}
       {unreadable ? (

@@ -69,9 +69,6 @@ const ROUTES: Record<string, string> = {
   settings:
     "contact opt-in, the parents' area behind the PIN, export and deletion are explicit controls the code enforces (rule 6), never a model's reading of a sentence",
 
-  capture:
-    'the supplied Capture page groups real photo/PDF preparation, quality review and upload in scroll content with a pinned send action and ordinary back navigation (#589)',
-
   // ── the work itself ──
   'practice/[id]':
     'the answer surfaces (typed, boards, staff, fraction bars, speaking) and the server-graded flow of one question at a time do not fit into chat bubbles',

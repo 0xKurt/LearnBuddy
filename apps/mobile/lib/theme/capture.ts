@@ -1,52 +1,30 @@
 import { TYPE } from './type.js';
 import { SPACE, TOUCH } from './space.js';
 
-const thumbnail = { width: 104, height: 140 };
-const closeFace = 28;
-// A full close target and its keyboard focus outline stay inside the browsed viewport.
-const listInset = (TOUCH - closeFace) / 2 + SPACE.xs;
+/** The ✕'s dark circle; the 44 pt around it is what takes the tap. */
+const closeFace = 24;
 
-function pageNumberType() {
-  return { ...TYPE.label, fontSize: 12, lineHeight: CAPTURE.pageNumber.size };
+function flagType() {
+  // Below the scale on purpose: a flag on a small photo. One point under the 11 it had in the
+  // system font: the app's own face runs wider, and "Schwer lesbar" must stand whole on 72 pt.
+  return { ...TYPE.label, fontSize: 10, lineHeight: 13 };
 }
 
-function addLabelType() {
-  const label = TYPE.label;
-  return { ...label, lineHeight: label.fontSize };
-}
-
-// Portrait page previews and their existing 44 pt remove targets.
+// The pages above the chat's field: small squares and their 44 pt remove targets.
 export const CAPTURE = {
-  thumbnail,
-  page: {
-    cameraMinHeight: 260,
-    cameraDisc: 64,
-    cameraGlyph: 28,
-    privacyMaxWidth: 240,
-    sourceSize: 52,
-  },
-  list: {
-    inset: listInset,
-    bottomInset: SPACE.xs,
-    maxHeight: thumbnail.height + listInset + SPACE.xs,
-  },
-  pageNumber: { size: 22, inset: 6 },
-  get pageNumberType() {
-    return pageNumberType();
-  },
-  reviewGap: SPACE.sm + SPACE.xs / 2,
+  thumbnail: 72,
   closeFace,
-  closeInset: SPACE.xs,
-  previewGap: SPACE.sm + SPACE.xs / 2,
-  addGap: SPACE.xs + SPACE.xs / 2,
-  get addLabelType() {
-    return addLabelType();
-  },
-  warningBorder: 2,
+  /** The 44 pt target hangs over the square's corner; its circle sits a little outside. */
+  closeOffset: -((TOUCH - closeFace) / 2 + SPACE.xs),
   closeGlyph: 14,
-  addGlyph: 22,
+  closeOpacity: 0.85,
+  glyph: 22,
+  /** Room for the squares' soft shadow at the sides; a mark close over its words. */
   shadowInset: 2,
   flagInset: 1,
-  border: 1.5,
-  closeOpacity: 0.85,
+  get flagType() {
+    return flagType();
+  },
+  border: 1,
+  reviewGap: SPACE.sm + SPACE.xs / 2,
 } as const;
