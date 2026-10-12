@@ -15,8 +15,13 @@ import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ListGroup } from '../components/lb/ListGroup.js';
+import { LIBRARY } from '../lib/theme/library.js';
+import { MaterialRow } from '../components/library/MaterialRow.js';
+import { useMaterialAct } from '../lib/api/useMaterialAct.js';
+import { startPractice } from '../lib/api/endpoints.js';
+import { seedSession } from '../lib/api/queries.js';
 import { SubjectCard } from '../components/library/SubjectCard.js';
 import { byActivity, hasSomething } from '../components/library/subjects.js';
 import { Btn } from '../components/lb/Btn.js';
@@ -28,7 +33,7 @@ import { LibrarySkeleton } from '../components/lb/Skeletons.js';
 import { useLibrary } from '../lib/api/libraryQueries.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { bottomRoom, SPACE } from '../lib/theme/space.js';
+import { SPACE } from '../lib/theme/space.js';
 import type { LibrarySubject } from '@learnbuddy/shared-types/contracts';
 import { attachInChat } from '../lib/capture/attachRequest.js';
 
@@ -39,11 +44,16 @@ export default function LibraryScreen() {
   const { palette } = useTheme();
   const { t } = useTranslation(['library', 'common']);
   const library = useLibrary();
-  const insets = useSafeAreaInsets();
+  const { busyId, act } = useMaterialAct();
   const [pulling, setPulling] = useState(false);
 
   const view = library.data;
   const rows: Row[] = [];
+  const recent = view
+    ? [...view.subjects.flatMap((subject) => subject.materials), ...view.unsorted].sort((a, b) =>
+        b.created_at.localeCompare(a.created_at),
+      )
+    : [];
   if (view) {
     // A subject with nothing in it is left out: this list says what there IS, and an empty
     // card would only lead to an empty screen. It comes back the moment something lands in it.
@@ -87,7 +97,7 @@ export default function LibraryScreen() {
           contentContainerStyle={{
             padding: SPACE.lg,
             paddingBottom: SPACE.xl,
-            gap: SPACE.md,
+            gap: SPACE.xl,
             ...(rows.length === 0 ? { flexGrow: 1 } : null),
           }}
           refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
@@ -95,7 +105,6 @@ export default function LibraryScreen() {
           {rows.length === 0 ? (
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <EmptyState
-                orb
                 title={t('library:empty.title')}
                 action={
                   // Body text sits here at 16 px (EmptyState's own body is smaller).
@@ -103,7 +112,11 @@ export default function LibraryScreen() {
                     <Text
                       style={[
                         TYPE.body,
-                        { color: palette.ink2, textAlign: 'center', maxWidth: 320 },
+                        {
+                          color: palette.ink2,
+                          textAlign: 'center',
+                          maxWidth: LIBRARY.emptyBodyWidth,
+                        },
                       ]}
                     >
                       {t('library:empty.body')}
@@ -116,30 +129,44 @@ export default function LibraryScreen() {
               />
             </View>
           ) : (
-            rows.map((row, index) => (
-              <Rise key={row.key} animate={entering(index)} index={index}>
-                <SubjectCard
-                  subject={row.subject}
-                  name={row.name}
-                  onPress={() => router.push(`/subject/${row.key}`)}
-                />
-              </Rise>
-            ))
+            <View style={{ gap: SPACE.xl }}>
+              <Btn variant="secondary" icon="camera" full onPress={openCapture}>
+                {t('library:capture')}
+              </Btn>
+              <ListGroup label={t('library:subjects')}>
+                {rows.map((row, index) => (
+                  <Rise key={row.key} animate={entering(index)} index={index}>
+                    <SubjectCard
+                      subject={row.subject}
+                      name={row.name}
+                      onPress={() => router.push(`/subject/${row.key}`)}
+                    />
+                  </Rise>
+                ))}
+              </ListGroup>
+              {recent.length > 0 ? (
+                <ListGroup label={t('library:recent')}>
+                  {recent.map((material) => (
+                    <MaterialRow
+                      key={material.id}
+                      material={material}
+                      busy={busyId === material.id}
+                      disabled={busyId !== null}
+                      onOpen={() => router.push(`/material/${material.id}`)}
+                      onStart={(mode) =>
+                        void act(material.id, async () => {
+                          const session = await startPractice({ material_id: material.id, mode });
+                          seedSession(session);
+                          router.push(`/practice/${session.id}`);
+                        })
+                      }
+                    />
+                  ))}
+                </ListGroup>
+              ) : null}
+            </View>
           )}
         </ScrollView>
-        {rows.length > 0 ? (
-          <View
-            style={{
-              paddingHorizontal: SPACE.lg,
-              paddingTop: SPACE.sm,
-              paddingBottom: bottomRoom(insets.bottom),
-            }}
-          >
-            <Btn size="lg" pill full onPress={openCapture}>
-              {t('library:capture')}
-            </Btn>
-          </View>
-        ) : null}
       </>
     );
   }

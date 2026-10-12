@@ -104,5 +104,7 @@
     "confirm": "Supprimer"
   },
   "item_deleted": "Question supprimée.",
-  "add_page": "Ajouter une page"
+  "add_page": "Ajouter une page",
+  "subjects": "Matières",
+  "recent": "Récemment"
 }

@@ -8,21 +8,23 @@
 import {
   FINAL_FAILURES,
   PHOTOS_GONE_AT_ONCE,
-  READ_WITHOUT_EXERCISES,
   type MaterialView,
 } from '@learnbuddy/shared-types/contracts';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { BusyIndicator } from '../lb/BusyIndicator.js';
 import { useTranslation } from 'react-i18next';
 
 import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { LIBRARY } from '../../lib/theme/library.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { materialStatusOf, materialPrimaryOf } from './materialPresentation.js';
 import { formatDate } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
 import { IconDisc } from '../lb/IconDisc.js';
-import { MARK, useMarkTint, type CardTone } from './tone.js';
+import { useMarkTint, type CardTone } from './tone.js';
 
 type Props = {
   material: MaterialView;
@@ -41,33 +43,6 @@ type Props = {
   onDelete: () => void;
 };
 
-type Status = {
-  key: 'reading' | 'unreadable' | 'not_read' | 'incomplete' | 'no_exercises';
-  tone: 'gray' | 'primary' | 'warning';
-};
-
-function statusOf(m: MaterialView): Status | null {
-  switch (m.status) {
-    case 'ready':
-      return null;
-    case 'queued':
-    case 'processing':
-      return { key: 'reading', tone: 'primary' };
-    case 'awaiting_upload':
-      return { key: 'incomplete', tone: 'gray' };
-    case 'failed':
-      // "nicht lesbar" only when that is what the reading found — and a sheet whose tasks
-      // are exercise forms Buddy cannot practise WAS read (issue #198), as was a corrected test
-      // with nothing marked (#259): it has no exercises, and that is no warning about her photo.
-      if (m.failure_reason && READ_WITHOUT_EXERCISES.has(m.failure_reason))
-        return { key: 'no_exercises', tone: 'gray' };
-      return {
-        key: m.failure_reason === 'unreadable' ? 'unreadable' : 'not_read',
-        tone: 'warning',
-      };
-  }
-}
-
 export function MaterialCard({
   material: m,
   tone,
@@ -85,7 +60,7 @@ export function MaterialCard({
   const title = m.title ?? t('untitled');
   const date = formatDate(m.created_at, i18n.language);
   const meta = m.status === 'ready' ? `${date} · ${t('questions', { count: m.item_count })}` : date;
-  const status = statusOf(m);
+  const status = materialStatusOf(m);
   // The photos are gone (7 days after reading): reading again is not possible, only a new photo.
   // Where they go at once by design, the reason says more than their absence does.
   const note =
@@ -111,20 +86,7 @@ export function MaterialCard({
   // Sentences on this sheet to read aloud (issue #223 point 2). They are never part of an
   // ordinary practice — the microphone has no place in the middle of typing — so the sheet
   // offers them separately, and only when it has them.
-  const speakable = m.purpose !== 'homework' && m.speak_count > 0;
-  // A sheet whose questions are ALL sentences to read aloud has nothing to practise in
-  // writing: there "Üben" would lead to "hier gibt es gerade nichts zu üben", so reading
-  // aloud IS its main action.
-  const spokenOnly = speakable && m.speak_count >= m.item_count;
-  // A homework sheet leads back to its help session, never to drill practice (audit H-7).
-  const action =
-    m.purpose !== 'homework'
-      ? spokenOnly
-        ? 'speak'
-        : 'practice'
-      : m.session_status === 'finished'
-        ? 'homework_view'
-        : 'homework_continue';
+  const { action, speakable, spokenOnly } = materialPrimaryOf(m);
   // Reading it again would give the same answer: the API refuses it (FINAL_FAILURES).
   const retryable =
     m.status === 'failed' &&
@@ -135,13 +97,18 @@ export function MaterialCard({
     <Card padding={SPACE.lg}>
       <View style={{ gap: RHYTHM.stack }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.md }}>
-          <IconDisc name="book" size={MARK.size} iconSize={MARK.iconSize} tone={tint} />
+          <IconDisc
+            name="book"
+            size={LIBRARY.materialMark.size}
+            iconSize={LIBRARY.materialMark.iconSize}
+            tone={tint}
+          />
           <View style={{ flex: 1, gap: SPACE.xs }}>
-            <Text style={[TYPE.body, { fontWeight: '600' }]}>{title}</Text>
+            <Text style={TYPE.cell}>{title}</Text>
             <Text style={TYPE.small}>{meta}</Text>
             {status ? (
-              // token-exempt: the status two points below the meta line, snug
-              <View style={{ marginTop: 2 }}>
+              // Status stays attached to its metadata.
+              <View style={{ marginTop: LIBRARY.statusGap }}>
                 <Chip tone={status.tone}>{t(`status.${status.key}`)}</Chip>
               </View>
             ) : null}
@@ -210,7 +177,7 @@ export function MaterialCard({
           >
             {t('delete')}
           </Btn>
-          {busy ? <ActivityIndicator size="small" color={palette.primary} /> : null}
+          {busy ? <BusyIndicator size="small" color={palette.primary} /> : null}
         </View>
       </View>
     </Card>

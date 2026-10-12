@@ -30,6 +30,7 @@ import { LibrarySkeleton } from '../../components/lb/Skeletons.js';
 import { toast } from '../../components/lb/Toast.js';
 import { ApiError } from '../../lib/api/client.js';
 import { deleteMaterial, retryMaterial, startPractice } from '../../lib/api/endpoints.js';
+import { useMaterialAct } from '../../lib/api/useMaterialAct.js';
 import { useLibrary } from '../../lib/api/libraryQueries.js';
 import { keys, queryClient, seedSession } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
@@ -68,7 +69,6 @@ export default function SubjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const library = useLibrary();
   const [pulling, setPulling] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
   // The sheet keeps its material while it slides out.
   const [deleteTarget, setDeleteTarget] = useState<MaterialView | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -76,6 +76,7 @@ export default function SubjectScreen() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   // Starting practice and deleting are not idempotent: one action at a time, even on a double tap.
   const acting = useRef(false);
+  const { busyId, act } = useMaterialAct(acting);
 
   const view = library.data;
   const unsorted = id === 'unsorted';
@@ -105,35 +106,18 @@ export default function SubjectScreen() {
     }
   }
 
-  async function act(m: MaterialView, fn: () => Promise<void>) {
-    if (acting.current) return;
-    acting.current = true;
-    setBusyId(m.id);
-    try {
-      await fn();
-    } catch (err) {
-      toast.show(messageFor(err), 'error');
-      // Changed meanwhile (read again, deleted elsewhere): show what is true now.
-      if (err instanceof ApiError && (err.code === 'conflict' || err.code === 'not_found'))
-        refreshAll();
-    } finally {
-      acting.current = false;
-      setBusyId(null);
-    }
-  }
-
   // Practise the sheet, or read its sentences aloud (issue #223 point 2) — the same way in,
   // one server call that decides what the run holds. Which of the two a sheet offers is the
   // card's business: it knows whether the sheet has sentences to read aloud at all.
   const start = (m: MaterialView, mode: 'practice' | 'speak') =>
-    void act(m, async () => {
+    void act(m.id, async () => {
       const session = await startPractice({ material_id: m.id, mode });
       seedSession(session);
       router.push(`/practice/${session.id}`);
     });
 
   const readAgain = (m: MaterialView) =>
-    void act(m, async () => {
+    void act(m.id, async () => {
       const updated = await retryMaterial(m.id);
       queryClient.setQueryData<LibraryView>(
         keys.library,
