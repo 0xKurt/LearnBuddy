@@ -49,3 +49,8 @@ export function usePathname(): string {
 export function useFocusEffect(effect: () => void | (() => void)): void {
   useEffect(effect, [effect]);
 }
+
+/** Outside a real navigator there is no route history; browser flows prove the actual stack. */
+export function useNavigation() {
+  return { getState: () => undefined };
+}

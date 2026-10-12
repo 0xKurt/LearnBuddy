@@ -126,7 +126,7 @@ export default function RootLayout() {
   // Subscribed, not read once: this frame sits above the provider, and the palette she
   // picks in the settings has to reach it too (audit 30.09., #133 position 16).
   const palette = useAppliedPalette();
-  useMotionReduced();
+  const reduced = useMotionReduced();
   const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
   const [sessionReady, setReady] = useState(false);
   const ready = sessionReady && (fontsLoaded || fontError !== null);
@@ -147,7 +147,12 @@ export default function RootLayout() {
         await restoreTheme().catch(() => undefined);
         userRef.current = s?.user_id ?? null;
         // Her last conversation at once; it refreshes in the background (gaps.md #2).
-        if (s) await restoreCache(s.user_id);
+        if (s) {
+          await restoreCache(s.user_id);
+          // An already-restored Me Query need not emit another success event on browser Back.
+          const locale = learnerLocaleOf(keys.me, queryClient.getQueryData(keys.me));
+          if (locale) applyLocale(locale);
+        }
         if (s) await afterSignedIn(s.user_id);
         else void retryPendingRelease().catch(() => undefined);
       })
@@ -310,6 +315,7 @@ export default function RootLayout() {
                     <Stack
                       screenOptions={{
                         headerShown: false,
+                        animation: reduced ? 'none' : undefined,
                         contentStyle: { backgroundColor: palette.bg },
                       }}
                     >

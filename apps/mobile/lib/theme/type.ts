@@ -57,6 +57,7 @@ function typeOf(p: Palette) {
     /** Live and pending recognized words keep body geometry and the current face. */
     voiceTranscript: { ...body, fontStyle: 'italic', color: p.ink2 },
     meta,
+    profileExplanation: { ...fontFace('400'), fontSize: 13, lineHeight: 19, color: p.ink2 },
     label,
     questionBig: { ...fontFace('800'), fontSize: 56, lineHeight: 64, color: p.ink },
     questionMedium: { ...fontFace('800'), fontSize: 44, lineHeight: 53, color: p.ink },

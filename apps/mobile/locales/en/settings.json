@@ -74,7 +74,9 @@
     "grade_label": "Grade",
     "subjects": "Subjects",
     "subjects_empty": "No subjects with material yet.",
-    "level_unknown": "Not specified yet"
+    "level_unknown": "Not specified yet",
+    "curriculum_explanation": "I use your grade and region to match tasks to your curriculum.",
+    "page_title": "Profile"
   },
   "adult": {
     "title_minor": "For parents",

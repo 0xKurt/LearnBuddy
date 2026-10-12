@@ -74,7 +74,9 @@
     "grade_label": "Klasse",
     "subjects": "Fächer",
     "subjects_empty": "Noch keine Fächer mit Material.",
-    "level_unknown": "Noch nicht angegeben"
+    "level_unknown": "Noch nicht angegeben",
+    "curriculum_explanation": "Klasse und Bundesland nutze ich, damit Aufgaben zu deinem Lehrplan passen.",
+    "page_title": "Profil"
   },
   "adult": {
     "title_minor": "Für Eltern",
