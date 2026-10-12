@@ -13,12 +13,29 @@
 // Dass auf 360 und 390 px wirklich keine Zeile mitten im Wort endet und die Karten einer
 // Reihe gleich hoch sind, misst `tests/web/layout.spec.ts` im Browser.
 
-import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import type { ComponentProps } from 'react';
+import { fireEvent, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { TOUCH } from '../../../lib/theme/space.js';
+import type * as OptionModule from '../../lb/Option.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { ChoiceList, gridCharsMax, mathOnly, twoColumnChoices } from '../ChoiceList.js';
+
+// requires live verification in Claude Code session
+// RN web does not expose native accessibilityHint in DOM; delegate to the real Option while
+// observing that the unchanged native hint crosses the presentation boundary.
+const nativeHints = vi.hoisted(() => new Map<string, string | undefined>());
+vi.mock('../../lb/Option.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof OptionModule>();
+  return {
+    ...actual,
+    Option(props: ComponentProps<typeof actual.Option>) {
+      nativeHints.set(props.accessibilityLabel ?? '', props.accessibilityHint);
+      return <actual.Option {...props} />;
+    },
+  };
+});
 
 const NOTHING_TRIED: ReadonlySet<string> = new Set();
 
@@ -95,14 +112,14 @@ describe('was als Mathe allein steht', () => {
 });
 
 describe('wie das Raster gesetzt ist', () => {
-  it('stellt kurze Antworten in eine umbrechende Reihe, je halbe Breite', () => {
+  it('keeps ordinary short answers in full-width vertical rows', () => {
     show(['Paris', 'Lyon']);
     const { button } = pill('Paris');
     const card = button.parentElement!;
     const row = card.parentElement!;
-    expect(styleOf(row).flexDirection).toBe('row');
-    expect(styleOf(row).flexWrap).toBe('wrap');
-    expect(styleOf(card).flexBasis).toBe('45%');
+    expect(styleOf(row).flexDirection).not.toBe('row');
+    expect(styleOf(row).flexWrap).not.toBe('wrap');
+    expect(styleOf(card).flexBasis).not.toBe('45%');
   });
 
   it('stellt lange Antworten untereinander, jede über die ganze Breite', () => {
@@ -126,7 +143,8 @@ describe('wie das Raster gesetzt ist', () => {
       expect(styleOf(mark.parentElement!).width).toBe('32px');
       expect(styleOf(mark.parentElement!).borderTopLeftRadius).toBe('16px');
       // Dasselbe Padding im Raster und in der Liste: die Texte beginnen auf einer Linie.
-      expect(styleOf(pill(set[0]!).inner).paddingLeft).toBe('12px');
+      expect(styleOf(pill(set[0]!).inner).paddingLeft).toBe('10px');
+      expect(styleOf(pill(set[0]!).inner).paddingRight).toBe('14px');
       view.unmount();
     }
   });
@@ -144,11 +162,11 @@ describe('wie das Raster gesetzt ist', () => {
     expect(styleOf(pill('2/3').button).flexGrow).toBe('1');
   });
 
-  it('setzt einen Bruch allein groß und mittig', () => {
+  it('keeps ordinary fractions left aligned in the same option row', () => {
     show(['$\\frac{2}{3}$', '$\\frac{3}{5}$']);
     const mark = letter('A');
     const content = mark.parentElement!.nextElementSibling!.firstElementChild!.lastElementChild!;
-    expect(styleOf(content).alignItems).toBe('center');
+    expect(styleOf(content).alignItems).toBe('flex-start');
   });
 });
 
@@ -181,4 +199,54 @@ describe('Genotypen klingen verschieden (Issue #352)', () => {
     expect(screen.getByRole('radio', { name: /groß A, klein a/ })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /klein a, klein a/ })).toBeTruthy();
   });
+});
+
+it('keeps settled verdict colours readable while every choice stays locked', () => {
+  const choose = vi.fn();
+  renderInApp(
+    <ChoiceList
+      choices={['Paris', 'Lyon', 'Bern']}
+      tried={NOTHING_TRIED}
+      settled={['right', 'mine_wrong', null]}
+      disabled
+      onChoose={choose}
+    />,
+  );
+  for (const [name, opacity] of [
+    ['Paris', '1'],
+    ['Lyon', '1'],
+    ['Bern', '0.6'],
+  ] as const) {
+    const { button, inner } = pill(name);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    expect(styleOf(inner).opacity).toBe(opacity);
+    fireEvent.click(button);
+  }
+  expect(choose).not.toHaveBeenCalled();
+  expect(screen.queryByText('Deine Wahl')).toBeNull();
+  expect(screen.queryByText('Lösung')).toBeNull();
+  expect(nativeHints.get('Paris')).toBe('Lösung');
+  expect(nativeHints.get('Lyon')).toBe('Deine Wahl, Noch nicht ganz');
+});
+
+it.each([
+  ['tried', 'Schon ausprobiert'],
+  ['mine', 'Deine Wahl'],
+] as const)('retains the real %s information without inventing a verdict', (mark, text) => {
+  const choose = vi.fn();
+  renderInApp(
+    <ChoiceList
+      choices={['Paris', 'Lyon']}
+      tried={NOTHING_TRIED}
+      settled={[mark, null]}
+      disabled
+      onChoose={choose}
+    />,
+  );
+  expect(screen.getByText(text)).toBeTruthy();
+  expect(nativeHints.get('Paris')).toBe(text);
+  const option = screen.getByRole('radio', { name: 'Paris' });
+  expect(option.getAttribute('aria-disabled')).toBe('true');
+  fireEvent.click(option);
+  expect(choose).not.toHaveBeenCalled();
 });

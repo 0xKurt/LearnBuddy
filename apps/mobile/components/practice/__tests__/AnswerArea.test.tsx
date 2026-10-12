@@ -1,12 +1,7 @@
-// Die Auswahl bleibt nach dem Antworten stehen (Issue #521).
-//
-// Der Owner am 09.10. zu „Welcher Bruch ist größer?“ nach der Antwort: „Aber da stehen keine
-// Brüche“ — die Optionen standen nur, solange die Frage offen war, danach nur noch ihre Blase
-// „2/3“. Diese Schicht hält fest: Nach richtiger und falscher Antwort stehen ALLE Optionen da,
-// keine mehr tippbar, ihre mit „Deine Wahl“ (Worte, nie Farbe allein), die richtige mit „Lösung“
-// nur, wenn der Server die Lösung geschickt hat — in der Hausaufgabenhilfe und im
-// laufenden Test nie. Darunter „Weiter“. Dass das auf 360×740 ohne Scrollen passt, misst der
-// Walkthrough (tests/web/core-loop-practice.spec.ts), jsdom legt nichts aus.
+// Closed choices remain present and read-only. Ordinary judged choices use the original
+// left verdict badge, without repeating a caption; ownership remains checked. A correct
+// badge is shown only when the server supplies it. Unjudged tests retain their factual
+// own-choice caption without leaking a verdict. Callbacks and answer payloads stay exact.
 
 import type { ItemView, PracticeTurnView } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen } from '@testing-library/react';
@@ -93,11 +88,15 @@ const tiles = () => [
 ];
 
 describe('die Optionen einer beantworteten Auswahlfrage', () => {
-  it('bleiben nach einer richtigen Antwort stehen, ihre als „Deine Wahl“, keine mehr tippbar', () => {
+  it('remain after a correct answer with checked ownership and no clickable choice', () => {
     const { answer, onNext } = show({ turns: [tried(TWO, 'correct')] });
     const [two, three] = tiles();
     for (const tile of [two!, three!]) expect(tile.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('Deine Wahl')).toBeTruthy();
+    expect(two!.getAttribute('aria-checked')).toBe('true');
+    expect(three!.getAttribute('aria-checked')).toBe('false');
+    expect(two!.querySelector('svg')).not.toBeNull();
+    expect(three!.querySelector('svg')).toBeNull();
+    expect(screen.queryByText('Deine Wahl')).toBeNull();
     expect(screen.queryByText('Lösung')).toBeNull();
     fireEvent.click(three!);
     expect(answer).not.toHaveBeenCalled();
@@ -105,19 +104,27 @@ describe('die Optionen einer beantworteten Auswahlfrage', () => {
     expect(onNext).toHaveBeenCalledOnce();
   });
 
-  it('zeigen nach einer falschen Antwort und der Lösung ihre Wahl und die richtige, in Worten', () => {
+  it('show factual ownership and both verdict badges when the server supplies the solution', () => {
     show({ turns: [tried(THREE, 'incorrect')], solution: TWO });
-    tiles();
-    expect(screen.getByText('Deine Wahl')).toBeTruthy();
-    expect(screen.getByText('Lösung')).toBeTruthy();
-    // Nothing tried before her last answer: no "Schon ausprobiert" beside "Deine Wahl".
+    const [two, three] = tiles();
+    expect(two!.getAttribute('aria-checked')).toBe('false');
+    expect(three!.getAttribute('aria-checked')).toBe('true');
+    expect(two!.querySelector('svg')).not.toBeNull();
+    expect(three!.querySelector('svg')).not.toBeNull();
+    expect(screen.queryByText('Deine Wahl')).toBeNull();
+    expect(screen.queryByText('Lösung')).toBeNull();
+    // Only the latest wrong choice: no earlier tried-state caption.
     expect(screen.queryByText('Schon ausprobiert')).toBeNull();
   });
 
   it('verraten in der Hausaufgabenhilfe die richtige nicht (keine Lösung vom Server)', () => {
     show({ turns: [tried(THREE, 'incorrect')], solution: null });
-    tiles();
-    expect(screen.getByText('Deine Wahl')).toBeTruthy();
+    const [two, three] = tiles();
+    expect(two!.getAttribute('aria-checked')).toBe('false');
+    expect(three!.getAttribute('aria-checked')).toBe('true');
+    expect(two!.querySelector('svg')).toBeNull();
+    expect(three!.querySelector('svg')).not.toBeNull();
+    expect(screen.queryByText('Deine Wahl')).toBeNull();
     expect(screen.queryByText('Lösung')).toBeNull();
   });
 

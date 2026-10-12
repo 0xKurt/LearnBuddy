@@ -83,7 +83,13 @@ export function Option({
               flexDirection: 'row',
               alignItems: 'center',
               gap: SPACE.md,
-              opacity: disabled ? PRACTICE.disabledOpacity : pressed ? PRACTICE.pressOpacity : 1,
+              opacity: disabled
+                ? PRACTICE.disabledOpacity
+                : state === 'dim'
+                  ? PRACTICE.optionDimOpacity
+                  : pressed
+                    ? PRACTICE.pressOpacity
+                    : 1,
             }}
           >
             {letter ? (
@@ -98,17 +104,20 @@ export function Option({
                 }}
               >
                 {marked ? (
-                  <Icon
-                    name={marked}
-                    size={PRACTICE.badgeIcon}
-                    color={state === 'correct' ? palette.onSuccess : palette.onDanger}
-                  />
+                  <Icon name={marked} size={PRACTICE.badgeIcon} color={palette.paper} />
                 ) : (
                   <Text
                     accessible={false}
                     style={[
-                      TYPE.label,
-                      { color: state === 'selected' ? palette.onPrimary : palette.primaryDk },
+                      TYPE.optionBadge,
+                      {
+                        color:
+                          state === 'selected'
+                            ? palette.onPrimary
+                            : state === 'dim'
+                              ? palette.ink3
+                              : palette.primaryDk,
+                      },
                     ]}
                   >
                     {letter}
@@ -118,10 +127,7 @@ export function Option({
             ) : null}
             <View style={{ flex: 1 }}>
               {typeof children === 'string' ? (
-                <Text
-                  accessible={false}
-                  style={[TYPE.body, { color: state === 'dim' ? palette.ink3 : palette.ink }]}
-                >
+                <Text accessible={false} style={[TYPE.option, { color: palette.ink }]}>
                   {children}
                 </Text>
               ) : (
