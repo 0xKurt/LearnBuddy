@@ -122,7 +122,10 @@
     "undo_label": "Undo: {{what}}",
     "undone": "undone",
     "undo_request_material": "No photo needed",
-    "in_app_only": "What you agreed shows up here in the app – notifications are off."
+    "in_app_only": "What you agreed shows up here in the app – notifications are off.",
+    "take_back": "Take back",
+    "undo_sheet_title": "What you can take back",
+    "taken_back": "Taken back"
   },
   "focus": {
     "label": "You are working on: {{what}}"

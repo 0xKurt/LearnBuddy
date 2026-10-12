@@ -1,0 +1,104 @@
+import { act, renderHook } from '@testing-library/react';
+import type { ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { describe, expect, it, vi } from 'vitest';
+import { useThreadFollow } from '../../../lib/buddy/useThreadFollow.js';
+
+const motion = vi.hoisted(() => ({ reduced: false }));
+vi.mock('../../../lib/theme/motion.js', () => ({ useMotionReduced: () => motion.reduced }));
+
+describe('thread scrolling respects live reduced motion', () => {
+  it('keeps follow behavior while switching animation off and back on', () => {
+    motion.reduced = false;
+    const { result, rerender } = renderHook(() => useThreadFollow(null));
+    const scrollToEnd = vi.fn();
+    result.current.scroll.current = { scrollToEnd } as unknown as ScrollView;
+    act(() => {
+      result.current.followNext();
+      result.current.follow();
+    });
+    expect(scrollToEnd).toHaveBeenLastCalledWith({ animated: true });
+    motion.reduced = true;
+    rerender();
+    act(() => {
+      result.current.followNext();
+      result.current.follow();
+    });
+    expect(scrollToEnd).toHaveBeenLastCalledWith({ animated: false });
+    act(() => result.current.toEnd());
+    expect(scrollToEnd).toHaveBeenLastCalledWith({ animated: false });
+    motion.reduced = false;
+    rerender();
+    act(() => result.current.toEnd());
+    expect(scrollToEnd).toHaveBeenLastCalledWith({ animated: true });
+  });
+});
+
+const scrolled = (y: number): NativeSyntheticEvent<NativeScrollEvent> =>
+  ({
+    nativeEvent: {
+      contentOffset: { x: 0, y },
+      layoutMeasurement: { width: 360, height: 300 },
+      contentSize: { width: 360, height: 900 },
+    },
+  }) as NativeSyntheticEvent<NativeScrollEvent>;
+
+it('settles an active intentional follow at its end once on live reduction', () => {
+  motion.reduced = false;
+  const { result, rerender } = renderHook(() => useThreadFollow(null));
+  const scrollToEnd = vi.fn();
+  result.current.scroll.current = { scrollToEnd } as unknown as ScrollView;
+  act(() => {
+    result.current.onScroll(scrolled(0));
+    result.current.followNext();
+    result.current.follow();
+    result.current.onScroll(scrolled(40));
+  });
+  expect(scrollToEnd).toHaveBeenCalledWith({ animated: true });
+  motion.reduced = true;
+  rerender();
+  expect(scrollToEnd.mock.calls).toEqual([[{ animated: true }], [{ animated: false }]]);
+  rerender();
+  expect(scrollToEnd).toHaveBeenCalledTimes(2);
+});
+
+it('does not move a manual reader or restart a completed programmatic follow', () => {
+  motion.reduced = false;
+  const { result, rerender } = renderHook(() => useThreadFollow(null));
+  const scrollToEnd = vi.fn();
+  result.current.scroll.current = { scrollToEnd } as unknown as ScrollView;
+  act(() => {
+    result.current.onScroll(scrolled(0));
+    result.current.toEnd();
+    result.current.onScroll(scrolled(600));
+  });
+  motion.reduced = true;
+  rerender();
+  expect(scrollToEnd).toHaveBeenCalledTimes(1);
+  motion.reduced = false;
+  rerender();
+  act(() => {
+    result.current.toEnd();
+    result.current.onScroll(scrolled(300));
+    result.current.onScroll(scrolled(200));
+  });
+  motion.reduced = true;
+  rerender();
+  expect(scrollToEnd).toHaveBeenCalledTimes(2);
+  expect(result.current.atEnd).toBe(false);
+});
+
+it('keeps an interrupted user position when reduction changes before another scroll event', () => {
+  motion.reduced = false;
+  const { result, rerender } = renderHook(() => useThreadFollow(null));
+  const scrollToEnd = vi.fn();
+  result.current.scroll.current = { scrollToEnd } as unknown as ScrollView;
+  act(() => {
+    result.current.onScroll(scrolled(0));
+    result.current.toEnd();
+    result.current.onScroll(scrolled(40));
+    result.current.interrupt();
+  });
+  motion.reduced = true;
+  rerender();
+  expect(scrollToEnd.mock.calls).toEqual([[{ animated: true }]]);
+});

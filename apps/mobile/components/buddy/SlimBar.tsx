@@ -10,25 +10,19 @@
 
 import type { NowCard } from '@learnbuddy/shared-types/contracts';
 import { Image } from 'expo-image';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import { Appear, AppearText } from '../lb/Motion.js';
+import { UI } from '../../lib/theme/components.js';
 import { useTranslation } from 'react-i18next';
 
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { fadeIn } from '../../lib/theme/enter.js';
-import { EASE } from '../../lib/theme/motion.js';
-import { around, circle } from '../../lib/theme/radius.js';
+
+import { RADIUS, around, circle } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { RHYTHM, SPACE, TOUCH } from '../../lib/theme/space.js';
+import { CARD_PAD, RHYTHM, SPACE, TOUCH } from '../../lib/theme/space.js';
+import { CHAT } from '../../lib/theme/chat.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -45,20 +39,15 @@ type Capture = Extract<NowCard, { type: 'capture_needed' }>;
 
 // Theme values come from the palette the bar renders with, never frozen in module constants.
 function titleStyle(p: Palette) {
-  return {
-    fontSize: TYPE.small.fontSize,
-    lineHeight: 20, // token-exempt: the name a line tighter than TYPE.small, two lines fit 60 pt
-    fontWeight: '700' as const,
-    color: p.ink,
-  };
+  return { ...TYPE.metaStrong, color: p.ink };
 }
 function lineStyle(p: Palette) {
-  return { fontSize: TYPE.label.fontSize, lineHeight: TYPE.label.lineHeight, color: p.ink2 };
+  return { ...TYPE.meta, color: p.ink2 };
 }
 
 /** The photo on a reading bar: its corner, and the white frame around it (concentric). */
-const THUMB_CORNER = 5; // token-exempt: the 30 × 38 photo's corner, smaller than RADIUS.cell
-const THUMB_FRAME = 2; // token-exempt: the hairline of paper around the photo
+const THUMB_CORNER = CHAT.reading.thumbCorner;
+const THUMB_FRAME = CHAT.reading.thumbFrame;
 
 /** The status line's box, tappable or not: at least a finger tall. */
 const TEXT_BOX = {
@@ -70,8 +59,7 @@ const TEXT_BOX = {
 
 /** What an opened bar says in a sentence. */
 function Detail({ children }: { children: string }) {
-  // token-exempt: TYPE.caption's 14 on a 20 line, the opened bar's reading size
-  return <Text style={[TYPE.caption, { lineHeight: 20 }]}>{children}</Text>;
+  return <Text style={TYPE.meta}>{children}</Text>;
 }
 
 /**
@@ -87,7 +75,6 @@ function saidTogether(parts: ReadonlyArray<string | null>): string {
 }
 
 function Bar({
-  tone,
   leading,
   title,
   line,
@@ -117,27 +104,25 @@ function Bar({
           TWO lines for the name, not one with "…" (issue #204): "Vokabelliste E…" hides the
           very thing she has to recognise — which sheet this is. A second line costs 20 pt
           and only when the name needs it; a cut-off name costs her the answer. */}
-      <Animated.Text
+      <AppearText
         key={title}
-        entering={fadeIn()}
         numberOfLines={2}
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         style={titleStyle(palette)}
       >
         {title}
-      </Animated.Text>
-      {/* token-exempt: one point between the name and its line */}
-      <View style={{ marginTop: 1 }}>{line}</View>
+      </AppearText>
+      <View style={{ marginTop: CHAT.reading.statusOffset }}>{line}</View>
     </>
   );
   return (
-    <Card tone={tone} padding={0} radius={20}>
+    <Card padding={0} radius={RADIUS.lg}>
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          minHeight: 60,
-          paddingLeft: leading ? 10 : SPACE.lg, // token-exempt: tighter beside a photo or mark
+          minHeight: CHAT.reading.minHeight,
+          paddingLeft: leading ? CHAT.reading.leadingInset : SPACE.lg,
           paddingRight: titleInset + SPACE.xs,
           gap: RHYTHM.parts,
         }}
@@ -162,19 +147,18 @@ function Bar({
         {action}
       </View>
       {open && details ? (
-        <Animated.View
-          entering={fadeIn()}
+        <Appear
           style={{
-            paddingHorizontal: 14, // token-exempt: the opened part's inset, 14 inside the bar's 20 corner
+            paddingHorizontal: CARD_PAD.base,
             paddingBottom: SPACE.md,
-            paddingTop: 10, // token-exempt: under the divider, a little less than at the bottom
+            paddingTop: CHAT.reading.leadingInset,
             gap: SPACE.sm,
-            borderTopWidth: 1,
+            borderTopWidth: UI.border,
             borderTopColor: palette.hairline,
           }}
         >
           {details}
-        </Animated.View>
+        </Appear>
       ) : null}
     </Card>
   );
@@ -244,7 +228,11 @@ export function ReadingBar({
               <Image
                 source={{ uri: thumb }}
                 accessible={false}
-                style={{ width: 30, height: 38, borderRadius: THUMB_CORNER }}
+                style={{
+                  width: CHAT.reading.thumbWidth,
+                  height: CHAT.reading.thumbHeight,
+                  borderRadius: THUMB_CORNER,
+                }}
                 contentFit="cover"
               />
             </View>
@@ -456,26 +444,23 @@ function SentPages({ uris }: { uris: readonly string[] }) {
   const { t } = useTranslation(['buddy', 'capture']);
   const [broken, setBroken] = useState<ReadonlySet<string>>(new Set());
   return (
-    // token-exempt: the heading 6 above its pages
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: CHAT.reading.gap }}>
       <Text style={TYPE.label}>{t('now.reading_pages')}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        // token-exempt: room above and below, so the scroller does not cut a page's edge
-        contentContainerStyle={{ gap: SPACE.sm, paddingVertical: 2 }}
+        contentContainerStyle={{ gap: SPACE.sm, paddingVertical: CHAT.titleGap }}
       >
         {uris.map((uri, i) => {
           const label = t('capture:photo_label', { index: i + 1, total: uris.length });
           return (
-            // token-exempt: the page's number just under it
-            <View key={uri} style={{ alignItems: 'center', gap: 2 }}>
+            <View key={uri} style={{ alignItems: 'center', gap: CHAT.titleGap }}>
               <View
                 style={{
                   // 44 wide keeps the tap target at the 44 pt rule; 58 is the page's shape.
-                  width: 44,
-                  height: 58,
-                  borderRadius: 8, // token-exempt: the page thumbnail's corner
+                  width: TOUCH,
+                  height: CHAT.reading.pageHeight,
+                  borderRadius: RADIUS.sm,
                   overflow: 'hidden',
                   backgroundColor: palette.canvas,
                 }}
@@ -486,7 +471,7 @@ function SentPages({ uris }: { uris: readonly string[] }) {
                     accessibilityLabel={t('capture:preview_failed')}
                     style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <Icon name="eye-off" size={18} color={palette.ink3} />
+                    <Icon name="eye-off" size={CHAT.reading.glyph} color={palette.ink3} />
                   </View>
                 ) : (
                   <PhotoThumb
@@ -500,8 +485,7 @@ function SentPages({ uris }: { uris: readonly string[] }) {
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
                 maxFontSizeMultiplier={MAX_FONT_SCALE}
-                // token-exempt: the page number at 11/14, below the type scale
-                style={{ fontSize: 11, lineHeight: 14, color: palette.ink2 }}
+                style={TYPE.meta}
               >
                 {i + 1}
               </Text>
@@ -514,7 +498,7 @@ function SentPages({ uris }: { uris: readonly string[] }) {
 }
 
 /** The round mark in front of a bar's text: a page or the camera. */
-const MARK = 36;
+const MARK = CHAT.reading.mark;
 
 function Mark({ icon }: { icon: 'file' | 'camera' }) {
   const { palette } = useTheme();
@@ -532,7 +516,7 @@ function Mark({ icon }: { icon: 'file' | 'camera' }) {
         ...SHADOW.soft,
       }}
     >
-      <Icon name={icon} size={18} color={palette.primaryDk} />
+      <Icon name={icon} size={CHAT.reading.glyph} color={palette.primaryDk} />
     </View>
   );
 }
@@ -552,11 +536,11 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
           <View
             key={`${s.key}-line`}
             style={{
-              width: 12,
-              height: 2,
-              borderRadius: 1, // token-exempt: half its height, a rounded link
+              width: CHAT.reading.linkWidth,
+              height: CHAT.reading.linkHeight,
+              borderRadius: circle(CHAT.reading.linkHeight),
               backgroundColor: s.state === 'done' ? palette.primary : palette.ink4,
-              opacity: s.state === 'done' ? 0.5 : 0.8,
+              opacity: s.state === 'done' ? CHAT.reading.doneOpacity : CHAT.pendingOpacity,
             }}
           />
         ) : null,
@@ -565,8 +549,7 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX_FONT_SCALE}
-          // token-exempt: the stage's name 6 after its dots, beyond their own 4
-          style={[lineStyle(palette), { marginLeft: 6, flexShrink: 1 }]}
+          style={[lineStyle(palette), { marginLeft: CHAT.reading.gap, flexShrink: 1 }]}
         >
           {label}
         </Text>
@@ -577,48 +560,17 @@ function Dots({ view, label }: { view: ReadingView; label: string }) {
 
 function Dot({ state }: { state: StepState }) {
   const { palette } = useTheme();
-  const reduce = useReducedMotion();
-  const pulse = useSharedValue(0);
-  useEffect(() => {
-    if (state !== 'active' || reduce) {
-      cancelAnimation(pulse);
-      pulse.value = 0;
-      return;
-    }
-    pulse.value = withRepeat(withTiming(1, { duration: 1100, easing: EASE.breathe }), -1, true);
-    return () => cancelAnimation(pulse);
-  }, [state, reduce, pulse]);
-  const halo = useAnimatedStyle(() => ({
-    opacity: 0.25 + pulse.value * 0.35,
-    transform: [{ scale: 1 + pulse.value * 0.4 }],
-  }));
   return (
-    <View style={{ width: 12, height: 12, alignItems: 'center', justifyContent: 'center' }}>
-      {state === 'active' ? (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              width: 12,
-              height: 12,
-              borderRadius: 6, // token-exempt: half its size, a circle
-              backgroundColor: palette.primary,
-            },
-            halo,
-          ]}
-        />
-      ) : null}
-      <View
-        style={{
-          width: state === 'active' ? 7 : 9,
-          height: state === 'active' ? 7 : 9,
-          borderRadius: 5, // token-exempt: half its size or more, a circle
-          backgroundColor: state === 'todo' ? palette.paper : palette.primary,
-          borderWidth: state === 'todo' ? 1.5 : 0,
-          borderColor: palette.ink4,
-        }}
-      />
-    </View>
+    <View
+      style={{
+        width: CHAT.reading.dot,
+        height: CHAT.reading.dot,
+        borderRadius: circle(CHAT.reading.dot),
+        backgroundColor: state === 'todo' ? palette.paper : palette.primary,
+        borderWidth: state === 'todo' ? CHAT.reading.dotBorder : 0,
+        borderColor: palette.hairlineStrong,
+      }}
+    />
   );
 }
 
@@ -633,15 +585,17 @@ function StepNames({ view }: { view: ReadingView }) {
       style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.md }}
     >
       {view.steps.map((s) => (
-        // token-exempt: the dot 6 from its stage's name
-        <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View
+          key={s.key}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: CHAT.reading.gap }}
+        >
           <Dot state={s.state} />
           <Text
             style={[
               TYPE.label,
               {
+                ...(s.state === 'active' ? TYPE.metaStrong : TYPE.meta),
                 color: s.state === 'todo' ? palette.ink2 : palette.ink,
-                fontWeight: s.state === 'active' ? '700' : '600',
               },
             ]}
           >

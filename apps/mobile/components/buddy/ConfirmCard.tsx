@@ -20,7 +20,7 @@ import { answerConfirmation } from '../../lib/api/endpoints.js';
 import { useAnnounce } from '../../lib/announce.js';
 import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
@@ -60,14 +60,14 @@ export function ConfirmCard({ confirm }: { confirm: Confirm }) {
 
   if (settled) {
     return (
-      <Card padding={SPACE.lg}>
+      <Card padding={CARD_PAD.base}>
         <Text style={[TYPE.body, { color: palette.ink2 }]}>{settled}</Text>
       </Card>
     );
   }
 
   return (
-    <Card padding={SPACE.lg}>
+    <Card padding={CARD_PAD.base}>
       <View style={{ gap: SPACE.md }}>
         <Text accessibilityRole="header" style={TYPE.title}>
           {t(`buddy:confirm.${what}_title`)}

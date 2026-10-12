@@ -8,7 +8,7 @@
 // the content is simply there.
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
+import type { StyleProp, TextProps, TextStyle, ViewProps, ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   cancelAnimation,
@@ -52,7 +52,12 @@ function useEntrance(animate: boolean, delay: number, duration: number) {
       p.value = 1;
       return;
     }
-    if (!run || started.current) return;
+    if (started.current) return;
+    // An initially skipped entrance is consumed too; later prop changes do not replay it.
+    if (!run) {
+      started.current = true;
+      return;
+    }
     started.current = true;
     p.value = withDelay(
       delay,
@@ -99,8 +104,16 @@ export function SlideIn({ children, delay = 0, animate = true, style, ...rest }:
   );
 }
 
-export function Appear({ children, delay = 0, animate = true, style, ...rest }: Props) {
-  const p = useEntrance(animate, delay, DURATION.base);
+export function Appear({
+  children,
+  delay = 0,
+  index = 0,
+  duration = DURATION.base,
+  animate = true,
+  style,
+  ...rest
+}: Props & { duration?: number }) {
+  const p = useEntrance(animate, delay + index * STAGGER, duration);
   const a = useAnimatedStyle(() => ({ opacity: p.value }));
   return (
     <Animated.View {...rest} style={[style, a]}>
@@ -123,4 +136,29 @@ export function useListEntrance(
   if (ready && since.current === null) since.current = Date.now();
   return (index: number) =>
     since.current !== null && index < max && Date.now() - since.current < windowMs;
+}
+
+export function AppearText({
+  children,
+  delay = 0,
+  index = 0,
+  duration = DURATION.base,
+  animate = true,
+  style,
+  ...rest
+}: Omit<TextProps, 'style'> & {
+  children: ReactNode;
+  delay?: number;
+  index?: number;
+  duration?: number;
+  animate?: boolean;
+  style?: StyleProp<TextStyle>;
+}) {
+  const p = useEntrance(animate, delay + index * STAGGER, duration);
+  const a = useAnimatedStyle(() => ({ opacity: p.value }));
+  return (
+    <Animated.Text {...rest} style={[style, a]}>
+      {children}
+    </Animated.Text>
+  );
 }

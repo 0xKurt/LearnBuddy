@@ -7,10 +7,11 @@ import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { BUBBLE, TAIL } from '../../lib/theme/bubble.js';
+import { CHAT } from '../../lib/theme/chat.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { ZoomablePhoto } from '../lb/ZoomViewer.js';
 
@@ -32,21 +33,27 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
     // message (Conversation, issue #51).
     <View style={{ alignItems: 'flex-start', gap: SPACE.sm }}>
       <View
-        style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm, maxWidth: '92%' }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          gap: SPACE.sm,
+          maxWidth: CHAT.buddyWidth,
+          width: CHAT.buddyWidth,
+        }}
       >
         <View
           accessible
           accessibilityLiveRegion="polite"
           accessibilityLabel={[text, detail].filter(Boolean).join(' ')}
           style={[
-            BUBBLE,
             {
-              flexShrink: 1,
+              flex: 1,
+              padding: CARD_PAD.base,
+              borderRadius: RADIUS.lg,
               flexDirection: 'row',
               alignItems: 'center',
               gap: SPACE.sm,
               backgroundColor: palette.paper,
-              borderBottomLeftRadius: TAIL,
             },
             SHADOW.soft,
           ]}
@@ -61,15 +68,19 @@ export function NoticeBubble({ text, detail = null, thumb = null, children }: Pr
                 accessible
                 accessibilityLabel={t('common:zoom.photo')}
                 // token-exempt: thumbnail of a page, its corner small like paper's
-                style={{ width: 32, height: 42, borderRadius: 6 }}
+                style={{
+                  width: CHAT.notice.thumbWidth,
+                  height: CHAT.notice.thumbHeight,
+                  borderRadius: RADIUS.sm,
+                }}
                 contentFit="cover"
               />
             </ZoomablePhoto>
           ) : null}
           {/* token-exempt: two points, the line heights carry the air between text and detail. */}
-          <View style={{ flexShrink: 1, gap: 2 }}>
+          <View style={{ flexShrink: 1, gap: CHAT.titleGap }}>
             <Text style={[TYPE.body, { color: palette.ink }]}>{text}</Text>
-            {detail ? <Text style={TYPE.small}>{detail}</Text> : null}
+            {detail ? <Text style={TYPE.meta}>{detail}</Text> : null}
           </View>
         </View>
       </View>

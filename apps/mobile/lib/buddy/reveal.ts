@@ -1,3 +1,6 @@
+import { CHAT } from '../theme/chat.js';
+import { DURATION } from '../theme/motionDurations.js';
+
 // Buddy's reply while it is written arrives in chunks; shown as they come it
 // jumps. The screen instead lets the shown text catch up with what arrived,
 // word by word, at a calm reading pace that speeds up when it falls behind —
@@ -5,9 +8,9 @@
 // (the text was replaced) starts over. Pure logic (unit tests).
 
 /** Characters per second at the calm pace. */
-export const REVEAL_CPS = 90;
+export const REVEAL_CPS = CHAT.reveal.charactersPerSecond;
 /** It never lags more than this long behind what arrived (ms): then it speeds up. */
-export const REVEAL_MAX_LAG_MS = 700;
+export const REVEAL_MAX_LAG_MS = DURATION.wordRevealLag;
 
 /**
  * How much of `target` to show after `dtMs`, given `shown` characters shown so far.

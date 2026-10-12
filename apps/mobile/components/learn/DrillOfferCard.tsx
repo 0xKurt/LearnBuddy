@@ -8,18 +8,16 @@ import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { startDrill } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
-import { Icon } from '../lb/Icon.js';
+import { OfferShell } from './OfferShell.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_drill' }>;
 
@@ -55,27 +53,18 @@ export function DrillOfferCard({ actionId, offer }: { actionId: string; offer: O
   }
 
   return (
-    <Card tone="primaryLt" padding={SPACE.lg} radius={18}>
-      {/* Like OfferCard: the two offer cards stand in one thread and must match. */}
-      <View style={{ gap: RHYTHM.parts }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Icon name="flame" size={20} color={palette.primaryDk} />
-          </View>
-          <Text style={[TYPE.label, { color: palette.primaryDk }]}>{label.toUpperCase()}</Text>
-        </View>
-        <Text style={TYPE.body} numberOfLines={2}>
-          {offer.title}
+    <OfferShell icon="flame" label={label}>
+      <Text style={TYPE.body} numberOfLines={2}>
+        {offer.title}
+      </Text>
+      <Btn busy={busy} onPress={() => void go()} accessibilityHint={`${label}: ${offer.title}`}>
+        {failed ? t('common:actions.retry') : t('learn:topic.submit')}
+      </Btn>
+      {failed ? (
+        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
+          {failed}
         </Text>
-        <Btn busy={busy} onPress={() => void go()} accessibilityHint={`${label}: ${offer.title}`}>
-          {failed ? t('common:actions.retry') : t('learn:topic.submit')}
-        </Btn>
-        {failed ? (
-          <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
-            {failed}
-          </Text>
-        ) : null}
-      </View>
-    </Card>
+      ) : null}
+    </OfferShell>
   );
 }

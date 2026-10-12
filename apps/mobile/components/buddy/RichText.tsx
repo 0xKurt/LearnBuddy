@@ -9,6 +9,8 @@ import { Text, View, type StyleProp, type TextStyle } from 'react-native';
 
 import { markdownBlocks } from '../../lib/buddy/markdown.js';
 import { InlineText } from '../lb/InlineText.js';
+import { CHAT } from '../../lib/theme/chat.js';
+import { TYPE } from '../../lib/theme/type.js';
 import { SPACE } from '../../lib/theme/space.js';
 
 export function RichText({ text, style }: { text: string; style: StyleProp<TextStyle> }) {
@@ -31,8 +33,12 @@ export function RichText({ text, style }: { text: string; style: StyleProp<TextS
                   style={[
                     style,
                     b.ordered
-                      ? { minWidth: 18, fontWeight: '600' }
-                      : { width: 12, textAlign: 'center' },
+                      ? {
+                          fontFamily: TYPE.bodyStrong.fontFamily,
+                          fontWeight: TYPE.bodyStrong.fontWeight,
+                          minWidth: CHAT.marker.orderedWidth,
+                        }
+                      : { width: CHAT.marker.bulletWidth, textAlign: 'center' },
                   ]}
                 >
                   {item.marker}

@@ -16,13 +16,12 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Animated from 'react-native-reanimated';
 
 import { composerAfterSend } from '../../lib/buddy/unsent.js';
 import { pageHandler } from '../../lib/capture/pages.js';
 import { useDraft } from '../../lib/drafts.js';
 import { haptic } from '../../lib/haptics.js';
-import { fadeIn } from '../../lib/theme/enter.js';
+import { Appear } from '../lb/Motion.js';
 import { COMPOSER } from '../../lib/theme/composer.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
@@ -122,7 +121,7 @@ export function Composer({
   );
 
   const stopBtn = (
-    <Animated.View key="stop" entering={fadeIn(DURATION.quick)}>
+    <Appear key="stop" duration={DURATION.quick}>
       <CircleBtn
         icon="stop"
         filled
@@ -130,7 +129,7 @@ export function Composer({
         {...(onStop ? { onPress: onStop } : {})}
         accessibilityLabel={t('buddy:thread.stop_label')}
       />
-    </Animated.View>
+    </Appear>
   );
   const stoppable = writing && onStop !== undefined && voice.state === 'idle';
 
