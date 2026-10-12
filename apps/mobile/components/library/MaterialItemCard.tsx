@@ -95,7 +95,6 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
           <Btn
             size="sm"
             variant="quiet"
-            bare
             pill
             disabled={disabled}
             onPress={onDelete}

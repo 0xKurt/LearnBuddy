@@ -18,6 +18,10 @@ The full 120-character rename/title matrix retains original Home df537 provenanc
 
 ## Limits
 
-Saved materials expose no source-photo retrieval contract, so no unsupported original-photo zoom is invented. The real worksheet fixture supplies multiple-choice fractions without extracted raster figures; shared figure compatibility is mounted-tested, not claimed as real browser raster proof. Native keyboard/image gestures/screen readers and observed in-flight native motion remain unverified. Normal publication gates are pending review; no commit or PR yet.
+Saved materials expose no source-photo retrieval contract, so no unsupported original-photo zoom is invented. The real worksheet fixture supplies multiple-choice fractions without extracted raster figures; shared figure compatibility is mounted-tested, not claimed as real browser raster proof. Native keyboard/image gestures/screen readers and observed in-flight native motion remain unverified. The initial fifteen-path commit passed normal hooks (760 related tests across 102 files, workspace typecheck/lint/guards and native exports) and full normal pre-push (5,214 tests across 515 files, one intentional API skip). PR #582 is draft pending the final delete-action correction.
 
 The normal unused-text guard identified library.rename after its visible text action became the accessible pencil. Actual source has no remaining caller. Only that key is removed in all five dictionaries; rename_label and every editor label remain. Original guard failure is preserved; no dummy use or exception grant.
+
+## Final delete action
+
+The filled quiet delete pill must retain its shared side padding. Removing only bare keeps quiet/sm/pill and the original callback while restoring canonical Btn padding; no new token or controller. Earlier 82df-final screenshots are retained as before-fix evidence. The corrected ordinary/add-page four-appearance matrix passes 4/4 in 1.7 minutes with 32 clean fit/44 pt/axe PNGs in delete-padding-round2. Four existing MaterialItemCard tests and scoped lint/format/diff pass. Corrected-source normal gates remain pending review.
