@@ -268,13 +268,9 @@
   "drill": {
     "progress": "Task {{current}} of {{total}}",
     "end_hint": "Back to Buddy. What you worked out stays saved.",
-    "typed": "Your answer: {{value}}",
-    "delete": "Delete",
     "slash": "Fraction bar",
     "right": "Right: {{task}}",
     "was": "It was: {{task}}",
-    "right_short": "Right:",
-    "was_short": "It was:",
     "done_title": "Done!",
     "again": "One more round",
     "line": {

@@ -1,4 +1,4 @@
-// Kopfrechnen-Schnellrunde (issue #243): one task, big; a digit pad; "Prüfen". That is all.
+// Kopfrechnen-Schnellrunde (issue #243): one task, big; the shared numeric Composer; "Prüfen". That is all.
 //
 // The server wrote every task from the range Buddy offered and checks every answer by code,
 // so nothing here waits for a model — and nothing here waits for the server either: the next
@@ -13,12 +13,11 @@
 // what every practice head has (`HeadActions`): the Vorlesen switch — on, the task is read
 // aloud, a tap on it reads it again (#434) — and the round ✕.
 
-import { PRACTICE } from '../../lib/theme/practice.js';
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
 import { useDraft } from '../../lib/drafts.js';
@@ -30,18 +29,21 @@ import { haptic } from '../../lib/haptics.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { PadKey } from '../lb/PadKey.js';
-import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
-import { QuestionCard } from '../lb/QuestionCard.js';
-import { EndButton } from '../lb/EndButton.js';
-import { Icon } from '../lb/Icon.js';
+import { Composer } from '../lb/Composer.js';
+import { KeyRow } from '../lb/KeyRow.js';
+import { ReadAloudSwitch } from '../lb/ReadAloudSwitch.js';
+import { DRILL } from '../../lib/theme/drill.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
+import { CARD_PAD } from '../../lib/theme/space.js';
+import { RADIUS } from '../../lib/theme/radius.js';
+import { Btn } from '../lb/Btn.js';
+import { Card } from '../lb/Card.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
 import { BottomBar } from '../lb/BottomBar.js';
-import { HeadActions } from './HeadActions.js';
 import { PassEnd } from './PassEnd.js';
 import { ProgressRow } from './Question.js';
 import { useQuestionVoice } from './useQuestionVoice.js';
@@ -57,23 +59,6 @@ type Props = {
 
 /** Long enough for every answer a range can have (100, 3/4, 0,75), short enough for the slot. */
 const MAX_TYPED = 6;
-
-/** The pad's keys, row by row. `slash` only for fractions; elsewhere the place stays empty. */
-const ROWS = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['slash', '0', 'back'],
-] as const;
-type Key = (typeof ROWS)[number][number];
-
-/** What she typed, appended to: one "/" at most, never first, never a leading zero run. */
-function typedWith(typed: string, key: Key): string {
-  if (key === 'back') return typed.slice(0, -1);
-  if (typed.length >= MAX_TYPED) return typed;
-  if (key === 'slash') return typed.length === 0 || typed.includes('/') ? typed : `${typed}/`;
-  return `${typed}${key}`;
-}
 
 /** A task of numbers and signs only ("7 · 8", "56 : 7", "45 − 18"), written without `$…$`. */
 const BARE_SUM = /^[\d\s·:+−]+$/;
@@ -157,11 +142,6 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
     }
   }
 
-  function press(key: Key): void {
-    haptic.select();
-    draft.setText((v) => typedWith(v, key));
-  }
-
   function submit(): void {
     if (!current || typed.length === 0 || typed.endsWith('/')) return;
     haptic.tap();
@@ -171,23 +151,6 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
     setPending((p) => new Map(p).set(itemId, typed));
     void drain();
   }
-
-  // A keyboard (the browser, a tablet's) types on the same pad.
-  const submitRef = useRef(submit);
-  submitRef.current = submit;
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    const onKey = (e: KeyboardEvent) => {
-      if (/^[0-9]$/.test(e.key)) press(e.key as Key);
-      else if (e.key === '/' && drill.input === 'fraction') press('slash');
-      else if (e.key === 'Backspace') press('back');
-      else if (e.key === 'Enter') submitRef.current();
-      else return;
-      e.preventDefault();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [drill.input]);
 
   async function oneMore(): Promise<void> {
     if (again) return;
@@ -209,30 +172,35 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
   if (session.status !== 'active') {
     const finished = session.status === 'finished';
     return (
-      <Screen title={title}>
+      <Screen
+        title={title}
+        state={finished ? 'happy' : undefined}
+        subtitle={finished ? t('practice:summary.finished') : undefined}
+        leading={{ icon: 'close', onPress: onClose, label: t('practice:end_label') }}
+      >
         <PassEnd
           finished={finished}
           title={t('practice:drill.done_title')}
           line={
-            !drill.summary
-              ? null
-              : drill.summary.group.kind === 'range'
+            finished && drill.summary
+              ? drill.summary.group.kind === 'range'
                 ? t(`practice:drill.line.${drill.summary.line}_range`, { what: title })
                 : t(`practice:drill.line.${drill.summary.line}_${drill.summary.group.kind}`, {
                     n: drill.summary.group.n,
                   })
+              : null
           }
           lineTestID="drill-line"
         />
         <BottomBar>
+          <Btn size="lg" pill full variant="primary" onPress={onClose}>
+            {t('practice:back_to_buddy')}
+          </Btn>
           {finished ? (
-            <Btn size="lg" pill full busy={again} onPress={() => void oneMore()}>
+            <Btn size="lg" pill full variant="ghost" busy={again} onPress={() => void oneMore()}>
               {t('practice:drill.again')}
             </Btn>
           ) : null}
-          <Btn size="lg" pill full variant={finished ? 'ghost' : 'primary'} onPress={onClose}>
-            {t('practice:back_to_buddy')}
-          </Btn>
         </BottomBar>
       </Screen>
     );
@@ -257,185 +225,128 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
           }
         : null;
 
-  // How big the task stands: as big as fits one line of a 360 pt phone (rule 16).
-  const taskSize = (text: string) => {
-    const len = text.replace(/\$|\\frac\{(\d+)\}\{(\d+)\}/g, '$1$2').length;
-    return len <= PRACTICE.drill.shortPromptMax
+  const prompt = current ? current.item.prompt : '…';
+  // Preserve the merged Practice hierarchy and its fraction-aware one-line thresholds.
+  const promptLength = prompt.replace(/\$|\\frac\{(\d+)\}\{(\d+)\}/g, '$1$2').length;
+  const taskStyle =
+    promptLength <= PRACTICE.drill.shortPromptMax
       ? TYPE.questionBig
-      : len <= PRACTICE.drill.mediumPromptMax
+      : promptLength <= PRACTICE.drill.mediumPromptMax
         ? TYPE.questionMedium
         : TYPE.questionLong;
-  };
-  const prompt = current ? current.item.prompt : '…';
-  const size = taskSize(prompt);
-
+  const ready = Boolean(current && typed.length > 0 && !typed.endsWith('/'));
+  const position = Math.min(answered + 1, session.items.length);
+  const progressLabel = t('practice:drill.progress', {
+    current: position,
+    total: session.items.length,
+  });
+  function changeTyped(value: string): void {
+    const allowed = value
+      .replace(drill.input === 'fraction' ? /[^0-9/]/g : /[^0-9]/g, '')
+      .slice(0, MAX_TYPED);
+    const [whole = '', fraction] = allowed.split('/');
+    draft.setText(fraction === undefined || whole.length === 0 ? whole : `${whole}/${fraction}`);
+  }
   return (
-    // The practice screens' header (issue #334.1): the round's name on one line and the round ✕.
     <Screen
       title={title}
-      right={
-        <HeadActions>
-          <EndButton
-            onPress={onClose}
-            label={t('practice:end_label')}
-            hint={t('practice:drill.end_hint')}
-          />
-        </HeadActions>
+      subtitle={progressLabel}
+      leading={{
+        icon: 'close',
+        onPress: onClose,
+        label: t('practice:end_label'),
+        hint: t('practice:drill.end_hint'),
+      }}
+      sound={<ReadAloudSwitch />}
+      footer={
+        <ProgressRow
+          position={position}
+          total={session.items.length}
+          closed={answered}
+          label={progressLabel}
+          hideLabel
+        />
       }
     >
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
-        <ProgressRow
-          position={Math.min(answered + 1, session.items.length)}
-          total={session.items.length}
-          closed={answered}
-          label={t('practice:drill.progress', {
-            current: Math.min(answered + 1, session.items.length),
-            total: session.items.length,
-          })}
-        />
-        {/* The one thing in front of her, and it takes the room there is: no dead gap between
-            the task and the pad (issue #286 point 1). */}
-        <QuestionCard style={{ flex: 1, paddingHorizontal: SPACE.xl, paddingVertical: SPACE.lg }}>
-          <View style={{ flex: 1 }} />
-          <View style={{ alignItems: 'center', gap: SPACE.lg }} testID="drill-task">
+        <Card radius={RADIUS.lg} padding={CARD_PAD.base}>
+          <View style={{ alignItems: 'center', gap: SPACE.md }} testID="drill-task">
             <ReadAgain {...(spoken ? { onRead: () => readTask(spoken) } : {})}>
               <MathText
                 text={prompt}
                 accessibilityRole="header"
-                style={[size, { textAlign: 'center' }]}
+                style={[taskStyle, { textAlign: 'center' }]}
               />
             </ReadAgain>
             <View
-              accessible
-              accessibilityLabel={t('practice:drill.typed', { value: typed || '–' })}
-              accessibilityLiveRegion="polite"
+              aria-hidden
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
               style={{
-                minWidth: PRACTICE.drill.answerWidth,
-                height: PRACTICE.drill.answerHeight,
-                paddingHorizontal: SPACE.xl,
-                borderRadius: SPACE.lg,
+                minWidth: DRILL.answerWidth,
+                minHeight: DRILL.answerHeight,
+                padding: CARD_PAD.snug,
+                borderRadius: RADIUS.md,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: palette.paper,
-                borderWidth: PRACTICE.selectedBorder,
-                borderColor: typed ? palette.primary : palette.lavenderDeep,
+                backgroundColor: typed ? palette.primaryLt : palette.canvas,
+                borderWidth: DRILL.answerBorder,
+                borderColor: typed ? palette.primary : palette.hairlineStrong,
               }}
             >
-              <Text
-                maxFontSizeMultiplier={MAX_FONT_SCALE}
-                style={{
-                  ...TYPE.drillAnswer,
-                  color: typed ? palette.ink : palette.lavenderDeep,
-                }}
-              >
-                {typed || '?'}
-              </Text>
+              <Text style={TYPE.drillAnswer}>{typed || '?'}</Text>
             </View>
           </View>
-          {/* The task she answered last, as one quiet pill at the card's foot. Always the same
-              height, so nothing jumps when it fills; words and a mark, never colour alone. */}
-          <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
-            <View
-              testID="drill-last"
-              style={{
-                minHeight: PRACTICE.drill.receiptHeight,
-                justifyContent: 'center',
-              }}
-            >
-              {shownLast ? (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: SPACE.sm,
-                    paddingHorizontal: SPACE.md,
-                    // token-exempt: optical, a pill of 36 pt around 15 pt text, fully rounded
-                    paddingVertical: SPACE.xs + PRACTICE.drill.receiptPadExtra,
-                    // token-exempt: half the pill's 36 pt height
-                    borderRadius: PRACTICE.drill.receiptRadius,
-                    backgroundColor: shownLast.verdict === true ? palette.mint : palette.paper,
-                  }}
-                >
-                  {shownLast.verdict === true ? (
-                    <View
-                      accessibilityElementsHidden
-                      importantForAccessibility="no-hide-descendants"
-                    >
-                      <Icon name="check" size={PRACTICE.badgeIcon} color={palette.successText} />
-                    </View>
-                  ) : null}
-                  {shownLast.verdict !== null ? (
-                    <Text
-                      style={[
-                        TYPE.metaStrong,
-                        {
-                          color:
-                            shownLast.verdict === true ? palette.successText : palette.primaryDk,
-                        },
-                      ]}
-                    >
-                      {shownLast.verdict === true
-                        ? t('practice:drill.right_short')
-                        : t('practice:drill.was_short')}
-                    </Text>
-                  ) : null}
-                  <MathText
-                    text={shownLast.text}
-                    style={[
-                      TYPE.metaStrong,
-                      {
-                        color:
-                          shownLast.verdict === true
-                            ? palette.successText
-                            : shownLast.verdict === null
-                              ? palette.ink2
-                              : palette.ink,
-                      },
-                    ]}
-                  />
-                </View>
-              ) : null}
-            </View>
-          </View>
-        </QuestionCard>
-        <View style={{ gap: SPACE.sm }} testID="drill-pad">
-          {ROWS.map((row, r) => (
-            <View key={r} style={{ flexDirection: 'row', gap: SPACE.sm }}>
-              {row
-                // Whole numbers have no "/": the 0 takes its place and the row stays whole
-                // (issue #287: no ragged gap in a grid).
-                .filter((key) => key !== 'slash' || drill.input === 'fraction')
-                .map((key) => (
-                  <PadKey
-                    key={key}
-                    sign={key === 'back' ? '⌫' : key === 'slash' ? '/' : key}
-                    onPress={() => press(key)}
-                    disabled={!current}
-                    quiet={key === 'back'}
-                    accessibilityLabel={
-                      key === 'back'
-                        ? t('practice:drill.delete')
-                        : key === 'slash'
-                          ? t('practice:drill.slash')
-                          : key
-                    }
-                    span={key === '0' && drill.input !== 'fraction' ? 2 : 1}
-                  />
-                ))}
-            </View>
-          ))}
+        </Card>
+        <View testID="drill-last" style={{ minHeight: DRILL.feedbackHeight }}>
+          {shownLast ? (
+            <MathText
+              text={
+                shownLast.verdict === null
+                  ? shownLast.text
+                  : t(shownLast.verdict ? 'practice:drill.right' : 'practice:drill.was', {
+                      task: shownLast.text,
+                    })
+              }
+              style={[TYPE.body, { color: palette.ink2 }]}
+            />
+          ) : null}
         </View>
       </View>
       <BottomBar>
-        <Btn
-          size="lg"
-          pill
-          full
-          disabled={!current || typed.length === 0 || typed.endsWith('/')}
-          onPress={submit}
-        >
-          {t('practice:check')}
-        </Btn>
+        <Composer
+          value={typed}
+          onChangeText={changeTyped}
+          editable={Boolean(current)}
+          keyboardType="numeric"
+          inputMode="numeric"
+          maxLength={MAX_TYPED}
+          autoFocus
+          accessibilityLabel={t('practice:answer.label')}
+          onSubmitEditing={submit}
+          keys={
+            drill.input === 'fraction' ? (
+              <KeyRow
+                keepsFocus
+                label={t('practice:drill.slash')}
+                keys={[
+                  {
+                    id: 'slash',
+                    face: '/',
+                    label: t('practice:drill.slash'),
+                    disabled: !current || typed.length === 0 || typed.includes('/'),
+                    onPress: () => changeTyped(`${typed}/`),
+                  },
+                ]}
+              />
+            ) : null
+          }
+          primary={
+            <Btn pill variant={ready ? 'primary' : 'quiet'} disabled={!ready} onPress={submit}>
+              {t('practice:check')}
+            </Btn>
+          }
+        />
       </BottomBar>
     </Screen>
   );

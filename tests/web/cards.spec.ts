@@ -9,6 +9,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { onboardChild, startOffer } from './figureWalk';
 import { bothSchemes, shot } from './fit';
+import { CardRequest, SessionView } from '../../packages/shared-types/src/contracts/index';
+import practiceDE from '../../apps/mobile/locales/de/practice.json';
+import { SCREEN_LOOKS, screenLook, screenShots } from './redesign-screen-matrix';
 import { voiceAsSilence } from './talk';
 
 /** Her typed answer to the open word, checked. */
@@ -96,3 +99,62 @@ test('flashcards: the one bar with her question, the card’s action, the round 
   await expect(page.getByText('Durch!')).toBeVisible();
   await bothSchemes(page, '101-cards-end');
 });
+
+for (const look of SCREEN_LOOKS)
+  test(`card completion ${look.family} ${look.dark ? 'dark' : 'light'}`, async ({ page }) => {
+    test.setTimeout(240_000);
+    await onboardChild(page, 'card-completion');
+    const key = await screenLook(page, look);
+    await startOffer(page, 'Lass uns Vokabeln mit Frosch üben', 'zwei Wörter aus Unité 3');
+    await expect(page).toHaveURL(/\/practice\/[0-9a-f-]{36}$/);
+    const source = new URL(page.url()).pathname.split('/').at(-1)!;
+    await answer(page, 'die Kröte');
+    await expect(page.getByText('Versuch es nochmal', { exact: false })).toBeVisible();
+    for (const text of ['der Frosch', 'die Zitrone', 'la grenouille', 'le citron']) {
+      await answer(page, text);
+      await expect(page.getByText('Richtig', { exact: true }).last()).toBeVisible();
+      await page.getByRole('button', { name: 'Weiter', exact: true }).click();
+    }
+    const started = page.waitForResponse(
+      (r) =>
+        r.request().method() === 'POST' &&
+        new URL(r.url()).pathname.endsWith(`/practice/sessions/${source}/cards`),
+    );
+    await page
+      .getByRole('button', { name: 'Die Wörter als Karten durchgehen', exact: true })
+      .click();
+    const start = await started;
+    expect(start.ok()).toBe(true);
+    const pass = SessionView.parse(await start.json());
+    expect(pass.card_pass).toBe(true);
+    expect(pass.status).toBe('active');
+    expect(pass.current_item_id).not.toBeNull();
+    await page.getByRole('button', { name: 'Umdrehen', exact: true }).click();
+    const recorded = page.waitForResponse(
+      (r) =>
+        r.request().method() === 'POST' &&
+        new URL(r.url()).pathname.endsWith(`/practice/sessions/${pass.id}/card`),
+    );
+    await page.getByRole('button', { name: 'Wusste ich', exact: true }).click();
+    const response = await recorded;
+    expect(response.ok()).toBe(true);
+    const body = CardRequest.parse(response.request().postDataJSON());
+    expect(body.item_id).toBe(pass.current_item_id);
+    expect(body.recall).toBe('knew_it');
+    const finished = SessionView.parse(await response.json());
+    expect(finished.id).toBe(pass.id);
+    expect(finished.status).toBe('finished');
+    expect(finished.current_item_id).toBeNull();
+    await expect(
+      page.getByRole('heading', { name: practiceDE.cards.done_title, exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(practiceDE.cards.done_body, { exact: true })).toBeVisible();
+    await expect(page.getByText(practiceDE.summary.finished, { exact: true })).toBeVisible();
+    await expect(page.locator('[data-testid="composer-primary"]:visible')).toHaveCount(0);
+    await screenShots(page, `card-completion-${key}`);
+    await page
+      .getByTestId('bottom-bar')
+      .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+      .click();
+    await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+  });

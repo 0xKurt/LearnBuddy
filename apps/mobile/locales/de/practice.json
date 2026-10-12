@@ -268,13 +268,9 @@
   "drill": {
     "progress": "Aufgabe {{current}} von {{total}}",
     "end_hint": "Zurück zu Buddy. Was du gerechnet hast, bleibt gespeichert.",
-    "typed": "Deine Antwort: {{value}}",
-    "delete": "Löschen",
     "slash": "Bruchstrich",
     "right": "Richtig: {{task}}",
     "was": "Das war: {{task}}",
-    "right_short": "Richtig:",
-    "was_short": "Das war:",
     "done_title": "Geschafft!",
     "again": "Noch eine Runde",
     "line": {

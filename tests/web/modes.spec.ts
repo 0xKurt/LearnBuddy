@@ -163,7 +163,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Alles saß gleich beim ersten Mal', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await page
+    .getByTestId('bottom-bar')
+    .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+    .click();
 
   // ── Homework help: hints only, no "show solution", solved by herself ──
   await closeCardIfAny(page);
@@ -281,7 +284,10 @@ test('learning modes: explain, homework help without the solution, practice with
     page.getByTestId('scroll-list').getByText('Du hast 1 Aufgabe selbst gelöst.'),
   ).toBeVisible();
   await expect(page.getByText('Auf Anhieb richtig')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await page
+    .getByTestId('bottom-bar')
+    .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+    .click();
 
   // ── Practice without a photo: fractions drawn, math rendered ──
   // Said to Buddy instead of picking a tile: Buddy answers with a start button.
@@ -397,7 +403,10 @@ test('learning modes: explain, homework help without the solution, practice with
   // summary rather than to another bar.
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await page
+    .getByTestId('bottom-bar')
+    .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+    .click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 
   // ── Practice test: no verdicts or solutions until the end ──
@@ -839,7 +848,10 @@ test('an order: tap in order, tap again to take back (issue #228)', async ({ pag
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await page
+    .getByTestId('bottom-bar')
+    .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+    .click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
@@ -873,13 +885,13 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   await page.keyboard.type('17');
   await expect(page.getByRole('toolbar')).toBeVisible();
   // With the keyboard up on the small phone (the window shrinks by its height, as Android's
-  // adjustResize does): the table and its keys still stand on "Prüfen", no free room under them
-  // (#386).
+  // adjustResize does): the table and its keys retain the action below; any free room follows
+  // the answer content, matching the shared placement introduced in #552.
   await page.setViewportSize({ width: 360, height: 740 - 300 });
   await settle(page);
   await page.screenshot({ path: join(SHOTS, '60c-table-kb.png') });
   const tableKb = await answerPlace(page);
-  expect(tableKb?.spacerAbove, 'table @kb: the free room above the table').toBe(true);
+  expect(tableKb?.spacerBelow, 'table @kb: free room follows the answer content').toBe(true);
   expect(tableKb?.actionLowest, 'table @kb: "Prüfen" lowest').toBe(true);
   await page.setViewportSize(PHONES[0]);
   await bothSchemes(page, '60-table-filled');
@@ -905,7 +917,10 @@ test('a table to fill in: Enter walks the gaps, each cell checked on its own (is
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await page
+    .getByTestId('bottom-bar')
+    .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+    .click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
@@ -1014,7 +1029,10 @@ test('zuordnen at its largest: pairs as rows, things into groups (issues #229, #
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await page
+    .getByTestId('bottom-bar')
+    .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+    .click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
@@ -1060,7 +1078,10 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await page
+    .getByTestId('bottom-bar')
+    .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+    .click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
@@ -1568,7 +1589,8 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
     return { task: m![0], value: Number(m![1]) * Number(m![2]) };
   }
   async function type(value: string): Promise<void> {
-    for (const d of value) await page.getByRole('button', { name: d, exact: true }).click();
+    const input = page.getByRole('textbox', { name: 'Deine Antwort', exact: true });
+    await input.fill((await input.inputValue()) + value);
   }
 
   for (let n = 0; n < 20; n++) {
@@ -1577,7 +1599,9 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
     const typed = n === 1 ? String(value + 1) : String(value);
     await type(typed);
     if (n === 0) {
-      await expect(page.getByLabel(`Deine Antwort: ${typed}`)).toBeVisible();
+      await expect(page.getByRole('textbox', { name: 'Deine Antwort', exact: true })).toHaveValue(
+        typed,
+      );
       await shot(page, '41-drill-typed');
     }
     await check.click();
@@ -1593,7 +1617,9 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
     if (n < 19) {
       // No pause: the next task is on the card (or the same numbers the other way round
       // never directly — the server keeps mirror tasks apart).
-      await expect(page.getByLabel('Deine Antwort: –')).toBeVisible();
+      await expect(page.getByRole('textbox', { name: 'Deine Antwort', exact: true })).toHaveValue(
+        '',
+      );
       await expect.poll(async () => (await solveShown()).task, { timeout: 5000 }).not.toBe(task);
     }
   }
@@ -1607,7 +1633,7 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   // "Noch eine Runde": the same range, new tasks, again without a model.
   await page.getByRole('button', { name: 'Noch eine Runde' }).click();
   await expect(page.getByText('Aufgabe 1 von 20')).toBeVisible();
-  await page.getByRole('button', { name: 'Beenden' }).click();
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 
   // Fractions: the pad gets its "/" — once, never first.
@@ -1619,11 +1645,15 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   await type('3');
   await page.getByRole('button', { name: 'Bruchstrich' }).click();
   await type('4');
-  await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Deine Antwort', exact: true })).toHaveValue(
+    '3/4',
+  );
   await bothSchemes(page, '44-drill-fraction');
   // The theme switches rebuilt the screen; what she typed is a draft and still there.
-  await expect(page.getByLabel('Deine Antwort: 3/4')).toBeVisible();
-  await page.getByRole('button', { name: 'Beenden' }).click();
+  await expect(page.getByRole('textbox', { name: 'Deine Antwort', exact: true })).toHaveValue(
+    '3/4',
+  );
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
 
   // The longest name a round has stays on one line, and the longest task fits.
   await page.getByLabel('Schreib Buddy …').fill('Plus bis 100 im Kopf');
@@ -1634,7 +1664,7 @@ test('Kopfrechnen: a quick round on a digit pad, no model (issue #243)', async (
   const box = await header.boundingBox();
   expect(box!.height).toBeLessThan(40);
   await shot(page, '45-drill-long-title');
-  await page.getByRole('button', { name: 'Beenden' }).click();
+  await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });
 
@@ -1736,6 +1766,9 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   }
   await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]);
-  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await page
+    .getByTestId('bottom-bar')
+    .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
+    .click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
 });

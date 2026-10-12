@@ -268,13 +268,9 @@
   "drill": {
     "progress": "Calcul {{current}} sur {{total}}",
     "end_hint": "Retour à Buddy. Ce que tu as calculé reste enregistré.",
-    "typed": "Ta réponse : {{value}}",
-    "delete": "Effacer",
     "slash": "Barre de fraction",
     "right": "Juste : {{task}}",
     "was": "C’était : {{task}}",
-    "right_short": "Juste :",
-    "was_short": "C’était :",
     "done_title": "Bravo !",
     "again": "Encore une manche",
     "line": {
