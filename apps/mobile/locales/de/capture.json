@@ -1,6 +1,7 @@
 {
   "tip": "Tipp: Ganze Seite, gutes Licht, von oben.",
   "privacy": "Die Fotos werden spätestens 7 Tage nach dem Lesen gelöscht.",
+  "camera_more": "Noch ein Foto",
   "photo_label": "Foto {{index}} von {{total}}",
   "remove_label": "Foto {{index}} entfernen",
   "limit": "Für ein Blatt gehen höchstens {{max}} Fotos.",
@@ -78,18 +79,5 @@
     "nothing": "Schick mir ein Foto oder PDF von deinem Blatt – Text und Links kann ich hier nicht lesen.",
     "signed_out": "Melde dich zuerst an – dann teil das Blatt nochmal mit LearnBuddy."
   },
-  "preview_failed": "Vorschau nicht möglich",
-  "page": {
-    "intro": "Arbeitsblatt, Buchseite oder Heft – als Foto oder PDF. Buddy macht Übungen daraus.",
-    "send": "An Buddy senden",
-    "count_one": "{{count}} Foto",
-    "count_other": "{{count}} Fotos",
-    "camera_title": "Ganze Seite, gutes Licht, von oben",
-    "privacy": "Fotos werden spätestens 7 Tage nach dem Lesen gelöscht.",
-    "page": "Seite",
-    "more": "Weitere Seite",
-    "files_one": "{{count}} PDF",
-    "files_other": "{{count}} PDFs",
-    "combined_count": "{{photos}} · {{files}}"
-  }
+  "preview_failed": "Vorschau nicht möglich"
 }

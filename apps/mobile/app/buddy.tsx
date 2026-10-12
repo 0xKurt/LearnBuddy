@@ -66,9 +66,6 @@ import { messageFor } from '../lib/errors.js';
 import { useClosedCard } from '../lib/homeCard.js';
 import { homeLayout, topKey } from '../lib/homeLayout.js';
 import { askAttach } from '../lib/capture/attachRequest.js';
-import { useLiveAttachments } from '../lib/capture/live.js';
-import { formDensity } from '../lib/keyboard.js';
-import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 import { SPACE } from '../lib/theme/space.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 
@@ -76,9 +73,6 @@ export default function BuddyScreen() {
   const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
   const home = useHome();
-  const seen = useVisibleHeight();
-  const introDensity = formDensity(seen.window, seen.overlap);
-  const hasPages = useLiveAttachments((state) => state.count > 0);
   // A practice to go on with is loaded while its card is on screen (gaps.md #2).
   usePrefetchSession(home.data?.now);
   const { busy, act } = useHomeAct();
@@ -221,7 +215,8 @@ export default function BuddyScreen() {
           })}
           onMenu={() => setMenuOpen(true)}
         />
-        <View style={{ flex: 1 }}>
+        {/* The card on top keeps its room: attached pages below never push the bar over it. */}
+        <View style={{ flex: 1, minHeight: cardHeight }}>
           {/* What matters now lies on top, over the greeting and the ways to start: it never
             pushes them down, and she can close it (only on this phone). */}
           <HomeTop
@@ -289,14 +284,13 @@ export default function BuddyScreen() {
                 }
               />
             </HomeThread>
-          ) : introDensity === 'tight' ? null : (
+          ) : (
             <HomeIntro
-              compact={hasPages && introDensity === 'compact'}
               h={h}
               refreshing={home.isRefetching}
               onRefresh={refetch}
               onSend={(text) => void send(text)}
-              onPhoto={() => askAttach({ open: 'menu' })}
+              onPhoto={() => askAttach({ open: 'camera' })}
             />
           )}
         </View>

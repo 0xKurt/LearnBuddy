@@ -66,6 +66,7 @@
     "keyboard": "Tastiera",
     "attach": {
       "title": "Cosa vuoi allegare?",
+      "camera": "Scatta una foto",
       "library": "Dalla galleria",
       "files": "Dai file"
     }

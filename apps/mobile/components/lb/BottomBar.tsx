@@ -15,8 +15,14 @@ import { useToastBar } from './Toast.js';
 export function BottomBar({
   children,
   testID = 'bottom-bar',
+  yields = false,
 }: {
   children: ReactNode;
+  /**
+   * The bar gives way when it is taller than the room above the keyboard: what yields inside it
+   * (the input bar's accessories) scrolls, the field and its tools stay whole (#599).
+   */
+  yields?: boolean;
   /**
    * What the walkthrough measures it by: what it takes is what the question or the conversation
    * loses on a small phone with the keyboard open (issue #16).
@@ -32,6 +38,7 @@ export function BottomBar({
       onLayout={onToastBar}
       style={{
         gap: SPACE.sm,
+        ...(yields ? { flexShrink: 1 } : null),
         paddingHorizontal: SPACE.lg,
         paddingTop: SPACE.sm,
         paddingBottom: bottomRoom(insets.bottom, SPACE.md),

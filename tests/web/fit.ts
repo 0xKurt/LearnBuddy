@@ -97,35 +97,6 @@ export async function overflows(page: Page): Promise<Overflow[]> {
         allowed: false,
       });
     }
-    // A capped Composer textarea may scroll its editable content only while both
-    // the field and pinned Composer are whole. Page and form policy stays unchanged.
-    const whole = (element: HTMLElement) => {
-      const box = element.getBoundingClientRect();
-      let left = 0,
-        top = 0,
-        right = innerWidth,
-        bottom = innerHeight;
-      for (let parent = element.parentElement; parent; parent = parent.parentElement) {
-        const style = getComputedStyle(parent),
-          clip = parent.getBoundingClientRect();
-        if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowX)) {
-          left = Math.max(left, clip.left);
-          right = Math.min(right, clip.right);
-        }
-        if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowY)) {
-          top = Math.max(top, clip.top);
-          bottom = Math.min(bottom, clip.bottom);
-        }
-      }
-      return (
-        box.width > 0 &&
-        box.height > 0 &&
-        box.left >= left - 0.5 &&
-        box.right <= right + 0.5 &&
-        box.top >= top - 0.5 &&
-        box.bottom <= bottom + 0.5
-      );
-    };
     for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
       const style = getComputedStyle(el);
       if (!['auto', 'scroll'].includes(style.overflowY)) continue;
@@ -134,16 +105,6 @@ export async function overflows(page: Page): Promise<Overflow[]> {
       if (overflow <= 2) continue;
       // Scroll areas are named by their testID (data-testid="scroll-…" on the web).
       const id = el.getAttribute('data-testid') ?? '';
-      const composer = el.closest<HTMLElement>('[data-testid="composer"]');
-      const maxHeight = Number.parseFloat(style.maxHeight);
-      const editable =
-        el instanceof HTMLTextAreaElement &&
-        composer !== null &&
-        Number.isFinite(maxHeight) &&
-        maxHeight > 0 &&
-        Math.abs(el.getBoundingClientRect().height - maxHeight) <= 1 &&
-        whole(el) &&
-        whole(composer);
       const focused = document.activeElement;
       const frame = focused?.closest<HTMLElement>('[data-testid="answer-cell-frame"]');
       let editingWhole =
@@ -171,14 +132,9 @@ export async function overflows(page: Page): Promise<Overflow[]> {
           b.right + ring <= right + 1;
       }
       out.push({
-        label:
-          id ||
-          (editable
-            ? el.getAttribute('aria-label') || 'composer textarea'
-            : (el.innerText ?? '').replace(/\s+/g, ' ').slice(0, 40)),
+        label: id || (el.innerText ?? '').replace(/\s+/g, ' ').slice(0, 40),
         overflow,
         allowed:
-          editable ||
           editingWhole ||
           id === 'scroll-thread' ||
           id === 'scroll-practice-body' ||

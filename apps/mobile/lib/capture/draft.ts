@@ -30,17 +30,9 @@ const Link = z.object({
 export type DraftLink = z.output<typeof Link>;
 export const DraftLinkSchema = Link;
 
-const Caption = z.object({
-  text: z.string().min(1).max(2000),
-  clientMessageId: z.string().min(1),
-  owner: z.string().min(1),
-});
-export type CaptureCaption = z.output<typeof Caption>;
-
 const Draft = z.object({
   v: z.literal(1),
   requestId: z.string().nullable(),
-  caption: Caption.optional(),
   photos: z
     .array(
       z.object({
@@ -60,8 +52,6 @@ export type CaptureDraft = z.output<typeof Draft>;
 const Sent = z.array(
   z.object({
     materialId: z.string(),
-    requestId: z.string().optional(),
-    caption: Caption.optional(),
     uris: z.array(z.string()),
     sentAt: z.string(),
     /** One photo per page: false when a PDF was among them (its pages are not photos here). */
@@ -69,20 +59,6 @@ const Sent = z.array(
   }),
 );
 export type SentPhotos = z.infer<typeof Sent>;
-
-/** Remove only this message's metadata; retain the actual material and its photos. */
-function withoutSentCaption(
-  list: SentPhotos,
-  requestId: string,
-  clientMessageId: string,
-): SentPhotos {
-  return list.map((record) => {
-    if (record.requestId !== requestId || record.caption?.clientMessageId !== clientMessageId)
-      return record;
-    const { caption: _caption, ...settled } = record;
-    return settled;
-  });
-}
 
 /** A draft older than this is dropped (the photos are deleted after 7 days on the server too). */
 const DRAFT_MAX_AGE_MS = 7 * 86_400_000;
@@ -158,67 +134,22 @@ function parse<S extends z.ZodTypeAny>(schema: S, raw: string | null): z.output<
 export function createDraftStore(storage: DraftStorage, now: () => Date = () => new Date()) {
   /** Sends in progress in this app run (then the draft is not "left behind"). */
   const sending = new Set<string>();
-  const sendingCaptions = new Map<string, CaptureCaption>();
-  const captionSending = new Set<string>();
-  let generation = 0;
-  let writes: Promise<void> = Promise.resolve();
-  function write(owner: number, key: string, value: string | null): Promise<void> {
-    const next = writes.then(async () => {
-      if (owner === generation) await storage.write(key, value);
-    });
-    writes = next.catch(() => undefined);
-    return next;
-  }
-  function editSent(owner: number, update: (list: SentPhotos) => SentPhotos): Promise<void> {
-    const next = writes.then(async () => {
-      if (owner !== generation) return;
-      const list = parse(Sent, await storage.read(SENT_KEY)) ?? [];
-      if (owner === generation) await storage.write(SENT_KEY, JSON.stringify(update(list)));
-    });
-    writes = next.catch(() => undefined);
-    return next;
-  }
-  function endPhotoDraft(owner: number, requestId: string): Promise<void> {
-    const next = writes.then(async () => {
-      if (owner !== generation) return;
-      const current = parse(Draft, await storage.read(DRAFT_KEY));
-      if (owner === generation && current?.requestId === requestId)
-        await storage.write(DRAFT_KEY, null);
-    });
-    writes = next.catch(() => undefined);
-    return next;
-  }
   /** Every URI handed out or deleted goes through here: it may have moved (rebasedUri). */
   const fix = (uri: string): string => storage.resolve?.(uri) ?? uri;
   const drop = (uris: readonly string[]) => storage.drop(uris.map(fix));
 
   async function readSent(): Promise<SentPhotos> {
-    const owner = generation;
-    const raw = await storage.read(SENT_KEY);
-    return owner === generation ? (parse(Sent, raw) ?? []) : [];
+    return parse(Sent, await storage.read(SENT_KEY)) ?? [];
   }
 
   return {
-    lifetime: () => {
-      const owner = generation;
-      return () => owner === generation;
-    },
     keep: (uri: string) => storage.keep(uri),
     drop,
 
     /** The draft left from before, if any and not too old (an old one is cleaned up). */
     async load(): Promise<CaptureDraft | null> {
-      const owner = generation;
       const draft = parse(Draft, await storage.read(DRAFT_KEY));
-      if (!draft || owner !== generation) return null;
-      // A crash between the sent-record write and draft deletion must not describe
-      // genuinely confirmed photos as unsent. The request identity is authoritative.
-      const sent = await readSent();
-      if (
-        owner !== generation ||
-        (draft.requestId && sent.some((s) => s.requestId === draft.requestId))
-      )
-        return null;
+      if (!draft) return null;
       if (now().getTime() - Date.parse(draft.savedAt) > DRAFT_MAX_AGE_MS) {
         await this.discard(draft);
         return null;
@@ -234,10 +165,9 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
     },
 
     async save(draft: Omit<z.input<typeof Draft>, 'v' | 'savedAt'>): Promise<void> {
-      const owner = generation;
-      if (draft.photos.length === 0) return write(owner, DRAFT_KEY, null);
+      if (draft.photos.length === 0) return storage.write(DRAFT_KEY, null);
       const full: z.input<typeof Draft> = { ...draft, v: 1, savedAt: now().toISOString() };
-      await write(owner, DRAFT_KEY, JSON.stringify(full));
+      await storage.write(DRAFT_KEY, JSON.stringify(full));
     },
 
     /**
@@ -245,27 +175,18 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
      * being sent (a requested send finishes; audit M-21). False when kept.
      */
     async discard(draft: CaptureDraft | null = null): Promise<boolean> {
-      const owner = generation;
       const d = draft ?? parse(Draft, await storage.read(DRAFT_KEY));
-      if (owner !== generation) return false;
       if (d?.requestId && sending.has(d.requestId)) return false;
-      await write(owner, DRAFT_KEY, null);
+      await storage.write(DRAFT_KEY, null);
       if (d) await drop(d.photos.map((p) => p.uri));
       return true;
     },
 
-    startSending(requestId: string, caption?: CaptureCaption) {
+    startSending(requestId: string) {
       sending.add(requestId);
-      if (caption) sendingCaptions.set(requestId, caption);
-    },
-    isSendingCaption(owner: string, text: string): boolean {
-      return [...sendingCaptions.values()].some(
-        (caption) => caption.owner === owner && caption.text === text.trim(),
-      );
     },
     stopSending(requestId: string) {
       sending.delete(requestId);
-      sendingCaptions.delete(requestId);
     },
 
     /**
@@ -277,70 +198,13 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
       uris: readonly string[],
       requestId: string,
       paged = true,
-      submittedCaption?: CaptureCaption,
     ): Promise<void> {
-      const owner = generation;
       const current = parse(Draft, await storage.read(DRAFT_KEY));
-      if (owner !== generation) return;
-      await editSent(owner, (previous) => {
-        const old = previous.find((s) => s.materialId === materialId);
-        const caption =
-          submittedCaption ?? (current?.requestId === requestId ? current.caption : old?.caption);
-        const list = previous.filter((s) => s.materialId !== materialId);
-        list.push({
-          materialId,
-          uris: [...uris],
-          sentAt: now().toISOString(),
-          paged,
-          requestId,
-          ...(caption ? { caption } : {}),
-        });
-        return list;
-      });
-      // The sent record is durable first; deletion then rechecks the actual current draft.
-      await endPhotoDraft(owner, requestId);
+      if (!current || current.requestId === requestId) await storage.write(DRAFT_KEY, null);
+      const list = (await readSent()).filter((s) => s.materialId !== materialId);
+      list.push({ materialId, uris: [...uris], sentAt: now().toISOString(), paged });
+      await storage.write(SENT_KEY, JSON.stringify(list));
       await this.prune();
-    },
-
-    /** Unresolved captions are recovered explicitly, never automatically sent. */
-    async pendingCaptions() {
-      const list = await readSent();
-      return list.flatMap((s) =>
-        s.requestId && s.caption && !sending.has(s.requestId) && !captionSending.has(s.requestId)
-          ? [{ requestId: s.requestId, materialId: s.materialId, caption: s.caption }]
-          : [],
-      );
-    },
-    startCaption(requestId: string) {
-      captionSending.add(requestId);
-    },
-    stopCaption(requestId: string) {
-      captionSending.delete(requestId);
-    },
-    async finishCaption(requestId: string, clientMessageId: string): Promise<void> {
-      const owner = generation;
-      await editSent(owner, (list) => withoutSentCaption(list, requestId, clientMessageId));
-      await endPhotoDraft(owner, requestId);
-    },
-
-    /** An explicit edit supersedes only that caption, retaining unsubmitted photos. */
-    async abandonCaption(requestId: string, clientMessageId: string): Promise<void> {
-      const owner = generation;
-      await editSent(owner, (list) => withoutSentCaption(list, requestId, clientMessageId));
-      const next = writes.then(async () => {
-        if (owner !== generation) return;
-        const current = parse(Draft, await storage.read(DRAFT_KEY));
-        if (
-          owner !== generation ||
-          current?.requestId !== requestId ||
-          current.caption?.clientMessageId !== clientMessageId
-        )
-          return;
-        const { caption: _caption, ...kept } = current;
-        await storage.write(DRAFT_KEY, JSON.stringify(kept));
-      });
-      writes = next.catch(() => undefined);
-      await next;
     },
 
     /**
@@ -361,35 +225,22 @@ export function createDraftStore(storage: DraftStorage, now: () => Date = () => 
 
     /** Signed out: the draft and every kept photo are deleted. */
     async clearAll(): Promise<void> {
-      const owner = ++generation;
-      sending.clear();
-      sendingCaptions.clear();
-      captionSending.clear();
-      // An already-started write finishes before the wipe; delayed old operations
-      // cannot enqueue private data under the new generation afterwards.
-      await writes;
       const d = parse(Draft, await storage.read(DRAFT_KEY));
+      await storage.write(DRAFT_KEY, null);
+      if (d) await drop(d.photos.map((p) => p.uri));
       const list = await readSent();
-      await drop([...(d?.photos.map((p) => p.uri) ?? []), ...list.flatMap((s) => s.uris)]);
-      await write(owner, DRAFT_KEY, null);
-      await write(owner, SENT_KEY, null);
+      await drop(list.flatMap((s) => s.uris));
+      await storage.write(SENT_KEY, null);
     },
 
     /** Sent photos older than a day are deleted. */
     async prune(): Promise<void> {
-      const owner = generation;
       const list = await readSent();
       const cutoff = now().getTime() - SENT_KEEP_MS;
       const old = list.filter((s) => Date.parse(s.sentAt) < cutoff);
       if (old.length === 0) return;
       await drop(old.flatMap((s) => s.uris));
-      // The photo lifetime stays unchanged; an unresolved caption is ordinary unsent
-      // text and must not disappear merely because its source photo has expired.
-      await editSent(owner, (current) =>
-        current.flatMap((s) =>
-          Date.parse(s.sentAt) >= cutoff ? [s] : s.caption ? [{ ...s, uris: [] }] : [],
-        ),
-      );
+      await storage.write(SENT_KEY, JSON.stringify(list.filter((s) => !old.includes(s))));
     },
   };
 }

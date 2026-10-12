@@ -1,18 +1,20 @@
 // The one way to a photo (issue #519): a place asks, the chat's input bar answers once.
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+const dismissTo = vi.fn();
 const navigate = vi.fn();
-vi.mock('expo-router', () => ({ router: { navigate: (href: string) => navigate(href) } }));
+vi.mock('expo-router', () => ({
+  router: {
+    dismissTo: (href: string) => dismissTo(href),
+    navigate: (href: string) => navigate(href),
+  },
+}));
 
 const { askAttach, attachInChat, CHAT_LINK, useAttachRequest } =
   await import('../attachRequest.js');
 
-describe('a wish for the full Capture page', () => {
-  beforeEach(() => {
-    navigate.mockClear();
-    useAttachRequest.getState().take();
-  });
+describe('a wish for a page, handed to the chat', () => {
   it('carries what the pages are for, the rest as for the chat', () => {
     askAttach({ open: 'camera', link: { purpose: 'homework', stepId: 's1' } });
     expect(useAttachRequest.getState().take()).toEqual({
@@ -21,6 +23,14 @@ describe('a wish for the full Capture page', () => {
       resume: false,
       pending: false,
     });
+  });
+
+  it('opens no screen of its own: photos go through the chat bar (#599 R5, owner 12.10.)', () => {
+    askAttach({ open: 'menu' });
+    attachInChat({ open: 'camera' });
+    expect(navigate).not.toHaveBeenCalled();
+    expect(dismissTo.mock.calls.every(([href]) => href === '/buddy')).toBe(true);
+    useAttachRequest.getState().take();
   });
 
   it('is answered once', () => {
@@ -39,10 +49,9 @@ describe('a wish for the full Capture page', () => {
     });
   });
 
-  it('from another screen: navigates once with every link field preserved', () => {
+  it('from another screen: back to the chat, where the bar answers it', () => {
     attachInChat({ open: 'menu', link: { completes: 'm1', add: true } });
-    expect(navigate).toHaveBeenCalledTimes(1);
-    expect(navigate).toHaveBeenCalledWith('/capture');
+    expect(dismissTo).toHaveBeenCalledWith('/buddy');
     expect(useAttachRequest.getState().take()?.link).toEqual({
       ...CHAT_LINK,
       completes: 'm1',

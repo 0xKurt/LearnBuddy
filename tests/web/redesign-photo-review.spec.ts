@@ -26,14 +26,13 @@ for (const look of SCREEN_LOOKS) {
     await screenShots(page, `photo-review-${key}-decisions`);
     await page.getByRole('button', { name: 'Trotzdem behalten', exact: true }).click();
     await expect(title).toHaveCount(0);
-    await expect(
-      page.getByRole('img', { name: 'Foto 1 von 1: Schwer lesbar', exact: true }),
-    ).toBeVisible();
+    // A kept page says so in words on its preview, never by colour alone.
+    const flag = page.getByTestId('attach-tile').getByText('Schwer lesbar', { exact: true });
+    await expect(page.getByRole('img', { name: 'Foto 1 von 1', exact: true })).toBeVisible();
+    await expect(flag).toBeVisible();
     await page.getByRole('button', { name: 'Foto 1 entfernen', exact: true }).click();
-    if (/\/capture$/.test(page.url())) {
-      await page.getByRole('button', { name: 'Zurück', exact: true }).click();
-      await expect(page).toHaveURL(/\/buddy$/);
-    }
+    // Photos go through the chat bar (#599 R5): she never leaves the conversation.
+    await expect(page).toHaveURL(/\/buddy$/);
     await choose();
     const photo = await worksheetJpeg(page);
     const retake = page.waitForEvent('filechooser');
@@ -41,6 +40,7 @@ for (const look of SCREEN_LOOKS) {
     await (await retake).setFiles(photo);
     await expect(title).toHaveCount(0);
     await expect(page.getByRole('img', { name: 'Foto 1 von 1', exact: true })).toBeVisible();
+    await expect(flag).toHaveCount(0);
     await screenShots(page, `photo-review-${key}-retaken`);
   });
 }

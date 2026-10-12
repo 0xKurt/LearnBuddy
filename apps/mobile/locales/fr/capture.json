@@ -1,6 +1,7 @@
 {
   "tip": "Astuce : la page entière, une bonne lumière, prise d'en haut.",
   "privacy": "Les photos sont supprimées au plus tard 7 jours après leur lecture.",
+  "camera_more": "Encore une photo",
   "photo_label": "Photo {{index}} sur {{total}}",
   "remove_label": "Retirer la photo {{index}}",
   "limit": "Une fiche peut avoir au maximum {{max}} photos.",
@@ -78,18 +79,5 @@
     "nothing": "Envoie-moi une photo ou un PDF de ta fiche – je ne peux pas lire de texte ni de liens ici.",
     "signed_out": "Connecte-toi d'abord – puis partage à nouveau la fiche avec LearnBuddy."
   },
-  "preview_failed": "Aperçu impossible",
-  "page": {
-    "intro": "Fiche, page de livre ou cahier – en photo ou PDF. Buddy en fait des exercices.",
-    "send": "Envoyer à Buddy",
-    "count_one": "{{count}} photo",
-    "count_other": "{{count}} photos",
-    "camera_title": "Page entière, bonne lumière, vue de dessus",
-    "privacy": "Les photos sont supprimées au plus tard 7 jours après leur lecture.",
-    "page": "Page",
-    "more": "Autre page",
-    "files_one": "{{count}} PDF",
-    "files_other": "{{count}} PDF",
-    "combined_count": "{{photos}} · {{files}}"
-  }
+  "preview_failed": "Aperçu impossible"
 }
