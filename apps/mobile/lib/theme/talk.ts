@@ -1,10 +1,11 @@
+import { FORM_DENSITY } from './layout.js';
 import { SPACE } from './space.js';
 
 // Conversation-mode frame; Orb/moon rendering and speech behavior stay shared (#548).
 export const TALK = {
   glowHeight: 700,
   groupGap: SPACE.xl,
-  compactBelow: 780,
+  compactBelow: FORM_DENSITY.compactBelow,
   stageSize: 150,
   compactStageSize: 112,
   captionHeight: 60,

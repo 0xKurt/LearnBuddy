@@ -1,11 +1,11 @@
 // The short conversation about one question: the learner's answers on the
-// right in violet, Buddy's replies on the left as white bubbles with the small
-// orb beside them (the same bubbles as the Buddy thread, Conversation.tsx).
+// right in the accent, Buddy's replies as plain full-width text. The header Orb
+// provides the Buddy state.
 // Only the latest answer carries its judgement, always in words and never as
 // "falsch", on a soft pastel chip (right = mint, almost = butter, not yet =
 // neutral); a turn that was not an attempt (a question, "no idea") gets none.
 // What arrives while the screen is open moves a little (Buddy's reply rises in, a right
-// answer is celebrated softly, a "not yet" nudges her answer; Verdict.tsx); what was
+// answer fades in, a "not yet" nudges her answer; Verdict.tsx); what was
 // there when the question opened just stands.
 // Her question to the tutor (issue #402) stands here like any of her turns, on every form, and an
 // answer Buddy offers to keep for later carries the chip "Merk ich mir für nachher" under it — the
@@ -21,15 +21,14 @@ import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { moonForReply, type MoonState } from '../../lib/buddy/moon.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { versionsOf, wordCount } from '../../lib/practice/essay.js';
-import { BUBBLE, TAIL } from '../../lib/theme/bubble.js';
+import { CHAT } from '../../lib/theme/chat.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SHADOW } from '../../lib/theme/shadow.js';
+import { DURATION } from '../../lib/theme/motion.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb } from '../lb/BuddyOrb.js';
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
@@ -43,10 +42,8 @@ import { PronunciationNote } from './SpeakPanel.js';
 import { Thinking } from './Thinking.js';
 import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
 
-/** Buddy's orb beside his bubble; what hangs under a reply starts where the bubble does. */
-const ORB = 26;
 /** The step between turns. */
-const GAP = SPACE.md;
+const GAP = SPACE.lg;
 
 /** null verdict = the answer could not be judged (no model), nothing was graded. */
 function verdictKey(verdict: PracticeTurnView['verdict']): VerdictKey | null {
@@ -145,22 +142,15 @@ export function ItemThread({
   if (turns.length === 0 && pending === null) return null;
 
   let latestAnswerId: string | null = null;
-  let latestReplyId: string | null = null;
   for (const turn of turns) {
     if (turn.role === 'learner') latestAnswerId = turn.id;
-    else latestReplyId = turn.id;
   }
 
   return (
     <View style={{ gap: GAP }}>
       {shown.map((turn) => {
         const mine = turn.role === 'learner';
-        const index = turns.indexOf(turn);
         const fresh = !known.has(turn.id);
-        // Buddy's reply to a right answer that arrives now: his moon celebrates (happy).
-        const before = index > 0 ? turns[index - 1] : undefined;
-        const afterCorrect =
-          !hideVerdicts && before?.role === 'learner' && before.verdict === 'correct';
         // While a new answer is on its way, the previous judgement no longer applies.
         const verdict =
           mine && turn.id === latestAnswerId && pending === null && !hideVerdicts
@@ -173,9 +163,6 @@ export function ItemThread({
             speaker={mine ? t('thread.you') : t('thread.buddy')}
             // Her code as she typed it; her question about it stays her words.
             code={code && mine && turn.verdict !== 'not_an_attempt'}
-            orb={moonForReply({ fresh, afterCorrect })}
-            // Only the newest reply's orb moves, and none while Buddy is looking again.
-            alive={turn.id === latestReplyId && pending === null}
           >
             {!mine && turn.essay ? (
               <Text style={[TYPE.body, { color: palette.ink }]}>
@@ -191,9 +178,11 @@ export function ItemThread({
             // Her own answer was on screen already (while it was sent): only Buddy's reply
             // rises in.
             animate={fresh && !mine}
-            delay={60}
-            // token-exempt: bubble and verdict 6 apart, snug as one turn
-            style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 6 }}
+            delay={DURATION.practiceTurnArrival}
+            style={{
+              alignItems: mine ? 'flex-end' : 'flex-start',
+              gap: PRACTICE_SCREEN.verdictGap,
+            }}
             onLayout={onHeight(turn.id)}
           >
             {mine ? (
@@ -217,19 +206,19 @@ export function ItemThread({
             {/* An explanation's picture (#298), under the reply's bubble like its chips: drawn
                 from data the server checked, and opened large on a tap like every figure. */}
             {!mine && turn.figure ? (
-              <View style={{ marginLeft: ORB + SPACE.sm, alignSelf: 'stretch' }}>
+              <View style={{ alignSelf: 'stretch' }}>
                 <QuestionFigure figure={turn.figure} />
               </View>
             ) : null}
             {/* Under the reply's bubble, not under Buddy's orb. */}
             {turn.later === 'kept' ? (
-              <View style={{ marginLeft: ORB + SPACE.sm }}>
+              <View style={{ alignSelf: 'stretch' }}>
                 <Chip tone="primary" icon="check">
                   {t('ask.kept')}
                 </Chip>
               </View>
             ) : turn.later === 'offered' && later ? (
-              <View style={{ marginLeft: ORB + SPACE.sm }}>
+              <View style={{ alignSelf: 'stretch' }}>
                 <Btn
                   variant="ghost"
                   size="sm"
@@ -249,7 +238,7 @@ export function ItemThread({
         <>
           {echoAnswers || asking ? (
             <Rise style={{ alignItems: 'flex-end' }}>
-              <View style={{ maxWidth: '86%' }}>
+              <View style={{ maxWidth: CHAT.mineWidth }}>
                 <Bubble
                   mine
                   faded
@@ -278,8 +267,6 @@ function Bubble({
   text,
   speaker,
   faded = false,
-  orb = 'idle',
-  alive = false,
   code = false,
   children = null,
 }: {
@@ -289,8 +276,6 @@ function Bubble({
   text: string;
   speaker: string;
   faded?: boolean;
-  orb?: MoonState;
-  alive?: boolean;
   /** Shown in place of the text (the short line over a long text's feedback, issue #258). */
   children?: ReactNode;
 }) {
@@ -301,22 +286,21 @@ function Bubble({
       accessible
       accessibilityLabel={`${speaker}: ${spoken}`}
       style={[
-        BUBBLE,
+        mine ? CHAT.mine : null,
         {
           flexShrink: 1,
-          backgroundColor: mine ? palette.primary : palette.paper,
-          borderBottomRightRadius: mine ? TAIL : BUBBLE.borderRadius,
-          borderBottomLeftRadius: mine ? BUBBLE.borderRadius : TAIL,
-          opacity: faded ? 0.7 : 1,
+          backgroundColor: mine ? palette.primary : undefined,
+          borderBottomRightRadius: mine ? CHAT.tail : undefined,
+          alignSelf: mine ? undefined : 'stretch',
+          opacity: faded ? PRACTICE_SCREEN.fadedOpacity : 1,
         },
-        mine ? null : SHADOW.soft,
       ]}
     >
       {children ??
         (code ? (
           <Text
             accessible={false}
-            style={[TYPE.code, { color: mine ? palette.paper : palette.ink }]}
+            style={[TYPE.code, { color: mine ? palette.onPrimary : palette.ink }]}
           >
             {keepSpaces(text)}
           </Text>
@@ -324,16 +308,10 @@ function Bubble({
           <MathText
             text={text}
             accessible={false}
-            style={[TYPE.body, { color: mine ? palette.paper : palette.ink }]}
+            style={[TYPE.body, { color: mine ? palette.onPrimary : palette.ink }]}
           />
         ))}
     </View>
   );
-  if (mine) return bubble;
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm, maxWidth: '92%' }}>
-      <BuddyOrb size={ORB} state={orb} breathe={alive} />
-      {bubble}
-    </View>
-  );
+  return bubble;
 }

@@ -16,6 +16,7 @@
 // Der Text bleibt, wie sie ihn verlassen hat, solange die Fragen denselben Text haben: eingeklappt
 // bleibt eingeklappt, und wo sie hingescrollt hat, bleibt sie (`kept`, je Text).
 
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { lineNumbers, type PassageView } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -177,7 +178,9 @@ export function PassagePanel({ passage, maxHeight }: Props) {
         {title}
       </Btn>
       {open ? (
-        <View style={{ borderTopWidth: 1, borderTopColor: palette.hairline }}>
+        <View
+          style={{ borderTopWidth: PRACTICE_SCREEN.evidenceRule, borderTopColor: palette.hairline }}
+        >
           <ScrollView
             ref={scroll}
             testID="scroll-text"
@@ -253,11 +256,11 @@ export function PassagePanel({ passage, maxHeight }: Props) {
             gap: SPACE.xs,
             paddingHorizontal: SPACE.md,
             paddingVertical: SPACE.sm,
-            borderTopWidth: 1,
+            borderTopWidth: PRACTICE_SCREEN.evidenceRule,
             borderTopColor: palette.hairline,
           }}
         >
-          <Icon name="book" size={14} color={palette.primaryDk} />
+          <Icon name="book" size={PRACTICE_SCREEN.evidenceGlyph} color={palette.primaryDk} />
           <Text testID="evidence" style={[TYPE.label, { color: palette.primaryDk }]}>
             {at.from === at.to
               ? t('reading.evidence_one', { from: at.from })

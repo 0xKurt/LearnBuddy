@@ -69,6 +69,7 @@ function typeOf(p: Palette) {
     bodyStrong: { ...body, ...fontFace('600') },
     quote: { ...meta, fontStyle: 'italic', color: p.primaryDk },
     metaMedium: { ...meta, ...fontFace('500') },
+    metaSemibold: { ...meta, ...fontFace('600') },
     speech: { ...fontFace('500'), fontSize: 24, lineHeight: 32, color: p.ink },
     speechMarked: { ...fontFace('500'), fontSize: 24, lineHeight: 36, color: p.ink },
     speechWord: { ...fontFace('700'), fontSize: 24, lineHeight: 36, color: p.ink },

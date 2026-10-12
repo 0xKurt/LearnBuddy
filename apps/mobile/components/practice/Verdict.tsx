@@ -1,273 +1,99 @@
-// How a judgement arrives. The chip always carries the word (never colour alone); the
-// movement only says "this just happened":
-// - right: the chip pops in, its check draws itself, a soft mint glow breathes out behind
-//   it and a few tiny pastel dots drift away — calm, over in well under a second;
-// - "Fast" / "Noch nicht ganz": the chip fades in and her answer gives a small, gentle
-//   shake (a nudge, never an alarm).
-// Only a judgement that arrives while the screen is open moves (`fresh`); one that was
-// already there when the question opened just stands. Reduce motion: no movement at all.
-
-import { useEffect, type ReactNode } from 'react';
+// Feedback carries its meaning in words. A fresh result may fade in; live reduced motion
+// finishes that transition and cancels a finite answer nudge immediately.
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
-  Easing,
-  useAnimatedProps,
+  cancelAnimation,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
-  withDelay,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
-
-import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, EASE } from '../../lib/theme/motion.js';
+import { ACTIVE_MOTION, DURATION, EASE, useMotionReduced } from '../../lib/theme/motion.js';
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
+import { CHAT } from '../../lib/theme/chat.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { Icon } from '../lb/Icon.js';
 
 export type VerdictKey = 'correct' | 'partially_correct' | 'incorrect' | 'unchecked';
 
-// Soft pastel chips with dark text; the word carries the meaning (a small check for "right").
-// Built from the palette in use: module-scope maps froze the start palette (issue #84).
-const verdictBg = (p: Palette): Record<VerdictKey, string> => ({
-  correct: p.mint,
-  partially_correct: p.butter,
-  incorrect: p.canvas,
-  unchecked: p.canvas,
-});
-const verdictText = (p: Palette): Record<VerdictKey, string> => ({
-  correct: p.successText,
-  partially_correct: p.warningText,
-  incorrect: p.ink2,
-  unchecked: p.ink2,
-});
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
-
-/** The chip and its glow and ring: fully round ends, like Chip. */
-const PILL = 999;
-
-/** The check's path ("M5 12l5 5 9-10") is about 20.5 units long. */
-const CHECK_LENGTH = 21;
-
-type Spark = { angle: number; distance: number; color: string; size: number };
-
-/** Tiny dots around a right answer: direction (degrees), distance, colour (render-time). */
-const sparks = (p: Palette): readonly Spark[] => [
-  { angle: -168, distance: 58, color: p.skyDeep, size: 6 },
-  { angle: -140, distance: 46, color: p.peachDeep, size: 7 },
-  { angle: -110, distance: 30, color: p.lavenderDeep, size: 6 },
-  { angle: -72, distance: 28, color: p.mintDeep, size: 7 },
-  { angle: -40, distance: 40, color: p.blushDeep, size: 5 },
-  { angle: 160, distance: 52, color: p.lavenderDeep, size: 5 },
-  { angle: 120, distance: 26, color: p.peachDeep, size: 5 },
-];
-
-type Props = {
+export function VerdictTag({
+  verdict,
+  label,
+  fresh,
+}: {
   verdict: VerdictKey;
   label: string;
-  /** It arrived just now: animate it. */
   fresh: boolean;
-};
-
-export function VerdictTag({ verdict, label, fresh }: Props) {
+}) {
   const { palette } = useTheme();
-  const reduced = useReducedMotion();
-  const animate = fresh && !reduced;
+  const reduced = useMotionReduced();
+  const played = useRef(false);
+  const shown = useSharedValue(fresh && !reduced ? 0 : 1);
+  useEffect(() => {
+    cancelAnimation(shown);
+    const animate = fresh && !reduced && !played.current;
+    played.current = true;
+    shown.value = animate
+      ? withTiming(1, { duration: DURATION.base, easing: EASE.standard, ...ACTIVE_MOTION })
+      : 1;
+    return () => cancelAnimation(shown);
+  }, [fresh, reduced, shown]);
+  const style = useAnimatedStyle(() => ({ opacity: shown.value }));
   const right = verdict === 'correct';
-  const shown = useSharedValue(animate ? 0 : 1);
-  const drawn = useSharedValue(animate ? 0 : 1);
-
-  useEffect(() => {
-    if (!animate) return;
-    shown.value = withTiming(1, {
-      duration: right ? DURATION.gentle : DURATION.base,
-      easing: right ? EASE.celebrate : EASE.standard,
-    });
-    if (right)
-      drawn.value = withDelay(
-        DURATION.quick,
-        withTiming(1, { duration: DURATION.base, easing: EASE.standard }),
-      );
-  }, [animate, right, shown, drawn]);
-
-  const chip = useAnimatedStyle(() => ({
-    opacity: Math.min(1, shown.value * 1.4),
-    transform: [{ scale: right ? 0.7 + shown.value * 0.3 : 0.94 + shown.value * 0.06 }],
-  }));
-  const checkProps = useAnimatedProps(() => ({
-    strokeDashoffset: CHECK_LENGTH * (1 - drawn.value),
-  }));
-
-  return (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      {right && animate ? <Celebration /> : null}
-      <Animated.View
-        accessibilityRole="text"
-        accessibilityLabel={label}
-        style={[
-          {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: SPACE.xs,
-            backgroundColor: verdictBg(palette)[verdict],
-            borderRadius: PILL,
-            // token-exempt: the chip's own snug padding; with the tick in front the left is 10
-            paddingLeft: right ? 10 : 14,
-            paddingRight: 14, // token-exempt: the chip's padding (above)
-            paddingVertical: 5, // token-exempt: the chip's padding (above)
-          },
-          chip,
-        ]}
-      >
-        {right ? (
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Svg width={15} height={15} viewBox="0 0 24 24">
-              <AnimatedPath
-                d="M5 12l5 5 9-10"
-                fill="none"
-                stroke={verdictText(palette).correct}
-                strokeWidth={2.2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeDasharray={`${CHECK_LENGTH} ${CHECK_LENGTH}`}
-                animatedProps={checkProps}
-              />
-            </Svg>
-          </View>
-        ) : null}
-        <Text
-          style={[
-            TYPE.caption,
-            { color: verdictText(palette)[verdict], fontWeight: '600', letterSpacing: 0.1 },
-          ]}
-        >
-          {label}
-        </Text>
-      </Animated.View>
-    </View>
-  );
-}
-
-/** The soft glow and the few drifting dots behind a right answer (decorative). */
-function Celebration() {
-  const { palette } = useTheme();
-  const t = useSharedValue(0);
-  useEffect(() => {
-    t.value = withTiming(1, { duration: 820, easing: Easing.out(Easing.cubic) });
-  }, [t]);
-  // A soft mint light that swells and fades, and a thin ring that breathes outwards.
-  const glow = useAnimatedStyle(() => ({
-    opacity: t.value < 0.2 ? t.value * 2 : Math.max(0, 0.4 * (1 - (t.value - 0.2) / 0.8)),
-    transform: [{ scaleX: 0.9 + t.value * 0.12 }, { scaleY: 0.9 + t.value * 0.35 }],
-  }));
-  const ring = useAnimatedStyle(() => ({
-    opacity: Math.max(0, 0.7 * (1 - t.value)),
-    transform: [{ scaleX: 1 + t.value * 0.14 }, { scaleY: 1 + t.value * 0.6 }],
-  }));
-  return (
-    <View
-      pointerEvents="none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}
-    >
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            top: -3,
-            bottom: -3,
-            left: -6,
-            right: -6,
-            borderRadius: PILL,
-            backgroundColor: palette.mintDeep,
-          },
-          glow,
-        ]}
-      />
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            borderRadius: PILL,
-            borderWidth: 1.5,
-            borderColor: palette.success,
-          },
-          ring,
-        ]}
-      />
-      {sparks(palette).map((s, i) => (
-        <Spark key={i} {...s} progress={t} />
-      ))}
-    </View>
-  );
-}
-
-function Spark({
-  angle,
-  distance,
-  color,
-  size,
-  progress,
-}: Spark & { progress: { value: number } }) {
-  const rad = (angle * Math.PI) / 180;
-  /** The spark is a circle centred on its point. */
-  const radius = size / 2;
-  const style = useAnimatedStyle(() => {
-    const p = progress.value;
-    return {
-      opacity: p < 0.15 ? p / 0.15 : Math.max(0, 1 - (p - 0.15) / 0.85),
-      transform: [
-        { translateX: Math.cos(rad) * distance * p },
-        { translateY: Math.sin(rad) * distance * p },
-        { scale: 1 - p * 0.4 },
-      ],
-    };
-  });
+  const partial = verdict === 'partially_correct';
+  const color = right ? palette.successText : partial ? palette.warningText : palette.ink2;
   return (
     <Animated.View
+      accessibilityRole="text"
+      accessibilityLabel={label}
       style={[
         {
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: size,
-          height: size,
-          marginLeft: -radius,
-          marginTop: -radius,
-          borderRadius: radius,
-          backgroundColor: color,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: SPACE.xs,
+          backgroundColor: right ? palette.mint : partial ? palette.butter : palette.canvas,
+          borderRadius: PRACTICE_SCREEN.verdictRadius,
+          paddingHorizontal: PRACTICE_SCREEN.verdictPadding,
+          paddingVertical: PRACTICE_SCREEN.verdictPaddingVertical,
         },
         style,
       ]}
-    />
+    >
+      {right ? (
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Icon name="check" size={PRACTICE_SCREEN.verdictIcon} color={color} />
+        </View>
+      ) : null}
+      <Text style={[TYPE.label, { color }]}>{label}</Text>
+    </Animated.View>
   );
 }
 
-/** Her answer that was not right yet: one small, soft shake when the judgement arrives. */
 export function Nudge({ active, children }: { active: boolean; children: ReactNode }) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   const x = useSharedValue(0);
+  const played = useRef(false);
   useEffect(() => {
-    if (!active || reduced) return;
-    const step = { duration: 70, easing: EASE.standard };
-    // Only towards the middle of the screen: her bubble sits at the right edge.
+    cancelAnimation(x);
+    if (!active) played.current = false;
+    if (!active || reduced || played.current) {
+      if (active) played.current = true;
+      x.value = 0;
+      return;
+    }
+    played.current = true;
+    const step = { duration: DURATION.verdictNudgeStep, easing: EASE.standard, ...ACTIVE_MOTION };
     x.value = withSequence(
-      withTiming(-7, step),
-      withTiming(0, step),
-      withTiming(-4, step),
-      withTiming(0, step),
-      withTiming(-2, step),
-      withTiming(0, step),
+      ...PRACTICE_SCREEN.nudgeOffsets.flatMap((offset) => [
+        withTiming(offset, step),
+        withTiming(0, step),
+      ]),
     );
+    return () => cancelAnimation(x);
   }, [active, reduced, x]);
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  return <Animated.View style={[{ maxWidth: '86%' }, style]}>{children}</Animated.View>;
+  return <Animated.View style={[{ maxWidth: CHAT.mineWidth }, style]}>{children}</Animated.View>;
 }
