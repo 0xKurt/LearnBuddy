@@ -224,7 +224,7 @@ export default function Welcome() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-      <Glow height={AUTH.glow} />
+      <Glow />
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
           testID="scroll-form"

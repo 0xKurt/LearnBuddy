@@ -152,7 +152,7 @@ export default function ResetPassword() {
   if (phase === 'checking') {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-        <Glow height={RESET.glow} />
+        <Glow />
         <LoadingState label={t('reset.checking')} />
       </SafeAreaView>
     );
@@ -164,7 +164,7 @@ export default function ResetPassword() {
       resetTouched && resetEmail.trim().length > 0 && !looksLikeEmail(resetEmail.trim());
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-        <Glow height={RESET.glow} />
+        <Glow />
         <KeyboardSafe style={{ flex: 1 }}>
           <ResetPage
             title={t(offline ? 'reset.offline_title' : 'reset.invalid_title')}
@@ -229,7 +229,7 @@ export default function ResetPassword() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-      <Glow height={RESET.glow} />
+      <Glow />
       <KeyboardSafe style={{ flex: 1 }}>
         <ResetPage title={t('reset.title')} keyboardShouldPersistTaps="handled">
           <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('reset.body')}</Text>

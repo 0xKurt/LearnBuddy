@@ -426,7 +426,7 @@ export default function TalkScreen() {
       // VoiceOver's Magic Tap (two-finger double tap) is the mic: speak, done, interrupt.
       onMagicTap={onMic}
     >
-      <Glow height={TALK.glowHeight} />
+      <Glow />
       <View
         style={{
           flexDirection: 'row',
