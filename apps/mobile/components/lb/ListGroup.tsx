@@ -41,6 +41,7 @@ export type RowProps = {
   /** A factual completed row remains readable, with its title struck and muted. */
   completed?: boolean;
   chevron?: boolean;
+  indicator?: 'chevron' | 'more';
   sub?: string;
   value?: string;
   icon?: IconName;
@@ -57,6 +58,7 @@ export function Row({
   title,
   completed = false,
   chevron = true,
+  indicator = 'chevron',
   sub,
   value,
   icon,
@@ -105,7 +107,11 @@ export function Row({
       </View>
       {value ? <Text style={TYPE.meta}>{value}</Text> : null}
       {onPress && chevron && trailing == null ? (
-        <Icon name="chevron" size={UI.list.chevron} color={palette.ink3} />
+        <Icon
+          name={indicator}
+          size={indicator === 'more' ? UI.list.icon : UI.list.chevron}
+          color={palette.ink3}
+        />
       ) : null}
     </>
   );

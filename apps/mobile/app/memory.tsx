@@ -28,6 +28,8 @@ import { keys, queryClient, useMemory } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { MEMORY } from '../lib/theme/memory.js';
+import { DURATION, motionIsReduced } from '../lib/theme/motion.js';
 import { SPACE } from '../lib/theme/space.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
@@ -61,7 +63,7 @@ function rowsOf(memories: MemoryView[]): Row[] {
 }
 
 /** A field that got the focus is scrolled to near the top once the keyboard is up. */
-const AFTER_KEYBOARD_MS = 280;
+const AFTER_KEYBOARD_MS = DURATION.keyboardReveal;
 
 export default function MemoryScreen() {
   const { palette } = useTheme();
@@ -165,12 +167,16 @@ export default function MemoryScreen() {
   /** Keeps the field she is typing in above the keyboard. */
   const reveal = (index: number) => {
     setTimeout(() => {
-      void list.current?.scrollToIndex({ index, animated: true, viewOffset: -12 });
+      void list.current?.scrollToIndex({
+        index,
+        animated: !motionIsReduced(),
+        viewOffset: MEMORY.revealOffset,
+      });
     }, AFTER_KEYBOARD_MS);
   };
 
   const heading = (text: string) => (
-    <Text accessibilityRole="header" style={[TYPE.title, { paddingHorizontal: SPACE.xs }]}>
+    <Text accessibilityRole="header" style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
       {text}
     </Text>
   );
@@ -185,7 +191,7 @@ export default function MemoryScreen() {
               {
                 color: palette.ink2,
                 paddingHorizontal: SPACE.xs,
-                marginBottom: 28, // token-exempt: the intro set well apart from the first section
+                marginBottom: MEMORY.introGap,
               },
             ]}
           >
@@ -194,9 +200,9 @@ export default function MemoryScreen() {
         );
       case 'empty':
         // The one shared empty state, not a bespoke card (same action → same component).
-        return <EmptyState orb title={t('memory:empty_title')} body={t('memory:empty_body')} />;
+        return <EmptyState title={t('memory:empty_title')} body={t('memory:empty_body')} />;
       case 'lasting':
-        return <View style={{ marginBottom: SPACE.md }}>{heading(t('memory:lasting'))}</View>;
+        return <View>{heading(t('memory:lasting'))}</View>;
       case 'temporary':
         return (
           <View style={{ marginTop: SPACE.lg, marginBottom: SPACE.md }}>
@@ -217,9 +223,11 @@ export default function MemoryScreen() {
       case 'memory': {
         const m = row.memory;
         return (
-          <Rise animate={entering(index)} index={index} style={{ marginBottom: SPACE.md }}>
+          <Rise animate={entering(index)} index={index}>
             <MemoryItem
               memory={m}
+              groupStart={rows[index - 1]?.type !== 'memory'}
+              groupEnd={rows[index + 1]?.type !== 'memory'}
               temporary={row.temporary}
               editing={editingId === m.id}
               draft={draft}
@@ -259,8 +267,7 @@ export default function MemoryScreen() {
           extraData={{ editingId, draft, savingId }}
           contentContainerStyle={{
             padding: SPACE.lg,
-            // token-exempt: room of 48 past the inset, the last memory clear of the edge
-            paddingBottom: insets.bottom + 48,
+            paddingBottom: insets.bottom + MEMORY.bottomRoom,
           }}
           keyboardShouldPersistTaps="handled"
           refreshControl={

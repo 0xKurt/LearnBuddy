@@ -10,6 +10,7 @@ export const DURATION = {
   reexplainReply: 200,
   base: 220,
   gentle: 420,
+  keyboardReveal: 280,
   voicePulse: 1200,
   recordingPulse: 700,
   wordRevealLag: 700,
