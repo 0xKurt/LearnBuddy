@@ -123,3 +123,7 @@ export type StartMenu = {
 };
 
 export const startMenu = slot<StartMenu>('Start-Menü');
+
+/** Actual subject cards in the open Profile editor; absent without a learning domain. */
+export const profileSubjects =
+  slot<ComponentType<{ onOpenSubject: (id: string) => void }>>('Profil-Fächer');

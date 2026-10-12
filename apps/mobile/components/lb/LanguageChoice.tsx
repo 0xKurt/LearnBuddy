@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from './Btn.js';
 import { Sheet } from './Sheet.js';
+import { ChoiceOptions } from './ChoiceOptions.js';
 
 type Props<T extends string> = {
   value: T;
@@ -39,24 +39,16 @@ export function LanguageChoice<T extends string>({
         </Btn>
       </View>
       <Sheet visible={open} title={label} closeLabel={closeLabel} onClose={() => setOpen(false)}>
-        <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: SPACE.sm }}>
-          {options.map((option) => (
-            <Btn
-              key={option.value}
-              variant={option.value === value ? 'picked' : 'quiet'}
-              icon={option.value === value ? 'check' : undefined}
-              size="sm"
-              full
-              selected={option.value === value}
-              onPress={() => {
-                setOpen(false);
-                onChange(option.value);
-              }}
-            >
-              {option.label}
-            </Btn>
-          ))}
-        </View>
+        <ChoiceOptions
+          size="sm"
+          options={options}
+          value={value}
+          label={label}
+          onChange={(next) => {
+            setOpen(false);
+            onChange(next);
+          }}
+        />
       </Sheet>
     </>
   );
