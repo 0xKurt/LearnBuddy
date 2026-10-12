@@ -4,13 +4,11 @@
 
 import type { SessionView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 
-import { DURATION } from '../../lib/theme/motion.js';
 import { RESULT } from '../../lib/theme/results.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
-import { Appear } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
 import { AgainButton } from './AgainButton.js';
 import { BottomBar } from '../lb/BottomBar.js';
@@ -44,28 +42,25 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
                 .filter((t): t is string => t !== undefined && t.length > 0),
             ),
           ];
-  const screen = session.mode !== 'test' || session.timer?.ran_out !== true;
   return (
     <Screen
       title={title}
-      subtitle={screen ? t('practice:summary.finished') : undefined}
-      state={screen ? 'happy' : undefined}
-      leading={
-        screen ? { icon: 'close', label: t('practice:back_to_buddy'), onPress: onBack } : undefined
-      }
+      subtitle={t('practice:summary.finished')}
+      state={session.timer?.ran_out === true ? 'idle' : 'happy'}
+      leading={{ icon: 'close', label: t('practice:back_to_buddy'), onPress: onBack }}
     >
       <ScrollView
         testID="scroll-list"
         tabIndex={Platform.OS === 'web' ? 0 : undefined}
         contentContainerStyle={{
           padding: SPACE.lg,
-          paddingTop: screen ? RESULT.top : SPACE.lg,
+          paddingTop: RESULT.top,
           paddingBottom: SPACE.xl,
         }}
         keyboardShouldPersistTaps="handled"
       >
         <SessionSummary
-          presentation={screen ? 'screen' : 'legacy'}
+          presentation="screen"
           celebrate={celebrate}
           summary={summary}
           mode={session.mode}
@@ -75,16 +70,10 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
         />
       </ScrollView>
       <BottomBar>
-        <Appear
-          animate={!screen}
-          delay={screen ? 0 : celebrate ? DURATION.summaryActions : 0}
-          style={{ gap: SPACE.sm }}
-        >
-          {screen ? (
-            <Btn size="lg" pill full onPress={onBack}>
-              {t('practice:back_to_buddy')}
-            </Btn>
-          ) : null}
+        <View style={{ gap: SPACE.sm }}>
+          <Btn size="lg" pill full onPress={onBack}>
+            {t('practice:back_to_buddy')}
+          </Btn>
           {/* Weiterüben ist immer einen Tipp entfernt (issue #47): das Wacklige zuerst,
               sonst mehr vom Sitzenden — und wenn die Zusammenfassung keine Themen kennt,
               die der Fragen selbst. Eine Übung endet nie in einer Sackgasse. */}
@@ -97,7 +86,7 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
           {session.card_pass_offered ? (
             <Btn
               size="lg"
-              variant={screen ? 'ghost' : 'soft'}
+              variant="ghost"
               pill
               icon="practice"
               full
@@ -109,19 +98,14 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
             </Btn>
           ) : session.mode !== 'help' && againTopics.length > 0 ? (
             <AgainButton
-              quiet={screen}
+              quiet
               {...(summary.shaky_topics.length > 0 ? {} : { kind: 'harder' as const })}
               title={session.title}
               topics={againTopics}
               sessionId={session.id}
             />
           ) : null}
-          {screen ? null : (
-            <Btn size="lg" pill full onPress={onBack}>
-              {t('practice:back_to_buddy')}
-            </Btn>
-          )}
-        </Appear>
+        </View>
       </BottomBar>
     </Screen>
   );
