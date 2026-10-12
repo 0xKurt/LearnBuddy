@@ -7,6 +7,8 @@ import type { ItemResult, MaterialItemView } from '@learnbuddy/shared-types/cont
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { UI } from '../../lib/theme/components.js';
+import { MATERIAL_DETAIL } from '../../lib/theme/materialDetail.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -56,8 +58,7 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
         <MathText text={lettered(item.prompt, part)} style={TYPE.body} />
         {item.figure ? <QuestionFigure figure={item.figure} /> : null}
         {choices ? (
-          // token-exempt: the label snug over its choices, 6 apart
-          <View style={{ gap: 6 }}>
+          <View style={{ gap: UI.field.labelGap }}>
             <Text style={TYPE.label}>{t('items.choices')}</Text>
             {choices.map((choice, index) => (
               <View
@@ -68,8 +69,8 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
                   style={{
                     // min sizes: large system text grows the letter's circle instead of
                     // clipping it in a fixed box (audit M-84, issue #73).
-                    minWidth: 24,
-                    minHeight: 24,
+                    minWidth: MATERIAL_DETAIL.choiceBadge,
+                    minHeight: MATERIAL_DETAIL.choiceBadge,
                     borderRadius: RADIUS.round,
                     backgroundColor: palette.lavender,
                     alignItems: 'center',
@@ -84,7 +85,7 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <MathText text={choice} style={TYPE.small} />
+                  <MathText text={choice} style={TYPE.meta} />
                 </View>
               </View>
             ))}
@@ -93,7 +94,8 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
           <Btn
             size="sm"
-            variant="ghost"
+            variant="quiet"
+            bare
             pill
             disabled={disabled}
             onPress={onDelete}

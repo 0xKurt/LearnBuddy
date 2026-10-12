@@ -73,7 +73,6 @@
   },
   "open": "Vedi le domande",
   "open_label": "Vedi le domande di «{{title}}»",
-  "rename": "Rinomina",
   "rename_label": "Rinomina «{{title}}»",
   "rename_sheet": {
     "title": "Rinomina il foglio",

@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialItemCard } from '../../components/library/MaterialItemCard.js';
 import { Btn } from '../../components/lb/Btn.js';
+import { IconBtn } from '../../components/lb/IconBtn.js';
 import { Card } from '../../components/lb/Card.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { ErrorNote } from '../../components/lb/ErrorNote.js';
@@ -27,8 +28,9 @@ import { deleteMaterialItem, renameMaterial } from '../../lib/api/endpoints.js';
 import { useMaterialItems } from '../../lib/api/libraryQueries.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
+import { MATERIAL_DETAIL } from '../../lib/theme/materialDetail.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { bottomRoom, RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { bottomRoom, GUTTER, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { attachInChat } from '../../lib/capture/attachRequest.js';
 
@@ -200,46 +202,41 @@ export default function MaterialScreen() {
       <ScrollView
         testID="scroll-list"
         contentContainerStyle={{
-          padding: SPACE.lg,
+          padding: GUTTER,
           // Edge-to-edge: the last card must clear the Android navigation bar.
-          // token-exempt: room of 32 past the inset, the last card well clear of the edge
-          paddingBottom: bottomRoom(insets.bottom, 32),
+          paddingBottom: bottomRoom(insets.bottom, MATERIAL_DETAIL.bottomClearance),
           gap: RHYTHM.stack,
           flexGrow: 1,
         }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
       >
-        {/* token-exempt: the headline's lines 6 apart, snug as one heading */}
-        <View style={{ gap: 6, marginBottom: SPACE.sm, paddingHorizontal: SPACE.xs }}>
-          {/* A detail screen's headline at displaySm's size; it keeps display's tracking, as it
-              always had — displaySm's own is a visible change of its own (#311 follow-up). */}
-          <Text
-            accessibilityRole="header"
-            style={[TYPE.displaySm, { letterSpacing: TYPE.display.letterSpacing }]}
-          >
-            {title}
-          </Text>
-          <Text style={[TYPE.body, { color: palette.ink2 }]}>
-            {[material.subject_name, t('library:questions', { count: data.items.length })]
-              .filter(Boolean)
-              .join(' · ')}
-          </Text>
+        <View style={{ gap: SPACE.sm }}>
+          <View style={{ gap: SPACE.xs }}>
+            <Text accessibilityRole="header" style={TYPE.title}>
+              {title}
+            </Text>
+            <Text style={[TYPE.meta, { color: palette.ink2 }]}>
+              {[material.subject_name, t('library:questions', { count: data.items.length })]
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+          </View>
           {material.source !== 'sheet' ? (
             // Where these questions came from (issue #259): a corrected test's are NEW tasks for
             // what was marked, a notebook entry's a few for the next morning — said once, quietly.
-            <Text style={[TYPE.body, { color: palette.ink2 }]}>
+            <Text style={[TYPE.meta, { color: palette.ink2 }]}>
               {t(`library:source.${material.source}`)}
             </Text>
           ) : null}
           {missed !== null && empty?.body !== missed ? (
-            <Text style={[TYPE.body, { color: palette.ink2 }]}>{missed}</Text>
+            <Text style={[TYPE.meta, { color: palette.ink2 }]}>{missed}</Text>
           ) : null}
           {material.status === 'ready' ? (
             // A page she forgot: its questions join this sheet once read.
             <View style={{ flexDirection: 'row', marginTop: SPACE.xs }}>
               <Btn
-                size="sm"
-                variant="soft"
+                full
+                variant="secondary"
                 pill
                 icon="camera"
                 disabled={deleting || renaming}
@@ -258,7 +255,7 @@ export default function MaterialScreen() {
         </View>
         {empty !== null ? (
           <View style={{ flex: 1, justifyContent: 'center' }}>
-            <EmptyState orb title={empty.title} body={empty.body} />
+            <EmptyState title={empty.title} body={empty.body} />
           </View>
         ) : (
           data.items.map((item, index) => (
@@ -277,19 +274,21 @@ export default function MaterialScreen() {
 
   return (
     <Screen
-      back
+      title={t('library:title')}
+      leading={{
+        icon: 'back',
+        label: t('library:items.back'),
+        onPress: () => (router.canGoBack() ? router.back() : router.replace('/library')),
+      }}
       right={
         material ? (
-          <Btn
-            size="sm"
-            variant="outline"
-            pill
+          <IconBtn
+            icon="pencil"
+            tone="plain"
             disabled={deleting || renaming}
             onPress={openRename}
             accessibilityLabel={t('library:rename_label', { title })}
-          >
-            {t('library:rename')}
-          </Btn>
+          />
         ) : undefined
       }
     >
@@ -302,7 +301,7 @@ export default function MaterialScreen() {
         onClose={() => setDeleteOpen(false)}
       >
         {target ? (
-          <Card tone="lavender" padding={SPACE.lg} radius={18}>
+          <Card tone="lavender">
             <MathText text={target.item.prompt} style={TYPE.body} />
           </Card>
         ) : null}
