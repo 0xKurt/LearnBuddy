@@ -1,17 +1,20 @@
-// Bottom sheet. Always closable with a visible in-sheet button (CLAUDE.md
-// rule 14); the backdrop and a swipe down on its top (the grab handle and the
-// title) also close it, but are never the only way.
-// A sheet with a form passes its CTA as `footer`: it stays pinned under the
-// scrolling content and, with the keyboard open, right above the keyboard
-// (CLAUDE.md rule 15).
-// Looks: a rounded white top sheet on a soft shadow, with a small grab handle
-// over a light violet-grey veil. Motion: the veil fades, the sheet rises on the
-// shared calm spring and slides away when it closes (the whole close stays under
-// the 450 ms that callers wait for, adultGate.tsx). Reduce motion: it appears and closes immediately.
+import { useMounted } from '../../lib/useMounted.js';
+// Original shared Sheet frame: veil, grabber and content; no global visible close footer.
+// The grabber has a44-point accessible dismissal target. Backdrop/swipe/keyboard dismissal
+// retain the caller's onClose, and a real form may pin its own footer outside the scroll.
+// Live reduced motion settles the same actual host-close boundary immediately.
 
 import { FormFrameContext, useFormViewport } from './FormFrameClearance.js';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -27,9 +30,9 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { UI } from '../../lib/theme/components.js';
 import { ACTIVE_MOTION, DURATION, EASE, SPRING, useMotionReduced } from '../../lib/theme/motion.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
-import { bottomRoom, RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { bottomRoom, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from './Btn.js';
+import { PressArea } from './PressArea.js';
 import { dismissedBySwipe } from '../../lib/gestures.js';
 import { KeyboardSafe } from './KeyboardSafe.js';
 import { useA11ySettings } from '../../lib/a11ySettings.js';
@@ -39,6 +42,8 @@ type Props = {
   title: string;
   closeLabel: string;
   onClose: () => void;
+  /** Actual closed host boundary; optional for a following sheet or route. */
+  onClosed?: () => void;
   children: ReactNode;
   /** Pinned below the content, above the close button (a form's main action). */
   footer?: ReactNode;
@@ -62,6 +67,7 @@ export function Sheet({
   title,
   closeLabel,
   onClose,
+  onClosed,
   children,
   footer,
   scrollTestID,
@@ -85,18 +91,62 @@ export function Sheet({
   const reduced = useMotionReduced();
   // Stays mounted while it slides out.
   const [mounted, setMounted] = useState(visible);
+  const [hostVisible, setHostVisible] = useState(visible);
+  const generation = useRef(0);
+  const lastVisible = useRef(visible);
+  if (lastVisible.current !== visible) {
+    generation.current += 1;
+    lastVisible.current = visible;
+  }
+  const closing = useRef<number | null>(null);
+  const alive = useMounted();
+  const current = useRef({ visible, onClosed });
+  current.current = { visible, onClosed };
+  const hideHost = useCallback((epoch: number) => {
+    if (!alive.current || current.current.visible || generation.current !== epoch) return;
+    closing.current = epoch;
+    setHostVisible(false);
+  }, []);
+  const dismissed = useCallback((epoch: number) => {
+    if (
+      !alive.current ||
+      current.current.visible ||
+      closing.current !== epoch ||
+      generation.current !== epoch
+    )
+      return;
+    closing.current = null;
+    setMounted(false);
+    current.current.onClosed?.();
+  }, []);
+  useEffect(
+    () => () => {
+      generation.current += 1;
+    },
+    [],
+  );
+  // Android removes its native Modal host when visible=false; onDismiss is iOS/web only.
+  useLayoutEffect(() => {
+    if (Platform.OS === 'android' && !hostVisible) dismissed(closing.current ?? -1);
+  }, [hostVisible, dismissed]);
   /** 0 = closed (off screen, veil clear), 1 = open. */
   const shown = useSharedValue(0);
   /** How far a finger pulled it down (px). */
   const drag = useSharedValue(0);
 
   useEffect(() => {
+    const epoch = generation.current;
+    if (visible) {
+      closing.current = null;
+      setHostVisible(true);
+    }
     if (reduced) {
       cancelAnimation(shown);
       cancelAnimation(drag);
       shown.value = visible ? 1 : 0;
       drag.value = 0;
-      setMounted(visible);
+      if (visible) setMounted(true);
+      else hideHost(epoch);
       return;
     }
     if (visible) {
@@ -113,10 +163,10 @@ export function Sheet({
       0,
       { duration: DURATION.base, easing: EASE.standard, ...ACTIVE_MOTION },
       (finished) => {
-        if (finished) runOnJS(setMounted)(false);
+        if (finished) runOnJS(hideHost)(epoch);
       },
     );
-  }, [visible, reduced, shown, drag]);
+  }, [visible, reduced, shown, drag, hideHost]);
 
   const pan = Gesture.Pan()
     .activeOffsetY(UI.sheet.gestureStart)
@@ -141,10 +191,12 @@ export function Sheet({
     return { transform: [{ translateY: offset + Math.max(0, drag.value) }] };
   });
 
+  const hostEpoch = generation.current;
   if (!mounted) return null;
   return (
     <Modal
-      visible
+      visible={hostVisible}
+      onDismiss={() => dismissed(hostEpoch)}
       transparent
       animationType="none"
       onRequestClose={onClose}
@@ -193,12 +245,13 @@ export function Sheet({
             </Animated.View>
             <Animated.View
               accessibilityViewIsModal
+              onAccessibilityEscape={onClose}
               style={[
                 {
                   backgroundColor: palette.bg,
                   borderTopLeftRadius: CORNER,
                   borderTopRightRadius: CORNER,
-                  paddingBottom: bottomRoom(insets.bottom, SPACE.sm),
+                  paddingBottom: bottomRoom(insets.bottom, UI.sheet.bottomPad),
                   maxHeight: `${SHEET_MAX * 100}%`,
                   ...SHADOW.float,
                 },
@@ -211,7 +264,7 @@ export function Sheet({
                   style={{
                     paddingTop: UI.sheet.topPad,
                     paddingHorizontal: SIDE,
-                    paddingBottom: SPACE.md,
+                    paddingBottom: UI.sheet.contentGap,
                   }}
                 >
                   <View
@@ -223,10 +276,21 @@ export function Sheet({
                       height: UI.sheet.handleHeight,
                       borderRadius: UI.sheet.handleRadius,
                       backgroundColor: palette.ink4,
-                      marginBottom: RHYTHM.stack,
+                      marginBottom: UI.sheet.contentGap,
                     }}
                   />
-                  <Text accessibilityRole="header" style={TYPE.title}>
+                  <PressArea
+                    accessibilityRole="button"
+                    accessibilityLabel={closeLabel}
+                    onPress={onClose}
+                    style={UI.sheet.dismissTarget}
+                  >
+                    <View />
+                  </PressArea>
+                  <Text
+                    accessibilityRole="header"
+                    style={[TYPE.sheetTitle, { paddingHorizontal: UI.sheet.titleInset }]}
+                  >
                     {title}
                   </Text>
                 </View>
@@ -243,8 +307,8 @@ export function Sheet({
                 contentContainerStyle={{
                   paddingHorizontal: SIDE,
                   // The sheet's rhythm: between its parts and under the last.
-                  paddingBottom: RHYTHM.stack,
-                  gap: RHYTHM.stack,
+                  paddingBottom: footer ? UI.sheet.contentGap : 0,
+                  gap: UI.sheet.contentGap,
                 }}
                 keyboardShouldPersistTaps="handled"
               >
@@ -252,12 +316,7 @@ export function Sheet({
                   {children}
                 </FormFrameContext.Provider>
               </ScrollView>
-              <View style={{ paddingHorizontal: SIDE, gap: SPACE.sm }}>
-                {footer}
-                <Btn variant="ghost" pill full onPress={onClose}>
-                  {closeLabel}
-                </Btn>
-              </View>
+              {footer ? <View style={{ paddingHorizontal: SIDE }}>{footer}</View> : null}
             </Animated.View>
           </View>
         </KeyboardSafe>

@@ -103,7 +103,10 @@ Numbers are stable: code and docs cite them ("CLAUDE.md rule 16"). New rules are
 
 13. **CTAs are `<Btn>`** from `components/lb/`; never a raw `Pressable` outside `components/lb`,
     never `backgroundColor` on a `Pressable` (put it on an inner `View`).
-14. **Every modal closes with an obvious in-sheet `<Btn>`** (`components/lb/Sheet.tsx`).
+14. **Sheets use the original grabber/veil dismissal frame** (`components/lb/Sheet.tsx`).
+    The visible grabber has an accessible 44-point target using the caller’s close label; keep
+    backdrop, swipe, keyboard/native Back and accessibility dismissal. Do not add a mandatory
+    global close footer; preserve explicit domain actions and pinned form footers.
 15. **Forms pin the CTA outside the `ScrollView`, inside `<KeyboardSafe>`** (`app/welcome.tsx` is
     the reference). Never a direct `KeyboardAvoidingView`: Android resizes the window itself, and a
     second `behavior="height"` leaves an empty band under the bar (#46).
@@ -113,14 +116,15 @@ Numbers are stable: code and docs cite them ("CLAUDE.md rule 16"). New rules are
       a new screen, menu or setting needs a reason it cannot. Parents' and rare settings stay
       closed until opened (`docs/UX-PRINCIPLES.md` §31–32).
     - **No scrolling to find what matters:** every screen fits 390×844 and 360×740; only a
-      conversation, browsed list, or required form scrolls (`tests/web/fit.ts`). Auth forms
+      conversation, ordinary practice body, browsed list, or required form scrolls (`tests/web/fit.ts`). Auth forms
       preserve readable copy and required fields in `scroll-form`, with a pinned CTA inside
       `KeyboardSafe`; tests verify each field is reachable whole above that CTA. Other screens
       show elements whole or not drawn.
       Required structured answer cells may use `scroll-answer-form` only while focused in tight
       keyboard room (#576/#548). Every focused frame and ring must fit its clipping ancestors;
-      other rows remain reachable, drafts and pinned Check retained. Ordinary `scroll-parts`
-      remains strict. Wide required-cell grids may scroll horizontally to preserve 44 pt targets;
+      other rows remain reachable, drafts and pinned Check retained. The original ordinary
+      practice body scrolls in Question → Answer → Conversation order above its pinned Composer;
+      each real action must remain reachable whole. Other `scroll-parts` remain strict. Wide required-cell grids may scroll horizontally to preserve 44 pt targets;
       each focused frame and ring must remain whole across both viewport axes.
     - **Every route is on an allowlist** with a one-line reason the chat cannot carry it (`ROUTES`
       in `apps/mobile/lib/__tests__/minimalism.test.ts`).
@@ -139,7 +143,9 @@ Numbers are stable: code and docs cite them ("CLAUDE.md rule 16"). New rules are
     distress gets the fixed help answer by age (`i18n/safeguarding.ts`), never model words (#389).
 19. **Same function → same component, same place, everywhere** (owner 04.10.). One text input in
     the whole app (`InputBar`, #365). In practice the answer board sits directly below the paper
-    QuestionCard; free room follows the board. Composer stays pinned at the bottom, and "Prüfen"
+    QuestionCard in the ordinary scrolling Question → Answer → Conversation body. Required
+    structured forms retain their measured focus/keyboard scrolling policy. Composer stays
+    pinned at the bottom, and "Prüfen"
     is its action. Selection saves a draft until Check submits it (mobile redesign, owner 11.10.;
     `answerShell`/`oneBar`/`oneInput` tests and real phone geometry in `tests/web/fit.ts`).
     One control per function, in the same place in chat and practice. No new icon, toggle or

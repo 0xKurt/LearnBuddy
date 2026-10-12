@@ -1,3 +1,4 @@
+import { Chip } from '../components/lb/Chip.js';
 // The one screen, Buddy first: the one thing that matters now (if any), the
 // one open decision, and the conversation — what Buddy did stands in it, with
 // undo. Starting something is a tap on a suggestion, the camera, or just
@@ -93,7 +94,7 @@ export default function BuddyScreen() {
       return () => setFocusedScreen(false);
     }, []),
   );
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [startOpen, setStartOpen] = useState(false);
   const thread = home.data?.thread;
   const newestReply = thread ? newestBuddyId(thread) : null;
   const follow = useThreadFollow(newestReply);
@@ -219,7 +220,6 @@ export default function BuddyScreen() {
             working: h.thread.some((m) => m.role === 'learner' && m.status === 'processing'),
             streaming: live !== null,
           })}
-          onMenu={() => setMenuOpen(true)}
         />
         <View style={{ flex: 1 }}>
           {/* What matters now lies on top, over the greeting and the ways to start: it never
@@ -288,6 +288,9 @@ export default function BuddyScreen() {
                   void send(m.text, m.client_message_id ?? newId(), m.reply_to_id)
                 }
               />
+              <Chip disabled={busy || pending !== null} onPress={() => setStartOpen(true)}>
+                {t('buddy:start_choice.title')}
+              </Chip>
             </HomeThread>
           ) : introDensity === 'tight' ? null : (
             <HomeIntro
@@ -297,6 +300,7 @@ export default function BuddyScreen() {
               onRefresh={refetch}
               onSend={(text) => void send(text)}
               onPhoto={() => askAttach({ open: 'menu' })}
+              onPractice={() => setStartOpen(true)}
             />
           )}
         </View>
@@ -310,11 +314,13 @@ export default function BuddyScreen() {
       </KeyboardSafe>
 
       <StartSheets
-        menuOpen={menuOpen}
-        onCloseMenu={() => setMenuOpen(false)}
+        menuOpen={startOpen}
+        onCloseMenu={() => setStartOpen(false)}
+        onOpenMenu={() => setStartOpen(true)}
         next={h.next}
         send={(text) => void send(text)}
         canStart={pending === null}
+        active={focusedScreen}
       />
     </SafeAreaView>
   );

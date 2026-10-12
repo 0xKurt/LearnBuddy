@@ -2,11 +2,13 @@
 // seconds), there was nothing to learn from the text, or it failed. Calm
 // words, never red alarm.
 
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { START } from '../../lib/theme/start.js';
+import { Icon } from '../lb/Icon.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { Banner } from '../lb/Banner.js';
@@ -39,9 +41,15 @@ export function StartStatus({ state }: { state: StartState }) {
             paddingVertical: SPACE.xs,
           }}
         >
-          <ActivityIndicator color={palette.primaryDk} />
+          <View
+            aria-hidden
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <Icon name="clock" size={START.status.mark} color={palette.primaryDk} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('topic.preparing')}</Text>
+            <Text style={TYPE.voiceStatus}>{t('topic.preparing')}</Text>
             <Text style={TYPE.small}>{t('topic.preparing_hint')}</Text>
           </View>
         </View>

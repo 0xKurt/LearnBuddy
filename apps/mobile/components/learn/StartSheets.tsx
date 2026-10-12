@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import { askAttach } from '../../lib/capture/attachRequest.js';
 import type { StartMenu } from '../buddy/extensions.js';
-import { SHEET_SWAP_MS } from '../buddy/StartSheets.js';
+import { useSheetHandoff } from '../navigation/useSheetHandoff.js';
 import { ChoiceSheet } from './ChoiceSheet.js';
 import { TopicSheet } from './TopicSheet.js';
 import type { TopicKind } from './useStartTopic.js';
@@ -28,15 +28,14 @@ function topicOf(sheet: string | null): TopicKind | null {
   return kind.success ? kind.data : null;
 }
 
-export const LearnStartSheets: StartMenu['Sheets'] = ({ open, onOpen }) => {
+export const LearnStartSheets: StartMenu['Sheets'] = ({ open, onOpen, active = true, onBack }) => {
   const { t } = useTranslation(['buddy', 'learn']);
+  const handoff = useSheetHandoff({
+    enabled: active,
+    visible: open === 'homework' || open === 'vocab',
+    onClose: () => onOpen(null),
+  });
   const choice = open === 'homework' || open === 'vocab' ? open : null;
-
-  /** From a choice sheet on: first let it close, then go on. */
-  function fromChoice(go: () => void): void {
-    onOpen(null);
-    setTimeout(go, SHEET_SWAP_MS);
-  }
 
   return (
     <>
@@ -44,38 +43,51 @@ export const LearnStartSheets: StartMenu['Sheets'] = ({ open, onOpen }) => {
         visible={choice !== null}
         title={t(choice === 'vocab' ? 'learn:vocab.title' : 'learn:homework.title')}
         body={t(choice === 'vocab' ? 'learn:vocab.body' : 'learn:homework.body')}
-        onClose={() => onOpen(null)}
+        onClose={() => {
+          if (onBack) handoff.begin(onBack);
+          else {
+            handoff.cancel();
+            onOpen(null);
+          }
+        }}
+        onClosed={handoff.closed}
         choices={
           choice === 'vocab'
             ? [
                 {
                   label: t('learn:vocab.photo'),
                   icon: 'camera',
+                  tone: 'sky',
                   // The camera at once; the page lands in the chat's bar (issue #519).
-                  onPress: () => fromChoice(() => askAttach({ open: 'camera' })),
+                  onPress: () => handoff.begin(() => askAttach({ open: 'camera' })),
                 },
                 {
                   label: t('learn:vocab.type'),
                   icon: 'keyboard',
-                  onPress: () => fromChoice(() => onOpen(topicSheet('vocab'))),
+                  tone: 'lavender',
+                  onPress: () => handoff.begin(() => onOpen(topicSheet('vocab'))),
                 },
               ]
             : [
                 {
                   label: t('learn:homework.photo'),
                   icon: 'camera',
+                  tone: 'sky',
                   onPress: () =>
-                    fromChoice(() => askAttach({ open: 'camera', link: { purpose: 'homework' } })),
+                    handoff.begin(() =>
+                      askAttach({ open: 'camera', link: { purpose: 'homework' } }),
+                    ),
                 },
                 {
                   label: t('learn:homework.type'),
                   icon: 'keyboard',
-                  onPress: () => fromChoice(() => onOpen(topicSheet('help'))),
+                  tone: 'lavender',
+                  onPress: () => handoff.begin(() => onOpen(topicSheet('help'))),
                 },
               ]
         }
       />
-      <TopicSheet kind={topicOf(open)} onClose={() => onOpen(null)} />
+      <TopicSheet kind={topicOf(open)} onClose={() => onOpen(null)} onBack={onBack} />
     </>
   );
 };

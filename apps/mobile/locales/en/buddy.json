@@ -142,7 +142,10 @@
     "memory": "What Buddy knows about you",
     "library": "Your material",
     "settings": "Settings",
-    "short": "More"
+    "short": "More",
+    "capture": "Photograph a sheet",
+    "history": "History",
+    "profile": "Profile"
   },
   "message": {
     "title_buddy": "Buddy's message",
@@ -438,5 +441,18 @@
       "slides": "Slides",
       "rehearsal": "Rehearsal"
     }
+  },
+  "start_choice": {
+    "title": "What would you like to practise?",
+    "material": "From my material",
+    "topic": "Name a topic",
+    "roleplay": "Roleplay",
+    "rehearse": "Rehearse a presentation",
+    "drill": "Mental arithmetic",
+    "topic_meta": "You say what it is about",
+    "roleplay_meta": "Practise speaking",
+    "rehearse_meta": "I listen",
+    "topic_title": "Which topic?",
+    "topic_lead": "Say or write a topic."
   }
 }

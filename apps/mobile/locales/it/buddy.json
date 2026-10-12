@@ -142,7 +142,10 @@
     "memory": "Cosa sa Buddy di te",
     "library": "Il tuo materiale",
     "settings": "Impostazioni",
-    "short": "Altro"
+    "short": "Altro",
+    "capture": "Fotografare un foglio",
+    "history": "Cronologia",
+    "profile": "Profilo"
   },
   "message": {
     "title_buddy": "Messaggio di Buddy",
@@ -438,5 +441,18 @@
       "slides": "Slide",
       "rehearsal": "Prova"
     }
+  },
+  "start_choice": {
+    "title": "Che cosa vuoi esercitare?",
+    "material": "Dal mio materiale",
+    "topic": "Indicare un argomento",
+    "roleplay": "Gioco di ruolo",
+    "rehearse": "Provare una presentazione",
+    "drill": "Calcolo mentale",
+    "topic_meta": "Tu dici di cosa si tratta",
+    "roleplay_meta": "Esercitare il parlato",
+    "rehearse_meta": "Ti ascolto",
+    "topic_title": "Quale argomento?",
+    "topic_lead": "Di o scrivi un argomento."
   }
 }

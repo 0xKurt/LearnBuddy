@@ -10,10 +10,49 @@ import { topicSheet } from './StartSheets.js';
 export const startItems: StartMenu['items'] = (next, t, act) => {
   const exam = next.find((i) => i.kind === 'exam');
   return [
+    {
+      key: 'material',
+      tone: 'sky',
+      icon: 'file',
+      label: t('buddy:start_choice.material'),
+      onPress: () => act.open('material'),
+    },
+    {
+      key: 'topic',
+      meta: t('buddy:start_choice.topic_meta'),
+      tone: 'lavender',
+      icon: 'pencil',
+      label: t('buddy:start_choice.topic'),
+      onPress: () => act.open(topicSheet('practice')),
+    },
+    {
+      key: 'roleplay',
+      meta: t('buddy:start_choice.roleplay_meta'),
+      tone: 'peach',
+      icon: 'voice',
+      label: t('buddy:start_choice.roleplay'),
+      onPress: () => act.send(t('buddy:start_choice.roleplay')),
+    },
+    {
+      key: 'rehearse',
+      meta: t('buddy:start_choice.rehearse_meta'),
+      tone: 'mint',
+      icon: 'mic',
+      label: t('buddy:start_choice.rehearse'),
+      onPress: () => act.send(t('buddy:start_choice.rehearse')),
+    },
+    {
+      key: 'drill',
+      tone: 'butter',
+      icon: 'clock',
+      label: t('buddy:start_choice.drill'),
+      onPress: () => act.send(t('buddy:start_choice.drill')),
+    },
     // Always "Arbeit" where she looks for it (user feedback #17); with a test planned it
     // prepares her for that one.
     {
       key: 'exam',
+      tone: 'butter',
       icon: 'clock',
       label: t('buddy:suggest.exam_short'),
       onPress: () =>
@@ -23,18 +62,21 @@ export const startItems: StartMenu['items'] = (next, t, act) => {
     },
     {
       key: 'homework',
+      tone: 'lavender',
       icon: 'pencil',
       label: t('buddy:suggest.homework'),
       onPress: () => act.open('homework'),
     },
     {
       key: 'speak',
+      tone: 'peach',
       icon: 'mic',
       label: t('buddy:suggest.speak'),
       onPress: () => act.open(topicSheet('speak')),
     },
     {
       key: 'vocab',
+      tone: 'mint',
       icon: 'book',
       label: t('buddy:suggest.vocab'),
       onPress: () => act.open('vocab'),
