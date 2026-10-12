@@ -130,18 +130,18 @@ export default function History() {
         contentContainerStyle={{ padding: SPACE.lg, paddingBottom: insets.bottom + SPACE.lg }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
         ListEmptyComponent={
-          <EmptyState orb title={t('thread.empty_title')} body={t('thread.empty_body')} />
+          <EmptyState title={t('thread.empty_title')} body={t('thread.empty_body')} />
         }
         ListHeaderComponent={
           more ? (
             <View style={{ alignItems: 'center', marginBottom: SPACE.lg }}>
               <Btn
-                variant="outline"
+                variant="quiet"
                 size="sm"
                 pill
                 center
                 onPress={() => void loadMore()}
-                disabled={loading}
+                busy={loading}
               >
                 {t('thread.load_more')}
               </Btn>
@@ -149,8 +149,8 @@ export default function History() {
           ) : null
         }
         renderItem={({ item: g }) => (
-          // sm between days like between turns: the same scale as the chat (issue #51).
-          <View style={{ gap: SPACE.sm, marginBottom: SPACE.sm }}>
+          // Day groups use the same canonical spacing as conversation turns.
+          <View style={{ gap: SPACE.lg, marginBottom: SPACE.lg }}>
             {g.todayLine ? <DayLine day={g.day} /> : null}
             <Conversation
               messages={g.messages}
