@@ -1,3 +1,4 @@
+import { UI } from './components.js';
 import { RADIUS } from './radius.js';
 import { SPACE } from './space.js';
 
@@ -45,7 +46,7 @@ export const CHAT = {
   buddyWidth: '100%' as const,
   cardWidth: '86%' as const,
   receiptWidth: '88%' as const,
-  pressedOpacity: 0.85,
+  pressedOpacity: UI.pressed.surface,
   pressedScale: 0.98,
   pendingOpacity: 0.8,
   titleGap: 2,

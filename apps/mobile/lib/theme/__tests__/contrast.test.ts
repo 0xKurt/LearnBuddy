@@ -40,15 +40,16 @@ const TEXT: Array<[keyof Palette, keyof Palette]> = [
   ['ink', 'primaryLt'],
   ['paper', 'primary'],
   ['onPrimary', 'primary'],
-  // A waiting <Btn>'s muted skin (issue #97): the label must stay readable on the muted
-  // fill. (The stepped-back ghost/danger label is `placeholder` on paper/bg — above.)
+  // A quiet label on the sunken surface: the grey chip (lib/theme/components.ts chipSkin).
   ['ink2', 'canvas'],
+  // The hint over a picture in the full-screen viewer (components/lb/ZoomViewer.tsx).
+  ['onViewerVeil', 'viewerVeil'],
 ];
 const SHAPES: Array<[keyof Palette, keyof Palette]> = [
   ['primary', 'paper'],
   ['primary', 'bg'],
-  // The ready button against the waiting skin (issue #97): two states no one can mix up
-  // on a screenshot, in every palette including night.
+  // The main action beside a quiet or soft <Btn>, whose fill is canvas (components/lb/Btn.tsx
+  // variantStyle): two fills no one can mix up, in every palette including night.
   ['primary', 'canvas'],
   // The "Dunkelmodus" switch (issue #517): its off track on the card and on the onboarding's
   // page, and the light knob on that track. On, the track is primary (above); the knob's
@@ -82,6 +83,38 @@ for (const [name, palette] of Object.entries(PALETTES)) {
     }
   });
 }
+
+// The acceptance line of #599, written out per look: what stands on the one main action reads
+// at 4.5:1 or better. The values are tokens/colors.css `--on-primary` / `--primary`.
+describe('onPrimary on primary', () => {
+  const LOOKS: Array<[keyof typeof PALETTES, string, string]> = [
+    ['pastell', '#ffffff', '#6a48d7'],
+    ['pastellDark', '#191627', '#9d82f5'],
+    ['forest', '#ffffff', '#2f7d5b'],
+    ['forestDark', '#121e18', '#5fae86'],
+    ['ocean', '#ffffff', '#2a6ab0'],
+    ['oceanDark', '#121a26', '#5a9fe0'],
+    ['sunset', '#ffffff', '#b45a1f'],
+    ['sunsetDark', '#241a14', '#e0925a'],
+  ];
+
+  it('covers every look there is', () => {
+    expect(LOOKS.map(([name]) => name).sort()).toEqual(Object.keys(PALETTES).sort());
+  });
+
+  it.each(LOOKS)('%s: %s on %s is at least 4.5:1', (name, onPrimary, primary) => {
+    expect(PALETTES[name].onPrimary).toBe(onPrimary);
+    expect(PALETTES[name].primary).toBe(primary);
+    expect(contrast(onPrimary, primary)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+it('keeps the image viewer dark in all eight palettes', () => {
+  for (const palette of Object.values(PALETTES)) {
+    expect(palette.viewerVeil).toBe('#15121f');
+    expect(palette.onViewerVeil).toBe('#bdb7d3');
+  }
+});
 
 it('keeps the modal scrim dark in all eight palettes', () => {
   for (const palette of Object.values(PALETTES)) expect(palette.scrim).toBe('#1f1b2e');

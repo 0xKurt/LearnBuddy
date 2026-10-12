@@ -1,6 +1,7 @@
 // Practice presentation shared by answer options and structured boards.
 import type { ViewStyle } from 'react-native';
 
+import { UI } from './components.js';
 import type { Palette } from './palettes.js';
 import { RADIUS } from './radius.js';
 import { SPACE, TOUCH } from './space.js';
@@ -24,8 +25,6 @@ export const PRACTICE = {
   drill: {
     shortPromptMax: 7,
     mediumPromptMax: 11,
-    answerWidth: 144,
-    answerHeight: 72,
     receiptHeight: 36,
     receiptRadius: 18,
     receiptPadExtra: 2,
@@ -41,10 +40,10 @@ export const PRACTICE = {
   staffGlyphSize: 32,
   hiddenSize: 1,
   optionCharacterEm: 0.64,
-  border: 1,
-  selectedBorder: 2,
-  pressOpacity: 0.85,
-  disabledOpacity: 0.45,
+  border: UI.border,
+  selectedBorder: UI.selectedBorder,
+  pressOpacity: UI.pressed.surface,
+  disabledOpacity: UI.disabledOpacity,
   contentGap: SPACE.md,
   optionPadding: SPACE.md,
   optionPaddingStart: 10,

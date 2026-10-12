@@ -1,4 +1,3 @@
-import { paletteOf } from './palettes.js';
 import { RADIUS } from './radius.js';
 import { UI } from './components.js';
 import { PRACTICE } from './practice.js';
@@ -25,16 +24,12 @@ export const PRACTICE_SCREEN = {
   verdictPaddingVertical: SPACE.xs,
   verdictIcon: 14,
   nudgeOffsets: [-7, -4, -2] as const,
-  imageHeight: 180,
+  imageHeight: PRACTICE.imageHeight,
   imageRatio: 4 / 3,
-  viewerVeil: '#15121f',
-  get viewerHint() {
-    return paletteOf('pastellDark').ink2;
-  },
   viewerHintTop: 58,
   viewerBottomRoom: 26,
   thumbnailSlop: 10,
-  thumbnailPressed: 0.85,
+  thumbnailPressed: UI.pressed.surface,
   viewerStartScale: 0.92,
   pullVeilDistance: 400,
   pullChromeDistance: 160,

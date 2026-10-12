@@ -40,7 +40,7 @@ import {
   useMotionReduced,
 } from '../../lib/theme/motion.js';
 import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
-import { PaletteScope } from '../../lib/theme/ThemeProvider.js';
+import { PaletteScope, useTheme } from '../../lib/theme/ThemeProvider.js';
 import { bottomRoom, GUTTER, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
@@ -58,6 +58,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
   const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
   const reduced = useMotionReduced();
+  const { palette } = useTheme();
   const [mounted, setMounted] = useState(visible);
   const visibility = useRef(visible);
   visibility.current = visible;
@@ -247,7 +248,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
         <Animated.View
           style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, veil]}
         >
-          <View style={{ flex: 1, backgroundColor: PRACTICE_SCREEN.viewerVeil }} />
+          <View style={{ flex: 1, backgroundColor: palette.viewerVeil }} />
         </Animated.View>
         <View
           accessibilityViewIsModal
@@ -261,7 +262,7 @@ export function ZoomViewer({ visible, onClose, label, children }: ViewerProps) {
             style={[
               TYPE.metaSemibold,
               {
-                color: PRACTICE_SCREEN.viewerHint,
+                color: palette.onViewerVeil,
                 textAlign: 'center',
                 paddingHorizontal: SPACE.xl,
               },
