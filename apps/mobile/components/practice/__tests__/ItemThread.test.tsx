@@ -135,3 +135,46 @@ describe('an explanation with a picture', () => {
     expect(screen.queryByTestId('question-figure')).toBeNull();
   });
 });
+
+// The server stores a recording marker; a matched pronunciation exchange displays heard text.
+describe('recorded answer presentation', () => {
+  const recorded = turn({ text: '🎤 weather', verdict: 'partially_correct' });
+  const judgement = turn({
+    ...REPLY,
+    pronunciation: {
+      heard: 'weather',
+      overall: 'almost',
+      words: [{ text: 'weather', ok: false, tip: null }],
+    },
+  });
+
+  it('shows factual heard text for the confirmed recorded answer without changing stored turns', () => {
+    renderInApp(<ItemThread turns={[recorded, judgement]} pronunciation pending={null} />);
+    expect(screen.queryByText(recorded.text)).toBeNull();
+    expect(screen.getByText('weather')).toBeDefined();
+    expect(recorded.text).toBe('🎤 weather');
+  });
+
+  it.each([
+    ['authored question', { ...recorded, verdict: 'not_an_attempt' as const }, judgement, true],
+    [
+      'unmatched heard text',
+      recorded,
+      { ...judgement, pronunciation: { ...judgement.pronunciation!, heard: 'today' } },
+      true,
+    ],
+    [
+      'different item',
+      recorded,
+      { ...judgement, item_id: '00000000-0000-4000-8000-0000000000bb' },
+      true,
+    ],
+    ['no pronunciation feedback', recorded, REPLY, true],
+    ['ordinary typed mode', recorded, judgement, false],
+  ])('preserves original text for %s', (_name, answer, reply, pronunciation) => {
+    renderInApp(
+      <ItemThread turns={[answer, reply]} pronunciation={pronunciation} pending={null} />,
+    );
+    expect(screen.getByText(recorded.text)).toBeDefined();
+  });
+});

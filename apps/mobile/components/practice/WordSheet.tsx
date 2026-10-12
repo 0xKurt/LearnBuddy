@@ -16,6 +16,7 @@ import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { useMounted } from '../../lib/useMounted.js';
 import { Btn } from '../lb/Btn.js';
 import { Sheet } from '../lb/Sheet.js';
 import { ListenButton } from './ListenButton.js';
@@ -32,7 +33,27 @@ type Props = {
   onClose: () => void;
 };
 
-export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
+export function WordSheet(props: Props) {
+  const { word, sessionId, itemId, lang } = props;
+  // Closing or changing the actual question/word owns a fresh attempt. A pending request
+  // belongs to the old body, including when the same word is opened again.
+  return word ? (
+    <WordAttempt
+      key={JSON.stringify([sessionId, itemId, lang, word.text])}
+      {...props}
+      word={word}
+    />
+  ) : null;
+}
+
+function WordAttempt({
+  word,
+  sessionId,
+  itemId,
+  lang,
+  onClose,
+}: Omit<Props, 'word'> & { word: SpokenWord }) {
+  const mounted = useMounted();
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
   /** What came back for the try she just made; null before the first one. */
@@ -52,17 +73,17 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
         mime: r.mime,
         audio_base64: r.base64,
       });
-      setTried({ ok: res.ok, heard: res.heard, tip: res.tip });
+      if (mounted.current) setTried({ ok: res.ok, heard: res.heard, tip: res.tip });
     } catch (err) {
-      setProblem(messageFor(err));
+      if (mounted.current) setProblem(messageFor(err));
     } finally {
-      setSending(false);
+      if (mounted.current) setSending(false);
     }
   }
 
   const rec = useRecording({
     onRecorded: (r) => {
-      if (word) void judge(r, word.text);
+      void judge(r, word.text);
     },
     onFailed: () => setProblem(t('practice:speak.problem.failed')),
   });
@@ -74,7 +95,6 @@ export function WordSheet({ word, sessionId, itemId, lang, onClose }: Props) {
     onClose();
   }
 
-  if (!word) return null;
   const recording = rec.phase === 'recording';
   const busy = sending || rec.phase === 'starting' || rec.phase === 'stopping';
   const tip = tried?.tip ?? word.tip;

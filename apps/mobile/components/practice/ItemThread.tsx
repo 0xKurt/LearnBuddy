@@ -119,7 +119,27 @@ export function ItemThread({
    * about it (#402) and "Tipp, bitte" stay her words.
    */
   const said = (turn: Pick<PracticeTurnView, 'id' | 'text' | 'verdict'>): string => {
-    if (!versions) return turn.text;
+    if (!versions) {
+      const committed = turns.find((candidate) => candidate.id === turn.id);
+      const reply = committed ? turns[turns.indexOf(committed) + 1] : undefined;
+      const feedback = reply?.pronunciation;
+      // Only the server's paired recording encoding changes presentation. Authored
+      // text and tutor questions, even with this prefix, stay exactly as written.
+      if (
+        pronunciation &&
+        turn.verdict !== null &&
+        turn.verdict !== 'not_an_attempt' &&
+        committed?.role === 'learner' &&
+        committed.item_id !== null &&
+        reply?.role === 'tutor' &&
+        reply.item_id === committed.item_id &&
+        feedback &&
+        turn.text === `🎤 ${feedback.heard || '…'}`
+      ) {
+        return feedback.heard || turn.text.slice('🎤 '.length);
+      }
+      return turn.text;
+    }
     const version = versions.get(turn.id);
     const words = wordCount(turn.text);
     if (version !== undefined) return t('essay.version', { n: version, count: words });

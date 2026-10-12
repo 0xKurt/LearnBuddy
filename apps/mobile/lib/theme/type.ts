@@ -51,6 +51,7 @@ function typeOf(p: Palette) {
     display,
     pageHeadline: { ...display, fontSize: 30, lineHeight: 36, letterSpacing: -0.8 },
     question,
+    questionStrong: { ...question, ...fontFace('700') },
     title,
     body,
     /** Live and pending recognized words keep body geometry and the current face. */
