@@ -53,31 +53,25 @@ reason index and failed-request draft; cleanup restores Next without a second ba
 
 AnswerTile is removed after its final caller migrated to Option. All answer forms now use
 practice board skins and semantic TYPE roles. QuestionCard uses CARD_PAD.base/snug and
-canonical radii. Verdict glyphs use onSuccess/onDanger with all-eight-look contrast checks.
+canonical radii. The palette carries no onSuccess/onDanger keys: nothing used them (#599 R4).
 HelpChips use shared Chip states and motion tokens. Code uses the existing CodeBlock renderer:
 normal closed questions show the whole program; keyboard density reuses ZoomableFigure's
 collapsed affordance and viewer. Horizontal code scrolling is keyboard focusable.
 
 New theme roles: option/board/table/speech/mark/music/drill/question typography; shared
-practice geometry and tile/picked/placed/slot/correct/wrong skins; onSuccess/onDanger glyph
-foregrounds. PressArea and TapSurface preserve explicit web checked semantics and native
-accessibility actions. Source ownership and browser fit guards enforce answer-under-question.
+practice geometry and tile/picked/placed/slot/correct/wrong skins. PressArea preserves
+explicit web checked semantics and native accessibility actions; TapSurface is unchanged.
+Source ownership and browser fit guards enforce answer-under-question.
 
 ## Syllable touch and accessibility
 
-The old letter targets were only 30 points wide. Syllables now keep the same letter cells
-and cut drawing under one existing TapSurface per word, at least 44 points in each dimension.
-A touch maps to the original `cutId(wordIndex, letter)`; no answer identifiers changed.
-Keyboard arrows select the boundary; Space/Enter toggles it. Native adjustable actions offer
-next/previous boundary and toggle. The value announces both the selected boundary and whether
-it is marked, using German-first translations with parity in all five locales.
-
-The tradeoff is one focus target per word instead of a focus target per boundary. Every
-boundary remains reachable with keyboard and native accessibility actions. Device testing of
-VoiceOver/TalkBack is still required; component evidence verifies keyboard event pairs,
-coordinate touches, unchanged checked payloads and disabled behavior. TapSurface avoids a
-second activation from React Native web's synthesized Enter keyup event when its explicit
-keyboard handler already owns activation.
+Syllables are marked as before the redesign (#599 R3, `docs/architecture.md` §Practice): one
+word per row, each letter but the last a `<Btn bare>` with `checked`, 44 points high and one
+30-point letter cell wide, the cells touching. A tap sets the cut after that letter, a second
+tap takes it back; the answer is `cutId(wordIndex, letter)`. The single adjustable word
+surface with arrow-key and accessibility-action stepping, and its seven `practice:mark.*`
+strings, are removed: the design shows no such interaction (`components/practice/Answers.jsx`
+MarkText). Device testing of VoiceOver/TalkBack is still required.
 
 ## Compact line-board adaptation
 

@@ -11,7 +11,7 @@ import {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { DURATION, EASE } from '../theme/motion.js';
+import { ORB_DURATION as DURATION, ORB_EASE as EASE } from '../theme/motion.js';
 import {
   HAPPY_SETTLE,
   moonPose,

@@ -23,3 +23,12 @@ export const DURATION = {
   /** Lead between the legacy result heading and its first card. */
   resultCardLead: 60,
 } as const;
+
+/**
+ * Buddy's orb keeps its own timing (#599 R2, owner rule 1): the values `quick`, `base` and the
+ * standard curve had before the redesign. The app tokens above follow the design; the orb and its
+ * moon (components/lb/BuddyOrb.tsx, lib/buddy/useMoon.ts) must not move with them.
+ */
+export const ORB_DURATION = { quick: 150, base: 240 } as const;
+/** Control points of the orb's standard curve; the curve itself is `ORB_EASE` in motion.ts. */
+export const ORB_EASE_STANDARD = [0.2, 0, 0, 1] as const;
