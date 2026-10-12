@@ -1,34 +1,79 @@
-// The floor under a structured answer (issues #228–#230): the parts scroll inside themselves
-// rather than be drawn over the question, if they ever had to.
-//
-// The question card never shrinks and 44 pt per touch target is the floor, so when an allowed
-// task is taller than the room — twelve elements still above four groups on a 360×740 phone, an
-// order of eight long steps — something has to give. The conversation above gives its room first
-// (`flexBasis: 0` in app/practice/[id].tsx); after that this area would scroll inside itself
-// rather than be drawn over the question (found on 360×740, #229). It must not come to that: the
-// contract's maxima are measured so that the largest task fits (`contracts/structured.ts`), and
-// `scroll-parts` is NOT a scroll area `tests/web/fit.ts` allows — a walkthrough shot fails the
-// moment the parts would have to be scrolled. The scroll is the floor under a mistake, not a
-// feature (rule 16).
-//
-// One exception, by the owner's decision (issue #524, 10.10.: longer texts in a pairing): the
-// sides of a pairing may be sentences, and four of them are a list she goes through — that
-// list may scroll (`list`, named "scroll-list" like every list rule 16 allows).
-//
-// Where it stands, the room around it and "Prüfen" are the answer shell's (`AnswerShell`,
-// issue #310): this is only the floor.
+// Structured answers normally fit without scrolling. While a required cell is focused in
+// tight keyboard room, its explicit answer-form viewport may scroll to keep the whole frame
+// visible above Composer (#576/#548). The board stays mounted and retains every draft/row.
+// Wide required-cell grids use a stable horizontal viewport; nested focus registration
+// clears both axes. Ordinary vertical scroll-parts remains strict.
 
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { ScrollView } from 'react-native';
+import {
+  FormFrameContext,
+  useFormFrameClearance,
+  useFormViewport,
+} from '../lb/FormFrameClearance.js';
 
-export function PartsArea({ children, list = false }: { children: ReactNode; list?: boolean }) {
+export function PartsArea({
+  children,
+  list = false,
+  keyboardEditing = false,
+  horizontal = false,
+}: {
+  children: ReactNode;
+  list?: boolean;
+  keyboardEditing?: boolean;
+  /** Wide required-cell grids retain full targets and share both viewport clearances. */
+  horizontal?: boolean;
+}) {
+  const { scroll, offset, controller } = useFormViewport(horizontal ? 'horizontal' : 'vertical');
+  const parent = useFormFrameClearance();
+  const registration = useMemo(
+    () =>
+      parent
+        ? {
+            focus: (frame: Parameters<typeof controller.focus>[0]) => {
+              parent.focus(frame);
+              controller.focus(frame);
+            },
+            blur: (frame: Parameters<typeof controller.blur>[0]) => {
+              parent.blur(frame);
+              controller.blur(frame);
+            },
+            refresh: () => {
+              parent.refresh();
+              controller.refresh();
+            },
+            dispose: controller.dispose,
+          }
+        : controller,
+    [parent, controller],
+  );
   return (
-    <ScrollView
-      testID={list ? 'scroll-list' : 'scroll-parts'}
-      style={{ flexGrow: 0, flexShrink: 1 }}
-      keyboardShouldPersistTaps="handled"
-    >
-      {children}
-    </ScrollView>
+    <FormFrameContext.Provider value={registration}>
+      <ScrollView
+        ref={scroll}
+        testID={
+          horizontal
+            ? 'scroll-answer-horizontal'
+            : keyboardEditing
+              ? 'scroll-answer-form'
+              : list
+                ? 'scroll-list'
+                : 'scroll-parts'
+        }
+        horizontal={horizontal}
+        contentContainerStyle={horizontal ? { flexGrow: 1, justifyContent: 'center' } : undefined}
+        style={{ flexGrow: 0, flexShrink: 1 }}
+        keyboardShouldPersistTaps="handled"
+        onLayout={controller.refresh}
+        onContentSizeChange={controller.refresh}
+        onScroll={(event) => {
+          offset.current = horizontal
+            ? event.nativeEvent.contentOffset.x
+            : event.nativeEvent.contentOffset.y;
+        }}
+      >
+        {children}
+      </ScrollView>
+    </FormFrameContext.Provider>
   );
 }

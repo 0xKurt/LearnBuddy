@@ -108,9 +108,9 @@ export type LbTextInputProps = Omit<TextInputProps, 'style'> & {
 };
 
 /**
- * The browser does not know `submitBehavior` (react-native-web reads only the deprecated
- * `blurOnSubmit`), so a multiline field there turned every Enter into a new line. Same rule as
- * on the phone; Shift+Enter and an input method still composing stay the field's own.
+ * RN Web reads legacy blurOnSubmit: explicit submit-without-blur is mapped below to
+ * preserve cell focus handoffs. Multiline Enter also needs this key adapter; Shift+Enter
+ * and composing input stay the field's own.
  */
 function submitsOnEnter(
   e: NativeSyntheticEvent<TextInputKeyPressEventData>,
@@ -220,9 +220,10 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
       ) : null}
       <View
         ref={frame}
+        testID={cell ? 'answer-cell-frame' : undefined}
         collapsable={false}
         onLayout={() => {
-          if (variant === 'field' && focused) clearance?.refresh();
+          if ((variant === 'field' || cell) && focused) clearance?.refresh();
         }}
         style={[
           {
@@ -265,10 +266,13 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
             // makes an empty field look like a box to fill in (`growsWithText` does the rest).
             {...(Platform.OS === 'web' && lines ? { numberOfLines: rows } : {})}
             {...rest}
+            {...(Platform.OS === 'web' && rest.submitBehavior === 'submit'
+              ? { blurOnSubmit: false }
+              : {})}
             onKeyPress={webSubmit ?? onKeyPress}
             onFocus={(e) => {
               setFocused(true);
-              if (variant === 'field' && frame.current) clearance?.focus(frame.current);
+              if ((variant === 'field' || cell) && frame.current) clearance?.focus(frame.current);
               onFocus?.(e);
             }}
             onBlur={(e) => {

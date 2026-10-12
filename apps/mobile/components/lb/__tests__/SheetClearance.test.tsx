@@ -26,6 +26,7 @@ vi.mock('../FormFrameClearance.js', async (load) => {
           getNativeScrollRef: () => ({
             measureInWindow: (done: (...args: number[]) => void) => done(0, 100, 300, modal.height),
           }),
+          getScrollableNode: () => null,
           scrollTo: modal.scrollTo,
         }),
         set: () => {},

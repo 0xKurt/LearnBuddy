@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef } from 'react';
-import { Keyboard, type ScrollView, type View } from 'react-native';
+import { Keyboard, Platform, type ScrollView, type View } from 'react-native';
 import { SPACE } from '../../lib/theme/space.js';
 
 export type Frame = Pick<View, 'measureInWindow'>;
@@ -16,6 +16,7 @@ export function frameScrollDelta(top: number, height: number, viewport: Viewport
 export function createFrameClearance(
   viewport: () => Frame | null,
   scroll: (delta: number) => void,
+  axis: 'vertical' | 'horizontal' = 'vertical',
 ) {
   let focused: Frame | null = null;
   let generation = 0;
@@ -24,11 +25,14 @@ export function createFrameClearance(
     const visible = viewport();
     const ticket = ++generation;
     if (!target || !visible) return;
-    visible.measureInWindow((_x, top, _w, height) => {
-      if (ticket !== generation || !height) return;
-      target.measureInWindow((_fx, fieldTop, _fw, fieldHeight) => {
-        if (ticket !== generation || !fieldHeight) return;
-        const delta = frameScrollDelta(fieldTop, fieldHeight, { top, height }, SPACE.xs);
+    visible.measureInWindow((left, top, width, height) => {
+      if (ticket !== generation || !(axis === 'horizontal' ? width : height)) return;
+      target.measureInWindow((fieldLeft, fieldTop, fieldWidth, fieldHeight) => {
+        if (ticket !== generation || !(axis === 'horizontal' ? fieldWidth : fieldHeight)) return;
+        const delta =
+          axis === 'horizontal'
+            ? frameScrollDelta(fieldLeft, fieldWidth, { top: left, height: width }, SPACE.xs)
+            : frameScrollDelta(fieldTop, fieldHeight, { top, height }, SPACE.xs);
         if (delta) scroll(delta);
       });
     });
@@ -56,7 +60,7 @@ export type FormClearance = ReturnType<typeof createFrameClearance>;
 export const FormFrameContext = createContext<FormClearance | null>(null);
 export const useFormFrameClearance = () => useContext(FormFrameContext);
 
-export function useFormViewport() {
+export function useFormViewport(axis: 'vertical' | 'horizontal' = 'vertical') {
   const scroll = useRef<ScrollView>(null);
   const offset = useRef(0);
   const clearance = useRef<FormClearance | null>(null);
@@ -64,11 +68,28 @@ export function useFormViewport() {
     clearance.current = createFrameClearance(
       () => scroll.current?.getNativeScrollRef() ?? null,
       (delta) => {
-        const y = Math.max(0, offset.current + delta);
-        offset.current = y;
+        // Browser focus can scroll before RN Web reports its event offset. Read the public
+        // live viewport on web; native hosts retain their event-reported offset.
+        const node: unknown = scroll.current?.getScrollableNode();
+        const property = axis === 'horizontal' ? 'scrollLeft' : 'scrollTop';
+        const liveOffset =
+          node !== null && typeof node === 'object' && property in node
+            ? (Reflect.get(node, property) as unknown)
+            : undefined;
+        const currentOffset =
+          Platform.OS === 'web' && typeof liveOffset === 'number' && Number.isFinite(liveOffset)
+            ? liveOffset
+            : offset.current;
+        const nextOffset = Math.max(0, currentOffset + delta);
+        offset.current = nextOffset;
         // Immediate correction has no transition to cancel on a live reduced-motion change.
-        scroll.current?.scrollTo({ y, animated: false });
+        scroll.current?.scrollTo(
+          axis === 'horizontal'
+            ? { x: nextOffset, animated: false }
+            : { y: nextOffset, animated: false },
+        );
       },
+      axis,
     );
   }
   const controller = clearance.current;

@@ -10,7 +10,7 @@
 // Was diese Schicht nicht sehen kann: ob die Tabelle auf 360×740 passt. Das misst der
 // Walkthrough (tests/web/fit.ts).
 
-import { fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
@@ -131,4 +131,51 @@ describe('a table she fills in', () => {
     fireEvent.focus(screen.getByLabelText('ich, Präteritum'));
     expect(screen.queryByRole('toolbar')).toBeNull();
   });
+});
+
+it('keeps a refocused earlier cell active after Enter submits without blur', () => {
+  vi.useFakeTimers();
+  const app = renderInApp(
+    <TableAnswer
+      view={VERBS}
+      draftKey="enter-refocus"
+      disabled={false}
+      onSubmit={() => undefined}
+    />,
+  );
+  try {
+    const first = screen.getByLabelText('ich, Präteritum');
+    act(() => first.focus());
+    fireEvent.keyDown(first, { key: 'Enter', code: 'Enter' });
+    expect(document.activeElement).toBe(screen.getByLabelText('du, Präsens'));
+    act(() => first.focus());
+    expect(document.activeElement).toBe(first);
+    act(() => vi.runOnlyPendingTimers());
+    expect(document.activeElement).toBe(first);
+  } finally {
+    app.unmount();
+    vi.useRealTimers();
+  }
+});
+
+it('still checks once and blurs the final blur-and-submit cell', () => {
+  vi.useFakeTimers();
+  const submit = vi.fn();
+  const app = renderInApp(
+    <TableAnswer view={VERBS} draftKey="enter-final" disabled={false} onSubmit={submit} />,
+  );
+  try {
+    fireEvent.change(screen.getByLabelText('ich, Präteritum'), { target: { value: 'ging' } });
+    fireEvent.change(screen.getByLabelText('du, Präsens'), { target: { value: 'gehst' } });
+    const last = screen.getByLabelText('du, Präteritum');
+    fireEvent.change(last, { target: { value: 'gingst' } });
+    act(() => last.focus());
+    fireEvent.keyDown(last, { key: 'Enter', code: 'Enter' });
+    expect(submit).toHaveBeenCalledOnce();
+    act(() => vi.runOnlyPendingTimers());
+    expect(document.activeElement).not.toBe(last);
+  } finally {
+    app.unmount();
+    vi.useRealTimers();
+  }
 });

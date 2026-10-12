@@ -3,10 +3,12 @@ import type { ViewStyle } from 'react-native';
 
 import type { Palette } from './palettes.js';
 import { RADIUS } from './radius.js';
-import { SPACE } from './space.js';
+import { SPACE, TOUCH } from './space.js';
 
 export type OptionState = 'idle' | 'selected' | 'correct' | 'wrong' | 'dim';
 export type BoardState = 'tile' | 'picked' | 'placed' | 'slot' | 'correct' | 'wrong';
+
+const COLUMN_CELL_AIR = 1;
 
 export const PRACTICE = {
   optionHeight: 56,
@@ -64,7 +66,8 @@ export const PRACTICE = {
   staffGapMin: 12,
   staffGapMax: 26,
   columnRule: 2,
-  columnCellAir: 1,
+  columnCellAir: COLUMN_CELL_AIR,
+  columnDigitTarget: TOUCH + 2 * COLUMN_CELL_AIR,
   speechNoteGap: 6,
   passageLineAir: SPACE.xs / 2,
   markLetterCell: 30,
