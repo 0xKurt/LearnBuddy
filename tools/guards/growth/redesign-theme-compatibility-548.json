@@ -1,8 +1,10 @@
 {
   "issue": "#548",
-  "reason": "Keep the existing REDUCE and REDUCE_NEVER theme exports as compatibility aliases through the sequential redesign PRs; remove both unused aliases and this grant in the final dedicated alias-cleanup PR.",
+  "reason": "Keep existing REDUCE/REDUCE_NEVER and MIC_RING_ROOM compatibility exports through the sequential redesign PRs as required by #548; remove the unused aliases, both MIC_RING_ROOM exports and their signatures, and this grant in the final dedicated alias-cleanup PR.",
   "knip": [
     "exports: apps/mobile/lib/theme/motion.ts: REDUCE",
-    "exports: apps/mobile/lib/theme/motion.ts: REDUCE_NEVER"
+    "exports: apps/mobile/lib/theme/motion.ts: REDUCE_NEVER",
+    "exports: apps/mobile/components/voice/MicButton.tsx: MIC_RING_ROOM",
+    "exports: apps/mobile/lib/theme/voice.ts: MIC_RING_ROOM"
   ]
 }

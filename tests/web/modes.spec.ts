@@ -7,6 +7,7 @@
 
 import { join } from 'node:path';
 
+import buddyDe from '../../apps/mobile/locales/de/buddy.json';
 import { expect, test, type Page } from '@playwright/test';
 
 import {
@@ -575,7 +576,7 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   // ── Conversation mode: she speaks, Buddy answers aloud, in the same conversation ──
   // (A fake microphone; in the browser there is no pause detection, so she taps when done.)
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
-  await expect(page.getByText('GESPRÄCH')).toBeVisible();
+  await expect(page.getByText(buddyDe.talk.title, { exact: true })).toBeVisible();
   await expect(page.getByText('Ich höre zu.')).toBeVisible();
   await expect(page.getByText('Tipp aufs Mikro, wenn du fertig bist.')).toBeVisible();
   await shot(page, '32-talk-listening');

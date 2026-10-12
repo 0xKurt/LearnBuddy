@@ -134,7 +134,7 @@ export const InputBar = forwardRef<LbTextInputRef, Props>(function InputBar(prop
         }
         microphone={
           mic && voice ? (
-            <MicButton voice={voice} size="sm" label={micLabel} disabled={disabled} />
+            <MicButton tone="quiet" voice={voice} size="sm" label={micLabel} disabled={disabled} />
           ) : null
         }
         primary={action !== null && idle ? action : after}

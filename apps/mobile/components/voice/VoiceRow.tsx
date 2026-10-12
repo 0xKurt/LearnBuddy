@@ -19,6 +19,7 @@ import { Text, View } from 'react-native';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { TALK } from '../../lib/theme/talk.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
 import { MicButton } from './MicButton.js';
@@ -37,6 +38,7 @@ type Mic = {
   voice: VoiceInput;
   /** What tapping it does ("Sprechen", "Antwort sagen", "Unterbrechen"). */
   label: string;
+  visibleLabel?: string;
   disabled: boolean;
   filled?: boolean;
   /** Instead of start/stop recording (the conversation screen runs its own loop). */
@@ -50,6 +52,7 @@ export function VoiceRow({
   size,
   action = null,
   centerAction = null,
+  presentation = 'default',
 }: {
   left: Side;
   mic: Mic;
@@ -60,17 +63,25 @@ export function VoiceRow({
   /** A selection's Check, kept reachable alongside the existing voice controls. */
   action?: ReactNode;
   centerAction?: ReactNode;
+  presentation?: 'default' | 'talk';
 }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-        <SideAction side={left} compact={action !== null || centerAction !== null} />
+        <SideAction
+          side={left}
+          talk={presentation === 'talk'}
+          compact={action !== null || centerAction !== null}
+        />
         {centerAction ? (
           <MicButton
+            presentation={presentation === 'talk' ? 'pill' : 'circle'}
             voice={mic.voice}
             size={size}
             filled={false}
+            tone="quiet"
             label={mic.label}
+            visibleLabel={mic.visibleLabel}
             disabled={mic.disabled}
             {...(mic.onPress ? { onPress: mic.onPress } : {})}
           />
@@ -78,17 +89,23 @@ export function VoiceRow({
       </View>
       {centerAction ?? (
         <MicButton
+          presentation={presentation === 'talk' ? 'pill' : 'circle'}
           voice={mic.voice}
           size={size}
           filled={mic.filled ?? true}
           label={mic.label}
+          visibleLabel={mic.visibleLabel}
           disabled={mic.disabled}
           {...(mic.onPress ? { onPress: mic.onPress } : {})}
         />
       )}
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
         {right ? (
-          <SideAction side={right} compact={action !== null || centerAction !== null} />
+          <SideAction
+            side={right}
+            talk={presentation === 'talk'}
+            compact={action !== null || centerAction !== null}
+          />
         ) : (
           <View style={{ flex: 1 }} />
         )}
@@ -98,7 +115,15 @@ export function VoiceRow({
   );
 }
 
-function SideAction({ side, compact = false }: { side: Side; compact?: boolean }) {
+function SideAction({
+  side,
+  compact = false,
+  talk = false,
+}: {
+  side: Side;
+  compact?: boolean;
+  talk?: boolean;
+}) {
   const { palette } = useTheme();
   return (
     <View
@@ -112,11 +137,12 @@ function SideAction({ side, compact = false }: { side: Side; compact?: boolean }
     >
       <CircleBtn
         icon={side.icon}
+        {...(talk ? { size: TALK.sideSize, tone: 'quiet' as const } : {})}
         onPress={side.onPress}
         accessibilityLabel={side.accessibilityLabel ?? side.label}
       />
       {/* The button carries the name; the word is for the eyes. */}
-      {compact ? null : (
+      {compact || talk ? null : (
         <Text
           aria-hidden
           numberOfLines={2}

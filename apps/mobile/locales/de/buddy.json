@@ -294,11 +294,13 @@
     "slow": "Das dauert gerade länger – die Antwort kommt gleich im Chat.",
     "end": "Beenden",
     "speak": "Sprechen",
+    "interrupt_short": "Unterbrechen",
     "interrupt": "Unterbrechen und sprechen",
     "photo": "Foto",
     "photo_label": "Foto zeigen",
     "tap_orb": "Tipp auf Buddy, dann hört er dir zu.",
-    "barge_sub": "Sprich einfach dazwischen, dann hört er dir zu."
+    "barge_sub": "Sprich einfach dazwischen, dann hört er dir zu.",
+    "finish": "Fertig"
   },
   "thread": {
     "title": "Chat mit Buddy",

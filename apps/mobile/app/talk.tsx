@@ -13,10 +13,9 @@
 // is open, which she opened herself; "Beenden" or the keyboard ends it.
 // The screen is a camera angle on that one thread (issue #18): the last few
 // messages stand as the chat's own bubbles (components/buddy/Conversation.tsx),
-// bottom-anchored and following the newest — her words form as her own bubble
+// naturally grouped with the Orb and following the newest — her words form as her own bubble
 // while she speaks, Buddy's reply streams into his, and the sentence he is
-// reading aloud stands out in it (ReadAlongBubble). Buddy himself sits small
-// above the button row; his state is the moon's movement plus a one-line
+// reading aloud stands out in it (ReadAlongBubble). Buddy occupies the centered conversation stage; his state is the moon's movement plus a one-line
 // caption (components/voice/TalkOrb.tsx, lib/buddy/moon.ts). Two soft tones
 // mark listening starting and ending (lib/speech/cues.ts). The camera shows
 // Buddy a photo: it goes into the same conversation, and she comes back here.
@@ -25,15 +24,13 @@ import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Platform, ScrollView, Text, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Linking, Platform, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Conversation } from '../components/buddy/Conversation.js';
 import { Btn } from '../components/lb/Btn.js';
-import { CircleBtn } from '../components/lb/CircleBtn.js';
+import { IconBtn } from '../components/lb/IconBtn.js';
 import { Glow } from '../components/lb/Glow.js';
-import { MIC_RING_ROOM } from '../components/voice/MicButton.js';
 import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
 import { VoiceRow } from '../components/voice/VoiceRow.js';
 import { talkMode } from '../lib/buddy/moon.js';
@@ -47,7 +44,7 @@ import { useScreenReader } from '../lib/useScreenReader.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
 import { haptic } from '../lib/haptics.js';
 import { playCue } from '../lib/speech/cues.js';
-import { fadeIn } from '../lib/theme/enter.js';
+import { AppearText } from '../components/lb/Motion.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { dropped, reacted, tapped } from '../lib/perf.js';
 import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/listen.js';
@@ -63,6 +60,9 @@ import { voiceLocale } from '../lib/speech/voice.js';
 import { useSay } from '../lib/speech/say.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
+import { TALK } from '../lib/theme/talk.js';
+import { useEndScroll } from '../lib/useEndScroll.js';
+import { CHAT } from '../lib/theme/chat.js';
 import { TYPE } from '../lib/theme/type.js';
 import { SPACE, bottomRoom } from '../lib/theme/space.js';
 import { attachInChat } from '../lib/capture/attachRequest.js';
@@ -77,8 +77,10 @@ export default function TalkScreen() {
   const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
+  const window = useWindowDimensions();
   const say = useSay();
   const scroll = useRef<ScrollView>(null);
+  const endScroll = useEndScroll(scroll);
   const [phase, setPhase] = useState<Phase>('paused');
   /** Her turn on its way: her bubble until the server's thread carries the message. */
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
@@ -424,51 +426,88 @@ export default function TalkScreen() {
       // VoiceOver's Magic Tap (two-finger double tap) is the mic: speak, done, interrupt.
       onMagicTap={onMic}
     >
-      <Glow height={700} />
+      <Glow height={TALK.glowHeight} />
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          gap: SPACE.sm,
           paddingHorizontal: SPACE.lg,
           paddingTop: SPACE.sm,
         }}
       >
-        <CircleBtn icon="close" onPress={leave} accessibilityLabel={t('buddy:talk.end')} />
-        <Text style={[TYPE.label, { color: palette.ink2, letterSpacing: 2 }]}>
-          {t('buddy:talk.title').toUpperCase()}
-        </Text>
-        <View style={{ width: 44 }} />
+        <IconBtn
+          tone="plain"
+          icon="close"
+          onPress={leave}
+          accessibilityLabel={t('buddy:talk.end')}
+        />
+        <Text style={[TYPE.title, { color: palette.ink, flex: 1 }]}>{t('buddy:talk.title')}</Text>
       </View>
 
-      {/* The conversation's tail, bottom-anchored and following its end: the same bubbles,
-          cards and streaming as the chat (issue #18) — no second rendering of the thread. */}
-      {/* Own name, not "scroll-thread": the home stays mounted under this modal, and two
+      <View style={{ flex: 1, justifyContent: 'center', gap: TALK.groupGap }}>
+        {/* Conversation mode is the explicit large-Orb exception; real cards remain below. */}
+        <View style={{ alignItems: 'center', flexShrink: 0 }}>
+          <TalkOrb
+            mode={orbMode}
+            size={window.height < TALK.compactBelow ? TALK.compactStageSize : TALK.stageSize}
+            level={voice.level}
+            {...(phase === 'speaking'
+              ? // Same action as the mic while Buddy speaks, so the same words name it.
+                { onPress: interrupt, pressLabel: t('buddy:talk.interrupt') }
+              : {})}
+          />
+          <View
+            style={{ minHeight: TALK.captionHeight, alignItems: 'center', marginTop: -SPACE.sm }}
+          >
+            <Text
+              accessibilityRole="header"
+              accessibilityLiveRegion="polite"
+              style={[TYPE.label, { color: palette.ink, textAlign: 'center' }]}
+            >
+              {headline}
+            </Text>
+            {sub ? (
+              <AppearText
+                key={sub}
+                style={[TYPE.meta, { textAlign: 'center', marginTop: TALK.hintGap }]}
+              >
+                {sub}
+              </AppearText>
+            ) : null}
+          </View>
+        </View>
+
+        {/* The conversation's natural-height tail follows its end: the same bubbles,
+          cards and streaming as the chat (issue #18), grouped with the stage. */}
+        {/* Own name, not "scroll-thread": the home stays mounted under this modal, and two
           identical testIDs make every thread locator ambiguous (Playwright strict mode). */}
-      <ScrollView
-        ref={scroll}
-        testID="scroll-talk"
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: 'flex-end',
-          paddingHorizontal: SPACE.lg,
-          paddingTop: SPACE.md,
-          paddingBottom: SPACE.sm,
-        }}
-        onLayout={() => scroll.current?.scrollToEnd({ animated: false })}
-        onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
-      >
-        <Conversation
-          messages={tail}
-          pending={bubble}
-          live={live}
-          busy={phase === 'thinking'}
-          spoken
-          // While she is still speaking, her forming words are no writing of Buddy's.
-          showTyping={phase !== 'listening'}
-        />
-      </ScrollView>
+        <ScrollView
+          ref={scroll}
+          testID="scroll-talk"
+          style={{ flexGrow: 0, flexShrink: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: SPACE.lg,
+            paddingTop: SPACE.md,
+            paddingBottom: SPACE.sm,
+          }}
+          onLayout={() => endScroll.toEnd(false)}
+          onContentSizeChange={() => endScroll.toEnd(true)}
+          onScroll={endScroll.onScroll}
+          {...endScroll.inputProps}
+          scrollEventThrottle={CHAT.scrollThrottle}
+        >
+          <Conversation
+            messages={tail}
+            pending={bubble}
+            live={live}
+            busy={phase === 'thinking'}
+            spoken
+            // While she is still speaking, her forming words are no writing of Buddy's.
+            showTyping={phase !== 'listening'}
+          />
+        </ScrollView>
+      </View>
 
       {problem || voice.hint || voice.denied ? (
         <View
@@ -499,8 +538,7 @@ export default function TalkScreen() {
         </View>
       ) : null}
       {reading ? (
-        <Animated.Text
-          entering={fadeIn()}
+        <AppearText
           style={[
             TYPE.small,
             { textAlign: 'center', paddingHorizontal: SPACE.xl, paddingBottom: SPACE.xs },
@@ -508,65 +546,32 @@ export default function TalkScreen() {
           accessibilityLiveRegion="polite"
         >
           {t('buddy:now.processing_title')}
-        </Animated.Text>
+        </AppearText>
       ) : null}
-
-      {/* Buddy, small and docked over the button row (issue #18): the moon's movement is the
-          state, the caption names it, one quiet line under it says what she can do. The
-          caption block keeps its two lines of room, so Buddy never jumps between states. */}
-      <View style={{ alignItems: 'center' }}>
-        <TalkOrb
-          mode={orbMode}
-          size={64}
-          level={voice.level}
-          {...(phase === 'speaking'
-            ? // Same action as the mic while Buddy speaks, so the same words name it.
-              { onPress: interrupt, pressLabel: t('buddy:talk.interrupt') }
-            : {})}
-        />
-        <View style={{ minHeight: 40, alignItems: 'center', marginTop: -SPACE.sm }}>
-          <Text
-            accessibilityRole="header"
-            accessibilityLiveRegion="polite"
-            style={[TYPE.caption, { fontWeight: '600', color: palette.ink, textAlign: 'center' }]}
-          >
-            {headline}
-          </Text>
-          {sub ? (
-            <Animated.Text
-              key={sub}
-              entering={fadeIn()}
-              style={[
-                TYPE.caption,
-                { textAlign: 'center', marginTop: 1 }, // token-exempt: the hint 1 under its state
-              ]}
-            >
-              {sub}
-            </Animated.Text>
-          ) : null}
-        </View>
-      </View>
 
       {/* Voice first: keyboard · big mic · camera — the conversation's one row (`VoiceRow`),
           the same in practice (issue #386). "Beenden" is the close button on top. */}
       <View
         style={{
           paddingHorizontal: SPACE.lg,
-          // Room for the mic's pulsing ring, which is drawn absolute and scaled and so
-          // reaches past its button (MIC_RING_ROOM, 17 pt) — with SPACE.md it stuck four
-          // pixels past the bottom of the phone and made the whole page scrollable.
-          // With a gesture bar the device's inset replaces this instead of adding to it
-          // (the fit check is exact to the pixel).
-          paddingBottom: bottomRoom(insets.bottom, MIC_RING_ROOM),
+          // Safe-area inset or shared footer spacing, without decorative ring clearance.
+          paddingBottom: bottomRoom(insets.bottom, SPACE.md),
           paddingTop: SPACE.sm,
         }}
       >
         <VoiceRow
           left={{ icon: 'keyboard', label: t('buddy:composer.keyboard'), onPress: leave }}
           size="lg"
+          presentation="talk"
           mic={{
             voice,
-            label: phase === 'speaking' ? t('buddy:talk.interrupt') : t('buddy:talk.speak'),
+            label:
+              phase === 'speaking'
+                ? t('buddy:talk.interrupt')
+                : listening
+                  ? t('buddy:talk.finish')
+                  : t('buddy:talk.speak'),
+            visibleLabel: phase === 'speaking' ? t('buddy:talk.interrupt_short') : undefined,
             disabled: phase === 'thinking',
             onPress: onMic,
           }}

@@ -1,3 +1,4 @@
+import { fireEvent } from '@testing-library/react';
 import { Animated } from 'react-native';
 import { afterEach, expect, it, vi } from 'vitest';
 
@@ -42,10 +43,8 @@ it('never starts a recording pulse when reduced motion is enabled on mount', () 
   expect(loop).not.toHaveBeenCalled();
 });
 
-it('stops the mounted microphone ring without disabling the recording stop action', () => {
-  const start = vi.fn();
-  const stop = vi.fn();
-  vi.spyOn(Animated, 'loop').mockReturnValue({ start, stop, reset: vi.fn() } as never);
+it('keeps recording microphone static and stoppable across preference changes', () => {
+  const loop = vi.spyOn(Animated, 'loop');
   const voice = {
     state: 'recording',
     elapsedMs: 1000,
@@ -53,12 +52,11 @@ it('stops the mounted microphone ring without disabling the recording stop actio
     toggle: vi.fn(),
   } as unknown as VoiceInput;
   const view = renderInApp(<MicButton voice={voice} label="Nachricht" disabled />);
-  expect(start).toHaveBeenCalledTimes(1);
   preference.reduced = true;
   view.rerender(<MicButton voice={voice} label="Nachricht" disabled />);
-  expect(stop).toHaveBeenCalledTimes(1);
-  expect(start).toHaveBeenCalledTimes(1);
-  expect(
-    view.getByRole('button', { name: 'Aufnahme stoppen' }).getAttribute('aria-disabled'),
-  ).not.toBe('true');
+  const control = view.getByRole('button', { name: 'Aufnahme stoppen' });
+  expect(control.getAttribute('aria-disabled')).not.toBe('true');
+  fireEvent.click(control);
+  expect(voice.toggle).toHaveBeenCalledTimes(1);
+  expect(loop).not.toHaveBeenCalled();
 });

@@ -294,11 +294,13 @@
     "slow": "Ça prend plus de temps – la réponse arrivera dans le chat.",
     "end": "Terminer",
     "speak": "Parler",
+    "interrupt_short": "Interrompre",
     "interrupt": "Interrompre et parler",
     "photo": "Photo",
     "photo_label": "Montrer une photo",
     "tap_orb": "Touche Buddy et il t’écoute.",
-    "barge_sub": "Parle simplement, il t’écoute."
+    "barge_sub": "Parle simplement, il t’écoute.",
+    "finish": "Terminé"
   },
   "thread": {
     "title": "Discussion avec Buddy",
