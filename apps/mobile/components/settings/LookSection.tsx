@@ -4,29 +4,24 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { type Family, type Mode } from '../../lib/theme/palettes.js';
+import { type Family } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { Card } from '../lb/Card.js';
-import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
+import { ListGroup } from '../lb/ListGroup.js';
+import { View } from 'react-native';
+import { CARD_PAD } from '../../lib/theme/space.js';
 import { FamilyChoice, ModeChoice } from '../lb/LookChoice.js';
-import { Group } from './Group.js';
 import { Row } from './Row.js';
 
 export function LookSection() {
   const { t } = useTranslation('settings');
-  const { family, mode } = useTheme();
+  const { family } = useTheme();
   const familyLabel = (f: Family) => t(`look.family.${f}`);
-  const modeLabel = (m: Mode) => t(`look.mode.${m}`);
 
   return (
-    <Group
-      title={t('look.title')}
-      fold="look"
-      summary={`${familyLabel(family)} · ${modeLabel(mode)}`}
-    >
+    <ListGroup label={t('look.title')}>
       {/* The two rows need air between them: the colour labels and the next question
           collided on the phone (owner 01.10.). */}
-      <Card padding={CARD_PAD.roomy} style={{ gap: SPACE.lg }}>
+      <View style={{ padding: CARD_PAD.base }}>
         {/* Two axes since #140: the colour, and whether it is light or dark. The dot IS
             the preview — drawn from that family's own palette in the mode that is showing
             — and picking one applies it at once, which shows more than any mock sentence
@@ -34,10 +29,10 @@ export function LookSection() {
         <Row question={t('look.question')} current={familyLabel(family)} hint={t('look.hint')}>
           <FamilyChoice />
         </Row>
-        {/* The switch is its own row: its name says what it does and its hint stands under
-            it (#517), so a question above it would only say the same thing twice. */}
+      </View>
+      <View style={{ padding: CARD_PAD.base }}>
         <ModeChoice />
-      </Card>
-    </Group>
+      </View>
+    </ListGroup>
   );
 }

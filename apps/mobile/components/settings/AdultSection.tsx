@@ -38,7 +38,6 @@ import { TYPE } from '../../lib/theme/type.js';
 import { formatDate, formatTime } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import type { LbTextInputRef } from '../lb/LbTextInput.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { AccountAccessCard } from './AccountAccessCard.js';
@@ -48,6 +47,7 @@ import {
   confirmAdultFirst,
   toastAdultFailure,
 } from './adultGate.js';
+import { ListGroup, Row as ListRow } from '../lb/ListGroup.js';
 import { Group } from './Group.js';
 import { PinCard } from './PinCard.js';
 import { ProfileFixCard } from './ProfileFixCard.js';
@@ -64,7 +64,6 @@ const EXPORT_DONE = {
 type Props = {
   account: NonNullable<MeResponse['account']>;
   learner: LearnerView;
-  onInputFocus: (input: LbTextInputRef | null) => void;
 };
 
 function setDeletionDue(due: string | null): void {
@@ -73,7 +72,7 @@ function setDeletionDue(due: string | null): void {
   );
 }
 
-export function AdultSection({ account, learner, onInputFocus }: Props) {
+export function AdultSection({ account, learner }: Props) {
   const { palette } = useTheme();
   const [open, setOpen] = useState<ParentsView | null>(null);
   const [opening, setOpening] = useState(false);
@@ -215,35 +214,34 @@ export function AdultSection({ account, learner, onInputFocus }: Props) {
   };
 
   return (
-    <View
-      style={{
-        backgroundColor: palette.rose,
-        borderRadius: 28, // token-exempt: the parents' area, rounder than the cards it holds
-        padding: SPACE.lg,
-      }}
-    >
+    <View>
       <Group
         title={minor ? t('settings:adult.title_minor') : t('settings:adult.title_self')}
         intro={minor ? t('settings:adult.intro_minor') : t('settings:adult.intro_self')}
         icon="shield"
       >
         {/* Closed by default: the learner's settings stay short; parents open it when needed. */}
-        <Btn pill variant="outline" disabled={opening} onPress={() => void toggle()}>
-          {open ? t('settings:adult.close') : t('settings:adult.open')}
-        </Btn>
+        <ListGroup>
+          <ListRow
+            title={open ? t('settings:adult.close') : t('settings:adult.open')}
+            accessibilityLabel={open ? t('settings:adult.close') : t('settings:adult.open')}
+            sub={minor ? t('settings:adult.needs_pin') : undefined}
+            icon="shield"
+            disabled={opening}
+            onPress={() => void toggle()}
+          />
+        </ListGroup>
         {open === 'pin_only' ? (
           <>
             <Text style={[TYPE.body, { color: palette.ink2, paddingHorizontal: SPACE.xs }]}>
               {t('settings:adult.forgot_intro')}
             </Text>
-            <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
+            <PinCard pinSet={account.pin_set} email={email} />
           </>
         ) : null}
         {open === 'all' ? (
           <>
-            {minor ? (
-              <PinCard pinSet={account.pin_set} email={email} onInputFocus={onInputFocus} />
-            ) : null}
+            {minor ? <PinCard pinSet={account.pin_set} email={email} /> : null}
 
             <ProfileFixCard learner={learner} pinSet={pinSet} enabled={busy === null} />
 

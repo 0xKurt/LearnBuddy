@@ -42,7 +42,6 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   // ── The look: every option previews in ITS OWN colours, and night stays readable ──
   // (issue #84: module-scope styles froze the start palette's ink, which was invisible on
   // the night background — the axe pass at every shot is what catches that class now.)
-  await page.getByRole('button', { name: 'Aussehen' }).click();
   const darkSwitch = page.getByRole('radio', { name: 'Dunkel', exact: true });
   await expect(darkSwitch).not.toBeChecked();
   await expect(page.getByRole('radio', { name: 'Wie das Handy', exact: true })).toBeChecked();
@@ -69,14 +68,12 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await page.getByRole('button', { name: 'Beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   await openMenu('Einstellungen');
-  await page.getByRole('button', { name: 'Aussehen' }).click();
   await page.getByRole('radio', { name: 'Pastell' }).click();
   await page.getByRole('radio', { name: 'Hell', exact: true }).click();
   const system = page.getByRole('radio', { name: 'Wie das Handy', exact: true });
   await system.click();
   await expect(system).toBeChecked();
   await page.reload();
-  await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
   await expect(system).toBeChecked();
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toHaveCSS(
@@ -101,8 +98,9 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
  * each package folded until she taps it, then its licence text under it.
  */
 async function openLicences(page: Page, about: string, sheet: string): Promise<void> {
-  await page.getByRole('button', { name: 'Über LearnBuddy' }).click();
   const entry = page.getByRole('button', { name: 'Lizenzen', exact: true });
+  if (!(await entry.isVisible()))
+    await page.getByRole('button', { name: 'Über LearnBuddy' }).click();
   await entry.scrollIntoViewIfNeeded();
   await expect(entry).toBeVisible();
   await shot(page, about, { opened: true });

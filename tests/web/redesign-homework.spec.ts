@@ -15,7 +15,6 @@ for (const family of ['Pastell', 'Meer'] as const) {
       await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: 'light' });
       await signUpMia(page, freshEmail('homework'));
       await openMenu(page, 'Einstellungen');
-      await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
       const familyChoice = page.getByRole('radio', { name: family, exact: true });
       await familyChoice.click();
       await expect(familyChoice).toBeChecked();

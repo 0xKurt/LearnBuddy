@@ -136,7 +136,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
         }
       >
         <View style={{ gap: SPACE.sm }}>
-          <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('settings:adult.profile.name')}</Text>
+          <Text style={TYPE.bodyStrong}>{t('settings:adult.profile.name')}</Text>
           <LbTextInput
             value={name}
             onChangeText={setName}
@@ -151,7 +151,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
           />
         </View>
         <View style={{ gap: SPACE.sm }}>
-          <Text style={[TYPE.body, { fontWeight: '600' }]}>{t('auth:profile.birth_date')}</Text>
+          <Text style={TYPE.bodyStrong}>{t('auth:profile.birth_date')}</Text>
           <BirthDateFields value={date} onChange={setDate} editable={!busy} />
           {dateComplete && !birthDate ? (
             <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>

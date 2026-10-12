@@ -28,7 +28,6 @@ export async function listLookMatrix(
   for (const look of LOOKS)
     for (const dark of [false, true]) {
       await page.goto('/settings');
-      await page.getByRole('button', { name: 'Aussehen', exact: true }).click();
       await page.getByRole('radio', { name: look.label, exact: true }).click();
       await expect(page.getByRole('radio', { name: look.label, exact: true })).toBeChecked();
       const mode = page.getByRole('radio', { name: dark ? 'Dunkel' : 'Hell', exact: true });

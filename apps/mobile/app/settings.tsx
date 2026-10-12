@@ -24,11 +24,12 @@ import { FoldContext } from '../components/settings/Group.js';
 import { useFolds } from '../components/settings/folds.js';
 import { LookSection } from '../components/settings/LookSection.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
-import { useRevealInput } from '../components/settings/useRevealInput.js';
 import { VoiceSection } from '../components/settings/VoiceSection.js';
 import { clearAdminToken } from '../lib/admin.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
 import { bottomRoom, SPACE } from '../lib/theme/space.js';
+import { SETTINGS } from '../lib/theme/settings.js';
+import { FormFrameContext, useFormViewport } from '../components/lb/FormFrameClearance.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 export default function SettingsScreen() {
@@ -37,9 +38,9 @@ export default function SettingsScreen() {
   const settings = useSettings();
   const me = useMe();
   const home = useHome();
-  const { scroll, content, reveal } = useRevealInput();
   const [refreshing, setRefreshing] = useState(false);
-  // One group open at a time; all closed at first (components/settings/Group.tsx).
+  const form = useFormViewport();
+  // One disclosure group opens at a time; appearance stays visible.
   // Outside the tree (components/settings/folds.ts): a theme change remounts the app by
   // key, and a useState here closed the group under her finger (issue #84).
   const open = useFolds((f) => f.open);
@@ -49,7 +50,7 @@ export default function SettingsScreen() {
   // afterwards cannot use it (docs/privacy.md §PIN gate).
   useFocusEffect(
     useCallback(() => {
-      // A fresh visit starts with every group closed; a remount (theme change) keeps hers.
+      // A fresh visit closes disclosures; a remount (theme change) keeps hers.
       useFolds.getState().arrive();
       return () => {
         useFolds.getState().markBlurred();
@@ -93,35 +94,41 @@ export default function SettingsScreen() {
     <Screen back title={title}>
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
-          ref={scroll}
+          ref={form.scroll}
+          onLayout={form.controller.refresh}
+          onContentSizeChange={form.controller.refresh}
+          onScroll={(event) => {
+            form.offset.current = event.nativeEvent.contentOffset.y;
+          }}
           // A list she browses on purpose (like her material): it may grow past the screen,
           // its groups stay closed until she opens one (tests/web/fit.ts, CLAUDE.md §16).
           testID="scroll-list"
           contentContainerStyle={{
             padding: SPACE.lg,
-            // token-exempt: room of 48 past the inset, the last group clear of the edge
-            paddingBottom: bottomRoom(insets.bottom, 48),
+            paddingBottom: bottomRoom(insets.bottom, SETTINGS.bottomClearance),
           }}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />
           }
         >
-          <FoldContext.Provider value={{ open, toggle: toggleFold }}>
-            <View ref={content} style={{ gap: SPACE.lg }}>
-              <ContactSection
-                settings={settings.data}
-                isMinor={learner.is_minor}
-                pinSet={account.pin_set}
-                push={home.data?.system.push ?? null}
-              />
-              <VoiceSection settings={settings.data} />
-              <LookSection />
-              <AdultSection account={account} learner={learner} onInputFocus={reveal} />
-              <ProfileSection learner={learner} />
-              <AboutSection />
-            </View>
-          </FoldContext.Provider>
+          <FormFrameContext.Provider value={form.controller}>
+            <FoldContext.Provider value={{ open, toggle: toggleFold }}>
+              <View style={{ gap: SPACE.lg }}>
+                <ProfileSection learner={learner} />
+                <LookSection />
+                <VoiceSection settings={settings.data} />
+                <ContactSection
+                  settings={settings.data}
+                  isMinor={learner.is_minor}
+                  pinSet={account.pin_set}
+                  push={home.data?.system.push ?? null}
+                />
+                <AdultSection account={account} learner={learner} />
+                <AboutSection />
+              </View>
+            </FoldContext.Provider>
+          </FormFrameContext.Provider>
         </ScrollView>
       </KeyboardSafe>
     </Screen>
