@@ -14,7 +14,7 @@
 // Read once and then followed: both can be changed while the app runs.
 
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, Platform } from 'react-native';
 
 export type A11ySettings = {
   /** The OS asks for heavier type. */
@@ -37,6 +37,18 @@ export function useA11ySettings(): A11ySettings {
     void AccessibilityInfo.isReduceTransparencyEnabled?.()
       .then((on) => set({ reduceTransparency: on }))
       .catch(() => undefined);
+    // RN Web exposes reduced motion, but not the browser's transparency preference.
+    const transparency =
+      Platform.OS === 'web' &&
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-reduced-transparency: reduce)')
+        : null;
+    const syncTransparency = () => set({ reduceTransparency: transparency?.matches ?? false });
+    if (transparency) {
+      syncTransparency();
+      transparency.addEventListener?.('change', syncTransparency);
+    }
     const subs = [
       AccessibilityInfo.addEventListener('boldTextChanged', (on) => set({ boldText: on })),
       AccessibilityInfo.addEventListener('reduceTransparencyChanged', (on) =>
@@ -45,6 +57,7 @@ export function useA11ySettings(): A11ySettings {
     ];
     return () => {
       alive = false;
+      transparency?.removeEventListener?.('change', syncTransparency);
       for (const s of subs) s.remove();
     };
   }, []);

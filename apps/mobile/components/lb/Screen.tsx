@@ -6,7 +6,6 @@ import type { ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { HEADER } from '../../lib/theme/header.js';
 import { BuddyHeader, type BuddyHeaderProps } from './BuddyHeader.js';
 import { Glow } from './Glow.js';
 
@@ -38,8 +37,8 @@ export function Screen({
   const { palette } = useTheme();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
-      {/* The same soft light as on Buddy's home, a little lower so content stays calm. */}
-      <Glow height={HEADER.glow} />
+      {/* The same full-page background as the custom screen roots. */}
+      <Glow />
       {(title || back || right || leading || footer) && (
         <BuddyHeader
           title={title ?? ''}
