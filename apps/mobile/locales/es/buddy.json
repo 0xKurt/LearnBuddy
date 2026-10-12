@@ -129,7 +129,10 @@
   },
   "greeting_ask": "¿Qué tienes pendiente?",
   "intro": {
-    "body": "Te ayudo a prepararte para exámenes y controles, sin estrés. Cuéntame qué tienes pendiente o mándame una foto de tu ficha."
+    "body": "Cuéntame sobre tu próximo examen o enséñame una ficha. Con eso haré ejercicios.",
+    "hello": "Hola {{name}}.",
+    "photo": "Foto de una ficha",
+    "practice": "Practicar un poco"
   },
   "menu": {
     "open": "Abrir menú",

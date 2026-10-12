@@ -65,6 +65,7 @@ import { useThreadFollow } from '../lib/buddy/useThreadFollow.js';
 import { messageFor } from '../lib/errors.js';
 import { useClosedCard } from '../lib/homeCard.js';
 import { homeLayout, topKey } from '../lib/homeLayout.js';
+import { askAttach } from '../lib/capture/attachRequest.js';
 import { SPACE } from '../lib/theme/space.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 
@@ -275,7 +276,13 @@ export default function BuddyScreen() {
               />
             </HomeThread>
           ) : (
-            <HomeIntro h={h} refreshing={home.isRefetching} onRefresh={refetch} />
+            <HomeIntro
+              h={h}
+              refreshing={home.isRefetching}
+              onRefresh={refetch}
+              onSend={(text) => void send(text)}
+              onPhoto={() => askAttach({ open: 'camera' })}
+            />
           )}
         </View>
         <Composer

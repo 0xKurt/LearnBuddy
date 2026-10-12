@@ -73,7 +73,7 @@ export function worksheetJpeg(page: Page): Promise<string> {
  * natural voices (issue #526). core-loop-setup.spec.ts walks the same way with every check and
  * shot.
  */
-export async function signUpMia(page: Page, email: string): Promise<void> {
+export async function signUpMia(page: Page, email: string, learnerName = 'Mia'): Promise<void> {
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(email);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
@@ -82,7 +82,7 @@ export async function signUpMia(page: Page, email: string): Promise<void> {
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('radio', { name: 'Mein Kind' }).click();
-  await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Mia');
+  await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill(learnerName);
   await page.getByRole('button', { name: 'Bundesland wählen' }).click();
   await page.getByRole('radio', { name: 'Niedersachsen' }).click();
   await page.getByLabel('Tag', { exact: true }).fill('14');
@@ -94,7 +94,7 @@ export async function signUpMia(page: Page, email: string): Promise<void> {
   await page.getByLabel('PIN wiederholen').fill(PIN);
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('button', { name: 'Ja, erlauben' }).click();
-  await page.getByRole('button', { name: "Los geht's, Mia!" }).click();
+  await page.getByRole('button', { name: `Los geht's, ${learnerName}!` }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }

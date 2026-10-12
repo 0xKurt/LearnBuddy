@@ -38,9 +38,12 @@ export function ListGroup({ label, children }: { label?: string; children: React
 }
 export type RowProps = {
   title: string;
+  chevron?: boolean;
   sub?: string;
   value?: string;
   icon?: IconName;
+  iconTone?: 'muted' | 'accent';
+  iconSize?: number;
   tile?: { letter: string; tone: SubjectTone };
   trailing?: ReactNode;
   onPress?: () => void;
@@ -50,9 +53,12 @@ export type RowProps = {
 };
 export function Row({
   title,
+  chevron = true,
   sub,
   value,
   icon,
+  iconTone = 'muted',
+  iconSize = UI.list.icon,
   tile,
   trailing,
   onPress,
@@ -77,14 +83,18 @@ export function Row({
           <Text style={[TYPE.title, { color: palette.ink }]}>{tile.letter}</Text>
         </View>
       ) : icon ? (
-        <Icon name={icon} size={UI.list.icon} color={palette.ink2} />
+        <Icon
+          name={icon}
+          size={iconSize}
+          color={iconTone === 'accent' ? palette.primaryDk : palette.ink2}
+        />
       ) : null}
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={TYPE.title}>{title}</Text>
+        <Text style={TYPE.cell}>{title}</Text>
         {sub ? <Text style={TYPE.meta}>{sub}</Text> : null}
       </View>
       {value ? <Text style={TYPE.meta}>{value}</Text> : null}
-      {onPress && trailing == null ? (
+      {onPress && chevron && trailing == null ? (
         <Icon name="chevron" size={UI.list.chevron} color={palette.ink3} />
       ) : null}
     </>

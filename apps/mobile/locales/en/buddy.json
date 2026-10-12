@@ -129,7 +129,10 @@
   },
   "greeting_ask": "What's coming up?",
   "intro": {
-    "body": "I help you get ready for tests and exams – without stress. Just tell me what's coming up, or send me a photo of your worksheet."
+    "body": "Tell me about your next test or show me a worksheet. I’ll turn it into exercises.",
+    "hello": "Hello {{name}}.",
+    "photo": "Photo of a worksheet",
+    "practice": "Just practise"
   },
   "menu": {
     "open": "Open menu",

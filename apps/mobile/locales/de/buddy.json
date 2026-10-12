@@ -129,7 +129,10 @@
   },
   "greeting_ask": "Was steht an?",
   "intro": {
-    "body": "Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten – ohne Stress. Erzähl mir einfach, was ansteht, oder schick mir ein Foto von deinem Arbeitsblatt."
+    "body": "Erzähl mir von deiner nächsten Arbeit oder zeig mir ein Arbeitsblatt. Ich mach daraus Übungen.",
+    "hello": "Hallo {{name}}.",
+    "photo": "Foto vom Arbeitsblatt",
+    "practice": "Einfach mal üben"
   },
   "menu": {
     "open": "Menü öffnen",

@@ -129,7 +129,10 @@
   },
   "greeting_ask": "Qu'est-ce qui t'attend ?",
   "intro": {
-    "body": "Je t'aide à préparer tes contrôles et tes interros – sans stress. Dis-moi simplement ce qui t'attend, ou envoie-moi une photo de ta fiche."
+    "body": "Parle-moi de ton prochain contrôle ou montre-moi une fiche. J’en ferai des exercices.",
+    "hello": "Bonjour {{name}}.",
+    "photo": "Photo d’une fiche",
+    "practice": "Faire quelques exercices"
   },
   "menu": {
     "open": "Ouvrir le menu",
