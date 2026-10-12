@@ -13,6 +13,8 @@
 // dann — lässt sie sich in sich selbst waagerecht schieben. Eine Zahlenmauer steht als
 // Mauer da: Reihe für Reihe mittig, Stein auf Stein.
 
+import { formDensity } from '../../lib/keyboard.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import {
   TABLE_ANSWER_MAX,
@@ -77,6 +79,7 @@ const BRICK = PRACTICE.tableBrickWidth;
 /** "Prüfen": every gap filled; `shown` is her cells in reading order, for the thread. */
 export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<TableFillTaskView>) {
   const { palette, figure: ink } = useTheme();
+  const seen = useVisibleHeight();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
   const { text: kept, setText: keep } = useDraft(draftKey);
@@ -288,8 +291,11 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
 
   return (
     <AnswerShell
+      boardEditing={focused !== null}
       answer={
-        <PartsArea>
+        <PartsArea
+          keyboardEditing={focused !== null && formDensity(seen.window, seen.overlap) === 'tight'}
+        >
           <View onLayout={(e) => setWidth(Math.floor(e.nativeEvent.layout.width))}>
             {wall ? (
               wallView

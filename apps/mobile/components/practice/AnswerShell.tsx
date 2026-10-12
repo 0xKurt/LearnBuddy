@@ -31,6 +31,8 @@ type Props = {
    * shades never shrink; the conversation above gives way instead (`threadRoom`).
    */
   keeps?: number | 'whole';
+  /** A cell in the board is being edited; it stays mounted while optional help folds. */
+  boardEditing?: boolean;
 };
 
 /** Pure layout slots supplied by the existing practice screen adapters. */
@@ -45,6 +47,7 @@ export function AnswerShell({
   keys = null,
   action,
   keeps = 0,
+  boardEditing = false,
 }: Props) {
   const seen = useVisibleHeight();
   const compact = formDensity(seen.window, seen.overlap) !== 'roomy';
@@ -55,9 +58,7 @@ export function AnswerShell({
   // Typed fields may have no answer board. While she edits in the tight keyboard room,
   // the optional hint row folds; the full source, keys and Check retain their minimum sizes.
   const toolsFolded =
-    'input' in action &&
-    action.input !== undefined &&
-    action.typing === true &&
+    (boardEditing || ('input' in action && action.input !== undefined && action.typing === true)) &&
     formDensity(seen.window, seen.overlap) === 'tight';
   const { onFocused } = ask;
   useEffect(() => {

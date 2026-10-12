@@ -105,10 +105,37 @@ export async function overflows(page: Page): Promise<Overflow[]> {
       if (overflow <= 2) continue;
       // Scroll areas are named by their testID (data-testid="scroll-…" on the web).
       const id = el.getAttribute('data-testid') ?? '';
+      const focused = document.activeElement;
+      const frame = focused?.closest<HTMLElement>('[data-testid="answer-cell-frame"]');
+      let editingWhole =
+        id === 'scroll-answer-form' && focused !== null && el.contains(focused) && frame !== null;
+      if (editingWhole && frame) {
+        const b = frame.getBoundingClientRect();
+        const ring = Number.parseFloat(getComputedStyle(frame).outlineWidth) || 0;
+        let top = 0,
+          bottom = innerHeight,
+          left = 0,
+          right = innerWidth;
+        for (let parent = frame.parentElement; parent; parent = parent.parentElement) {
+          if (/(auto|scroll|hidden)/.test(getComputedStyle(parent).overflow)) {
+            const clip = parent.getBoundingClientRect();
+            top = Math.max(top, clip.top);
+            bottom = Math.min(bottom, clip.bottom);
+            left = Math.max(left, clip.left);
+            right = Math.min(right, clip.right);
+          }
+        }
+        editingWhole =
+          b.top - ring >= top - 1 &&
+          b.bottom + ring <= bottom + 1 &&
+          b.left - ring >= left - 1 &&
+          b.right + ring <= right + 1;
+      }
       out.push({
         label: id || (el.innerText ?? '').replace(/\s+/g, ' ').slice(0, 40),
         overflow,
         allowed:
+          editingWhole ||
           id === 'scroll-thread' ||
           id === 'scroll-talk' ||
           id === 'scroll-list' ||
@@ -327,6 +354,10 @@ export async function cutControls(page: Page): Promise<string[]> {
       // A reply taller than the conversation's box is read through and scrolls (`readsThrough`,
       // #258, #387): the picture of an explanation in it can stand whole nowhere at rest.
       .filter((el) => {
+        // A keyboard answer form retains every row for focus navigation; only its active
+        // frame must be whole. overflows independently validates that explicit viewport.
+        if (el.closest('[data-testid="scroll-answer-form"]') && el !== document.activeElement)
+          return false;
         const turn = el.closest('[data-testid="thread-turn"]');
         const box = el.closest('[data-testid="scroll-thread"]');
         return !turn || !box || turn.getBoundingClientRect().height <= box.clientHeight;

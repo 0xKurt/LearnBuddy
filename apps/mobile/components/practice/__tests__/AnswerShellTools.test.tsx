@@ -70,3 +70,24 @@ it('keeps tools beside a drafted choice Check in tight room', () => {
   );
   expect(screen.getByRole('button', { name: 'Tipp' })).toBeTruthy();
 });
+
+it('folds optional help during tight board editing without hiding the board or draft', () => {
+  const props = {
+    action: { ready: true, disabled: false, onPress: () => undefined, waitsHint: '' },
+    answer: <input aria-label="Board cell" defaultValue="17" />,
+  };
+  const content = (editing: boolean) => (
+    <AnswerFlow.Provider value={{ thread: null, tools: <Btn>Tipp</Btn> }}>
+      <AnswerShell {...props} boardEditing={editing} />
+    </AnswerFlow.Provider>
+  );
+  const app = renderInApp(content(false));
+  expect(screen.getByRole('button', { name: 'Tipp' })).toBeTruthy();
+  app.rerender(content(true));
+  expect(screen.queryByRole('button', { name: 'Tipp' })).toBeNull();
+  expect(screen.getByRole('textbox', { name: 'Board cell' })).toBeTruthy();
+  expect((screen.getByLabelText('Board cell') as HTMLInputElement).value).toBe('17');
+  expect(screen.getByRole('button', { name: 'Prüfen' })).toBeTruthy();
+  app.rerender(content(false));
+  expect(screen.getByRole('button', { name: 'Tipp' })).toBeTruthy();
+});

@@ -10,9 +10,9 @@
 // empty means no carry, or no leading zero. "Prüfen" waits for the first digit; the server checks
 // every cell and names the first place that is not right yet. What she wrote stays in the draft.
 //
-// The columns are as wide as the phone allows, up to square cells; the contract keeps a task to
-// what fits a 360-pt phone with every digit column at its narrowest (`columnsFit`), and to rows a
-// 360×740 phone holds (COLUMN_ROWS_MAX) — the board never has to scroll.
+// The contract retains its legibility/row bounds. Presentation keeps each editable frame
+// at least 44 pt: wide grids scroll horizontally, and tight keyboard editing may scroll
+// vertically to reveal the whole focused frame and ring (#576).
 //
 // A division is written step by step, as in her exercise book (issue #413): the staircase shows the
 // step she is at in full and the steps she has worked on above it, each shrunk to half-high lines
@@ -37,6 +37,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 
+import { formDensity } from '../../lib/keyboard.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { useDraft } from '../../lib/drafts.js';
 import { around, RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
@@ -97,6 +99,8 @@ type Props = FormProps<ColumnCalcTaskView> & {
 
 export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null }: Props) {
   const { palette, figure: ink } = useTheme();
+  const seen = useVisibleHeight();
+  const [focused, setFocused] = useState<string | null>(null);
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);
   const ids = new Set(view.order);
@@ -139,14 +143,14 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
   const cols = Math.max(...view.rows.map((r) => r.cells.length));
   const signs = Array.from({ length: cols }, (_, c) => signColumn(view.rows, c));
   const signCount = signs.filter(Boolean).length;
-  // As wide as the phone allows, never wider than a square, never narrower than the contract's.
+  // Prefer square columns, retaining both the domain legibility floor and full touch frames.
   const digitWidth =
     width > 0
       ? Math.max(
-          COLUMN_DIGIT_MIN,
+          Math.max(COLUMN_DIGIT_MIN, PRACTICE.columnDigitTarget),
           Math.min(ROW, Math.floor((width - signCount * COLUMN_SIGN) / (cols - signCount))),
         )
-      : COLUMN_DIGIT_MIN;
+      : Math.max(COLUMN_DIGIT_MIN, PRACTICE.columnDigitTarget);
   const colWidth = (c: number) => (signs[c] ? COLUMN_SIGN : digitWidth);
   const gridWidth = Array.from({ length: cols }, (_, c) => colWidth(c)).reduce((a, b) => a + b, 0);
 
@@ -203,9 +207,11 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
       returnKeyType="done"
       onSubmitEditing={submit}
       onFocus={() => {
+        setFocused(gap.id);
         const step = stepOf(gap, quotientDigits);
         if (step > 0) setAt(step);
       }}
+      onBlur={() => setFocused((now) => (now === gap.id ? null : now))}
       selectTextOnFocus={Platform.OS !== 'web'}
       accessibilityLabel={labelOf(gap)}
       autoCorrect={false}
@@ -299,12 +305,15 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
 
   return (
     <AnswerShell
+      boardEditing={focused !== null}
       answer={
-        <PartsArea>
+        <PartsArea
+          keyboardEditing={focused !== null && formDensity(seen.window, seen.overlap) === 'tight'}
+        >
           <View
             testID="column-paper"
             onLayout={(e) =>
-              setWidth(Math.floor(e.nativeEvent.layout.width) - 2 * SPACE.sm - 2 /* frame */)
+              setWidth(Math.floor(e.nativeEvent.layout.width) - 2 * SPACE.sm - 2 * PRACTICE.border)
             }
             style={{
               backgroundColor: ink.paper,
@@ -314,7 +323,9 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
               padding: SPACE.sm,
             }}
           >
-            {grid}
+            <PartsArea horizontal>
+              <View style={{ padding: SPACE.xs }}>{grid}</View>
+            </PartsArea>
           </View>
         </PartsArea>
       }

@@ -64,41 +64,44 @@ import { renderInApp } from '../../../testing/render.js';
 import { LbTextInput, type LbTextInputRef } from '../../lb/LbTextInput.js';
 import { FormFrameContext } from '../../lb/FormFrameClearance.js';
 
-it('preserves native input focus/ref callbacks and releases the distinct frame on blur/unmount', () => {
-  const ref = createRef<LbTextInputRef>();
-  const focus = vi.fn();
-  const blur = vi.fn();
-  const controller = { focus, blur, refresh: vi.fn(), dispose: vi.fn() };
-  const onFocus = vi.fn();
-  const onBlur = vi.fn();
-  const { unmount } = renderInApp(
-    <FormFrameContext.Provider value={controller}>
-      <LbTextInput ref={ref} label="Year" onFocus={onFocus} onBlur={onBlur} />
-    </FormFrameContext.Provider>,
-  );
-  const input = screen.getByRole('textbox', { name: 'Year' });
-  expect(ref.current).toBe(input);
-  expect(typeof ref.current?.focus).toBe('function');
-  fireEvent.focus(input);
-  expect(onFocus).toHaveBeenCalledTimes(1);
-  expect(focus).toHaveBeenCalledTimes(1);
-  const frame = focus.mock.calls[0]![0];
-  expect(frame).not.toBe(ref.current);
-  expect(frame.contains(input)).toBe(true);
-  fireEvent.blur(input);
-  expect(onBlur).toHaveBeenCalledTimes(1);
-  expect(blur).toHaveBeenCalledWith(frame);
-  fireEvent.focus(input);
-  unmount();
-  expect(blur).toHaveBeenLastCalledWith(frame);
-});
+it.each(['field', 'cell'] as const)(
+  'preserves %s input focus/ref callbacks and releases its frame on blur/unmount',
+  (variant) => {
+    const ref = createRef<LbTextInputRef>();
+    const focus = vi.fn();
+    const blur = vi.fn();
+    const controller = { focus, blur, refresh: vi.fn(), dispose: vi.fn() };
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    const { unmount } = renderInApp(
+      <FormFrameContext.Provider value={controller}>
+        <LbTextInput variant={variant} ref={ref} label="Year" onFocus={onFocus} onBlur={onBlur} />
+      </FormFrameContext.Provider>,
+    );
+    const input = screen.getByRole('textbox', { name: 'Year' });
+    expect(ref.current).toBe(input);
+    expect(typeof ref.current?.focus).toBe('function');
+    fireEvent.focus(input);
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(focus).toHaveBeenCalledTimes(1);
+    const frame = focus.mock.calls[0]![0];
+    expect(frame).not.toBe(ref.current);
+    expect(frame.contains(input)).toBe(true);
+    fireEvent.blur(input);
+    expect(onBlur).toHaveBeenCalledTimes(1);
+    expect(blur).toHaveBeenCalledWith(frame);
+    fireEvent.focus(input);
+    unmount();
+    expect(blur).toHaveBeenLastCalledWith(frame);
+  },
+);
 
-it.each(['bar', 'cell'] as const)('does not enroll %s inputs in form scrolling', (variant) => {
+it('does not enroll the pinned bar in form scrolling', () => {
   const focus = vi.fn();
   const controller = { focus, blur: vi.fn(), refresh: vi.fn(), dispose: vi.fn() };
   renderInApp(
     <FormFrameContext.Provider value={controller}>
-      <LbTextInput variant={variant} accessibilityLabel="Answer" />
+      <LbTextInput variant="bar" accessibilityLabel="Answer" />
     </FormFrameContext.Provider>,
   );
   fireEvent.focus(screen.getByRole('textbox', { name: 'Answer' }));
@@ -114,6 +117,7 @@ it('scrolls minimally without animation using the real viewport host ref', () =>
   const { result, unmount } = renderHook(() => useFormViewport());
   result.current.scroll.current = {
     getNativeScrollRef: () => measured(100, 300),
+    getScrollableNode: () => 42,
     scrollTo,
   } as unknown as ScrollView;
   result.current.offset.current = 20;
@@ -123,4 +127,49 @@ it('scrolls minimally without animation using the real viewport host ref', () =>
   unmount();
   act(() => result.current.controller.refresh());
   expect(scrollTo).toHaveBeenCalledTimes(1);
+});
+
+it('corrects from the live web viewport after native focus scroll precedes its event', () => {
+  const host = document.createElement('div');
+  host.scrollTop = 116;
+  const scrollTo = vi.fn();
+  const { result } = renderHook(() => useFormViewport());
+  result.current.scroll.current = {
+    getNativeScrollRef: () => measured(100, 300),
+    getScrollableNode: () => host,
+    scrollTo,
+  } as unknown as ScrollView;
+  result.current.offset.current = 15;
+  act(() => result.current.controller.focus(measured(349, 52)));
+  expect(scrollTo).toHaveBeenCalledWith({ y: 121, animated: false });
+  expect(result.current.offset.current).toBe(121);
+});
+
+it('corrects horizontal focus from the live web offset before its scroll event', () => {
+  const host = document.createElement('div');
+  host.scrollLeft = 116;
+  const scrollTo = vi.fn();
+  const { result } = renderHook(() => useFormViewport('horizontal'));
+  result.current.scroll.current = {
+    getNativeScrollRef: () => ({ measureInWindow: (done: Measure) => done(100, 100, 300, 300) }),
+    getScrollableNode: () => host,
+    scrollTo,
+  } as unknown as ScrollView;
+  result.current.offset.current = 15;
+  act(() => result.current.controller.focus({ measureInWindow: (done) => done(349, 200, 52, 44) }));
+  expect(scrollTo).toHaveBeenCalledWith({ x: 121, animated: false });
+  expect(result.current.offset.current).toBe(121);
+});
+
+it('retains event offsets for a horizontal native host without a DOM offset', () => {
+  const scrollTo = vi.fn();
+  const { result } = renderHook(() => useFormViewport('horizontal'));
+  result.current.scroll.current = {
+    getNativeScrollRef: () => ({ measureInWindow: (done: Measure) => done(100, 100, 300, 300) }),
+    getScrollableNode: () => 42,
+    scrollTo,
+  } as unknown as ScrollView;
+  result.current.offset.current = 20;
+  act(() => result.current.controller.focus({ measureInWindow: (done) => done(349, 200, 52, 44) }));
+  expect(scrollTo).toHaveBeenCalledWith({ x: 25, animated: false });
 });
