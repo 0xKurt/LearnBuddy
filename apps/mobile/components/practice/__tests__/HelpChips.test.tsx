@@ -5,6 +5,7 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { UI } from '../../../lib/theme/components.js';
 import { paletteOf } from '../../../lib/theme/palettes.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { HelpChips } from '../HelpChips.js';
@@ -37,7 +38,11 @@ describe('HelpChips', () => {
 
   it('keeps "Tipp" quiet until it is offered', () => {
     renderInApp(<HelpChips onHint={() => undefined} onReveal={() => undefined} />);
-    expect(fillOf()).toBe(asRgb(paletteOf('pastell').canvas));
+    expect(fillOf()).toBe(
+      asRgb(paletteOf('pastell').paper)
+        .replace('rgb(', 'rgba(')
+        .replace(')', `, ${UI.chip.paperOpacity})`),
+    );
     expect(
       screen.getByRole('button', { name: 'Einen Tipp bekommen' }).getAttribute('aria-pressed'),
     ).not.toBe('true');

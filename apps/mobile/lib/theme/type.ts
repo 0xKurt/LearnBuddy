@@ -101,6 +101,7 @@ function typeOf(p: Palette) {
     brand: { ...fontFace('800'), fontSize: 20, lineHeight: 26, letterSpacing: -0.4, color: p.ink },
     headerMeta: { ...fontFace('600'), fontSize: 13, lineHeight: 18, color: p.ink2 },
     voiceStatus: { ...body, ...fontFace('600') },
+    chip: { ...fontFace('600'), fontSize: 14, lineHeight: 14, color: p.ink },
     metaStrong: { ...fontFace('700'), fontSize: 14, lineHeight: 20, color: p.ink2 },
 
     code: {

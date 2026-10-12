@@ -1,9 +1,11 @@
+import type { Palette } from './palettes.js';
 import { TYPE } from './type.js';
 
 // Shared component geometry and interaction treatment (redesign, #548).
 const inputLine = () => TYPE.input.lineHeight;
 
 export const UI = {
+  icon: { defaultSize: 22, stroke: 1.7, boldStroke: 2.2 },
   textLink: { pressedOpacity: 0.6 },
   border: 1,
   selectedBorder: 2,
@@ -32,7 +34,7 @@ export const UI = {
   },
   iconButton: { glyph: 20, actionGlyph: 22, composer: 40 },
   list: { row: 56, tile: 36, icon: 22, chevron: 18, trailing: 32 },
-  chip: { height: 34, icon: 14 },
+  chip: { height: 34, icon: 16, gap: 6, pad: 14, iconPad: 10, paperOpacity: 0.88 },
   segmented: { visible: 36 },
   progress: { height: 4, legacyHeight: 6, currentPart: 0.5 },
   sheet: {
@@ -50,3 +52,27 @@ export const UI = {
   },
   entrance: { staggerCap: 4, slide: 28, slowMultiplier: 2, maxRows: 8, windowMs: 900 },
 } as const;
+
+export type ChipTone = 'default' | 'receipt' | 'gray' | 'primary' | 'success' | 'warning' | 'dark';
+
+/** Chip surfaces are palette roles; only the default paper surface is translucent. */
+export function chipSkin(p: Palette, tone: ChipTone, selected: boolean, opaque: boolean) {
+  if (selected) return { bg: p.primaryLt, color: p.primaryDk, border: 'transparent' };
+  const paper = opaque ? p.paper : translucentPaper(p.paper);
+  const tones: Record<ChipTone, { bg: string; color: string; border?: string }> = {
+    default: { bg: paper, color: p.ink, border: p.hairlineStrong },
+    receipt: { bg: p.canvas, color: p.ink, border: p.hairlineStrong },
+    // Existing explicit semantic tones stay compatible until their caller migrations.
+    gray: { bg: p.canvas, color: p.ink2 },
+    primary: { bg: p.primaryLt, color: p.primaryDk },
+    success: { bg: p.canvas, color: p.successText },
+    warning: { bg: p.canvas, color: p.warningText },
+    dark: { bg: p.ink, color: p.paper },
+  };
+  return tones[tone];
+}
+
+function translucentPaper(hex: string): string {
+  const rgb = Number.parseInt(hex.slice(1), 16);
+  return `rgba(${rgb >> 16},${(rgb >> 8) & 255},${rgb & 255},${UI.chip.paperOpacity})`;
+}

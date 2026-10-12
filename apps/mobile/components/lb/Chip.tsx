@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import type { Palette } from '../../lib/theme/palettes.js';
-import { UI } from '../../lib/theme/components.js';
+import { chipSkin, UI, type ChipTone } from '../../lib/theme/components.js';
+import { useA11ySettings } from '../../lib/a11ySettings.js';
 import { TOUCH } from '../../lib/theme/space.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -9,23 +9,9 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon, type IconName } from './Icon.js';
 
-type Tone = 'default' | 'receipt' | 'gray' | 'primary' | 'success' | 'warning' | 'dark';
-
-// Built from the palette the component is rendering with: a module-scope map froze the
-// start palette (issue #84).
-const tones = (p: Palette): Record<Tone, { bg: string; color: string; border?: string }> => ({
-  default: { bg: p.paper, color: p.ink, border: p.hairlineStrong },
-  receipt: { bg: p.paper, color: p.ink2, border: p.hairlineStrong },
-  gray: { bg: p.canvas, color: p.ink2 },
-  primary: { bg: p.primaryLt, color: p.primaryDk },
-  success: { bg: p.canvas, color: p.successText },
-  warning: { bg: p.canvas, color: p.warningText },
-  dark: { bg: p.ink, color: p.paper },
-});
-
 export function Chip({
   children,
-  tone = 'gray',
+  tone = 'default',
   icon,
   accessibilityLabel,
   selected = false,
@@ -38,16 +24,15 @@ export function Chip({
   disabled?: boolean;
   onPress?: () => void;
   trailing?: ReactNode;
-  tone?: Tone;
+  tone?: ChipTone;
   /** A small sign before the words (the clock of a test with time, issue #241). */
   icon?: IconName;
   /** What a screen reader says when the short label is not enough on its own. */
   accessibilityLabel?: string;
 }) {
   const { palette } = useTheme();
-  const t = selected
-    ? { bg: palette.primaryLt, color: palette.primaryDk, border: palette.primary }
-    : tones(palette)[tone];
+  const { reduceTransparency } = useA11ySettings();
+  const t = chipSkin(palette, tone, selected, reduceTransparency);
   const content = (
     <View
       accessibilityRole={trailing == null ? 'text' : undefined}
@@ -55,13 +40,13 @@ export function Chip({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: SPACE.xs,
+        gap: UI.chip.gap,
         backgroundColor: t.bg,
         minHeight: UI.chip.height,
         borderColor: t.border ?? 'transparent',
-        borderWidth: selected ? UI.selectedBorder : t.border ? UI.border : 0,
-        paddingHorizontal: SPACE.md,
-        paddingVertical: SPACE.xs,
+        borderWidth: t.border ? UI.border : 0,
+        paddingLeft: icon ? UI.chip.iconPad : UI.chip.pad,
+        paddingRight: UI.chip.pad,
         borderRadius: RADIUS.round,
         alignSelf: 'flex-start',
         maxWidth: '100%',
@@ -72,7 +57,7 @@ export function Chip({
           <Icon name={icon} size={UI.chip.icon} color={t.color} />
         </View>
       ) : null}
-      <Text style={[TYPE.label, { color: t.color }]}>{children}</Text>
+      <Text style={[TYPE.chip, { color: t.color }]}>{children}</Text>
       {onPress ? null : trailing}
     </View>
   );
