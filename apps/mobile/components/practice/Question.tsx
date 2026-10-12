@@ -150,6 +150,8 @@ type QuestionProps = {
    * while she types (issue #484).
    */
   dense?: boolean;
+  /** Closed typed feedback; distinct from open keyboard density. */
+  compactFeedback?: boolean;
   /**
    * What stands above the question and is answered FROM: the text this question is about
    * (Leseverständnis, issue #233) — with its line numbers, scrolling in itself so the question under
@@ -193,6 +195,7 @@ export function QuestionCard({
   imageMaxHeight = PRACTICE.imageHeight,
   minHeight,
   dense = false,
+  compactFeedback = false,
   stimulus,
   answerBoard = false,
   onReadAgain,
@@ -221,7 +224,7 @@ export function QuestionCard({
   // row steps aside like the drawing does (#419, #484). On 360×440 a part's situation over its
   // folded chart, the question and the bar with its keys ran 10 pt past the window and the header
   // stood cut (#387); the part's letter still stands before the question ("a) …").
-  const meta = !typing && (fromBuddy || Boolean(shownTopic) || part !== null);
+  const meta = !compactFeedback && !typing && (fromBuddy || Boolean(shownTopic) || part !== null);
   const { t } = useTranslation('practice');
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
@@ -233,7 +236,7 @@ export function QuestionCard({
   // das feld ist riesig. das wirkt richtig komisch" (owner, 30.09., after the first test
   // with his daughter). A plain question keeps its own height; the room stays with the
   // conversation that appears right under it a moment later.
-  const grown = hasVisual && minHeight !== undefined && minHeight > 0;
+  const grown = !compactFeedback && hasVisual && minHeight !== undefined && minHeight > 0;
   // The room the drawing really has inside the grown card, measured instead of guessed
   // from the window (issue #96): the card's padding, the gap under the prompt and the
   // drawing's own frame (FigureView's padding and border) all come off first, so the card
@@ -254,7 +257,8 @@ export function QuestionCard({
     <PresentationCard
       testID="question-card"
       extra={extra}
-      compact={small}
+      compact={compactFeedback}
+      snug={small}
       style={grown ? { minHeight: cardMin } : null}
     >
       <View style={grown ? { flexGrow: 1 } : null}>
@@ -273,7 +277,7 @@ export function QuestionCard({
                 marginBottom: SPACE.sm,
               }}
             >
-              {fromBuddy ? <Text style={TYPE.meta}>{t('origin_buddy')}</Text> : null}
+              {fromBuddy ? <Text style={TYPE.label}>{t('origin_buddy')}</Text> : null}
               {/* One line, never a second (it would cost the card a line, issue #310): a long
                   topic ends in "…" — the header's title names the run, a screen reader the rest. */}
               {part ? (
@@ -284,7 +288,7 @@ export function QuestionCard({
               ) : shownTopic ? (
                 <Text
                   numberOfLines={1}
-                  style={[TYPE.metaStrong, { color: palette.ink2, flex: 1, minWidth: 0 }]}
+                  style={[TYPE.label, { color: palette.ink2, flex: 1, minWidth: 0 }]}
                 >
                   {shownTopic}
                 </Text>
@@ -306,11 +310,17 @@ export function QuestionCard({
               // A fraction in the question sits in its sentence (issue #288).
               inlineFractions
               accessibilityRole="header"
-              style={small ? TYPE.questionCompact : TYPE.question}
+              style={
+                compactFeedback
+                  ? TYPE.questionFeedback
+                  : small
+                    ? TYPE.questionCompact
+                    : TYPE.question
+              }
             />
           </ReadAgain>
         </View>
-        {figure ? (
+        {figure && !compactFeedback ? (
           <View
             style={
               grown
@@ -322,7 +332,7 @@ export function QuestionCard({
             <QuestionFigure figure={figure} maxHeight={figureMax} folded={typing} />
           </View>
         ) : null}
-        {image && imageKey ? (
+        {image && imageKey && !compactFeedback ? (
           <View style={grown ? { flexGrow: 1, justifyContent: 'center' } : null}>
             <StimulusImage image={image} cacheKey={imageKey} maxHeight={imageMaxHeight} />
           </View>

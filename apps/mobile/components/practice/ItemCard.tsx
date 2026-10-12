@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 
-import type { AnswerForm } from '../../lib/practice/answerForm.js';
+import { answerForm, type AnswerForm } from '../../lib/practice/answerForm.js';
 import type { QuestionView } from '../../lib/practice/questionView.js';
 import { DictationCard } from './DictationCard.js';
 import { QuestionCard } from './Question.js';
@@ -84,6 +84,7 @@ export function ItemCard({
   return (
     <QuestionCard
       extra={extra}
+      compactFeedback={!view.open && answerForm(item, true).typed}
       prompt={item.prompt}
       // Not twice: a topic the header's title already names stays out of the card.
       topic={item.topic && title.includes(item.topic) ? null : item.topic}

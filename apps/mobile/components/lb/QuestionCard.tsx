@@ -15,6 +15,7 @@ type Props = {
   figure?: ReactNode;
   extra?: ReactNode;
   compact?: boolean;
+  snug?: boolean;
   big?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -26,6 +27,7 @@ export function QuestionCard({
   figure,
   extra,
   compact = false,
+  snug = false,
   big = false,
   style,
   testID,
@@ -38,15 +40,15 @@ export function QuestionCard({
         {
           backgroundColor: palette.paper,
           borderRadius: RADIUS.lg,
-          padding: compact ? CARD_PAD.snug : CARD_PAD.base,
+          padding: compact || snug ? CARD_PAD.snug : CARD_PAD.base,
           gap: PRACTICE.contentGap,
         },
         SHADOW.soft,
         style,
       ]}
     >
-      {typeof meta === 'string' ? (
-        <Text style={[TYPE.meta, { color: palette.ink2 }]}>{meta}</Text>
+      {compact ? null : typeof meta === 'string' ? (
+        <Text style={[TYPE.label, { color: palette.ink2 }]}>{meta}</Text>
       ) : (
         meta
       )}
@@ -54,8 +56,8 @@ export function QuestionCard({
         <Text
           accessibilityRole="header"
           style={[
-            big ? TYPE.questionBig : TYPE.question,
-            { color: palette.ink },
+            compact ? TYPE.questionFeedback : big ? TYPE.questionBig : TYPE.question,
+            { color: compact ? palette.ink2 : palette.ink },
             big ? { textAlign: 'center' } : null,
           ]}
         >
@@ -64,7 +66,7 @@ export function QuestionCard({
       ) : (
         children
       )}
-      {figure}
+      {compact ? null : figure}
       {extra}
     </View>
   );

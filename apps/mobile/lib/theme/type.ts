@@ -62,6 +62,13 @@ function typeOf(p: Palette) {
     questionBig: { ...fontFace('800'), fontSize: 56, lineHeight: 64, color: p.ink },
     questionMedium: { ...fontFace('800'), fontSize: 44, lineHeight: 53, color: p.ink },
     questionLong: { ...fontFace('800'), fontSize: 34, lineHeight: 41, color: p.ink },
+    questionFeedback: {
+      ...fontFace('400'),
+      fontSize: 15,
+      lineHeight: 21,
+      letterSpacing: 0,
+      color: p.ink2,
+    },
     questionCompact: { ...fontFace('500'), fontSize: 18, lineHeight: 25, color: p.ink },
     option: { ...fontFace('600'), fontSize: 17, lineHeight: 25, color: p.ink },
     board: { ...fontFace('600'), fontSize: 16, lineHeight: 22, color: p.ink },
