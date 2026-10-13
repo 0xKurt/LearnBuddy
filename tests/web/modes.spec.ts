@@ -1089,7 +1089,7 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
 });
 
 // Its own test: note lines need only a learner and Buddy (issues #226, #275).
-test('note lines: read four, then write one — set with a tap, move with Höher/Tiefer (#275)', async ({
+test('note lines: read four, then write one — set with a tap on the line, no arrow keys (#275, #599)', async ({
   page,
 }) => {
   // Nine stops, each at both sizes, light and dark: 2.4 min before issue #464, 2.7 min of the
@@ -1176,11 +1176,16 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   // E on the first line: one tap, on the line.
   await tapAt(1, -4);
   await bar(1, 'E als Viertelnote');
-  // A finger a line too low (F instead of G) is no new attempt: "Höher" moves THAT note.
+  // A finger a line too low (F instead of G): there are no arrow keys (owner rule 8) — "Zurück"
+  // takes the note away, and a tap on the right line sets it.
   await tapAt(1, -3);
   await bar(1, 'E als Viertelnote, F als Viertelnote');
   await bothSchemes(page, '75-staff-write-moving');
-  await page.getByRole('button', { name: 'Höher' }).click();
+  for (const arrow of ['Höher', 'Tiefer'])
+    await expect(page.getByRole('button', { name: arrow, exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  await bar(1, 'E als Viertelnote');
+  await tapAt(1, -2);
   await bar(1, 'E als Viertelnote, G als Viertelnote');
   await page.getByRole('radio', { name: 'halbe Note', exact: true }).click();
   await tapAt(1, 0);
@@ -1210,8 +1215,9 @@ test('note lines: read four, then write one — set with a tap, move with Höher
       `${await target.getAttribute('aria-label')}: above Prüfen`,
     ).toBeLessThanOrEqual(checkTop);
   }
-  // Her line stays; one step down and it is right.
-  await page.getByRole('button', { name: 'Tiefer' }).click();
+  // Her line stays; the last note taken back and set one step lower, and it is right.
+  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  await tapAt(2, 4);
   await bar(2, 'A als Viertelnote, Viertelpause, F als halbe Note');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();

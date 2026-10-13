@@ -143,9 +143,16 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
     const last = at === gaps.length - 1;
     const next = gaps[at + 1];
     const math = cell.input === 'math';
-    // iOS number pads lack minus, comma and letters; this one has them all.
-    const keyboardType: KeyboardTypeOptions =
-      math && Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default';
+    // A whole number is typed on the phone's own number pad (owner rule 8; the design's
+    // FillTable, components/practice/Tasks.jsx:135) — its minus, which no pad has, is the one key
+    // over the table. Any other number or term needs a comma, a fraction bar or a letter: iOS
+    // number pads lack them, this keyboard has them all.
+    const pad = math && cell.whole;
+    const keyboardType: KeyboardTypeOptions = pad
+      ? 'number-pad'
+      : math && Platform.OS === 'ios'
+        ? 'numbers-and-punctuation'
+        : 'default';
     return (
       <LbTextInput
         variant="cell"
@@ -179,6 +186,7 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
         autoComplete="off"
         autoCapitalize="none"
         keyboardType={keyboardType}
+        {...(pad ? { inputMode: 'numeric' as const } : {})}
         maxLength={TABLE_ANSWER_MAX}
       />
     );
@@ -313,9 +321,9 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
           </View>
         </PartsArea>
       }
-      // The math keys while a number or term cell has the focus. Only what the gap needs: none
-      // for a word, only the minus for a whole number — the phone's digits write the rest
-      // (#286 finding 5, #239, lib/math/keys.ts).
+      // The keys while a number or term cell has the focus. Only what its keyboard lacks: none
+      // for a word, the minus for a whole number on the number pad, the minus and the exponent
+      // for a term (#286 finding 5, #239, #599, lib/math/keys.ts).
       keys={
         focusedGap ? (
           <MathKeys

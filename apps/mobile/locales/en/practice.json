@@ -268,6 +268,7 @@
   "drill": {
     "progress": "Task {{current}} of {{total}}",
     "end_hint": "Back to Buddy. What you worked out stays saved.",
+    "placeholder": "Result …",
     "slash": "Fraction bar",
     "right": "Right: {{task}}",
     "was": "It was: {{task}}",

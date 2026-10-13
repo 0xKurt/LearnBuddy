@@ -2,6 +2,7 @@
 import { expect, test } from '@playwright/test';
 
 import { freshEmail, openMenu, planTest, sendWorksheet, signUpMia } from './coreLoop';
+import { paletteOf, themeNameOf } from '../../apps/mobile/lib/theme/palettes';
 import { PHONES, shot } from './fit';
 
 for (const family of ['Pastell', 'Meer'] as const) {
@@ -36,7 +37,12 @@ for (const family of ['Pastell', 'Meer'] as const) {
       await expect(page.getByText('Frage 1 von 4', { exact: true })).toHaveCount(1);
       const primary = page.locator('[data-testid="composer-primary"]:visible');
       await expect(primary).toHaveCount(1);
-      await expect(primary.getByRole('button', { name: 'Prüfen', exact: true })).toBeDisabled();
+      // Nothing to check yet: the one slot holds the blue conversation button (#599), and
+      // "Prüfen" takes its place with the first digit.
+      await expect(
+        primary.getByRole('button', { name: 'Mit Buddy sprechen', exact: true }),
+      ).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Prüfen', exact: true })).toHaveCount(0);
       await expect(
         page.locator('[data-testid="progress-bar"]:visible [role="progressbar"]'),
       ).toHaveAttribute('aria-valuenow', '0.5');
@@ -59,20 +65,40 @@ for (const family of ['Pastell', 'Meer'] as const) {
 
       const answer = page.getByLabel('Deine Antwort');
       await answer.fill('0,75');
-      // Chromium's auto outline can paint despite outline-width:0; the shared frame
-      // supplies the visible theme halo, so suppress only the inner textarea outline.
+      // Chromium's auto outline can paint despite outline-width:0: suppress the inner textarea's.
       await expect(answer).toHaveCSS('outline-style', 'solid');
       await expect(answer).toHaveCSS('outline-width', '0px');
+      // The Composer's box has no focus state (design components/composer/Composer.jsx:39–40):
+      // a hairline at rest and with the focus, no ring around it.
+      const hairline = paletteOf(
+        themeNameOf(family === 'Pastell' ? 'pastell' : 'ocean', dark),
+      ).hairlineStrong;
       expect(
-        await answer.evaluate((element) => {
-          for (let parent = element.parentElement; parent; parent = parent.parentElement) {
-            const style = getComputedStyle(parent);
-            if (style.outlineStyle === 'solid' && parseFloat(style.outlineWidth) > 0) return true;
-          }
-          return false;
-        }),
-        'focused Composer retains its visible outer theme halo',
-      ).toBe(true);
+        await answer.evaluate((element, color) => {
+          const probe = document.createElement('span');
+          probe.style.color = color;
+          document.body.append(probe);
+          const expected = getComputedStyle(probe).color;
+          probe.remove();
+          const box = element.parentElement!.parentElement!;
+          const style = getComputedStyle(box);
+          return {
+            hairline: style.borderTopColor === expected,
+            ring: parseFloat(style.outlineWidth) || 0,
+            radius: style.borderTopLeftRadius,
+          };
+        }, hairline),
+        'the focused Composer keeps its hairline and gets no ring',
+      ).toEqual({ hairline: true, ring: 0, radius: '26px' });
+      // "Prüfen": the 40 pt pill with its sign, inside a 44 pt target.
+      const pill = primary.getByRole('button', { name: 'Prüfen', exact: true });
+      expect(
+        await pill.evaluate((element) => ({
+          target: Math.round(element.getBoundingClientRect().height),
+          face: Math.round(element.firstElementChild!.getBoundingClientRect().height),
+          sign: element.querySelectorAll('svg').length,
+        })),
+      ).toEqual({ target: 44, face: 40, sign: 1 });
       await expect(primary.getByRole('button', { name: 'Prüfen', exact: true })).toBeEnabled();
       const name = `composer-${family.toLowerCase()}-${dark ? 'dark' : 'light'}`;
       await shot(page, `${name}-check`);

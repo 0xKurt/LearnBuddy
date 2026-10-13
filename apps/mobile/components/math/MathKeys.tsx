@@ -4,9 +4,9 @@
 // next keys (issue #286 finding 5: the old row was cut off at the right and slid sideways, so
 // half of it was keys she did not know were there).
 //
-// Three kinds of key:
-//   - a character key writes at the cursor ("/", "=", "→" …); the characters are ones the
-//     checks read (packages/shared-math typographicToAscii, apps/api/.../chemistry.ts);
+// Three kinds of key, each a flat tile inside the Composer's box (issue #599):
+//   - a character key writes at the cursor ("/", "=", "→", the question's own "x" …); the
+//     characters are ones the checks read (packages/shared-math typographicToAscii, apps/api/.../chemistry.ts);
 //   - a mode key (xⁿ, x₂, x⁺⁻) raises or lowers the digits she types next on the phone's own
 //     keyboard. It stays lit while it is on, says so to a screen reader, and goes out by
 //     itself when she types anything the mode does not take — a letter, a space. Lit is
@@ -21,11 +21,11 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { currentLocale } from '../../lib/i18n/index.js';
 import { insertAtCursor, type Insertion, type Selection } from '../../lib/math/insert.js';
 import {
   glyphOf,
   insertionOf,
+  isLetterKey,
   isModeKey,
   slotsOf,
   type KeyId,
@@ -59,7 +59,6 @@ export function MathKeys({
   chemistry = false,
 }: Props) {
   const { t } = useTranslation('math');
-  const decimal = currentLocale() === 'en' ? '.' : ',';
   const row = keys.map((id): Key => {
     if (id === 'newline')
       return {
@@ -76,7 +75,7 @@ export function MathKeys({
     if (isModeKey(id))
       return {
         id,
-        face: glyphOf(id, decimal),
+        face: glyphOf(id),
         on: mode === id,
         // On or off is said in the name: a button may not carry aria-selected (axe fails the
         // screen for it — components/practice/__tests__/FractionBarAnswer.test.tsx).
@@ -86,10 +85,11 @@ export function MathKeys({
       };
     return {
       id,
-      face: glyphOf(id, decimal),
-      label: t(`keys.${id}`),
+      face: glyphOf(id),
+      // A letter of the question is its own name.
+      label: isLetterKey(id) ? glyphOf(id) : t(`keys.${id}`),
       hint: t('keys.hint'),
-      onPress: () => onInsert(insertionOf(id, decimal)),
+      onPress: () => onInsert(insertionOf(id)),
     };
   });
   return (

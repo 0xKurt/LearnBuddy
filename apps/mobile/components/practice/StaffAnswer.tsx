@@ -102,8 +102,7 @@ const WIDTH_IN_GAPS = (bars: number) => (headUnits(true) + TAIL_UNITS) / SPACE_U
 export const STAFF_ANSWER_MIN = writeHeight(GAP_MIN);
 
 /** Die Stellen, die es gibt: eine Hilfslinie über und unter den fünf Linien. */
-export const clampStep = (step: number) =>
-  Math.max(-STAFF_STEP_MAX, Math.min(STAFF_STEP_MAX, step));
+const clampStep = (step: number) => Math.max(-STAFF_STEP_MAX, Math.min(STAFF_STEP_MAX, step));
 
 /** Was sie bisher geschrieben hat, und womit sie gerade schreibt. */
 export type StaffAnswerState = {
@@ -166,7 +165,7 @@ export function staffLineOf(answer: StaffAnswerState): string {
  * Die Note, die „höher" und „tiefer" bewegen: das zuletzt gesetzte Zeichen, wenn es eine Note
  * ist. Takt und Platz darin, oder null (leer, oder zuletzt kam eine Pause).
  */
-export function lastNote(answer: StaffAnswerState): { bar: number; index: number } | null {
+function lastNote(answer: StaffAnswerState): { bar: number; index: number } | null {
   for (let b = answer.bars.length - 1; b >= 0; b--) {
     const bar = answer.bars[b] as StaffElement[];
     if (bar.length === 0) continue;

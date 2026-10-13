@@ -138,7 +138,9 @@ export function MicButton({
                 size={
                   pill
                     ? TALK.micGlyph
-                    : Math.round(d * (recording ? VOICE.iconRatio.stop : VOICE.iconRatio.mic))
+                    : size === 'sm' && !recording
+                      ? VOICE.slotGlyph
+                      : Math.round(d * (recording ? VOICE.iconRatio.stop : VOICE.iconRatio.mic))
                 }
                 color={fg}
               />

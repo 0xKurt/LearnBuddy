@@ -1,7 +1,8 @@
 import { UI } from '../../lib/theme/components.js';
-// Native icon set ported from components.jsx (consistent stroke 1.7). An icon is a list of shapes
-// on a 24-unit grid; one <Svg> draws every icon with the same stroke (issue #311: the 32 cases
-// used to spell the same <Svg> frame out each).
+// Native icon set (design components/core/Icon.jsx): line icons on a 24-unit grid, drawn 1.7
+// thick — and 2.2 (`bold`) for the four that stand on a fill or lead an action: send, check, next
+// (`arrow`) and voice. One <Svg> draws every icon (issue #311: the 32 cases used to spell the
+// same <Svg> frame out each).
 import type { ColorValue } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
@@ -30,9 +31,10 @@ const ICONS = {
     { cx: 19, cy: 12, r: 1.4, dot: true },
   ],
   plus: [{ d: 'M12 5v14M5 12h14' }],
-  check: [{ d: 'M5 12l5 5 9-10' }],
+  check: [{ d: 'M5 12l5 5 9-10', bold: true }],
   mic: [{ x: 9, y: 3, width: 6, height: 11, rx: 3 }, { d: 'M5 11a7 7 0 0014 0M12 18v3M8.5 21h7' }],
-  arrow: [{ d: 'M5 12h14M13 6l6 6-6 6' }],
+  // The design's `next`.
+  arrow: [{ d: 'M5 12h14M13 6l6 6-6 6', bold: true }],
   // Up and away, on the input bar's round send button (issue #522) — bold: it sits on a fill.
   send: [{ d: 'M12 19V5M6 11l6-6 6 6', bold: true }],
   // Out to the corners: a page at full size (the essay's writing view, issue #525).
@@ -48,8 +50,14 @@ const ICONS = {
     },
   ],
   folder: [{ d: 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z' }],
-  calendar: [{ x: 4, y: 5, width: 16, height: 15, rx: 2 }, { d: 'M4 10h16M8 3v4M16 3v4' }],
-  sparkle: [{ d: 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z' }],
+  calendar: [
+    {
+      d: 'M4 7a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2zM4 10h16M8 3v4M16 3v4',
+    },
+  ],
+  sparkle: [{ d: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z' }],
+  // A key that takes back the last sign (components/core/Icon.jsx `delete`).
+  delete: [{ d: 'M9 6h10a2 2 0 012 2v8a2 2 0 01-2 2H9l-6-6zM12 10l4 4M16 10l-4 4' }],
   clock: [{ cx: 12, cy: 12, r: 8.5 }, { d: 'M12 7v5l3 2' }],
   flame: [
     { d: 'M12 3c1 3.5 4 5 4 8.5 0 2.5-1.8 4.5-4 4.5s-4-2-4-4.5C8 9 9.5 7.5 12 3z' },

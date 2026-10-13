@@ -70,8 +70,6 @@ const NO_MENU = ['app/pin.tsx'];
  *  · `menu={{ own }}` — a ⋯ the screen draws itself, with its own sheet.
  */
 const OWN_END: Record<string, string> = {
-  'components/practice/CardPass.tsx':
-    '`right`: the card pass keeps its switch and ✕ in `HeadActions` until the practice area rewires it',
   'app/practice/[id].tsx':
     '`own`: a question’s "Frage passt nicht" / "Einspruch" has its own ⋯ sheet until `MenuSheet` can carry a screen’s action with its hint',
 };

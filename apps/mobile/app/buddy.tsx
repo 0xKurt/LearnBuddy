@@ -89,6 +89,8 @@ export default function BuddyScreen() {
     }, []),
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  /** She is writing or dictating a message (the Composer says so): the head's orb listens. */
+  const [typing, setTyping] = useState(false);
   const thread = home.data?.thread;
   const newestReply = thread ? newestBuddyId(thread) : null;
   const follow = useThreadFollow(newestReply);
@@ -219,6 +221,8 @@ export default function BuddyScreen() {
             streaming: live !== null,
             // Buddy is reading a sheet she sent (design ui_kits/app/Flows.jsx `ChatState`).
             reading: h.now?.type === 'material_processing',
+            // She is writing or dictating in the Composer: Buddy leans in.
+            typing,
           })}
           onMenu={() => setMenuOpen(true)}
         />
@@ -307,6 +311,7 @@ export default function BuddyScreen() {
           onStop={() => void stopReply()}
           onSend={(text) => send(text)}
           onTalk={() => router.push('/talk')}
+          onTyping={setTyping}
         />
       </KeyboardSafe>
 

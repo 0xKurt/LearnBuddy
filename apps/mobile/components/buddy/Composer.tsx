@@ -1,5 +1,5 @@
-// Free text to Buddy, typed or spoken, plus the pages she attaches. The one input bar
-// (`InputBar`, issue #522): her text on top, under it the + on the left, the mic and one filled
+// Free text to Buddy, typed or spoken, plus the pages she attaches. The one Composer
+// (`components/lb/Composer.tsx`, issues #522, #599): her text on top, under it the + on the left, the mic and one filled
 // circle on the right — the waveform, the way into a conversation (`app/talk.tsx`), or the round
 // send arrow once there is something to send. The mic writes what she said into the field so she
 // can check it. While Buddy writes his answer, the filled circle is "Stopp".
@@ -14,7 +14,7 @@
 // draft that survives a crash, the upload that resumes) is lib/capture/useAttachments.ts.
 
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { composerAfterSend } from '../../lib/buddy/unsent.js';
@@ -28,8 +28,7 @@ import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { AttachMenu } from '../capture/AttachMenu.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
-import { InputBar } from '../lb/InputBar.js';
-import { TalkButton } from '../voice/TalkButton.js';
+import { Composer as OneComposer, type ComposerAction } from '../lb/Composer.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { ComposerPages } from './ComposerPages.js';
 import { useChatPages } from './useChatPages.js';
@@ -43,6 +42,7 @@ export function Composer({
   onStop,
   onSend,
   onTalk,
+  onTyping,
 }: {
   disabled: boolean;
   /** Buddy is answering what she sent: the send button becomes "Stopp". */
@@ -53,6 +53,11 @@ export function Composer({
   onSend: (text: string) => Promise<boolean>;
   /** Conversation mode (talk screen): bottom right, next to the mic. */
   onTalk: () => void;
+  /**
+   * She is writing or dictating a message right now — what the head's orb leans in to
+   * (`headState` `typing`, design ui_kits/app/App.jsx:46; decision on #599).
+   */
+  onTyping?: (typing: boolean) => void;
 }) {
   const { t } = useTranslation(['buddy', 'common']);
   // Kept on the device: a half-typed question survives Android killing the app.
@@ -120,18 +125,36 @@ export function Composer({
     }, []),
   );
 
-  const stopBtn = (
-    <Appear key="stop" duration={DURATION.quick}>
-      <CircleBtn
-        icon="stop"
-        filled
-        size={COMPOSER.slot}
-        {...(onStop ? { onPress: onStop } : {})}
-        accessibilityLabel={t('buddy:thread.stop_label')}
-      />
-    </Appear>
-  );
+  // There are words of hers in the field, or the mic is taking them down.
+  const typing = focused && (text.length > 0 || voice.state !== 'idle');
+  const tellTyping = useRef(onTyping);
+  tellTyping.current = onTyping;
+  useEffect(() => {
+    tellTyping.current?.(typing);
+  }, [typing]);
+  useEffect(() => () => tellTyping.current?.(false), []);
+
   const stoppable = writing && onStop !== undefined && voice.state === 'idle';
+  // Like a messenger: the waveform while there is nothing to send, the round arrow once there is
+  // (issue #522). While Buddy writes, the same slot is "Stopp" — not in the design, as before it.
+  const action: ComposerAction | null = stoppable
+    ? {
+        kind: 'own',
+        node: (
+          <Appear key="stop" duration={DURATION.quick}>
+            <CircleBtn
+              icon="stop"
+              filled
+              size={COMPOSER.slot}
+              {...(onStop ? { onPress: onStop } : {})}
+              accessibilityLabel={t('buddy:thread.stop_label')}
+            />
+          </Appear>
+        ),
+      }
+    : trimmed.length > 0 || attached
+      ? { kind: 'send', onPress: send, disabled: disabled || pages.busy }
+      : null;
 
   return (
     <BottomBar testID="composer" yields={attached}>
@@ -141,7 +164,7 @@ export function Composer({
         onChoose={menu.choose}
         onClose={menu.close}
       />
-      <InputBar
+      <OneComposer
         value={text}
         onChangeText={setText}
         maxLength={MAX_MESSAGE_LENGTH}
@@ -151,42 +174,19 @@ export function Composer({
         voice={voice}
         micLabel={t('common:voice.message')}
         disabled={disabled}
-        above={<ComposerPages pages={pages} onMore={more} />}
+        attached={<ComposerPages pages={pages} onMore={more} />}
         // With the keyboard up the pages and the photo check scroll; field and tools stay whole.
-        aboveYields={attached}
+        attachedYields={attached}
         // Like the assistants she knows: one + that asks where it comes from, instead of a
         // page of its own (owner 29.09., issue #82). Only where a domain takes pages (#107).
-        start={
-          pageHandler.get() ? (
-            <CircleBtn
-              icon="plus"
-              plain
-              size={COMPOSER.slot}
-              onPress={menu.open}
-              accessibilityLabel={t('buddy:composer.attach.title')}
-            />
-          ) : null
+        tool={
+          pageHandler.get()
+            ? { icon: 'plus', label: t('buddy:composer.attach.title'), onPress: menu.open }
+            : null
         }
-        // Like a messenger: the waveform while there is nothing to send, the round arrow once
-        // there is — its name says "Senden" (issue #522).
-        action={
-          stoppable ? (
-            stopBtn
-          ) : trimmed.length > 0 || attached ? (
-            <CircleBtn
-              icon="send"
-              filled
-              size={COMPOSER.slot}
-              keepsFocus
-              onPress={send}
-              disabled={disabled || pages.busy}
-              accessibilityLabel={t('buddy:composer.send')}
-            />
-          ) : null
-        }
-        // Conversation mode: the waveform circle at the box's end, same scale as its
-        // neighbours (owner feedback 2026-09-28).
-        after={<TalkButton onPress={onTalk} />}
+        action={action}
+        // Conversation mode: the blue waveform holds the slot while there is nothing to send.
+        onTalk={onTalk}
       />
     </BottomBar>
   );

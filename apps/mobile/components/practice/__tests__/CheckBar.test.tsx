@@ -1,10 +1,10 @@
-// Her question in the one bar (issue #402, report #388 §1, §9). On every form without a typed
-// answer the input bar's field is the way to ask the tutor: "Frag zur Aufgabe …". What is pinned
-// here:
+// Her question in the one Composer (issue #402, report #388 §1, §9; #599). On every form without
+// a typed answer the Composer's field is the way to ask the tutor: "Frag zur Aufgabe …". What is
+// pinned here:
 //
-//   · options she taps get the bar with the field, and no "Prüfen" (the tile is the answer);
-//   · a board keeps "Prüfen" at the pill's end, and the placeholder stays beside it — it is what
-//     says the field is there to ask (#394 hides it beside the chat's "Senden" only);
+//   · one primary slot: "Prüfen" (quiet while it waits), "Weiter", or — where the answer can be
+//     said and nothing is ready yet — the blue conversation button, never a grey one on the left;
+//   · the placeholder stays beside "Prüfen" — it is what says the field is there to ask;
 //   · once she has typed a question "Senden" takes the action's place, and sends it; locked, it
 //     sends nothing.
 //
@@ -15,9 +15,19 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useVoiceMode } from '../../../lib/speech/voiceMode.js';
-import { InputBar } from '../../lb/InputBar.js';
-import { renderInApp } from '../../../testing/render.js';
+import { paletteOf } from '../../../lib/theme/palettes.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
+import { Btn } from '../../lb/Btn.js';
 import { AskRoute, CheckBar, type CheckAction } from '../CheckBar.js';
+
+/** Options she can say, none chosen yet. */
+const SAYABLE: CheckAction = {
+  ready: false,
+  disabled: false,
+  onPress: () => undefined,
+  waitsHint: 'Wähl erst eine Antwort.',
+  canTalk: true,
+};
 
 const BOARD: CheckAction = {
   ready: true,
@@ -54,13 +64,21 @@ function Asking({
   );
 }
 
+function cssColor(color: string) {
+  const element = document.createElement('div');
+  element.style.backgroundColor = color;
+  return element.style.backgroundColor;
+}
+
 const field = () => screen.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' });
 
 describe('her question in the bar', () => {
-  it('stands under options she taps, without "Prüfen"', () => {
-    renderInApp(<Asking action={{ tap: true }} />);
+  it('stands under a form whose check still waits, beside the quiet "Prüfen"', () => {
+    renderInApp(<Asking action={{ ...BOARD, ready: false }} />);
     expect(field().getAttribute('placeholder')).toBe('Frag zur Aufgabe …');
-    expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
+    const check = screen.getByRole('button', { name: 'Prüfen' });
+    expect(check.getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByTestId('composer-primary').contains(check)).toBe(true);
   });
 
   it('stands beside "Prüfen" on a board, with its placeholder', () => {
@@ -80,7 +98,7 @@ describe('her question in the bar', () => {
 
   it('sends nothing while the question is locked', () => {
     const onSend = vi.fn();
-    renderInApp(<Asking action={{ tap: true }} onSend={onSend} disabled start="Warum?" />);
+    renderInApp(<Asking action={BOARD} onSend={onSend} disabled start="Warum?" />);
     fireEvent.click(screen.getByRole('button', { name: 'Senden' }));
     expect(onSend).not.toHaveBeenCalled();
   });
@@ -99,14 +117,27 @@ describe('Gespräch in the bar', () => {
     },
   });
 
-  it('puts the waveform at the end of the bar only where the options can be said', () => {
-    renderInApp(<Asking action={{ tap: true }} />);
+  it('offers the waveform only where the answer can be said', () => {
+    renderInApp(<Asking action={{ ...BOARD, ready: false }} />);
     expect(screen.queryByRole('button', { name: 'Mit Buddy sprechen' })).toBeNull();
+  });
+
+  it('holds the blue waveform in the primary slot, never a grey one among the tools', () => {
+    renderInApp(<Asking action={SAYABLE} />);
+    const waves = screen.getAllByRole('button', { name: 'Mit Buddy sprechen' });
+    expect(waves).toHaveLength(1);
+    const primary = screen.getByTestId('composer-primary');
+    expect(primary.contains(waves[0]!)).toBe(true);
+    expect(styleOf(waves[0]!.firstElementChild!).backgroundColor).toBe(
+      cssColor(paletteOf('pastell').primary),
+    );
+    // One slot, one control: the check takes it once an answer is chosen.
+    expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
   });
 
   it('starts the conversation with the waveform, and "Tastatur" ends it', () => {
     useVoiceMode.setState({ readAloud: false, conversation: false });
-    const view = renderInApp(<Asking action={{ tap: true, canTalk: true }} />);
+    const view = renderInApp(<Asking action={SAYABLE} />);
     fireEvent.click(screen.getByRole('button', { name: 'Mit Buddy sprechen' }));
     expect(useVoiceMode.getState().conversation).toBe(true);
     view.unmount();
@@ -136,9 +167,7 @@ it('keeps a typed answer check in the single primary slot even before focus', ()
       action={{
         ...BOARD,
         onPress: checked,
-        input: (primary) => (
-          <InputBar value="12" maxLength={100} accessibilityLabel="Antwort" action={primary} />
-        ),
+        field: { value: '12', maxLength: 100, accessibilityLabel: 'Antwort' },
         typing: false,
       }}
     />,
@@ -159,15 +188,28 @@ it('advances a closed question from the same primary slot', () => {
   expect(next).toHaveBeenCalledOnce();
 });
 
-it('retains the optional conversation start beside a drafted selection Check', () => {
+it('gives the one slot to "Prüfen" once a sayable answer is chosen', () => {
   useVoiceMode.setState({ readAloud: false, conversation: false });
-  renderInApp(<Asking action={{ ...BOARD, canTalk: true }} />);
-  const check = screen.getByRole('button', { name: 'Prüfen' });
-  const wave = screen.getByRole('button', { name: 'Mit Buddy sprechen' });
+  renderInApp(<Asking action={{ ...SAYABLE, ready: true }} />);
   const primary = screen.getByTestId('composer-primary');
-  expect(primary.contains(check)).toBe(true);
-  expect(primary.contains(wave)).toBe(false);
-  fireEvent.click(wave);
-  expect(useVoiceMode.getState().conversation).toBe(true);
-  useVoiceMode.setState({ readAloud: false, conversation: false });
+  expect(primary.contains(screen.getByRole('button', { name: 'Prüfen' }))).toBe(true);
+  expect(primary.querySelectorAll('[role="button"]')).toHaveLength(1);
+  expect(screen.queryByRole('button', { name: 'Mit Buddy sprechen' })).toBeNull();
+});
+
+it('hosts a pass’s own action in the slot and its row of answers under the box', () => {
+  const view = renderInApp(
+    <Asking action={{ own: { primary: <Btn>Umdrehen</Btn>, row: null } }} />,
+  );
+  expect(
+    screen
+      .getByTestId('composer-primary')
+      .contains(screen.getByRole('button', { name: 'Umdrehen' })),
+  ).toBe(true);
+  view.unmount();
+  renderInApp(<Asking action={{ own: { primary: null, row: <Btn>Wusste ich</Btn> } }} />);
+  const answer = screen.getByRole('button', { name: 'Wusste ich' });
+  expect(screen.getAllByTestId('bottom-bar')).toHaveLength(1);
+  expect(screen.getByTestId('bottom-bar').contains(answer)).toBe(true);
+  expect(screen.getByTestId('composer-primary').contains(answer)).toBe(false);
 });

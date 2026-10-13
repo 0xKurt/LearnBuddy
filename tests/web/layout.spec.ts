@@ -187,7 +187,13 @@ test('the composer row stays one row when the field grows', async ({ page }) => 
   // Air between the two round controls at the end (owner 01.10.: "der abstand zwischen
   // senden und voice mode button sollte groesser sein"). The box's own gap is 2, which
   // is right next to the text field and too tight between two buttons.
-  const gap = send.x - (mic.x + mic.width);
+  // Measured between the circles she sees (40 pt, the Composer's slot — design
+  // components/composer/Composer.jsx:52 `gap: 6`), not between their 44 pt touch targets.
+  const face = async (name: string) =>
+    (await page.getByRole('button', { name }).locator(':scope > div').first().boundingBox())!;
+  const micFace = await face('Nachricht sprechen');
+  const sendFace = await face('Senden');
+  const gap = sendFace.x - (micFace.x + micFace.width);
   expect(gap, 'mic and send have real air between them').toBeGreaterThanOrEqual(6);
 
   await page.screenshot({ path: join(SHOTS, '31-composer-grown.png') });

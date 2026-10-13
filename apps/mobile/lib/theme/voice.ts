@@ -22,6 +22,8 @@ export const VOICE = {
   pressedOpacity: UI.pressed.voice,
   border: UI.border,
   iconRatio: { stop: 0.36, mic: 0.44 },
+  /** The Composer's mic: the glyph of every 40 pt slot control (components/core/Btn.jsx `IconBtn`). */
+  slotGlyph: UI.iconButton.glyph,
 } as const;
 
 export const MIC_RING_ROOM = Math.ceil((VOICE.face.lg * (VOICE.ring.scale - 1)) / 2);

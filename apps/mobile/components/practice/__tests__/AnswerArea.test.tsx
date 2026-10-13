@@ -140,11 +140,12 @@ describe('die Optionen einer beantworteten Auswahlfrage', () => {
     const { answer } = show({ open: true, turns: [] });
     const [two] = tiles();
     expect(two!.getAttribute('aria-disabled')).not.toBe('true');
-    const check = screen.getByRole('button', { name: 'Prüfen' });
-    expect(check.getAttribute('aria-disabled')).toBe('true');
+    // Nothing chosen: the slot is the conversation's (the options can be said), not a check.
+    expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
     fireEvent.click(two!);
     expect(two!.getAttribute('aria-checked')).toBe('true');
     expect(answer).not.toHaveBeenCalled();
+    const check = screen.getByRole('button', { name: 'Prüfen' });
     expect(check.getAttribute('aria-disabled')).not.toBe('true');
     fireEvent.click(check);
     expect(answer).toHaveBeenCalledOnce();

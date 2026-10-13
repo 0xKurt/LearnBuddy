@@ -2078,10 +2078,10 @@ its own route, so nothing she asks is ever misread as an answer:
   `ask_coax_no_giveaway` — the live run is still open.
 - **The app (issue #402, report #388 §9).** Every form without a typed answer — tap options,
   picture options, select-all, order, match, table, cloze, mark, the note line and the fraction
-  bar — gets the field of the one `InputBar` as her question: „Frag zur Aufgabe …"
-  (`useAskField` in `components/practice/CheckBar.tsx`, the screen provides it through
-  `AskRoute`). Beside it stands the form's „Prüfen" (none under options: the tile is the
-  answer); once she has typed, the round send arrow takes its place, as in the chat (#522). The
+  bar — gets the field of the one `Composer` as her question: „Frag zur Aufgabe …"
+  (`AskComposer` in `components/practice/CheckBar.tsx`, the screen provides it through
+  `AskRoute`). Beside it stands the form's „Prüfen" in the Composer's one primary slot; once
+  she has typed, the round send arrow takes its place, as in the chat (#522, #599). The
   placeholder stays beside „Prüfen": it is the one thing that says what the field is for. The
   question is kept as a draft (`session.<id>.ask`), sent with `askItem` (not through the outbox:
   help in the moment, not learning state), and stands in the thread like any of her words — her
@@ -2491,7 +2491,7 @@ eigenen Worte bestätigen und keine exakte Angabe überstimmen.
   `NotPracticable` (die Übung des Blatts kann ihn nicht stellen); Buddy kann ihn von dort als
   `essay` anbieten. Migration 0099 hebt die Grenze von `practice_turns.text` von 4000 auf 12 000
   Zeichen — ein Aufsatz über etwa 600 Wörtern scheiterte vorher beim Speichern.
-- **In der App (Schritt 2):** dieselbe Übungsseite, dieselbe Eingabeleiste (`InputBar`), kein
+- **In der App (Schritt 2):** dieselbe Übungsseite, derselbe Composer (`components/lb/Composer.tsx`), kein
   zweites Feld. Für `essay` (`lib/practice/essay.ts`) nimmt die Leiste 12 000 Zeichen, steht
   `tall` — drei Zeilen, beim Schreiben wächst sie bis zehn (mit Tastatur auf dem kleinen Telefon
   bis vier, `formDensity`), in Ruhe bleibt sie bei drei, damit die Rückmeldung darüber Platz hat —,
@@ -4688,7 +4688,7 @@ word list, so it stays a prompt rule.
   every practice screen (rule 19): the round ✕ (`EndButton`) in the header, and the one input
   bar (`CheckBar` `own`) — its field her question to the tutor about the card (`POST …/ask`,
   never a rating; the reply stands under the card), "Umdrehen" where a board's "Prüfen" stands,
-  "Noch nicht" / "Wusste ich" across under the pill where a typed answer's "Prüfen" stands. A
+  "Noch nicht" / "Wusste ich" as a row under the Composer's box (not in the design: as before it). A
   turned card is kept like a draft, so the theme switch (which rebuilds the screen) no longer
   turns it back. Walkthrough: `tests/web/cards.spec.ts`.
 - **Kopfrechnen — a quick round code writes** (issue #243; `contracts/drill.ts`,
@@ -5174,7 +5174,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   | What happens | Buddy reads aloud, does not listen | hands-free: Buddy reads and listens |
   | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — part of the one head of every screen (`components/lb/BuddyHeader.tsx`, #599), beside ⋯, which opens the same menu everywhere (`components/buddy/HeaderMenu.tsx`) | the waveform at the end of the input bar (`TalkButton`) |
   | In the chat | replies are read aloud | opens the conversation screen (`app/talk.tsx`) |
-  | In practice | the question when it appears, the feedback, "Anders erklären"; also a Kopfrechnen task (as math in words) and a card's front, never its back (#434). The switch stands in every practice head (the shared `BuddyHeader`; a card pass still through `components/practice/HeadActions.tsx`), and a tap on the question itself reads it again (`components/lb/ReadAgain.tsx`, "Nochmal vorlesen" for a screen reader) | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
+  | In practice | the question when it appears, the feedback, "Anders erklären"; also a Kopfrechnen task (as math in words) and a card's front, never its back (#434). The switch stands in every practice head (the shared `BuddyHeader`, the card pass and the Kopfrechnen round included), and a tap on the question itself reads it again (`components/lb/ReadAgain.tsx`, "Nochmal vorlesen" for a screen reader) | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
   | Kept | on the device (`lb.voiceMode`, the old single flag's key) | not kept: she starts it |
   A conversation includes reading aloud (`readsAloud`); switching the speaker off ends it, and
   "Tastatur" ends it without touching her Vorlesen choice. Before #386 one flag did both, set by
@@ -5603,34 +5603,32 @@ question shows is pure (`questionView`). The parts drawn are `QuestionProgress`,
 `QuestionThread`, `AnswerArea` and `NoQuestion` in `components/practice/`.
 **The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
 action in fixed slots: the free room, the answer, optional keys for what she types directly under
-it, and "Prüfen" (`CheckBar.tsx`: one full-width pill in the pinned bar,
-waiting until the form says its answer is complete). **One bar per practice screen, and it is the
-input bar** (issue #395, report #388 §9): "Prüfen" is the action of the app's one `InputBar`, as
-"Senden" is the chat's. A board (order, match, table, cloze, mark, select-all, the note line) has
+it, and "Prüfen" (`CheckBar.tsx`, the practice adapter of the one Composer: the 40 pt pill in
+its primary slot, quiet until the form says its answer is complete). **One bar per practice
+screen, and it is the Composer** (issues #395, #599, report #388 §9): "Prüfen" is the action of
+the app's one `components/lb/Composer.tsx`, as "Senden" is the chat's. A board (order, match, table, cloze, mark, select-all, the note line) has
 no answer to type, so the bar's field is her question to the tutor ("Frag zur Aufgabe …", issue
-#402, §Practice „Fragen beim Üben") with "Prüfen" at the pill's end — the pill is 54 pt where
-"Prüfen" across was 48 (+6 pt), paid by dropping the answer slot's own top gap; under options the
-bar holds only the field, paid for by the card giving room (`CARD_GIVES`) and the conversation
-(`threadRoom`). Guarded by the source
-test `apps/mobile/lib/__tests__/oneBar.test.ts` (every `BottomBar` in practice code holds one
-`InputBar`, none inside another; the bars that are not the input bar — the conversation row (#386), "Weiter",
-pronunciation, flash cards, Kopfrechnen, a round's end — are listed with their step, and the list
-only shrinks) and by the walkthrough (`room` in `tests/web/fit.ts`: at most one pinned bar at every
+#402, §Practice „Fragen beim Üben") with "Prüfen" in the primary slot; where the answer can
+be said and nothing is ready yet, the slot holds the blue conversation button instead (#386,
+#599). Guarded by the source
+test `apps/mobile/lib/__tests__/oneBar.test.ts` (every `BottomBar` in practice code holds the
+Composer, none inside another; the bars that are not an input — pronunciation, the end of a
+round or pass — are listed, and the list only shrinks; the conversation row (#386) stands in the
+Composer's place inside the adapter's one bar) and by the walkthrough (`room` in `tests/web/fit.ts`: at most one pinned bar at every
 stop, and the free room, bar and answer slot of every practice stop recorded in `fit.jsonl`,
 also at 360×440). A form fills the slots and decides nothing
 about place, spacing or the look of its action. Order, match, table, cloze, the note line and the
 typed answer are in it. **Free text is typed at the bottom, like in the chat** (issue #365, owner
 04.10.; it replaces #310's variant B "Eingabefeld direkt unter der Frage" for free text): a typed
 answer (`TypedAnswer.tsx` — short, long, numeric, formula, vocab, "Erklär mal", a Diktat) is
-written in the app's one input bar (`components/lb/InputBar.tsx`, the same component as the chat's
-composer), pinned in the bar at the bottom right above "Prüfen" (`action.input` of `CheckBar`),
-inside the screen's `KeyboardSafe`. The question, Buddy's reply and the follow-up stand above it
+written in the app's one Composer (`components/lb/Composer.tsx`, the same component as the
+chat's), pinned in the bar at the bottom (`action.field` of `CheckBar`), inside the screen's
+`KeyboardSafe`. The question, Buddy's reply and the follow-up stand above it
 like a conversation; nothing floats under the question with an empty band down to "Prüfen". The
-math keys stand right under the input bar, on top of the keyboard, while she types, the mic sits at the bar's end (a soft
-circle, as in the chat), the return key still sends a one-liner, and "Prüfen"
-waits until something is in the field. While she types, "Prüfen" stands in the bar itself, where the chat has
-"Senden" (`typing` in `CheckBar`), and the full-width one steps aside — with the keyboard up on a
-small phone it would push the bar she types in under the keyboard. In a conversation the
+keys are flat tiles inside the Composer's box, named and put away by its mode chip ("Formel",
+"Rechnen", "Chemie"; `lib/math/keys.ts`), the mic sits left of the primary slot (a soft circle,
+as in the chat), the return key still sends a one-liner, and "Prüfen" stands in the primary slot,
+where the chat has "Senden". In a conversation the
 conversation row takes the bar's place (#386). Structured forms (table, order, match,
 mark, select-all, cloze) have their board at the bottom, directly above "Prüfen" (#386); their cells and gaps are the same
 one text field (`LbTextInput`, variant `cell`). A form that cannot scroll says what the slot keeps
@@ -5869,25 +5867,25 @@ place she types into is `components/lb/LbTextInput.tsx`, the only file that rend
 cloze's gap (cell) — one frame with the same paper, hairline, violet focus frame with its halo,
 type size and token corners (`RADIUS.frame`, `.bar`, `.cell`); controls stand inside the frame
 (`start`, `end`, the clear ×, the password eye), a visible name above it is `label`, a ref to it
-is `LbTextInputRef`. Free text goes into the one input bar (`components/lb/InputBar.tsx`), built
-like the Claude app's (issue #522, owner 09.10.): one rounded box, **her text on top over the full
-width**, growing with it, and under it **one row of tools** — on the left `start` (the chat's +,
-the camera of a path, the essay's writing view) and `chips` (the unit as "in cm²", how her typed
-math is read); on the right the soft mic and one filled circle: the waveform into a conversation,
-or the action once there is something to send (the round send arrow named "Senden", "Stopp" while
-Buddy writes, "Prüfen" as the round arrow while she types an answer). Empty, the box is one compact
-line with the controls beside the text, so a small phone keeps its room; the tools fold under the
-text with the first letter (`LbTextInput`, `stacked`). The chat's composer
+is `LbTextInputRef`. Free text goes into the one Composer (`components/lb/Composer.tsx`, issue #599; design
+`components/composer/Composer.jsx`), built like the Claude app's (issue #522, owner 09.10.): one
+rounded box with a hairline that does not change with the focus, **her text on top over the full
+width**, growing with it, then its keys as flat tiles, and under them **one row of tools** — on
+the left one `tool` (the chat's +; the camera of a path and the essay's writing view, which the
+design does not draw), the `mode` chip that names and hides the keys, the unit as "in cm²", how
+her typed math is read, the count; on the right the soft mic and ONE primary slot (`action`): the
+round send arrow, "Prüfen" and "Weiter" as 40 pt pills with their sign — and, while there is no
+action, the blue waveform into a conversation (`onTalk`). "Stopp" while Buddy writes and a
+flashcard's "Umdrehen" are hosted in the same slot (`kind: 'own'`). The chat's composer
 (`components/buddy/Composer.tsx`) and a typed practice answer (`components/practice/TypedAnswer.tsx`,
-math keys inside the box between her lines and the tools while she types, "Prüfen" across under it
-while she does not) are the same box in the same pinned `components/lb/BottomBar.tsx`, with the same
+through the practice adapter `components/practice/CheckBar.tsx`) are the same box in the same pinned `components/lb/BottomBar.tsx`, with the same
 status line and character count (`FieldCount`). The math preview shows only while the line looks
 different when set (`TypedMathPreview`): plain digits are never mirrored. Before #522 everything
 stood in one line beside the text and a "Senden" pill left her text a narrow column. A birth date is `components/auth/BirthDateFields.tsx` in the
 profile form and in the parents' correction. Guarded: `lb/one-text-field`
 (docs/engineering-guards.md) refuses `TextInput` anywhere else in the app, and
 `apps/mobile/lib/__tests__/oneInput.test.ts` holds that the chat and practice type into
-`InputBar` and that no other file draws its pill.
+the one `Composer`, that no other file draws its box and that it has one primary slot.
 
 ### The keyboard and the height a screen lays itself out in (issues #46, #141, #289)
 
