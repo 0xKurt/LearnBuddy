@@ -29,12 +29,18 @@ describe('the library in the model’s rules', () => {
     expect([...SCHEMATIC_DRAWINGS]).toEqual(SCHEMATIC_IDS);
   });
 
-  it('marks a part whose anchor stands too close to the next: named, never tapped', () => {
+  it('marks a part a tap area does not cover, or too close to the next: named, never tapped', () => {
     expect(partsOf('eye')).toContain('Pupille*');
-    expect(partsOf('eye')).toContain('Linse');
+    expect(partsOf('eye')).toContain('Sehnerv');
     expect(partsOf('skeleton')).toContain('Wadenbein*');
     expect(partsOf('skeleton')).toContain('Schädel');
-    expect(partsOf('flower_section')).toContain('Staubblatt');
+    // Drawn twice, going on elsewhere (#599 review): the lungs, the colon, the myelin.
+    expect(partsOf('breathing')).toContain('Lunge*');
+    expect(partsOf('breathing')).toContain('Kehlkopf');
+    expect(partsOf('digestion')).toContain('Dickdarm*');
+    expect(partsOf('neuron')).toContain('Myelinscheide*');
+    expect(partsOf('flower_section')).toContain('Staubblatt*');
+    expect(partsOf('flower_section')).toContain('Narbe');
     // The circuit is still drawn: its parts are decided by their outlines, as before.
     expect(partsOf('circuit')?.map((p) => p.replace('*', ''))).toEqual([
       'Kabel',
@@ -46,7 +52,11 @@ describe('the library in the model’s rules', () => {
   });
 
   it('offers no part an image does not show — the list follows the library (#599)', () => {
-    expect(partsOf('plant')).toEqual(['Sprossachse', 'Blatt', 'Blüte']);
+    expect(partsOf('plant')?.map((p) => p.replace('*', ''))).toEqual([
+      'Sprossachse',
+      'Blatt',
+      'Blüte',
+    ]);
     expect(partsOf('bicycle')?.map((p) => p.replace('*', ''))).toEqual([
       'Hinterrad',
       'Vorderrad',
@@ -72,7 +82,10 @@ describe('the anchors the server decides with (#599)', () => {
     id: z.string().min(1),
     at: xy,
     badge: xy,
-    tap: z.tuple([z.number().min(0), z.number().min(0), z.number().min(44), z.number().min(44)]),
+    // Null: named only — no tap area, no tap question.
+    tap: z
+      .tuple([z.number().min(0), z.number().min(0), z.number().min(44), z.number().min(44)])
+      .nullable(),
   });
 
   it('every image has anchors of the right shape, one per part, inside its frame', () => {
@@ -84,6 +97,7 @@ describe('the anchors the server decides with (#599)', () => {
       // Every part that can be asked has its anchor, and no anchor names a part the library lacks.
       expect(data[d]?.map((a) => a.id)).toEqual(schematic(FIGURE_NAMES, d).parts.map((p) => p.id));
       for (const a of data[d] ?? []) {
+        if (!a.tap) continue;
         const [x, y, w, h] = a.tap;
         expect(x + w <= width && y + h <= height, `${d}.${a.id}`).toBe(true);
       }
@@ -105,15 +119,22 @@ describe('a stored question read back (#599)', () => {
     expect(stalePicture(row('Klingel', bicycle(['bell', 'saddle'], 1)))).toBe(true);
     expect(stalePicture(row('Sattel', bicycle(['bell', 'saddle'], 2)))).toBe(true);
     expect(stalePicture(row('Klingel', bicycle([], 0), true))).toBe(true);
-    // A part that was tapped in the drawing and stands too close in the image.
+    // A part that was tapped in the drawing and has no tap area in the image: both lungs are
+    // drawn, the pelvis is larger than an area.
+    const tapOn = (d: string, answer: string) =>
+      row(answer, { type: 'schematic', d, n: [], ask: 0 }, true);
+    expect(stalePicture(tapOn('skeleton', 'Becken'))).toBe(true);
+    expect(stalePicture(tapOn('breathing', 'Lunge'))).toBe(true);
+    expect(stalePicture(tapOn('bicycle', 'Rahmen'))).toBe(true);
+    // The same part asked by its number still holds.
     expect(
-      stalePicture(row('Becken', { type: 'schematic', d: 'skeleton', n: [], ask: 0 }, true)),
-    ).toBe(true);
+      stalePicture(row('Lunge', { type: 'schematic', d: 'breathing', n: ['lungs'], ask: 1 })),
+    ).toBe(false);
   });
 
   it('holds when every part it names is one the image shows', () => {
     expect(stalePicture(row('Sattel', bicycle(['saddle', 'chain'], 1)))).toBe(false);
-    expect(stalePicture(row('Rahmen', bicycle([], 0), true))).toBe(false);
+    expect(stalePicture(row('Sattel', bicycle([], 0), true))).toBe(false);
     // No picture, or a figure of another kind: never stale.
     expect(stalePicture(row('4', null))).toBe(false);
     expect(

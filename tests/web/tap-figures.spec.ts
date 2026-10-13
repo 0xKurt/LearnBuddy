@@ -336,22 +336,23 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
   await expect(page.getByText('Pflanzenzelle: Wie heißt Teil 3?')).toBeVisible();
   await typed(page, 'Chloroplast');
 
-  // Every part of the cell is reached at its own point; the line names none of them.
-  await expect(page.getByText('Tippe auf den Zellkern.')).toBeVisible();
+  // The cell's one part with a tap area is reached at its anchor; a tap beside every area — on
+  // the nucleus, which is named only — picks nothing (#599). The line names no part.
+  await expect(page.getByText('Tippe auf den Chloroplasten.')).toBeVisible();
   await expect(words(page)).toHaveText('Tippe auf das Teil in der Abbildung.');
-  for (const part of schematic(FIGURE_NAMES, 'plant_cell').parts) {
-    await tapPart(page, 'plant_cell', part.id);
-    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
-  }
+  await tapPart(page, 'plant_cell', 'chloroplast');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Chloroplast');
   await expect(words(page)).toHaveText('Teil gewählt');
   await tapPart(page, 'plant_cell', 'nucleus');
+  await expect(words(page)).toHaveText('Tippe auf das Teil in der Abbildung.');
+  await tapPart(page, 'plant_cell', 'chloroplast');
   await bothSchemes(page, '91-picture-cell', 'tap-figure');
   await checkRight(page);
 
-  // The bicycle's frame: many strokes, one part.
-  await expect(page.getByText('Tippe auf den Rahmen.')).toBeVisible();
-  await tapPart(page, 'bicycle', 'frame');
-  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Rahmen');
+  // The bicycle's saddle.
+  await expect(page.getByText('Tippe auf den Sattel.')).toBeVisible();
+  await tapPart(page, 'bicycle', 'saddle');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Sattel');
   await bothSchemes(page, '92-picture-bike', 'tap-figure');
   await checkRight(page);
 
@@ -380,7 +381,9 @@ async function walkLibrary(
     await expect(page.getByText(item.prompt)).toBeVisible();
     const d = item.figure.d as SchematicId;
     if ('tap' in item) {
-      for (const part of schematic(FIGURE_NAMES, d).parts) {
+      for (const [i, part] of schematic(FIGURE_NAMES, d).parts.entries()) {
+        // Only a part with a tap area can be picked (an image's; every part of the circuit).
+        if (isImageSchematic(d) && !SCHEMATIC_ANCHORS[d][i]?.tap) continue;
         await tapPart(page, d, part.id);
         await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
       }

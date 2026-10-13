@@ -1,18 +1,14 @@
 // A labelled picture that is a real image (#599; design `components/figures/Drawn.jsx › Schematic`,
-// `Abbildungen.dc.html`, apps/mobile/assets/figures/TEILE.md §Festlegungen). The images keep their
-// own colours and are made for a light ground, so they always lie on a light paper card — in the
-// dark looks too — and what is drawn over them (leader lines, the numbers' rings) is the light
-// look's ink in every look: these are no palette colours, they belong to the paper.
+// `Abbildungen.dc.html`, apps/mobile/assets/figures/TEILE.md §Festlegungen): its measures. Its
+// colours are the palette's (`figurePaper`, `figureInk`, `figureAccent`, `onFigureAccent` in
+// palettes.ts, read through `useTheme()`): a light paper card in every look, the dark ones too.
 //
 // Lengths are in the image's frame, 300 wide (`SCHEMATIC_IMAGE_WIDTH`, shared-math): they are drawn
 // times the picture's scale, as the design's overlay scales with its image. Line weights are not.
 
 export const FIGURE_PICTURE = {
-  /** The paper card under every image, and its corners. */
-  paper: '#ffffff',
+  /** The corners of the paper card under every image. */
   radius: 14,
-  /** Leader lines, their dots and the rings of the numbers. */
-  ink: '#1f1b2e',
   leader: {
     width: 1,
     /** The dot a leader line ends in, on the part. */

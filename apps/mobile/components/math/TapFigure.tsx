@@ -182,9 +182,9 @@ function Mark({ mark }: { mark: TapMark }) {
         cx={mark.x}
         cy={mark.y}
         r={radius * mark.k}
-        fill={palette.primary}
+        fill={palette.figureAccent}
         fillOpacity={fillOpacity}
-        stroke={palette.primary}
+        stroke={palette.figureAccent}
         strokeWidth={stroke}
       />
     );
@@ -305,7 +305,13 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
                   drag
                   testID="tap-pad"
                   disabled={disabled}
-                  onPoint={(x, y) => write(layout.pickAt(x, y, pick, active))}
+                  onPoint={(x, y) => {
+                    const next = layout.pickAt(x, y, pick, active);
+                    // Beside every part of an image a tap picks nothing (#599): her place is
+                    // empty again — no ring, and the line under the figure says how to answer.
+                    if (next) write(next);
+                    else if (value !== '') onChange('');
+                  }}
                   onRelease={clock && active === 0 ? () => setActive(1) : undefined}
                 />
               </>

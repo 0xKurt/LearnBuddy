@@ -18,9 +18,12 @@
 //
 // A stored question is held to the same check when it is read (`stalePicture`): the library
 // changes — #599 took out the parts the images do not show (a bicycle's bell, a plant's root) —
-// and a question that names such a part is no longer chosen for a set (`selection.ts`) nor shown
-// with its picture (`storedQuestionFigure`, items.ts). Nothing is renumbered: "Wie heißt Teil 3?"
-// with one name dropped would point at another part.
+// and a question that names such a part is no longer chosen for a set (`selection.ts`), no longer
+// started from a set prepared before (`service.ts`) and nowhere shown with its picture
+// (`storedQuestionFigure`, items.ts: a session, a sheet's list of questions). A homework task
+// stays in its sheet's help session — it is her sheet's task, helped with as it stands — without
+// the picture. Nothing is renumbered: "Wie heißt Teil 3?" with one name dropped would point at
+// another part.
 
 import {
   FIGURE_NAMES,
@@ -76,18 +79,21 @@ function schematicItemProblem(it: Pictured): string | null {
     : 'the key is not the part asked for';
 }
 
+/** A stored question as its picture's check reads it: `items.kind`, `answer`, `figure`, `tap`. */
+export type PictureQuestion = {
+  kind: string;
+  answer: string;
+  figure: unknown;
+  tap?: boolean | null;
+};
+
 /**
  * Whether a STORED question about a picture no longer holds — it names a part the picture does not
  * have any more, as a number or as its key, or asks to tap one a finger cannot hit now (#599). Read
  * through the check it was written under, like an option's pictures (`storedChoiceFigures`); a
  * question without a picture, or with a figure of another kind, is never stale.
  */
-export function stalePicture(row: {
-  kind: string;
-  answer: string;
-  figure: unknown;
-  tap?: boolean | null;
-}): boolean {
+export function stalePicture(row: PictureQuestion): boolean {
   const figure = FigureSchema.safeParse(row.figure);
   if (!figure.success || !isSchematic(figure.data)) return false;
   return schematicItemProblem({ ...row, figure: figure.data }) !== null;

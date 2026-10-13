@@ -20,11 +20,11 @@ import type { Schematic } from './schematics.js';
 export const SCHEMATIC_LIFE_NAMES = {
   flower_section: {
     names: named([
-      'Blüte im Längsschnitt (groß)',
-      'flower in section (large)',
-      'fleur en coupe (grande)',
-      'flor en corte (grande)',
-      'fiore in sezione (grande)',
+      'Blüte im Längsschnitt (mit Samenanlage)',
+      'flower in section (with ovule)',
+      'fleur en coupe (avec ovule)',
+      'flor en corte (con óvulo)',
+      'fiore in sezione (con ovulo)',
     ]),
     parts: [
       ...Object.values(FLOWER),
@@ -83,11 +83,11 @@ export const SCHEMATIC_LIFE_NAMES = {
   },
   teeth: {
     names: named([
-      'Gebiss (Unterkiefer)',
-      'teeth (lower jaw)',
-      'dents (mâchoire inférieure)',
-      'dientes (mandíbula)',
-      'denti (mandibola)',
+      'Gebiss (Ober- und Unterkiefer)',
+      'teeth (upper and lower jaw)',
+      'dents (mâchoires supérieure et inférieure)',
+      'dientes (maxilar y mandíbula)',
+      'denti (arcata superiore e inferiore)',
     ]),
     parts: [
       TOOTH.gum,

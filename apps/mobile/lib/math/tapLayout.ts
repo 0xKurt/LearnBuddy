@@ -13,8 +13,9 @@
 // whose label it is near. Its shapes and names are loaded with the first map (`useMapShapes`,
 // `useFigureNames`, #440) and handed in.
 // A labelled picture that is an image (#599) is tapped by its anchors (`pictureTaps`): the part
-// whose tap area holds the finger — the nearest anchor where two overlap, and where none does
-// (`anchorAt`, shared-math, the rule the server decides what can be tapped with). On a map's
+// whose tap area holds the finger — the nearest anchor where two overlap —, and NOTHING outside
+// every area (`anchorAt`, shared-math, the rule the server decides what can be tapped with): the
+// one figure on which a tap can miss, because a guess there would be graded as her answer. On a map's
 // Gradnetz (#429) the places are its crossings: the nearest one, marked with a dot like a point of
 // a coordinate system.
 
@@ -71,9 +72,10 @@ export type TapLayout = {
   axes: TapAxis[];
   /**
    * The place a finger at (x, y) means, in the drawing's coordinates. Where one tap sets one axis
-   * only (a hand of the clock), `active` names it and the other axis keeps `current`.
+   * only (a hand of the clock), `active` names it and the other axis keeps `current`. Null: the
+   * finger means no place — only on a picture that is an image, outside every tap area (#599).
    */
-  pickAt: (x: number, y: number, current: TapPick | null, active: number) => TapPick;
+  pickAt: (x: number, y: number, current: TapPick | null, active: number) => TapPick | null;
   /** Where the place is marked in the drawing (null: the figure shows it itself — the hands). */
   markOf: (pick: TapPick) => TapMark;
   /**
@@ -152,7 +154,10 @@ function pictureTaps(
   const least = anchorFinger(width);
   return {
     axes,
-    pickAt: (x, y) => [anchorAt(anchors, x / k, y / k, least)],
+    pickAt: (x, y) => {
+      const i = anchorAt(anchors, x / k, y / k, least);
+      return i === null ? null : [i];
+    },
     markOf: ([i = 0]) => {
       const a = anchors[i];
       return a ? { kind: 'spot', x: a.at[0] * k, y: a.at[1] * k, k } : null;

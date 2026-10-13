@@ -4255,24 +4255,29 @@ keeps our drawing until one exists (`SCHEMATIC_DRAWN`, with its reason).
   `at` the point on the motif, `badge` where its number stands (a column at x = 12 or 288; in a
   row picture its cell's corner), `tap` the area a finger hits ([x, y, w, h], at least 44 × 44; a
   row picture's whole cell). It was taken from the package's `anchors/<id>.json` and is the source
-  from here on: every anchor was looked at on its image and 63 that stood beside the named
+  from here on: every anchor was looked at on its image and 75 that stood beside the named
   structure were moved onto it (listed in ADR 0009). The circuit's outlines are
   `schematicShapes.data.ts` (`drawShapes.ts`, regions like a map's Länder). Names, anchors and
   shapes load with the first picture (`useFigureNames`, `useSchematicPictures`,
   `useSchematicShapes`, on `lib/lazyModule.ts`); only each picture's frame is eager
   (`schematicFrame`, its room while it loads).
 - **Which part a finger means** (`anchorAt`, `schematics.ts`): of the parts whose tap area holds
-  the point, the one whose anchor is nearest; where none does, the nearest anchor of all — a tap
-  never misses, as on every tappable figure. Drawn narrower than its frame, a tap area keeps
-  44 pt on the screen (`anchorFinger`).
-- **What a tap may ask for** (`schematicTappable`): a part of an image when, in the smallest room
-  (`REGION_TAP_BOX`), the next anchor stands at least 24 pt away (`TAP_TARGET.image`, the spacing
-  of WCAG 2.2, 2.5.8 — the map's rule: the parts are as small as the image shows them, and where
-  two tap areas overlap the nearer anchor wins); the circuit's parts as before, a whole finger
-  (44 pt) inside the outline or around its point. What stands closer is named with a number, never
-  tapped — 37 of 240 parts, listed in `schematicAnchors.test.ts`: e.g. the skeleton's radius and
-  ulna, tibia and fibula, the eye's cornea and pupil, the organs' intestines, bladder, stomach and
-  heart. The model sees them marked "\*".
+  the point, the one whose anchor is nearest (HANDOFF §8); **outside every area, nothing** — the
+  one figure on which a tap can miss. The data has a point and an area per part, no outlines, so a
+  finger beside an area may lie on another structure, and a nearest-anchor guess would be graded
+  as her answer (rule 1). `TapFigure` then empties her place: no ring, and the line under the
+  figure says how to answer. Drawn narrower than its frame, a tap area keeps 44 pt on the screen
+  (`anchorFinger`).
+- **What a tap may ask for** (`schematicTappable`): a part of an image that has a tap area
+  (`tap` in the anchor data; `null` = named only) and whose anchor stands at least 24 pt from
+  every other part's with an area in the smallest room (`REGION_TAP_BOX`; `TAP_TARGET.image`, the
+  spacing of WCAG 2.2, 2.5.8 — the map's rule). **A part has a tap area only if one area covers
+  its structure**, decided by looking at each of the 240 parts: what is clearly larger than its
+  area, drawn more than once (both lungs, both arms, every myelin segment, upper and lower teeth)
+  or continues elsewhere (the colon, the aorta) is named with a number, never tapped, and no
+  finger picks it — 160 parts, each with its reason in ADR 0009; 80 can be tapped, listed in
+  `schematicAnchors.test.ts`. The circuit's parts as before: a whole finger (44 pt) inside the
+  outline or around its point. The model sees every named-only part marked "\*".
 - **Rule 0, generation** (`apps/api/src/modules/practice/schematicCheck.ts`): a labelling draft
   (two or more numbers, none asked, no tap) becomes one question per number, written by code —
   "Pflanzenzelle: Wie heißt Teil 2?" in the question's language, the library's name as the key
@@ -4286,9 +4291,11 @@ keeps our drawing until one exists (`SCHEMATIC_DRAWN`, with its reason).
 - **Stored questions after the library changed** (#599): a row names parts by id
   (`items.figure`, `items.choice_figures`, `practice_turns.figure`), and a row written before may
   name a part its picture no longer has. It is read back through the check it was written under
-  (`stalePicture`): never chosen for a set (`selectPracticeItems`), and where an older session or
-  a past turn still holds it, shown without its picture (`storedFigure`, `storedQuestionFigure`) —
-  the repo's rule for a figure that no longer reads. Nothing is renumbered: with one name dropped
+  (`stalePicture` — a part that is gone, or a tap on a part that has no tap area now): never
+  chosen for a set (`selectPracticeItems`), dropped from a set prepared before (`startFromStep`),
+  and wherever it still appears — an older session, a past turn, the sheet's list of questions —
+  shown without its picture (`storedFigure`, `storedQuestionFigure`), the repo's rule for a figure
+  that no longer reads. A homework task stays in its sheet's help session, without the picture. Nothing is renumbered: with one name dropped
   the other parts' numbers would shift and "Wie heißt Teil 2?" would point at another part
   (`schematicNumbered` returns no numbers at all for such a picture, in the app too). No row is
   rewritten or deleted; a later clean-up is described in ADR 0009.
@@ -4298,7 +4305,8 @@ keeps our drawing until one exists (`SCHEMATIC_DRAWN`, with its reason).
   (`tappedAnswerText`, answerRules.ts — the same path as the map's regions).
 - **Screen:** `components/math/SchematicPicture.tsx` shows the image (expo-image) on a light paper
   card — white, radius 14, in the dark looks too: the images keep their colours and are made for a
-  light ground (`lib/theme/figurePicture.ts`) — and over it, with react-native-svg, the numbers of
+  light ground (the palette's `figurePaper`, `figureInk` and `figureAccent`, the same in all eight looks; measures
+  in `lib/theme/figurePicture.ts`) — and over it, with react-native-svg, the numbers of
   the parts asked for, each joined to its part's anchor by a 1 pt leader line that ends in a dot;
   the number that is asked is filled in the accent (design `Drawn.jsx › Schematic`). Image and
   overlay scale together (`pictureLayout` in `lib/math/schematicLayout.ts`): the picture fills

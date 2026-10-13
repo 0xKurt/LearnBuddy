@@ -93,8 +93,8 @@ describe('a map (#251): every Land and every continent by its label', () => {
     expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(100);
   });
 
-  it('a picture that is an image (#599): every part by its anchor, marked with a ring', () => {
-    for (const d of ['plant_cell', 'eye', 'bicycle', 'signs', 'skeleton'] as const) {
+  it('a picture that is an image (#599): a part with a tap area by its anchor, marked with a ring', () => {
+    for (const d of ['plant_cell', 'ear', 'bicycle', 'signs', 'skeleton'] as const) {
       const f = { type: 'schematic', d, n: [], ask: 0 } as const;
       for (const width of [300, 236]) {
         const l = tapLayout(FIGURE_NAMES, f, width, format, 12, { anchors: SCHEMATIC_ANCHORS });
@@ -105,22 +105,34 @@ describe('a map (#251): every Land and every continent by its label', () => {
           const a = SCHEMATIC_ANCHORS[d][i]!;
           expect(mark.x).toBeCloseTo((a.at[0] * width) / 300);
           expect(mark.y).toBeCloseTo((a.at[1] * width) / 300);
-          expect(l.pickAt(mark.x, mark.y, null, 0)).toEqual(pick);
+          // A part that is named only has no area: a finger on its anchor never picks it (it
+          // picks nothing, or the part whose area lies there).
+          const picked = l.pickAt(mark.x, mark.y, null, 0);
+          if (a.tap) expect(picked).toEqual(pick);
+          else expect(picked).not.toEqual(pick);
         });
       }
     }
   });
 
-  it('on an image a tap means the cell of a row picture, and never misses beside the motif', () => {
+  it('on an image a tap means the cell of a row picture — and nothing beside every tap area', () => {
     const signs = { type: 'schematic', d: 'signs', n: [], ask: 0 } as const;
     const l = tapLayout(FIGURE_NAMES, signs, 150, format, 12, { anchors: SCHEMATIC_ANCHORS });
     // The frame is 300 × 200, drawn at half size: three cells across, two down.
     expect(l?.pickAt(2, 2, null, 0)).toEqual([0]);
     expect(l?.pickAt(148, 98, null, 0)).toEqual([5]);
-    const plant = { type: 'schematic', d: 'plant', n: [], ask: 0 } as const;
-    const p = tapLayout(FIGURE_NAMES, plant, 300, format, 12, { anchors: SCHEMATIC_ANCHORS });
-    // The white corner beside the plant's flowers: the blossom is the nearest part.
-    expect(p?.pickAt(299, 1, null, 0)).toEqual([2]);
+    // The other lung of the breathing organs (the anchor stands on the left one): before, the
+    // nearest anchor made it "Bronchien" — a right tap graded wrong. Now it is no pick at all.
+    const breathing = { type: 'schematic', d: 'breathing', n: [], ask: 0 } as const;
+    for (const width of [300, 236]) {
+      const k = width / 300;
+      const b = tapLayout(FIGURE_NAMES, breathing, width, format, 12, {
+        anchors: SCHEMATIC_ANCHORS,
+      });
+      expect(b?.pickAt(213 * k, 253 * k, null, 0)).toBeNull();
+      // And the white corner of the frame.
+      expect(b?.pickAt(width - 1, 1, null, 0)).toBeNull();
+    }
   });
 
   it('the picture we draw (#252, the circuit): every part by its own point, its outline marked', () => {

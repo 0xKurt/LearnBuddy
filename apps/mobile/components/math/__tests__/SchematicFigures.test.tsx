@@ -58,7 +58,10 @@ describe('SchematicBody', () => {
     expect(styleOf(card).backgroundColor).toBe('rgb(255, 255, 255)');
     expect(styleOf(card).borderTopLeftRadius).toBe(`${FIGURE_PICTURE.radius}px`);
     // The paper and its ink are constants of the picture, the same under every palette.
-    expect(FIGURE_PICTURE).toMatchObject({ paper: '#ffffff', ink: '#1f1b2e', radius: 14 });
+    for (const palette of Object.values(PALETTES)) {
+      expect(palette).toMatchObject({ figurePaper: '#ffffff', figureInk: '#1f1b2e' });
+    }
+    expect(FIGURE_PICTURE.radius).toBe(14);
   });
 
   it('writes the numbers 1, 2, 3 on the parts, never a name', async () => {
@@ -76,9 +79,9 @@ describe('SchematicBody', () => {
       (c) => Number(c.getAttribute('r')) === FIGURE_PICTURE.badge.radius,
     );
     expect(rings.map((c) => c.getAttribute('fill'))).toEqual([
-      FIGURE_PICTURE.paper,
-      PALETTES.pastell.primary,
-      FIGURE_PICTURE.paper,
+      PALETTES.pastell.figurePaper,
+      PALETTES.pastell.figureAccent,
+      PALETTES.pastell.figurePaper,
     ]);
   });
 

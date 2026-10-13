@@ -93,11 +93,11 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
 
   it('grades a named part in any language and a tapped part by code, never the tutor', async () => {
     const s = await start(env, l, SCHEMATIC_ITEMS);
-    const [one, two, , nucleus, frame, sign] = s.items.map((i) => i.item.id) as string[];
+    const [one, two, , chloroplast, saddle, sign] = s.items.map((i) => i.item.id) as string[];
     expect((await answer(l, s, one!, 'Nukleus')).body.verdict).toBe('correct');
     expect((await answer(l, s, two!, 'vacuole')).body.verdict).toBe('correct');
-    expect((await answer(l, s, nucleus!, 'Vakuole')).body.verdict).toBe('incorrect');
-    expect((await answer(l, s, frame!, 'Rahmen')).body.verdict).toBe('correct');
+    expect((await answer(l, s, chloroplast!, 'Vakuole')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, saddle!, 'Sattel')).body.verdict).toBe('correct');
     // A drawing of #252's second part: the traffic signs, the stop sign tapped for the cycle path.
     expect((await answer(l, s, sign!, 'Stoppschild')).body.verdict).toBe('incorrect');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
@@ -114,45 +114,45 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
-  it('the lens, the iris, the stigma and the stamen are tapped by their anchors; the pupil is not (#599)', async () => {
-    // The pupil's anchor stands right behind the cornea's, in the whole eye and in its front: a
-    // finger cannot tell them apart there, the question is dropped.
-    const pupil = (d: string, prompt: string) => ({
+  it('a tap is stored only for a part its tap area covers; the same part is named anywhere (#599)', async () => {
+    const tap = (d: string, prompt: string, answer: string) => ({
       ...SCHEMATIC_ITEMS[2]!,
       prompt,
-      answer: 'Pupille',
+      answer,
       figure: { type: 'schematic', d, n: [], ask: 0 },
     });
-    const large = LIBRARY_MORE_ITEMS.filter(
-      (i) => ['Linse', 'Regenbogenhaut', 'Narbe', 'Staubblatt'].includes(i.answer) && 'tap' in i,
-    );
-    expect(large).toHaveLength(4);
     const s = await start(env, l, [
-      pupil('eye', 'Tippe auf die Pupille im Auge.'),
-      pupil('eye_front', 'Tippe auf die Pupille vorn im Auge.'),
-      ...large,
+      // Drawn twice, going on elsewhere, larger than an area, or too close to the next: dropped.
+      tap('breathing', 'Tippe auf die Lunge.', 'Lunge'),
+      tap('organs', 'Tippe auf die Lunge im Körper.', 'Lunge'),
+      tap('digestion', 'Tippe auf den Dickdarm.', 'Dickdarm'),
+      tap('heart', 'Tippe auf die Aorta.', 'Aorta'),
+      tap('eye', 'Tippe auf die Pupille im Auge.', 'Pupille'),
+      // One structure, covered by its area: stored.
+      tap('flower_section', 'Tippe auf die Narbe.', 'Narbe'),
+      tap('breathing', 'Tippe auf den Kehlkopf.', 'Kehlkopf'),
+      // The lung by its number: named, as before.
+      {
+        ...SCHEMATIC_ITEMS[2]!,
+        tap: undefined,
+        prompt: 'Atmungsorgane: Wie heißt Teil 1?',
+        answer: 'Lunge',
+        figure: { type: 'schematic', d: 'breathing', n: ['Lunge', 'Zwerchfell'], ask: 1 },
+      },
     ]);
-    expect(s.items.map((i) => i.item.prompt)).toEqual(large.map((i) => i.prompt));
-    const rows = await env.db.query<{ id: string; answer: string; figure: unknown; tap: boolean }>(
-      `select id, answer, figure, tap from items where learner_id = $1`,
-      [l.learnerId],
-    );
-    // The two taps on the pupil were never stored.
-    expect(rows).toHaveLength(4);
-    // In the order of the run.
-    const stored = s.items.map(({ item }) => rows.find((r) => r.id === item.id)!);
-    expect(stored.map((r) => [r.answer, r.tap, (r.figure as { d: string }).d])).toEqual([
-      ['Linse', true, 'eye_front'],
-      ['Regenbogenhaut', true, 'eye_front'],
-      ['Narbe', true, 'flower_section'],
-      ['Staubblatt', true, 'flower_section'],
+    expect(s.items.map((i) => [i.item.prompt, i.item.tap])).toEqual([
+      ['Tippe auf die Narbe.', true],
+      ['Tippe auf den Kehlkopf.', true],
+      ['Atmungsorgane: Wie heißt Teil 1?', false],
     ]);
+    const rows = await env.db.query(`select 1 from items where learner_id = $1`, [l.learnerId]);
+    // The five taps on parts without an area were never stored.
+    expect(rows).toHaveLength(3);
     // Graded by code, by the part's id: any of its names counts, another part does not.
-    const [lens, iris, stigma, stamen] = s.items.map((i) => i.item.id) as string[];
-    expect((await answer(l, s, lens!, 'Linse')).body.verdict).toBe('correct');
-    expect((await answer(l, s, iris!, 'Pupille')).body.verdict).toBe('incorrect');
+    const [stigma, larynx, lungs] = s.items.map((i) => i.item.id) as string[];
     expect((await answer(l, s, stigma!, 'stigma')).body.verdict).toBe('correct');
-    expect((await answer(l, s, stamen!, 'Staubbeutel')).body.verdict).toBe('correct');
+    expect((await answer(l, s, larynx!, 'Luftröhre')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, lungs!, 'Lungenflügel')).body.verdict).toBe('correct');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
@@ -181,11 +181,11 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
       locale: 'en',
     });
     const s = await start(env, en, SCHEMATIC_ITEMS);
-    const nucleus = s.items[3]!.item.id;
-    expect((await answer(en, s, nucleus, 'Zellkern')).body.verdict).toBe('correct');
+    const tapped = s.items[3]!.item.id;
+    expect((await answer(en, s, tapped, 'Chloroplast')).body.verdict).toBe('correct');
     const view = (await en.api.get<SessionView>(`/practice/sessions/${s.id}`)).body;
-    const mine = view.turns.find((t) => t.item_id === nucleus && t.role === 'learner');
-    expect(mine?.text).toBe('nucleus');
+    const mine = view.turns.find((t) => t.item_id === tapped && t.role === 'learner');
+    expect(mine?.text).toBe('chloroplast');
   });
 
   it('another learner cannot answer her picture question', async () => {

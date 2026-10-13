@@ -1,9 +1,11 @@
 // Scripted model answers for labelled pictures (issue #252): a plant cell to label (code writes
-// one question per number), the plant cell's nucleus, a bicycle's frame and a traffic sign to tap;
+// one question per number), the plant cell's chloroplast, a bicycle's saddle and a traffic sign to tap;
 // the pictures of the second part, each with six numbers and one part to tap (`LIBRARY_ITEMS`); and
 // those of #462 (`LIBRARY_MORE_ITEMS`): the eye's front and the flower in section with two parts
 // tapped each, and every further picture numbered and tapped. Since #599 the pictures are images:
-// every part named here is one its image shows, every part tapped one whose anchor stands clear.
+// every part named here is one its image shows, every part tapped one that has a tap area — its
+// structure is covered by one (`tap` in schematicAnchors.data.ts); a picture none of whose parts
+// has one is numbered only.
 // Shared by the integration test (`__tests__/schematic-figures.int.test.ts`) and the browser
 // walkthrough (tests/web/tap-figures.spec.ts). Every name is a part of its drawing and passes the server's own
 // check (`modules/practice/schematicCheck.ts`). Test tooling only; answers are keyed by the
@@ -39,15 +41,15 @@ export const SCHEMATIC_ITEMS = [
   },
   {
     ...base,
-    prompt: 'Tippe auf den Zellkern.',
-    answer: 'Zellkern',
+    prompt: 'Tippe auf den Chloroplasten.',
+    answer: 'Chloroplast',
     tap: true,
     figure: cell([]),
   },
   {
     ...base,
-    prompt: 'Tippe auf den Rahmen.',
-    answer: 'Rahmen',
+    prompt: 'Tippe auf den Sattel.',
+    answer: 'Sattel',
     topic: 'Fahrrad',
     tap: true,
     figure: { type: 'schematic', d: 'bicycle', n: [], ask: 0 },
@@ -67,8 +69,8 @@ export const SCHEMATIC_PROMPTS = [
   'Pflanzenzelle: Wie heißt Teil 1?',
   'Pflanzenzelle: Wie heißt Teil 2?',
   'Pflanzenzelle: Wie heißt Teil 3?',
-  'Tippe auf den Zellkern.',
-  'Tippe auf den Rahmen.',
+  'Tippe auf den Chloroplasten.',
+  'Tippe auf den Sattel.',
   'Tippe auf das Schild für den Radweg.',
 ];
 
@@ -81,7 +83,7 @@ const LIBRARY = [
     d: 'microscope',
     name: 'Mikroskop',
     n: ['Okular', 'Tubus', 'Objektiv', 'Objekttisch', 'Grobtrieb', 'Fuß'],
-    taps: [['Tippe auf den Objekttisch.', 'Objekttisch']],
+    taps: [['Tippe auf den Grobtrieb.', 'Grobtrieb']],
   },
   {
     d: 'lab',
@@ -94,13 +96,13 @@ const LIBRARY = [
       'Messzylinder',
       'Bunsenbrenner',
     ],
-    taps: [['Tippe auf den Trichter.', 'Trichter']],
+    taps: [],
   },
   {
     d: 'heart',
     name: 'Herz',
     n: ['rechter Vorhof', 'linke Kammer', 'Aorta', 'Hohlvene', 'Herzscheidewand', 'Segelklappe'],
-    taps: [['Tippe auf die linke Kammer.', 'linke Kammer']],
+    taps: [['Tippe auf den linken Vorhof.', 'linker Vorhof']],
   },
   {
     d: 'ear',
@@ -149,7 +151,7 @@ const LIBRARY = [
     d: 'bicycle',
     name: 'Fahrrad',
     n: ['Sattel', 'Lenker', 'Bremse', 'Pedal', 'Vorderrad', 'Hinterrad'],
-    taps: [['Tippe auf die Kette.', 'Kette']],
+    taps: [['Tippe auf den Lenker.', 'Lenker']],
   },
 ] as const;
 
@@ -193,10 +195,7 @@ const LIBRARY_MORE: readonly LibraryEntry[] = [
     d: 'eye_front',
     name: 'Auge',
     n: ['Hornhaut', 'Linse', 'Regenbogenhaut', 'Ziliarmuskel', 'Linsenbänder', 'Glaskörper'],
-    taps: [
-      ['Tippe auf die Linse.', 'Linse'],
-      ['Tippe auf die Regenbogenhaut.', 'Regenbogenhaut'],
-    ],
+    taps: [],
   },
   {
     d: 'flower_section',
@@ -204,38 +203,38 @@ const LIBRARY_MORE: readonly LibraryEntry[] = [
     n: ['Narbe', 'Griffel', 'Fruchtknoten', 'Samenanlage', 'Staubblatt', 'Kronblatt'],
     taps: [
       ['Tippe auf die Narbe.', 'Narbe'],
-      ['Tippe auf ein Staubblatt.', 'Staubblatt'],
+      ['Tippe auf den Fruchtknoten.', 'Fruchtknoten'],
     ],
   },
   {
     d: 'insect_head',
     name: 'Insektenkopf',
     n: ['Facettenauge', 'Fühler', 'Oberkiefer', 'Kopf'],
-    taps: [['Tippe auf ein Facettenauge.', 'Facettenauge']],
+    taps: [],
   },
   {
     d: 'distillation',
     name: 'Destillation',
     n: ['Rundkolben', 'Thermometer', 'Liebigkühler', 'Kühlwasserzulauf', 'Vorlage', 'Destillat'],
-    taps: [['Tippe auf den Liebigkühler.', 'Liebigkühler']],
+    taps: [['Tippe auf den Kühlwasserzulauf.', 'Kühlwasserzulauf']],
   },
   {
     d: 'teeth',
     name: 'Gebiss',
     n: ['Schneidezahn', 'Eckzahn', 'Vormahlzahn', 'Mahlzahn', 'Zahnfleisch'],
-    taps: [['Tippe auf einen Eckzahn.', 'Eckzahn']],
+    taps: [],
   },
   {
     d: 'joint',
     name: 'Gelenk',
     n: ['Gelenkkopf', 'Gelenkpfanne', 'Gelenkknorpel', 'Gelenkspalt', 'Gelenkkapsel', 'Knochen'],
-    taps: [['Tippe auf den Gelenkkopf.', 'Gelenkkopf']],
+    taps: [],
   },
   {
     d: 'breathing',
     name: 'Atmungsorgane',
     n: ['Nasenhöhle', 'Kehlkopf', 'Luftröhre', 'Bronchien', 'Lunge', 'Zwerchfell'],
-    taps: [['Tippe auf das Zwerchfell.', 'Zwerchfell']],
+    taps: [['Tippe auf den Kehlkopf.', 'Kehlkopf']],
   },
   {
     d: 'digestion',
@@ -264,19 +263,19 @@ const LIBRARY_REST: readonly LibraryEntry[] = [
     d: 'neuron',
     name: 'Nervenzelle',
     n: ['Dendriten', 'Zellkörper', 'Zellkern', 'Axon', 'Myelinscheide', 'Endknöpfchen'],
-    taps: [['Tippe auf die Myelinscheide.', 'Myelinscheide']],
+    taps: [['Tippe auf den Zellkern.', 'Zellkern']],
   },
   {
     d: 'mushroom',
     name: 'Pilz',
     n: ['Hut', 'Lamellen', 'Ring', 'Stiel', 'Myzel'],
-    taps: [['Tippe auf das Myzel.', 'Myzel']],
+    taps: [['Tippe auf den Ring.', 'Ring']],
   },
   {
     d: 'earth',
     name: 'Schalenbau der Erde',
     n: ['Erdkruste', 'Erdmantel', 'äußerer Kern', 'innerer Kern'],
-    taps: [['Tippe auf den äußeren Kern.', 'äußerer Kern']],
+    taps: [['Tippe auf den inneren Kern.', 'innerer Kern']],
   },
   {
     d: 'volcano',
@@ -306,7 +305,7 @@ const LIBRARY_REST: readonly LibraryEntry[] = [
     d: 'seedling',
     name: 'Keimling',
     n: ['Hauptwurzel', 'Seitenwurzeln', 'Sprossachse', 'Keimblatt', 'Blatt'],
-    taps: [['Tippe auf ein Keimblatt.', 'Keimblatt']],
+    taps: [],
   },
   {
     d: 'circuit',
@@ -362,8 +361,25 @@ export const BROKEN_SCHEMATIC_ITEMS = [
     answer: 'Wurzel',
     figure: { type: 'schematic', d: 'plant', n: ['Wurzel', 'Blatt', 'Blüte'], ask: 0 },
   },
-  // A tap needs its part's anchor 24 pt clear of the next on the narrowest phone: the pupil's
-  // stands right behind the cornea's.
+  // A tap needs a part its tap area covers (#599): both lungs are drawn, the colon runs round the
+  // small intestine, every segment of the axon's sheath is the myelin — a finger on the "other"
+  // one would be recorded as nothing or as a neighbour. Named with a number, never tapped.
+  ...(
+    [
+      ['breathing', 'Tippe auf die Lunge.', 'Lunge'],
+      ['digestion', 'Tippe auf den Dickdarm.', 'Dickdarm'],
+      ['neuron', 'Tippe auf die Myelinscheide.', 'Myelinscheide'],
+      ['plant_cell', 'Tippe auf den Zellkern.', 'Zellkern'],
+      ['bicycle', 'Tippe auf den Rahmen.', 'Rahmen'],
+    ] as const
+  ).map(([d, prompt, answer]) => ({
+    ...SCHEMATIC_ITEMS[2]!,
+    prompt,
+    answer,
+    figure: { type: 'schematic', d, n: [], ask: 0 },
+  })),
+  // And its anchor 24 pt clear of the next on the narrowest phone: the pupil's stands right
+  // behind the cornea's.
   {
     ...SCHEMATIC_ITEMS[2]!,
     prompt: 'Tippe auf die Pupille.',

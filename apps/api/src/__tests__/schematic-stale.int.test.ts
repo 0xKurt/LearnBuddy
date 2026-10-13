@@ -43,7 +43,7 @@ const ROWS = [
     answer: 'Kette',
     figure: bicycle(['saddle', 'frame', 'chain'], 3),
   },
-  { prompt: 'Tippe auf den Rahmen.', answer: 'Rahmen', figure: bicycle([], 0), tap: true },
+  { prompt: 'Tippe auf den Sattel.', answer: 'Sattel', figure: bicycle([], 0), tap: true },
 ] as const;
 const STALE = ROWS.slice(0, 3).map((r) => r.prompt);
 const FINE = ROWS.slice(3).map((r) => r.prompt);
@@ -111,7 +111,7 @@ describe.skipIf(!dbReady)('a stored picture question whose part is gone', () => 
     expect(s.items.map((i) => i.item.tap)).toEqual([false, true]);
 
     expect((await answer(l, s, s.items[0]!.item.id, 'Kette')).body.verdict).toBe('correct');
-    expect((await answer(l, s, s.items[1]!.item.id, 'Rahmen')).body.verdict).toBe('correct');
+    expect((await answer(l, s, s.items[1]!.item.id, 'Sattel')).body.verdict).toBe('correct');
     const done = await l.api.post<SessionView>(`/practice/sessions/${s.id}/finish`, {});
     expect(done.body.status).toBe('finished');
     expect(done.body.summary).not.toBeNull();
@@ -197,6 +197,44 @@ describe.skipIf(!dbReady)('a stored picture question whose part is gone', () => 
     const done = await l.api.post<SessionView>(`/practice/sessions/${session.id}/finish`, {});
     expect(done.body.status).toBe('finished');
     await env.flushBackground();
+  });
+
+  it('a set Buddy prepared before the library changed starts with what can still be asked', async () => {
+    const sheet = await sheetOf(env, l);
+    const step = await env.db.one<{ id: string }>(
+      `insert into buddy_steps (learner_id, kind, title, state, planned_date, payload, prepared_at)
+       values ($1, 'practice', 'Das Fahrrad', 'prepared', '2026-10-13', $2, $3) returning id`,
+      [
+        l.learnerId,
+        {
+          item_ids: [...sheet.items.values()],
+          est_minutes: 10,
+          focus_topics: [],
+          subject_id: null,
+        },
+        env.clock.now(),
+      ],
+    );
+    const started = await l.api.post<{ session: SessionView }>(`/buddy/steps/${step.id}/start`);
+    expect(started.status).toBe(200);
+    // The five prepared ids, minus the three that name the bell.
+    expect(started.body.session.items.map((i) => i.item.prompt)).toEqual(FINE);
+    await env.flushBackground();
+  });
+
+  it('the sheet’s list of questions shows no picture beside a question that no longer holds', async () => {
+    const sheet = await sheetOf(env, l);
+    const list = await l.api.get<{ items: Array<{ prompt: string; figure: unknown }> }>(
+      `/materials/${sheet.id}/items`,
+    );
+    expect(list.status).toBe(200);
+    const figures = new Map(list.body.items.map((i) => [i.prompt, i.figure]));
+    // "Tippe auf die Klingel" beside a bicycle without a bell: the question stands, no picture.
+    for (const prompt of STALE) expect(figures.get(prompt), prompt).toBeNull();
+    expect(figures.get(FINE[0]!)).toEqual(ROWS[3].figure);
+    expect(figures.get(FINE[1]!)).toEqual(ROWS[4].figure);
+    // Nothing of the key travels with the list.
+    expect(JSON.stringify(list.body)).not.toContain('"answer"');
   });
 
   it('touches nobody else: another learner’s questions are chosen as before, and hers stay hers', async () => {

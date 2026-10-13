@@ -35,7 +35,7 @@ import type { DifficultyWish, VocabDirection } from '@learnbuddy/shared-types/co
 
 import type { Db } from '../../lib/db.js';
 import { FREE_TEXT_KINDS } from './itemFields.js';
-import { stalePicture } from './schematicCheck.js';
+import { stalePicture, type PictureQuestion } from './schematicCheck.js';
 
 export type PracticeScope = {
   goalId?: string | null;
@@ -110,7 +110,7 @@ type Candidate = {
   task: string | null;
   part: string | null;
   /** A question about a labelled picture as stored — its picture, kind, key and tap; else null. */
-  picture: { figure: unknown; kind: string; answer: string; tap: boolean | null } | null;
+  picture: PictureQuestion | null;
 };
 
 /**

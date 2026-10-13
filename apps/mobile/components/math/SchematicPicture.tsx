@@ -23,10 +23,12 @@ import { FAMILY } from './figureText.js';
 
 type PictureFigure = Extract<Figure, { type: 'schematic' }> & { d: SchematicImageId };
 
-const { paper, radius, ink, leader, badge } = FIGURE_PICTURE;
+const { radius, leader, badge } = FIGURE_PICTURE;
 
 export function SchematicPicture({ figure, width }: { figure: PictureFigure; width: number }) {
   const { palette } = useTheme();
+  // The picture's own colours, the same in every look: light paper, its ink, the accent on it.
+  const { figurePaper: paper, figureInk: ink, figureAccent, onFigureAccent } = palette;
   const pictures = useSchematicPictures()?.SCHEMATIC_PICTURES;
   const names = useFigureNames(figure);
   const loaded = pictures && names ? { anchors: pictures.anchors[figure.d], names } : null;
@@ -48,7 +50,7 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
           <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }}>
             {badges.map(({ from, at }, i) => {
               const asked = i + 1 === figure.ask;
-              const line = asked ? palette.primary : ink;
+              const line = asked ? figureAccent : ink;
               // A number that stands on its part (a row picture's cell) needs no line to it.
               const apart =
                 Math.abs(at[0] - from[0]) + Math.abs(at[1] - from[1]) > leader.least * k;
@@ -69,7 +71,7 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
                     cx={at[0]}
                     cy={at[1]}
                     r={badge.radius * k}
-                    fill={asked ? palette.primary : paper}
+                    fill={asked ? figureAccent : paper}
                     stroke={line}
                     strokeWidth={badge.stroke}
                   />
@@ -79,7 +81,7 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
                     fontFamily={FAMILY}
                     fontSize={badge.fontSize * k}
                     fontWeight={badge.fontWeight}
-                    fill={asked ? palette.onPrimary : ink}
+                    fill={asked ? onFigureAccent : ink}
                     textAnchor="middle"
                   >
                     {String(i + 1)}

@@ -108,8 +108,9 @@ export function LicencesPage() {
       {/* The pictures in the tasks (#599): every entry of both sources.json files, none left out. */}
       <LicenceGroup
         hint={t('about.figures_intro')}
-        entries={figures.map((f) => ({
-          id: `figure:${f.files.join()}:${f.title}`,
+        entries={figures.map((f, i) => ({
+          // Its place in the list: the entries of a row picture share file and title.
+          id: `figure:${i}`,
           // The work's title without its file ending, as the source names it.
           title: f.title.replace(/\.(svg|png|jpe?g)$/i, ''),
           licence: f.licence === 'Public domain' ? t('about.figures_public_domain') : f.licence,
