@@ -5188,15 +5188,18 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   one comes; a question that must not be heard is not read, and the mic listens at once. With a
   screen reader on, neither screen opens the mic by itself (it would record the screen reader,
   audit M-85, `lib/useScreenReader.ts`): her tap on the mic starts the loop. "Tastatur", switching
-  the speaker off or leaving ends it. **One row, one size prop:** `/talk` has the whole screen and
-  takes the 72 pt mic; on a practice question the row shares the screen with the question, its
-  conversation and the options, and there the 72 pt mic cost the 16 pt that hid Buddy's newest
-  reply on 360×740 behind a 124 pt empty band (#403's whole-turn rule) — the worse flaw (CLAUDE.md
-  rule 17). So practice takes the 56 pt mic (`VoiceRow size="md"`); in both the word stands
-  beside its circle, not under it (under it the row stood 8 pt above the mic), and in practice no
-  status line appears while she speaks — the mic's ring and stop square say it, a problem (no
-  mic, nothing understood) still gets its line. The row is then exactly as tall as the old voice
-  slot. A second cause of the same band was a 1 pt flip: the conversation's room is a sum of
+  the speaker off or leaving ends it. **One row, the conversation's look in both places** (#599, design `ui_kits/app/Talk.jsx:32–39`,
+  `Gaps.jsx:133–144`): keyboard at one end, the 64 pt mic pill in the middle, one more at the
+  other end (camera on `/talk`, "Nochmal vorlesen" in practice), 28 from the edges
+  (`VoiceRow presentation="talk"`). While it records the pill keeps the mic glyph on the action
+  colour with its shadow and says "Fertig"; the darker stop square is the round mic's sign
+  elsewhere (dictation, the quiet mic beside a Check). In practice one small line above the row
+  says "Ich höre zu." only while the recorder runs and "Buddy spricht …" only while he is heard;
+  a problem (no mic, nothing understood) still gets its line. A Check appears only when there is
+  something to check, never greyed; the Composer's chips are back with "Tastatur". Before #599
+  practice had the 56 pt round mic and no status line, because a taller row had hidden Buddy's
+  newest reply on 360×740 (#403's whole-turn rule) — whether the pill and the line still leave
+  that room is to be measured in the final walkthrough. A second cause of the same band was a 1 pt flip: the conversation's room is a sum of
   measurements each rounded on its own, and a reply needing 190 pt in a room of 189 was hidden,
   drawn, hidden — `threadRoom` now counts a part one point over as whole (`ROUNDING`); a shot taken
   mid-flip was the soft `halfTurns` failure seen once at `27b-practice-voice-mode-night @360`. The
@@ -5236,8 +5239,14 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`components/voice/TalkCaption.tsx`, decided in `components/voice/talkLine.ts`): her own while
   she speaks and while Buddy thinks, the sentence Buddy's voice is on while he speaks
   (`lib/speech/voiceState.ts`) — and once he is silent his whole answer, quiet, until she says
-  something (a help answer with a number must not vanish with his voice, rule 18); what is longer
-  than its room scrolls inside it. The screen is still a camera angle
+  something; what is longer than its room scrolls inside it. **An answer that was not written in
+  front of her stays whole** (rule 18): that is how the fixed help answer arrives — the server
+  streams no answer with a concern (`modules/buddy/stream.ts`), and `MessageView` carries no mark
+  for it, so the app does not guess from words (rule 3) but treats every answer that arrived
+  stored, not word by word, this way: in full and in full ink from the first moment, also while
+  it is read; not displaced by what the recogniser hears or by her next turn; replaced only by
+  Buddy's next answer, or by leaving the screen. A mark of its own on the message would be a
+  contract change. The screen is still a camera angle
   on that one thread (issue #18): where its newest message carries something to tap or to look at
   (his offers and open-area buttons, a result) or a roleplay runs, the newest messages stand under
   the orb as the chat's own bubbles and cards (`components/buddy/Conversation.tsx`, with the
@@ -5312,8 +5321,11 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   a few animated views read (moon in front and behind the glass, trail dots, ping, reflection) —
   no JS re-render per frame. Tapping Buddy while he
   speaks stops him and listens (issue #35), as the mic pill ("Unterbrechen") does. "Buddy spricht …"
-  stands only while he is heard: while his voice is still on its way the line says he is thinking,
-  as the moon shows (rule 5). Two quiet synthesised tones
+  stands from his first audio to the end of his reply (`lib/speech/talkState.ts` `talkStatus`,
+  `heardHim`): before it his voice is on its way and the line says he is thinking, as the moon
+  shows (rule 5); between two sentences neither flips back, so a live region announces it once.
+  A home a turn brings back is written only if it is not older than the one held
+  (`newerHome`, by `context_version`): her turn and "Gespräch beenden" can both be on their way. Two quiet synthesised tones
   (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
   iOS they play in a session that obeys the silent switch, then talk mode's session is restored
   (needs live verification on a phone); the web plays none. The camera next to the mic pill
@@ -5347,7 +5359,8 @@ the role; code holds the frame (CLAUDE.md rule 1).
   with two equal points, or while one is running (one per learner, a partial unique index). The
   card (`components/buddy/RoleplayCard.tsx`, on the thread's one `ChatCard`; design
   `components/practice/Modes.jsx:20–31`) shows the language, the scene, who Buddy plays and her
-  tasks, and "Gespräch starten", which opens the conversation screen — typing her lines in the
+  tasks, and "Gespräch starten" with the waveform, which opens the conversation screen (the
+  second way into it besides the talk button, kept to these two by `lib/__tests__/oneVoice.test.ts`) — typing her lines in the
   chat works as before. While the scene runs, the conversation screen (`app/talk.tsx`) is its
   live view (design `ui_kits/app/Extra.jsx:186–205`): the scene's name on top, the 120 pt orb, who
   Buddy plays, the lines as bubbles, and "Gespräch beenden", which ends the scene like the strip
@@ -5456,7 +5469,8 @@ own (CLAUDE.md rule 16).
   in the offer, 15–220 words, checked by code). The card shows the talk's title or the whole
   passage, the length she was given, one button that starts and ends the recording; while it
   runs the card shows the running time large and the given length beside "ich höre zu" (design
-  `Modes.jsx:40–50`; the large orb of that state is not drawn in the chat, where Buddy stands in
+  `Modes.jsx:40–50`; the chat's head listens while the recorder runs (`lib/buddy/headState.ts`
+  `useThreadRecording`); the large orb of that state is not drawn in the chat, where Buddy stands in
   the head), 24 kbit/s mono (`useRecording({ long })`). It is the thread's one `ChatCard`.
 - **Measured by code** (`POST /buddy/rehearsals`, `buddy/rehearse.ts`, `talkMeasure.ts`): one
   model call (`transcribe` budget) writes down what was said — hesitation sounds in curly braces, a

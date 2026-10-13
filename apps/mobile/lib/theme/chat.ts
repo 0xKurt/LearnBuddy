@@ -68,6 +68,11 @@ export const CHAT = {
    * lines, 8 between its two actions; a page of hers lies 6 inside the tile.
    */
   card: { tile: 48, glyph: 22, lineGap: 2, actions: SPACE.sm },
+  /**
+   * A way to practise beyond question and answer — roleplay, rehearsing a talk — has the smaller
+   * tile in its own tone (components/practice/Modes.jsx:10): 40 pt with a 20 pt sign.
+   */
+  modeCard: { tile: 40, glyph: 20 },
   pressedOpacity: UI.pressed.surface,
   pressedScale: 0.98,
   pendingOpacity: 0.8,

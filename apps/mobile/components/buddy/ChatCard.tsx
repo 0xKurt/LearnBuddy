@@ -9,6 +9,10 @@
 //   · a small label in the tile's ink, the title (700 17), a quiet detail;
 //   · at most one primary action, full width, and a ghost beside it.
 //
+// A way to practise beyond question and answer (components/practice/Modes.jsx:20–50: roleplay,
+// rehearsing a talk) is the same card with `mode`: the 40 pt tile in the mode's own tone, the
+// label in the quiet ink, and a start button as wide as its words with its sign.
+//
 // A card that asks a question with several answers (Cards.jsx: `HowDidItGo`, `ContactOptIn`,
 // `ConfirmCard`) hands them in as `children`: 44 pt pills in a wrapping row (`CardChoices`).
 
@@ -44,10 +48,19 @@ export type CardAction = {
   variant?: 'primary' | 'secondary';
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  /** The sign before the words (Modes.jsx:27, :37). */
+  icon?: IconName;
+  /** As wide as its words, at the card's start, instead of the card's width (Modes.jsx:9). */
+  fit?: boolean;
 };
+
+/** The tone of a mode's tile (Modes.jsx:23 peach for a roleplay, :34 mint for a rehearsal). */
+type CardMode = 'peach' | 'mint';
 
 type Props = {
   tone?: CardTone;
+  /** A practice mode's card: the smaller tile in this tone, the label quiet. */
+  mode?: CardMode;
   /** The tile's sign; without one (and without a page) the card has no tile: a plain question. */
   icon?: IconName;
   /** A photo of her page in the tile, so she recognises the sheet; a tap shows it large. */
@@ -75,7 +88,13 @@ type Props = {
   children?: ReactNode;
 };
 
-function tileOf(tone: CardTone, p: Palette): { bg: string; ink: string } {
+function tileOf(
+  tone: CardTone,
+  mode: CardMode | undefined,
+  p: Palette,
+): { bg: string; ink: string } {
+  if (mode === 'peach') return { bg: p.peach, ink: p.peachDeep };
+  if (mode === 'mint') return { bg: p.mint, ink: p.mintDeep };
   if (tone === 'accent') return { bg: p.primaryLt, ink: p.primaryDk };
   if (tone === 'warn') return { bg: p.blush, ink: p.danger };
   return { bg: p.canvas, ink: p.ink2 };
@@ -83,6 +102,7 @@ function tileOf(tone: CardTone, p: Palette): { bg: string; ink: string } {
 
 export function ChatCard({
   tone = 'quiet',
+  mode,
   icon,
   thumb = null,
   busy = false,
@@ -101,7 +121,8 @@ export function ChatCard({
 }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('common');
-  const tile = tileOf(tone, palette);
+  const tile = tileOf(tone, mode, palette);
+  const size = mode ? CHAT.modeCard : CHAT.card;
   const tiled = Boolean(icon || thumb || busy);
   return (
     <Card padding={CARD_PAD.thread} style={{ gap: tiled ? SPACE.lg : SPACE.md }}>
@@ -109,8 +130,8 @@ export function ChatCard({
         {tiled ? (
           <View
             style={{
-              width: CHAT.card.tile,
-              height: CHAT.card.tile,
+              width: size.tile,
+              height: size.tile,
               borderRadius: RADIUS.sm,
               backgroundColor: thumb ? palette.canvas : tile.bg,
               alignItems: 'center',
@@ -125,7 +146,7 @@ export function ChatCard({
                   // Her page is a thing on the screen, so it carries a name (image-alt, #73).
                   accessible
                   accessibilityLabel={t('common:zoom.photo')}
-                  style={{ width: CHAT.card.tile, height: CHAT.card.tile }}
+                  style={{ width: size.tile, height: size.tile }}
                   contentFit="cover"
                 />
               </ZoomablePhoto>
@@ -133,7 +154,7 @@ export function ChatCard({
               <BusyIndicator size="small" color={palette.primary} />
             ) : icon ? (
               <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                <Icon name={icon} size={CHAT.card.glyph} color={tile.ink} />
+                <Icon name={icon} size={size.glyph} color={tile.ink} />
               </View>
             ) : null}
           </View>
@@ -145,7 +166,9 @@ export function ChatCard({
           style={{ flex: 1, minWidth: 0, gap: CHAT.card.lineGap }}
         >
           {label ? (
-            <Text style={[TYPE.label, { color: tone === 'quiet' ? palette.ink2 : tile.ink }]}>
+            <Text
+              style={[TYPE.label, { color: tone === 'quiet' || mode ? palette.ink2 : tile.ink }]}
+            >
               {label}
             </Text>
           ) : null}
@@ -167,9 +190,10 @@ export function ChatCard({
       {primary || secondary ? (
         <View style={{ flexDirection: 'row', gap: CHAT.card.actions }}>
           {primary ? (
-            <View style={{ flex: 1 }}>
+            <View style={primary.fit ? undefined : { flex: 1 }}>
               <Btn
-                full
+                full={!primary.fit}
+                icon={primary.busy ? undefined : primary.icon}
                 variant={primary.variant ?? 'primary'}
                 iconRight={arrow && !primary.busy ? 'arrow' : undefined}
                 busy={primary.busy}

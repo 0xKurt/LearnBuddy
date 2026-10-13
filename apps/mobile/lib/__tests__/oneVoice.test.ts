@@ -102,9 +102,25 @@ describe('Gespräch: one way in, one row of controls (#386)', () => {
   });
 
   it('is the filled waveform and never a second, quieter one among the tools', () => {
-    // The mark itself is drawn by the talk button alone: no file hands `icon="voice"` to a
-    // button of its own (the grey circle left of "Prüfen", #599).
-    expect(holders(/icon=["']voice["']/)).toEqual(['components/voice/TalkButton.tsx']);
+    // The mark is drawn by the talk button — and by the role card of a roleplay, whose start
+    // is the design's second way into the conversation (components/practice/Modes.jsx:23, :27).
+    // No other file hands the waveform to a button or a tile of its own (the grey circle left
+    // of "Prüfen", #599), whether as a prop or as an action's `icon`.
+    expect(holders(/\bicon\s*[=:]\s*\{?\s*["']voice["']/)).toEqual([
+      'components/buddy/RoleplayCard.tsx',
+      'components/voice/TalkButton.tsx',
+    ]);
+    // Wherever the waveform stands, it leads to the conversation: the role card's opens the
+    // conversation screen and nothing else, and only these two places open it at all.
+    const card = app.find((s) => s.file === 'components/buddy/RoleplayCard.tsx')!.text;
+    expect(
+      card.match(/icon: 'voice',\s+fit: true,\s+onPress: \(\) => router\.push\('\/talk'\)/g),
+    ).toHaveLength(1);
+    expect(card.match(/router\.(push|replace|navigate)\(/g)).toHaveLength(1);
+    expect(holders(/router\.(push|replace|navigate)\(\s*['"]\/talk['"]/)).toEqual([
+      'app/buddy.tsx',
+      'components/buddy/RoleplayCard.tsx',
+    ]);
     const talk = app.find((s) => s.file === 'components/voice/TalkButton.tsx')!.text;
     expect(talk).toMatch(/icon="voice"\s+filled\s+size=\{COMPOSER\.slot\}/);
   });

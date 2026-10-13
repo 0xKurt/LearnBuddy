@@ -26,7 +26,7 @@
 // chat, where the feedback stands. The microphone stays: here it is how a turn ends in the
 // browser and how she interrupts him.
 
-import type { MessageView } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +40,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { IconBtn } from '../components/lb/IconBtn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { TalkCaption } from '../components/voice/TalkCaption.js';
-import { talkLine } from '../components/voice/talkLine.js';
+import { talkLine, type TalkReply } from '../components/voice/talkLine.js';
 import { TalkOrb, talkOrbRoom, type OrbMode } from '../components/voice/TalkOrb.js';
 import { VoiceRow } from '../components/voice/VoiceRow.js';
 import { talkMode } from '../lib/buddy/moon.js';
@@ -48,7 +48,8 @@ import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
 import { useVoiceInput } from '../components/voice/useVoiceInput.js';
 import { newId } from '../lib/api/client.js';
 import { sendMessageStreamed } from '../lib/api/endpoints.js';
-import { setHome, useHome } from '../lib/api/queries.js';
+import { keys } from '../lib/api/keys.js';
+import { queryClient, setHome, useHome } from '../lib/api/queries.js';
 import { useAnnounce } from '../lib/announce.js';
 import { useScreenReader } from '../lib/useScreenReader.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
@@ -64,7 +65,13 @@ import { warmRecognition } from '../lib/speech/recognize.js';
 import { BargeGate } from '../lib/speech/bargeIn.js';
 import { bargeSupported, useBargeMonitor } from '../lib/speech/bargeMonitor.js';
 import { voiceStore } from '../lib/speech/voiceState.js';
-import { talkHeadline, type TalkPhase } from '../lib/speech/talkState.js';
+import {
+  heardHim,
+  newerHome,
+  talkHeadline,
+  talkStatus,
+  type TalkPhase,
+} from '../lib/speech/talkState.js';
 import { afterReply } from '../lib/speech/talkTurn.js';
 import { voiceLocale } from '../lib/speech/voice.js';
 import { useSay } from '../lib/speech/say.js';
@@ -112,8 +119,14 @@ export default function TalkScreen() {
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
   /** Buddy's reply while it is still being written (only an answer that changes nothing). */
   const [live, setLive] = useState<string | null>(null);
-  /** His stored reply to her last turn: the line while he reads it. */
-  const [reply, setReply] = useState<string | null>(null);
+  /**
+   * His stored answer, the line under the orb. One that was not written in front of her
+   * (`whole` — how the fixed help answer arrives, rule 18) stays through her next turns until his
+   * next answer takes its place (components/voice/talkLine.ts).
+   */
+  const [reply, setReply] = useState<TalkReply | null>(null);
+  /** His voice has been heard for the reply he is on (lib/speech/talkState.ts `heardHim`). */
+  const [heard, setHeard] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const open = useRef(true);
 
@@ -160,7 +173,8 @@ export default function TalkScreen() {
     const id = newId();
     setPending({ id, text });
     setLive(null);
-    setReply(null);
+    // An answer that arrived whole stays on screen through this turn (rule 18).
+    setReply((held) => (held?.whole ? held : null));
     setPhase('thinking');
     const me = ++turnSeq.current;
     // She spoke again (or left): this answer no longer drives the screen or the voice.
@@ -225,7 +239,10 @@ export default function TalkScreen() {
         // nothing and carries no safeguarding — the rest waits, as before (audit M-52).
         speakAlong().feed(e.text, e.done);
       });
-      setHome(res.home);
+      // Her tap on "Gespräch beenden" may have been answered while this turn was on its way:
+      // the home it brings back is then the older one, with the scene still running, and must
+      // not be written over the newer (lib/speech/talkState.ts `newerHome`).
+      if (newerHome(res.home, queryClient.getQueryData<BuddyHome>(keys.home))) setHome(res.home);
       if (stale()) return;
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
@@ -242,7 +259,9 @@ export default function TalkScreen() {
       final = r;
       // The stored reply stands in the thread now; the live bubble made room for it.
       setLive(null);
-      setReply(r.text);
+      // Nothing of it was said while it was written: it arrived whole (an answer that changes
+      // something, or the fixed help answer — the server streams neither).
+      setReply({ id, text: r.text, whole: along.speaker === null });
       setPhase('speaking');
       if (along.speaker) {
         // Already speaking: the stored text is what was streamed, so this only closes it
@@ -347,6 +366,12 @@ export default function TalkScreen() {
   useEffect(() => {
     if (buddyVoice.phase === 'speaking') reacted('first_audio');
   }, [buddyVoice.phase]);
+  // From his first audio to the end of his reply he speaks — also in the gap while the next
+  // sentence's audio loads (no flip of the status and the moon between two sentences).
+  const heardNow = heardHim(heard, phase, buddyVoice.phase);
+  useEffect(() => {
+    setHeard(heardNow);
+  }, [heardNow]);
 
   function onMic(): void {
     haptic.tap();
@@ -419,7 +444,13 @@ export default function TalkScreen() {
   // Without bubbles, the one line under the orb carries the words (components/voice/talkLine.ts).
   const line = threaded
     ? null
-    : talkLine({ phase, heard: voice.live, said: pending?.text ?? null, reply: live ?? reply });
+    : talkLine({
+        phase,
+        heard: voice.live,
+        said: pending?.text ?? null,
+        // His next answer, as soon as its first words are written, takes the line.
+        reply: live !== null ? { id: pending?.id ?? 'live', text: live, whole: false } : reply,
+      });
 
   // Not "Ich höre zu" until the recorder really runs (issue #158): the decision is pure
   // and tested in lib/speech/talkState.ts, because it is a claim, not a label.
@@ -429,19 +460,20 @@ export default function TalkScreen() {
     phase,
     hearing: listening || voice.state === 'starting',
     transcribing: voice.state === 'transcribing',
-    voiceLoading: buddyVoice.phase === 'loading',
+    // "Speaking" is from his first audio on: until then his voice is on its way.
+    voiceLoading: !heardNow,
     trouble: !!problem || !!voice.hint || !!voice.denied,
   });
-  // One status line (Talk.jsx:28). While the microphone really records it says how her turn
-  // ends: by itself only where her pause really ends it (issue #523); the browser's recorder
-  // measures no level, so there the tap finishes. While his voice is still on its way the moon
-  // thinks, and the line says so too: "Buddy spricht" stands only while he is heard (rule 5).
-  // Every other state is the headline itself.
-  const status = listening
-    ? t(voice.endsByItself ? 'buddy:talk.listening_sub' : 'buddy:talk.tap_when_done')
-    : orbMode === 'thinking'
-      ? t('buddy:talk.thinking')
-      : headline;
+  // One status line (Talk.jsx:28), decided and tested in lib/speech/talkState.ts `talkStatus`.
+  const status = t(
+    talkStatus({
+      phase,
+      mic: voice.state,
+      endsByItself: voice.endsByItself,
+      voice: buddyVoice.phase,
+      heard: heardNow,
+    }),
+  );
 
   // Every phase change is heard on iOS too (Android reads the live region).
   useAnnounce(headline);
@@ -640,7 +672,8 @@ export default function TalkScreen() {
           (`VoiceRow`), the same in practice (issue #386). "Beenden" is the close button on top. */}
       <View
         style={{
-          paddingHorizontal: SPACE.lg,
+          // The side buttons stand 28 from the edges (Talk.jsx:32).
+          paddingHorizontal: TALK.rowInset,
           // Safe-area inset or shared footer spacing, without decorative ring clearance.
           paddingBottom: bottomRoom(insets.bottom, SPACE.md),
           paddingTop: SPACE.sm,

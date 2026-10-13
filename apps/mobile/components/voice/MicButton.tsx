@@ -1,6 +1,10 @@
 import { BusyIndicator } from '../lb/BusyIndicator.js';
 // Shared microphone control: recording uses a static stop square and its real timer.
-// The optional Talk pill preserves the same recorder, accessibility and busy behavior.
+// The optional Talk pill preserves the same recorder, accessibility and busy behavior — and keeps
+// the conversation's look while it records (design ui_kits/app/Talk.jsx:34–37, Gaps.jsx:138–141):
+// the mic glyph on the action colour with the float shadow. There the state is told by the
+// pill's word ("Fertig") and by the orb, and to a screen reader by the same name and value as
+// everywhere ("Aufnahme stoppen", the running time) — never by colour alone.
 
 import { useTranslation } from 'react-i18next';
 import { Linking, Platform, Text, View } from 'react-native';
@@ -12,6 +16,7 @@ export { MIC_RING_ROOM } from '../../lib/theme/voice.js';
 import { useAnnounce } from '../../lib/announce.js';
 import { formatClock } from '../../lib/speech/voice.js';
 import { circle } from '../../lib/theme/radius.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -62,9 +67,12 @@ export function MicButton({
   const target = Math.max(TOUCH, d);
   const quiet = tone === 'quiet';
   const filled = !quiet && (tone === 'primary' || size === 'lg' || recording || filledIdle);
+  // The stop square on the darker fill is the round mic's sign for "recording"; the pill keeps
+  // its glyph and its colour.
+  const square = recording && !pill;
   const bg = quiet
     ? palette.canvas
-    : recording
+    : square
       ? palette.primaryDk
       : filled
         ? palette.primary
@@ -109,7 +117,8 @@ export function MicButton({
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: circle(d),
-          overflow: 'hidden',
+          // The pill's shadow lies outside its edge.
+          overflow: pill ? 'visible' : 'hidden',
           opacity: off && !working ? UI.disabledOpacity : 1,
         }}
       >
@@ -128,19 +137,20 @@ export function MicButton({
               alignItems: 'center',
               justifyContent: 'center',
               opacity: pressed ? VOICE.pressedOpacity : 1,
+              ...(pill && filled ? SHADOW.float : null),
             }}
           >
             {working ? (
               <BusyIndicator color={fg} />
             ) : (
               <Icon
-                name={recording ? 'stop' : 'mic'}
+                name={square ? 'stop' : 'mic'}
                 size={
                   pill
                     ? TALK.micGlyph
                     : size === 'sm' && !recording
                       ? VOICE.slotGlyph
-                      : Math.round(d * (recording ? VOICE.iconRatio.stop : VOICE.iconRatio.mic))
+                      : Math.round(d * (square ? VOICE.iconRatio.stop : VOICE.iconRatio.mic))
                 }
                 color={fg}
               />

@@ -13,6 +13,10 @@
 // (and also when a side is empty). The word stands beside its circle, not under it: under it the
 // row was 8 pt taller than the 56 pt mic, and on 360×740 that, too, hid Buddy's reply (#386);
 // beside it the row is the mic's height, and "Nochmal vorlesen" takes two short lines.
+//
+// In the conversation's own look (`presentation="talk"`, design ui_kits/app/Talk.jsx:32–39 and
+// Gaps.jsx:136–143) the row is keyboard · pill · one more: the side buttons stand at the row's
+// two ends (the caller gives the row its 28 pt inset, `TALK.rowInset`), the pill in the middle.
 
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -71,11 +75,13 @@ export function VoiceRow({
         <SideAction
           side={left}
           talk={presentation === 'talk'}
+          at="start"
           compact={action !== null || centerAction !== null}
         />
         {centerAction ? (
+          // Beside a Check in the middle the mic is the quiet round tool, in either look: a
+          // second pill would not fit the row.
           <MicButton
-            presentation={presentation === 'talk' ? 'pill' : 'circle'}
             voice={mic.voice}
             size={size}
             filled={false}
@@ -104,6 +110,7 @@ export function VoiceRow({
           <SideAction
             side={right}
             talk={presentation === 'talk'}
+            at="end"
             compact={action !== null || centerAction !== null}
           />
         ) : (
@@ -119,10 +126,13 @@ function SideAction({
   side,
   compact = false,
   talk = false,
+  at,
 }: {
   side: Side;
   compact?: boolean;
   talk?: boolean;
+  /** Which end of the row it stands at in the conversation's look. */
+  at: 'start' | 'end';
 }) {
   const { palette } = useTheme();
   return (
@@ -131,7 +141,7 @@ function SideAction({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: talk ? (at === 'start' ? 'flex-start' : 'flex-end') : 'center',
         gap: SPACE.sm,
       }}
     >

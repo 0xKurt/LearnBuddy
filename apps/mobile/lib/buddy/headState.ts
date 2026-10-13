@@ -10,7 +10,21 @@
 // sent → thinking · the answer arrives → speaking · an open task → waiting · right → happy ·
 // otherwise idle. Only existing poses (`MoonState`), nothing new.
 
+import { create } from 'zustand';
+
 import { moonForReply, type MoonState } from './moon.js';
+
+/**
+ * A recording of hers runs on a card in the thread (the rehearsal card, issue #264): the fact
+ * lives in that card's recorder, deep in the thread, and the head is drawn by the screen — so
+ * the card says it here and the chat reads it, as the Composer tells the screen that she types.
+ * True only while the recorder really runs (the card sets it from its phase and clears it when
+ * it goes).
+ */
+export const useThreadRecording = create<{ on: boolean; set: (on: boolean) => void }>((set) => ({
+  on: false,
+  set: (on) => set({ on }),
+}));
 
 export type HeadFacts = {
   /** A message of hers is on its way to the server. */
@@ -21,6 +35,8 @@ export type HeadFacts = {
   streaming: boolean;
   /** She is writing or dictating a message right now. */
   typing?: boolean;
+  /** A recording of hers runs on a card in the thread (`useThreadRecording`). */
+  recording?: boolean;
   /** Buddy is reading a sheet she sent (ui_kits/app/Flows.jsx `ChatState` "reading"). */
   reading?: boolean;
 };
@@ -37,6 +53,9 @@ export function headState(f: HeadFacts): MoonState {
   // (`App.jsx`) and owner rule 1 ask; the state is the orb's pose, not a claim about an open
   // microphone. The owner can reverse it.
   if (f.typing) return 'listen';
+  // Her talk is being recorded on the rehearsal card: the microphone is open, Buddy listens
+  // (design components/practice/Modes.jsx:44, ui_kits/app/Extra.jsx:185).
+  if (f.recording) return 'listen';
   if (f.reading) return 'think';
   return 'idle';
 }

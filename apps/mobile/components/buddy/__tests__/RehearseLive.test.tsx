@@ -9,6 +9,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { Animated } from 'react-native';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { headState, useThreadRecording } from '../../../lib/buddy/headState.js';
 import { renderInApp } from '../../../testing/render.js';
 import { RehearseCard } from '../RehearseCard.js';
 
@@ -51,6 +52,19 @@ describe('while it records', () => {
     // What to do stood there before she started; now the card says what is happening.
     expect(screen.queryByText(/Vorgesehen sind 5 Minuten/)).toBeNull();
     expect(loop).not.toHaveBeenCalled();
+  });
+
+  it('lets the chat’s head listen while the recorder runs, and only then', () => {
+    const view = show(5);
+    expect(useThreadRecording.getState().on).toBe(true);
+    expect(headState({ sending: false, working: false, streaming: false, recording: true })).toBe(
+      'listen',
+    );
+    view.unmount();
+    expect(useThreadRecording.getState().on).toBe(false);
+    recorder.phase = 'starting';
+    show(5);
+    expect(useThreadRecording.getState().on).toBe(false);
   });
 
   it('names the longest it may be when no length was given', () => {

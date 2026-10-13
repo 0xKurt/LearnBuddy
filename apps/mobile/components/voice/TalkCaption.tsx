@@ -2,8 +2,11 @@
 // small status line — what Buddy is doing right now — and ONE centred line of words: her own
 // while she speaks (quiet), the sentence Buddy is saying while he speaks (full ink), and what he
 // said, quiet again, once he is silent. The sentence follows his real voice
-// (lib/speech/voiceState.ts), as the read-along in the chat does; a line that is new rises in,
-// her growing words do not rise again with every word.
+// (lib/speech/voiceState.ts), as the read-along in the chat does; a line that is new rises in
+// (`lineKey`), growing words do not rise again with every word.
+//
+// An answer that arrived whole — how the fixed help answer arrives (rule 18, `talkLine.ts`) —
+// stands in full and in full ink from the first moment, also while it is read.
 //
 // The line is never cut: what does not fit its room scrolls inside it — her newest words stay in
 // sight, his finished answer starts at its beginning.
@@ -21,7 +24,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { InlineText } from '../lb/InlineText.js';
 import { Rise } from '../lb/Motion.js';
-import { sentenceAt, type TalkLineOf } from './talkLine.js';
+import { lineKey, sentenceAt, type TalkLineOf } from './talkLine.js';
 
 export function TalkCaption({
   status,
@@ -42,9 +45,11 @@ export function TalkCaption({
   const say = useSay();
   const voice = useBuddyVoice();
   const scroll = useRef<ScrollView>(null);
-  const speaking = line?.who === 'buddy' && line.speaking;
-  const words =
-    line && speaking ? sentenceAt(line.text, highlightedSentence(voice, line.text)) : line?.text;
+  const his = line?.who === 'buddy' ? line : null;
+  // Sentence by sentence only for a reply that was written in front of her.
+  const sentence = his && his.speaking && !his.whole ? highlightedSentence(voice, his.text) : null;
+  const words = his ? sentenceAt(his.text, sentence) : line?.text;
+  const strong = his !== null && (his.speaking || his.whole);
   return (
     <View
       style={{
@@ -77,8 +82,8 @@ export function TalkCaption({
           }
         >
           <Rise
-            // His next sentence is a new line; her words grow in the one that is there.
-            key={line.who === 'her' ? 'her' : words}
+            // His next sentence is a new line; growing words stay in the one that is there.
+            key={lineKey(line, sentence)}
             testID="talk-line"
             accessible
             accessibilityRole="text"
@@ -91,7 +96,7 @@ export function TalkCaption({
               accessible={false}
               style={[
                 TYPE.question,
-                { textAlign: 'center', color: speaking ? palette.ink : palette.ink2 },
+                { textAlign: 'center', color: strong ? palette.ink : palette.ink2 },
               ]}
             />
           </Rise>

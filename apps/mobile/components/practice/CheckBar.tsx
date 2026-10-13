@@ -3,19 +3,24 @@
 // action — onto the Composer's props, and adds her question to the tutor as the field of every
 // form that is not typed (#402). It draws no bar of its own: one `BottomBar`, the Composer in it.
 //
-// Two things stand in that bar that the design's Composer does not draw; they stay as before the
-// redesign (owner rule 2): the conversation row while a question is answered hands-free
-// (`VoiceRow`, #386, in the Composer's place) and a pass's own row of answers under the box (the
-// flashcards' two equal decisions, #384). Domain callbacks stay with the callers.
+// Two things stand in that bar that the design's Composer does not draw: the conversation row
+// while a question is answered hands-free (`VoiceRow`, #386, in the Composer's place — its look is
+// the design's practice in conversation, ui_kits/app/Gaps.jsx:133–144) and a pass's own row of
+// answers under the box (the flashcards' two equal decisions, #384), which stays as before the
+// redesign (owner rule 2). Domain callbacks stay with the callers.
 
 import { useCheckOverride } from './CheckOverride.js';
 
 import { ASK_TEXT_MAX } from '@learnbuddy/shared-types/contracts';
 import { createContext, useContext, useEffect, useRef, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { mergeTranscript } from '../../lib/speech/spoken.js';
+import { useBuddyVoice } from '../../lib/speech/useBuddyVoice.js';
+import { SPACE } from '../../lib/theme/space.js';
+import { TALK } from '../../lib/theme/talk.js';
+import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { ActionPill, Composer, type ComposerAction, type ComposerProps } from '../lb/Composer.js';
@@ -140,10 +145,9 @@ export function CheckBar(provided: CheckAction & { keys?: ReactNode; chips?: Rea
   return (
     <BottomBar>
       {said ? (
-        <>
-          {chips}
-          <TalkRow {...said} />
-        </>
+        // The conversation's row stands alone (Gaps.jsx:133–144): the chips ("Tipp") belong to
+        // the Composer and are back with "Tastatur".
+        <TalkRow {...said} />
       ) : 'field' in action && action.field ? (
         <TypedComposer check={action} field={action.field} keys={keys} chips={chips} />
       ) : (
@@ -259,9 +263,14 @@ function AskComposer({
 
 /**
  * Gespräch (issue #386): the conversation screen's row in the bar — "Tastatur" (back to the
- * Composer) · the mic · "Nochmal vorlesen". As on /talk the mic listens by itself once the
- * question has been read (the hands-free loop, `useHandsFreeMic`; the screen arms it); listening
- * ends by itself when she pauses (on the phone).
+ * Composer) · the mic pill · "Nochmal vorlesen" (design ui_kits/app/Gaps.jsx:133–144, #599). As
+ * on /talk the mic listens by itself once the question has been read (the hands-free loop,
+ * `useHandsFreeMic`; the screen arms it); listening ends by itself when she pauses (on the phone).
+ *
+ * One small line above the row says what is happening — "Ich höre zu." only while the recorder
+ * really runs, "Buddy spricht …" only while his voice is heard (CLAUDE.md rule 5) — and the pill
+ * says what a tap does: "Fertig" while it records. A Check appears only when there is something
+ * to check: beside the running microphone, or in the middle once she has chosen and it rests.
  */
 function TalkRow({
   prompt,
@@ -292,6 +301,13 @@ function TalkRow({
     untilPause: true,
   });
   useHandsFreeMic(voice, disabled, prompt);
+  const buddy = useBuddyVoice();
+  const recording = voice.state === 'recording';
+  const status = recording
+    ? t('buddy:talk.listening')
+    : buddy.phase === 'speaking'
+      ? t('buddy:talk.speaking')
+      : null;
   const selectedCheck = check ? (
     <View testID="answer-action">
       <ActionPill
@@ -311,36 +327,50 @@ function TalkRow({
   ) : null;
   return (
     <>
-      {/* Only what went wrong (no mic, nothing understood). Listening and writing it down are the
-          mic's own (the ring, the stop square, the spinner; its screen-reader value): a status
-          line while she speaks grew the bar by a line and hid Buddy's reply on 360×740 (#386). */}
+      {/* What went wrong (no mic, nothing understood) while the mic rests; otherwise the one line
+          of the design (Gaps.jsx:135). */}
       {voice.state === 'idle' ? <MicStatus voice={voice} /> : null}
-      <VoiceRow
-        left={{
-          icon: 'keyboard',
-          label: t('buddy:composer.keyboard'),
-          onPress: () => {
-            submitted.current = true;
-            voice.cancel();
-            conversation.stop();
-          },
-        }}
-        // The 56 pt mic: the row shares the screen with the question and its conversation (#386).
-        size="md"
-        mic={{
-          voice,
-          label: t('common:voice.answer'),
-          disabled,
-          filled: voice.state !== 'idle' || !check?.ready,
-        }}
-        right={
-          onReadAgain
-            ? { icon: 'speak', label: t('common:voice.read_again'), onPress: onReadAgain }
-            : null
-        }
-        centerAction={check?.ready && voice.state === 'idle' ? selectedCheck : null}
-        action={voice.state !== 'idle' ? selectedCheck : null}
-      />
+      {status ? (
+        <Text
+          testID="talk-row-status"
+          accessibilityLiveRegion="polite"
+          style={[TYPE.label, { textAlign: 'center', paddingBottom: SPACE.sm }]}
+        >
+          {status}
+        </Text>
+      ) : null}
+      <View style={{ paddingHorizontal: TALK.rowInset - SPACE.lg }}>
+        <VoiceRow
+          left={{
+            icon: 'keyboard',
+            label: t('buddy:composer.keyboard'),
+            onPress: () => {
+              submitted.current = true;
+              voice.cancel();
+              conversation.stop();
+            },
+          }}
+          // The row shares the screen with the question and its conversation (#386): `md` is the
+          // size of the round mic that stands beside a Check; the pill is the conversation's.
+          size="md"
+          presentation="talk"
+          mic={{
+            voice,
+            label: t('common:voice.answer'),
+            visibleLabel: t(recording ? 'buddy:talk.finish' : 'buddy:talk.speak'),
+            disabled,
+            filled: voice.state !== 'idle' || !check?.ready,
+          }}
+          right={
+            onReadAgain
+              ? { icon: 'speak', label: t('common:voice.read_again'), onPress: onReadAgain }
+              : null
+          }
+          centerAction={check?.ready && voice.state === 'idle' ? selectedCheck : null}
+          // Never a greyed Check that cannot be pressed (Gaps.jsx:136–143 has three controls).
+          action={check?.ready && voice.state !== 'idle' ? selectedCheck : null}
+        />
+      </View>
     </>
   );
 }
