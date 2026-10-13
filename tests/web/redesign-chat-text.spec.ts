@@ -24,12 +24,17 @@ for (const look of SCREEN_LOOKS)
     const receipt = page.getByText('Gemerkt: Spielt Handball – rückgängig gemacht', {
       exact: true,
     });
-    const ink = Number.parseInt(paletteOf(themeNameOf(look.family, look.dark)).ink2.slice(1), 16);
-    const color = `rgb(${ink >> 16}, ${(ink >> 8) & 255}, ${ink & 255})`;
+    const rgb = (hex: string) => {
+      const value = Number.parseInt(hex.slice(1), 16);
+      return `rgb(${value >> 16}, ${(value >> 8) & 255}, ${value & 255})`;
+    };
+    const palette = paletteOf(themeNameOf(look.family, look.dark));
+    const color = rgb(palette.ink2);
     for (const phone of PHONES) {
       await page.setViewportSize(phone);
       await expect(receipt).toBeVisible();
-      await expect(receipt).toHaveCSS('color', color);
+      // A receipt is the design's chip (components/core/Chip.jsx:12, `color: var(--ink)`, #599).
+      await expect(receipt).toHaveCSS('color', rgb(palette.ink));
       await expect(receipt).toHaveCSS('font-family', /Figtree/);
     }
     await screenShots(page, `chat-${key}-readable-receipt`);

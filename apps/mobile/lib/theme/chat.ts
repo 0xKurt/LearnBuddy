@@ -1,6 +1,6 @@
 import { UI } from './components.js';
 import { RADIUS } from './radius.js';
-import { SPACE } from './space.js';
+import { SPACE, TOUCH } from './space.js';
 
 // Conversation presentation: each role has one consistent treatment (#548).
 export const CHAT = {
@@ -44,14 +44,34 @@ export const CHAT = {
   failedBorder: 1,
   mineWidth: '82%' as const,
   buddyWidth: '100%' as const,
-  cardWidth: '86%' as const,
-  receiptWidth: '88%' as const,
+  /** A card of Buddy's takes the thread's whole width (components/practice/PracticeReady.jsx). */
+  cardWidth: '100%' as const,
+  /**
+   * Buddy's line (components/buddy/Message.jsx:17–19): his mini orb beside the newest one, the
+   * text 10 after it; an older line keeps the column empty. What hangs under a line — a receipt,
+   * answer chips — starts where its text does (ui_kits/app/Chat.jsx:20, `paddingLeft: 36`).
+   */
+  orb: { size: 26, gap: 10, indent: 36 },
+  /** Buddy is writing (components/buddy/Cards.jsx:96–103): a smaller orb and three still dots. */
+  typing: { orb: 22, gap: SPACE.sm, dot: 6, dotGap: SPACE.xs, padX: SPACE.md, padY: 10 },
+  typingDots: [0.4, 0.65, 0.9] as const,
+  /**
+   * "Zurücknehmen" under a turn (ui_kits/app/Gaps.jsx:83–85): a quiet line, 34 in. `reach` is
+   * what its 44 pt target extends beyond the 20 pt line, above and below (handed back as margin).
+   */
+  takeBack: { inset: 34, icon: 16, gap: 6, reach: (TOUCH - 20) / 2 },
+  /** A receipt's room above and below its words: a 20 pt line closes at the chip's 34 (`--chip-h`). */
+  receiptPad: 6,
+  /**
+   * The one card for what Buddy puts into the thread (components/practice/PracticeReady.jsx
+   * `PracticeReady` and `ChatCard`): a 48 pt tile with a 22 pt sign, two points between its
+   * lines, 8 between its two actions; a page of hers lies 6 inside the tile.
+   */
+  card: { tile: 48, glyph: 22, lineGap: 2, actions: SPACE.sm },
   pressedOpacity: UI.pressed.surface,
   pressedScale: 0.98,
   pendingOpacity: 0.8,
   titleGap: 2,
-  receiptIcon: 14,
-  receiptOffset: 2,
   longPress: 350,
   scrollThrottle: 64,
 } as const;

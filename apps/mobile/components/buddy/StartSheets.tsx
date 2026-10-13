@@ -1,17 +1,22 @@
-// The ⋯ menu on Buddy's home and the sheets its ways to start can open (issue #174). The ways to
-// start and their sheets are a domain's (components/buddy/extensions.ts `startMenu`, issue #107):
-// the learning domain's homework, vocabulary, speaking and test. Without one the menu holds only
-// the places. The sheet itself, and the tick it leaves before a way opens the next one, is the
-// same on every screen (`HeaderMenu`).
+// The ⋯ menu on Buddy's home and what it leads to (issue #174, #599). The menu is the same list
+// of places on every screen (`HeaderMenu`); the chat puts one row before them — the way into the
+// start sheet "Was willst du üben?" (design ui_kits/app/Extra.jsx `StartSheet`), which lists the
+// ways to start. Those ways and the sheets they open are a domain's (components/buddy/
+// extensions.ts `startMenu`, issue #107): the learning domain's test, homework, speaking and
+// vocabulary. Without one there is no such row: the menu holds only the places.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ChoiceSheet } from './ChoiceSheet.js';
 import { startMenu } from './extensions.js';
-import { HeaderMenu } from './HeaderMenu.js';
+import { HeaderMenu, SHEET_SWAP_MS } from './HeaderMenu.js';
 
 export { SHEET_SWAP_MS } from './HeaderMenu.js';
+
+/** The core's own sheet: the ways to start. Every other name is one of the domain's sheets. */
+const START = 'start';
 
 type Props = {
   menuOpen: boolean;
@@ -24,20 +29,41 @@ type Props = {
 };
 
 export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Props) {
-  const { t } = useTranslation('buddy');
-  /** The domain's sheet that is up, by its own name; null: none. */
+  // The start sheet's words are the learning domain's and exist once (`learn:topic.practice`).
+  const { t } = useTranslation(['buddy', 'learn']);
+  /** The sheet that is up, by name; null: none. */
   const [sheet, setSheet] = useState<string | null>(null);
   const menu = startMenu.get();
+  const ways = menu?.items(next, t, { send, open: setSheet }) ?? [];
+  const title = t('learn:topic.practice.title');
 
   return (
     <>
       <HeaderMenu
         visible={menuOpen}
-        actions={menu?.items(next, t, { send, open: setSheet })}
+        actions={
+          ways.length > 0
+            ? [{ key: START, icon: 'practice', label: title, onPress: () => setSheet(START) }]
+            : undefined
+        }
         canAct={canStart}
         onClose={onCloseMenu}
       />
-      {menu ? <menu.Sheets open={sheet} onOpen={setSheet} /> : null}
+      <ChoiceSheet
+        visible={sheet === START}
+        title={title}
+        onClose={() => setSheet(null)}
+        choices={ways.map((way) => ({
+          label: way.label,
+          icon: way.icon,
+          // The start sheet closes first: a way may open a sheet of its own.
+          onPress: () => {
+            setSheet(null);
+            setTimeout(way.onPress, SHEET_SWAP_MS);
+          },
+        }))}
+      />
+      {menu ? <menu.Sheets open={sheet === START ? null : sheet} onOpen={setSheet} /> : null}
     </>
   );
 }

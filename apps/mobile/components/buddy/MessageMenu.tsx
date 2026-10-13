@@ -11,7 +11,7 @@ import { markdownPlain } from '../../lib/buddy/markdown.js';
 import { haptic } from '../../lib/haptics.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { speak } from '../../lib/speech/listen.js';
-import { Btn } from '../lb/Btn.js';
+import { ListGroup, Row } from '../lb/ListGroup.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { useSay } from '../../lib/speech/say.js';
@@ -49,35 +49,36 @@ export function MessageMenu({
       closeLabel={t('common:actions.close')}
       onClose={onClose}
     >
-      <Btn
-        variant="outline"
-        full
-        onPress={() => {
-          const m = message;
-          onClose();
-          if (m)
-            void copyMessage(m.text, {
-              copied: t('buddy:message.copied'),
-              failed: t('buddy:message.copy_failed'),
-            });
-        }}
-      >
-        {t('buddy:message.copy')}
-      </Btn>
-      {message?.role === 'buddy' ? (
-        <Btn
-          variant="outline"
-          full
-          icon="speak"
+      {/* The message's actions as rows with their signs (design components/buddy/Cards.jsx:122,
+          `MessageMenu`: Vorlesen, then Kopieren) — the same list the ⋯ menu is. */}
+      <ListGroup>
+        {message?.role === 'buddy' ? (
+          <Row
+            icon="speak"
+            title={t('buddy:message.speak')}
+            chevron={false}
+            onPress={() => {
+              const m = message;
+              onClose();
+              void speak(spokenText(m.text, say), currentLocale());
+            }}
+          />
+        ) : null}
+        <Row
+          icon="file"
+          title={t('buddy:message.copy')}
+          chevron={false}
           onPress={() => {
             const m = message;
             onClose();
-            void speak(spokenText(m.text, say), currentLocale());
+            if (m)
+              void copyMessage(m.text, {
+                copied: t('buddy:message.copied'),
+                failed: t('buddy:message.copy_failed'),
+              });
           }}
-        >
-          {t('buddy:message.speak')}
-        </Btn>
-      ) : null}
+        />
+      </ListGroup>
     </Sheet>
   );
 }

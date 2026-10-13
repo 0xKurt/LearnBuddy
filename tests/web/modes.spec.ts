@@ -118,6 +118,8 @@ test('learning modes: explain, homework help without the solution, practice with
   // No tiles or lists: Buddy, his name, and one way into everything else (issue #174).
   await expect(page.getByText('Was willst du machen?')).toHaveCount(0);
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  // ⋯ is one list of places (#599); its row leads to the start sheet with the ways to start.
+  await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Schließen', exact: true }).click();
   await shot(page, '20-home-start-row');
@@ -171,6 +173,7 @@ test('learning modes: explain, homework help without the solution, practice with
   // ── Homework help: hints only, no "show solution", solved by herself ──
   await closeCardIfAny(page);
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe eintippen' }).click();
   await expect(page.getByText('Welche Aufgabe? Schreib sie ab.')).toBeVisible();

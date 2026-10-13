@@ -1,7 +1,9 @@
 // The one open decision, answered with a tap (no model involved). It is asked at the end
 // of the conversation like everything Buddy asks — never a card on top (issue #17): the top
-// of home belongs to the slim bar of what happens now, and the violet button with it, so
-// the answers here stay quiet (user feedback #6, docs/UX-PRINCIPLES.md §31–32).
+// of home belongs to the slim bar of what happens now (user feedback #6,
+// docs/UX-PRINCIPLES.md §31–32). Both questions are the thread's one card with its answers as
+// pills (design components/buddy/Cards.jsx: `HowDidItGo` — three paper pills; `ContactOptIn` —
+// the primary pill and a ghost beside it).
 //
 // Messages to the phone say exactly what would be allowed, from the stored rules —
 // for a minor too, so the parents see what their PIN allows (user feedback #4).
@@ -11,7 +13,8 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { Btn } from '../lb/Btn.js';
-import { NoticeBubble } from './NoticeBubble.js';
+import { CardChoices, ChatCard } from './ChatCard.js';
+import { quietVariant, type Quiet } from './extensions.js';
 
 export type OptInDecision = Extract<Decision, { type: 'contact_opt_in' }>;
 
@@ -28,26 +31,40 @@ type Props = {
   onOptIn: (enable: boolean) => void;
   onAdultOptIn: () => void;
   onOutcome: (goalId: string, outcome: 'good' | 'ok' | 'hard') => void;
+  /**
+   * The violet button belongs to the bar on top while one lies there (HANDOFF §4: one primary
+   * per screen); the notices hand it in (HomeNotices), like every other card gets it.
+   */
+  quiet?: Quiet;
 };
 
-export function DecisionCard({ decision, busy, onOptIn, onAdultOptIn, onOutcome }: Props) {
+export function DecisionCard({
+  decision,
+  busy,
+  onOptIn,
+  onAdultOptIn,
+  onOutcome,
+  quiet = 'primary',
+}: Props) {
   const { t } = useTranslation('buddy');
   if (decision.type === 'how_did_it_go') {
     const goalId = decision.goal.id;
     return (
-      <NoticeBubble text={t('decision.outcome_title', { title: decision.goal.title })}>
-        {(['good', 'ok', 'hard'] as const).map((o) => (
-          <Btn
-            key={o}
-            variant="outline"
-            size="sm"
-            onPress={() => onOutcome(goalId, o)}
-            disabled={busy}
-          >
-            {t(`decision.outcome_${o}`)}
-          </Btn>
-        ))}
-      </NoticeBubble>
+      <ChatCard live title={t('decision.outcome_title', { title: decision.goal.title })}>
+        <CardChoices>
+          {(['good', 'ok', 'hard'] as const).map((o) => (
+            <Btn
+              key={o}
+              variant="secondary"
+              size="sm"
+              onPress={() => onOutcome(goalId, o)}
+              disabled={busy}
+            >
+              {t(`decision.outcome_${o}`)}
+            </Btn>
+          ))}
+        </CardChoices>
+      </ChatCard>
     );
   }
   const body = [
@@ -56,25 +73,21 @@ export function DecisionCard({ decision, busy, onOptIn, onAdultOptIn, onOutcome 
   ]
     .filter(Boolean)
     .join(' ');
-  // The violet button belongs to the bar on top: here a soft one.
   return (
-    <NoticeBubble text={t('decision.optin_title')} detail={body}>
-      <Btn
-        variant="soft"
-        size="sm"
-        onPress={decision.can_enable_here ? () => onOptIn(true) : onAdultOptIn}
-        disabled={busy}
-      >
-        {decision.can_enable_here ? t('decision.optin_yes') : t('decision.optin_minor_cta')}
-      </Btn>
-      {/* Outline, not ghost: next to a filled "Ja, gern" the ghost had no shape at all
-          and read as a word someone forgot to finish (owner 01.10.: "lieber nicht hat
-          gar keinen button background irgendwie.. kp", issue #191). Two answers to one
-          question are two buttons; which one leads is said by the fill, not by one of
-          them being invisible. */}
-      <Btn variant="outline" size="sm" onPress={() => onOptIn(false)} disabled={busy}>
-        {t('decision.optin_no')}
-      </Btn>
-    </NoticeBubble>
+    <ChatCard live title={t('decision.optin_title')} detail={body}>
+      <CardChoices>
+        <Btn
+          size="sm"
+          variant={quietVariant(quiet)}
+          onPress={decision.can_enable_here ? () => onOptIn(true) : onAdultOptIn}
+          disabled={busy}
+        >
+          {decision.can_enable_here ? t('decision.optin_yes') : t('decision.optin_minor_cta')}
+        </Btn>
+        <Btn variant="ghost" size="sm" onPress={() => onOptIn(false)} disabled={busy}>
+          {t('decision.optin_no')}
+        </Btn>
+      </CardChoices>
+    </ChatCard>
   );
 }

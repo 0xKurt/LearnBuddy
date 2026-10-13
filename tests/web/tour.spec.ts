@@ -339,6 +339,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // scheme switch rebuilds the tree — the light shot comes from the run below. ──
   await setScheme(page, 'dark');
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
@@ -352,6 +353,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
 
   // ── Homework of two pages, the second cut off: Lena is told, and takes just that page again ──
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   // The camera at once; the page lands in the chat's input bar (#519).
   chooser = page.waitForEvent('filechooser');
@@ -487,6 +489,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
 async function pronunciation(page: Page): Promise<void> {
   // ── Pronunciation: record (a fake microphone), sent, feedback per word ──
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
   await page.getByRole('button', { name: 'Aussprache', exact: true }).click();
   // The sheet opens a tick AFTER the menu closes (`fromMenu`, `SHEET_SWAP_MS`). An unscoped
   // `getByRole('textbox').last()` could resolve in that gap to the only field on screen, Buddy's

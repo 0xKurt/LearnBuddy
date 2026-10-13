@@ -1,11 +1,12 @@
 // What Buddy tells at the end of the conversation on his home, with its buttons — never as a card
 // on top (lib/homeLayout.ts, issue #17): photos not sent yet, a spot or pages he could not read, a
-// sheet he could not read at all, the finished practice. Each is a <NoticeBubble>; the violet
-// button belongs to the bar on top when there is one (`quiet`).
+// sheet he could not read at all, the finished practice. Each is the thread's one card (`ChatCard`,
+// design components/practice/PracticeReady.jsx); the violet button belongs to the bar on top when
+// there is one (`quiet`): then the card's main action is the paper one.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import { cloneElement, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { acceptMissingPages, clarifyUnclear, retryMaterial } from '../../lib/api/endpoints.js';
@@ -16,8 +17,8 @@ import type { HomeThumbs, LeftBehind } from '../../lib/buddy/useHomePhotos.js';
 import type { CaptureDraft } from '../../lib/capture/draft.js';
 import type { HomeLayout } from '../../lib/homeLayout.js';
 import { Btn } from '../lb/Btn.js';
-import { resultNotice, type Quiet } from './extensions.js';
-import { NoticeBubble } from './NoticeBubble.js';
+import { CardChoices, ChatCard, type CardAction } from './ChatCard.js';
+import { quietVariant, resultNotice, type Quiet } from './extensions.js';
 import { WorkingNote } from './WorkingNote.js';
 
 type Notice = NonNullable<BuddyHome['notice']>;
@@ -34,8 +35,8 @@ type Props = {
   /** The violet button belongs to the bar on top when there is one. */
   quiet: Quiet;
   act: HomeAct;
-  /** The open question, asked here when the layout says so. */
-  decision: ReactElement | null;
+  /** The open question (`DecisionCard`), asked here when the layout says so. */
+  decision: ReactElement<{ quiet?: Quiet }> | null;
 };
 
 /** The notices at the end of the conversation, in their order; empty when Buddy has nothing. */
@@ -86,7 +87,8 @@ export function homeNotices({ h, layout, left, thumbs, busy, quiet, act, decisio
     ) : null,
     result && Result ? <Result key="result" now={result} busy={busy} quiet={quiet} /> : null,
     // The open question, and "Buddy is working" said once.
-    layout.decisionInline ? decision : null,
+    // It follows the bar on top like every card here: one violet button on the screen.
+    layout.decisionInline && decision ? cloneElement(decision, { quiet }) : null,
     layout.working === 'thread' && h.working ? (
       <WorkingNote key="working" what={h.working} />
     ) : null,
@@ -105,41 +107,34 @@ function DraftNotice({
 }) {
   const { t } = useTranslation('capture');
   const { draft } = left;
+  if (!draft)
+    return (
+      <ChatCard
+        live
+        icon="camera"
+        title={t('capture:draft.discarded', { count: shown.photos.length })}
+        secondary={{
+          label: t('capture:draft.undo'),
+          accessibilityLabel: t('capture:draft.undo_label'),
+          onPress: left.bringBack,
+        }}
+      />
+    );
   return (
-    <NoticeBubble
-      text={
-        draft
-          ? t('capture:draft.title')
-          : t('capture:draft.discarded', { count: shown.photos.length })
-      }
-      detail={draft ? t('capture:draft.body', { count: draft.photos.length }) : null}
-      thumb={draft ? (draft.photos.find((p) => !p.pdf)?.uri ?? null) : null}
-    >
-      {draft ? (
-        <>
-          <Btn
-            size="sm"
-            variant={quiet}
-            // The pages from before stand above her text again (issue #519).
-            onPress={() => askAttach({ open: null, resume: true })}
-          >
-            {t('capture:draft.resume')}
-          </Btn>
-          <Btn size="sm" variant="ghost" onPress={left.letGo}>
-            {t('capture:draft.discard')}
-          </Btn>
-        </>
-      ) : (
-        <Btn
-          size="sm"
-          variant="ghost"
-          accessibilityLabel={t('capture:draft.undo_label')}
-          onPress={left.bringBack}
-        >
-          {t('capture:draft.undo')}
-        </Btn>
-      )}
-    </NoticeBubble>
+    <ChatCard
+      live
+      icon="camera"
+      thumb={draft.photos.find((p) => !p.pdf)?.uri ?? null}
+      title={t('capture:draft.title')}
+      detail={t('capture:draft.body', { count: draft.photos.length })}
+      primary={{
+        label: t('capture:draft.resume'),
+        variant: quietVariant(quiet),
+        // The pages from before stand above her text again (issue #519).
+        onPress: () => askAttach({ open: null, resume: true }),
+      }}
+      secondary={{ label: t('capture:draft.discard'), onPress: left.letGo }}
+    />
   );
 }
 
@@ -151,20 +146,25 @@ type Asked<N> = Told & { notice: N };
  * One spot Buddy could not read, asked with the readings to tap (issue #164): she is holding the
  * sheet, so the words say which task it is and she only has to say which reading. Never a
  * cut-out of the photo — a box would come from the same reading that could not settle this spot,
- * and a wrong one would show her another task of her own sheet.
+ * and a wrong one would show her another task of her own sheet. The readings are the card's
+ * answers (design components/buddy/Cards.jsx:61, paper pills); "weiß ich nicht" is always there,
+ * so the ask is never a wall.
  */
 function UnclearNotice({
   notice,
   thumb,
   busy,
-  quiet,
   andReload,
 }: Asked<Extract<Notice, { type: 'unclear_spot' }>>) {
   const { t } = useTranslation('buddy');
   const { spot } = notice;
   return (
-    <NoticeBubble
-      text={
+    <ChatCard
+      live
+      tone="warn"
+      icon="file"
+      thumb={thumb}
+      title={
         notice.photo_count > 1
           ? t('buddy:now.unclear_title', { page: notice.page, about: spot.about })
           : t('buddy:now.unclear_title_single', { about: spot.about })
@@ -174,39 +174,37 @@ function UnclearNotice({
           ? t('buddy:now.unclear_writing', { reading: spot.answer ?? '' })
           : [spot.task, t('buddy:now.unclear_pick')].join('\n')
       }
-      thumb={thumb}
     >
-      {/* Her answer is one of the readings the server offered, by its own alias — and
-          "weiß ich nicht" is always there, so the ask is never a wall. */}
-      {spot.status === 'open'
-        ? spot.readings.map((r) => (
+      {spot.status === 'open' ? (
+        <CardChoices>
+          {/* Her answer is one of the readings the server offered, by its own alias. */}
+          {spot.readings.map((r) => (
             <Btn
               key={r.ref}
               size="sm"
-              variant={quiet}
+              variant="secondary"
               disabled={busy}
               accessibilityLabel={t('buddy:now.unclear_reading_label', { reading: r.text })}
               onPress={() => andReload(() => clarifyUnclear(notice.material_id, spot.ref, r.ref))}
             >
               {r.text}
             </Btn>
-          ))
-        : null}
-      {spot.status === 'open' ? (
-        <Btn
-          size="sm"
-          variant="ghost"
-          disabled={busy}
-          onPress={() => andReload(() => clarifyUnclear(notice.material_id, spot.ref, null))}
-        >
-          {t('buddy:now.unclear_unknown')}
-        </Btn>
+          ))}
+          <Btn
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            onPress={() => andReload(() => clarifyUnclear(notice.material_id, spot.ref, null))}
+          >
+            {t('buddy:now.unclear_unknown')}
+          </Btn>
+        </CardChoices>
       ) : null}
-    </NoticeBubble>
+    </ChatCard>
   );
 }
 
-/** Pages Buddy could not read completely: take them again, or "OK" without them. */
+/** Pages Buddy could not read completely: take them again, or "Passt so" without them. */
 function PagesNotice({
   notice,
   thumb,
@@ -216,9 +214,15 @@ function PagesNotice({
 }: Asked<Extract<Notice, { type: 'pages_missing' }>>) {
   const { t } = useTranslation('buddy');
   const several = notice.photo_count > 1;
+  // A photo of something else is not worth taking again: then only "Passt so".
+  const retake = notice.pages.some((p) => p.problem !== 'not_material');
   return (
-    <NoticeBubble
-      text={
+    <ChatCard
+      live
+      tone="warn"
+      icon="file"
+      thumb={thumb}
+      title={
         several
           ? t('buddy:now.pages_title', { count: notice.pages.length })
           : t('buddy:now.pages_title_single')
@@ -236,36 +240,29 @@ function PagesNotice({
           ? t('buddy:now.pages_rest', { title: notice.title })
           : t('buddy:now.pages_rest_untitled'),
       ].join('\n')}
-      thumb={thumb}
-    >
-      {/* A photo of something else is not worth taking again: then only "OK". */}
-      {notice.pages.some((p) => p.problem !== 'not_material') ? (
-        <Btn
-          size="sm"
-          variant={quiet}
-          disabled={busy}
-          onPress={() =>
-            askAttach({
-              open: 'camera',
-              link: {
-                completes: notice.material_id,
-                ...(several ? { pages: notice.pages.map((p) => p.page).join(', ') } : {}),
-              },
-            })
-          }
-        >
-          {t('buddy:now.pages_retake', { count: several ? notice.pages.length : 1 })}
-        </Btn>
-      ) : null}
-      <Btn
-        size="sm"
-        variant="ghost"
-        disabled={busy}
-        onPress={() => andReload(() => acceptMissingPages(notice.material_id))}
-      >
-        {t('buddy:now.pages_ok')}
-      </Btn>
-    </NoticeBubble>
+      primary={
+        retake
+          ? {
+              label: t('buddy:now.pages_retake', { count: several ? notice.pages.length : 1 }),
+              variant: quietVariant(quiet),
+              disabled: busy,
+              onPress: () =>
+                askAttach({
+                  open: 'camera',
+                  link: {
+                    completes: notice.material_id,
+                    ...(several ? { pages: notice.pages.map((p) => p.page).join(', ') } : {}),
+                  },
+                }),
+            }
+          : null
+      }
+      secondary={{
+        label: t('buddy:now.pages_ok'),
+        disabled: busy,
+        onPress: () => andReload(() => acceptMissingPages(notice.material_id)),
+      }}
+    />
   );
 }
 
@@ -278,41 +275,40 @@ function FailedNotice({
   andReload,
 }: Told & { now: Extract<Now, { type: 'material_failed' }> }) {
   const { t } = useTranslation('buddy');
+  const newPhoto: CardAction = {
+    label: t('buddy:now.failed_new_photo'),
+    disabled: busy,
+    // The same purpose (homework stays homework) and, for a page, the same sheet (M-18).
+    onPress: () =>
+      askAttach({
+        open: 'camera',
+        link: { purpose: now.purpose ?? 'study', completes: now.completes ?? null },
+      }),
+  };
   return (
-    <NoticeBubble
-      text={t(`buddy:${failedTitleKey(now)}`, { title: now.title })}
-      detail={t(`buddy:now.failed_${now.reason ?? 'model_error'}`)}
+    <ChatCard
+      live
+      tone="warn"
+      icon="file"
       thumb={thumb}
-    >
-      {now.retryable ? (
-        <Btn
-          size="sm"
-          variant={quiet}
-          disabled={busy}
-          onPress={() => andReload(() => retryMaterial(now.material_id))}
-        >
-          {t('buddy:now.failed_retry')}
-        </Btn>
-      ) : null}
-      <Btn
-        size="sm"
-        variant={now.retryable ? 'ghost' : quiet}
-        disabled={busy}
-        // The same purpose (homework stays homework) and, for a page, the same sheet (M-18).
-        onPress={() =>
-          askAttach({
-            open: 'camera',
-            link: { purpose: now.purpose ?? 'study', completes: now.completes ?? null },
-          })
-        }
-      >
-        {t('buddy:now.failed_new_photo')}
-      </Btn>
-    </NoticeBubble>
+      title={t(`buddy:${failedTitleKey(now)}`, { title: now.title })}
+      detail={t(`buddy:now.failed_${now.reason ?? 'model_error'}`)}
+      primary={
+        now.retryable
+          ? {
+              label: t('buddy:now.failed_retry'),
+              variant: quietVariant(quiet),
+              disabled: busy,
+              onPress: () => andReload(() => retryMaterial(now.material_id)),
+            }
+          : { ...newPhoto, variant: quietVariant(quiet) }
+      }
+      secondary={now.retryable ? newPhoto : null}
+    />
   );
 }
 
-/** "Ansehen": the full view of a finished practice — in its notice, or with Buddy's greeting. */
+/** "Ansehen": the full view of a finished practice, with Buddy's greeting that names it. */
 export function ResultViewBtn({
   sessionId,
   busy,
@@ -326,7 +322,7 @@ export function ResultViewBtn({
   return (
     <Btn
       size="sm"
-      variant={quiet}
+      variant={quietVariant(quiet)}
       disabled={busy}
       onPress={() => router.push(`/practice/${sessionId}`)}
     >

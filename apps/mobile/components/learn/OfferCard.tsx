@@ -1,19 +1,16 @@
 // Buddy offered to start something in the chat ("Soll ich dir den Dativ
-// erklären?"): the offer under its message, with one "Los geht's". It starts
+// erklären?"): the offer under its message, as the thread's one card with one "Los geht's"
+// (design components/practice/PracticeReady.jsx, #599). It starts
 // like the topic sheet does; the offer's action id is the request id, so the
 // same offer always opens the same session (tapping it again resumes it).
 
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
-import { KIND_ICON, KIND_LABEL } from './kinds.js';
-import { OfferShell } from './OfferShell.js';
+import { PracticeReady } from '../buddy/ChatCard.js';
+import { KIND_LABEL } from './kinds.js';
 import { useStartTopic } from './useStartTopic.js';
 import { reacted, tapped } from '../../lib/perf.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
@@ -34,7 +31,6 @@ export function OfferCard({
    */
   spoken?: boolean;
 }) {
-  const { palette } = useTheme();
   const { t } = useTranslation(['learn', 'common']);
   const { state, start } = useStartTopic();
   const preparing = state.status === 'preparing';
@@ -82,37 +78,29 @@ export function OfferCard({
   }
 
   return (
-    // A bounded thing (issue #15): icon row, two lines of offer, the button. Nothing grows
-    // between them — the first owner run had "Los geht's" pushed out of sight by a status
-    // line that appeared above it. What is happening lives in the button itself.
-    <OfferShell icon={offer.minutes !== null ? 'clock' : KIND_ICON[offer.kind]} label={label}>
-      <Text style={TYPE.body} numberOfLines={2}>
-        {offer.text}
-      </Text>
-      {dead ? (
-        // Nothing to learn from this text: one quiet line where the button was.
-        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
-          {t('learn:topic.not_usable')}
-        </Text>
-      ) : (
-        <Btn
-          busy={preparing}
-          onPress={() => void go()}
-          accessibilityHint={`${label}: ${offer.text}`}
-        >
-          {preparing
-            ? t('learn:topic.preparing')
-            : state.status === 'failed'
-              ? t('common:actions.retry')
-              : t('learn:topic.submit')}
-        </Btn>
-      )}
-      {/* A failure says why — under the button, where nothing can push it away. */}
-      {state.status === 'failed' ? (
-        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
-          {state.message}
-        </Text>
-      ) : null}
-    </OfferShell>
+    // A bounded thing (issue #15): what it is, its topic, the button. Nothing grows between
+    // them — the first owner run had "Los geht's" pushed out of sight by a status line that
+    // appeared above it. What is happening lives in the button itself; a failure says why
+    // under it, where nothing can push it away. A start that cannot happen has no button:
+    // one quiet line where it was (issue #196).
+    <PracticeReady
+      label={label}
+      title={offer.text}
+      note={dead ? t('learn:topic.not_usable') : state.status === 'failed' ? state.message : null}
+      start={
+        dead
+          ? null
+          : {
+              label: preparing
+                ? t('learn:topic.preparing')
+                : state.status === 'failed'
+                  ? t('common:actions.retry')
+                  : t('learn:topic.submit'),
+              busy: preparing,
+              accessibilityHint: `${label}: ${offer.text}`,
+              onPress: () => void go(),
+            }
+      }
+    />
   );
 }

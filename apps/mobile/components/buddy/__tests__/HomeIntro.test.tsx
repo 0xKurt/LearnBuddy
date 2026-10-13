@@ -2,7 +2,7 @@ import { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { renderInApp } from '../../../testing/render.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { HomeIntro } from '../HomeIntro.js';
 
 const home = BuddyHome.parse({
@@ -21,6 +21,24 @@ const home = BuddyHome.parse({
 });
 
 describe('first-visit Home', () => {
+  it('stands 24 in from the sides and from the bar (Home.jsx:12)', () => {
+    renderInApp(
+      <HomeIntro
+        h={home}
+        refreshing={false}
+        onRefresh={() => undefined}
+        onSend={() => undefined}
+        onPhoto={() => undefined}
+      />,
+    );
+    const content = styleOf(screen.getByTestId('scroll-home').firstElementChild!);
+    expect([content.paddingLeft, content.paddingRight, content.paddingBottom]).toEqual([
+      '24px',
+      '24px',
+      '24px',
+    ]);
+  });
+
   it('greets the real learner and preserves three distinct start actions and the practiced fact', () => {
     const send = vi.fn();
     const photo = vi.fn();
@@ -35,6 +53,12 @@ describe('first-visit Home', () => {
     );
     expect(screen.getByRole('heading').textContent).toContain('Hallo Lena.');
     expect(screen.getByText('Heute geübt')).toBeTruthy();
+    // The design's sentence (ui_kits/app/Home.jsx:15).
+    expect(
+      screen.getByText(
+        'Erzähl mir von deiner nächsten Arbeit oder zeig mir ein Arbeitsblatt. Ich mach daraus Übungen.',
+      ),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Ich schreibe bald eine Arbeit' }));
     expect(send).toHaveBeenLastCalledWith('Ich schreibe bald eine Arbeit');
     fireEvent.click(screen.getByRole('button', { name: 'Foto vom Arbeitsblatt' }));

@@ -1,8 +1,8 @@
-// The ways to start, as the ⋯ menu on Buddy's home lists them (issue #174; docs/UX-PRINCIPLES.md
-// §6: examples of what Buddy does, not a feature catalog). The first one fits her situation;
-// everything else she just says, and Buddy answers with a button. The menu is the core's
-// (components/buddy/StartSheets.tsx); these ways and the sheets they open are the learning
-// domain's (./StartSheets.tsx, issue #107).
+// The ways to start, as the start sheet "Was willst du üben?" lists them (issue #174, #599;
+// docs/UX-PRINCIPLES.md §6: examples of what Buddy does, not a feature catalog). The first one
+// fits her situation; everything else she just says, and Buddy answers with a button. The sheet
+// is the core's (components/buddy/StartSheets.tsx); these ways and the sheets they open are the
+// learning domain's (./StartSheets.tsx, issue #107).
 
 import type { StartMenu } from '../buddy/extensions.js';
 import { topicSheet } from './StartSheets.js';

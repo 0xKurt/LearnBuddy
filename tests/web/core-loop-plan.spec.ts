@@ -124,9 +124,12 @@ test('core loop · plan: a test, a photo → practice prepared by Buddy', async 
     page.getByText('Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.'),
   ).toBeInViewport();
   await expect(page.getByRole('button', { name: 'Jetzt üben' })).toBeInViewport();
-  // Every receipt in view carries its own ↺ (issue #520) — here the one receipt left.
-  const waysBack = await page.getByRole('button', { name: /^Rückgängig/ }).count();
-  expect(waysBack, 'one ↺ per receipt in view (issues #204, #520)').toBe(1);
+  // One way back per turn (issues #204, #520; the quiet "Zurücknehmen" line since the redesign,
+  // design ui_kits/app/Gaps.jsx:83): the turn with its receipt, and the turn whose prepared
+  // practice the bar on top carries — that one stays takeable though its line is not repeated.
+  const waysBack = await page.getByRole('button', { name: 'Zurücknehmen', exact: true }).count();
+  expect(waysBack, 'one way back per turn that did something').toBe(2);
+  await expect(page.getByRole('button', { name: /^Rückgängig/ })).toHaveCount(0);
   // …and none of it has to be scrolled to: the conversation fits this phone as it stands.
   const thread = (await overflows(page)).find((o) => o.label === 'scroll-thread');
   expect(thread?.overflow ?? 0, 'the thread must not need scrolling here').toBe(0);

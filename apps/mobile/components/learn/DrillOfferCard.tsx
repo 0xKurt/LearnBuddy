@@ -1,5 +1,6 @@
 // Buddy offered a Kopfrechnen round in the chat ("Lass uns Einmaleins üben", issue #243): the
-// same card as every other offer — what it is, in two words, and one "Los geht's". Starting it
+// same card as every other offer — what it is, in two words, and one "Los geht's" (design
+// ui_kits/app/Flows.jsx:169, `PracticeReady label="Kopfrechnen"`). Starting it
 // asks no model: the server writes the twenty tasks from the range in a few milliseconds, so
 // there is no "wird vorbereitet" to wait through. The offer's action id is the request id, so
 // tapping the same card again opens the same round.
@@ -8,21 +9,16 @@ import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { startDrill } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
-import { OfferShell } from './OfferShell.js';
+import { PracticeReady } from '../buddy/ChatCard.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_drill' }>;
 
 export function DrillOfferCard({ actionId, offer }: { actionId: string; offer: Offer }) {
-  const { palette } = useTheme();
   const { t } = useTranslation(['learn', 'common']);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
@@ -53,18 +49,16 @@ export function DrillOfferCard({ actionId, offer }: { actionId: string; offer: O
   }
 
   return (
-    <OfferShell icon="flame" label={label}>
-      <Text style={TYPE.body} numberOfLines={2}>
-        {offer.title}
-      </Text>
-      <Btn busy={busy} onPress={() => void go()} accessibilityHint={`${label}: ${offer.title}`}>
-        {failed ? t('common:actions.retry') : t('learn:topic.submit')}
-      </Btn>
-      {failed ? (
-        <Text accessibilityLiveRegion="polite" style={[TYPE.small, { color: palette.ink2 }]}>
-          {failed}
-        </Text>
-      ) : null}
-    </OfferShell>
+    <PracticeReady
+      label={label}
+      title={offer.title}
+      note={failed}
+      start={{
+        label: failed ? t('common:actions.retry') : t('learn:topic.submit'),
+        busy,
+        accessibilityHint: `${label}: ${offer.title}`,
+        onPress: () => void go(),
+      }}
+    />
   );
 }

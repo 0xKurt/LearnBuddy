@@ -1,28 +1,8 @@
-// The ways to start learning from something the learner names, with the icon
-// and label they have everywhere (Buddy's home, the topic sheet, Buddy's offers).
+// The ways to start learning from something the learner names, with the label they have
+// everywhere (the topic sheet, Buddy's offers). An offer's sign is the one sparkle of the
+// thread's card (components/buddy/ChatCard.tsx, #599), no longer an icon per kind.
 
-import type { IconName } from '../lb/Icon.js';
 import type { TopicKind } from './useStartTopic.js';
-
-export const KIND_ICON: Record<TopicKind, IconName> = {
-  practice: 'practice',
-  test: 'check',
-  vocab: 'book',
-  speak: 'mic',
-  // Hörverstehen: the speaker, the same icon everything that is READ ALOUD carries
-  // (`ListenButton`) — the microphone above is for her own voice (issue #210).
-  listen: 'speak',
-  // Diktat (issue #242): she WRITES what she hears — the pencil of writing, not her microphone.
-  spelling_dictation: 'pencil',
-  // „Erklär mal" (issue #236): she explains an idea in her own words — the bulb, not the mic,
-  // because she may just as well type it.
-  teach_back: 'bulb',
-  // Leseverständnis (#368): the book a reading text above a question carries (`PassagePanel`).
-  read: 'book',
-  // Lange Texte (issue #258): a page she writes — the file, not the pencil of homework help.
-  essay: 'file',
-  help: 'pencil',
-};
 
 /** learn:start.* – the same words as the start tiles on the home. */
 export const KIND_LABEL: Record<TopicKind, string> = {
