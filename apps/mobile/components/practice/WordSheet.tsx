@@ -18,7 +18,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { Btn } from '../lb/Btn.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { ListenButton } from './ListenButton.js';
 
 export type SpokenWord = { text: string; ok: boolean; tip: string | null };
@@ -102,12 +102,12 @@ function WordAttempt({
   return (
     <Sheet visible title={word.text} closeLabel={t('common:actions.close')} onClose={close}>
       <View style={{ gap: SPACE.md }}>
-        <Text style={TYPE.meta}>{t('practice:speak.word_hint')}</Text>
+        <Text style={[TYPE.meta, SHEET_TEXT]}>{t('practice:speak.word_hint')}</Text>
         <View style={{ flexDirection: 'row', gap: SPACE.sm, flexWrap: 'wrap' }}>
           <ListenButton source={{ text: word.text, lang }} slow disabled={recording} />
         </View>
 
-        {tip ? <Text style={TYPE.body}>{tip}</Text> : null}
+        {tip ? <Text style={[TYPE.body, SHEET_TEXT]}>{tip}</Text> : null}
 
         {sending ? (
           <View
@@ -123,12 +123,12 @@ function WordAttempt({
           </View>
         ) : null}
         {problem ? (
-          <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
+          <Text accessibilityRole="alert" style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}>
             {problem}
           </Text>
         ) : null}
         {tried && !sending ? (
-          <View accessibilityLiveRegion="polite" style={{ gap: SPACE.xs }}>
+          <View accessibilityLiveRegion="polite" style={[SHEET_TEXT, { gap: SPACE.xs }]}>
             <Text
               style={[
                 TYPE.body,

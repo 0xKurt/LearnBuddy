@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { UI } from '../../lib/theme/components.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { DURATION, EASE } from '../../lib/theme/motion.js';
 import { BuddyOrb, FILL } from './BuddyOrb.js';
@@ -22,8 +23,8 @@ import { BuddyOrb, FILL } from './BuddyOrb.js';
 // Must be called at start-up, before the first render (expo-splash-screen).
 if (Platform.OS !== 'web') void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
-/** The native splash's image width (app.json → expo-splash-screen → imageWidth). */
-const SPLASH_IMAGE_WIDTH = 200;
+/** How far the orb shrinks as it settles (read on the UI thread, so held as a number). */
+const SETTLE = UI.splash.settle;
 
 export function SplashHandoff({ ready }: { ready: boolean }) {
   const { palette } = useTheme();
@@ -43,7 +44,7 @@ export function SplashHandoff({ ready }: { ready: boolean }) {
 
   const veil = useAnimatedStyle(() => ({ opacity: fade.value }));
   const orb = useAnimatedStyle(() => ({
-    transform: [{ scale: reduce ? 1 : 1 - 0.14 * settle.value }],
+    transform: [{ scale: reduce ? 1 : 1 - SETTLE * settle.value }],
   }));
 
   if (gone) return null;
@@ -60,7 +61,7 @@ export function SplashHandoff({ ready }: { ready: boolean }) {
           backgroundColor: palette.bg,
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
+          zIndex: UI.splash.layer,
         },
         veil,
       ]}
@@ -84,7 +85,7 @@ export function SplashHandoff({ ready }: { ready: boolean }) {
             ball at r = 285/1024 of its canvas, BuddyOrb at 0.48/2 of its box) so the
             hand-off from the native splash does not jump. */}
         <BuddyOrb
-          size={Math.round((SPLASH_IMAGE_WIDTH * (285 / 1024)) / (FILL / 2))}
+          size={Math.round((UI.splash.imageWidth * UI.splash.ball) / (FILL / 2))}
           breathe={false}
         />
       </Animated.View>

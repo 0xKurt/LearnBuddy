@@ -25,7 +25,7 @@ import { Rise, useListEntrance } from '../../components/lb/Motion.js';
 import { Screen } from '../../components/lb/Screen.js';
 import { ListGroup } from '../../components/lb/ListGroup.js';
 import { Section } from '../../components/lb/Section.js';
-import { Sheet } from '../../components/lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../../components/lb/Sheet.js';
 import { LibrarySkeleton } from '../../components/lb/Skeletons.js';
 import { toast } from '../../components/lb/Toast.js';
 import { ApiError } from '../../lib/api/client.js';
@@ -285,7 +285,9 @@ export default function SubjectScreen() {
         closeLabel={t('common:actions.cancel')}
         onClose={() => setSheetOpen(false)}
       >
-        <Text style={TYPE.body}>{t('library:delete_sheet.body', { title: deleteTitle })}</Text>
+        <Text style={[TYPE.body, SHEET_TEXT]}>
+          {t('library:delete_sheet.body', { title: deleteTitle })}
+        </Text>
         <ErrorNote text={deleteError} />
         <Btn variant="danger" pill full busy={deleting} onPress={() => void confirmDelete()}>
           {t('library:delete_sheet.confirm')}

@@ -18,12 +18,9 @@ import Animated, {
 import { TYPE } from '../../lib/theme/type.js';
 import { EASE } from '../../lib/theme/motion.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { LOADING_STATE } from '../../lib/theme/states.js';
 import { BuddyOrb } from './BuddyOrb.js';
 import { Appear } from './Motion.js';
-
-/** A quick load is over before anything shows. */
-const SHOW_AFTER_MS = 250;
-const BREATH_MS = 1600;
 
 export function LoadingState({ label }: { label?: string }) {
   const reduced = useReducedMotion();
@@ -31,19 +28,19 @@ export function LoadingState({ label }: { label?: string }) {
   useEffect(() => {
     if (reduced) return;
     breath.value = withRepeat(
-      withTiming(1, { duration: BREATH_MS, easing: EASE.breathe }),
+      withTiming(1, { duration: LOADING_STATE.breathMs, easing: EASE.breathe }),
       -1,
       true,
     );
     return () => cancelAnimation(breath);
   }, [reduced, breath]);
   const orb = useAnimatedStyle(() => ({
-    opacity: 0.75 + breath.value * 0.25,
-    transform: [{ scale: 0.94 + breath.value * 0.08 }],
+    opacity: LOADING_STATE.dim + breath.value * LOADING_STATE.dimSpan,
+    transform: [{ scale: LOADING_STATE.scale + breath.value * LOADING_STATE.scaleSpan }],
   }));
   return (
     <Appear
-      delay={SHOW_AFTER_MS}
+      delay={LOADING_STATE.showAfterMs}
       accessible
       accessibilityRole="progressbar"
       accessibilityLabel={label}
@@ -52,12 +49,12 @@ export function LoadingState({ label }: { label?: string }) {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 28, // token-exempt: the label in a column narrower than the page
+        paddingHorizontal: LOADING_STATE.padX,
         gap: SPACE.lg,
       }}
     >
       <Animated.View style={orb}>
-        <BuddyOrb size={56} />
+        <BuddyOrb size={LOADING_STATE.orb} />
       </Animated.View>
       {label ? <Text style={[TYPE.small, { textAlign: 'center' }]}>{label}</Text> : null}
     </Appear>

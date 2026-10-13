@@ -9,7 +9,7 @@ import { Pressable, View } from 'react-native';
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import { circle } from '../../lib/theme/radius.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
-import { UI } from '../../lib/theme/components.js';
+import { pressedStyle, UI } from '../../lib/theme/components.js';
 import { TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Icon, type IconName } from './Icon.js';
@@ -42,6 +42,9 @@ const LABEL_KEY: Record<CircleIcon, string> = {
   voice: 'a11y.voice',
   expand: 'a11y.expand',
 };
+
+/** The two glyphs drawn a step larger, whatever the tone (components/core/Btn.jsx `IconBtn`). */
+const ACTION_GLYPHS: ReadonlySet<IconName> = new Set(['voice', 'send']);
 
 export function IconBtn({
   icon,
@@ -81,8 +84,7 @@ export function IconBtn({
   const off = disabled || busy;
   const reduced = useMotionReduced();
   // Every other control in the system answers a finger; this one did not (audit 30.09.,
-  // #133 position 6). The same dip Btn and StartRow use, so a press feels the same
-  // wherever it lands.
+  // #133 position 6). The same dip Btn uses, so a press feels the same wherever it lands.
   const inner = (pressed: boolean) => (
     <View
       style={{
@@ -92,18 +94,13 @@ export function IconBtn({
         // A filled circle, not paper + hairline: the hairline sits at ~1.2:1 on the page
         // and the button read as a floating icon without a boundary (WCAG 1.4.11).
         backgroundColor: primary ? palette.primary : unfilled ? 'transparent' : palette.canvas,
-        borderColor: palette.hairline,
-        borderWidth: 0,
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: disabled
-          ? UI.disabledOpacity
+        ...(disabled
+          ? { opacity: UI.disabledOpacity }
           : busy
-            ? UI.busyOpacity
-            : pressed
-              ? UI.pressedOpacity
-              : 1,
-        transform: [{ scale: pressed && !reduced ? UI.pressScale : 1 }],
+            ? { opacity: UI.busyOpacity }
+            : pressedStyle(pressed, reduced)),
       }}
     >
       {busy ? (
@@ -111,7 +108,7 @@ export function IconBtn({
       ) : (
         <Icon
           name={icon}
-          size={primary ? UI.iconButton.actionGlyph : UI.iconButton.glyph}
+          size={ACTION_GLYPHS.has(icon) ? UI.iconButton.actionGlyph : UI.iconButton.glyph}
           color={primary ? palette.onPrimary : palette.ink}
         />
       )}

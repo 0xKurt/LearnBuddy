@@ -116,7 +116,7 @@ function Bar({
     </>
   );
   return (
-    <Card padding={0} radius={RADIUS.lg}>
+    <Card padding={0} joined radius={RADIUS.lg}>
       <View
         style={{
           flexDirection: 'row',

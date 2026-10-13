@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import type { Palette, SubjectTone } from '../../lib/theme/palettes.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
-import { UI } from '../../lib/theme/components.js';
+import { pressedStyle, UI } from '../../lib/theme/components.js';
 import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { CONTROL, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -153,6 +153,9 @@ const SIZE_STYLE: Record<Size, { height: number; paddingHorizontal: number; labe
   lg: { height: CONTROL.lg, paddingHorizontal: BTN_PAD_MD, label: 'input' },
 };
 
+/** The design's own four (components/core/Btn.jsx): they answer a finger with the dip alone. */
+const DESIGN_VARIANTS: ReadonlySet<Variant> = new Set(['primary', 'secondary', 'quiet', 'ghost']);
+
 type VariantSkin = {
   bg: string;
   color: string;
@@ -175,7 +178,8 @@ const variantStyle = (p: Palette): Record<Variant, VariantSkin> => ({
   primary: { bg: p.primary, color: p.onPrimary, borderColor: 'transparent', borderWidth: 0 },
   quiet: { bg: p.canvas, color: p.ink, borderColor: 'transparent', borderWidth: 0 },
   secondary: { bg: p.paper, color: p.ink, borderColor: p.hairlineStrong, borderWidth: UI.border },
-  soft: { bg: p.canvas, color: p.ink, borderColor: 'transparent', borderWidth: 0 },
+  // Not one of the design's four: the accent tint it had before the redesign (owner rule 2).
+  soft: { bg: p.primaryLt, color: p.primaryDk, borderColor: 'transparent', borderWidth: 0 },
   outline: { bg: p.paper, color: p.ink, borderColor: p.hairlineStrong, borderWidth: UI.border },
   ghost: { bg: 'transparent', color: p.primaryDk, borderColor: 'transparent', borderWidth: 0 },
   danger: {
@@ -294,8 +298,12 @@ export function Btn(props: Props) {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: wrap ? 'flex-start' : 'center',
-            opacity: pressed ? UI.pressedOpacity : 1,
-            transform: [{ scale: pressed && !reduced ? UI.pressScale : 1 }],
+            ...(DESIGN_VARIANTS.has(variant)
+              ? pressedStyle(pressed, reduced)
+              : {
+                  opacity: pressed ? UI.pressedOpacity : 1,
+                  transform: [{ scale: pressed && !reduced ? UI.pressScale : 1 }],
+                }),
           }}
         >
           {busy ? (
@@ -336,7 +344,7 @@ export function Btn(props: Props) {
                       adjustsFontSizeToFit: true,
                       minimumFontScale: UI.minimumFontScale,
                     }
-                  : { numberOfLines: 2 })}
+                  : { numberOfLines: UI.button.maxLines })}
               style={{
                 ...TYPE.action,
                 flexShrink: 1,

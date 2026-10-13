@@ -159,5 +159,7 @@ test('Reset existing local account receives the same generic resend confirmation
   await page.getByRole('button', { name: requestName, exact: true }).click();
   expect((await response).ok()).toBe(true);
   await expect(page.getByRole('alert')).toHaveText(confirmation);
+  // The toast's words are in the app's own face, not the system's (#599, owner rule 4).
+  await expect(page.getByRole('alert').getByText(confirmation)).toHaveCSS('font-family', /Figtree/);
   await expect(page.getByRole('button', { name: requestName, exact: true })).toBeDisabled();
 });

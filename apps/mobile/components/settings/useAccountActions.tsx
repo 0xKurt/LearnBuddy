@@ -16,7 +16,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { Btn } from '../lb/Btn.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import {
   AdultCancelled,
@@ -232,7 +232,7 @@ export function useAccountActions({
         closeLabel={t('common:actions.cancel')}
         onClose={closeDeletion}
       >
-        <Text style={TYPE.body}>{t('settings:adult.delete.confirm_body')}</Text>
+        <Text style={[TYPE.body, SHEET_TEXT]}>{t('settings:adult.delete.confirm_body')}</Text>
         <Btn
           pill
           variant="danger"
@@ -249,9 +249,9 @@ export function useAccountActions({
         closeLabel={t('common:actions.cancel')}
         onClose={() => setSignOutOpen(false)}
       >
-        <Text style={TYPE.body}>{t('settings:adult.signout.confirm_body')}</Text>
+        <Text style={[TYPE.body, SHEET_TEXT]}>{t('settings:adult.signout.confirm_body')}</Text>
         {unsent ? (
-          <Text style={[TYPE.body, { color: palette.ink2 }]}>
+          <Text style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}>
             {t('settings:adult.signout.confirm_unsent')}
           </Text>
         ) : null}

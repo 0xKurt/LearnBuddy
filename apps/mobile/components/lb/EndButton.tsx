@@ -6,6 +6,7 @@
 // e.g. "Übung beenden"), and the hint says where it leads. One component, so a question, a
 // Kopfrechnen round and a roleplay end the same way (CLAUDE.md: one UI element, one component).
 
+import { UI } from '../../lib/theme/components.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Btn } from './Btn.js';
 import { Icon } from './Icon.js';
@@ -30,7 +31,13 @@ export function EndButton({ onPress, label, hint, disabled = false, busy = false
       pill
       // compact (12 each side) + the 20 pt icon = 44: a circle, like the speaker switch.
       compact
-      label={<Icon name="close" size={20} color={disabled ? palette.ink2 : palette.ink} />}
+      label={
+        <Icon
+          name="close"
+          size={UI.iconButton.glyph}
+          color={disabled ? palette.ink2 : palette.ink}
+        />
+      }
       onPress={onPress}
       disabled={disabled}
       busy={busy}

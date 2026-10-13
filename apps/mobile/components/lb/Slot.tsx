@@ -13,29 +13,39 @@
 
 import { Pressable, Text, View, type TextStyle } from 'react-native';
 
+import { UI } from '../../lib/theme/components.js';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
+import { fontFace, TYPE } from '../../lib/theme/type.js';
 
 /** About as wide as what is in the slot: small when empty, never wider than a phone line. */
 export function slotWidth(text: string): number {
-  return Math.max(64, Math.min(220, SPACE.xl + text.length * 9.5));
+  const { minWidth, maxWidth, letter } = UI.slot;
+  return Math.max(minWidth, Math.min(maxWidth, SPACE.xl + text.length * letter));
 }
 
 /** Her word in a slot: the accent, a step bolder than the body text around it. */
 function slotText(palette: Palette): TextStyle {
-  return { color: palette.primaryDk, fontSize: TYPE.body.fontSize, fontWeight: '600' };
+  return { ...fontFace('600'), color: palette.primaryDk, fontSize: TYPE.body.fontSize };
 }
 
 /** The slot's box for this word and state. */
 function slotStyle(palette: Palette, value: string, current: boolean) {
   const frame = current
-    ? { borderWidth: 2, borderColor: palette.primary, borderStyle: 'solid' as const }
+    ? {
+        borderWidth: UI.selectedBorder,
+        borderColor: palette.primary,
+        borderStyle: 'solid' as const,
+      }
     : value
-      ? { borderWidth: 2, borderColor: 'transparent', borderStyle: 'solid' as const }
-      : { borderWidth: 1.5, borderColor: palette.field, borderStyle: 'dashed' as const };
+      ? {
+          borderWidth: UI.selectedBorder,
+          borderColor: 'transparent',
+          borderStyle: 'solid' as const,
+        }
+      : { borderWidth: UI.slot.dashed, borderColor: palette.field, borderStyle: 'dashed' as const };
   return {
     minWidth: slotWidth(value),
     height: TOUCH,

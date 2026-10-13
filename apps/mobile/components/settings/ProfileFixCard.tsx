@@ -21,7 +21,7 @@ import { BirthDateFields, type DateParts } from '../auth/BirthDateFields.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { AdultCancelled, asAdultIfNeeded, useAdultOpener } from './adultGate.js';
 import { Row } from './Row.js';
@@ -136,7 +136,7 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
         }
       >
         <View style={{ gap: SPACE.sm }}>
-          <Text style={TYPE.bodyStrong}>{t('settings:adult.profile.name')}</Text>
+          <Text style={[TYPE.bodyStrong, SHEET_TEXT]}>{t('settings:adult.profile.name')}</Text>
           <LbTextInput
             value={name}
             onChangeText={setName}
@@ -151,16 +151,22 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
           />
         </View>
         <View style={{ gap: SPACE.sm }}>
-          <Text style={TYPE.bodyStrong}>{t('auth:profile.birth_date')}</Text>
+          <Text style={[TYPE.bodyStrong, SHEET_TEXT]}>{t('auth:profile.birth_date')}</Text>
           <BirthDateFields value={date} onChange={setDate} editable={!busy} />
           {dateComplete && !birthDate ? (
-            <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
+            <Text
+              accessibilityLiveRegion="polite"
+              style={[TYPE.body, SHEET_TEXT, { color: palette.danger }]}
+            >
               {t('auth:profile.birth_date_invalid')}
             </Text>
           ) : null}
         </View>
         {failure ? (
-          <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
+          <Text
+            accessibilityLiveRegion="polite"
+            style={[TYPE.body, SHEET_TEXT, { color: palette.danger }]}
+          >
             {failure}
           </Text>
         ) : null}

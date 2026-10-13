@@ -13,7 +13,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { FoldLabel } from '../lb/FoldLabel.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { BoneLines, SkeletonGroup } from '../lb/Skeleton.js';
 
 const useLicences = lazyModule(() => import('../../lib/licences.js'));
@@ -34,7 +34,9 @@ export function LicencesSheet({ visible, onClose }: Props) {
       onClose={onClose}
       scrollTestID="scroll-list"
     >
-      <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('settings:about.licences_intro')}</Text>
+      <Text style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}>
+        {t('settings:about.licences_intro')}
+      </Text>
       {licences === null ? (
         <SkeletonGroup label={t('settings:about.licences_loading')}>
           <BoneLines lines={6} />

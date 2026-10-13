@@ -128,6 +128,8 @@ export const SOURCE_LISTS = {
   // with a thin one unseen.
   'apps/mobile/lib/__tests__/minimalism.test.ts#ROUTES(WEAK)': (s) =>
     sourceList(s, 'ROUTES', isWeak),
+  // Lines of text in a sheet that stand off its title's edge on purpose (#599).
+  'apps/mobile/lib/__tests__/sheetText.test.ts#PLACED': (s) => sourceList(s, 'PLACED'),
 };
 
 /** "a/b.ts#NAME(…)" → "a/b.ts" */

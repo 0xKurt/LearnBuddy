@@ -18,7 +18,7 @@ import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { MemorySkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
-import { Sheet } from '../components/lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import type { ToastAction } from '../lib/toast.js';
 import { MemoryItem } from '../components/memory/MemoryItem.js';
@@ -284,7 +284,7 @@ export default function MemoryScreen() {
         onClose={() => setRemoveOpen(false)}
       >
         {removeTarget ? (
-          <Text style={TYPE.body}>
+          <Text style={[TYPE.body, SHEET_TEXT]}>
             {t('memory:confirm_body', { statement: removeTarget.statement })}
           </Text>
         ) : null}

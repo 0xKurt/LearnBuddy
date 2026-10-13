@@ -25,7 +25,7 @@ import { NewPasswordFields } from '../auth/NewPasswordFields.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { asAdultIfNeeded, useAdultOpener } from './adultGate.js';
 import { Divider, Row } from './Row.js';
@@ -192,7 +192,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
         {pendingEmail ? (
           <Card tone="mint">
             <Text style={TYPE.title}>{t('settings:adult.access.email_pending_title')}</Text>
-            <Text style={[TYPE.body, { marginTop: SPACE.xs }]} accessibilityLiveRegion="polite">
+            <Text style={TYPE.body} accessibilityLiveRegion="polite">
               {email
                 ? t('settings:adult.access.email_pending_body', {
                     old_email: email,
@@ -205,7 +205,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
           </Card>
         ) : (
           <>
-            <Text style={TYPE.body}>{t('settings:adult.access.email_intro')}</Text>
+            <Text style={[TYPE.body, SHEET_TEXT]}>{t('settings:adult.access.email_intro')}</Text>
             <LbTextInput
               value={newEmail}
               onChangeText={setNewEmail}
@@ -237,7 +237,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
           </Btn>
         }
       >
-        <Text style={TYPE.body}>
+        <Text style={[TYPE.body, SHEET_TEXT]}>
           {t(
             reauth
               ? 'settings:adult.access.password_reauth'
@@ -277,7 +277,10 @@ function Failure({ text }: { text: string | null }) {
   useAnnounce(text);
   if (!text) return null;
   return (
-    <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
+    <Text
+      accessibilityLiveRegion="polite"
+      style={[TYPE.body, SHEET_TEXT, { color: palette.danger }]}
+    >
       {text}
     </Text>
   );

@@ -7,27 +7,29 @@ import { View, type ViewStyle } from 'react-native';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { SKELETON } from '../../lib/theme/states.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Bone, BoneCard, BoneLines, SkeletonGroup } from './Skeleton.js';
 
-// The numbers off the spacing scale below are the shapes of the screens these stand in for,
-// kept as they were (#311): a step instead would move the bones, and with them the jump this
-// file exists to avoid.
+// The measures are the shapes of the screens these stand in for, kept as they were (#311) and
+// named in `SKELETON` (lib/theme/states.ts): a step of the spacing scale instead would move the
+// bones, and with them the jump this file exists to avoid. A width in per cent is how much of its
+// row a line of text takes; they differ on purpose, so the bones read as text and not as a grid.
 
 /** A tinted card on the page: the question and memory cards, with Card's own padding. */
 function tintCard(p: Palette): ViewStyle {
   return {
     backgroundColor: p.lavender,
     borderRadius: RADIUS.card,
-    padding: 18, // token-exempt: Card's own padding (components/lb/Card.tsx)
+    padding: SKELETON.tintPad,
   };
 }
 
 /** One of Buddy's bubbles: a card whose corner next to the orb is tucked in. */
 const BUDDY_BUBBLE: ViewStyle = {
-  padding: 14, // token-exempt: bubble's inner room, kept as drawn (see top)
+  padding: SKELETON.bubblePad,
   borderRadius: RADIUS.card,
-  borderBottomLeftRadius: 6, // token-exempt: tucked corner of a chat bubble (Conversation)
+  borderBottomLeftRadius: SKELETON.bubbleTuck,
 };
 
 /** The practice screen: where she is, the question card, the answer at the bottom. */
@@ -36,32 +38,48 @@ export function PracticeSkeleton({ label }: { label: string }) {
   return (
     <SkeletonGroup label={label} style={{ flex: 1, paddingHorizontal: SPACE.lg }}>
       {/* The header: the session's title and "Beenden". */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: SPACE.md }}>
-        <Bone width="46%" height={18} radius={9} />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          minHeight: SKELETON.head,
+          gap: SPACE.md,
+        }}
+      >
+        <Bone width="46%" {...SKELETON.text.title} />
         <View style={{ flex: 1 }} />
-        <Bone width={96} height={44} radius={22} />
+        <Bone width={SKELETON.width.end} {...SKELETON.touch} />
       </View>
-      <View style={{ height: 4 }} />
+      <View style={{ height: SKELETON.headRule }} />
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           gap: SPACE.md,
-          marginBottom: 10, // token-exempt: progress row to question card, kept as drawn (see top)
+          marginBottom: SKELETON.progressGap,
         }}
       >
-        <Bone width={84} height={14} radius={7} />
-        <Bone width="auto" height={8} radius={4} style={{ flex: 1 }} />
+        <Bone width={SKELETON.width.short} {...SKELETON.text.label} />
+        <Bone width="auto" {...SKELETON.progress} style={{ flex: 1 }} />
       </View>
-      {/* token-exempt: question card's 24 corner and 14 gap, kept as drawn (see top) */}
-      <View style={[tintCard(palette), { borderRadius: 24, gap: 14 }]}>
-        <Bone width={120} height={12} radius={6} tone="white" />
-        {/* token-exempt: question lines 10 apart, kept as drawn (see top) */}
-        <BoneLines lines={2} height={18} gap={10} last="70%" tone="white" />
+      <View
+        style={[
+          tintCard(palette),
+          { borderRadius: SKELETON.questionRadius, gap: SKELETON.questionGap },
+        ]}
+      >
+        <Bone width={SKELETON.width.eyebrow} {...SKELETON.text.meta} tone="white" />
+        <BoneLines
+          lines={2}
+          height={SKELETON.text.title.height}
+          gap={SKELETON.questionLineGap}
+          last="70%"
+          tone="white"
+        />
       </View>
       <View style={{ flex: 1 }} />
       <View style={{ paddingBottom: SPACE.lg }}>
-        <Bone height={54} radius={27} />
+        <Bone {...SKELETON.cta} />
       </View>
     </SkeletonGroup>
   );
@@ -79,23 +97,21 @@ export function LibrarySkeleton({ label }: { label: string }) {
           paddingHorizontal: SPACE.xs,
         }}
       >
-        <Bone width={10} height={10} radius={5} />
-        <Bone width={70} height={12} radius={6} />
+        <Bone width={SKELETON.dot.height} {...SKELETON.dot} />
+        <Bone width={SKELETON.width.dotLabel} {...SKELETON.text.meta} />
       </View>
       {[0, 1, 2].map((i) => (
         <BoneCard key={i}>
-          {/* token-exempt: subject mark 14 from its name, kept as drawn (see top) */}
-          <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-            <Bone width={44} height={44} radius={22} />
+          <View style={{ flexDirection: 'row', gap: SKELETON.markGap, alignItems: 'center' }}>
+            <Bone width={SKELETON.touch.height} {...SKELETON.touch} />
             <View style={{ flex: 1, gap: SPACE.sm }}>
-              <Bone width={i === 1 ? '64%' : '82%'} height={15} radius={7} />
-              <Bone width="46%" height={12} radius={6} />
+              <Bone width={i === 1 ? '64%' : '82%'} {...SKELETON.text.name} />
+              <Bone width="46%" {...SKELETON.text.meta} />
             </View>
           </View>
-          {/* token-exempt: two pill buttons 10 apart, kept as drawn (see top) */}
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Bone width={72} height={40} radius={20} />
-            <Bone width={128} height={40} radius={20} />
+          <View style={{ flexDirection: 'row', gap: SKELETON.pillGap }}>
+            <Bone width={SKELETON.width.shortPill} {...SKELETON.pill} />
+            <Bone width={SKELETON.width.longPill} {...SKELETON.pill} />
           </View>
         </BoneCard>
       ))}
@@ -107,22 +123,22 @@ export function LibrarySkeleton({ label }: { label: string }) {
 export function MemorySkeleton({ label }: { label: string }) {
   const { palette } = useTheme();
   return (
-    <SkeletonGroup
-      label={label}
-      // token-exempt: intro to entries, kept as drawn (see top)
-      style={{ padding: SPACE.lg, gap: 22 }}
-    >
+    <SkeletonGroup label={label} style={{ padding: SPACE.lg, gap: SKELETON.introGap }}>
       <View style={{ paddingHorizontal: SPACE.xs }}>
-        <BoneLines lines={2} height={13} last="74%" />
+        <BoneLines lines={2} height={SKELETON.text.intro.height} last="74%" />
       </View>
       <View style={{ gap: SPACE.md }}>
-        <Bone width={110} height={18} radius={9} style={{ marginHorizontal: SPACE.xs }} />
+        <Bone
+          width={SKELETON.width.medium}
+          {...SKELETON.text.title}
+          style={{ marginHorizontal: SPACE.xs }}
+        />
         {[0, 1].map((i) => (
           <View key={i} style={[tintCard(palette), { gap: SPACE.md }]}>
-            <Bone width={i === 0 ? '58%' : '72%'} height={15} radius={7} tone="white" />
-            <Bone width="44%" height={12} radius={6} tone="white" />
+            <Bone width={i === 0 ? '58%' : '72%'} {...SKELETON.text.name} tone="white" />
+            <Bone width="44%" {...SKELETON.text.meta} tone="white" />
             <View style={{ flexDirection: 'row' }}>
-              <Bone width={84} height={40} radius={20} tone="white" />
+              <Bone width={SKELETON.width.short} {...SKELETON.pill} tone="white" />
             </View>
           </View>
         ))}
@@ -141,13 +157,13 @@ export function ChatSkeleton({ label, rows = 4 }: { label: string; rows?: number
         const width = widths[i % widths.length] ?? '60%';
         return mine ? (
           <View key={i} style={{ alignItems: 'flex-end' }}>
-            <Bone width={width} height={44} radius={22} />
+            <Bone width={width} {...SKELETON.touch} />
           </View>
         ) : (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
-            <Bone width={26} height={26} radius={13} />
+            <Bone width={SKELETON.orb.height} {...SKELETON.orb} />
             <BoneCard style={{ width, ...BUDDY_BUBBLE }}>
-              <BoneLines lines={2} height={11} gap={SPACE.sm} last="54%" />
+              <BoneLines lines={2} height={SKELETON.text.tag.height} gap={SPACE.sm} last="54%" />
             </BoneCard>
           </View>
         );
@@ -162,9 +178,9 @@ export function SettingsSkeleton({ label }: { label: string }) {
     <SkeletonGroup label={label} style={{ padding: SPACE.lg, gap: SPACE.lg }}>
       {[0, 1, 2].map((i) => (
         <BoneCard key={i}>
-          <Bone width={i === 1 ? '40%' : '52%'} height={16} radius={8} />
-          <BoneLines lines={2} height={12} last="66%" />
-          <Bone width={i === 0 ? 150 : 110} height={40} radius={20} />
+          <Bone width={i === 1 ? '40%' : '52%'} {...SKELETON.text.heading} />
+          <BoneLines lines={2} last="66%" />
+          <Bone width={i === 0 ? SKELETON.width.long : SKELETON.width.medium} {...SKELETON.pill} />
         </BoneCard>
       ))}
     </SkeletonGroup>
@@ -177,14 +193,18 @@ export function QuestionsSkeleton({ label }: { label: string }) {
   return (
     <SkeletonGroup label={label} style={{ padding: SPACE.lg, gap: SPACE.md }}>
       <BoneCard>
-        <Bone width="70%" height={18} radius={9} />
-        <Bone width="40%" height={12} radius={6} />
+        <Bone width="70%" {...SKELETON.text.title} />
+        <Bone width="40%" {...SKELETON.text.meta} />
       </BoneCard>
       {[0, 1, 2].map((i) => (
-        // token-exempt: question tag 10 above its lines, kept as drawn (see top)
-        <View key={i} style={[tintCard(palette), { gap: 10 }]}>
-          <Bone width={90} height={11} radius={6} tone="white" />
-          <BoneLines lines={2} height={14} last={i === 2 ? '44%' : '72%'} tone="white" />
+        <View key={i} style={[tintCard(palette), { gap: SKELETON.tagGap }]}>
+          <Bone width={SKELETON.width.tag} {...SKELETON.text.tag} tone="white" />
+          <BoneLines
+            lines={2}
+            height={SKELETON.text.label.height}
+            last={i === 2 ? '44%' : '72%'}
+            tone="white"
+          />
         </View>
       ))}
     </SkeletonGroup>
@@ -198,22 +218,29 @@ export function HomeSkeleton({ label }: { label: string }) {
       label={label}
       style={{ flex: 1, paddingHorizontal: SPACE.lg, paddingTop: SPACE.sm }}
     >
-      {/* token-exempt: head buttons 10 apart, kept as drawn (see top) */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52 }}>
-        <Bone width={104} height={44} radius={22} />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: SKELETON.headGap,
+          minHeight: SKELETON.head,
+        }}
+      >
+        <Bone width={SKELETON.width.brand} {...SKELETON.touch} />
         <View style={{ flex: 1 }} />
-        <Bone width={44} height={44} radius={22} />
-        <Bone width={44} height={44} radius={22} />
+        <Bone width={SKELETON.touch.height} {...SKELETON.touch} />
+        <Bone width={SKELETON.touch.height} {...SKELETON.touch} />
       </View>
-      {/* token-exempt: greeting 18 under the head, kept as drawn (see top) */}
-      <View style={{ alignItems: 'center', marginTop: 18, marginBottom: SPACE.lg }}>
-        <Bone width={150} height={22} radius={11} />
+      <View
+        style={{ alignItems: 'center', marginTop: SKELETON.greetingTop, marginBottom: SPACE.lg }}
+      >
+        <Bone width={SKELETON.width.long} {...SKELETON.text.greeting} />
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {[0, 1, 2, 3, 4].map((i) => (
           <View key={i} style={{ alignItems: 'center', gap: SPACE.sm }}>
-            <Bone width={44} height={44} radius={22} />
-            <Bone width={52} height={10} radius={5} />
+            <Bone width={SKELETON.touch.height} {...SKELETON.touch} />
+            <Bone width={SKELETON.width.startLabel} {...SKELETON.text.tiny} />
           </View>
         ))}
       </View>
@@ -221,17 +248,17 @@ export function HomeSkeleton({ label }: { label: string }) {
         style={{ flex: 1, justifyContent: 'flex-end', gap: SPACE.lg, paddingVertical: SPACE.lg }}
       >
         <View style={{ alignItems: 'flex-end' }}>
-          <Bone width="52%" height={44} radius={22} />
+          <Bone width="52%" {...SKELETON.touch} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
-          <Bone width={26} height={26} radius={13} />
+          <Bone width={SKELETON.orb.height} {...SKELETON.orb} />
           <BoneCard style={{ width: '72%', ...BUDDY_BUBBLE }}>
-            <BoneLines lines={3} height={11} gap={SPACE.sm} last="48%" />
+            <BoneLines lines={3} height={SKELETON.text.tag.height} gap={SPACE.sm} last="48%" />
           </BoneCard>
         </View>
       </View>
       <View style={{ paddingBottom: SPACE.lg }}>
-        <Bone height={56} radius={28} />
+        <Bone {...SKELETON.bar} />
       </View>
     </SkeletonGroup>
   );

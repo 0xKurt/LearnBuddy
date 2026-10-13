@@ -13,7 +13,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import type { IconName } from '../lb/Icon.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 
 type Source = Exclude<AttachOpen, 'menu'>;
 
@@ -59,7 +59,7 @@ export function AttachMenu({
       closeLabel={t('common:actions.close')}
       onClose={onClose}
     >
-      <Text style={[TYPE.meta, { color: palette.ink2 }]}>
+      <Text style={[TYPE.meta, SHEET_TEXT, { color: palette.ink2 }]}>
         {`${t(line)} ${t('capture:privacy')}`}
       </Text>
       {SOURCES.map(({ source, icon }) => (

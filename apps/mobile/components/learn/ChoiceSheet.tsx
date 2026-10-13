@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import type { IconName } from '../lb/Icon.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 
 type Choice = { label: string; icon: IconName; onPress: () => void };
 
@@ -23,7 +23,7 @@ export function ChoiceSheet({ visible, title, body, choices, onClose }: Props) {
   const { t } = useTranslation('common');
   return (
     <Sheet visible={visible} title={title} closeLabel={t('actions.close')} onClose={onClose}>
-      <Text style={TYPE.small}>{body}</Text>
+      <Text style={[TYPE.small, SHEET_TEXT]}>{body}</Text>
       {choices.map((c) => (
         <Btn key={c.label} size="lg" variant="outline" icon={c.icon} full onPress={c.onPress}>
           {c.label}

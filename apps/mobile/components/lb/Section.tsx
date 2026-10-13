@@ -4,13 +4,14 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { UI } from '../../lib/theme/components.js';
 import { circle } from '../../lib/theme/radius.js';
 import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 
 /** The round mark before the title. */
-const DOT = 10;
+const DOT = UI.section.dot;
 
 export function Section({
   title,
@@ -50,7 +51,12 @@ export function Section({
             // all-caps string letter by letter.
             style={[
               TYPE.label,
-              { flex: 1, color: palette.ink2, letterSpacing: 0.8, textTransform: 'uppercase' },
+              {
+                flex: 1,
+                color: palette.ink2,
+                letterSpacing: UI.section.tracking,
+                textTransform: 'uppercase',
+              },
             ]}
           >
             {title}

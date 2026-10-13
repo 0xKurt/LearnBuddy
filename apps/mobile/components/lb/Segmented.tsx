@@ -1,4 +1,5 @@
-// An exclusive choice on one canvas track; each segment keeps its own accessible target (#548).
+// An exclusive choice of two to four on one canvas track (components/core/Segmented.jsx): the
+// segments share one line, each with its own accessible target (#548).
 import { Pressable, Text, View } from 'react-native';
 import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
@@ -14,7 +15,6 @@ export function Segmented<T extends string>({
   options: Array<{ value: T; label: string }>;
   value: T | null;
   onChange: (v: T) => void;
-  size?: 'sm' | 'md';
 }) {
   const { palette } = useTheme();
   return (
@@ -22,7 +22,6 @@ export function Segmented<T extends string>({
       accessibilityRole="radiogroup"
       style={{
         flexDirection: 'row',
-        flexWrap: 'wrap',
         gap: SPACE.xs,
         paddingHorizontal: SPACE.xs,
         borderRadius: RADIUS.round,

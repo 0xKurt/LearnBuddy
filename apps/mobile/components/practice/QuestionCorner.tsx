@@ -18,7 +18,7 @@ import { Text } from 'react-native';
 import type { CornerAction } from '../../lib/practice/useCornerConfirm.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 
 type Props = {
   flaggable: boolean;
@@ -69,7 +69,7 @@ export function CornerSheet({
       closeLabel={t('common:actions.cancel')}
       onClose={onClose}
     >
-      <Text style={TYPE.body}>{t(`practice:${action}.sheet_body`)}</Text>
+      <Text style={[TYPE.body, SHEET_TEXT]}>{t(`practice:${action}.sheet_body`)}</Text>
       <Btn full busy={busy} onPress={onConfirm}>
         {t(`practice:${action}.confirm`)}
       </Btn>

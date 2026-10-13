@@ -157,7 +157,6 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Mar
           {categories.length > 0 ? (
             // One chosen at a time, each with the digit its words carry (the shared choice row).
             <Segmented
-              size="sm"
               options={categories.map((c, i) => ({ value: c.id, label: categoryLabel(c, i) }))}
               value={chosen}
               onChange={choose}

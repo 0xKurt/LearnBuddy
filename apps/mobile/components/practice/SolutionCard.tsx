@@ -31,7 +31,7 @@ export function SolutionCard({ answer, numeric, code = false }: Props) {
   return (
     <Card tone="sky" padding={CARD_PAD.roomy} radius={24}>
       <Text style={[TYPE.bodyStrong, { color: palette.ink2 }]}>{t('solution.title')}</Text>
-      <View style={{ marginTop: SPACE.xs }}>
+      <View>
         {code ? (
           <Text style={TYPE.code}>{keepSpaces(answer)}</Text>
         ) : (
@@ -41,9 +41,7 @@ export function SolutionCard({ answer, numeric, code = false }: Props) {
           />
         )}
       </View>
-      <Text style={[TYPE.bodyStrong, { color: palette.ink2, marginTop: SPACE.sm }]}>
-        {t('solution.calm')}
-      </Text>
+      <Text style={[TYPE.bodyStrong, { color: palette.ink2 }]}>{t('solution.calm')}</Text>
     </Card>
   );
 }

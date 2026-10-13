@@ -8,6 +8,7 @@
 import { Platform, View, type ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
+import { UI } from '../../lib/theme/components.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useSvgId } from '../../lib/theme/svgId.js';
 
@@ -16,7 +17,7 @@ import { useSvgId } from '../../lib/theme/svgId.js';
  * stood readable under the question card and looked like a rendering fault (owner 28.09.,
  * issue #63) — a line of type is ~22 pt, so the fade has to cover one.
  */
-export const EDGE_FADE = 28;
+export const EDGE_FADE = UI.edgeFade.height;
 
 /**
  * The web: the scroll view's own top edge fades out (a CSS mask). Spread into its style.
@@ -91,7 +92,11 @@ export function TopEdgeFade({
                 under the row (measured on the Xiaomi, 01.10.) — the very fault this fade
                 exists to remove (live finding 8, issue #63). */}
             <Stop offset="0" stopColor={color ?? palette.bg} stopOpacity={1} />
-            <Stop offset="0.35" stopColor={color ?? palette.bg} stopOpacity={0.7} />
+            <Stop
+              offset={UI.edgeFade.mid}
+              stopColor={color ?? palette.bg}
+              stopOpacity={UI.edgeFade.midOpacity}
+            />
             <Stop offset="1" stopColor={color ?? palette.bg} stopOpacity={0} />
           </LinearGradient>
         </Defs>

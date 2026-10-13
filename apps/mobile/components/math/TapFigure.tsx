@@ -257,7 +257,6 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
     <View style={{ gap: SPACE.sm }}>
       {clock ? (
         <Segmented
-          size="sm"
           options={[
             { value: '0', label: t('tap.hour_hand') },
             { value: '1', label: t('tap.minute_hand') },
