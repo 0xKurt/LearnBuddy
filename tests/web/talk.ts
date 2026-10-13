@@ -11,6 +11,15 @@ import { dirname, join } from 'node:path';
 
 import { expect, type Page } from '@playwright/test';
 
+import buddyDe from '../../apps/mobile/locales/de/buddy.json';
+
+/**
+ * The conversation screen's one status line while the microphone really records (#599, design
+ * ui_kits/app/Talk.jsx:28). The browser's recorder measures no level, so here it asks for the
+ * tap that ends her turn; on a phone it says that her pause ends it.
+ */
+export const LISTENING = buddyDe.talk.tap_when_done;
+
 /** A 16-bit mono PCM WAV of `samples` (−1…1). */
 function wav(samples: Float32Array, rate: number): Buffer {
   const b = Buffer.alloc(44 + samples.length * 2);
@@ -114,7 +123,7 @@ export async function sayOneThing(page: Page, firstTime: boolean): Promise<void>
     await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
     await expect(page.getByText('Gespräch', { exact: true })).toBeVisible();
   }
-  await expect(page.getByText('Ich höre zu.')).toBeVisible();
+  await expect(page.getByText(LISTENING)).toBeVisible();
   await page.waitForTimeout(1200);
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
 }

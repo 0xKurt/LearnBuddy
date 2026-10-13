@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { PHONES, shot } from './fit';
 import { freshEmail, signUpMia, planTest, sendWorksheet } from './coreLoop';
 import { SCREEN_LOOKS, screenLook, screenShots } from './redesign-screen-matrix';
+import { LISTENING } from './talk';
 
 const glow = (page: Page) =>
   page.locator('svg[viewBox="0 0 100 100"][preserveAspectRatio="none"]').filter({ visible: true });
@@ -67,7 +68,7 @@ test('full-page background covers Welcome, invalid Reset, Talk and Practice', as
   await rootShot('reset');
   await signUpMia(page, freshEmail('background-roots'));
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
-  await expect(page.getByText('Ich höre zu.')).toBeVisible();
+  await expect(page.getByText(LISTENING)).toBeVisible();
   await rootShot('talk');
   await page.getByRole('button', { name: 'Beenden', exact: true }).click();
   await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();

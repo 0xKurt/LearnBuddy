@@ -34,3 +34,7 @@ Logs: `/tmp/learnbuddy-talk-actual-label-matrix.log`, `/tmp/learnbuddy-talk-long
 Twenty-six paths: Talk route; InputBar; MicButton/VoiceRow and their three focused test files; HomeThread; EndScrollMotion test; useEndScroll/useThreadFollow; theme type/talk; five buddy namespaces; core-loop-settings/modes/roleplay/talk browser helper/redesign-talk spec; this ledger, central mobile-redesign progress and the existing #548 temporary compatibility grant. The diagnostic is outside discovery. No pending-unit source is copied.
 
 The documented compatibility grant retains exactly the two now-unused MIC_RING_ROOM exports until the user-required dedicated alias cleanup, alongside the published REDUCE aliases. Final cleanup must remove both exports, their two knip signatures and the grant; no permanent exemption is introduced.
+
+## Correction #599 (talk)
+
+The stage follows `ui_kits/app/Talk.jsx:22–45` now: one status line and ONE centred line of words under the 150 pt orb (`components/voice/TalkCaption.tsx`, `talkLine.ts`), 36 between orb and caption, 110 of room for the caption. The last-three-message tail described above stands only where the thread's newest message carries a card or a roleplay runs. The second hint line and its three texts (`talk.tap_orb`, `talk.barge_sub`, `talk.paused_sub`) are gone; `RecordingStatus` no longer pulses and serves the pronunciation recorder only. Not walked in a browser in that change (owner 13.10.: tested once at the end).

@@ -289,7 +289,6 @@
     "thinking": "Estoy pensando …",
     "speaking": "Buddy está hablando …",
     "paused": "Listo cuando tú quieras.",
-    "paused_sub": "Toca el micro y habla.",
     "slow": "Está tardando más – la respuesta aparecerá en el chat.",
     "end": "Terminar",
     "speak": "Hablar",
@@ -297,8 +296,6 @@
     "interrupt": "Interrumpir y hablar",
     "photo": "Foto",
     "photo_label": "Enseñar una foto",
-    "tap_orb": "Toca a Buddy y te escucha.",
-    "barge_sub": "Habla sin más y te escucha.",
     "finish": "Listo"
   },
   "thread": {
@@ -380,8 +377,10 @@
     "label": "Juego de rol",
     "plays": "Buddy hace de: {{role}}",
     "tasks": "Tus tareas",
+    "start": "Empezar la conversación",
     "end": "Terminar – ¿qué tal ha ido?",
     "end_hint": "Buddy para y te dice cómo te ha ido en cada tarea.",
+    "end_talk": "Terminar la conversación",
     "ended": "Terminado. Mis comentarios están en la conversación.",
     "lang": {
       "de": "alemán",
@@ -404,6 +403,8 @@
     "hint_talk": "Presenta tu exposición como si la clase escuchara. 10 minutos como máximo.",
     "hint_talk_minutes": "Están previstos {{minutes}} minutos. Preséntala como si la clase escuchara.",
     "hint_read": "Lee el texto en voz alta. 2 minutos como máximo.",
+    "live_target": "Meta {{target}} · te escucho",
+    "live": "Te escucho · {{max}} como máximo",
     "too_short": "Ha sido muy corto. Empieza a grabar y habla hasta terminar.",
     "result": {
       "length": "Duración",
@@ -438,5 +439,8 @@
       "slides": "Diapositivas",
       "rehearsal": "Ensayo"
     }
+  },
+  "mode_result": {
+    "next": "La próxima vez"
   }
 }

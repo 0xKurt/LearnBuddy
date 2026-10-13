@@ -289,7 +289,6 @@
     "thinking": "Ci penso …",
     "speaking": "Buddy sta parlando …",
     "paused": "Pronto quando vuoi.",
-    "paused_sub": "Tocca il microfono e parla.",
     "slow": "Ci vuole di più – la risposta arriverà nella chat.",
     "end": "Termina",
     "speak": "Parla",
@@ -297,8 +296,6 @@
     "interrupt": "Interrompi e parla",
     "photo": "Foto",
     "photo_label": "Mostra una foto",
-    "tap_orb": "Tocca Buddy e ti ascolta.",
-    "barge_sub": "Parla pure, ti ascolta.",
     "finish": "Fatto"
   },
   "thread": {
@@ -380,8 +377,10 @@
     "label": "Gioco di ruolo",
     "plays": "Buddy fa: {{role}}",
     "tasks": "I tuoi compiti",
+    "start": "Inizia la conversazione",
     "end": "Finisci – com'è andata?",
     "end_hint": "Buddy si ferma e ti dice com'è andato ogni compito.",
+    "end_talk": "Termina la conversazione",
     "ended": "Finito. Il commento è nella conversazione.",
     "lang": {
       "de": "tedesco",
@@ -404,6 +403,8 @@
     "hint_talk": "Presenta come se la classe ascoltasse. Al massimo 10 minuti.",
     "hint_talk_minutes": "Sono previsti {{minutes}} minuti. Presenta come se la classe ascoltasse.",
     "hint_read": "Leggi il testo ad alta voce. Al massimo 2 minuti.",
+    "live_target": "Obiettivo {{target}} · ti ascolto",
+    "live": "Ti ascolto · al massimo {{max}}",
     "too_short": "È stato molto breve. Avvia la registrazione e parla fino alla fine.",
     "result": {
       "length": "Durata",
@@ -438,5 +439,8 @@
       "slides": "Slide",
       "rehearsal": "Prova"
     }
+  },
+  "mode_result": {
+    "next": "La prossima volta"
   }
 }

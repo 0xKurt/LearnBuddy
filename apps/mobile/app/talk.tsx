@@ -11,14 +11,20 @@
 // (start learning, open a part of the app), the card stays tappable while the
 // loop simply listens again (issue #40). The mic is only on while this screen
 // is open, which she opened herself; "Beenden" or the keyboard ends it.
-// The screen is a camera angle on that one thread (issue #18): the last few
-// messages stand as the chat's own bubbles (components/buddy/Conversation.tsx),
-// naturally grouped with the Orb and following the newest — her words form as her own bubble
-// while she speaks, Buddy's reply streams into his, and the sentence he is
-// reading aloud stands out in it (ReadAlongBubble). Buddy occupies the centered conversation stage; his state is the moon's movement plus a one-line
-// caption (components/voice/TalkOrb.tsx, lib/buddy/moon.ts). Two soft tones
-// mark listening starting and ending (lib/speech/cues.ts). The camera shows
-// Buddy a photo: it goes into the same conversation, and she comes back here.
+// The orb is the stage (design ui_kits/app/Talk.jsx:22–45, #599): Buddy's state is the moon's
+// movement (components/voice/TalkOrb.tsx, lib/buddy/moon.ts) plus one small status line, and under
+// it stands ONE line of words — her own while she speaks, the sentence Buddy is saying while he
+// speaks (components/voice/TalkCaption.tsx). The screen is still a camera angle on the one thread
+// (issue #18): where the thread holds something to tap or to look at — a card Buddy offered, a
+// result — or a roleplay runs (ui_kits/app/Extra.jsx:186–195), its newest messages stand as the
+// chat's own bubbles and cards (components/buddy/Conversation.tsx) in place of the line. Two soft
+// tones mark listening starting and ending (lib/speech/cues.ts). The camera shows Buddy a photo:
+// it goes into the same conversation through the chat's bar.
+//
+// A roleplay spoken here is the design's live scene: its name on top, the smaller orb, who Buddy
+// plays, the lines as bubbles, and "Gespräch beenden", which ends the scene and goes back to the
+// chat, where the feedback stands. The microphone stays: here it is how a turn ends in the
+// browser and how she interrupts him.
 
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
@@ -28,10 +34,14 @@ import { Linking, Platform, ScrollView, Text, View, useWindowDimensions } from '
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Conversation } from '../components/buddy/Conversation.js';
+import { hasCard, messageCard } from '../components/buddy/extensions.js';
+import { roleplayLabel, useEndRoleplay } from '../components/buddy/RoleplayLive.js';
 import { Btn } from '../components/lb/Btn.js';
 import { IconBtn } from '../components/lb/IconBtn.js';
 import { Glow } from '../components/lb/Glow.js';
-import { TalkOrb, type OrbMode } from '../components/voice/TalkOrb.js';
+import { TalkCaption } from '../components/voice/TalkCaption.js';
+import { talkLine } from '../components/voice/talkLine.js';
+import { TalkOrb, talkOrbRoom, type OrbMode } from '../components/voice/TalkOrb.js';
 import { VoiceRow } from '../components/voice/VoiceRow.js';
 import { talkMode } from '../lib/buddy/moon.js';
 import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
@@ -64,7 +74,8 @@ import { TALK } from '../lib/theme/talk.js';
 import { useEndScroll } from '../lib/useEndScroll.js';
 import { CHAT } from '../lib/theme/chat.js';
 import { TYPE } from '../lib/theme/type.js';
-import { SPACE, bottomRoom } from '../lib/theme/space.js';
+import { RADIUS } from '../lib/theme/radius.js';
+import { SPACE, TOUCH, bottomRoom } from '../lib/theme/space.js';
 import { attachInChat } from '../lib/capture/attachRequest.js';
 import { pageHandler } from '../lib/capture/pages.js';
 
@@ -72,6 +83,21 @@ type Phase = TalkPhase;
 
 /** How many of the newest messages the talk screen shows (a tail, not the history). */
 const TAIL = 3;
+
+/** Who Buddy plays in the running roleplay, from its role card in the thread (if still there). */
+function roleIn(thread: readonly MessageView[], roleplayId: string): string | null {
+  for (const m of thread)
+    for (const a of m.actions)
+      if (a.summary.tool === 'start_roleplay' && a.summary.roleplay_id === roleplayId)
+        return a.summary.role;
+  return null;
+}
+
+/** Something to tap or to look at: a card of one of Buddy's actions, or a message drawn as one. */
+function carriesCard(m: MessageView | undefined): boolean {
+  if (!m || m.role !== 'buddy') return false;
+  return m.actions.some((a) => hasCard(a.summary.tool)) || messageCard(m) !== null;
+}
 
 export default function TalkScreen() {
   const { palette } = useTheme();
@@ -86,6 +112,8 @@ export default function TalkScreen() {
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
   /** Buddy's reply while it is still being written (only an answer that changes nothing). */
   const [live, setLive] = useState<string | null>(null);
+  /** His stored reply to her last turn: the line while he reads it. */
+  const [reply, setReply] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const open = useRef(true);
 
@@ -109,6 +137,7 @@ export default function TalkScreen() {
     stopSpeaking();
     setProblem(null);
     setLive(null);
+    // His stored reply stays: it is readable under the orb until she says something.
     setPhase('listening');
     // Cue and microphone start together: the 150 ms tap is too quiet and short
     // for the recogniser to write down, and waiting for it read as a stall
@@ -131,6 +160,7 @@ export default function TalkScreen() {
     const id = newId();
     setPending({ id, text });
     setLive(null);
+    setReply(null);
     setPhase('thinking');
     const me = ++turnSeq.current;
     // She spoke again (or left): this answer no longer drives the screen or the voice.
@@ -212,6 +242,7 @@ export default function TalkScreen() {
       final = r;
       // The stored reply stands in the thread now; the live bubble made room for it.
       setLive(null);
+      setReply(r.text);
       setPhase('speaking');
       if (along.speaker) {
         // Already speaking: the stored text is what was streamed, so this only closes it
@@ -289,6 +320,7 @@ export default function TalkScreen() {
         // — and its optimistic bubble belongs to this visit, the thread carries the rest.
         voiceRef.current.cancel();
         setPending(null);
+        setReply(null);
         setPhase('paused');
       };
     }, []),
@@ -339,14 +371,10 @@ export default function TalkScreen() {
   // level is watched, never its words. The gate learns his echo first and stops him only for
   // her voice: clearly louder than his residue, for long enough (lib/speech/bargeIn.ts).
   const gate = useRef(new BargeGate());
-  /** The ear really hears (a first level arrived): only then may the screen say "just talk". */
-  const [bargeHears, setBargeHears] = useState(false);
   const watching =
     bargeSupported && phase === 'speaking' && talkListensByItself(screenReader.current);
   useEffect(() => {
-    if (!watching) return;
-    gate.current = new BargeGate();
-    return () => setBargeHears(false);
+    if (watching) gate.current = new BargeGate();
   }, [watching]);
   const barge = useBargeMonitor({
     // In the browser the open stream is held while the recorder starts: its own getUserMedia
@@ -360,7 +388,6 @@ export default function TalkScreen() {
         (voice.state === 'idle' || voice.state === 'starting')),
     onLevel: (db, at) => {
       if (!watching) return;
-      setBargeHears(true);
       if (gate.current.observe(db, at, voiceStore.get().phase === 'speaking')) {
         // She talked over him: he stops and listens, as if she had tapped him.
         listen();
@@ -374,9 +401,12 @@ export default function TalkScreen() {
 
   const listening = phase === 'listening' && voice.state === 'recording';
   // The same thread as the chat, seen from here: its newest messages as the chat's
-  // own bubbles (issue #18).
+  // own bubbles (issue #18) — where there is something to tap or to look at, or a scene runs.
   const thread = home.data?.thread ?? [];
   const tail = thread.slice(-TAIL);
+  const roleplay = home.data?.roleplay ?? null;
+  const role = roleplay ? roleIn(thread, roleplay.id) : null;
+  const threaded = roleplay !== null || carriesCard(thread[thread.length - 1]);
   // Her words as her own bubble: the live transcript while she speaks, then what she
   // said until the server's thread carries the message.
   const confirmed = pending !== null && thread.some((m) => m.client_message_id === pending.id);
@@ -386,21 +416,14 @@ export default function TalkScreen() {
       : pending && !confirmed
         ? { text: pending.text }
         : null;
+  // Without bubbles, the one line under the orb carries the words (components/voice/talkLine.ts).
+  const line = threaded
+    ? null
+    : talkLine({ phase, heard: voice.live, said: pending?.text ?? null, reply: live ?? reply });
 
   // Not "Ich höre zu" until the recorder really runs (issue #158): the decision is pure
   // and tested in lib/speech/talkState.ts, because it is a claim, not a label.
   const headline = t(talkHeadline(listening ? 'listening' : phase, voice.state));
-  // Only where her pause really ends the turn does it say so (issue #523); the browser's
-  // recorder measures no level, so there the tap finishes.
-  const sub = listening
-    ? voice.endsByItself
-      ? t('buddy:talk.listening_sub')
-      : t('buddy:talk.tap_when_done')
-    : phase === 'speaking'
-      ? t(bargeHears ? 'buddy:talk.barge_sub' : 'buddy:talk.tap_orb')
-      : phase === 'paused' && !problem && !voice.hint && !voice.denied
-        ? t('buddy:talk.paused_sub')
-        : null;
   // Paused without trouble is her turn: the moon waits (lib/buddy/moon.ts).
   const orbMode: OrbMode = talkMode({
     phase,
@@ -409,6 +432,16 @@ export default function TalkScreen() {
     voiceLoading: buddyVoice.phase === 'loading',
     trouble: !!problem || !!voice.hint || !!voice.denied,
   });
+  // One status line (Talk.jsx:28). While the microphone really records it says how her turn
+  // ends: by itself only where her pause really ends it (issue #523); the browser's recorder
+  // measures no level, so there the tap finishes. While his voice is still on its way the moon
+  // thinks, and the line says so too: "Buddy spricht" stands only while he is heard (rule 5).
+  // Every other state is the headline itself.
+  const status = listening
+    ? t(voice.endsByItself ? 'buddy:talk.listening_sub' : 'buddy:talk.tap_when_done')
+    : orbMode === 'thinking'
+      ? t('buddy:talk.thinking')
+      : headline;
 
   // Every phase change is heard on iOS too (Android reads the live region).
   useAnnounce(headline);
@@ -416,6 +449,17 @@ export default function TalkScreen() {
   // Opened straight from a link (learnbuddy://talk), there is nothing to go back to: the
   // way out leads to the start screen (deep-link-unmatched-and-talk-back).
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
+  // "Gespräch beenden" in a spoken roleplay (Extra.jsx:204): the scene ends, and she is back in
+  // the chat, where the feedback stands as its card.
+  const scene = useEndRoleplay(roleplay?.id ?? null);
+  async function endScene(): Promise<void> {
+    haptic.tap();
+    if (await scene.end()) leave();
+  }
+
+  const compact = window.height < TALK.compactBelow;
+  const stage = compact ? TALK.compactStageSize : roleplay ? TALK.liveStageSize : TALK.stageSize;
 
   return (
     <SafeAreaView
@@ -432,8 +476,11 @@ export default function TalkScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: SPACE.sm,
-          paddingHorizontal: SPACE.lg,
-          paddingTop: SPACE.sm,
+          minHeight: TOUCH,
+          // Talk.jsx:22: 4 above, 8 before the close button, 12 after the title.
+          paddingLeft: SPACE.sm,
+          paddingRight: SPACE.md,
+          paddingTop: SPACE.xs,
         }}
       >
         <IconBtn
@@ -442,39 +489,60 @@ export default function TalkScreen() {
           onPress={leave}
           accessibilityLabel={t('buddy:talk.end')}
         />
-        <Text style={[TYPE.title, { color: palette.ink, flex: 1 }]}>{t('buddy:talk.title')}</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text numberOfLines={1} style={TYPE.title}>
+            {roleplay?.scene || t('buddy:talk.title')}
+          </Text>
+          {roleplay ? (
+            <Text numberOfLines={1} style={TYPE.headerMeta}>
+              {roleplayLabel(t, roleplay.language)}
+            </Text>
+          ) : null}
+        </View>
       </View>
 
-      <View style={{ flex: 1, justifyContent: 'center', gap: TALK.groupGap }}>
-        {/* Conversation mode is the explicit large-Orb exception; real cards remain below. */}
-        <View style={{ alignItems: 'center', flexShrink: 0 }}>
+      <View style={{ flex: 1, justifyContent: 'center', gap: SPACE.xl }}>
+        {/* Conversation mode is the explicit large-Orb exception (HANDOFF §4). */}
+        <View style={{ alignItems: 'center', flexShrink: 0, paddingHorizontal: SPACE.xxl }}>
           <TalkOrb
             mode={orbMode}
-            size={window.height < TALK.compactBelow ? TALK.compactStageSize : TALK.stageSize}
+            size={stage}
             level={voice.level}
             {...(phase === 'speaking'
               ? // Same action as the mic while Buddy speaks, so the same words name it.
                 { onPress: interrupt, pressLabel: t('buddy:talk.interrupt') }
               : {})}
           />
-          <View
-            style={{ minHeight: TALK.captionHeight, alignItems: 'center', marginTop: -SPACE.sm }}
-          >
-            <Text
-              accessibilityRole="header"
-              accessibilityLiveRegion="polite"
-              style={[TYPE.label, { color: palette.ink, textAlign: 'center' }]}
+          {role ? (
+            // Who Buddy plays, as the scene's pill (Extra.jsx:191).
+            <View
+              style={{
+                backgroundColor: palette.paper,
+                borderRadius: RADIUS.round,
+                paddingVertical: SPACE.sm,
+                paddingHorizontal: SPACE.md,
+                marginBottom: SPACE.md,
+              }}
             >
-              {headline}
-            </Text>
-            {sub ? (
-              <AppearText
-                key={sub}
-                style={[TYPE.meta, { textAlign: 'center', marginTop: TALK.hintGap }]}
-              >
-                {sub}
-              </AppearText>
-            ) : null}
+              <Text numberOfLines={1} style={TYPE.headerMeta}>
+                {t('buddy:roleplay.plays', { role })}
+              </Text>
+            </View>
+          ) : null}
+          {/* The orb's box already holds the halo's room: the caption stands `groupGap` under
+              the orb itself (Talk.jsx:25). Under a scene's pill it simply follows. */}
+          <View
+            style={{
+              alignSelf: 'stretch',
+              marginTop: role ? 0 : TALK.groupGap - talkOrbRoom(stage),
+            }}
+          >
+            <TalkCaption
+              status={status}
+              line={line}
+              lines={compact ? TALK.lineMaxCompact : TALK.lineMax}
+              room={!threaded}
+            />
           </View>
         </View>
 
@@ -482,31 +550,33 @@ export default function TalkScreen() {
           cards and streaming as the chat (issue #18), grouped with the stage. */}
         {/* Own name, not "scroll-thread": the home stays mounted under this modal, and two
           identical testIDs make every thread locator ambiguous (Playwright strict mode). */}
-        <ScrollView
-          ref={scroll}
-          testID="scroll-talk"
-          style={{ flexGrow: 0, flexShrink: 1 }}
-          contentContainerStyle={{
-            paddingHorizontal: SPACE.lg,
-            paddingTop: SPACE.md,
-            paddingBottom: SPACE.sm,
-          }}
-          onLayout={() => endScroll.toEnd(false)}
-          onContentSizeChange={() => endScroll.toEnd(true)}
-          onScroll={endScroll.onScroll}
-          {...endScroll.inputProps}
-          scrollEventThrottle={CHAT.scrollThrottle}
-        >
-          <Conversation
-            messages={tail}
-            pending={bubble}
-            live={live}
-            busy={phase === 'thinking'}
-            spoken
-            // While she is still speaking, her forming words are no writing of Buddy's.
-            showTyping={phase !== 'listening'}
-          />
-        </ScrollView>
+        {threaded ? (
+          <ScrollView
+            ref={scroll}
+            testID="scroll-talk"
+            style={{ flexGrow: 0, flexShrink: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: SPACE.lg,
+              paddingTop: SPACE.md,
+              paddingBottom: SPACE.sm,
+            }}
+            onLayout={() => endScroll.toEnd(false)}
+            onContentSizeChange={() => endScroll.toEnd(true)}
+            onScroll={endScroll.onScroll}
+            {...endScroll.inputProps}
+            scrollEventThrottle={CHAT.scrollThrottle}
+          >
+            <Conversation
+              messages={tail}
+              pending={bubble}
+              live={live}
+              busy={phase === 'thinking'}
+              spoken
+              // While she is still speaking, her forming words are no writing of Buddy's.
+              showTyping={phase !== 'listening'}
+            />
+          </ScrollView>
+        ) : null}
       </View>
 
       {problem || voice.hint || voice.denied ? (
@@ -529,7 +599,9 @@ export default function TalkScreen() {
                   ? t(`common:voice.problem.${voice.hint}`)
                   : '')}
           </Text>
-          {/* The same way out as everywhere else the mic is refused (talk-denied-no-settings-action). */}
+          {/* The same way out as everywhere else the mic is refused (talk-denied-no-settings-action).
+              The design has no refused microphone on this screen, so the button keeps the look it
+              has everywhere else that state shows (`MicStatus`, owner rule 2). */}
           {!problem && voice.denied && Platform.OS !== 'web' ? (
             <Btn variant="soft" pill center onPress={() => void Linking.openSettings()}>
               {t('common:voice.open_settings')}
@@ -549,8 +621,23 @@ export default function TalkScreen() {
         </AppearText>
       ) : null}
 
-      {/* Voice first: keyboard · big mic · camera — the conversation's one row (`VoiceRow`),
-          the same in practice (issue #386). "Beenden" is the close button on top. */}
+      {roleplay ? (
+        <View style={{ alignItems: 'center', paddingBottom: SPACE.xs }}>
+          {/* The paper button: the microphone below is this screen's one filled action. */}
+          <Btn
+            variant="secondary"
+            center
+            busy={scene.busy}
+            onPress={() => void endScene()}
+            accessibilityHint={t('buddy:roleplay.end_hint')}
+          >
+            {t('buddy:roleplay.end_talk')}
+          </Btn>
+        </View>
+      ) : null}
+
+      {/* Voice first: keyboard · mic pill · camera (Talk.jsx:32–39) — the conversation's one row
+          (`VoiceRow`), the same in practice (issue #386). "Beenden" is the close button on top. */}
       <View
         style={{
           paddingHorizontal: SPACE.lg,

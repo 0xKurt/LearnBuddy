@@ -23,6 +23,12 @@ import { PressArea } from '../lb/PressArea.js';
 
 export type OrbMode = TalkMode;
 
+/** The box the orb stands in: room around it for the halo and the moon's orbit. */
+const boxOf = (size: number): number => Math.round(size * 1.5);
+
+/** That room on one side — what a neighbour takes off its own gap to the orb itself. */
+export const talkOrbRoom = (size: number): number => (boxOf(size) - size) / 2;
+
 export function TalkOrb({
   mode,
   level,
@@ -38,8 +44,7 @@ export function TalkOrb({
   onPress?: () => void;
   pressLabel?: string;
 }) {
-  // Room around the orb for the halo and the moon's orbit.
-  const box = Math.round(size * 1.5);
+  const box = boxOf(size);
   const orb = (
     <View style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}>
       <Stage size={size * 2} box={box} />

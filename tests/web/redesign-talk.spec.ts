@@ -3,7 +3,7 @@ import { planTest, sendWorksheet } from './coreLoop';
 import { expect, test } from '@playwright/test';
 import { onboardChild, startOffer } from './figureWalk';
 import { PHONES, shot } from './fit';
-import { REPLY, sayOneThing, voiceAsSilence } from './talk';
+import { LISTENING, REPLY, sayOneThing, voiceAsSilence } from './talk';
 import { SCREEN_LOOKS, screenLook, screenTargets } from './redesign-screen-matrix';
 test.use({ actionTimeout: 20_000 });
 for (const look of SCREEN_LOOKS)
@@ -18,12 +18,15 @@ for (const look of SCREEN_LOOKS)
       // Reuse the existing silent-audio speech harness; API/PG and microphone remain real.
       await voiceAsSilence(page, 15_000);
       await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
-      await expect(page.getByText('Ich höre zu.')).toBeVisible();
+      await expect(page.getByText(LISTENING)).toBeVisible();
       await screenTargets(page);
       await shot(page, `talk-${key}-${phone.width}-listening`, { phones: [phone] });
       await sayOneThing(page, false);
       await expect(page.getByText(REPLY).last()).toBeVisible();
       await expect(page.getByText('Buddy spricht …')).toBeVisible();
+      // His reply is the ONE line under the orb while he says it — no bubbles (Talk.jsx:22–45).
+      await expect(page.getByTestId('talk-line').filter({ visible: true })).toHaveCount(1);
+      await expect(page.getByTestId('talk-line').filter({ visible: true })).toContainText(REPLY);
       await screenTargets(page);
       const controls = await Promise.all(
         ['Tastatur', 'Unterbrechen und sprechen', 'Foto zeigen'].map((name) =>
@@ -98,7 +101,8 @@ for (const sample of [
       .getByRole('button', { name: 'Mit Buddy sprechen', exact: true })
       .filter({ visible: true })
       .click();
-    await expect(page.getByText('Ich höre zu.', { exact: true })).toBeVisible();
+    await expect(page.getByText(LISTENING, { exact: true })).toBeVisible();
+    // A card to tap in the thread: there the thread's newest stands under the orb (issue #40).
     const tail = page.locator('[data-testid="scroll-talk"]:visible');
     const ready = tail.getByRole('button', { name: "Los geht's", exact: true });
     await expect(ready).toBeVisible();

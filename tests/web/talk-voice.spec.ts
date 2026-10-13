@@ -8,7 +8,7 @@
 import { expect, test } from '@playwright/test';
 
 import { recordPerf } from './perf';
-import { onboardTalker, REPLY, sayOneThing, voiceAsSilence } from './talk';
+import { LISTENING, onboardTalker, REPLY, sayOneThing, voiceAsSilence } from './talk';
 
 test('Buddy reads to the end over beeps, and listens again by himself', async ({ page }) => {
   await onboardTalker(page, 'talk');
@@ -20,9 +20,7 @@ test('Buddy reads to the end over beeps, and listens again by himself', async ({
     await sayOneThing(page, turn === 0);
     await expect(page.getByText(REPLY).last()).toBeVisible();
     await expect(page.getByText('Buddy spricht …')).toBeVisible();
-    // Only once the ear really hears does the screen say she can just talk (rule 5).
-    await expect(page.getByText('Sprich einfach dazwischen, dann hört er dir zu.')).toBeVisible();
-    await expect(page.getByText('Ich höre zu.')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(LISTENING)).toBeVisible({ timeout: 15_000 });
     // The recorder really runs: that is where the `relisten` span ends.
     await expect(page.getByRole('button', { name: 'Aufnahme stoppen' })).toBeVisible();
     const spans = await recordPerf(page, 'talk-voice');
