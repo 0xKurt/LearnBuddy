@@ -2,7 +2,7 @@
   "title": "Einstellungen",
   "saved": "Gespeichert.",
   "clock": "{{time}} Uhr",
-  "pin_first": "Dafür braucht es die PIN der Eltern. Es gibt noch keine. Sie wird unten bei „Für Eltern“ festgelegt.",
+  "pin_first": "Dafür braucht es die PIN der Eltern. Es gibt noch keine. Sie wird in den Einstellungen unter „Für Eltern“ bei „Anmeldung und PIN“ festgelegt.",
   "contact": {
     "question": "Benachrichtigungen",
     "state_on": "Ja – nie nach {{quiet}} Uhr.",
@@ -49,7 +49,7 @@
     "days_question": "Wann darf Buddy schreiben?",
     "weekend": "Ruhe am Wochenende",
     "weekend_hint": "Keine Nachrichten am Samstag und Sonntag.",
-    "no_pin_hint": "Dafür legen deine Eltern zuerst unten eine PIN fest."
+    "no_pin_hint": "Dafür legen deine Eltern zuerst eine PIN fest: in den Einstellungen unter „Für Eltern“ bei „Anmeldung und PIN“."
   },
   "profile": {
     "title": "Dein Profil",

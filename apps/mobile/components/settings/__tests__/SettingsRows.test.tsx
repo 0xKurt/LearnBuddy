@@ -178,7 +178,9 @@ it('offers "Benachrichtigungen erlauben" to a minor’s parents only while conta
       allowContact={{ busy: false, onPress: allow }}
     />,
   );
-  expect(screen.getByText(/Dafür legen deine Eltern zuerst unten eine PIN fest\./)).toBeTruthy();
+  expect(
+    screen.getByText(/in den Einstellungen unter „Für Eltern“ bei „Anmeldung und PIN“\./),
+  ).toBeTruthy();
   view.rerender(<AdultSection account={account} learner={learner} />);
   expect(screen.queryByText('Benachrichtigungen erlauben')).toBeNull();
 });

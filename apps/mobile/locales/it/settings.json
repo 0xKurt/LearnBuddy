@@ -2,7 +2,7 @@
   "title": "Impostazioni",
   "saved": "Salvato.",
   "clock": "{{time}}",
-  "pin_first": "Per questo serve il PIN dei genitori. Non c'è ancora. Si imposta più sotto, in “Per i genitori”.",
+  "pin_first": "Per questo serve il PIN dei genitori. Non c'è ancora. Si imposta nelle Impostazioni, in “Per i genitori”, alla voce “Accesso e PIN”.",
   "contact": {
     "question": "Notifiche",
     "state_on": "Sì – mai dopo le {{quiet}}.",
@@ -49,7 +49,7 @@
     "days_question": "Quando può scrivere Buddy?",
     "weekend": "Weekend tranquillo",
     "weekend_hint": "Nessun messaggio il sabato e la domenica.",
-    "no_pin_hint": "Per farlo, i tuoi genitori devono prima impostare un PIN qui sotto."
+    "no_pin_hint": "Per farlo, i tuoi genitori devono prima impostare un PIN: nelle Impostazioni, in “Per i genitori”, alla voce “Accesso e PIN”."
   },
   "profile": {
     "title": "Il tuo profilo",

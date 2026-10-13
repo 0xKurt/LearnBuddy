@@ -2,7 +2,7 @@
   "title": "Ajustes",
   "saved": "Guardado.",
   "clock": "{{time}}",
-  "pin_first": "Para esto hace falta el PIN de los padres. Todavía no hay ninguno. Se crea más abajo, en “Para los padres”.",
+  "pin_first": "Para esto hace falta el PIN de los padres. Todavía no hay ninguno. Se crea en Ajustes, en “Para los padres”, en “Acceso y PIN”.",
   "contact": {
     "question": "Notificaciones",
     "state_on": "Sí – nunca después de las {{quiet}}.",
@@ -49,7 +49,7 @@
     "days_question": "¿Cuándo puede escribir Buddy?",
     "weekend": "Fin de semana tranquilo",
     "weekend_hint": "Ningún mensaje el sábado ni el domingo.",
-    "no_pin_hint": "Para eso, tus padres tienen que crear primero un PIN más abajo."
+    "no_pin_hint": "Para eso, tus padres tienen que crear primero un PIN: en Ajustes, en “Para los padres”, en “Acceso y PIN”."
   },
   "profile": {
     "title": "Tu perfil",

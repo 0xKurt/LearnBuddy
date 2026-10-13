@@ -203,7 +203,9 @@ it('the weekend switch: when the server asks for the parents it is retried once 
 
 it('says to a minor without a PIN that the parents set one first — on the page, not only in a toast', () => {
   contact({ ...base, contact_enabled: false }, { pinSet: false });
-  expect(screen.getByText(/Dafür legen deine Eltern zuerst unten eine PIN fest\./)).toBeTruthy();
+  expect(
+    screen.getByText(/in den Einstellungen unter „Für Eltern“ bei „Anmeldung und PIN“\./),
+  ).toBeTruthy();
 });
 
 it('switches contact off with one tap, and pauses it', async () => {
@@ -236,7 +238,9 @@ it('a minor allows contact only through the parents; without a PIN it says where
   await press(screen.getByRole('button', { name: /^Eltern fragen/ }));
   expect(request).not.toHaveBeenCalled();
   expect(update).not.toHaveBeenCalled();
-  expect(show).toHaveBeenCalledWith(expect.stringContaining('PIN der Eltern'));
+  expect(show).toHaveBeenCalledWith(
+    expect.stringContaining('in den Einstellungen unter „Für Eltern“ bei „Anmeldung und PIN“'),
+  );
 });
 
 it('ends a pause and "seltener schreiben" only with the parents for a minor', async () => {

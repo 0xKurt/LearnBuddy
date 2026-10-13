@@ -2,7 +2,7 @@
   "title": "Réglages",
   "saved": "Enregistré.",
   "clock": "{{time}}",
-  "pin_first": "Pour ça, il faut le code PIN des parents. Il n'y en a pas encore. Il se définit plus bas, dans « Pour les parents ».",
+  "pin_first": "Pour ça, il faut le code PIN des parents. Il n'y en a pas encore. Il se définit dans les Réglages, sous « Pour les parents », à « Connexion et code PIN ».",
   "contact": {
     "question": "Notifications",
     "state_on": "Oui – jamais après {{quiet}}.",
@@ -49,7 +49,7 @@
     "days_question": "Quand Buddy peut-il écrire ?",
     "weekend": "Week-end au calme",
     "weekend_hint": "Aucun message le samedi et le dimanche.",
-    "no_pin_hint": "Pour ça, tes parents doivent d'abord définir un code PIN plus bas."
+    "no_pin_hint": "Pour ça, tes parents doivent d'abord définir un code PIN : dans les Réglages, sous « Pour les parents », à « Connexion et code PIN »."
   },
   "profile": {
     "title": "Ton profil",

@@ -2,7 +2,7 @@
   "title": "Settings",
   "saved": "Saved.",
   "clock": "{{time}}",
-  "pin_first": "This needs your parents' PIN. There isn't one yet. It's set below under “For parents”.",
+  "pin_first": "This needs your parents' PIN. There isn't one yet. It's set in Settings under “For parents”, at “Sign-in and PIN”.",
   "contact": {
     "question": "Notifications",
     "state_on": "Yes – never after {{quiet}}.",
@@ -49,7 +49,7 @@
     "days_question": "When may Buddy write?",
     "weekend": "Quiet weekends",
     "weekend_hint": "No messages on Saturday and Sunday.",
-    "no_pin_hint": "For that, your parents first set a PIN below."
+    "no_pin_hint": "For that, your parents first set a PIN: in Settings under “For parents”, at “Sign-in and PIN”."
   },
   "profile": {
     "title": "Your profile",
