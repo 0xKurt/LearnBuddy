@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { PRACTICE } from '../../lib/theme/practice.js';
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { useDraft } from '../../lib/drafts.js';
@@ -30,7 +31,7 @@ import { Btn } from '../lb/Btn.js';
 import { Chip } from '../lb/Chip.js';
 import { Appear } from '../lb/Motion.js';
 import { ChoiceList } from './ChoiceList.js';
-import { ItemThread } from './ItemThread.js';
+import { ItemThread, useWritesBelow } from './ItemThread.js';
 
 const WAYS: readonly ReexplainWay[] = ['simpler', 'example', 'why'];
 /** A reason is picked once (`why.ts`): none of them was tried before. */
@@ -114,6 +115,12 @@ export function Reexplain({
     [choosing, asksHer, picked, disabled, pending, t, submit],
   );
   useRegisterCheckOverride(draftKey, override);
+  // While Buddy writes the new explanation his orb stands at these dots, not at a line above.
+  const writing = pending !== null;
+  useEffect(() => {
+    useWritesBelow.setState({ writing });
+    return () => useWritesBelow.setState({ writing: false });
+  }, [writing]);
   const pendingText =
     pending === 'why' && asksHer && picked !== null
       ? (why[picked] ?? null)
@@ -171,7 +178,10 @@ export function Reexplain({
       <Appear delay={turns.length > 0 ? DURATION.reexplainReply : delay}>
         <View
           accessibilityLabel={t('reexplain.label')}
-          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
+          style={[
+            { flexDirection: 'row', flexWrap: 'wrap' },
+            render ? PRACTICE_SCREEN.chipRow : { gap: SPACE.sm },
+          ]}
         >
           {WAYS.map((way) => (
             <Shortcut

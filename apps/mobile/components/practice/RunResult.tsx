@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Platform, ScrollView, View } from 'react-native';
 
 import { RESULT } from '../../lib/theme/results.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { GUTTER_OUTER, SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
 import { Screen } from '../lb/Screen.js';
 import { AgainButton } from './AgainButton.js';
@@ -54,10 +54,11 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
       <ScrollView
         testID="scroll-list"
         tabIndex={Platform.OS === 'web' ? 0 : undefined}
+        // Design ui_kits/app/Done.jsx:23: `padding: 28px 20px 16px`.
         contentContainerStyle={{
-          padding: SPACE.lg,
+          paddingHorizontal: GUTTER_OUTER,
           paddingTop: RESULT.top,
-          paddingBottom: SPACE.xl,
+          paddingBottom: SPACE.lg,
         }}
         keyboardShouldPersistTaps="handled"
       >
@@ -85,11 +86,10 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
               Tippen das, worüber der Owner sich beschwert hat. Der Server entscheidet,
               wann das gilt (practice/cards.ts offersCardPass). */}
           {session.card_pass_offered ? (
+            // The second way on is a ghost without a sign (Done.jsx:43).
             <Btn
-              size="lg"
               variant="ghost"
               pill
-              icon="practice"
               full
               busy={busy}
               onPress={onCards}
@@ -99,7 +99,6 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
             </Btn>
           ) : session.mode !== 'help' && againTopics.length > 0 ? (
             <AgainButton
-              quiet
               {...(summary.shaky_topics.length > 0 ? {} : { kind: 'harder' as const })}
               title={session.title}
               topics={againTopics}

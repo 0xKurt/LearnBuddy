@@ -3,6 +3,8 @@
 // - shaky: "Die wackligen nochmal üben" – new questions on what didn't sit yet;
 // - harder: everything sat – "Mehr davon, etwas schwerer" (the old app's
 //   "10 ähnliche Aufgaben", as questions Buddy writes).
+// The result's second way on: a ghost without a sign under "Zurück zu Buddy" (design
+// ui_kits/app/Done.jsx:43).
 
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -18,14 +20,12 @@ export function AgainButton({
   topics,
   sessionId,
   kind = 'shaky',
-  quiet = false,
 }: {
   title: string;
   topics: readonly string[];
   /** The finished session: the new questions stay in its world (issue #58). */
   sessionId: string;
   kind?: 'shaky' | 'harder';
-  quiet?: boolean;
 }) {
   const { t } = useTranslation(['practice', 'common']);
   const { state, start } = useStartTopic();
@@ -52,15 +52,7 @@ export function AgainButton({
     <View style={{ gap: SPACE.sm }}>
       <StartStatus state={state} />
       {state.status === 'not_usable' ? null : (
-        <Btn
-          size="lg"
-          variant={quiet ? 'ghost' : 'soft'}
-          pill
-          icon="practice"
-          full
-          disabled={preparing}
-          onPress={() => void go()}
-        >
+        <Btn variant="ghost" pill full disabled={preparing} onPress={() => void go()}>
           {state.status === 'failed'
             ? t('common:actions.retry')
             : kind === 'harder'

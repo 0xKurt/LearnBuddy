@@ -34,12 +34,12 @@ for (const look of SCREEN_LOOKS)
       page.getByRole('heading', { name: practiceDE.summary.title, exact: true }),
     ).toBeVisible();
     await expect(page.getByText(practiceDE.summary.finished, { exact: true })).toBeVisible();
-    for (const [index, item] of session.items.entries()) {
-      expect(item.status).toBe('correct');
-      await expect(
-        page.getByText(`${index + 1} · ${practiceDE.summary_test.right}`, { exact: true }),
-      ).toHaveCount(1);
-    }
+    for (const item of session.items) expect(item.status).toBe('correct');
+    // Each row ends in its state, in a word (design ui_kits/app/Done.jsx:36).
+    const states = page
+      .getByTestId('scroll-list')
+      .getByText(practiceDE.summary_test.right, { exact: true });
+    await expect(states).toHaveCount(session.items.length);
     const back = page
       .getByTestId('bottom-bar')
       .getByRole('button', { name: 'Zurück zu Buddy', exact: true });
@@ -64,9 +64,7 @@ for (const look of SCREEN_LOOKS)
         await page.keyboard.press('PageDown');
         await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
         await page.keyboard.press('End');
-        const last = page.getByText(`${session.items.length} · ${practiceDE.summary_test.right}`, {
-          exact: true,
-        });
+        const last = states.last();
         await expect
           .poll(async () => {
             const bounds = await last.boundingBox();

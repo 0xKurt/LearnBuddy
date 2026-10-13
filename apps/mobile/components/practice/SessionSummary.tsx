@@ -57,8 +57,8 @@ export function SessionSummary({
   }, [celebrate]);
   const { t } = useTranslation('practice');
   const homework = mode === 'help';
-  // The time ran out (issue #241): how far she got is the strong sentence; that what stayed open
-  // is not wrong follows as a plain one — one bold paragraph of three lines read like a verdict.
+  // The time ran out (issue #241): how far she got comes first; that what stayed open is not
+  // wrong follows it.
   const timeUp = ranOut && review ? timeUpLines(summary, review.length) : [];
   const lines = (
     timeUp.length > 0
@@ -71,16 +71,14 @@ export function SessionSummary({
   // Homework is about solving it herself, not about topics that "sit".
   const secure = homework ? [] : summary.secure_topics;
   const shaky = homework ? [] : summary.shaky_topics;
-  const sentences = [
-    ...(lines.length > 0 ? [{ key: 'lines', text: lines.join(' '), strong: true }] : []),
-    ...rest.map((text, i) => ({ key: `rest-${i}`, text, strong: false })),
-    ...(secure.length > 0
-      ? [{ key: 'secure', text: t('summary.secure', { topics: secure.join(', ') }), strong: false }]
-      : []),
-    ...(shaky.length > 0
-      ? [{ key: 'shaky', text: t('summary.shaky', { topics: shaky.join(', ') }), strong: false }]
-      : []),
-  ];
+  // One calm paragraph under the heading (design ui_kits/app/Done.jsx:26): what she did, what
+  // stayed open, what sits and what deserves another look — sentences, never a stack of lines.
+  const lead = [
+    ...lines,
+    ...rest,
+    ...(secure.length > 0 ? [t('summary.secure', { topics: secure.join(', ') })] : []),
+    ...(shaky.length > 0 ? [t('summary.shaky', { topics: shaky.join(', ') })] : []),
+  ].join(' ');
   return (
     <View style={{ gap: RHYTHM.sections }}>
       <View style={{ gap: RESULT.introGap }}>
@@ -91,17 +89,17 @@ export function SessionSummary({
               ? t(ranOut ? 'summary_test.time_up_title' : 'summary_test.title')
               : t('summary.title')}
         </Text>
-        {sentences.map((line) => (
-          <Text key={line.key} style={[TYPE.body, { color: palette.ink2 }]}>
-            {line.text}
+        {lead ? (
+          <Text testID="summary-lead" style={[TYPE.body, { color: palette.ink2 }]}>
+            {lead}
           </Text>
-        ))}
+        ) : null}
       </View>
       {review && review.length > 0 ? (
         <ResultList
           variant="rows"
           title={t('summary_test.review')}
-          rows={review.map((row, n) => reviewRow(row, n + 1, ranOut, t))}
+          rows={review.map((row) => reviewRow(row, ranOut, t))}
           animate={false}
         />
       ) : null}
@@ -110,7 +108,7 @@ export function SessionSummary({
 }
 
 /** One question of a practice test as a row of the result list: its state and its solution. */
-function reviewRow(row: SessionItemView, number: number, ranOut: boolean, t: TFunction): ResultRow {
+function reviewRow(row: SessionItemView, ranOut: boolean, t: TFunction): ResultRow {
   const right = row.status === 'correct';
   const status = right
     ? t('summary_test.right')
@@ -130,7 +128,8 @@ function reviewRow(row: SessionItemView, number: number, ranOut: boolean, t: TFu
     key: row.item.id,
     right,
     status: row.status,
-    label: `${number} · ${status}`,
+    // The state alone, at the row's right end (Done.jsx:36): the question is the row's title.
+    label: status,
     text: row.item.prompt,
     detail: answer !== null && !right ? t('summary_test.solution', { answer }) : null,
     // The review explains, not only lists (report #388 §3.2): the worked way where one was

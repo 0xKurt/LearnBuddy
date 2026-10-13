@@ -5,7 +5,7 @@
 // answer it stands in the gap, so she sees the whole sentence.
 
 import type { Figure, ItemImage, ItemView, TaskPartView } from '@learnbuddy/shared-types/contracts';
-import { useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -14,7 +14,8 @@ import { useDrawingNatural } from '../../lib/math/figureSizing.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { CARD_PAD as CARD_PADDING, PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
+import { QUESTION } from '../../lib/theme/question.js';
+import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { QuestionCard as PresentationCard } from '../lb/QuestionCard.js';
@@ -40,11 +41,6 @@ type ProgressProps = {
   /** A quiet action at the end of the row: one short word ("Passt nicht", `QuestionCorner`). */
   right?: ReactNode;
   /**
-   * The time left in a test she sits with time (issue #241): its own fixed place right after the
-   * bar (issue #334.2). The bar keeps its least width beside it, so the clock never pushes it out.
-   */
-  clock?: ReactNode;
-  /**
    * What the row says instead of "Frage x von y". A flashcard pass counts cards, not
    * questions (issue #147) — same row, same bar, same place on the screen.
    */
@@ -63,7 +59,6 @@ export function ProgressRow({
   total,
   closed,
   right,
-  clock,
   label,
   preparing,
   hideLabel = false,
@@ -107,7 +102,6 @@ export function ProgressRow({
           <Progress total={total} current={closed} part={active ? undefined : 0} />
         </View>
       )}
-      {clock ? <View style={{ flexShrink: 0 }}>{clock}</View> : null}
       {right}
     </View>
   );
@@ -182,6 +176,27 @@ const PASSAGE_SHARE = PRACTICE.passageShare;
 const PASSAGE_SHARE_SHORT = PRACTICE.passageShareShort;
 /** The card's padding, and the gap between the prompt and the drawing. */
 const FIGURE_GAP = SPACE.md;
+
+/**
+ * What the run says about itself in the card's meta line, in place of topic and origin: a
+ * test's rule (design ui_kits/app/Tasks.jsx:139, "Probetest · eine Antwort, keine Tipps").
+ * null: the question's own line.
+ */
+export const RunMeta = createContext<string | null>(null);
+
+/** A quiet line in the page (design ui_kits/app/Flows.jsx:15, `Hint`): meta type, ink-2, 4 in. */
+export function Hint({ children, testID }: { children: string; testID?: string }) {
+  const { palette } = useTheme();
+  return (
+    <Text
+      testID={testID}
+      style={[TYPE.meta, { color: palette.ink2, paddingHorizontal: QUESTION.hintInset }]}
+    >
+      {children}
+    </Text>
+  );
+}
+
 export function QuestionCard({
   extra,
   prompt,
@@ -210,7 +225,7 @@ export function QuestionCard({
   // While she types the card's padding steps down to the field's: on 360×440 a three-line prompt,
   // its folded drawing and the bar with its math keys ran 7 pt past the window and the keys stood
   // cut (issue #419, `cutControls`).
-  const pad = dense || typing ? CARD_PADDING.snug : CARD_PADDING.base;
+  const pad = dense || typing ? QUESTION.typingPad : QUESTION.pad;
   // And the prompt steps down to the smaller size (`dense`), as the drawing folds (issue #484): on
   // 360×440 a four-line prompt from Buddy over the net of a cylinder, its folded drawing and the bar
   // with its math keys ran 38 pt past the window — the question never scrolls, so the keys and the
@@ -224,7 +239,11 @@ export function QuestionCard({
   // row steps aside like the drawing does (#419, #484). On 360×440 a part's situation over its
   // folded chart, the question and the bar with its keys ran 10 pt past the window and the header
   // stood cut (#387); the part's letter still stands before the question ("a) …").
-  const meta = !compactFeedback && !typing && (fromBuddy || Boolean(shownTopic) || part !== null);
+  const runMeta = useContext(RunMeta);
+  const meta =
+    !compactFeedback &&
+    !typing &&
+    (runMeta !== null || fromBuddy || Boolean(shownTopic) || part !== null);
   const { t } = useTranslation('practice');
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
@@ -267,32 +286,45 @@ export function QuestionCard({
         ) : null}
         <View onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}>
           {meta ? (
-            // Where it comes from and what it is about share one line.
+            // Where it comes from and what it is about are one quiet line (design
+            // components/practice/Option.jsx:30, "Brüche · von Buddy"): never a second (it would
+            // cost the card a line, issue #310) — a long topic ends in "…"; the header's title
+            // names the run, a screen reader the rest.
             <View
               testID="question-meta"
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: SPACE.sm,
-                marginBottom: SPACE.sm,
-              }}
+              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACE.md }}
             >
-              {fromBuddy ? <Text style={TYPE.label}>{t('origin_buddy')}</Text> : null}
-              {/* One line, never a second (it would cost the card a line, issue #310): a long
-                  topic ends in "…" — the header's title names the run, a screen reader the rest. */}
-              {part ? (
-                <PartSteps
-                  part={part}
-                  label={t('parts.step', { part: part.part, all: part.letters.join(', ') })}
-                />
-              ) : shownTopic ? (
+              {runMeta !== null ? (
                 <Text
                   numberOfLines={1}
                   style={[TYPE.label, { color: palette.ink2, flex: 1, minWidth: 0 }]}
                 >
-                  {shownTopic}
+                  {runMeta}
                 </Text>
-              ) : null}
+              ) : part ? (
+                <>
+                  {fromBuddy ? (
+                    <Text style={[TYPE.label, { color: palette.ink2 }]}>
+                      {`${t('origin_buddy')} · `}
+                    </Text>
+                  ) : null}
+                  <PartSteps
+                    part={part}
+                    label={t('parts.step', { part: part.part, all: part.letters.join(', ') })}
+                  />
+                </>
+              ) : (
+                <Text
+                  numberOfLines={1}
+                  style={[TYPE.label, { color: palette.ink2, flex: 1, minWidth: 0 }]}
+                >
+                  {fromBuddy && shownTopic
+                    ? t('origin_buddy_topic', { topic: shownTopic })
+                    : fromBuddy
+                      ? t('origin_buddy')
+                      : shownTopic}
+                </Text>
+              )}
             </View>
           ) : null}
           {/* The situation of a task in parts, the same above each of its parts (issue #297). */}
@@ -344,7 +376,7 @@ export function QuestionCard({
 
 /**
  * The letters of a task in parts, the current one in the accent: where she is, never how many are
- * left to do (rule 6). One line, like the topic it stands in for.
+ * left to do (rule 6). One line, in the meta line's type, where the topic stands otherwise.
  */
 function PartSteps({ part, label }: { part: TaskPartView; label: string }) {
   const { palette } = useTheme();
@@ -353,7 +385,7 @@ function PartSteps({ part, label }: { part: TaskPartView; label: string }) {
       testID="task-part-steps"
       accessibilityLabel={label}
       numberOfLines={1}
-      style={[TYPE.metaStrong, { flex: 1, minWidth: 0, color: palette.ink3 }]}
+      style={[TYPE.label, { flex: 1, minWidth: 0, color: palette.ink3 }]}
     >
       {part.letters.map((letter, i) => (
         <Text key={letter} style={letter === part.part ? { color: palette.primaryDk } : null}>

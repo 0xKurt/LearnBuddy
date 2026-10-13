@@ -132,6 +132,7 @@
     "check_waits": "Once every one has a place."
   },
   "origin_buddy": "Question from Buddy",
+  "origin_buddy_topic": "{{topic}} · from Buddy",
   "progress": "Question {{current}} of {{total}}",
   "progress_more_coming": "Question {{current}} · I’m writing more",
   "reexplain": {
@@ -160,6 +161,7 @@
   },
   "speak": {
     "instruction": "Say it out loud",
+    "meta_topic": "{{topic}} · say it out loud",
     "record": "Speak",
     "record_again": "Say it again",
     "record_stop": "Done",
@@ -173,7 +175,6 @@
     "send_failed": "Your recording hasn't reached Buddy yet.",
     "resend": "Send again",
     "record_new": "Record again",
-    "skip": "Skip this time",
     "denied": "Without the microphone I can't hear you. You can allow it in Settings.",
     "denied_web": "Without the microphone I can't hear you. Allow it at the top of your browser, then tap Speak again.",
     "open_settings": "Open Settings",
@@ -218,8 +219,8 @@
   "summary": {
     "finished": "Finished",
     "title": "Done!",
-    "secure": "Managed today without a hint: {{topics}}",
-    "shaky": "Worth another look: {{topics}}"
+    "secure": "Managed today without a hint: {{topics}}.",
+    "shaky": "Worth another look: {{topics}}."
   },
   "summary_help": {
     "title": "Homework done"
@@ -246,7 +247,7 @@
     "time_up_rest": "What stayed open does not count as wrong.",
     "unanswered": "Not answered"
   },
-  "test_note": "Practice test – one answer per question, no hints. You'll see the result at the end.",
+  "test_meta": "Practice test · one answer, no hints",
   "thread": {
     "you": "You",
     "buddy": "Buddy",
@@ -270,6 +271,7 @@
   },
   "drill": {
     "progress": "Task {{current}} of {{total}}",
+    "meta": "Mental maths · as fast as you can",
     "end_hint": "Back to Buddy. What you worked out stays saved.",
     "placeholder": "Result …",
     "slash": "Fraction bar",
@@ -294,7 +296,6 @@
     "chip_other": "{{count}} min left",
     "left_one": "{{count}} minute left",
     "left_other": "{{count}} minutes left",
-    "note": "One answer per question, no hints.",
     "soon": "Calmly see what else you can do.",
     "up": "Time is up – your result is on its way."
   },

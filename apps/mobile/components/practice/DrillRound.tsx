@@ -12,6 +12,9 @@
 // Minimalism (#224): no settings, no instructions, no timer, no score. The head is the one
 // head of every screen (`Screen`, #599): the round ✕, Buddy, the Vorlesen switch — on, the task
 // is read aloud, a tap on it reads it again (#434).
+//
+// The card is the question card of every task (design ui_kits/app/Flows.jsx:82–87): one meta
+// line, then the task, "=" and the slot her digits fill, in one row.
 
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
@@ -27,17 +30,16 @@ import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { practiceHeadState } from '../../lib/buddy/headState.js';
 import { haptic } from '../../lib/haptics.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { GUTTER_APP, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Composer } from '../lb/Composer.js';
 import { KeyRow } from '../lb/KeyRow.js';
 import { DRILL } from '../../lib/theme/drill.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
-import { CARD_PAD } from '../../lib/theme/space.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
+import { QuestionCard } from '../lb/QuestionCard.js';
 import { Screen } from '../lb/Screen.js';
 import { toast } from '../lb/Toast.js';
 import { MathText } from '../math/MathText.js';
@@ -203,7 +205,8 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
             {t('practice:back_to_buddy')}
           </Btn>
           {finished ? (
-            <Btn size="lg" pill full variant="ghost" busy={again} onPress={() => void oneMore()}>
+            // The second way on is a ghost of the plain size (design ui_kits/app/Done.jsx:43).
+            <Btn pill full variant="ghost" busy={again} onPress={() => void oneMore()}>
               {t('practice:drill.again')}
             </Btn>
           ) : null}
@@ -263,14 +266,16 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
         label: t('practice:end_label'),
         hint: t('practice:drill.end_hint'),
       }}
-      // The design's round (ui_kits/app/Flows.jsx:66–80): Buddy waits on the open task and is
-      // glad when a right answer comes back. Nothing here waits for the server, so he never
-      // "thinks": the next task is already on the card.
+      // The design's round (ui_kits/app/Flows.jsx:66–80): Buddy waits on the open task, is glad
+      // when a right answer comes back and speaks when one was not right (:74) — until she
+      // starts the next answer. Nothing here waits for the server, so he never "thinks": the
+      // next task is already on the card.
       state={practiceHeadState({
         checking: false,
         open: Boolean(current),
         fresh: last !== null && last.item_id !== lastAtStart.current,
         afterCorrect: last?.correct === true,
+        replying: last?.correct === false && pending.size === 0 && typed.length === 0,
       })}
       footer={
         <ProgressRow
@@ -282,36 +287,76 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
         />
       }
     >
-      <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
-        <Card radius={RADIUS.lg} padding={CARD_PAD.base}>
-          <View style={{ alignItems: 'center', gap: SPACE.md }} testID="drill-task">
-            <ReadAgain {...(spoken ? { onRead: () => readTask(spoken) } : {})}>
-              <MathText
-                text={prompt}
-                accessibilityRole="header"
-                style={[taskStyle, { textAlign: 'center' }]}
-              />
-            </ReadAgain>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: GUTTER_APP,
+          paddingTop: DRILL.bodyTop,
+          gap: DRILL.bodyGap,
+        }}
+      >
+        <QuestionCard meta={t('practice:drill.meta')}>
+          <View
+            testID="drill-task"
+            style={{
+              flexDirection: 'row',
+              // A long task (a sum of fractions) puts the slot under it instead of squeezing it.
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'center',
+              columnGap: DRILL.taskGap,
+              rowGap: SPACE.sm,
+              paddingTop: DRILL.taskTop,
+              paddingBottom: DRILL.taskBottom,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+              <ReadAgain {...(spoken ? { onRead: () => readTask(spoken) } : {})}>
+                <MathText
+                  text={prompt}
+                  accessibilityRole="header"
+                  style={[taskStyle, { textAlign: 'center' }]}
+                />
+              </ReadAgain>
+              {/* The sign that ties the task to her slot; the heading is the task alone. */}
+              <Text
+                aria-hidden
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+                style={taskStyle}
+              >
+                {' ='}
+              </Text>
+            </View>
             <View
+              testID="drill-slot"
               aria-hidden
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
               style={{
                 minWidth: DRILL.answerWidth,
                 minHeight: DRILL.answerHeight,
-                padding: CARD_PAD.snug,
+                paddingHorizontal: DRILL.answerPad,
                 borderRadius: RADIUS.md,
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: typed ? palette.primaryLt : palette.canvas,
-                borderWidth: DRILL.answerBorder,
+                borderWidth: typed ? DRILL.answerBorder : DRILL.emptyBorder,
+                borderStyle: typed ? 'solid' : 'dashed',
                 borderColor: typed ? palette.primary : palette.hairlineStrong,
               }}
             >
-              <Text style={TYPE.drillAnswer}>{typed || '?'}</Text>
+              <Text
+                style={[
+                  taskStyle,
+                  { color: typed ? palette.ink : palette.ink3, fontVariant: ['tabular-nums'] },
+                ]}
+              >
+                {typed || '?'}
+              </Text>
             </View>
           </View>
-        </Card>
+        </QuestionCard>
         <View testID="drill-last" style={{ minHeight: DRILL.feedbackHeight }}>
           {shownLast ? (
             <MathText

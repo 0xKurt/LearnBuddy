@@ -132,6 +132,7 @@
     "check_waits": "Seulement quand chacun a sa place."
   },
   "origin_buddy": "Question de Buddy",
+  "origin_buddy_topic": "{{topic}} · de Buddy",
   "progress": "Question {{current}} sur {{total}}",
   "progress_more_coming": "Question {{current}} · j’en écris d’autres",
   "reexplain": {
@@ -160,6 +161,7 @@
   },
   "speak": {
     "instruction": "Dis-le à voix haute",
+    "meta_topic": "{{topic}} · dis-le à voix haute",
     "record": "Parler",
     "record_again": "Redis-le",
     "record_stop": "Terminé",
@@ -173,7 +175,6 @@
     "send_failed": "Ton enregistrement n'est pas encore arrivé chez Buddy.",
     "resend": "Renvoyer",
     "record_new": "Réenregistrer",
-    "skip": "Passer cette fois",
     "denied": "Sans micro, je ne peux pas t'entendre. Tu peux l'autoriser dans les réglages.",
     "denied_web": "Sans micro, je ne peux pas t'entendre. Autorise-le en haut de ton navigateur, puis touche à nouveau Parler.",
     "open_settings": "Ouvrir les réglages",
@@ -218,8 +219,8 @@
   "summary": {
     "finished": "Terminé",
     "title": "C'est fait !",
-    "secure": "Réussi aujourd’hui sans indice : {{topics}}",
-    "shaky": "On revoit ça ensemble : {{topics}}"
+    "secure": "Réussi aujourd’hui sans indice : {{topics}}.",
+    "shaky": "On revoit ça ensemble : {{topics}}."
   },
   "summary_help": {
     "title": "Devoirs terminés"
@@ -246,7 +247,7 @@
     "time_up_rest": "Ce qui est resté ouvert ne compte pas comme faux.",
     "unanswered": "Sans réponse"
   },
-  "test_note": "Test d'entraînement – une réponse par question, pas d'indices. Tu verras le résultat à la fin.",
+  "test_meta": "Test d’entraînement · une réponse, pas d’indices",
   "thread": {
     "you": "Toi",
     "buddy": "Buddy",
@@ -270,6 +271,7 @@
   },
   "drill": {
     "progress": "Calcul {{current}} sur {{total}}",
+    "meta": "Calcul mental · aussi vite que tu peux",
     "end_hint": "Retour à Buddy. Ce que tu as calculé reste enregistré.",
     "placeholder": "Résultat …",
     "slash": "Barre de fraction",
@@ -294,7 +296,6 @@
     "chip_other": "encore {{count}} min",
     "left_one": "Encore {{count}} minute",
     "left_other": "Encore {{count}} minutes",
-    "note": "Une réponse par question, pas d’indices.",
     "soon": "Regarde tranquillement ce que tu peux encore faire.",
     "up": "Le temps est écoulé – ton résultat arrive."
   },

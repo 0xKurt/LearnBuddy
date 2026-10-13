@@ -132,6 +132,7 @@
     "check_waits": "Solo quando ognuno ha il suo posto."
   },
   "origin_buddy": "Domanda di Buddy",
+  "origin_buddy_topic": "{{topic}} · di Buddy",
   "progress": "Domanda {{current}} di {{total}}",
   "progress_more_coming": "Domanda {{current}} · ne sto scrivendo altre",
   "reexplain": {
@@ -160,6 +161,7 @@
   },
   "speak": {
     "instruction": "Dillo ad alta voce",
+    "meta_topic": "{{topic}} · dillo ad alta voce",
     "record": "Parla",
     "record_again": "Ridillo",
     "record_stop": "Fatto",
@@ -173,7 +175,6 @@
     "send_failed": "La tua registrazione non è ancora arrivata a Buddy.",
     "resend": "Invia di nuovo",
     "record_new": "Registra di nuovo",
-    "skip": "Salta per questa volta",
     "denied": "Senza microfono non posso sentirti. Puoi consentirlo nelle Impostazioni.",
     "denied_web": "Senza microfono non posso sentirti. Consentilo in alto nel browser e poi tocca di nuovo Parla.",
     "open_settings": "Apri Impostazioni",
@@ -218,8 +219,8 @@
   "summary": {
     "finished": "Finito",
     "title": "Ce l'hai fatta!",
-    "secure": "Oggi senza aiuto: {{topics}}",
-    "shaky": "Lo rivediamo insieme: {{topics}}"
+    "secure": "Oggi senza aiuto: {{topics}}.",
+    "shaky": "Lo rivediamo insieme: {{topics}}."
   },
   "summary_help": {
     "title": "Compiti fatti"
@@ -246,7 +247,7 @@
     "time_up_rest": "Quello che è rimasto aperto non conta come sbagliato.",
     "unanswered": "Senza risposta"
   },
-  "test_note": "Verifica di prova – una risposta per domanda, niente suggerimenti. Vedrai il risultato alla fine.",
+  "test_meta": "Verifica di prova · una risposta, niente suggerimenti",
   "thread": {
     "you": "Tu",
     "buddy": "Buddy",
@@ -270,6 +271,7 @@
   },
   "drill": {
     "progress": "Calcolo {{current}} di {{total}}",
+    "meta": "Calcolo a mente · più veloce che puoi",
     "end_hint": "Torna da Buddy. Quello che hai calcolato resta salvato.",
     "placeholder": "Risultato …",
     "slash": "Linea di frazione",
@@ -294,7 +296,6 @@
     "chip_other": "ancora {{count}} min",
     "left_one": "Manca {{count}} minuto",
     "left_other": "Mancano {{count}} minuti",
-    "note": "Una risposta per domanda, niente suggerimenti.",
     "soon": "Guarda con calma cos’altro riesci a fare.",
     "up": "Il tempo è finito – il tuo risultato sta arrivando."
   },

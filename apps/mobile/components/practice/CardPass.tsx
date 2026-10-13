@@ -54,7 +54,7 @@ import { CheckBar } from './CheckBar.js';
 import { ItemThread } from './ItemThread.js';
 import { PassEnd } from './PassEnd.js';
 import { ListenButton } from './ListenButton.js';
-import { ProgressRow } from './Question.js';
+import { Hint, ProgressRow } from './Question.js';
 import { useQuestionVoice } from './useQuestionVoice.js';
 
 type Props = {
@@ -204,10 +204,8 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
             total: session.items.length,
           })}
         />
-        {/* What this run is, said once — the same quiet line homework and a test get. */}
-        <Text style={[TYPE.metaMedium, { color: palette.primaryDk }]}>
-          {t('practice:cards.note')}
-        </Text>
+        {/* What this run is, said once — the same quiet line homework gets (`Hint`). */}
+        <Hint>{t('practice:cards.note')}</Hint>
         {/* The card in the middle while it is alone; at the top once a conversation follows it. */}
         <View
           style={{ flexGrow: talking ? 0 : 1, flexShrink: 0, justifyContent: 'center' }}

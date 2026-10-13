@@ -63,7 +63,9 @@ describe('SessionSummary — the Probetest review', () => {
         ]}
       />,
     );
-    expect(screen.getByText('1 · Nicht beantwortet')).toBeDefined();
+    // The state alone, at the row's end (design ui_kits/app/Done.jsx:36): no number before it.
+    expect(screen.getByText('Nicht beantwortet')).toBeDefined();
+    expect(screen.queryByText(/\d · /)).toBeNull();
     expect(screen.getByText('Lösung: 12')).toBeDefined();
     expect(screen.getByText('Drei Gruppen mit vier.')).toBeDefined();
     const paths = Array.from(document.querySelectorAll('svg path')).map((path) =>
@@ -71,5 +73,23 @@ describe('SessionSummary — the Probetest review', () => {
     );
     expect(paths).toContain('M12 7v5l3 2');
     expect(paths).toContain('M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z');
+  });
+
+  it('says the lead as one paragraph, sentence after sentence (Done.jsx:26)', () => {
+    renderInApp(
+      <SessionSummary
+        summary={{
+          answered: 4,
+          first_try: 2,
+          secure_topics: ['Brüche'],
+          shaky_topics: ['Gleichungen', 'Terme'],
+        }}
+        mode="practice"
+      />,
+    );
+    expect(screen.getAllByTestId('summary-lead')).toHaveLength(1);
+    expect(screen.getByTestId('summary-lead').textContent).toBe(
+      'Du hast 4 Fragen beantwortet. Heute ohne Tipp geschafft: Brüche. Schauen wir nochmal an: Gleichungen, Terme.',
+    );
   });
 });

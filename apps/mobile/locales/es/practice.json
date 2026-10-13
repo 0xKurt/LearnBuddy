@@ -132,6 +132,7 @@
     "check_waits": "Solo cuando todos tengan su lugar."
   },
   "origin_buddy": "Pregunta de Buddy",
+  "origin_buddy_topic": "{{topic}} · de Buddy",
   "progress": "Pregunta {{current}} de {{total}}",
   "progress_more_coming": "Pregunta {{current}} · estoy escribiendo más",
   "reexplain": {
@@ -160,6 +161,7 @@
   },
   "speak": {
     "instruction": "Dilo en voz alta",
+    "meta_topic": "{{topic}} · dilo en voz alta",
     "record": "Hablar",
     "record_again": "Dilo otra vez",
     "record_stop": "Listo",
@@ -173,7 +175,6 @@
     "send_failed": "Tu grabación aún no ha llegado a Buddy.",
     "resend": "Enviar otra vez",
     "record_new": "Grabar de nuevo",
-    "skip": "Saltar esta vez",
     "denied": "Sin micrófono no puedo oírte. Puedes permitirlo en Ajustes.",
     "denied_web": "Sin micrófono no puedo oírte. Permítelo arriba en tu navegador y vuelve a tocar Hablar.",
     "open_settings": "Abrir Ajustes",
@@ -218,8 +219,8 @@
   "summary": {
     "finished": "Terminado",
     "title": "¡Lo has conseguido!",
-    "secure": "Hoy sin pista: {{topics}}",
-    "shaky": "Lo repasamos otra vez: {{topics}}"
+    "secure": "Hoy sin pista: {{topics}}.",
+    "shaky": "Lo repasamos otra vez: {{topics}}."
   },
   "summary_help": {
     "title": "Deberes hechos"
@@ -246,7 +247,7 @@
     "time_up_rest": "Lo que quedó abierto no cuenta como incorrecto.",
     "unanswered": "Sin responder"
   },
-  "test_note": "Examen de prueba: una respuesta por pregunta, sin pistas. Verás el resultado al final.",
+  "test_meta": "Examen de prueba · una respuesta, sin pistas",
   "thread": {
     "you": "Tú",
     "buddy": "Buddy",
@@ -270,6 +271,7 @@
   },
   "drill": {
     "progress": "Cuenta {{current}} de {{total}}",
+    "meta": "Cálculo mental · tan rápido como puedas",
     "end_hint": "Volver con Buddy. Lo que has calculado queda guardado.",
     "placeholder": "Resultado …",
     "slash": "Barra de fracción",
@@ -294,7 +296,6 @@
     "chip_other": "quedan {{count}} min",
     "left_one": "Queda {{count}} minuto",
     "left_other": "Quedan {{count}} minutos",
-    "note": "Una respuesta por pregunta, sin pistas.",
     "soon": "Mira con calma qué más puedes hacer.",
     "up": "Se acabó el tiempo: enseguida llega tu resultado."
   },

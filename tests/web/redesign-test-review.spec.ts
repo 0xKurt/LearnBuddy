@@ -75,8 +75,11 @@ for (const look of SCREEN_LOOKS)
       practiceDE.summary_test.right,
       practiceDE.summary_test.skipped,
     ];
-    for (const [index, status] of statuses.entries())
-      await expect(page.getByText(`${index + 1} · ${status}`, { exact: true })).toHaveCount(1);
+    // Each row ends in its state, in a word (design ui_kits/app/Done.jsx:36).
+    for (const status of statuses)
+      await expect(page.getByTestId('scroll-list').getByText(status, { exact: true })).toHaveCount(
+        1,
+      );
     for (const row of session.items) {
       await expect(page.getByTestId('scroll-list')).toContainText(row.item.prompt);
       if (row.status !== 'correct' && row.answer !== null) {
@@ -106,7 +109,7 @@ for (const look of SCREEN_LOOKS)
         await expect.poll(() => list.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
         await page.keyboard.press('End');
       }
-      const last = page.getByText(`3 · ${practiceDE.summary_test.skipped}`, { exact: true });
+      const last = list.getByText(practiceDE.summary_test.skipped, { exact: true });
       await expect(last).toBeInViewport({ ratio: 1 });
       const finalRow = session.items.at(-1)!;
       expect(finalRow.answer).not.toBeNull();

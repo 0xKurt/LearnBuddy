@@ -244,6 +244,10 @@ it.each([
     />,
   );
   expect(screen.getByText(text)).toBeTruthy();
+  // The words keep the label's size (13/18, as before the redesign); only their weight steps.
+  const words = screen.getByText(text).style;
+  expect([words.fontSize, words.lineHeight]).toEqual(['13px', '18px']);
+  expect(words.fontWeight).toBe(mark === 'tried' ? '500' : '600');
   expect(nativeHints.get('Paris')).toBe(text);
   const option = screen.getByRole('radio', { name: 'Paris' });
   expect(option.getAttribute('aria-disabled')).toBe('true');

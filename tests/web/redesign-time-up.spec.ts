@@ -86,7 +86,7 @@ for (const look of SCREEN_LOOKS)
     await expect(page.getByText(practiceDE.summary.finished, { exact: true })).toBeVisible();
     await expect(page.getByText('In der Zeit hast du 2 von 3 Fragen beantwortet.')).toBeVisible();
     await expect(page.getByText('Was offen blieb, zählt nicht als falsch.')).toBeVisible();
-    await expect(page.getByText('3 · Nicht beantwortet', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('Nicht beantwortet', { exact: true })).toHaveCount(1);
     const last = finished.items[2];
     expect(last.answer).toBe('Traubenzucker');
     const solutionText = practiceDE.summary_test.solution.replace('{{answer}}', last.answer!);

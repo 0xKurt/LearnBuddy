@@ -2909,7 +2909,7 @@ spielt sie mit ihrer eigenen Synthese (`lib/music/tone.ts`, Dreieck mit Hüllkur
 gezeichnete Zeile (`ListenButton speakerOnly` neben der Zeile, die Taste in `StaffKeys`), Wörter
 und Sätze und die Aufnahme einer Frage (Hörtext, Diktat); die Kopien `useStaffPlay`,
 `useListenToggle` und `useHearText` sind weg (`lib/__tests__/oneListen.test.ts`). Seit #311
-Schritt 2 gibt es genau **einen Hörknopf**, `ListenButton`: gleiche Pille, gleiche Zustände
+Schritt 2 gibt es genau **einen Hörknopf**, `ListenButton`: gleicher Chip (#599), gleiche Zustände
 (bereit „Anhören"/„Nochmal hören", lädt „Lädt …", spielt „Anhalten"; ein Fehler wird gesagt, der
 Knopf ist wieder bereit), gleiches Label-Muster, „Langsam" als leiser Zwilling mit geteiltem
 Zustand. Den Spielzustand selbst (angefragt / klingt, Anhalten beim Verlassen, ein Satz statt
@@ -4684,10 +4684,10 @@ word list, so it stays a prompt rule.
   test ends in the same transaction; the scheduler's session sweep ends one she never came back
   to (`lifecycle.ts`). `SessionView.timer` = `{ minutes, remaining_ms, ran_out }`; the app counts
   down from the moment the view arrived (never its wall clock against a deadline), shows whole
-  minutes in a small chip in the progress row's own clock slot right after the bar ("noch 10
-  Min." — no red, no seconds; the bar keeps its least width beside it, issue #334.2),
-  the test's one rule on the line under it, and at five minutes that line turns into one quiet
-  sentence ("Schau in Ruhe, was du noch schaffst."), announced once (`TestClock.tsx`,
+  minutes in the head's subtitle beside where she is ("Frage 1 von 3 · noch 10 Min." — no red,
+  no seconds; #599, design `ui_kits/app/Tasks.jsx` `test`), the test's one rule in the question
+  card's meta line, and at five minutes that line turns into one quiet sentence ("Schau in
+  Ruhe, was du noch schaffst."), announced once (`TestClock.tsx`, `QuestionProgress.tsx`,
   `lib/practice/testClock.ts`). The offer card carries a clock and the minutes. At zero the app
   hands the test in once no answer is on its way.
   `ran_out` (finished at or after the deadline) makes the result say how far she got ("In der
@@ -5378,7 +5378,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   with Chromium's fake microphone and a scripted transcript.
 - **Pronunciation** — see Learning modes (`speak`). A judgement that lands after "Beenden" is
   refused (the write locks the session first, 409). Offline, the recording waits for the
-  connection with "Neu aufnehmen" / "Diesmal überspringen" available, which cancel the wait.
+  connection with "Neu aufnehmen" / "Überspringen" available, which cancel the wait.
 - **Screen readers** — `lib/announce.ts`: Android reads live regions by itself, iOS has none,
   so toasts, capture and dictation status, what the mic understood, the PIN error (again after
   each attempt), Buddy's reply ("Buddy: …", when Vorlesen is off), practice feedback with its

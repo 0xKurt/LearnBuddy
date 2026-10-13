@@ -110,7 +110,7 @@ test('charts: every chart type drawn, read and judged by code', async ({ page })
     .last()
     .getByRole('button', { name: START })
     .click();
-  await expect(page.getByText('Frage von Buddy')).toBeVisible();
+  await expect(page.getByTestId('question-meta')).toContainText('von Buddy');
 
   const seen = new Set<string>();
   for (let n = 0; n < QUESTIONS.length; n++) {

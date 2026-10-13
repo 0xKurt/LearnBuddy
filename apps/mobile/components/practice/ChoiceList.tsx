@@ -18,7 +18,7 @@ import type { ChoiceMark } from '../../lib/practice/choiceMarks.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { circle } from '../../lib/theme/radius.js';
-import { TYPE } from '../../lib/theme/type.js';
+import { fontFace, TYPE } from '../../lib/theme/type.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { Btn } from '../lb/Btn.js';
 import { Option, type OptionState } from '../lb/Option.js';
@@ -695,12 +695,9 @@ function MarkWords({ state, text }: { state: ChoiceMark | undefined; text: strin
       <Text
         style={[
           TYPE.label,
-          {
-            ...(state === 'tried' ? TYPE.metaMedium : TYPE.bodyStrong),
-            flex: 1,
-            minWidth: 0,
-            color,
-          },
+          // The label's size, a step lighter than its own 700: 500 for a tried one, 600 else.
+          fontFace(state === 'tried' ? '500' : '600'),
+          { flex: 1, minWidth: 0, color },
         ]}
       >
         {text}

@@ -80,7 +80,9 @@ vi.mock('../../../lib/toast.js', async (importOriginal) => ({
 
 const { ListenButton } = await import('../ListenButton.js');
 const { QuestionTools } = await import('../QuestionTools.js');
-const { renderInApp } = await import('../../../testing/render.js');
+const { renderInApp, styleOf } = await import('../../../testing/render.js');
+const { UI } = await import('../../../lib/theme/components.js');
+const { CONTROL } = await import('../../../lib/theme/space.js');
 
 const THIRD: HeardTones = {
   bars: [
@@ -142,6 +144,31 @@ describe('ListenButton: words', () => {
   it('cannot be tapped without words or while disabled', () => {
     renderInApp(<ListenButton source={{ text: '  ', lang: 'fr' }} />);
     expect(button('Anhören').getAttribute('aria-disabled')).toBe('true');
+  });
+
+  // Design ui_kits/app/Flows.jsx:120 (#599): `Chip icon="sound"` and a plain chip "Langsam".
+  it('is the design’s chip with the speaker; "Langsam" the same chip without it', () => {
+    renderInApp(<ListenButton source={{ text: 'bonjour', lang: 'fr' }} slow />);
+    const chipOf = (name: string) => button(name).querySelector('div > div') as HTMLElement;
+    for (const name of ['Anhören', 'Langsam anhören']) {
+      const chip = styleOf(chipOf(name));
+      expect(chip.minHeight).toBe(`${UI.chip.height}px`);
+      expect(chip.borderTopWidth).toBe('1px');
+    }
+    expect(button('Anhören').querySelector('svg')).not.toBeNull();
+    expect(button('Langsam anhören').querySelector('svg')).toBeNull();
+    // The target stays a whole touch target around the 34 pt chip.
+    expect(styleOf(button('Anhören')).minHeight).toBe('44px');
+  });
+
+  it('stays a full button where hearing is the question itself (the Diktat card)', () => {
+    renderInApp(
+      <ListenButton source={{ text: 'bonjour', lang: 'fr' }} size="lg" variant="primary" />,
+    );
+    const parts = [button('Anhören'), ...Array.from(button('Anhören').querySelectorAll('div'))];
+    const heights = parts.flatMap((part) => [styleOf(part).minHeight, styleOf(part).height]);
+    expect(heights).toContain(`${CONTROL.lg}px`);
+    expect(heights).not.toContain(`${UI.chip.height}px`);
   });
 });
 
@@ -212,8 +239,9 @@ describe('ListenButton: a recording (Hörtext #210, Diktat #242)', () => {
     show();
     tap('Anhören');
     expect(asked).toMatchObject([{ slow: false }]);
-    // Loading: the words say it, and the other pass waits.
-    expect(button('Lädt …').querySelector('[role="progressbar"]')).not.toBeNull();
+    // Loading: the chip's words say it, and both passes wait.
+    expect(button('Lädt …').textContent).toBe('Lädt …');
+    expect(button('Lädt …').getAttribute('aria-disabled')).toBe('true');
     expect(button('Langsam anhören').getAttribute('aria-disabled')).toBe('true');
     await answer();
     expect(played.map((p) => p.uri)).toEqual(['file://normal']);

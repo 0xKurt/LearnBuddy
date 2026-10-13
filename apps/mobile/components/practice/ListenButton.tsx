@@ -7,21 +7,21 @@
 //     loading ("Lädt …", a recording on its way), playing ("Anhalten"); a sound that could not be
 //     made is said by the one playback state (`usePlayback`) and the control is ready again. The
 //     state is in the words and the icon, never in the colour alone;
-//   · the same small soft pill with the speaker — larger only where hearing IS the question (the
-//     Diktat card), the speaker alone only where a column beside a note line has no room for words;
+//   · the same chip with the speaker (design ui_kits/app/Flows.jsx:120, `Chip icon="sound"`) — a
+//     full button only where hearing IS the question (the Diktat card names its size and
+//     variant), the speaker alone as a quiet round button where a column beside a note line has
+//     no room for words;
 //   · `slow` is NOT a second way to listen: it is the same one, slower, sharing its state. So it is
-//     the quieter ghost pill beside its sibling, without the speaker, labelled with the modifier
-//     alone ("Langsam") while a screen reader hears the whole action ("Langsam anhören").
+//     the chip beside its sibling without the speaker, labelled with the modifier alone
+//     ("Langsam") while a screen reader hears the whole action ("Langsam anhören").
 //
 // It renders a fragment: the caller's row or column decides where the pair stands.
 
-import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { Btn } from '../lb/Btn.js';
-import { Icon } from '../lb/Icon.js';
+import { Chip } from '../lb/Chip.js';
+import { IconBtn } from '../lb/IconBtn.js';
 import { type ListenSource, type Pass, sourceKind, useListen } from './useListen.js';
 
 type Props = {
@@ -30,10 +30,13 @@ type Props = {
   slow?: boolean;
   /** She heard it before in this run: "Nochmal hören". */
   heard?: boolean;
-  /** Larger only where hearing is the question itself (the Diktat card). */
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'soft' | 'outline' | 'primary';
-  /** The speaker alone, the full width of its column (beside a note line, issue #275). */
+  /**
+   * A full button instead of the chip, in this size and variant: only where hearing is the
+   * question itself (the Diktat card).
+   */
+  size?: 'md' | 'lg';
+  variant?: 'outline' | 'primary';
+  /** The speaker alone, a quiet round button (beside a note line, issue #275). */
   speakerOnly?: boolean;
   /** What the screen reader hears it does, where the source alone does not say it. */
   hint?: string;
@@ -50,14 +53,13 @@ export function ListenButton({
   source,
   slow = false,
   heard = false,
-  size = 'sm',
-  variant = 'soft',
+  size = 'md',
+  variant,
   speakerOnly = false,
   hint,
   disabled = false,
 }: Props) {
   const { t } = useTranslation('practice');
-  const { palette } = useTheme();
   const { state, play, fetching } = useListen(source);
   /** Nothing to hear: no words, or a line without a note. */
   const nothing =
@@ -65,8 +67,9 @@ export function ListenButton({
       ? source.text.trim().length === 0
       : 'tones' in source && source.tones.bars.length === 0;
 
-  /** A running pass stays tappable — tapping it is how she stops it. */
-  const off = (pass: Pass): boolean => state(pass) === 'ready' && (disabled || nothing || fetching);
+  /** A running pass stays tappable — tapping it is how she stops it; a loading one waits. */
+  const off = (pass: Pass): boolean =>
+    state(pass) === 'loading' || (state(pass) === 'ready' && (disabled || nothing || fetching));
   const busyLabel = (pass: Pass): string | null =>
     state(pass) === 'playing'
       ? t('listen.stop')
@@ -81,46 +84,50 @@ export function ListenButton({
 
   return (
     <>
-      <Btn
-        size={size}
-        pill
-        variant={variant}
-        {...(speakerOnly
-          ? {
-              full: true,
-              compact: true,
-              label: (
-                <View style={{ alignItems: 'center' }}>
-                  <Icon
-                    name={mainIcon}
-                    size={PRACTICE_SCREEN.speakerGlyph}
-                    color={off('normal') ? palette.ink2 : palette.primaryDk}
-                  />
-                </View>
-              ),
-            }
-          : { icon: mainIcon })}
-        busy={state('normal') === 'loading'}
-        disabled={off('normal')}
-        onPress={() => play('normal')}
-        accessibilityLabel={main}
-        {...mainHint}
-      >
-        {main}
-      </Btn>
-      {slow ? (
+      {speakerOnly ? (
+        <IconBtn
+          icon={mainIcon}
+          tone="quiet"
+          busy={state('normal') === 'loading'}
+          disabled={off('normal')}
+          onPress={() => play('normal')}
+          accessibilityLabel={main}
+          {...mainHint}
+        />
+      ) : variant ? (
         <Btn
-          size="sm"
+          size={size}
           pill
-          variant="ghost"
+          variant={variant}
+          icon={mainIcon}
+          busy={state('normal') === 'loading'}
+          disabled={off('normal')}
+          onPress={() => play('normal')}
+          accessibilityLabel={main}
+          {...mainHint}
+        >
+          {main}
+        </Btn>
+      ) : (
+        <Chip
+          icon={mainIcon}
+          disabled={off('normal')}
+          onPress={() => play('normal')}
+          accessibilityLabel={main}
+          {...mainHint}
+        >
+          {main}
+        </Chip>
+      )}
+      {slow ? (
+        <Chip
           {...(state('slow') === 'playing' ? { icon: 'stop' as const } : {})}
-          busy={state('slow') === 'loading'}
           disabled={off('slow')}
           onPress={() => play('slow')}
           accessibilityLabel={busyLabel('slow') ?? t('listen.slow_label')}
         >
           {busyLabel('slow') ?? t('listen.slow')}
-        </Btn>
+        </Chip>
       ) : null}
     </>
   );

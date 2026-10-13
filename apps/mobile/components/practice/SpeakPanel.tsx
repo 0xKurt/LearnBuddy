@@ -1,16 +1,15 @@
-// Saying a sentence aloud (a 'speak' question). SpeakCard shows the sentence
-// large and, once Buddy has listened, the same sentence word by word: words
-// that sound right in calm green, words to practise in warm amber and
-// underlined (never red), the tips below and one overall line. SpeakPanel is
-// the pinned bottom part: hearing the sentence, saying it (tap to start, tap to
-// stop, 15 s at most) and the way past it. The recording goes to the server,
-// whose model listens to it; a failed upload is sent again with the same
-// client_turn_id, so it is counted only once.
+// Saying a sentence aloud (a 'speak' question; design ui_kits/app/Flows.jsx:98–129). SpeakCard is
+// the question card: one meta line, the sentence large and, once Buddy has listened, the same
+// sentence with only the words to practise underlined in the "wrong" text colour (never the
+// whole sentence coloured); what the underline means stands as a quiet hint under the card.
+// SpeakPanel is the pinned bottom part: the chips above (hearing the sentence, slower, the way
+// past it) and the one large primary — "Sprechen", then "Fertig" (tap to start, tap to stop,
+// 15 s at most). The recording goes to the server, whose model listens to it; a failed upload is
+// sent again with the same client_turn_id, so it is counted only once.
 //
-// The bar carries TWO shapes, not four (issue #186): one large filled pill — the single
-// leading action, which always says what pressing it will do — and small pills for
-// everything quiet around it (soft for a tool on this sentence, ghost for a way out). The
-// owner looked at the old bar, with a text link, two outlined boxes, a big filled button
+// The bar carries TWO shapes, not four (issue #186): one large filled pill — the single leading
+// action, which always says what pressing it will do — and chips for everything quiet around it.
+// The owner looked at the old bar, with a text link, two outlined boxes, a big filled button
 // and a ghost button on it, and wrote "und ich weiss auch nicht wieso das vom design so
 // anders ist" (01.10.).
 
@@ -25,9 +24,8 @@ import type {
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
-import { Linking, Platform, Text, View } from 'react-native';
+import { Linking, Platform, Text, View, type TextStyle } from 'react-native';
 
-import { BusyIndicator } from '../lb/BusyIndicator.js';
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
 import { newId } from '../../lib/api/client.js';
 import { speakItem } from '../../lib/api/endpoints.js';
@@ -40,17 +38,20 @@ import { MAX_RECORDING_MS } from '../../lib/speech/voice.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
-import { SPEAK } from '../../lib/theme/speak.js';
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
+import { QUESTION } from '../../lib/theme/question.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { RecordingStatus } from '../voice/RecordingStatus.js';
 import { PressArea } from '../lb/PressArea.js';
 import { Btn } from '../lb/Btn.js';
+import { Chip } from '../lb/Chip.js';
 import { QuestionCard } from '../lb/QuestionCard.js';
 import { toast } from '../lb/Toast.js';
 import { dropped, reacted, tapped } from '../../lib/perf.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { ListenButton } from './ListenButton.js';
+import { Hint } from './Question.js';
 import { WordSheet, type SpokenWord } from './WordSheet.js';
 
 /** The newest pronunciation feedback among this question's turns, if any. */
@@ -64,6 +65,19 @@ export function latestPronunciation(turns: PracticeTurnView[]): PronunciationFee
 
 // ─────────────── the sentence and the feedback ───────────────
 
+/**
+ * A word to practise: underlined, in the "wrong" text colour (Flows.jsx:109). A word that sounds
+ * right stays plain — the underline is the mark, the colour only repeats it.
+ */
+function useWeak(): TextStyle {
+  const { palette } = useTheme();
+  return {
+    color: palette.danger,
+    textDecorationLine: 'underline',
+    textDecorationColor: palette.danger,
+  };
+}
+
 function MarkedWords({
   feedback,
   onWord,
@@ -72,7 +86,7 @@ function MarkedWords({
   /** A word she taps: it opens on its own to listen to and to try again (issue #83). */
   onWord?: (word: PronunciationFeedback['words'][number]) => void;
 }) {
-  const { palette } = useTheme();
+  const weak = useWeak();
   const { t } = useTranslation('practice');
   const ok = feedback.words.filter((w) => w.ok).map((w) => w.text);
   const practise = feedback.words.filter((w) => !w.ok).map((w) => w.text);
@@ -82,84 +96,50 @@ function MarkedWords({
   ]
     .filter((s): s is string => s !== null)
     .join(' ');
+  if (onWord)
+    return (
+      <View
+        testID="spoken-word-actions"
+        style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.xs, alignItems: 'baseline' }}
+      >
+        {feedback.words.map((w, i) => (
+          <PressArea
+            key={`${i}-${w.text}`}
+            accessibilityRole="button"
+            accessibilityLabel={t('speak.word_open', { word: w.text })}
+            onPress={() => onWord(w)}
+            style={{
+              minWidth: TOUCH,
+              minHeight: TOUCH,
+              maxWidth: '100%',
+              flexShrink: 1,
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={[TYPE.question, w.ok ? null : weak]}>{w.text}</Text>
+          </PressArea>
+        ))}
+      </View>
+    );
   return (
-    <View
-      accessible={!onWord}
-      accessibilityLabel={onWord ? undefined : summary}
-      style={{ gap: PRACTICE.speechNoteGap }}
-    >
-      {onWord ? (
-        <View
-          testID="spoken-word-actions"
-          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.xs, alignItems: 'baseline' }}
-        >
-          {feedback.words.map((w, i) => (
-            <PressArea
-              key={`${i}-${w.text}`}
-              accessibilityRole="button"
-              accessibilityLabel={t('speak.word_open', { word: w.text })}
-              onPress={() => onWord(w)}
-              style={{
-                minWidth: TOUCH,
-                minHeight: TOUCH,
-                maxWidth: '100%',
-                flexShrink: 1,
-                justifyContent: 'center',
-              }}
-            >
-              <Text
-                style={[
-                  TYPE.question,
-                  w.ok
-                    ? { color: palette.successText }
-                    : {
-                        ...TYPE.questionStrong,
-                        color: palette.warningText,
-                        textDecorationLine: 'underline',
-                        textDecorationColor: palette.warning,
-                      },
-                ]}
-              >
-                {w.text}
-              </Text>
-            </PressArea>
-          ))}
-        </View>
-      ) : (
-        <Text style={TYPE.question}>
-          {feedback.words.map((w, i) => (
-            <Text key={`${i}-${w.text}`}>
-              {i > 0 ? ' ' : ''}
-              <Text
-                style={
-                  w.ok
-                    ? { color: palette.successText }
-                    : {
-                        ...TYPE.questionStrong,
-                        color: palette.warningText,
-                        textDecorationLine: 'underline',
-                        textDecorationColor: palette.warning,
-                      }
-                }
-              >
-                {w.text}
-              </Text>
-            </Text>
-          ))}
+    <Text accessible accessibilityLabel={summary} style={TYPE.question}>
+      {feedback.words.map((w, i) => (
+        <Text key={`${i}-${w.text}`}>
+          {i > 0 ? ' ' : ''}
+          <Text style={w.ok ? null : weak}>{w.text}</Text>
         </Text>
-      )}
-      {practise.length > 0 ? <Text style={TYPE.meta}>{t('speak.legend')}</Text> : null}
-    </View>
+      ))}
+    </Text>
   );
 }
 
 /**
- * The sentence she was asked to say, with the words the model has judged so far in
- * the same colours as the finished feedback; the rest stays plain. Nothing counts as
- * judged here — the stored feedback replaces it (issue #8).
+ * The sentence she was asked to say, with the words the model has judged so far marked as in
+ * the finished feedback; the rest stays plain. Nothing counts as judged here — the stored
+ * feedback replaces it (issue #8).
  */
 function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent['words'] }) {
-  const { palette } = useTheme();
+  const weak = useWeak();
   const parts = prompt.split(/(\s+)/);
   let at = 0;
   return (
@@ -168,21 +148,8 @@ function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent[
         if (/^\s+$/.test(part)) return <Text key={i}>{part}</Text>;
         const judged = words[at];
         at++;
-        if (!judged) return <Text key={i}>{part}</Text>;
         return (
-          <Text
-            key={i}
-            style={
-              judged.ok
-                ? { color: palette.successText }
-                : {
-                    ...TYPE.questionStrong,
-                    color: palette.warningText,
-                    textDecorationLine: 'underline',
-                    textDecorationColor: palette.warning,
-                  }
-            }
-          >
+          <Text key={i} style={judged && !judged.ok ? weak : null}>
             {part}
           </Text>
         );
@@ -214,17 +181,19 @@ type CardProps = {
  * reply in the thread (PronunciationNote, ItemThread).
  */
 export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
-  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const feedback = latestPronunciation(turns);
   /** The word she tapped, to hear and try on its own (issue #83). */
   const [word, setWord] = useState<SpokenWord | null>(null);
+  const marked = feedback !== null && feedback.words.length > 0;
 
   return (
-    <QuestionCard>
-      <View style={{ gap: SPACE.md }}>
-        {item.topic ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{item.topic}</Text> : null}
-        <Text style={TYPE.label}>{t('speak.instruction')}</Text>
+    <>
+      {/* One meta line (Flows.jsx:108, "Sprechen · sag es laut"): what it is about, where the
+          question names it, and what to do. */}
+      <QuestionCard
+        meta={item.topic ? t('speak.meta_topic', { topic: item.topic }) : t('speak.instruction')}
+      >
         {sessionId && item.lang ? (
           <WordSheet
             word={word}
@@ -234,7 +203,7 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
             onClose={() => setWord(null)}
           />
         ) : null}
-        {feedback && feedback.words.length > 0 ? (
+        {marked ? (
           <MarkedWords
             feedback={feedback}
             {...(sessionId && item.lang ? { onWord: setWord } : {})}
@@ -246,8 +215,14 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
             {item.prompt}
           </Text>
         )}
-      </View>
-    </QuestionCard>
+      </QuestionCard>
+      {/* What the underline means: a quiet hint under the card, not in it (Flows.jsx:115). */}
+      {marked && feedback.words.some((w) => !w.ok) ? (
+        <View style={{ marginTop: QUESTION.hintGap }}>
+          <Hint testID="speak-legend">{t('speak.legend')}</Hint>
+        </View>
+      ) : null}
+    </>
   );
 }
 
@@ -262,12 +237,7 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
   // No verdict line here: the words are marked in the card, the chip under her own turn
   // says "Fast", and Buddy's bubble says it in his words. Three times was two too many.
   return (
-    <View
-      style={{
-        gap: PRACTICE.speechNoteGap,
-        paddingLeft: SPACE.xs,
-      }}
-    >
+    <View style={{ gap: PRACTICE.speechNoteGap }}>
       {tips.map((w, i) => (
         <Text key={`${i}-${w.text}`} style={TYPE.body}>
           {t('speak.tip', { word: w.text, tip: w.tip ?? '' })}
@@ -470,7 +440,9 @@ export function SpeakPanel({
       ? 'stop'
       : sending === 'failed'
         ? 'resend'
-        : 'record';
+        : sending === 'sending' && !waitingOffline
+          ? 'judging'
+          : 'record';
 
   const leadText =
     lead === 'settings'
@@ -479,9 +451,11 @@ export function SpeakPanel({
         ? t('speak.record_stop')
         : lead === 'resend'
           ? t('speak.resend')
-          : hasFeedback
-            ? t('speak.record_again')
-            : t('speak.record');
+          : lead === 'judging'
+            ? t('speak.listening')
+            : hasFeedback
+              ? t('speak.record_again')
+              : t('speak.record');
 
   // One status row, never a stack (issue #14): what is true right now replaces what was
   // true before — a microphone that was refused, the running recording, Buddy listening,
@@ -513,25 +487,10 @@ export function SpeakPanel({
         </Btn>
         {onSkip ? (
           <Btn size="sm" pill variant="ghost" onPress={skipWhileWaiting} disabled={disabled}>
-            {t('speak.skip')}
+            {t('skip')}
           </Btn>
         ) : null}
       </View>
-    </View>
-  ) : sending === 'sending' ? (
-    <View
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel={t('speak.listening')}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SPACE.sm,
-        minHeight: SPEAK.statusHeight,
-      }}
-    >
-      <BusyIndicator color={palette.primary} />
-      <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('speak.listening')}</Text>
     </View>
   ) : sending === 'failed' ? (
     <View style={{ gap: SPACE.sm }}>
@@ -554,28 +513,40 @@ export function SpeakPanel({
     <BottomBar>
       {status}
 
-      {/* Hearing the sentence is ONE thing with a quieter variant, not two equal buttons
-          (issue #186): "Anhören" is the soft pill the app uses for reading aloud wherever
-          it offers it, and "Langsam" stands beside it as its modifier — close enough
-          (SPACE.xs) to read as one control, and the rank is in the pill, the icon and the
-          label, never in the colour alone. ListenButton decides that, once. */}
-      <View style={{ flexDirection: 'row', gap: SPACE.xs, flexWrap: 'wrap' }}>
+      {/* The quiet controls stand above the primary as one row of chips (Flows.jsx:119–121):
+          hearing the sentence is ONE thing with a slower variant (`ListenButton` decides that,
+          once, issue #186), and beside it the way past this sentence — the only one: for a
+          sentence she is to SAY there is no solution to show, so the screen's "Lösung zeigen"
+          chip (the same `reveal` call under another name) is not offered next to it
+          (app/practice/[id].tsx). */}
+      <View
+        testID="speak-chips"
+        style={[{ flexDirection: 'row', flexWrap: 'wrap' }, PRACTICE_SCREEN.chipRow]}
+      >
         <ListenButton source={{ text: item.prompt, lang }} slow disabled={recording || busy} />
+        {onSkip && !recording && !waitingOffline ? (
+          <Chip onPress={onSkip} disabled={locked}>
+            {t('skip')}
+          </Chip>
+        ) : null}
       </View>
 
       {/* The one leading action: the only filled thing in the bar, and it always says what
-          pressing it will do. Without the microphone that is "open the settings", not
-          "speak" — a button that cannot do its job must not keep offering it (issue #185). */}
+          pressing it will do — "Sprechen", "Fertig" while she speaks, and while Buddy listens
+          it waits and says so (Flows.jsx:122–124). Without the microphone that is "open the
+          settings", not "speak" — a button that cannot do its job must not keep offering it
+          (issue #185). */}
       <Btn
         size="lg"
         full
         pill
-        variant={lead === 'stop' ? 'soft' : 'primary'}
+        variant="primary"
         {...(lead === 'stop'
-          ? { icon: 'stop' as const }
+          ? { icon: 'check' as const }
           : lead === 'record'
             ? { icon: 'mic' as const }
             : {})}
+        busy={lead === 'judging'}
         onPress={
           lead === 'settings'
             ? () => void Linking.openSettings()
@@ -591,22 +562,14 @@ export function SpeakPanel({
               ? t('speak.record_stop_label')
               : lead === 'resend'
                 ? t('speak.resend')
-                : t('speak.record_label')
+                : lead === 'judging'
+                  ? t('speak.listening')
+                  : t('speak.record_label')
         }
         {...(lead === 'record' ? { accessibilityHint: t('speak.record_hint') } : {})}
       >
         {leadText}
       </Btn>
-
-      {/* The way past this sentence — the same quiet pill as the controls above it, and the
-          only one: for a sentence she is to SAY there is no solution to show, so the
-          screen's "Lösung zeigen" chip (the same `reveal` call under another name) is not
-          offered next to it any more (app/practice/[id].tsx, issue #186). */}
-      {onSkip && !recording && !waitingOffline ? (
-        <Btn size="sm" pill variant="ghost" center onPress={onSkip} disabled={locked}>
-          {t('speak.skip')}
-        </Btn>
-      ) : null}
     </BottomBar>
   );
 }
