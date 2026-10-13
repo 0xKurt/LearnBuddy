@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 import { freshEmail, openMenu, PIN, sendWorksheet, signUpMia } from './coreLoop';
-import { PHONES, setScheme, settle, SHOTS } from './fit';
+import { overflows, PHONES, setScheme, settle, SHOTS } from './fit';
 
 const OUT = join(SHOTS, 'header');
 const SCHEMES = ['light', 'dark'] as const;
@@ -20,7 +20,7 @@ type Pose = 'idle' | 'listen' | 'think' | 'speak' | 'wait' | 'happy';
 type Measured = {
   pose: string;
   slot: { left: number; right: number; width: number };
-  title: { left: number; right: number; width: number; lines: number };
+  title: { left: number; right: number; width: number; lines: number; cut: boolean };
   sound: { left: number; right: number; width: number; height: number } | null;
   more: { left: number; right: number; width: number; height: number } | null;
   view: number;
@@ -55,6 +55,8 @@ function measure(page: Page): Promise<Measured | null> {
         right: title.right,
         width: title.width,
         lines: Math.round(title.height / line),
+        // One line is not enough: a title that ends in "…" lost its end.
+        cut: heading.scrollWidth > heading.clientWidth,
       },
       sound: box(row.querySelector('[role="switch"]')),
       more: box(row.querySelector('[aria-label="Mehr"]')),
@@ -69,12 +71,46 @@ function measure(page: Page): Promise<Measured | null> {
  */
 type Want = { pose?: Pose; more?: boolean | 'own' };
 
+/**
+ * Titles that are cut today, and nothing else may be. Both wait for the owner (#599, review of
+ * #604): since the head carries the switch and ⋯ on every screen, its title column is 162 pt
+ * at 390 and 132 pt at 360 — as in the prototype, which ellipsizes the same titles. A title that
+ * is whole again fails here too: its entry goes.
+ */
+const CUT_TITLES: ReadonlyArray<{
+  screen: RegExp;
+  widths: readonly number[];
+  /** Only beside a ⋯: a question without an action of its own draws none, and the title fits. */
+  besideMore?: true;
+  why: string;
+}> = [
+  {
+    screen: /^memory$/,
+    widths: [390, 360],
+    why: '"Was Buddy über dich weiß": owner decision on a shorter title',
+  },
+  {
+    screen: /^(practice-(open|wrong|checking|correct)|done)$/,
+    widths: [360],
+    besideMore: true,
+    why: 'the session title "Mathearbeit Brüche" beside two controls at 360',
+  },
+];
+const cutExpected = (screen: string, m: Measured) =>
+  CUT_TITLES.some(
+    (c) => c.screen.test(screen) && c.widths.includes(m.view) && (!c.besideMore || m.more !== null),
+  );
+
 /** What every head must hold, whatever its screen. */
-function check(m: Measured | null, at: string, want: Want): void {
+function check(m: Measured | null, screen: string, look: string, want: Want): void {
+  const at = `${screen} ${look}`;
   expect.soft(m, `${at}: the screen has the head`).not.toBeNull();
   if (!m) return;
   if (want.pose) expect.soft(m.pose, `${at}: the orb's state`).toBe(want.pose);
   expect.soft(m.title.lines, `${at}: the title on one line`).toBe(1);
+  expect
+    .soft(m.title.cut, `${at}: the title whole (cut only where CUT_TITLES says so)`)
+    .toBe(cutExpected(screen, m));
   // The slot is the moon's room (1.85 × the orb): the title begins after it.
   expect
     .soft(m.title.left, `${at}: the moon's room clear of the title`)
@@ -121,7 +157,7 @@ async function head(
       await page.setViewportSize(phone);
       await settle(page, 900);
       await page.screenshot({ path: join(OUT, `${name}-${scheme}-${phone.width}.png`) });
-      check(await measure(page), `${name} ${scheme} @${phone.width}`, want);
+      check(await measure(page), name, `${scheme} @${phone.width}`, want);
     }
   }
   await setScheme(page, 'light');
@@ -141,7 +177,7 @@ async function passing(
     .soft(page.locator(`[data-testid="header-orb-${pose}"]:visible`).last(), `${name}: ${pose}`)
     .toBeVisible({ timeout: 6000 });
   await page.screenshot({ path: join(OUT, `${name}-${variant}.png`) });
-  check(await measure(page), `${name} ${variant}`, { pose, more });
+  check(await measure(page), name, variant, { pose, more });
 }
 
 /** The four looks of a passing state, one after the other. */
@@ -250,7 +286,16 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   await page.getByLabel('Deine Antwort').fill('0,5');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByTestId('thread-turn').first()).toBeVisible();
-  await head(page, 'practice-wrong', { pose: 'wait', more: 'own' });
+  // Not right yet: Buddy speaks about it (design App.jsx:62) — until she starts her next answer.
+  // A change of scheme draws the app anew, and a reply that was there when the screen opened
+  // moves nothing: the dark shots show the task waiting.
+  await head(page, 'practice-wrong', { pose: 'speak', more: 'own' }, ['light']);
+  await head(page, 'practice-wrong', { pose: 'wait', more: 'own' }, ['dark']);
+  await page.getByLabel('Deine Antwort').fill('0,5');
+  await page.getByRole('button', { name: 'Prüfen' }).click();
+  await expect(page.locator('[data-testid="header-orb-speak"]:visible').last()).toBeVisible();
+  await page.getByLabel('Deine Antwort').fill('0');
+  await expect(page.locator('[data-testid="header-orb-wait"]:visible').last()).toBeVisible();
 
   // Checking → thinking; right → happy. One look per question.
   release = await slow(page, /\/practice\/sessions\/[^/]+\/answer$/, 'POST', 1500);
@@ -287,6 +332,19 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   await expect(page.getByRole('heading', { name: 'LearnBuddy', exact: true })).toBeVisible();
   for (const n of [1, 2, 3]) await say(page, n);
 
+  // ── A practice that cannot be loaded: the head with its way out, Buddy thinks ──
+  const lost = /\/practice\/sessions\/[^/]+$/;
+  await page.route(lost, (route) => route.fulfill({ status: 404, body: '{}' }));
+  await page.goto(practice);
+  await expect(page.getByRole('button', { name: 'Zurück zu Buddy' })).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByRole('button', { name: 'Schließen', exact: true })).toBeVisible();
+  await head(page, 'practice-stuck', { pose: 'think' });
+  await page.unroute(lost);
+  await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  await expect(page.getByRole('heading', { name: 'LearnBuddy', exact: true })).toBeVisible();
+
   // ── The places, each with the same head ──
   await openMenu(page, 'Dein Material');
   await expect(page.getByRole('heading', { name: 'Dein Material', exact: true })).toBeVisible();
@@ -316,7 +374,23 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   // ── The parents' PIN: the head with the way out, Buddy waits; a wrong PIN and he speaks up ──
   await page.goto('/pin');
   await expect(page.getByRole('heading', { name: 'PIN der Eltern', exact: true })).toBeVisible();
+  // The head closes; "Abbrechen" is the page's own button (rule 14), once.
+  await expect(page.getByRole('button', { name: 'Schließen', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Abbrechen', exact: true })).toHaveCount(1);
+  // The lead stands under the head, the pad at the bottom, and all of it fits both phones.
+  for (const phone of PHONES) {
+    await page.setViewportSize(phone);
+    await settle(page, 900);
+    expect((await overflows(page)).filter((o) => !o.allowed)).toEqual([]);
+    const lead = await page.getByText(/deine Eltern erlauben/).boundingBox();
+    const cancel = await page.getByRole('button', { name: 'Abbrechen', exact: true }).boundingBox();
+    expect(lead!.y, `PIN @${phone.width}: the lead under the head`).toBeLessThan(90);
+    expect(
+      cancel!.y + cancel!.height,
+      `PIN @${phone.width}: the last button at the bottom`,
+    ).toBeGreaterThan(phone.height - 60);
+  }
+  await page.setViewportSize(PHONES[0]!);
   await head(page, 'pin', { pose: 'wait', more: false });
   const wrong = PIN === '0000' ? '1111' : '0000';
   for (const digit of wrong) await page.getByRole('button', { name: digit, exact: true }).click();
@@ -345,8 +419,19 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   // One tap turns Vorlesen, the next turns it back — the chat's switch, on every screen.
   const sound = page.getByRole('switch', { name: 'Vorlesen' }).last();
   const before = await sound.getAttribute('aria-checked');
+  const glyph = () =>
+    sound.locator('path').evaluateAll((paths) => paths.map((x) => x.getAttribute('d')));
+  const drawn = await glyph();
+  await page.screenshot({
+    path: join(OUT, `switch-${before === 'true' ? 'on' : 'off'}-light-390.png`),
+  });
   await sound.click();
   await expect(sound).not.toHaveAttribute('aria-checked', before ?? '');
+  // On or off is the glyph's own shape (waves or a cross), never its colour.
+  expect(await glyph()).not.toEqual(drawn);
+  await page.screenshot({
+    path: join(OUT, `switch-${before === 'true' ? 'off' : 'on'}-light-390.png`),
+  });
   await sound.click();
   await expect(sound).toHaveAttribute('aria-checked', before ?? '');
 

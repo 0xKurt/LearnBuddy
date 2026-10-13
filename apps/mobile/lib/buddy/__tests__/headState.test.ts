@@ -51,7 +51,13 @@ describe('what the head says Buddy is doing', () => {
   });
 });
 
-const task: PracticeFacts = { checking: false, open: true, fresh: false, afterCorrect: false };
+const task: PracticeFacts = {
+  checking: false,
+  open: true,
+  fresh: false,
+  afterCorrect: false,
+  replying: false,
+};
 
 describe('what the head of a task shows (MIGRATION §6)', () => {
   it('waits while the task is open', () => {
@@ -71,8 +77,22 @@ describe('what the head of a task shows (MIGRATION §6)', () => {
     expect(practiceHeadState({ ...closed, fresh: true, afterCorrect: false })).toBe('idle');
   });
 
-  it('waits again after a try that was not right yet', () => {
-    expect(practiceHeadState({ ...task, fresh: true, afterCorrect: false })).toBe('wait');
+  it('speaks while his feedback to a try that was not right yet is the newest thing on screen', () => {
+    // Design ui_kits/app/App.jsx:62, Tasks.jsx:176: not right yet → speaking.
+    expect(practiceHeadState({ ...task, fresh: true, replying: true })).toBe('speak');
+    // …also on a task the try closed (the solution is shown with his words).
+    expect(practiceHeadState({ ...task, open: false, fresh: true, replying: true })).toBe('speak');
+  });
+
+  it('waits again once she starts her next try, and thinks once it is sent', () => {
+    expect(practiceHeadState({ ...task, fresh: true, replying: false })).toBe('wait');
+    expect(practiceHeadState({ ...task, fresh: true, replying: true, checking: true })).toBe(
+      'think',
+    );
+  });
+
+  it('never speaks about a reply that was there when the screen opened', () => {
+    expect(practiceHeadState({ ...task, fresh: false, replying: true })).toBe('wait');
   });
 
   it('listens while she says her answer, before anything else', () => {

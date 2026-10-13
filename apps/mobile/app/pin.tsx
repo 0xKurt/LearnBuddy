@@ -19,7 +19,8 @@ import { messageFor } from '../lib/errors.js';
 import { formatTime } from '../lib/time.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { bottomRoom, GUTTER, RHYTHM, SPACE } from '../lib/theme/space.js';
+import { PIN_PAGE } from '../lib/theme/pin.js';
+import { bottomRoom, GUTTER_APP, SPACE } from '../lib/theme/space.js';
 import { RADIUS } from '../lib/theme/radius.js';
 
 export default function Pin() {
@@ -82,7 +83,7 @@ export default function Pin() {
       title={t('pin.title')}
       // Design ui_kits/app/More.jsx `ParentPin`: Buddy waits for the PIN and speaks up when it was wrong.
       state={error ? 'speak' : 'wait'}
-      leading={{ icon: 'close', label: t('pin.cancel'), onPress: () => router.back() }}
+      leading={{ icon: 'close', onPress: () => router.back() }}
       // No ⋯ here: this modal is the parents' one step, and the menu's places would lead out of it
       // with the approval still pending (lib/adminFlow.ts).
       menu={null}
@@ -90,50 +91,66 @@ export default function Pin() {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          paddingHorizontal: GUTTER,
-          paddingTop: SPACE.xl,
+          paddingHorizontal: GUTTER_APP,
+          paddingTop: PIN_PAGE.top,
           // Edge-to-edge: the last button must clear the Android navigation bar.
-          paddingBottom: bottomRoom(insets.bottom, SPACE.xl),
-          gap: RHYTHM.sections,
-          alignItems: 'center',
-          justifyContent: 'center',
+          paddingBottom: bottomRoom(insets.bottom, PIN_PAGE.bottom),
         }}
       >
-        <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center', maxWidth: 360 }]}>
+        {/* The lead under the head, then free room, then the pad at the bottom — where the
+            thumb is (design ui_kits/app/More.jsx:104–108). */}
+        <Text
+          style={[
+            TYPE.body,
+            {
+              color: palette.ink2,
+              paddingHorizontal: PIN_PAGE.leadInset,
+              maxWidth: PIN_PAGE.textWidth,
+            },
+          ]}
+        >
           {detail ?? (purpose ? t(`pin.purpose.${purpose}`) : t('pin.body'))}
         </Text>
-        {error ? (
-          <View
-            style={{
-              backgroundColor: palette.blush,
-              borderRadius: RADIUS.note,
-              paddingHorizontal: SPACE.lg,
-              paddingVertical: 10, // token-exempt: one or two lines, snug in the note
-              maxWidth: 360,
-            }}
-          >
-            <Text style={[TYPE.body, { color: palette.ink, textAlign: 'center' }]}>{error}</Text>
-          </View>
-        ) : null}
-        <View style={{ marginTop: SPACE.xs }}>
+        <View style={{ flexGrow: 1, minHeight: SPACE.xl }} />
+        <View style={{ alignItems: 'center', gap: SPACE.lg }}>
+          {error ? (
+            <View
+              style={{
+                backgroundColor: palette.blush,
+                borderRadius: RADIUS.note,
+                paddingHorizontal: SPACE.lg,
+                paddingVertical: 10, // token-exempt: one or two lines, snug in the note
+                maxWidth: PIN_PAGE.textWidth,
+              }}
+            >
+              <Text style={[TYPE.body, { color: palette.ink, textAlign: 'center' }]}>{error}</Text>
+            </View>
+          ) : null}
           <PinPad onComplete={(pin) => void submit(pin)} resetKey={attempt} disabled={busy} />
+          <View style={{ alignItems: 'center' }}>
+            {/* Opening the parents' area: a forgotten PIN is set anew with the account's
+                password there (components/settings/PinCard.tsx). */}
+            {purpose === 'parents' ? (
+              <Btn
+                variant="ghost"
+                pill
+                center
+                onPress={() => {
+                  done.current = true;
+                  finishAdmin(false, true);
+                  router.back();
+                }}
+              >
+                {t('pin.forgot')}
+              </Btn>
+            ) : null}
+            {/* A modal closes with an obvious button in it (CLAUDE.md rule 14); the head's ✕ is
+                the design's way out. Both stay until the owner decides between them (#599). */}
+            <Btn variant="ghost" pill center onPress={() => router.back()}>
+              {t('pin.cancel')}
+            </Btn>
+          </View>
         </View>
-        {/* Opening the parents' area: a forgotten PIN is set anew with the account's
-            password there (components/settings/PinCard.tsx). */}
-        {purpose === 'parents' ? (
-          <Btn
-            variant="ghost"
-            pill
-            center
-            onPress={() => {
-              done.current = true;
-              finishAdmin(false, true);
-              router.back();
-            }}
-          >
-            {t('pin.forgot')}
-          </Btn>
-        ) : null}
       </ScrollView>
     </Screen>
   );

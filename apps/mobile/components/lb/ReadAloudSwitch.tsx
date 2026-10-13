@@ -50,10 +50,13 @@ export function ReadAloudSwitch() {
       }}
     >
       {({ pressed }) => (
+        // Design components/buddy/Header.jsx:23 with core/Btn.jsx:37: a 20 pt glyph in ink-2,
+        // on or off. Which way it is says the glyph itself — sound waves or the cross — and the
+        // switch's state, never a colour.
         <Icon
           name={on ? 'speak' : 'speak-off'}
-          size={UI.iconButton.actionGlyph}
-          color={on ? palette.primaryDk : pressed ? palette.ink : palette.ink3}
+          size={UI.iconButton.glyph}
+          color={pressed ? palette.ink : palette.ink2}
         />
       )}
     </Pressable>
