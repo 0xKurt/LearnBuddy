@@ -48,7 +48,8 @@
     "days": "Days",
     "days_question": "When may Buddy write?",
     "weekend": "Quiet weekends",
-    "weekend_hint": "No messages on Saturday and Sunday."
+    "weekend_hint": "No messages on Saturday and Sunday.",
+    "no_pin_hint": "For that, your parents first set a PIN below."
   },
   "profile": {
     "title": "Your profile",
@@ -108,7 +109,8 @@
       "share_title": "LearnBuddy export",
       "share_failed": "The file couldn't be handed over. Please try again.",
       "shared": "The export has been handed over.",
-      "saved": "The export has been saved as a file."
+      "saved": "The export has been saved as a file.",
+      "body": "Everything stored, as a file. To keep or pass on."
     },
     "delete": {
       "title": "Delete account",
@@ -119,7 +121,8 @@
       "confirm_title": "Really delete the account?",
       "confirm_body": "In 7 days everything is deleted for good: account, profile, conversations, photos and practice. Until then you can cancel it here.",
       "confirm_cta": "Yes, delete in 7 days",
-      "scheduled_toast": "The deletion is scheduled."
+      "scheduled_toast": "The deletion is scheduled.",
+      "body": "Everything is deleted for good after 7 days. Until then you can cancel it."
     },
     "signout": {
       "cta": "Sign out",
@@ -127,7 +130,9 @@
       "confirm_body": "Signing in again needs the e-mail address and the password.",
       "confirm_cta": "Yes, sign out",
       "confirm_unsent": "This device still has answers or photos that were not sent. Signing out deletes them. With a connection they are sent right away – just wait a moment.",
-      "confirm_cta_unsent": "Sign out anyway"
+      "confirm_cta_unsent": "Sign out anyway",
+      "body": "Signed in as {{email}}.",
+      "body_no_email": "You are signed in."
     },
     "access": {
       "email_unknown": "The address isn't stored on this phone.",
@@ -164,7 +169,9 @@
     "forgot_intro": "You set a new PIN with the account's password. Everything else here stays closed until then.",
     "allow_contact": "Allow notifications",
     "manage_minor": "Sign-in and PIN",
-    "manage_self": "Sign-in and profile"
+    "manage_self": "Sign-in and profile",
+    "intro_minor": "This is where parents manage the account. It opens only with their PIN.",
+    "intro_self": "Your data and your sign-in."
   },
   "about": {
     "title": "About LearnBuddy",

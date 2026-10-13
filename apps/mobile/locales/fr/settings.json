@@ -48,7 +48,8 @@
     "days": "Jours",
     "days_question": "Quand Buddy peut-il écrire ?",
     "weekend": "Week-end au calme",
-    "weekend_hint": "Aucun message le samedi et le dimanche."
+    "weekend_hint": "Aucun message le samedi et le dimanche.",
+    "no_pin_hint": "Pour ça, tes parents doivent d'abord définir un code PIN plus bas."
   },
   "profile": {
     "title": "Ton profil",
@@ -108,7 +109,8 @@
       "share_title": "Export LearnBuddy",
       "share_failed": "Le fichier n'a pas pu être transmis. Réessaie.",
       "shared": "L'export a été transmis.",
-      "saved": "L'export a été enregistré comme fichier."
+      "saved": "L'export a été enregistré comme fichier.",
+      "body": "Tout ce qui est enregistré, sous forme de fichier. Pour le conserver ou le transmettre."
     },
     "delete": {
       "title": "Supprimer le compte",
@@ -119,7 +121,8 @@
       "confirm_title": "Vraiment supprimer le compte ?",
       "confirm_body": "Dans 7 jours, tout sera définitivement supprimé : compte, profil, conversations, photos et exercices. D'ici là, tu peux annuler ici.",
       "confirm_cta": "Oui, supprimer dans 7 jours",
-      "scheduled_toast": "La suppression est prévue."
+      "scheduled_toast": "La suppression est prévue.",
+      "body": "Tout est définitivement supprimé au bout de 7 jours. D'ici là, tu peux annuler."
     },
     "signout": {
       "cta": "Se déconnecter",
@@ -127,7 +130,9 @@
       "confirm_body": "Pour te reconnecter, il faudra l'adresse e-mail et le mot de passe.",
       "confirm_cta": "Oui, me déconnecter",
       "confirm_unsent": "Cet appareil contient encore des réponses ou des photos non envoyées. La déconnexion les supprime. Avec une connexion, elles partent tout de suite – attends un instant.",
-      "confirm_cta_unsent": "Me déconnecter quand même"
+      "confirm_cta_unsent": "Me déconnecter quand même",
+      "body": "Compte connecté : {{email}}.",
+      "body_no_email": "Ta session est ouverte."
     },
     "access": {
       "email_unknown": "L'adresse n'est pas enregistrée sur ce téléphone.",
@@ -164,7 +169,9 @@
     "forgot_intro": "Vous définissez un nouveau code PIN avec le mot de passe du compte. Tout le reste ici reste fermé d'ici là.",
     "allow_contact": "Autoriser les notifications",
     "manage_minor": "Connexion et code PIN",
-    "manage_self": "Connexion et profil"
+    "manage_self": "Connexion et profil",
+    "intro_minor": "C'est ici que les parents gèrent le compte. Cet espace s'ouvre seulement avec leur code PIN.",
+    "intro_self": "Tes données et ta connexion."
   },
   "about": {
     "title": "À propos de LearnBuddy",

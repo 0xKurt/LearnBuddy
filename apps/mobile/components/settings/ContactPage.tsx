@@ -119,8 +119,12 @@ export function ContactPage({ settings, isMinor, pinSet, push }: ContactProps) {
         </ListGroup>
       ) : null}
       {isMinor && !canLoosen ? (
-        // Without a PIN yet, the tap says where the parents set one (`pin_first`).
-        <Hint>{t('settings:contact.minor_hint')}</Hint>
+        // Without a PIN yet she reads that one comes first — not only in the toast after a tap.
+        <Hint>
+          {pinSet
+            ? t('settings:contact.minor_hint')
+            : `${t('settings:contact.minor_hint')} ${t('settings:contact.no_pin_hint')}`}
+        </Hint>
       ) : null}
     </>
   );

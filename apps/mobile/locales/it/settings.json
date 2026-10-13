@@ -48,7 +48,8 @@
     "days": "Giorni",
     "days_question": "Quando può scrivere Buddy?",
     "weekend": "Weekend tranquillo",
-    "weekend_hint": "Nessun messaggio il sabato e la domenica."
+    "weekend_hint": "Nessun messaggio il sabato e la domenica.",
+    "no_pin_hint": "Per farlo, i tuoi genitori devono prima impostare un PIN qui sotto."
   },
   "profile": {
     "title": "Il tuo profilo",
@@ -108,7 +109,8 @@
       "share_title": "Esportazione LearnBuddy",
       "share_failed": "Non è stato possibile consegnare il file. Riprova.",
       "shared": "L'esportazione è stata consegnata.",
-      "saved": "L'esportazione è stata salvata come file."
+      "saved": "L'esportazione è stata salvata come file.",
+      "body": "Tutto ciò che è salvato, come file. Da conservare o inoltrare."
     },
     "delete": {
       "title": "Elimina l'account",
@@ -119,7 +121,8 @@
       "confirm_title": "Eliminare davvero l'account?",
       "confirm_body": "Tra 7 giorni tutto verrà eliminato definitivamente: account, profilo, conversazioni, foto ed esercizi. Fino ad allora puoi annullare qui.",
       "confirm_cta": "Sì, elimina tra 7 giorni",
-      "scheduled_toast": "L'eliminazione è programmata."
+      "scheduled_toast": "L'eliminazione è programmata.",
+      "body": "Tutto viene eliminato definitivamente dopo 7 giorni. Fino ad allora puoi annullare."
     },
     "signout": {
       "cta": "Esci",
@@ -127,7 +130,9 @@
       "confirm_body": "Per accedere di nuovo servono l'indirizzo email e la password.",
       "confirm_cta": "Sì, esci",
       "confirm_unsent": "Su questo dispositivo ci sono ancora risposte o foto non inviate. Uscendo vengono cancellate. Con la connessione vengono inviate subito: aspetta un attimo.",
-      "confirm_cta_unsent": "Esci comunque"
+      "confirm_cta_unsent": "Esci comunque",
+      "body": "Accesso effettuato come {{email}}.",
+      "body_no_email": "Hai effettuato l'accesso."
     },
     "access": {
       "email_unknown": "L'indirizzo non è salvato su questo telefono.",
@@ -164,7 +169,9 @@
     "forgot_intro": "Un nuovo PIN si imposta con la password dell'account. Tutto il resto qui rimane chiuso fino ad allora.",
     "allow_contact": "Consenti le notifiche",
     "manage_minor": "Accesso e PIN",
-    "manage_self": "Accesso e profilo"
+    "manage_self": "Accesso e profilo",
+    "intro_minor": "Qui i genitori gestiscono l'account. Si apre solo con il loro PIN.",
+    "intro_self": "I tuoi dati e il tuo accesso."
   },
   "about": {
     "title": "Informazioni su LearnBuddy",

@@ -177,6 +177,35 @@ it('retries a later quiet time once after the parents’ PIN when the server ask
   expect(update).toHaveBeenLastCalledWith({ quiet_start: '21:00', version: 4 });
 });
 
+it('the weekend switch: when the server asks for the parents it is retried once after the PIN, and nothing more is sent when they cancel', async () => {
+  const refused = () => new ApiError('admin_required', 'adult needed', 403);
+  update.mockRejectedValueOnce(refused());
+  const request = vi.spyOn(adminFlow, 'requestAdmin').mockResolvedValue(false);
+  // Quiet on: less contact, so no PIN up front — the server's answer is what asks for it.
+  const view = times({ ...base, avoid_weekdays: [3] });
+  await press(screen.getByRole('switch', { name: 'Ruhe am Wochenende' }));
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(request).toHaveBeenCalledWith('contact');
+  expect(update).toHaveBeenCalledTimes(1);
+  expect(queryClient.getQueryData<BuddySettingsView>(keys.settings)?.avoid_weekdays).toEqual([3]);
+  view.unmount();
+
+  update.mockClear();
+  update.mockRejectedValueOnce(refused());
+  request.mockResolvedValue(true);
+  times({ ...base, avoid_weekdays: [3] });
+  await press(screen.getByRole('switch', { name: 'Ruhe am Wochenende' }));
+  await waitFor(() => expect(update).toHaveBeenCalledTimes(2));
+  expect(update).toHaveBeenLastCalledWith({ avoid_weekdays: [3, 6, 7], version: 4 });
+  // Once, not until it works: a second refusal is not asked about again.
+  expect(request).toHaveBeenCalledTimes(2);
+});
+
+it('says to a minor without a PIN that the parents set one first — on the page, not only in a toast', () => {
+  contact({ ...base, contact_enabled: false }, { pinSet: false });
+  expect(screen.getByText(/Dafür legen deine Eltern zuerst unten eine PIN fest\./)).toBeTruthy();
+});
+
 it('switches contact off with one tap, and pauses it', async () => {
   const view = contact(base);
   expect(screen.getByText('Ja – nie nach 20:00 Uhr.')).toBeTruthy();

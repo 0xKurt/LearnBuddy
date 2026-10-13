@@ -204,61 +204,75 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Zurück' }).click();
 
   // ── Settings: messages to the phone (parents' PIN), times, language ──
+  // Rows that lead to pages (#589): "Aufs Handy", "Lernzeiten", the parents' page.
+  const pin = async (digits: string) => {
+    for (const digit of digits)
+      await page.getByRole('button', { name: digit, exact: true }).click();
+  };
+  const back = () => page.getByRole('button', { name: 'Zurück', exact: true }).click();
   await openMenu(page, 'Einstellungen');
-  await page.getByRole('button', { name: 'Benachrichtigungen', exact: true }).click();
+  await page.getByRole('button', { name: /^Aufs Handy, Nein/ }).click();
   await expect(page.getByText('Nein. Buddy schreibt dir nur hier in der App.')).toBeVisible();
-  await page.getByRole('button', { name: 'Eltern fragen' }).click();
-  for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
-  // The card answers the heading once with the state, never the question again (issue #95).
-  await expect(page.getByText('Ja – nie nach 20:00 Uhr.')).toBeVisible();
-  await page.getByRole('button', { name: 'Zeiten anpassen' }).click();
+  await page.getByRole('button', { name: /^Eltern fragen/ }).click();
+  await pin('2468');
+  // The page answers once with the state, never the question again (issue #95).
+  await expect(page.getByText('Ja – nie nach 20:00 Uhr.').filter({ visible: true })).toBeVisible();
+  await back();
+  await page.getByRole('button', { name: /^Lernzeiten, / }).click();
   await expect(page.getByText('Wann nicht?')).toBeVisible();
-  await shot(page, '44-settings-times', { opened: true });
+  await shot(page, '44-settings-times');
+  await back();
   // A pause needs no PIN (less contact is always allowed).
-  await page.getByRole('button', { name: 'Bis morgen' }).click();
+  await page.getByRole('button', { name: /^Aufs Handy, Ja/ }).click();
+  await page.getByRole('button', { name: /^Bis morgen/ }).click();
   await expect(page.getByText(/Pause bis einschließlich/).first()).toBeVisible();
   await page.getByRole('button', { name: 'Nicht mehr erlauben' }).click();
   await expect(page.getByText('Nein. Buddy schreibt dir nur hier in der App.')).toBeVisible();
+  await back();
 
-  await page.getByRole('button', { name: 'Sprache' }).click();
+  // The language: a pick in the sheet, applied once the server confirmed it.
+  await page.getByRole('button', { name: /^Sprache, / }).click();
   await page.getByRole('radio', { name: 'English' }).click();
-  await expect(page.getByText('Settings')).toBeVisible();
-  // The group stays open: back in one tap.
+  await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /^Language, / }).click();
   await page.getByRole('radio', { name: 'Deutsch' }).click();
-  await expect(page.getByText('Einstellungen')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toBeVisible();
 
   // ── For parents: after leaving the settings the PIN counts no more ──
-  await page.getByRole('button', { name: 'Zurück' }).click();
+  await back();
   await openMenu(page, 'Einstellungen');
   // A child's account: the parents' area itself opens only with their PIN — the e-mail and
-  // "Abmelden" are theirs (user feedback #13). Cancelling keeps it closed.
-  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  // "Abmelden" are theirs (user feedback #13). Its rows on the settings only name it; each asks
+  // for the PIN. Cancelling keeps it closed.
+  await page.getByRole('button', { name: 'Daten exportieren', exact: true }).click();
   await expect(
     page.getByText('Für die Eltern: Den Elternbereich öffnen. Bitte die PIN eingeben.'),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'PIN vergessen?' })).toBeVisible();
   await page.getByRole('button', { name: 'Abbrechen' }).last().click();
-  await expect(page.getByText('Daten exportieren')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page.getByText('Passwort ändern')).toHaveCount(0);
   await expect(page.getByText(email)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
-  for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
-  await expect(page.getByText('Daten exportieren')).toBeVisible();
-  await page.getByRole('button', { name: 'Konto löschen …' }).click();
+  await page.getByRole('button', { name: /^Anmeldung und PIN/ }).click();
+  await pin('2468');
+  await expect(page).toHaveURL(/\/settings\/parents$/);
+  await expect(page.getByRole('button', { name: /^Daten exportieren, / })).toBeVisible();
+  await page.getByRole('button', { name: /^Konto löschen, / }).click();
   // A child's account: the parents' PIN first (the pad names the step), then their confirmation.
   await expect(
     page.getByText('Für die Eltern: Das Konto löschen. Bitte die PIN eingeben.'),
   ).toBeVisible();
-  for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
+  await pin('2468');
   await page.getByRole('button', { name: 'Ja, in 7 Tagen löschen' }).click();
   await expect(page.getByText(/Die Löschung ist geplant/).first()).toBeVisible();
   // The PIN counted for that one step: cancelling asks for it again.
-  await page.getByRole('button', { name: 'Löschung abbrechen' }).click();
+  await page.getByRole('button', { name: /^Löschung abbrechen, / }).click();
   await expect(page.getByRole('button', { name: '2', exact: true })).toBeVisible();
-  for (const digit of '2468') await page.getByRole('button', { name: digit, exact: true }).click();
+  await pin('2468');
   await expect(page.getByText(/Löschung abgebrochen/)).toBeVisible();
   await shot(page, '45-parents', { opened: true });
   // A new PIN, with the current one.
-  await page.getByRole('button', { name: 'PIN ändern' }).click();
+  await page.getByRole('button', { name: /^PIN ändern, / }).click();
   await page.getByLabel('Aktuelle PIN').fill('2468');
   await page.getByLabel('Neue PIN (4 Ziffern)').fill('1357');
   await page.getByLabel('Neue PIN wiederholen').fill('1357');
@@ -269,14 +283,15 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   const exported = page.waitForResponse(
     (r) => r.url().endsWith('/v1/account/export') && r.status() === 200,
   );
-  await page.getByRole('button', { name: 'Export erstellen' }).click();
+  await page.getByRole('button', { name: /^Daten exportieren, / }).click();
   await expect(
     page.getByText('Für die Eltern: Alle Daten exportieren. Bitte die PIN eingeben.'),
   ).toBeVisible();
-  for (const digit of '1357') await page.getByRole('button', { name: digit, exact: true }).click();
+  await pin('1357');
   expect((await exported).status()).toBe(200);
   await expect(page.getByText('Der Export ist als Datei gespeichert.')).toBeVisible();
-  await page.getByRole('button', { name: 'Zurück' }).click();
+  await back();
+  await back();
 
   // ── The + menu (#519): Kamera · Fotos · Dateien, in both schemes. An open menu is the
   // screen's own state and the scheme switch rebuilds the tree, so each scheme opens it anew. ──
@@ -463,7 +478,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
 
   // ── Signing out, and the password link that no longer works ──
   await openMenu(page, 'Einstellungen');
-  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  await page.getByRole('button', { name: /^Anmeldung und PIN/ }).click();
   // The parents' area opens with their (new) PIN.
   for (const digit of '1357') await page.getByRole('button', { name: digit, exact: true }).click();
   await page.getByRole('button', { name: 'Abmelden' }).last().click();

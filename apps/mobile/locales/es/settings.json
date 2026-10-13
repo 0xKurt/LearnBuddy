@@ -48,7 +48,8 @@
     "days": "Días",
     "days_question": "¿Cuándo puede escribir Buddy?",
     "weekend": "Fin de semana tranquilo",
-    "weekend_hint": "Ningún mensaje el sábado ni el domingo."
+    "weekend_hint": "Ningún mensaje el sábado ni el domingo.",
+    "no_pin_hint": "Para eso, tus padres tienen que crear primero un PIN más abajo."
   },
   "profile": {
     "title": "Tu perfil",
@@ -108,7 +109,8 @@
       "share_title": "Exportación de LearnBuddy",
       "share_failed": "No se pudo entregar el archivo. Inténtalo de nuevo.",
       "shared": "La exportación se ha entregado.",
-      "saved": "La exportación se ha guardado como archivo."
+      "saved": "La exportación se ha guardado como archivo.",
+      "body": "Todo lo guardado, como archivo. Para conservarlo o pasarlo."
     },
     "delete": {
       "title": "Eliminar la cuenta",
@@ -119,7 +121,8 @@
       "confirm_title": "¿Seguro que quieres eliminar la cuenta?",
       "confirm_body": "Dentro de 7 días se eliminará todo definitivamente: cuenta, perfil, conversaciones, fotos y ejercicios. Hasta entonces, puedes cancelarlo aquí.",
       "confirm_cta": "Sí, eliminar dentro de 7 días",
-      "scheduled_toast": "La eliminación está programada."
+      "scheduled_toast": "La eliminación está programada.",
+      "body": "Todo se elimina definitivamente pasados 7 días. Hasta entonces, puedes cancelarlo."
     },
     "signout": {
       "cta": "Cerrar sesión",
@@ -127,7 +130,9 @@
       "confirm_body": "Para volver a iniciar sesión hacen falta el correo electrónico y la contraseña.",
       "confirm_cta": "Sí, cerrar sesión",
       "confirm_unsent": "En este dispositivo hay respuestas o fotos que aún no se enviaron. Al cerrar sesión se borran. Con conexión se envían enseguida: espera un momento.",
-      "confirm_cta_unsent": "Cerrar sesión igualmente"
+      "confirm_cta_unsent": "Cerrar sesión igualmente",
+      "body": "Sesión iniciada como {{email}}.",
+      "body_no_email": "Has iniciado sesión."
     },
     "access": {
       "email_unknown": "La dirección no está guardada en este móvil.",
@@ -164,7 +169,9 @@
     "forgot_intro": "Ponéis un PIN nuevo con la contraseña de la cuenta. Todo lo demás de aquí sigue cerrado hasta entonces.",
     "allow_contact": "Permitir notificaciones",
     "manage_minor": "Acceso y PIN",
-    "manage_self": "Acceso y perfil"
+    "manage_self": "Acceso y perfil",
+    "intro_minor": "Aquí los padres gestionan la cuenta. Solo se abre con su PIN.",
+    "intro_self": "Tus datos y tu inicio de sesión."
   },
   "about": {
     "title": "Sobre LearnBuddy",

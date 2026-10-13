@@ -5572,11 +5572,13 @@ nothing unfolds in place (#589): "Aufs Handy" (contact on/off, a pause, this dev
 "Lernzeiten" (days, time of day, quiet hours — only while contact is allowed), Buddy's voice,
 "Über LearnBuddy" and "Lizenzen" (`app/settings/*`, `components/settings/SettingsPage.tsx`).
 The language and the Bundesland are a short pick in the shared choice sheet
-(`components/settings/ChoiceRow.tsx`). The parents' group lists allowing messages, the export
-and the deletion as rows — for a minor each asks for the parents' PIN — and the way to the
-parents' page (PIN, profile correction, e-mail, password), which for a minor's profile opens
-only with the parents' PIN ("PIN vergessen?" opens just the PIN there, where a new PIN needs
-the account's password; `lib/parentsGate.ts`, `components/settings/parentsArea.ts`).
+(`components/settings/ChoiceRow.tsx`). The parents' group names what is behind the gate as
+plain rows without any state (export, deletion, sign-in and PIN); the parents' area itself is a
+page (`app/settings/parents.tsx`: PIN, profile correction, e-mail, password, export, deletion,
+sign-out) that is closed until opened, and for a minor's profile it opens only with the
+parents' PIN ("PIN vergessen?" opens just the PIN there, where a new PIN needs the account's
+password; `lib/parentsGate.ts`). What was approved is held for that account and profile only
+and dropped when the page leaves the stack (`components/settings/parentsArea.ts`).
 Setting up a child's profile is two short steps (the child, then consent and the parents' PIN),
 then a hand-over: what is set (consent, PIN, messages to the phone off) and "Gib Lena jetzt das
 Handy". Someone under 16 choosing "Ich selbst" gets no dead end: "Eine erwachsene Person ist

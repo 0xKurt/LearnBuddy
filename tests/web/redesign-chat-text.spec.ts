@@ -34,13 +34,14 @@ for (const look of SCREEN_LOOKS)
     }
     await screenShots(page, `chat-${key}-readable-receipt`);
     await page.goto('/settings');
-    await page.getByRole('button', { name: 'Benachrichtigungen', exact: true }).click();
+    await page.getByRole('button', { name: /^Aufs Handy, / }).click();
     const changed = page.waitForResponse(
       (r) => r.request().method() === 'PATCH' && new URL(r.url()).pathname === '/v1/buddy/settings',
     );
     await page.getByRole('button', { name: 'Nicht mehr erlauben', exact: true }).click();
     expect(BuddySettingsView.parse(await (await changed).json()).contact_enabled).toBe(false);
-    await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+    // Two pages back: from "Aufs Handy" to the settings, and on to the chat (#589).
+    for (const _ of [0, 1]) await page.getByRole('button', { name: 'Zurück', exact: true }).click();
     const reminder = page.waitForResponse(
       (r) => r.request().method() === 'POST' && new URL(r.url()).pathname === '/v1/buddy/messages',
     );

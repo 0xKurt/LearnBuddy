@@ -87,6 +87,12 @@ test('settings: rows that lead to pages, in every look', async ({ page }) => {
       page.getByRole('button', { name: /^Profil korrigieren, Mia, geboren am/ }),
     ).toBeVisible();
     await expect(page.getByRole('button', { name: /^E-Mail ändern/ })).toBeVisible();
+    // Export, deletion and sign-out act here, each with what parents read first.
+    await expect(
+      page.getByRole('button', { name: /^Daten exportieren, Alles, was gespeichert ist/ }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Konto löschen, / })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Abmelden, Angemeldet als / })).toBeVisible();
     await settingsShots(page, `settings-${key}-parents`);
     await back(page);
     await expect(heading(page, 'Einstellungen')).toBeVisible();
@@ -226,11 +232,15 @@ test('the parents’ page is closed without the gate, and closes when they leave
   await page.goto('/settings/parents');
   await expect(page).toHaveURL(/\/settings$/);
   await expect(page.getByText('Passwort ändern')).toHaveCount(0);
-  // A cancelled PIN opens nothing.
-  await page.getByRole('button', { name: /^Anmeldung und PIN/ }).click();
-  await expect(heading(page, 'PIN der Eltern')).toBeVisible();
-  await page.getByRole('button', { name: 'Abbrechen', exact: true }).click();
-  await expect(page).toHaveURL(/\/settings$/);
+  // The rows on the settings only name the area: each asks for the PIN, and a cancelled PIN
+  // opens nothing and does nothing.
+  for (const row of ['Daten exportieren', 'Konto löschen', 'Anmeldung und PIN']) {
+    await page.getByRole('button', { name: row, exact: true }).click();
+    await expect(heading(page, 'PIN der Eltern')).toBeVisible();
+    await page.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    await expect(page).toHaveURL(/\/settings$/);
+    await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
+  }
   // Opened with the PIN, left, and it is closed again.
   await page.getByRole('button', { name: /^Anmeldung und PIN/ }).click();
   await enterPin(page);

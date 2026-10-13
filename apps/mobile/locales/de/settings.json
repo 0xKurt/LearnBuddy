@@ -48,7 +48,8 @@
     "days": "Tage",
     "days_question": "Wann darf Buddy schreiben?",
     "weekend": "Ruhe am Wochenende",
-    "weekend_hint": "Keine Nachrichten am Samstag und Sonntag."
+    "weekend_hint": "Keine Nachrichten am Samstag und Sonntag.",
+    "no_pin_hint": "Dafür legen deine Eltern zuerst unten eine PIN fest."
   },
   "profile": {
     "title": "Dein Profil",
@@ -108,7 +109,8 @@
       "share_title": "LearnBuddy-Export",
       "share_failed": "Die Datei ließ sich nicht übergeben. Versuch es nochmal.",
       "shared": "Der Export ist übergeben.",
-      "saved": "Der Export ist als Datei gespeichert."
+      "saved": "Der Export ist als Datei gespeichert.",
+      "body": "Alles, was gespeichert ist, als Datei. Zum Sichern oder Weitergeben."
     },
     "delete": {
       "title": "Konto löschen",
@@ -119,7 +121,8 @@
       "confirm_title": "Konto wirklich löschen?",
       "confirm_body": "In 7 Tagen wird alles endgültig gelöscht: Konto, Profil, Gespräche, Fotos und Übungen. Bis dahin kannst du das hier abbrechen.",
       "confirm_cta": "Ja, in 7 Tagen löschen",
-      "scheduled_toast": "Die Löschung ist geplant."
+      "scheduled_toast": "Die Löschung ist geplant.",
+      "body": "Alles wird nach 7 Tagen endgültig gelöscht. Bis dahin kannst du es abbrechen."
     },
     "signout": {
       "cta": "Abmelden",
@@ -127,7 +130,9 @@
       "confirm_body": "Zum Wiederanmelden braucht es die E-Mail-Adresse und das Passwort.",
       "confirm_cta": "Ja, abmelden",
       "confirm_unsent": "Auf diesem Gerät sind noch Antworten oder Fotos, die nicht gesendet sind. Beim Abmelden werden sie gelöscht. Mit Verbindung werden sie gleich gesendet – dann einfach kurz warten.",
-      "confirm_cta_unsent": "Trotzdem abmelden"
+      "confirm_cta_unsent": "Trotzdem abmelden",
+      "body": "Angemeldet als {{email}}.",
+      "body_no_email": "Du bist angemeldet."
     },
     "access": {
       "email_unknown": "Die Adresse ist auf diesem Handy nicht gespeichert.",
@@ -164,7 +169,9 @@
     "forgot_intro": "Eine neue PIN legt ihr mit dem Passwort des Kontos fest. Alles andere hier bleibt bis dahin zu.",
     "allow_contact": "Benachrichtigungen erlauben",
     "manage_minor": "Anmeldung und PIN",
-    "manage_self": "Anmeldung und Profil"
+    "manage_self": "Anmeldung und Profil",
+    "intro_minor": "Hier regeln Eltern das Konto. Öffnen geht nur mit ihrer PIN.",
+    "intro_self": "Deine Daten und deine Anmeldung."
   },
   "about": {
     "title": "Über LearnBuddy",

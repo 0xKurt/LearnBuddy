@@ -1101,7 +1101,8 @@
     review), and required auth forms with readable copy and a pinned CTA. Auth
     forms use `scroll-form`; walkthroughs verify each field is reachable whole
     above the action, including validation states. Rare settings are rows that say what is set now; one tap
-    opens a row's own page (#589) — nothing unfolds in place. A long form is split into short steps. The walkthroughs check
+    opens a row's own page (#589); the parents' rows name their page and say nothing of what is
+    in it. A long form is split into short steps. The walkthroughs check
     this on every screen (tests/web/fit.ts).
 
     Free text is typed at the bottom, everywhere (issue #365): the chat and
