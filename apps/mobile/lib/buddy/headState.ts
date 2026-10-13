@@ -56,7 +56,7 @@ export type PracticeFacts = {
    * …or a try that was not right yet, and his words about it are still the newest thing on
    * screen: she has not started her next answer. Never true where verdicts are hidden.
    */
-  replying: boolean;
+  replying?: boolean;
 };
 
 /**

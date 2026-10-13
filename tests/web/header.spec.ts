@@ -90,6 +90,13 @@ const CUT_TITLES: ReadonlyArray<{
     why: '"Was Buddy über dich weiß": owner decision on a shorter title',
   },
   {
+    // Calculated, not measured yet: the name is 234 pt wide in the title's type (Figtree 700,
+    // 17 pt) and the column 162 / 132 pt. The final walkthrough confirms it.
+    screen: /^material$/,
+    widths: [390, 360],
+    why: 'the sheet\'s name "Brüche kürzen und vergleichen" is the head\'s title (#607)',
+  },
+  {
     screen: /^(practice-(open|wrong|checking|correct)|done)$/,
     widths: [360],
     besideMore: true,
@@ -282,7 +289,7 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   await setScheme(page, 'light');
   await page.setViewportSize(PHONES[0]!);
 
-  // A try that is not right yet: the task is still open, Buddy waits again.
+  // A try that is not right yet: the task is still open and Buddy speaks about it.
   await page.getByLabel('Deine Antwort').fill('0,5');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByTestId('thread-turn').first()).toBeVisible();

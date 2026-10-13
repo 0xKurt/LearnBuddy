@@ -91,6 +91,12 @@ describe('what the head of a task shows (MIGRATION §6)', () => {
     );
   });
 
+  it('needs no word about a reply from a screen that has none (a round of Kopfrechnen)', () => {
+    const round = { checking: false, open: true, fresh: false, afterCorrect: false };
+    expect(practiceHeadState(round)).toBe('wait');
+    expect(practiceHeadState({ ...round, open: false, fresh: true })).toBe('idle');
+  });
+
   it('never speaks about a reply that was there when the screen opened', () => {
     expect(practiceHeadState({ ...task, fresh: false, replying: true })).toBe('wait');
   });

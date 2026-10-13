@@ -396,7 +396,7 @@ export default function PracticeScreen() {
         // A test keeps its verdicts for the review: no celebration gives one away.
         afterCorrect: !offers.testing && lastTry?.verdict === 'correct',
         // Not right yet: Buddy speaks until she writes her next answer (the draft she had when
-        // his words arrived is the fact; `judgedDraft` below).
+        // his words arrived is the fact; `judgedDraft` above).
         replying:
           !offers.testing &&
           lastTry !== undefined &&
