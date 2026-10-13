@@ -198,7 +198,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Von dir geändert.')).toBeVisible();
   await shot(page, '43-memory-edited');
   await page.getByRole('button', { name: 'Entfernen: Mag Katzen und Hunde' }).click();
-  await page.getByRole('button', { name: 'Ja, entfernen' }).click();
+  // Removed at once; the toast offers "Rückgängig" (#599, ui_kits/app/More.jsx:42).
   await expect(page.getByText('Entfernt. Buddy vergisst das.')).toBeVisible();
   await expect(page.getByText('Mag Katzen und Hunde', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Zurück' }).click();
@@ -329,6 +329,8 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
     .click();
   await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
   // A page for this sheet: back in the chat, its + menu says what the page is for (#519).
+  // The sheet's own actions stand in the head's ⋯ (#599).
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: 'Seite hinzufügen' }).click();
   await expect(page.getByText('Die Fragen dazu kommen zu diesem Blatt.')).toBeVisible();
   await inSheet(page).getByRole('button', { name: 'Schließen' }).click();
