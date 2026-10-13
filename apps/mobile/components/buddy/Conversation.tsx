@@ -26,7 +26,6 @@ import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
 import { PressArea } from '../lb/PressArea.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
 import { CHAT } from '../../lib/theme/chat.js';
@@ -34,7 +33,6 @@ import { AreaCard } from './AreaCard.js';
 import { ConfirmCard } from './ConfirmCard.js';
 import { deliveryText, describeAction, onlyInApp } from './describe.js';
 import { actionCard, addActionCard, hasCard, messageCard, readAlong } from './extensions.js';
-import { i18n } from '../../lib/i18n/index.js';
 import { dayBreaks, formatDay, localDateOf } from '../../lib/time.js';
 import { closedStream, markdownPlain } from '../../lib/buddy/markdown.js';
 import { haptic } from '../../lib/haptics.js';
@@ -44,6 +42,7 @@ import { RichText } from './RichText.js';
 import { UndoSheet } from './UndoSheet.js';
 import {
   BuddyLine,
+  FailedLine,
   Receipt,
   receiptIcon,
   ReplyOptions,
@@ -228,10 +227,14 @@ export function Conversation({
   const thinking =
     pending !== null || messages.some((m) => m.role === 'learner' && m.status === 'processing');
   const shownLive = useReveal(thinking && live ? closedStream(live) : null);
-  // Buddy's orb stands beside the newest thing he says, once: the reply being written and the
-  // typing dots bring their own, and a greeting that closes the thread is his newest line.
-  const greets =
-    sessionStart !== null && messages.some((m) => m.id === sessionStart.afterMessageId);
+  // Buddy's orb stands beside the newest thing he says, once (ui_kits/app/Chat.jsx:12, :21): the
+  // reply being written and the typing dots bring their own. The greeting of this visit stays
+  // where it was said (lib/buddy/useSessionStart.ts) and is his newest line only until he says
+  // something after it — then the orb moves on to that line.
+  const greetedAt = sessionStart
+    ? messages.findIndex((m) => m.id === sessionStart.afterMessageId)
+    : -1;
+  const greets = greetedAt >= 0 && !messages.slice(greetedAt + 1).some((m) => m.role === 'buddy');
   const orbAt = thinking || greets ? null : (lastBuddy?.id ?? null);
   // What was on screen as "being sent" or "being written" does not come in a second time
   // when the stored message takes its place.
@@ -261,39 +264,6 @@ export function Conversation({
 
   const canTakeBack = (m: MessageView): boolean =>
     showActions && onUndo !== undefined && m.actions.some(takeableBack);
-  /** Why her message was not answered, and the way to send it again. */
-  const failedLine = (m: MessageView): ReactNode => {
-    if (m.role !== 'learner' || m.status !== 'failed') return null;
-    const stopped = m.failure_code === 'stopped';
-    return (
-      <Entrance
-        animate={enters}
-        index={0}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
-      >
-        {/* It arrived: say why it was not answered (CLAUDE.md rule 5). Stopped by
-            her is no failure: said calmly, not in red. */}
-        <Text style={[TYPE.small, { color: stopped ? palette.ink2 : palette.danger }]}>
-          {failedLabel(m.failure_code)}
-        </Text>
-        {/* Resending cannot help once today's allowance is used up. */}
-        {m.failure_code === 'budget' || !onResend ? null : (
-          <Btn
-            size="sm"
-            variant="outline"
-            onPress={() => {
-              haptic.tap();
-              onResend(m);
-            }}
-            disabled={busy}
-          >
-            {t('thread.resend')}
-          </Btn>
-        )}
-      </Entrance>
-    );
-  };
-
   const view = (
     // One rhythm for the thread (ui_kits/app/Chat.jsx:16, `gap: 16`): lines, cards, receipts and
     // chips stand lg apart. Only what belongs to one piece sits closer: a line's own status (xs),
@@ -414,7 +384,11 @@ export function Conversation({
               {m.outreach && (m.id === inAppDelivery || !saysOnlyInApp(m)) ? (
                 <Text style={[TYPE.small, TYPE.meta, UNDER_LINE]}>{deliveryText(m.outreach)}</Text>
               ) : null}
-              {failedLine(m)}
+              {mine && m.status === 'failed' ? (
+                <Entrance animate={enters} index={0}>
+                  <FailedLine message={m} busy={busy} onResend={onResend} />
+                </Entrance>
+              ) : null}
             </View>
             {m.actions.map((a) => {
               const card = actionCard(a, spokenMode);
@@ -502,7 +476,7 @@ export function Conversation({
             ) : null}
             {opensHere ? (
               <SessionGreeting
-                orb={!thinking}
+                orb={greets && !thinking}
                 text={sessionStart!.text}
                 room={sessionRoom}
                 action={sessionStart!.action}
@@ -660,10 +634,4 @@ export function DayLine({ day }: { day: string }) {
       {label}
     </Text>
   );
-}
-
-/** Why a stored message was not answered; "not arrived" only when nothing is known. */
-function failedLabel(code: string | null): string {
-  const key = `buddy:thread.failed_reason.${code ?? 'internal'}`;
-  return i18n.exists(key) ? i18n.t(key) : i18n.t('buddy:thread.failed');
 }

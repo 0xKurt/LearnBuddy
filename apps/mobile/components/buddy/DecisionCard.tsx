@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Btn } from '../lb/Btn.js';
 import { CardChoices, ChatCard } from './ChatCard.js';
+import { quietVariant, type Quiet } from './extensions.js';
 
 export type OptInDecision = Extract<Decision, { type: 'contact_opt_in' }>;
 
@@ -30,9 +31,21 @@ type Props = {
   onOptIn: (enable: boolean) => void;
   onAdultOptIn: () => void;
   onOutcome: (goalId: string, outcome: 'good' | 'ok' | 'hard') => void;
+  /**
+   * The violet button belongs to the bar on top while one lies there (HANDOFF §4: one primary
+   * per screen); the notices hand it in (HomeNotices), like every other card gets it.
+   */
+  quiet?: Quiet;
 };
 
-export function DecisionCard({ decision, busy, onOptIn, onAdultOptIn, onOutcome }: Props) {
+export function DecisionCard({
+  decision,
+  busy,
+  onOptIn,
+  onAdultOptIn,
+  onOutcome,
+  quiet = 'primary',
+}: Props) {
   const { t } = useTranslation('buddy');
   if (decision.type === 'how_did_it_go') {
     const goalId = decision.goal.id;
@@ -65,6 +78,7 @@ export function DecisionCard({ decision, busy, onOptIn, onAdultOptIn, onOutcome 
       <CardChoices>
         <Btn
           size="sm"
+          variant={quietVariant(quiet)}
           onPress={decision.can_enable_here ? () => onOptIn(true) : onAdultOptIn}
           disabled={busy}
         >

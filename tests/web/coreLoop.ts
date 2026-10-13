@@ -172,8 +172,13 @@ export async function askShorter(page: Page): Promise<void> {
   await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeVisible();
 }
 
-/** One tap into ⋯ and one item in it. */
+/** The ways to start: they stand in the start sheet, which the chat's ⋯ leads to (#599). */
+const WAYS_TO_START = ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln'];
+
+/** One tap into ⋯ and one item in it — a way to start through the start sheet. */
 export async function openMenu(page: Page, item: string): Promise<void> {
   await page.getByRole('button', { name: 'Mehr' }).click();
+  if (WAYS_TO_START.includes(item))
+    await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
   await page.getByRole('button', { name: item }).click();
 }

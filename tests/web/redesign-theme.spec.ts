@@ -151,13 +151,15 @@ test('theme foundation: Pastell/Meer light/dark phone matrix', async ({ page }) 
       }
       await page.getByRole('button', { name: 'Mehr', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Schließen', exact: true })).toBeVisible();
+      // The menu is one list of places (#599): "Verlauf" is a row of it.
+      await expect(page.getByRole('button', { name: 'Verlauf', exact: true })).toBeVisible();
       await shot(page, `${name}-menu`, { opened: true });
       for (const phone of PHONES) {
         await page.setViewportSize(phone);
         await touchTargets(page);
       }
       await page.getByRole('button', { name: 'Schließen', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeHidden();
+      await expect(page.getByRole('button', { name: 'Verlauf', exact: true })).toBeHidden();
     }
   }
 });

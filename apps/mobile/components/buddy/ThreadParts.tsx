@@ -11,8 +11,9 @@
 //   · `TakeBack` — ui_kits/app/Gaps.jsx:83–85: undo sign and "Zurücknehmen", ink-2 600 14;
 //   · `ReplyOptions` — ui_kits/app/Flows.jsx:196: her quick answers as chips under the line.
 
-import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
+import type { ActionSummary, MessageView } from '@learnbuddy/shared-types/contracts';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { CHAT } from '../../lib/theme/chat.js';
@@ -21,6 +22,9 @@ import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { haptic } from '../../lib/haptics.js';
+import { i18n } from '../../lib/i18n/index.js';
+import { Btn } from '../lb/Btn.js';
 import { Chip } from '../lb/Chip.js';
 import { Icon, type IconName } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
@@ -154,6 +158,51 @@ export function ReplyOptions({
           i,
           option,
         ),
+      )}
+    </View>
+  );
+}
+
+/** Why a stored message was not answered; "not arrived" only when nothing is known. */
+function failedLabel(code: string | null): string {
+  const key = `buddy:thread.failed_reason.${code ?? 'internal'}`;
+  return i18n.exists(key) ? i18n.t(key) : i18n.t('buddy:thread.failed');
+}
+
+/** Under her message that was not answered: why, and the way to send it again. */
+export function FailedLine({
+  message,
+  busy,
+  onResend,
+}: {
+  message: MessageView;
+  busy: boolean;
+  /** Left out (History), there is no way to send it again from here. */
+  onResend?: (message: MessageView) => void;
+}) {
+  const { palette } = useTheme();
+  const { t } = useTranslation('buddy');
+  const stopped = message.failure_code === 'stopped';
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
+      {/* It arrived: say why it was not answered (CLAUDE.md rule 5). Stopped by her is no
+          failure: said calmly, not in red. */}
+      <Text style={[TYPE.small, { color: stopped ? palette.ink2 : palette.danger }]}>
+        {failedLabel(message.failure_code)}
+      </Text>
+      {/* Resending cannot help once today's allowance is used up. */}
+      {message.failure_code === 'budget' || !onResend ? null : (
+        <Btn
+          size="sm"
+          variant="outline"
+          onPress={() => {
+            haptic.tap();
+            onResend(message);
+          }}
+          disabled={busy}
+        >
+          {t('thread.resend')}
+        </Btn>
       )}
     </View>
   );

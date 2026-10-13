@@ -88,6 +88,8 @@ for (const viewport of [
       expect(b!.x + b!.width, name).toBeLessThanOrEqual(viewport.width);
     }
     await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    // The start sheet is closed again: its title and its ways are gone.
+    await expect(page.getByRole('heading', { name: 'Was willst du üben?' })).toBeHidden();
     await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeHidden();
     // The composer bar: camera, field and mic inside the screen, the field centred on the mic.
     const camera = await page

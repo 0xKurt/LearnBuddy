@@ -194,6 +194,21 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
     expect(onOptIn).toHaveBeenCalledWith(true);
   });
 
+  it('the contact question under a bar on top: the paper button, one violet one on the screen', () => {
+    renderInApp(
+      <DecisionCard
+        decision={{ type: 'contact_opt_in', can_enable_here: true, rules: null }}
+        busy={false}
+        quiet="soft"
+        onOptIn={() => undefined}
+        onAdultOptIn={() => undefined}
+        onOutcome={() => undefined}
+      />,
+    );
+    const yes = screen.getByRole('button', { name: 'Ja, gern' }).firstElementChild!;
+    expect(styleOf(yes).borderTopWidth).toBe('1px');
+  });
+
   it('"Wie lief’s?": three paper pills (Cards.jsx:55–67)', () => {
     const onOutcome = vi.fn();
     renderInApp(

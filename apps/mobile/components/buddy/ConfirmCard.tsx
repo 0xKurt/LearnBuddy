@@ -63,7 +63,7 @@ export function ConfirmCard({ confirm }: { confirm: Confirm }) {
   // What was decided stays in the card it was asked in (Cards.jsx:42–43).
   if (settled) {
     return (
-      <ChatCard tone="warn" icon="trash" title={title} detail={name || null}>
+      <ChatCard tone="warn" icon="trash" title={title} detail={name || null} detailLines={3}>
         <CardDone>{settled}</CardDone>
       </ChatCard>
     );
@@ -75,9 +75,13 @@ export function ConfirmCard({ confirm }: { confirm: Confirm }) {
       tone="warn"
       icon="trash"
       title={title}
-      // The name of what would go, then — said once, plainly — that it cannot be taken back.
-      detail={[name, t(`buddy:confirm.${what}_body`)].filter(Boolean).join('\n')}
+      heading
+      // The name of what would go, at most three lines of it.
+      detail={name || null}
+      detailLines={3}
     >
+      {/* Said once, plainly: this is the part that cannot be taken back. */}
+      <Text style={TYPE.meta}>{t(`buddy:confirm.${what}_body`)}</Text>
       <CardChoices>
         {/* The dangerous button says exactly what it does, never just "Ja" — in the danger ink
             on paper, never a red fill (Cards.jsx:34, :46); keeping it is the quiet way out. */}

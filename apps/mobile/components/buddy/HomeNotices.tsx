@@ -6,7 +6,7 @@
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import { cloneElement, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { acceptMissingPages, clarifyUnclear, retryMaterial } from '../../lib/api/endpoints.js';
@@ -35,8 +35,8 @@ type Props = {
   /** The violet button belongs to the bar on top when there is one. */
   quiet: Quiet;
   act: HomeAct;
-  /** The open question, asked here when the layout says so. */
-  decision: ReactElement | null;
+  /** The open question (`DecisionCard`), asked here when the layout says so. */
+  decision: ReactElement<{ quiet?: Quiet }> | null;
 };
 
 /** The notices at the end of the conversation, in their order; empty when Buddy has nothing. */
@@ -87,7 +87,8 @@ export function homeNotices({ h, layout, left, thumbs, busy, quiet, act, decisio
     ) : null,
     result && Result ? <Result key="result" now={result} busy={busy} quiet={quiet} /> : null,
     // The open question, and "Buddy is working" said once.
-    layout.decisionInline ? decision : null,
+    // It follows the bar on top like every card here: one violet button on the screen.
+    layout.decisionInline && decision ? cloneElement(decision, { quiet }) : null,
     layout.working === 'thread' && h.working ? (
       <WorkingNote key="working" what={h.working} />
     ) : null,

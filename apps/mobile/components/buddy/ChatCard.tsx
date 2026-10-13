@@ -59,6 +59,10 @@ type Props = {
   detail?: string | null;
   /** Lines of the title before it is cut (an offer's topic may be a sentence). */
   titleLines?: number;
+  /** The title is the card's question: a heading for a screen reader. */
+  heading?: boolean;
+  /** Lines of the detail before it is cut (the name of a sheet may be long). */
+  detailLines?: number;
   primary?: CardAction | null;
   /** The arrow of an offer's "Los geht's" (PracticeReady.jsx:17). */
   arrow?: boolean;
@@ -86,6 +90,8 @@ export function ChatCard({
   title,
   detail = null,
   titleLines,
+  heading = false,
+  detailLines,
   primary = null,
   arrow = false,
   secondary = null,
@@ -133,9 +139,9 @@ export function ChatCard({
           </View>
         ) : null}
         <View
-          accessible
+          // Its lines are read as they stand; a name on a box without a role is not allowed on
+          // the web (axe aria-prohibited-attr).
           accessibilityLiveRegion={live ? 'polite' : undefined}
-          accessibilityLabel={[label, title, detail].filter(Boolean).join(' ')}
           style={{ flex: 1, minWidth: 0, gap: CHAT.card.lineGap }}
         >
           {label ? (
@@ -143,10 +149,18 @@ export function ChatCard({
               {label}
             </Text>
           ) : null}
-          <Text style={TYPE.title} numberOfLines={titleLines}>
+          <Text
+            accessibilityRole={heading ? 'header' : undefined}
+            style={TYPE.title}
+            numberOfLines={titleLines}
+          >
             {title}
           </Text>
-          {detail ? <Text style={TYPE.meta}>{detail}</Text> : null}
+          {detail ? (
+            <Text style={TYPE.meta} numberOfLines={detailLines}>
+              {detail}
+            </Text>
+          ) : null}
         </View>
       </View>
       {children}
