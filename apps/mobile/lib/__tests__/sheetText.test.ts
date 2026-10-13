@@ -42,11 +42,12 @@ const PARTS: Record<string, string> = {
   StartStatus: 'a row that begins with its spinner, or a banner',
   BusyIndicator: 'a mark',
   FieldCount: 'a count at the end of its line, not at the start',
-  QuestionCorner: 'a sheet of its own',
+  QuestionCorner: 'a button (its confirmation is a sheet of its own)',
 };
 
 /**
- * Words that stand where they do on purpose (file → how many, and why). Only shrinks.
+ * Words that stand where they do on purpose (file → how many, and why). Only shrinks:
+ * `tools/guards/no-growth.mjs` compares it with main (`tools/guards/source-lists.mjs`).
  */
 const PLACED: Record<string, { count: number; why: string }> = {
   'components/practice/WordSheet.tsx': {
