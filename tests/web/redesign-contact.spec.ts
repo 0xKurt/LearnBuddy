@@ -52,6 +52,16 @@ for (const look of ONBOARDING_LOOKS)
       await page.getByRole('button', { name: 'Weiter', exact: true }).click();
       await expect(page.getByText('Darf Buddy Mia Benachrichtigungen schicken?')).toBeVisible();
       await expect(page.getByRole('checkbox', { name: /Push-Benachrichtigungen/ })).toHaveCount(0);
+      // One main action, the quiet ones below it (design Onboarding.jsx:44–48, #599): "yes",
+      // then "no" — no grey bar any more — then the way back.
+      const tops: number[] = [];
+      for (const name of ['Ja, erlauben', 'Nein, danke', 'Zurück']) {
+        const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+        expect(box, name).not.toBeNull();
+        tops.push(box!.y);
+      }
+      expect(tops).toEqual([...tops].sort((a, b) => a - b));
+      await expect(page.getByText('2 von 4', { exact: true })).toBeVisible();
       await onboardingShots(page, `contact-${look.family}-${look.dark}-${allow}`, look);
       const saved = page.waitForResponse(
         (r) => r.url().endsWith('/v1/learner') && r.request().method() === 'POST',

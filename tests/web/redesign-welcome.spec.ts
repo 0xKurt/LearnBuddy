@@ -41,6 +41,15 @@ for (const family of ['pastell', 'meer'] as const) {
       );
       await page.goto('/');
       await expect(page.getByLabel('E-Mail', { exact: true })).toBeVisible();
+      // An address to type, as the design shows it (Welcome.jsx:20), and the margin of the pages
+      // before the app (tokens/space.css `--space-gutter`, #599).
+      await expect(page.getByLabel('E-Mail', { exact: true })).toHaveAttribute(
+        'placeholder',
+        'name@beispiel.de',
+      );
+      const heading = await page.getByRole('heading').first().boundingBox();
+      expect(heading).not.toBeNull();
+      expect(heading!.x).toBe(20);
       const expectedPrimary = paletteOf(
         themeNameOf(family === 'meer' ? 'ocean' : family, mode === 'dark'),
       ).primary;

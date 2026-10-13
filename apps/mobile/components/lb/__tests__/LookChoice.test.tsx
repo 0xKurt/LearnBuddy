@@ -71,14 +71,12 @@ it('pins either mode explicitly and can return to system without a hidden gestur
     </>,
   );
   await waitFor(() =>
-    expect(screen.getByRole('radio', { name: 'Wie das Handy' }).getAttribute('aria-checked')).toBe(
-      'true',
-    ),
+    expect(screen.getByRole('radio', { name: 'System' }).getAttribute('aria-checked')).toBe('true'),
   );
   for (const [label, value] of [
     ['Dunkel', 'dark'],
     ['Hell', 'light'],
-    ['Wie das Handy', 'system'],
+    ['System', 'system'],
   ] as const) {
     fireEvent.click(screen.getByRole('radio', { name: label }));
     await waitFor(() =>
@@ -98,9 +96,7 @@ it('selects the actual family with the onboarding tile and retains it through a 
     </>,
   );
   await waitFor(() =>
-    expect(screen.getByRole('radio', { name: 'Wie das Handy' }).getAttribute('aria-checked')).toBe(
-      'true',
-    ),
+    expect(screen.getByRole('radio', { name: 'System' }).getAttribute('aria-checked')).toBe('true'),
   );
   fireEvent.click(screen.getByRole('radio', { name: 'Meer' }));
   await waitFor(() => expect(screen.getByTestId('look-state').textContent).toContain('ocean:'));
@@ -128,9 +124,7 @@ it('restores the picked family and pinned mode after remount and persists system
     </>,
   );
   await waitFor(() =>
-    expect(screen.getByRole('radio', { name: 'Wie das Handy' }).getAttribute('aria-checked')).toBe(
-      'true',
-    ),
+    expect(screen.getByRole('radio', { name: 'System' }).getAttribute('aria-checked')).toBe('true'),
   );
   fireEvent.click(screen.getByRole('radio', { name: 'Wald' }));
   await waitFor(() =>
@@ -148,7 +142,7 @@ it('restores the picked family and pinned mode after remount and persists system
     </>,
   );
   await waitFor(() => expect(screen.getByTestId('look-state').textContent).toBe('forest:dark'));
-  fireEvent.click(screen.getByRole('radio', { name: 'Wie das Handy' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'System' }));
   await waitFor(async () => expect(await readItem('lb.themeMode')).toBe('system'));
   expect(screen.getByRole('radio', { name: 'Wald' }).getAttribute('aria-checked')).toBe('true');
 });
@@ -161,9 +155,7 @@ it('follows live OS changes only in System and keeps pinned light while the OS c
     </>,
   );
   await waitFor(() =>
-    expect(screen.getByRole('radio', { name: 'Wie das Handy' }).getAttribute('aria-checked')).toBe(
-      'true',
-    ),
+    expect(screen.getByRole('radio', { name: 'System' }).getAttribute('aria-checked')).toBe('true'),
   );
   changeSystem('dark');
   await waitFor(() => expect(screen.getByTestId('applied-theme').textContent).toBe('pastellDark'));
@@ -172,7 +164,7 @@ it('follows live OS changes only in System and keeps pinned light while the OS c
   changeSystem('light');
   changeSystem('dark');
   expect(screen.getByTestId('applied-theme').textContent).toBe('pastell');
-  fireEvent.click(screen.getByRole('radio', { name: 'Wie das Handy' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'System' }));
   await waitFor(() => expect(screen.getByTestId('applied-theme').textContent).toBe('pastellDark'));
 });
 

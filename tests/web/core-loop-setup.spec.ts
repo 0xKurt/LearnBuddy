@@ -26,6 +26,8 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
 
   await expect(page.getByText('Kurz zum Datenschutz')).toBeVisible();
+  // One count for the whole setup, as the design writes it (#599): privacy is 1 of 4.
+  await expect(page.getByText('1 von 4', { exact: true })).toBeVisible();
   await shot(page, '02-consent');
   const accept = page.getByRole('button', { name: 'Weiter' });
   await expect(accept).toBeDisabled();
@@ -33,6 +35,7 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   await accept.click();
 
   await expect(page.getByText('Wer lernt mit LearnBuddy?')).toBeVisible();
+  await expect(page.getByText('2 von 4', { exact: true })).toBeVisible();
   await page.getByRole('radio', { name: 'Mein Kind' }).click();
   await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Mia');
   // The Bundesland is a required field at registration (issue #199): one row that opens
@@ -47,6 +50,11 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   await page.getByRole('button', { name: 'Weiter' }).click();
   const next = page.getByRole('button', { name: 'Weiter' });
   await expect(next).toBeDisabled(); // consent and PIN still missing
+  // The parents' page is still the profile: the same step, with the way out and the way back
+  // in the bar below (design Onboarding.jsx:68).
+  await expect(page.getByRole('button', { name: 'Abmelden', exact: true })).toBeVisible();
+  await expect(page.getByText('2 von 4', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Zurück', exact: true })).toBeVisible();
   await page.getByRole('checkbox', { name: /sorgeberechtigt/ }).click();
   await page.getByLabel('PIN der Eltern').fill(pin);
   await page.getByLabel('PIN wiederholen').fill(pin);
@@ -57,6 +65,7 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   // saved in the same request (issue #518) — no box in the small print any more ──
   await expect(page.getByText('Darf Buddy Mia Benachrichtigungen schicken?')).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /Push-Benachrichtigungen/ })).toHaveCount(0);
+  await expect(page.getByText('2 von 4', { exact: true })).toBeVisible();
   await shot(page, '03a2-contact-question');
   await page.getByRole('button', { name: 'Ja, erlauben' }).click();
 
@@ -64,6 +73,8 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   await expect(page.getByText('Fertig! Das ist eingestellt:')).toBeVisible();
   await expect(page.getByText('PIN der Eltern: gesetzt – nur ihr kennt sie')).toBeVisible();
   await expect(page.getByText(/Push-Benachrichtigungen: erlaubt/)).toBeVisible();
+  // The hand-over settles nothing and counts nothing (design Onboarding.jsx:128).
+  await expect(page.getByText(/^\d von \d$/)).toHaveCount(0);
   await shot(page, '03b-handover');
   await page.getByRole('button', { name: "Los geht's, Mia!" }).click();
 
@@ -74,15 +85,22 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   // ── The first-start cards, then the home ──
   await expect(page.getByText('Sag es Buddy einfach')).toBeVisible();
   await expect(page.getByText('Wie soll Buddy klingen?')).toHaveCount(0);
+  // The three cards explain; they are no step of the setup and say no "Schritt 1 von 4" any more.
+  await expect(page.getByText(/^\d von \d$/)).toHaveCount(0);
   await shot(page, '03d-onboarding');
   // Walk to the last card: the colours are chosen here now, not three taps deep in the
   // settings (issue #136), and every card has to fit without scrolling (rule 16).
   for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Such dir deine Farben aus')).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Meer' })).toBeVisible();
-  // Explicit persisted system/light/dark selection follows the supplied design (#548).
+  // No voice page on this stack (known only once the profile exists, #526), so after "1 von 4"
+  // and "2 von 4" the colours are the third of three — never "4 von 4" after a step that was
+  // not there.
+  await expect(page.getByText('3 von 3', { exact: true })).toBeVisible();
+  // Explicit persisted system/light/dark selection follows the supplied design (#548); the
+  // first is "System", as in the settings (design Gaps.jsx:34, #599).
   const dark = page.getByRole('radio', { name: 'Dunkel', exact: true });
-  await expect(page.getByRole('radio', { name: 'Wie das Handy', exact: true })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'System', exact: true })).toBeChecked();
   await shot(page, '03e-onboarding-look');
   await page.getByRole('radio', { name: 'Abend' }).click();
   await expect(page.getByRole('radio', { name: 'Abend' })).toHaveAttribute('aria-checked', 'true');
@@ -90,15 +108,19 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   await dark.click();
   await expect(dark).toBeChecked();
   await shot(page, '03g-onboarding-look-dark');
-  await page.getByRole('radio', { name: 'Wie das Handy', exact: true }).click();
-  await expect(page.getByRole('radio', { name: 'Wie das Handy', exact: true })).toBeChecked();
+  await page.getByRole('radio', { name: 'System', exact: true }).click();
+  await expect(page.getByRole('radio', { name: 'System', exact: true })).toBeChecked();
   await expect(dark).not.toBeChecked();
   await page.getByRole('button', { name: "Los geht's" }).click();
 
   // ── The student's first look: who Buddy is and how to start ──
   await expect(page.getByText('LearnBuddy')).toBeVisible();
   await expect(
-    page.getByText('Ich helfe dir, dich auf Arbeiten und Tests vorzubereiten', { exact: false }),
+    // The home's words since the redesign (design ui_kits/app/Home.jsx:15, `buddy:intro.body`):
+    // this line still waited for the sentence from before it and kept the walk red (#599).
+    page.getByText('Erzähl mir von deiner nächsten Arbeit oder zeig mir ein Arbeitsblatt.', {
+      exact: false,
+    }),
   ).toBeVisible();
   // The ways to start live in ⋯ since #174; the head carries Buddy, his name and that one way.
   await expect(page.getByRole('button', { name: 'Mehr', exact: true })).toBeVisible();

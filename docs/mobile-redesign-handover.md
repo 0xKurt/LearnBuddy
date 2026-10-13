@@ -1,5 +1,7 @@
 # Handover
 
+> **Changed by #599 (onboarding area).** This ledger describes the state of #548. The hand-over's lines name what is set in bold with its colon (`<strong>…:</strong>`, `ui_kits/app/Onboarding.jsx:141`), drawn through `Trans` only. "Gib … jetzt das Handy." is the scale's title (17/23 · 700) 16 above the action. `CheckPoints` has no boxed variant left.
+
 Current base: published main `b36be2a26b2c8203df5c109a69aa1a7d6c655406`. Handover presents the actual saved consent, parent PIN and notification choice, then gives the phone to the named child through the existing action. Profile form, Contact, Voice and controller behavior are preserved.
 
 ## Source scope

@@ -201,7 +201,6 @@
     },
     "hint": "Solo su questo dispositivo. Puoi cambiare quando vuoi.",
     "mode": {
-      "system": "Come il telefono",
       "light": "Chiaro",
       "dark": "Scuro"
     },

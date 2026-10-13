@@ -39,7 +39,7 @@ import {
 import { messageFor } from '../lib/errors.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { GUTTER, pinnedBar, RHYTHM } from '../lib/theme/space.js';
+import { GUTTER_OUTER, pinnedBar } from '../lib/theme/space.js';
 import { RESET } from '../lib/theme/reset.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
@@ -208,7 +208,7 @@ export default function ResetPassword() {
               </Text>
             ) : null}
           </ResetPage>
-          <View style={[pinnedBar(0), { gap: RHYTHM.parts }]}>
+          <View style={[pinnedBar(0), { gap: RESET.gap, paddingBottom: RESET.bottom }]}>
             <Btn
               full
               size="lg"
@@ -248,7 +248,7 @@ export default function ResetPassword() {
           </Btn>
         </ResetPage>
         {/* The SafeAreaView keeps the bottom edge: no inset left to clear. */}
-        <View style={pinnedBar(0)}>
+        <View style={[pinnedBar(0), { paddingBottom: RESET.bottom }]}>
           <Btn
             size="lg"
             pill
@@ -266,8 +266,9 @@ export default function ResetPassword() {
 }
 
 /**
- * The page every phase after the check shares: Buddy and the title on top, what the phase
- * says below. Both password and resend forms keep taps while the keyboard is up.
+ * The page every phase after the check shares: Buddy, the title, what the phase says and its
+ * field in one column at one distance (design ui_kits/app/Flows.jsx `ResetInvalid`). Both password
+ * and resend forms keep taps while the keyboard is up.
  */
 function ResetPage({
   title,
@@ -281,24 +282,20 @@ function ResetPage({
   return (
     <ScrollView
       contentContainerStyle={{
-        paddingHorizontal: GUTTER,
+        // The margin before the app (design tokens/space.css `--space-gutter`).
+        paddingHorizontal: GUTTER_OUTER,
         paddingTop: RESET.top,
-        paddingBottom: RESET.bottom,
-        gap: RHYTHM.sections,
+        paddingBottom: RESET.gap,
+        gap: RESET.gap,
       }}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
     >
-      <View
-        style={{
-          alignItems: 'flex-start',
-          gap: RHYTHM.stack, // the title under Buddy's orb
-        }}
-      >
+      <View style={{ alignItems: 'flex-start' }}>
         <BuddyOrb size={RESET.orb} />
-        <Text accessibilityRole="header" style={TYPE.pageHeadline}>
-          {title}
-        </Text>
       </View>
+      <Text accessibilityRole="header" style={TYPE.pageHeadline}>
+        {title}
+      </Text>
       {children}
     </ScrollView>
   );

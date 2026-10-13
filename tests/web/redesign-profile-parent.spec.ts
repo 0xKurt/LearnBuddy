@@ -106,11 +106,23 @@ for (const look of ONBOARDING_LOOKS)
     for (const phone of PHONES) {
       await page.setViewportSize(phone);
       await reachableFields(page);
+      // The bar below the page, as the design has it (Onboarding.jsx:66–69, #599): "Weiter",
+      // then the way out, then the way back to the child's details — nothing stands above Buddy
+      // any more. Each keeps the margin of the pages before the app (20) and a whole target.
+      const forward = await next.boundingBox();
+      const out = await page.getByRole('button', { name: 'Abmelden', exact: true }).boundingBox();
       const back = await page.getByRole('button', { name: 'Zurück', exact: true }).boundingBox();
-      expect(back).not.toBeNull();
-      expect(back!.x).toBe(16);
-      expect(back!.width).toBe(44);
-      expect(back!.height).toBe(44);
+      expect(forward).not.toBeNull();
+      for (const box of [out, back]) {
+        expect(box).not.toBeNull();
+        expect(box!.x).toBe(20);
+        expect(box!.width).toBe(phone.width - 40);
+        expect(box!.height).toBeGreaterThanOrEqual(44);
+      }
+      expect(out!.y).toBeGreaterThanOrEqual(forward!.y + forward!.height);
+      expect(back!.y).toBeGreaterThanOrEqual(out!.y + out!.height);
+      expect(back!.y + back!.height).toBeLessThanOrEqual(phone.height);
+      await expect(page.getByText('2 von 4', { exact: true })).toBeVisible();
       await shot(page, `profile-parent-fields-${look.family}-${look.dark}-${phone.width}`, {
         phones: [phone],
       });

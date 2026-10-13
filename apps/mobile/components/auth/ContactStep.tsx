@@ -6,11 +6,17 @@
 // is the button that saves the profile: for a child under 16 in the same request as the adults'
 // consent and PIN (rule 6), from 16 hers. A "no" is final (owner 10.10.): the chat never asks
 // again, only the settings change it.
+//
+// The design draws this as a tick box on the parents' page (ui_kits/app/Onboarding.jsx:71). It
+// stays a page of its own (#599): an empty box and a "no" are the same there, which is the very
+// thing #518 took out, and with a "no" that is final an overlooked box would decide for good.
+// Nothing is chosen in advance here either — no answer exists until an adult taps one.
+// How it looks follows the design's page: "yes" is the one main action, "no" and the way back are
+// the quiet ones below it, like the privacy page's "Nicht einverstanden" (Onboarding.jsx:44–48).
 
 import { useTranslation } from 'react-i18next';
 
 import { Btn } from '../lb/Btn.js';
-import { IconBtn } from '../lb/IconBtn.js';
 import { SetupStep } from './SetupStep.js';
 
 export type ContactAnswer = 'yes' | 'no';
@@ -32,30 +38,39 @@ export function ContactStep({
   onBack: () => void;
 }) {
   const { t } = useTranslation('auth');
-  const answer = (value: ContactAnswer, label: string) => (
-    <Btn
-      size="lg"
-      pill
-      full
-      variant={value === 'yes' ? 'primary' : 'quiet'}
-      busy={answering === value}
-      disabled={answering !== null}
-      onPress={() => onAnswer(value)}
-    >
-      {label}
-    </Btn>
-  );
+  const saving = answering !== null;
   return (
     <SetupStep
+      step="profile"
       lead={forChild ? t('profile.contact_body_child') : t('profile.contact_body_self')}
       title={
         forChild ? t('profile.contact_title_child', { name }) : t('profile.contact_title_self')
       }
-      top={<IconBtn icon="back" onPress={onBack} accessibilityLabel={t('profile.back')} />}
       footer={
         <>
-          {answer('yes', t('profile.contact_yes'))}
-          {answer('no', t('profile.contact_no'))}
+          <Btn
+            size="lg"
+            pill
+            full
+            busy={answering === 'yes'}
+            disabled={saving}
+            onPress={() => onAnswer('yes')}
+          >
+            {t('profile.contact_yes')}
+          </Btn>
+          <Btn
+            variant="ghost"
+            pill
+            full
+            busy={answering === 'no'}
+            disabled={saving}
+            onPress={() => onAnswer('no')}
+          >
+            {t('profile.contact_no')}
+          </Btn>
+          <Btn variant="ghost" size="sm" pill full disabled={saving} onPress={onBack}>
+            {t('profile.back')}
+          </Btn>
         </>
       }
     >

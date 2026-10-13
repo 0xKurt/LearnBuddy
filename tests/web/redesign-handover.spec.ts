@@ -56,8 +56,16 @@ for (const look of ONBOARDING_LOOKS)
       const proceed = page.getByRole('button', { name: "Los geht's, Mia!", exact: true });
       await expect(instruction).toBeVisible();
       await expect(instruction).toHaveCSS('text-align', 'center');
+      // The scale's title (17/23 · 700) for the design's 700 17/24 (Onboarding.jsx:131, #599).
       await expect(instruction).toHaveCSS('font-size', '17px');
-      await expect(instruction).toHaveCSS('line-height', '25px');
+      await expect(instruction).toHaveCSS('line-height', '23px');
+      await expect(instruction).toHaveCSS('font-family', /Figtree_700Bold/);
+      // What is set stands in bold, its colon included (Onboarding.jsx:141).
+      await expect(page.getByText('PIN der Eltern:', { exact: true })).toHaveCSS(
+        'font-family',
+        /Figtree_700Bold/,
+      );
+      await expect(page.getByText(/^\d von \d$/)).toHaveCount(0);
       const instructionBox = await instruction.boundingBox();
       const proceedBox = await proceed.boundingBox();
       expect(instructionBox).not.toBeNull();

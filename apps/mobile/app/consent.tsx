@@ -92,8 +92,13 @@ export default function Consent() {
     }
   }
 
+  // The first of the setup's four only while it IS the setup: no profile yet. Agreeing to a
+  // changed text later, or for herself at 16, is one page on its own and counts nothing.
+  const settingUp = me.data ? !me.data.learner : false;
+
   return (
     <SetupStep
+      step={settingUp ? 'consent' : undefined}
       title={t(forHerself ? 'consent.own_title' : 'consent.title')}
       lead={t(forHerself ? 'consent.own_intro' : 'consent.intro')}
       scrollTestID="scroll-list"
@@ -115,7 +120,7 @@ export default function Consent() {
       }
     >
       <View style={{ gap: ONBOARDING.facts.gap }}>
-        <CheckPoints plain points={POINTS.map((point) => t(`consent.${point}`))} />
+        <CheckPoints points={POINTS.map((point) => t(`consent.${point}`))} />
         {ENV.PRIVACY_URL ? (
           <View style={{ marginLeft: ONBOARDING.policyIndent, alignSelf: 'flex-start' }}>
             <Btn

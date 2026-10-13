@@ -201,7 +201,6 @@
     },
     "hint": "Gilt nur auf diesem Gerät. Du kannst jederzeit wechseln.",
     "mode": {
-      "system": "Wie das Handy",
       "light": "Hell",
       "dark": "Dunkel"
     },
