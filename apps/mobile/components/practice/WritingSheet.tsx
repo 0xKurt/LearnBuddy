@@ -17,7 +17,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { FieldCount } from '../lb/FieldCount.js';
 import { LbTextInput, LINE } from '../lb/LbTextInput.js';
 import { PressArea } from '../lb/PressArea.js';
-import { Sheet, SHEET_MAX } from '../lb/Sheet.js';
+import { Sheet, SHEET_MAX, SHEET_TEXT } from '../lb/Sheet.js';
 
 /**
  * What the sheet takes besides the field's lines, in pt, read from Sheet.tsx and rounded up: its
@@ -74,7 +74,7 @@ export function WritingSheet({
       >
         <Text
           numberOfLines={wholeTask ? undefined : 1}
-          style={[TYPE.body, { color: palette.ink2 }]}
+          style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}
         >
           {task}
         </Text>

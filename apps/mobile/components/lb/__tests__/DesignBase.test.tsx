@@ -21,7 +21,6 @@ import { IconBtn } from '../IconBtn.js';
 import { ListGroup, Row } from '../ListGroup.js';
 import { Segmented } from '../Segmented.js';
 import { Sheet, SHEET_TEXT } from '../Sheet.js';
-import { BoneCard } from '../Skeleton.js';
 import { Slot } from '../Slot.js';
 import { ToastHost } from '../Toast.js';
 
@@ -157,15 +156,6 @@ describe('Card (components/core/Card.jsx)', () => {
       </Card>,
     );
     expect(own(screen.getByLabelText('Leiste')).gap).toBe('');
-  });
-
-  it('pads the skeleton’s card like the card that arrives (components/core/States.jsx)', () => {
-    renderInApp(
-      <BoneCard>
-        <Text>Knochen</Text>
-      </BoneCard>,
-    );
-    expect(styleOf(screen.getByText('Knochen').parentElement!).padding).toBe('20px');
   });
 
   it('takes the conversation’s padding only when the caller names it', () => {

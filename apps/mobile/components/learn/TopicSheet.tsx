@@ -15,7 +15,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
-import { Sheet } from '../lb/Sheet.js';
+import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { KIND_EXAMPLES } from './kinds.js';
@@ -99,8 +99,11 @@ export function TopicSheet({ kind, onClose }: Props) {
         </Btn>
       }
     >
-      <Text style={TYPE.small}>{t(`learn:topic.${k}.hint`)}</Text>
-      <MicStatus voice={voice} />
+      <Text style={[TYPE.small, SHEET_TEXT]}>{t(`learn:topic.${k}.hint`)}</Text>
+      {/* What the microphone says is words of the sheet too: on the title's edge. */}
+      <View style={SHEET_TEXT}>
+        <MicStatus voice={voice} />
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
         <View style={{ flex: 1 }}>
           <LbTextInput
@@ -124,7 +127,7 @@ export function TopicSheet({ kind, onClose }: Props) {
       </View>
       {examples.length > 0 ? (
         <View style={{ gap: SPACE.sm }}>
-          <Text style={TYPE.label}>{t('learn:topic.examples')}</Text>
+          <Text style={[TYPE.label, SHEET_TEXT]}>{t('learn:topic.examples')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
             {examples.map((example) => (
               <Btn

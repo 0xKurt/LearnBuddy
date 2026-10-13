@@ -123,12 +123,12 @@ function WordAttempt({
           </View>
         ) : null}
         {problem ? (
-          <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
+          <Text accessibilityRole="alert" style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}>
             {problem}
           </Text>
         ) : null}
         {tried && !sending ? (
-          <View accessibilityLiveRegion="polite" style={{ gap: SPACE.xs }}>
+          <View accessibilityLiveRegion="polite" style={[SHEET_TEXT, { gap: SPACE.xs }]}>
             <Text
               style={[
                 TYPE.body,

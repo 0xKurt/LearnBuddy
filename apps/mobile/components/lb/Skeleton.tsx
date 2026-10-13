@@ -165,7 +165,7 @@ export function BoneCard({ children, style }: { children: ReactNode; style?: Vie
         {
           backgroundColor: palette.paper,
           borderRadius: RADIUS.card,
-          padding: CARD_PAD.card,
+          padding: CARD_PAD.base,
           gap: SPACE.md,
           borderWidth: UI.border,
           borderColor: palette.hairline,

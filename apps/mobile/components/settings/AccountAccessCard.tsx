@@ -205,7 +205,7 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
           </Card>
         ) : (
           <>
-            <Text style={TYPE.body}>{t('settings:adult.access.email_intro')}</Text>
+            <Text style={[TYPE.body, SHEET_TEXT]}>{t('settings:adult.access.email_intro')}</Text>
             <LbTextInput
               value={newEmail}
               onChangeText={setNewEmail}
@@ -277,7 +277,10 @@ function Failure({ text }: { text: string | null }) {
   useAnnounce(text);
   if (!text) return null;
   return (
-    <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
+    <Text
+      accessibilityLiveRegion="polite"
+      style={[TYPE.body, SHEET_TEXT, { color: palette.danger }]}
+    >
       {text}
     </Text>
   );
