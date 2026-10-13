@@ -13,6 +13,13 @@ const SCRIM = '#1f1b2e';
 /** The image viewer's ground and its hint, the same in every look (design ui_kits/app/Gaps.jsx FigureZoom). */
 const VIEWER_VEIL = '#15121f';
 const ON_VIEWER_VEIL = '#bdb7d3';
+/**
+ * The paper a labelled picture's image lies on and the ink drawn over it (#599,
+ * assets/figures/TEILE.md: always a light paper card, in the dark looks too — the images keep
+ * their colours and are made for a light ground). The same in every look.
+ */
+const FIGURE_PAPER = '#ffffff';
+const FIGURE_INK = '#1f1b2e';
 
 export type Palette = {
   /** Modal backdrop stays dark in every look. */
@@ -21,6 +28,17 @@ export type Palette = {
   viewerVeil: string;
   /** The quiet hint on that ground (≥ 4.5:1). */
   onViewerVeil: string;
+  /** The light paper card under a labelled picture's image, in every look (#599). */
+  figurePaper: string;
+  /** Leader lines, their dots, the numbers and their rings on that paper (≥ 4.5:1). */
+  figureInk: string;
+  /**
+   * The asked number and her chosen part on that paper: the look's accent as its LIGHT mode has
+   * it — a dark look's accent is made for a dark ground and fades on white (≥ 3:1 on the paper).
+   */
+  figureAccent: string;
+  /** The asked number's digit on that accent (≥ 4.5:1). */
+  onFigureAccent: string;
   ink: string;
   ink2: string;
   ink3: string;
@@ -136,6 +154,10 @@ const pastellSoft: Palette = {
   scrim: SCRIM,
   viewerVeil: VIEWER_VEIL,
   onViewerVeil: ON_VIEWER_VEIL,
+  figurePaper: FIGURE_PAPER,
+  figureInk: FIGURE_INK,
+  figureAccent: '#6a48d7',
+  onFigureAccent: '#ffffff',
   hairlineStrong: 'rgba(60,40,120,0.16)',
   onPrimary: '#ffffff',
   primary: '#6a48d7',
@@ -232,6 +254,10 @@ const night: Palette = {
   scrim: SCRIM,
   viewerVeil: VIEWER_VEIL,
   onViewerVeil: ON_VIEWER_VEIL,
+  figurePaper: FIGURE_PAPER,
+  figureInk: FIGURE_INK,
+  figureAccent: '#6a48d7',
+  onFigureAccent: '#ffffff',
   hairlineStrong: 'rgba(220,210,255,0.20)',
   onPrimary: '#191627',
   primary: '#9d82f5',
@@ -339,6 +365,8 @@ function accent(base: Palette, over: Accent): Palette {
     ring: over.ring,
     bg: over.bg,
     ...(base === night ? { onPrimary: over.bg } : {}),
+    // On the picture's light paper: the light mode's accent (`onPaper` sets a dark look's).
+    figureAccent: over.primary,
     canvas: over.canvas,
     ...(over.glow ? { glow: over.glow } : {}),
     figure: { ...base.figure, fill: over.figureFill, fillSoft: over.figureFillSoft },
@@ -461,15 +489,24 @@ const ACCENTS: Record<Exclude<Family, 'pastell'>, { light: Accent; dark: Accent 
  * Every family in both modes, generated rather than typed (issue #140). The key is what is
  * stored and what `applyPalette` takes; the two axes are resolved into it by the provider.
  */
+/** A dark look whose pictures lie on light paper: there its accent is its light sibling's. */
+function onPaper(dark: Palette, light: Palette): Palette {
+  return { ...dark, figureAccent: light.figureAccent, onFigureAccent: light.onFigureAccent };
+}
+
+const FOREST = accent(pastellSoft, ACCENTS.forest.light);
+const OCEAN = accent(pastellSoft, ACCENTS.ocean.light);
+const SUNSET = accent(pastellSoft, ACCENTS.sunset.light);
+
 export const PALETTES = {
   pastell: pastellSoft,
-  pastellDark: night,
-  forest: accent(pastellSoft, ACCENTS.forest.light),
-  forestDark: accent(night, ACCENTS.forest.dark),
-  ocean: accent(pastellSoft, ACCENTS.ocean.light),
-  oceanDark: accent(night, ACCENTS.ocean.dark),
-  sunset: accent(pastellSoft, ACCENTS.sunset.light),
-  sunsetDark: accent(night, ACCENTS.sunset.dark),
+  pastellDark: onPaper(night, pastellSoft),
+  forest: FOREST,
+  forestDark: onPaper(accent(night, ACCENTS.forest.dark), FOREST),
+  ocean: OCEAN,
+  oceanDark: onPaper(accent(night, ACCENTS.ocean.dark), OCEAN),
+  sunset: SUNSET,
+  sunsetDark: onPaper(accent(night, ACCENTS.sunset.dark), SUNSET),
 } satisfies Record<string, Palette>;
 
 export type ThemeName = keyof typeof PALETTES;

@@ -277,11 +277,14 @@ export const REGION_TAP_BOX = { width: 320, height: 330 } as const;
 const REACH_PT = 22;
 
 /**
- * Half the target a region needs before a question may ask to tap it, in pt: a part of a picture a
- * whole finger (44 pt, `TOUCH` — we draw the pictures, so we draw them big enough, #252); a region
- * of a map at least the 24 pt of WCAG 2.2 (2.5.8) — its countries are as small as they are.
+ * Half the target a region needs before a question may ask to tap it, in pt: a part of a picture
+ * we draw a whole finger (44 pt, `TOUCH` — we draw it, so we draw it big enough, #252); a region
+ * of a map at least the 24 pt of WCAG 2.2 (2.5.8) — its countries are as small as they are; and
+ * the same 24 pt for a part of a picture that is an image (#599): its parts are as small as the
+ * image shows them, and its tap areas may overlap — the nearer anchor wins (`anchorAt`,
+ * schematics.ts) —, so what counts is that two anchors stand that far apart.
  */
-export const TAP_TARGET = { picture: REACH_PT, map: 12 } as const;
+export const TAP_TARGET = { picture: REACH_PT, map: 12, image: 12 } as const;
 
 /** `pt` on a drawing `width` pt wide, in the frame's units. */
 function units(pt: number, width: number): number {

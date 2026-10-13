@@ -35,6 +35,7 @@ import {
   type MapFig,
 } from '../../../../packages/shared-math/src/maps.js';
 import { regionName } from '../../../../packages/shared-math/src/regions.js';
+import { isImageSchematic } from '../../../../packages/shared-math/src/schematics.js';
 import { parseClockAnswer } from '../../../../packages/shared-math/src/primary.js';
 import {
   namedPlaces,
@@ -49,7 +50,9 @@ import type { Translate } from '../../lib/i18n/index.js';
 import { tapLayout, type TapMark } from '../../lib/math/tapLayout.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useMapShapes } from '../../lib/math/useMapShapes.js';
+import { useSchematicPictures } from '../../lib/math/useSchematicPictures.js';
 import { useSchematicShapes } from '../../lib/math/useSchematicShapes.js';
+import { FIGURE_PICTURE } from '../../lib/theme/figurePicture.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -171,6 +174,21 @@ function Mark({ mark }: { mark: TapMark }) {
       </>
     );
   }
+  if (mark.kind === 'spot') {
+    // The part she chose on an image (#599): a ring around its anchor, as the design marks it.
+    const { radius, stroke, fillOpacity } = FIGURE_PICTURE.pick;
+    return (
+      <Circle
+        cx={mark.x}
+        cy={mark.y}
+        r={radius * mark.k}
+        fill={palette.figureAccent}
+        fillOpacity={fillOpacity}
+        stroke={palette.figureAccent}
+        strokeWidth={stroke}
+      />
+    );
+  }
   if (mark.kind === 'box') {
     const { x, y, w, h } = mark.box;
     return (
@@ -210,9 +228,12 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
   const names = useFigureNames(figure);
   const pick = value === '' ? null : tapPick(names, figure, value);
   const clock = figure.type === 'clock';
+  // A picture is an image with anchors (#599) or, the circuit alone, our drawing with shapes.
+  const image = figure.type === 'schematic' && isImageSchematic(figure.d);
   const shapes = {
     maps: useMapShapes(figure.type === 'map')?.MAP_SHAPES,
-    pictures: useSchematicShapes(figure.type === 'schematic')?.SCHEMATIC_SHAPES,
+    pictures: useSchematicShapes(figure.type === 'schematic' && !image)?.SCHEMATIC_SHAPES,
+    anchors: useSchematicPictures(image)?.SCHEMATIC_PICTURES.anchors,
   };
   // The hand a tap on the clock moves: the small one first (axis 0), then the large one.
   const [active, setActive] = useState(0);
@@ -284,7 +305,13 @@ export function TapFigure({ figure, value, onChange, disabled, maxHeight }: Prop
                   drag
                   testID="tap-pad"
                   disabled={disabled}
-                  onPoint={(x, y) => write(layout.pickAt(x, y, pick, active))}
+                  onPoint={(x, y) => {
+                    const next = layout.pickAt(x, y, pick, active);
+                    // Beside every part of an image a tap picks nothing (#599): her place is
+                    // empty again — no ring, and the line under the figure says how to answer.
+                    if (next) write(next);
+                    else if (value !== '') onChange('');
+                  }}
                   onRelease={clock && active === 0 ? () => setActive(1) : undefined}
                 />
               </>

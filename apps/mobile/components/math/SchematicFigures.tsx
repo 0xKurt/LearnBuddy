@@ -1,12 +1,14 @@
-// A labelled picture (issue #252): a drawing of the picture library — a plant cell, an eye, a
-// bicycle — in the app's pastels, with numbers beside it, each joined to its part by a leader
-// line, as a schoolbook prints them (`schematicLayout.ts`). Nothing here decides anything: every
-// part, its name and its outline are packages/shared-math (`schematics.ts`), the library the
-// server checked the question against. The drawings and the names come with the first picture
-// (`useSchematicShapes`, `useFigureNames`, #440); until both are there the picture keeps its room
-// and draws nothing. `describeSchematic` says in words
-// what it shows — the drawing and how many parts are numbered, never their names (naming them is
-// the task).
+// A labelled picture (issue #252): a picture of the library — a plant cell, an eye, a bicycle —
+// with numbers on the parts asked for, each joined to its part by a leader line. Every picture is
+// a real image with its anchors as data (`SchematicPicture.tsx`, #599) — but the circuit, the one
+// picture no free image exists for (`SCHEMATIC_DRAWN`, shared-math): that one is still drawn here
+// in the app's pastels, its numbers beside it as a schoolbook prints them (`schematicLayout.ts`).
+// Nothing here decides anything: every part and its name are packages/shared-math
+// (`schematics.ts`), the library the server checked the question against. The drawing and the
+// names come with the first picture (`useSchematicShapes`, `useFigureNames`, #440); until both are
+// there the picture keeps its room and draws nothing. `describeSchematic` says in words what it
+// shows — the picture and how many parts are numbered, never their names (naming them is the
+// task).
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { View } from 'react-native';
@@ -14,7 +16,12 @@ import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
 import type { FigureNames } from '../../../../packages/shared-math/src/figureNames.js';
 import { regionPath } from '../../../../packages/shared-math/src/regions.js';
-import { schematic, schematicNumbered } from '../../../../packages/shared-math/src/schematics.js';
+import {
+  isImageSchematic,
+  schematic,
+  schematicNumbered,
+  type SchematicDrawnId,
+} from '../../../../packages/shared-math/src/schematics.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import type { Translate } from '../../lib/i18n/index.js';
 import { BADGE_R, schematicLayout } from '../../lib/math/schematicLayout.js';
@@ -23,25 +30,39 @@ import { useSchematicShapes } from '../../lib/math/useSchematicShapes.js';
 import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FAMILY, FONT } from './figureText.js';
+import { SchematicPicture } from './SchematicPicture.js';
 
 export type SchematicFigure = Extract<Figure, { type: 'schematic' }>;
 
-export function SchematicBody({
+type BodyProps<F extends SchematicFigure> = {
+  figure: F;
+  /** The width FigureView gives the picture, already shrunk by `scale`. */
+  width: number;
+  /**
+   * How far FigureView shrinks it. A drawing with numbers keeps its whole width and is drawn
+   * `scale` times its height between its columns: the columns do not shrink with it, so a
+   * narrower picture came out shorter than the room it was shrunk for (#462). One to tap keeps
+   * the width it is given — the tap layer lies over exactly that. An image's height follows its
+   * width alone.
+   */
+  scale?: number;
+};
+
+/** An image with its numbers over it — or, for the circuit alone, our drawing of it. */
+export function SchematicBody({ figure, width, scale }: BodyProps<SchematicFigure>) {
+  const { d } = figure;
+  return isImageSchematic(d) ? (
+    <SchematicPicture figure={{ ...figure, d }} width={width} />
+  ) : (
+    <SchematicDrawing figure={{ ...figure, d }} width={width} scale={scale} />
+  );
+}
+
+function SchematicDrawing({
   figure,
   width,
   scale = 1,
-}: {
-  figure: SchematicFigure;
-  /** The width FigureView gives the drawing, already shrunk by `scale`. */
-  width: number;
-  /**
-   * How far FigureView shrinks it. A picture with numbers keeps its whole width and is drawn
-   * `scale` times its height between its columns: the columns do not shrink with it, so a
-   * narrower picture came out shorter than the room it was shrunk for (#462). One to tap keeps
-   * the width it is given — the tap layer lies over exactly that.
-   */
-  scale?: number;
-}) {
+}: BodyProps<SchematicFigure & { d: SchematicDrawnId }>) {
   const { figure: ink } = useTheme();
   const shape = useSchematicShapes()?.SCHEMATIC_SHAPES[figure.d];
   const names = useFigureNames(figure);
@@ -88,8 +109,8 @@ export function SchematicBody({
             <Path d={paths[i]} fill={tone(p.tone)} fillOpacity={p.tone < 0 ? 0.85 : 1} />
           </G>
         ))}
-        {/* What is drawn on the parts without being one: a sign's white symbol, a fish's eye —
-            white and black in either room, as a sign is at night. */}
+        {/* What is drawn on the parts without being one: the battery's plus and minus, the bulb's
+            wire — white and black in either room. */}
         {drawing.marks?.white ? <Path d={regionPath(drawing.marks.white, k)} fill={white} /> : null}
         {drawing.marks?.black ? <Path d={regionPath(drawing.marks.black, k)} fill={black} /> : null}
       </G>
@@ -142,7 +163,7 @@ export function describeSchematic(
   const lang = currentLocale();
   const titles = schematic(names, figure.d).names;
   const name = lang in titles ? titles[lang as keyof typeof titles] : titles.de;
-  const count = schematicNumbered(names, figure).length;
+  const count = schematicNumbered(names, figure)?.length ?? 0;
   return count > 0
     ? t('figure.schematic_numbered', { name, count })
     : t('figure.schematic', { name });

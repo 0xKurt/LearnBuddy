@@ -50,6 +50,10 @@ const TEXT: Array<[keyof Palette, keyof Palette]> = [
   ['primaryLt', 'ink'],
   ['primaryDk', 'primaryLt'],
   ['paper', 'danger'],
+  // A labelled picture's numbers on its light paper card, and the asked number's digit on its
+  // filled ring — the same paper in every look, the dark ones too (#599, SchematicPicture.tsx).
+  ['figureInk', 'figurePaper'],
+  ['onFigureAccent', 'figureAccent'],
 ];
 const SHAPES: Array<[keyof Palette, keyof Palette]> = [
   ['primary', 'paper'],
@@ -63,6 +67,10 @@ const SHAPES: Array<[keyof Palette, keyof Palette]> = [
   ['ink3', 'paper'],
   ['ink3', 'bg'],
   ['knob', 'ink3'],
+  // The asked number's ring and leader line, and the ring on the part she chose, on the
+  // picture's paper (#599): a dark look's own accent would fade on white.
+  ['figureAccent', 'figurePaper'],
+  ['figureInk', 'figurePaper'],
 ];
 
 for (const [name, palette] of Object.entries(PALETTES)) {

@@ -7,7 +7,7 @@
 import type { Figure, ItemResult, MaterialItemsView } from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
-import { storedFigure } from '../practice/items.js';
+import { storedQuestionFigure } from '../practice/items.js';
 import { taskPartViews } from '../practice/taskParts.js';
 import { subjectKindOf } from '../practice/viewParts.js';
 import { materialView } from './view.js';
@@ -23,6 +23,9 @@ type MaterialItemRow = {
   lang: string | null;
   prompt_lang: string | null;
   figure: Figure | null;
+  /** Read only to hold a labelled picture to its question (`storedQuestionFigure`); never sent. */
+  answer: string;
+  tap: boolean | null;
   subject_kind: string | null;
   last_status: 'correct' | 'revealed' | 'skipped' | 'missed' | null;
   last_first_try: boolean | null;
@@ -47,7 +50,7 @@ export async function materialItems(
   const material = await materialView(db, learnerId, materialId);
   const rows = await db.query<MaterialItemRow>(
     `select i.id, i.kind, i.prompt, i.choices, i.unit, i.topic, i.origin, i.lang, i.prompt_lang, i.figure,
-            i.task_part, sub.kind as subject_kind,
+            i.answer, i.tap, i.task_part, sub.kind as subject_kind,
             last.status as last_status, last.first_try_correct as last_first_try
        from items i
        left join subjects sub on sub.id = i.subject_id
@@ -76,7 +79,9 @@ export async function materialItems(
       lang: r.lang,
       prompt_lang: r.prompt_lang,
       subject_kind: subjectKindOf(r.subject_kind),
-      figure: storedFigure(r.figure),
+      // Through the check the question was written under (#599): a labelled picture whose
+      // question names a part it no longer has is not shown beside it. Never the key itself.
+      figure: storedQuestionFigure(r),
       // The concept image is shown where the question is shown full size (sessions);
       // the material list stays a list (issue #50).
       image: null,

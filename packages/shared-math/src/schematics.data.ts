@@ -133,37 +133,10 @@ export const SCHEMATIC_NAMES: SchematicNames = {
       ]),
       part('chain', ['Kette', 'chain', 'chaîne', 'cadena', 'catena'], ['Fahrradkette']),
       part('frame', ['Rahmen', 'frame', 'cadre', 'cuadro', 'telaio'], ['Fahrradrahmen']),
-      part(
-        'carrier',
-        ['Gepäckträger', 'rack', 'porte-bagages', 'portaequipajes', 'portapacchi'],
-        ['Gepäcktraeger', 'carrier'],
-      ),
       part('pedal', ['Pedal', 'pedal', 'pédale', 'pedal', 'pedale'], ['Tretkurbel', 'Pedale']),
       part('saddle', ['Sattel', 'saddle', 'selle', 'sillín', 'sella']),
       part('handlebar', ['Lenker', 'handlebar', 'guidon', 'manillar', 'manubrio'], ['Lenkstange']),
-      part('bell', ['Klingel', 'bell', 'sonnette', 'timbre', 'campanello'], ['Fahrradklingel']),
-      part(
-        'headlight',
-        ['Scheinwerfer', 'headlight', 'phare', 'faro', 'faro anteriore'],
-        ['Vorderlicht', 'Frontlicht', 'Lampe'],
-      ),
-      part(
-        'spoke_reflector',
-        [
-          'Speichenreflektor',
-          'spoke reflector',
-          'catadioptre de rayon',
-          'reflector de radios',
-          'catarifrangente per raggi',
-        ],
-        ['Speichenreflektoren', 'Katzenauge', 'Katzenaugen', 'Reflektor', 'Rückstrahler'],
-      ),
       part('brake', ['Bremse', 'brake', 'frein', 'freno', 'freno'], ['Bremsen', 'Felgenbremse']),
-      part(
-        'rear_light',
-        ['Rücklicht', 'rear light', 'feu arrière', 'luz trasera', 'luce posteriore'],
-        ['Rückleuchte', 'Schlusslicht'],
-      ),
     ],
   },
   microscope: {

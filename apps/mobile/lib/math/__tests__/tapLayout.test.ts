@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { FIGURE_NAMES } from '../../../../../packages/shared-math/src/figureNames.data.js';
 import { MAP_SHAPES } from '../../../../../packages/shared-math/src/mapShapes.data.js';
+import { SCHEMATIC_ANCHORS } from '../../../../../packages/shared-math/src/schematicAnchors.data.js';
 import { SCHEMATIC_SHAPES } from '../../../../../packages/shared-math/src/schematicShapes.data.js';
 import { mapRegion } from '../../../../../packages/shared-math/src/maps.js';
 import { tapAxes, type Tappable } from '../../../../../packages/shared-math/src/tap.js';
@@ -92,17 +93,57 @@ describe('a map (#251): every Land and every continent by its label', () => {
     expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(100);
   });
 
-  it('a labelled picture (#252): every part by its own point, no shapes to load', () => {
-    for (const d of ['plant_cell', 'eye', 'bicycle'] as const) {
+  it('a picture that is an image (#599): a part with a tap area by its anchor, marked with a ring', () => {
+    for (const d of ['plant_cell', 'ear', 'bicycle', 'signs', 'skeleton'] as const) {
       const f = { type: 'schematic', d, n: [], ask: 0 } as const;
-      const l = tapLayout(FIGURE_NAMES, f, 300, format, 12, { pictures: SCHEMATIC_SHAPES });
-      if (!l) throw new Error('no layout');
-      for (const pick of everyPick(f)) {
-        const mark = l.markOf(pick);
-        if (mark?.kind !== 'region') throw new Error('a part');
-        expect(mark.outline).toBe(true);
-        expect(l.pickAt(mark.x, mark.y, null, 0)).toEqual(pick);
+      for (const width of [300, 236]) {
+        const l = tapLayout(FIGURE_NAMES, f, width, format, 12, { anchors: SCHEMATIC_ANCHORS });
+        if (!l) throw new Error('no layout');
+        everyPick(f).forEach((pick, i) => {
+          const mark = l.markOf(pick);
+          if (mark?.kind !== 'spot') throw new Error('a part');
+          const a = SCHEMATIC_ANCHORS[d][i]!;
+          expect(mark.x).toBeCloseTo((a.at[0] * width) / 300);
+          expect(mark.y).toBeCloseTo((a.at[1] * width) / 300);
+          // A part that is named only has no area: a finger on its anchor never picks it (it
+          // picks nothing, or the part whose area lies there).
+          const picked = l.pickAt(mark.x, mark.y, null, 0);
+          if (a.tap) expect(picked).toEqual(pick);
+          else expect(picked).not.toEqual(pick);
+        });
       }
+    }
+  });
+
+  it('on an image a tap means the cell of a row picture — and nothing beside every tap area', () => {
+    const signs = { type: 'schematic', d: 'signs', n: [], ask: 0 } as const;
+    const l = tapLayout(FIGURE_NAMES, signs, 150, format, 12, { anchors: SCHEMATIC_ANCHORS });
+    // The frame is 300 × 200, drawn at half size: three cells across, two down.
+    expect(l?.pickAt(2, 2, null, 0)).toEqual([0]);
+    expect(l?.pickAt(148, 98, null, 0)).toEqual([5]);
+    // The other lung of the breathing organs (the anchor stands on the left one): before, the
+    // nearest anchor made it "Bronchien" — a right tap graded wrong. Now it is no pick at all.
+    const breathing = { type: 'schematic', d: 'breathing', n: [], ask: 0 } as const;
+    for (const width of [300, 236]) {
+      const k = width / 300;
+      const b = tapLayout(FIGURE_NAMES, breathing, width, format, 12, {
+        anchors: SCHEMATIC_ANCHORS,
+      });
+      expect(b?.pickAt(213 * k, 253 * k, null, 0)).toBeNull();
+      // And the white corner of the frame.
+      expect(b?.pickAt(width - 1, 1, null, 0)).toBeNull();
+    }
+  });
+
+  it('the picture we draw (#252, the circuit): every part by its own point, its outline marked', () => {
+    const f = { type: 'schematic', d: 'circuit', n: [], ask: 0 } as const;
+    const l = tapLayout(FIGURE_NAMES, f, 300, format, 12, { pictures: SCHEMATIC_SHAPES });
+    if (!l) throw new Error('no layout');
+    for (const pick of everyPick(f)) {
+      const mark = l.markOf(pick);
+      if (mark?.kind !== 'region') throw new Error('a part');
+      expect(mark.outline).toBe(true);
+      expect(l.pickAt(mark.x, mark.y, null, 0)).toEqual(pick);
     }
   });
 
@@ -139,8 +180,9 @@ describe('a map (#251): every Land and every continent by its label', () => {
 
   it('offers nothing to tap until the shapes and the names are loaded (#440)', () => {
     const maps = { maps: MAP_SHAPES };
-    const pictures = { pictures: SCHEMATIC_SHAPES };
+    const pictures = { pictures: SCHEMATIC_SHAPES, anchors: SCHEMATIC_ANCHORS };
     const eye = { type: 'schematic', d: 'eye', n: [], ask: 0 } as const;
+    const circuit = { type: 'schematic', d: 'circuit', n: [], ask: 0 } as const;
     for (const f of [
       { type: 'map', v: 'de', hl: [] },
       { type: 'map', v: 'de', hl: [], l: 'grid' },
@@ -148,8 +190,17 @@ describe('a map (#251): every Land and every continent by its label', () => {
       expect(tapLayout(FIGURE_NAMES, f, 300, format, 12)).toBeNull();
       expect(tapLayout(null, f, 300, format, 12, maps)).toBeNull();
     }
-    expect(tapLayout(FIGURE_NAMES, eye, 300, format, 12)).toBeNull();
-    expect(tapLayout(null, eye, 300, format, 12, pictures)).toBeNull();
+    for (const picture of [eye, circuit]) {
+      expect(tapLayout(FIGURE_NAMES, picture, 300, format, 12)).toBeNull();
+      expect(tapLayout(null, picture, 300, format, 12, pictures)).toBeNull();
+    }
+    // An image is tapped by its anchors, the circuit by its shapes: neither by the other's.
+    expect(
+      tapLayout(FIGURE_NAMES, eye, 300, format, 12, { pictures: SCHEMATIC_SHAPES }),
+    ).toBeNull();
+    expect(
+      tapLayout(FIGURE_NAMES, circuit, 300, format, 12, { anchors: SCHEMATIC_ANCHORS }),
+    ).toBeNull();
     // Every other figure needs no names: nothing is loaded for it.
     expect(tapLayout(null, line, 300, format, 12)).not.toBeNull();
   });

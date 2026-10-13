@@ -30,6 +30,7 @@ import {
   stillPreparing,
   type SessionRow,
 } from './sessionRow.js';
+import { stalePicture, type PictureQuestion } from './schematicCheck.js';
 import { questionCountFor, selectPracticeItems, type PracticeRun } from './selection.js';
 
 export type PracticeLearner = {
@@ -302,14 +303,17 @@ export async function startFromStep(
     if (!['planned', 'prepared', 'in_progress'].includes(step.state)) {
       throw new AppError('conflict', 'This practice is no longer open', { state: step.state });
     }
-    // The prepared set may be stale (questions deleted since): keep what exists.
+    // The prepared set may be stale (questions deleted since): keep what exists — and what can
+    // still be asked: a question about a labelled picture that names a part its picture no
+    // longer has was prepared before the library changed (#599, `stalePicture`).
     let itemIds = step.payload.item_ids ?? [];
     if (itemIds.length > 0) {
-      const alive = await tx.query<{ id: string }>(
-        `select id from items where id = any($1::uuid[]) and learner_id = $2 and archived_at is null`,
+      const alive = await tx.query<{ id: string } & PictureQuestion>(
+        `select id, kind, answer, figure, tap from items
+          where id = any($1::uuid[]) and learner_id = $2 and archived_at is null`,
         [itemIds, learnerId],
       );
-      const aliveSet = new Set(alive.map((a) => a.id));
+      const aliveSet = new Set(alive.filter((a) => !stalePicture(a)).map((a) => a.id));
       itemIds = itemIds.filter((id) => aliveSet.has(id));
     }
     if (itemIds.length === 0) {

@@ -32,10 +32,12 @@ import {
   type MapLayer,
   type MapView,
 } from '../../packages/shared-math/src/maps';
-import { REGION_FRAME } from '../../packages/shared-math/src/regions';
+import { SCHEMATIC_ANCHORS } from '../../packages/shared-math/src/schematicAnchors.data';
 import { SCHEMATIC_SHAPES } from '../../packages/shared-math/src/schematicShapes.data';
 import {
+  isImageSchematic,
   schematic,
+  schematicFrame,
   schematicPart,
   type SchematicId,
 } from '../../packages/shared-math/src/schematics';
@@ -303,13 +305,17 @@ test('the Gradnetz: crossings tapped on Germany and Europe, coordinates typed (#
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
 
-/** Tap the part `name` of drawing `d` at its own point, in the pad's coordinates. */
+/**
+ * Tap the part `id` of picture `d` at its own point, in the pad's coordinates: an image's part at
+ * its anchor (#599), the circuit's — the one picture still drawn — at its outline's point.
+ */
 async function tapPart(page: Page, d: SchematicId, id: string): Promise<void> {
   const box = await page.getByTestId('tap-pad').boundingBox();
   if (!box) throw new Error('no tap pad');
-  const part = SCHEMATIC_SHAPES[d].parts.find((p) => p.id === id);
+  const parts = isImageSchematic(d) ? SCHEMATIC_ANCHORS[d] : SCHEMATIC_SHAPES[d].parts;
+  const part = parts.find((p) => p.id === id);
   if (!part) throw new Error(`no part ${id}`);
-  const k = box.width / REGION_FRAME;
+  const k = box.width / schematicFrame(d).width;
   await page.getByTestId('tap-pad').click({ position: { x: part.at[0] * k, y: part.at[1] * k } });
 }
 
@@ -330,22 +336,23 @@ test('a labelled picture: the cell labelled number by number, every part tapped 
   await expect(page.getByText('Pflanzenzelle: Wie heißt Teil 3?')).toBeVisible();
   await typed(page, 'Chloroplast');
 
-  // Every part of the cell is reached at its own point; the line names none of them.
-  await expect(page.getByText('Tippe auf den Zellkern.')).toBeVisible();
+  // The cell's one part with a tap area is reached at its anchor; a tap beside every area — on
+  // the nucleus, which is named only — picks nothing (#599). The line names no part.
+  await expect(page.getByText('Tippe auf den Chloroplasten.')).toBeVisible();
   await expect(words(page)).toHaveText('Tippe auf das Teil in der Abbildung.');
-  for (const part of schematic(FIGURE_NAMES, 'plant_cell').parts) {
-    await tapPart(page, 'plant_cell', part.id);
-    await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
-  }
+  await tapPart(page, 'plant_cell', 'chloroplast');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Chloroplast');
   await expect(words(page)).toHaveText('Teil gewählt');
   await tapPart(page, 'plant_cell', 'nucleus');
+  await expect(words(page)).toHaveText('Tippe auf das Teil in der Abbildung.');
+  await tapPart(page, 'plant_cell', 'chloroplast');
   await bothSchemes(page, '91-picture-cell', 'tap-figure');
   await checkRight(page);
 
-  // The bicycle's frame: many strokes, one part.
-  await expect(page.getByText('Tippe auf den Rahmen.')).toBeVisible();
-  await tapPart(page, 'bicycle', 'frame');
-  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Rahmen');
+  // The bicycle's saddle.
+  await expect(page.getByText('Tippe auf den Sattel.')).toBeVisible();
+  await tapPart(page, 'bicycle', 'saddle');
+  await expect(spoken(page)).toHaveAttribute('aria-valuetext', 'Teil: Sattel');
   await bothSchemes(page, '92-picture-bike', 'tap-figure');
   await checkRight(page);
 
@@ -374,7 +381,9 @@ async function walkLibrary(
     await expect(page.getByText(item.prompt)).toBeVisible();
     const d = item.figure.d as SchematicId;
     if ('tap' in item) {
-      for (const part of schematic(FIGURE_NAMES, d).parts) {
+      for (const [i, part] of schematic(FIGURE_NAMES, d).parts.entries()) {
+        // Only a part with a tap area can be picked (an image's; every part of the circuit).
+        if (isImageSchematic(d) && !SCHEMATIC_ANCHORS[d][i]?.tap) continue;
         await tapPart(page, d, part.id);
         await expect(spoken(page)).toHaveAttribute('aria-valuetext', `Teil: ${part.de}`);
       }

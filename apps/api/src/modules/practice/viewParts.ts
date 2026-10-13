@@ -7,7 +7,7 @@ import { isStructuredKind, SubjectKind, type ItemView } from '@learnbuddy/shared
 import type { StorageGateway } from '../../storage/gateway.js';
 import { surfaceOf, taskOf } from './bars.js';
 import { codeSurfaceOf, codeTaskOf } from './code.js';
-import { storedFigure } from './items.js';
+import { storedQuestionFigure } from './items.js';
 import { staffSurfaceOf, staffTaskOf, tonesOf } from './staff.js';
 import { structuredTaskOf, viewOf } from './structured.js';
 import type { ItemRow } from './service.js';
@@ -81,7 +81,7 @@ export function taskViewFor(row: Pick<ItemRow, 'kind' | 'task'>): ItemView['task
  * written under, or the question is typed like any other.
  */
 export function tapsFigure(row: Pick<ItemRow, 'kind' | 'answer' | 'figure' | 'tap'>): boolean {
-  return row.tap === true && tapItemProblem({ ...row, figure: storedFigure(row.figure) }) === null;
+  return row.tap === true && tapItemProblem({ ...row, figure: storedQuestionFigure(row) }) === null;
 }
 
 /**

@@ -1,7 +1,9 @@
-// The numbers of a labelled picture as a schoolbook prints them (#252): beside the drawing, never on
-// it, none on another, each joined to its part by a leader line that crosses no other and runs over
-// no other number's part — for every drawing of the library, with as many numbers as a question may
-// carry, at 360 and 390 pt.
+// Where the numbers of a labelled picture stand. On an image (#599, `pictureLayout`): where its
+// anchor data puts them, each joined to its part's anchor, all of it scaled with the image. On the
+// one picture we draw, the circuit (#252, `schematicLayout`): as a schoolbook prints them — beside
+// the drawing, never on it, none on another, each joined to its part by a leader line that crosses
+// no other and runs over no other number's part, with as many numbers as a question may carry, at
+// 360 and 390 pt.
 
 import { describe, expect, it } from 'vitest';
 
@@ -12,15 +14,19 @@ import {
 } from '../../../../../packages/shared-math/src/labelBoxes.js';
 import { FIGURE_NAMES } from '../../../../../packages/shared-math/src/figureNames.data.js';
 import { REGION_FRAME } from '../../../../../packages/shared-math/src/regions.js';
+import { SCHEMATIC_ANCHORS } from '../../../../../packages/shared-math/src/schematicAnchors.data.js';
 import { SCHEMATIC_SHAPES } from '../../../../../packages/shared-math/src/schematicShapes.data.js';
 import {
-  SCHEMATIC_IDS,
+  SCHEMATIC_DRAWN,
+  SCHEMATIC_IMAGE_IDS,
   schematic,
   schematicBounds,
-  schematicHeight,
+  schematicFrame,
+  type SchematicDrawnId,
   type SchematicFig,
+  type SchematicImageId,
 } from '../../../../../packages/shared-math/src/schematics.js';
-import { BADGE_R, schematicLayout } from '../schematicLayout.js';
+import { BADGE_R, pictureLayout, schematicLayout } from '../schematicLayout.js';
 
 /** The cards' widths on a 360 and a 390 pt phone. */
 const WIDTHS = [312, 342];
@@ -37,8 +43,63 @@ function numberings(ids: readonly string[]): string[][] {
   return [...rows, every(0), every(1)];
 }
 
+describe('pictureLayout', () => {
+  const loaded = (d: SchematicImageId) => ({ anchors: SCHEMATIC_ANCHORS[d], names: FIGURE_NAMES });
+
+  it('the image fills the width, its height follows its frame — with numbers and without', () => {
+    for (const d of SCHEMATIC_IMAGE_IDS) {
+      const { height } = schematicFrame(d);
+      for (const width of WIDTHS) {
+        for (const n of [
+          [],
+          schematic(FIGURE_NAMES, d)
+            .parts.slice(0, 3)
+            .map((p) => p.id),
+        ]) {
+          const l = pictureLayout({ type: 'schematic', d, n, ask: 0 }, width, null);
+          expect(l).toMatchObject({ x0: 0, y0: 0, width, k: width / 300, badges: [] });
+          expect(l.height).toBeCloseTo((height * width) / 300);
+        }
+      }
+    }
+  });
+
+  it('each number stands where its anchor data puts it, joined to its own part', () => {
+    for (const d of SCHEMATIC_IMAGE_IDS) {
+      for (const n of numberings(schematic(FIGURE_NAMES, d).parts.map((p) => p.id))) {
+        const l = pictureLayout({ type: 'schematic', d, n, ask: 1 }, 150, loaded(d));
+        expect(l.badges).toHaveLength(n.length);
+        l.badges.forEach(({ from, at }, i) => {
+          const a = SCHEMATIC_ANCHORS[d].find((p) => p.id === n[i])!;
+          expect(from).toEqual([a.at[0] / 2, a.at[1] / 2]);
+          expect(at).toEqual([a.badge[0] / 2, a.badge[1] / 2]);
+        });
+      }
+    }
+  });
+
+  it('the numbers follow the question’s order, not the library’s', () => {
+    const fig: SchematicFig = {
+      type: 'schematic',
+      d: 'plant_cell',
+      n: ['vacuole', 'nucleus'],
+      ask: 2,
+    };
+    const [first, second] = pictureLayout(fig, 300, loaded('plant_cell')).badges;
+    const at = (id: string) => SCHEMATIC_ANCHORS.plant_cell.find((p) => p.id === id)!.at;
+    expect(first?.from).toEqual(at('vacuole'));
+    expect(second?.from).toEqual(at('nucleus'));
+  });
+
+  it('a picture that names a part it no longer has carries no number at all (#599)', () => {
+    // Stored before the image: the bell was 1, the saddle 2. The saddle must not become 1.
+    const stored: SchematicFig = { type: 'schematic', d: 'bicycle', n: ['bell', 'saddle'], ask: 2 };
+    expect(pictureLayout(stored, 300, loaded('bicycle')).badges).toEqual([]);
+  });
+});
+
 describe('schematicLayout', () => {
-  for (const d of SCHEMATIC_IDS) {
+  for (const d of Object.keys(SCHEMATIC_DRAWN) as SchematicDrawnId[]) {
     for (const n of numberings(schematic(FIGURE_NAMES, d).parts.map((p) => p.id))) {
       for (const width of WIDTHS) {
         it(`${d} (${n.join(', ')}) at ${width} pt`, () => {
@@ -83,13 +144,13 @@ describe('schematicLayout', () => {
   it('with numbers it is cut to its bounds; kept to a height, it is centred between its columns (#462)', () => {
     const fig: SchematicFig = {
       type: 'schematic',
-      d: 'skeleton',
-      n: ['Schädel', 'Becken'],
+      d: 'circuit',
+      n: ['Batterie', 'Schalter'],
       ask: 1,
     };
-    const [bx0, by0, bx1, by1] = schematicBounds('skeleton');
+    const [bx0, by0, bx1, by1] = schematicBounds('circuit');
     const full = schematicLayout(fig, 312, null);
-    // The narrow skeleton fills the room between the columns: more than twice the frame's scale.
+    // The drawing fills the room between the columns, cut to its bounds.
     expect(full.k).toBeCloseTo((312 - 2 * 34) / (bx1 - bx0));
     expect(full.height).toBeCloseTo((by1 - by0) * full.k);
     const kept = schematicLayout(fig, 312, null, full.height * 0.6);
@@ -103,9 +164,9 @@ describe('schematicLayout', () => {
   });
 
   it('without numbers the drawing fills the width, as a tap needs it', () => {
-    const l = schematicLayout({ type: 'schematic', d: 'eye', n: [], ask: 0 }, 312, null);
+    const l = schematicLayout({ type: 'schematic', d: 'circuit', n: [], ask: 0 }, 312, null);
     expect(l).toMatchObject({ x0: 0, y0: 0, k: 312 / REGION_FRAME, badges: [] });
-    expect(l.height).toBeCloseTo((schematicHeight('eye') * 312) / REGION_FRAME);
+    expect(l.height).toBeCloseTo((schematicFrame('circuit').height * 312) / REGION_FRAME);
   });
 });
 
