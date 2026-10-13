@@ -111,7 +111,8 @@
     "hint_linked": "Deshace la unión.",
     "hint_put": "Pone {{text}} aquí.",
     "hint_group_waits": "Primero toca algo arriba.",
-    "check_waits": "Solo cuando todo esté emparejado."
+    "check_waits": "Solo cuando todo esté emparejado.",
+    "empty": "vacío"
   },
   "next": "Siguiente",
   "cloze": {
@@ -119,7 +120,8 @@
     "gap_filled": "Hueco {{n}} de {{total}}: {{word}}",
     "gap_clear": "Vacía el hueco otra vez.",
     "word_used": "{{word}}, ya colocada",
-    "check_waits": "Solo cuando cada hueco tenga algo."
+    "check_waits": "Solo cuando cada hueco tenga algo.",
+    "how_bank": "Toca una palabra: va al hueco marcado. Toca un hueco para vaciarlo."
   },
   "order": {
     "how": "Tócalos en orden.",
@@ -263,7 +265,8 @@
     "cell_at": "fila {{row}}, columna {{column}}",
     "brick": "fila {{row}}, ladrillo {{n}}",
     "check_waits": "Solo cuando todas las casillas estén rellenas.",
-    "scroll": "Tabla, se desplaza hacia los lados"
+    "scroll": "Tabla, se desplaza hacia los lados",
+    "how": "Toca una casilla vacía y escribe lo que falta."
   },
   "drill": {
     "progress": "Cuenta {{current}} de {{total}}",
@@ -334,8 +337,8 @@
     "paper_graph": "Sistema de coordenadas",
     "paper_mirror": "Papel cuadriculado con eje de simetría",
     "paper_bars": "Diagrama de barras",
-    "tap_hint": "Coloca el siguiente punto en el cruce. Tocar un punto lo quita.",
-    "tap_hint_bars": "Sube la barra de esta columna hasta aquí.",
+    "tap_hint": "Coloca el siguiente punto en el cruce. Tocar un punto lo quita. Sin tocar, queda en el centro; después muévelo con las acciones o con las flechas del teclado.",
+    "tap_hint_bars": "Sube la barra de esta columna hasta aquí. Sin tocar, la barra elegida sube una fila; elige una barra y súbela con las acciones o con las flechas del teclado.",
     "left": "A la izquierda",
     "up": "Arriba",
     "down": "Abajo",

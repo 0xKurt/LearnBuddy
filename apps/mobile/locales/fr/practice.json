@@ -111,7 +111,8 @@
     "hint_linked": "Défait le lien.",
     "hint_put": "Met {{text}} ici.",
     "hint_group_waits": "Touche d'abord un élément en haut.",
-    "check_waits": "Seulement quand tout est relié."
+    "check_waits": "Seulement quand tout est relié.",
+    "empty": "vide"
   },
   "next": "Suivant",
   "cloze": {
@@ -119,7 +120,8 @@
     "gap_filled": "Trou {{n}} sur {{total}} : {{word}}",
     "gap_clear": "Vide de nouveau le trou.",
     "word_used": "{{word}}, déjà placé",
-    "check_waits": "Seulement quand chaque trou est rempli."
+    "check_waits": "Seulement quand chaque trou est rempli.",
+    "how_bank": "Touche un mot – il va dans le trou marqué. Touche un trou pour le vider."
   },
   "order": {
     "how": "Touche-les dans l'ordre.",
@@ -263,7 +265,8 @@
     "cell_at": "ligne {{row}}, colonne {{column}}",
     "brick": "rangée {{row}}, brique {{n}}",
     "check_waits": "Seulement quand toutes les cases sont remplies.",
-    "scroll": "Tableau, défile sur le côté"
+    "scroll": "Tableau, défile sur le côté",
+    "how": "Touche une case vide et écris ce qui manque."
   },
   "drill": {
     "progress": "Calcul {{current}} sur {{total}}",
@@ -334,8 +337,8 @@
     "paper_graph": "Repère",
     "paper_mirror": "Papier quadrillé avec un axe de symétrie",
     "paper_bars": "Diagramme en barres",
-    "tap_hint": "Place le point suivant sur le croisement. Toucher un point l’enlève.",
-    "tap_hint_bars": "Monte la barre de cette colonne jusqu’ici.",
+    "tap_hint": "Place le point suivant sur le croisement. Toucher un point l’enlève. Sans toucher, il se pose au milieu ; déplace-le ensuite avec les actions ou avec les flèches du clavier.",
+    "tap_hint_bars": "Monte la barre de cette colonne jusqu’ici. Sans toucher, la barre choisie monte d’une ligne ; choisis une barre et monte-la avec les actions ou avec les flèches du clavier.",
     "left": "À gauche",
     "up": "En haut",
     "down": "En bas",

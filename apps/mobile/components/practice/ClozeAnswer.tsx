@@ -5,8 +5,10 @@
 //     in der letzten schickt es ab, wenn alles ausgefüllt ist;
 //   · mit Wortbank tippt sie ein Wort an, und es landet in der aktiven Lücke — danach ist die
 //     nächste leere aktiv. Ein Tipp auf eine gefüllte Lücke leert sie wieder (rückgängig
-//     statt bestätigen). Ein eingesetztes Wort bleibt an seinem Platz stehen, nur blass: so
-//     springt nichts unter dem Finger weg.
+//     statt bestätigen). Ein eingesetztes Wort bleibt an seinem Platz stehen, als leerer
+//     gestrichelter Umriss (Design components/practice/Tasks.jsx `WordBank`): so springt nichts
+//     unter dem Finger weg. Wörter und Lücken sind die eine Brett-Kachel (`Tile`, `Slot`, #599);
+//     unter der Wortbank steht eine Zeile Anleitung, bis sie das erste Wort gesetzt hat.
 //
 // „Prüfen" wartet, bis jede Lücke etwas hat. Geprüft wird auf dem Server, Lücke für Lücke mit
 // den Regeln jeder geschriebenen Antwort (apps/api/src/modules/practice/cloze.ts). Ob sie
@@ -22,12 +24,14 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
+import { WORD_ROW } from '../../lib/theme/board.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
+import { BoardHint } from '../lb/BoardHint.js';
 import { TopEdgeFade, topEdgeMask } from '../lb/EdgeFade.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 import { Slot, slotWidth } from '../lb/Slot.js';
+import { Tile } from '../lb/Tile.js';
 import { MathText } from '../math/MathText.js';
 import { AnswerShell } from './AnswerShell.js';
 import type { FormProps } from './formProps.js';
@@ -284,28 +288,26 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Cl
           </ScrollView>
           {scrolled ? <TopEdgeFade /> : null}
           {bank ? (
-            <View
-              testID="cloze-bank"
-              style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}
-            >
+            <View testID="cloze-bank" style={WORD_ROW}>
               {bank.map((word) => {
                 const taken = used.has(word);
                 return (
-                  <Btn
+                  <Tile
                     key={word}
-                    variant="tile"
-                    size="sm"
-                    pill
+                    shape="word"
+                    state={taken ? 'slot' : 'tile'}
+                    hollow={taken}
                     disabled={disabled || taken}
                     onPress={() => place(word)}
                     accessibilityLabel={taken ? t('cloze.word_used', { word }) : word}
                   >
                     {word}
-                  </Btn>
+                  </Tile>
                 );
               })}
             </View>
           ) : null}
+          {bank && used.size === 0 ? <BoardHint>{t('cloze.how_bank')}</BoardHint> : null}
         </View>
       }
       action={{ ready: complete, disabled, onPress: submit, waitsHint: t('cloze.check_waits') }}

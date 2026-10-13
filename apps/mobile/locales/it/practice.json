@@ -111,7 +111,8 @@
     "hint_linked": "Scioglie il collegamento.",
     "hint_put": "Mette {{text}} qui.",
     "hint_group_waits": "Prima tocca qualcosa in alto.",
-    "check_waits": "Solo quando tutto è abbinato."
+    "check_waits": "Solo quando tutto è abbinato.",
+    "empty": "vuoto"
   },
   "next": "Avanti",
   "cloze": {
@@ -119,7 +120,8 @@
     "gap_filled": "Spazio {{n}} di {{total}}: {{word}}",
     "gap_clear": "Svuota di nuovo lo spazio.",
     "word_used": "{{word}}, già inserita",
-    "check_waits": "Solo quando ogni spazio ha qualcosa."
+    "check_waits": "Solo quando ogni spazio ha qualcosa.",
+    "how_bank": "Tocca una parola: va nello spazio evidenziato. Tocca uno spazio per svuotarlo."
   },
   "order": {
     "how": "Toccali in ordine.",
@@ -263,7 +265,8 @@
     "cell_at": "riga {{row}}, colonna {{column}}",
     "brick": "fila {{row}}, mattone {{n}}",
     "check_waits": "Solo quando tutte le caselle sono compilate.",
-    "scroll": "Tabella, scorre di lato"
+    "scroll": "Tabella, scorre di lato",
+    "how": "Tocca una casella vuota e scrivi quello che manca."
   },
   "drill": {
     "progress": "Calcolo {{current}} di {{total}}",
@@ -334,8 +337,8 @@
     "paper_graph": "Sistema di coordinate",
     "paper_mirror": "Carta a quadretti con asse di simmetria",
     "paper_bars": "Diagramma a barre",
-    "tap_hint": "Mette il punto successivo sull’incrocio. Toccare un punto lo toglie.",
-    "tap_hint_bars": "Alza la barra di questa colonna fin qui.",
+    "tap_hint": "Mette il punto successivo sull’incrocio. Toccare un punto lo toglie. Senza toccare finisce al centro; poi spostalo con le azioni o con i tasti freccia.",
+    "tap_hint_bars": "Alza la barra di questa colonna fin qui. Senza toccare, la barra scelta sale di una riga; scegli una barra e alzala con le azioni o con i tasti freccia.",
     "left": "A sinistra",
     "up": "Su",
     "down": "Giù",

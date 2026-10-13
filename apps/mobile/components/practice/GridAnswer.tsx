@@ -1,14 +1,23 @@
 // Zeichnen auf dem Raster (issue #249): sie trägt Punkte ein, setzt Punkte auf einen Graphen
 // (eine Gerade aus zwei Punkten zeichnet die App gleich mit), spiegelt eine Figur auf Karopapier
 // oder zieht die Säulen eines Diagramms. In der Antworthülle wie jede Form (`AnswerShell`, #310):
-// das Blatt unten über seiner einen Tastenreihe, „Prüfen" in der Leiste. Geprüft wird auf dem
-// Server, exakt und ohne Modell (apps/api/src/modules/practice/grid.ts).
+// das Blatt über seiner einen Tastenreihe, „Prüfen" in der Leiste. Geprüft wird auf dem Server,
+// exakt und ohne Modell (apps/api/src/modules/practice/grid.ts).
 //
 // Bedienung wie die Notenzeile (#275): das Blatt ist EIN Tippziel (`TapSurface`); der Tipp setzt
-// den Punkt auf die Kreuzung, die dem Finger am nächsten liegt, und die Pfeile schieben ihn um eine
-// Kreuzung. Ein Tipp auf einen eigenen Punkt nimmt ihn weg, „Zurück" macht den letzten Schritt
+// den Punkt auf die Kreuzung, die dem Finger am nächsten liegt, bzw. zieht die Säule der Spalte
+// bis dorthin. Ein Tipp auf einen eigenen Punkt nimmt ihn weg, „Zurück" macht den letzten Schritt
 // rückgängig (lib/practice/gridDraw.ts). Was gezeichnet ist, steht in Worten unter dem Blatt —
 // auch für den Screenreader, der es nach jedem Schritt hört.
+//
+// Gezeichnete Pfeiltasten gibt es nicht mehr (Owner-Regel 8, #599; Design
+// components/practice/Answers.jsx `GridBars`, ui_kits/app/Extra.jsx `bars`: Säule antippen,
+// − / +). In der einen Tastenreihe (`KeyRow`, der `keys`-Platz der Antworthülle — die eine
+// Tastenreihe jeder Form, lib/__tests__/answerShell.test.ts) stehen bei Säulen „−" und „+" und auf
+// jedem Blatt „Zurück". Wer keinen Finger auf dem Blatt hat, schiebt den zuletzt gesetzten Punkt
+// bzw. wählt und zieht eine Säule ohne gezeichnetes Bedienelement: mit den Aktionen des
+// Screenreaders auf dem Blatt, im Browser mit den vier Pfeiltasten (`step`) — der Weg, den die
+// Notenzeile seit #608 geht.
 //
 // Platz (Regel 16): das Blatt nimmt so viel Höhe, wie unter der Frage frei ist, und wird kleiner,
 // nie abgeschnitten — nie unter dem kleinsten Kästchen (`gridMinHeight`, `keeps`). Ihr Stand liegt im Entwurf
@@ -17,7 +26,7 @@
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { gridDrawnText, type GridDrawTaskView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Platform, Text, View, type AccessibilityActionEvent } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
 import { useDraft } from '../../lib/drafts.js';
@@ -37,7 +46,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { useBox } from '../../lib/useBox.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Icon, type IconName } from '../lb/Icon.js';
+import { Icon } from '../lb/Icon.js';
 import { KeyRow, type Key } from '../lb/KeyRow.js';
 import { TapSurface } from '../lb/TapSurface.js';
 import {
@@ -71,6 +80,46 @@ function gridAnswerMin(view: GridDrawTaskView): number {
   return gridMinHeight(view) + (hasLine(view) ? wordsRoom() : 0);
 }
 
+/**
+ * The steps without a finger on the paper, by the name they come in: a screen reader's action on
+ * the paper, or an arrow key of a hardware keyboard. `[dx, dy]` in crossings (a bar chart: another
+ * bar, or the chosen bar's height).
+ */
+export const GRID_STEPS: Readonly<Record<string, readonly [number, number]>> = {
+  left: [-1, 0],
+  right: [1, 0],
+  up: [0, 1],
+  down: [0, -1],
+  previous: [-1, 0],
+  next: [1, 0],
+  increment: [0, 1],
+  decrement: [0, -1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  ArrowUp: [0, 1],
+  ArrowDown: [0, -1],
+};
+
+/**
+ * What a screen reader offers on the paper, and the words it is offered in (`practice:grid.*`):
+ * on a bar chart the chosen bar a row higher or lower and the bar before or after it, on every
+ * other paper the last point one crossing in each direction.
+ */
+export const GRID_ACTIONS = {
+  bars: [
+    ['increment', 'bar_up'],
+    ['decrement', 'bar_down'],
+    ['previous', 'bar_left'],
+    ['next', 'bar_right'],
+  ],
+  points: [
+    ['left', 'left'],
+    ['up', 'up'],
+    ['down', 'down'],
+    ['right', 'right'],
+  ],
+} as const;
+
 /** "Prüfen": every point set (a bar chart: one bar drawn); `shown` is her drawing in words. */
 export function GridAnswer({ view, draftKey, disabled, onSubmit }: FormProps<GridDrawTaskView>) {
   const { palette } = useTheme();
@@ -100,25 +149,49 @@ export function GridAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Gri
     announce(drawnWords(after.now, view).join(', '));
   };
 
-  const icon = (name: IconName) => (color: string) => (
-    <Icon name={name} size={PRACTICE.actionIcon} color={color} />
-  );
-  const chosen = now.selected !== null;
-  const arrow = (id: string, face: IconName, dx: number, dy: number): Key => ({
-    id,
-    face: icon(face),
-    label: t(`grid.${bars ? 'bar_' : ''}${id}`),
-    disabled: !bars && !chosen,
-    onPress: () => change((k) => nudge(k, view, dx, dy)),
+  /**
+   * The way without a finger position (a screen reader, a keyboard): the point she set last one
+   * crossing further, or another bar / the chosen bar a row higher or lower. Never drawn — who
+   * sees and taps sets a point with her finger (owner rule 8, #599).
+   */
+  const step = (name: string): boolean => {
+    const by = GRID_STEPS[name];
+    if (disabled || by === undefined) return false;
+    change((k) => nudge(k, view, by[0], by[1]));
+    return true;
+  };
+  const actions = GRID_ACTIONS[bars ? 'bars' : 'points'].map(([name, word]) => ({
+    name,
+    label: t(`grid.${word}`),
+  }));
+  const onAction = (e: AccessibilityActionEvent) => void step(e.nativeEvent.actionName);
+  /** In the browser the same steps with the arrow keys, while the paper has the focus. */
+  const onKeys =
+    Platform.OS === 'web'
+      ? {
+          onKeyDown: (e: { key: string; preventDefault: () => void }) => {
+            if (e.key.startsWith('Arrow') && step(e.key)) e.preventDefault();
+          },
+        }
+      : {};
+
+  // The keys (ui_kits/app/Extra.jsx `bars`): − and + pull the chosen bar a row; "Zurück" takes
+  // the last step back on every paper. No arrow keys.
+  const pull = (
+    sign: string,
+    name: 'increment' | 'decrement',
+    word: 'bar_up' | 'bar_down',
+  ): Key => ({
+    id: name,
+    face: sign,
+    label: t(`grid.${word}`),
+    onPress: () => void step(name),
   });
   const keys: Key[] = [
-    arrow('left', 'back', -1, 0),
-    arrow('up', 'up', 0, 1),
-    arrow('down', 'down', 0, -1),
-    arrow('right', 'chevron', 1, 0),
+    ...(bars ? [pull('−', 'decrement', 'bar_down'), pull('+', 'increment', 'bar_up')] : []),
     {
       id: 'undo',
-      face: icon('undo'),
+      face: (color) => <Icon name="undo" size={PRACTICE.actionIcon} color={color} />,
       label: t('grid.undo'),
       quiet: true,
       disabled: past.length === 0,
@@ -139,13 +212,15 @@ export function GridAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Gri
           >
             {/* The target is there before the paper is measured: a screen reader can set a point
                 from the first moment (without a finger it lands in the middle). */}
-            <View style={{ alignItems: 'center' }}>
+            <View style={{ alignItems: 'center' }} {...onKeys}>
               <TapSurface
                 testID="grid-paper"
                 accessibilityRole="button"
                 style={box.width > 0 ? size : { alignSelf: 'stretch' }}
                 accessibilityLabel={`${t(`grid.paper_${view.sheet.mode}`)}: ${line}`}
                 accessibilityHint={t(bars ? 'grid.tap_hint_bars' : 'grid.tap_hint')}
+                accessibilityActions={actions}
+                onAccessibilityAction={onAction}
                 disabled={disabled}
                 onTap={(at) =>
                   change((k) =>

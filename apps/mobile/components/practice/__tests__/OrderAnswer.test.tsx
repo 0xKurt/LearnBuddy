@@ -13,7 +13,8 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { renderInApp } from '../../../testing/render.js';
+import { paletteOf } from '../../../lib/theme/palettes.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { isShortList, OrderAnswer, placedFrom, placeOrTake } from '../OrderAnswer.js';
 
 const VIEW = {
@@ -114,5 +115,52 @@ describe('numbers to order: places and a pool (#286)', () => {
     // Back to the pool with one tap.
     fireEvent.click(placed);
     expect(screen.getByRole('button', { name: '-12, noch ohne Platz' })).toBeDefined();
+  });
+});
+
+const rgb = (hex: string) => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`;
+};
+
+describe('the look of an order (design components/practice/Tasks.jsx `OrderList`, #599)', () => {
+  const p = paletteOf('pastell');
+  const step = (name: string) => screen.getByRole('button', { name });
+
+  it('sets every step as a whole row of the board, as tall as an Option', () => {
+    renderInApp(
+      <OrderAnswer view={VIEW} draftKey="look1" disabled={false} onSubmit={() => undefined} />,
+    );
+    for (const { text } of VIEW.elements) {
+      const tile = step(`${text}, noch ohne Platz`);
+      expect(styleOf(tile).alignSelf, text).toBe('stretch');
+      expect(styleOf(tile.firstElementChild!).minHeight, text).toBe('56px');
+      expect(styleOf(tile.firstElementChild!).backgroundColor, text).toBe(rgb(p.paper));
+    }
+  });
+
+  it('turns a placed step light primary without a ring, and keeps its words in ink', () => {
+    renderInApp(
+      <OrderAnswer view={VIEW} draftKey="look2" disabled={false} onSubmit={() => undefined} />,
+    );
+    fireEvent.click(step('Samen quillt, noch ohne Platz'));
+    const face = styleOf(step('Samen quillt, Platz 1').firstElementChild!);
+    expect(face.backgroundColor).toBe(rgb(p.primaryLt));
+    expect([face.borderTopWidth, face.borderTopColor]).toEqual(['1px', rgb(p.primaryLt)]);
+    // Ink, not the accent: the state is the fill and the number, never the colour of the words.
+    expect(styleOf(screen.getByText('Samen quillt')).color).toBe(rgb(p.ink));
+    // Still a whole row: a placed step does not shrink to its words.
+    expect(styleOf(step('Samen quillt, Platz 1')).alignSelf).toBe('stretch');
+  });
+
+  it('puts its one line of how-to under the steps, until she has started', () => {
+    renderInApp(
+      <OrderAnswer view={VIEW} draftKey="look3" disabled={false} onSubmit={() => undefined} />,
+    );
+    const how = screen.getByText('Tippe sie der Reihe nach an.');
+    const last = step('Laubblätter, noch ohne Platz');
+    expect(last.compareDocumentPosition(how) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(last);
+    expect(screen.queryByText('Tippe sie der Reihe nach an.')).toBeNull();
   });
 });

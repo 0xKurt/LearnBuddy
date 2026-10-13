@@ -13,7 +13,8 @@
 import { act, fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { renderInApp } from '../../../testing/render.js';
+import { paletteOf } from '../../../lib/theme/palettes.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { cellsFrom, gapsIn, TableAnswer } from '../TableAnswer.js';
 
 const VERBS = {
@@ -203,4 +204,67 @@ it('still checks once and blurs the final blur-and-submit cell', () => {
     app.unmount();
     vi.useRealTimers();
   }
+});
+
+const rgb = (hex: string) => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`;
+};
+
+describe('the look of a table (design components/practice/Tasks.jsx `FillTable`, #599)', () => {
+  const p = paletteOf('pastell');
+  const HOW = 'Tippe ein leeres Feld an und schreib hinein, was fehlt.';
+  /** The cell a text or a field stands in, and the row that cell stands in. */
+  const cellOf = (el: Element) => el.closest('[style*="min-width"]')!;
+
+  it('sets the head on canvas, without a tint of its own and without a line between columns', () => {
+    renderInApp(
+      <TableAnswer view={VERBS} draftKey="look-t1" disabled={false} onSubmit={() => undefined} />,
+    );
+    const head = cellOf(screen.getByText('Präsens'));
+    expect(styleOf(head.parentElement!).backgroundColor).toBe(rgb(p.canvas));
+    expect(styleOf(head).borderRightWidth).toBe('0px');
+    expect([styleOf(head).paddingTop, styleOf(head).paddingLeft]).toEqual(['10px', '8px']);
+    const text = (screen.getByText('Präsens') as HTMLElement).style;
+    expect([text.fontSize, text.fontWeight, text.lineHeight]).toEqual(['14px', '700', '18px']);
+  });
+
+  it('parts two rows by a hairline and no two columns by anything', () => {
+    renderInApp(
+      <TableAnswer view={VERBS} draftKey="look-t2" disabled={false} onSubmit={() => undefined} />,
+    );
+    const given = cellOf(screen.getByText('gehe'));
+    expect(styleOf(given).borderRightWidth).toBe('0px');
+    expect(styleOf(given).borderLeftWidth).toBe('0px');
+    expect([styleOf(given).minHeight, styleOf(given).paddingTop]).toEqual(['52px', '6px']);
+    const row = styleOf(given.parentElement!);
+    expect(row.borderTopWidth).toBe('1px');
+    expect(row.borderTopColor.replace(/\s/g, '')).toBe(p.hairline.replace(/\s/g, ''));
+  });
+
+  it('names a row in its first column a step bolder than the cells it reads', () => {
+    renderInApp(
+      <TableAnswer view={VERBS} draftKey="look-t3" disabled={false} onSubmit={() => undefined} />,
+    );
+    const lead = (screen.getByText('ich') as HTMLElement).style;
+    expect([lead.fontSize, lead.fontWeight]).toEqual(['15px', '600']);
+    const cell = (screen.getByText('gehe') as HTMLElement).style;
+    expect([cell.fontSize, cell.fontWeight]).toEqual(['17px', '400']);
+  });
+
+  it('says how under the table until she taps or fills a field', () => {
+    renderInApp(
+      <TableAnswer view={VERBS} draftKey="look-t4" disabled={false} onSubmit={() => undefined} />,
+    );
+    expect(screen.getByText(HOW)).toBeTruthy();
+    const field = screen.getByLabelText('ich, Präteritum');
+    expect(
+      field.compareDocumentPosition(screen.getByText(HOW)) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    fireEvent.focus(field);
+    expect(screen.queryByText(HOW)).toBeNull();
+    fireEvent.change(field, { target: { value: 'ging' } });
+    fireEvent.blur(field);
+    expect(screen.queryByText(HOW)).toBeNull();
+  });
 });

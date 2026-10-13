@@ -2722,10 +2722,23 @@ draft (`lib/drafts.ts`), so a theme switch — a remount — keeps it, brings it
 pinned bar, and that waits until the arrangement is complete. `OrderAnswer.tsx` is one gesture:
 tap the elements in order, they get numbers; tapping a numbered one takes it back with
 everything after it. The place is said in words to a screen reader ("…, Platz 2"). Steps (text)
-keep their place and get the number in a circle before them; short things — numbers — stand as
+keep their place, each a whole row of the board with the number in the badge before it (design
+`components/practice/Tasks.jsx` `OrderList`, #599); short things — numbers — stand as
 places and a pool (#286): numbered places on top, the number ABOVE the place and never beside the
 value ("1" before "−12" read as one number, "4 ¾" as a mixed fraction), the pool below in equal
 tiles, four to a row; a tap puts a tile on the next free place.
+
+**One piece, one state set** (#599, design `components/practice/Tasks.jsx` `Tile`). Whatever she
+taps, places or marks on a board is `components/lb/Tile.tsx` in one of six states — tile (free),
+picked (the one thing chosen now: the light primary with the 2 pt primary frame, an Option's
+"selected"), placed (answered, changeable: the light primary without a ring), slot (an empty
+place: canvas, dashed), correct, wrong — with the skins of `lib/theme/board.ts`, which reads the
+four states an Option has from `optionLook`. Its shapes are a step (an Option's height, a badge
+for its number), a word (a 40 pt pill whose target stays 44 pt), a cell (a short thing in a grid
+place) and running text (no frame, filled when marked). The words on a piece are always ink; the
+state is the fill, the frame and a number or sign, never the colour of the words. `<Btn>` has no
+board state (`lib/__tests__/boardTiles.test.ts`). The one line that says what a tap does stands
+UNDER the board (`components/lb/BoardHint.tsx`), never between the question and the board.
 
 **Room on a small phone** (rule 16; `components/practice/PartsArea.tsx`). The question card never
 shrinks and 44 pt per touch target is the floor, so the largest task the contract allows has to fit
@@ -2776,8 +2789,10 @@ most by name, the rest counted. When no cell is right but some are nearly right,
 "none is right": it says they are almost there and names them (`table_almost`). Her cells are stored as
 the turn in reading order ("6 · 8 · 20").
 
-App: `TableAnswer.tsx` shows the table as in the exercise book (a wall centred, brick on brick);
-each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
+App: `TableAnswer.tsx` shows the table as one paper card (design `Tasks.jsx` `FillTable`, #599):
+the head on canvas, a hairline between two rows, no line between two columns, the first column
+naming the row; under it one line of instruction until she taps or fills a field. A number wall
+stands as before, centred, brick on brick. Each gap is a small field, Enter goes to the next gap and in the last one checks; the math keys
 stand right under the table (the answer shell's keys slot, #310) while a number cell has the focus. Her cells are kept in the draft, so after
 a wrong check she changes only the cell named. The table is as wide as the screen; only columns
 with words to type can make it wider, and only then does it scroll sideways, inside itself.
@@ -2808,18 +2823,23 @@ and the third miss explains the solution.
 App: `MatchAnswer.tsx`. What is still open stands in two equal columns; a row's two tiles are
 equally tall and grow with their text. Tap one, then its partner (either way round): the two
 move together into ONE row across the board, "links → rechts", one line of running text in the
-one calm outline every pair shares (issue #524, owner 10.10.: no symbols ● ▲ ■ ◆, no tint per
+one placed look every pair shares (issue #524, owner 10.10.: no symbols ● ▲ ■ ◆, no tint per
 pair — the pairing is said in words, for the eye and the screen reader alike). Formed rows stand
 on top in the order of the left column; a tap on one dissolves it. A pairing's board is a list
 she goes through (`PartsArea list`, `scroll-list`): with four sentences on a small phone it may
 scroll; a grouping's may not.
 Groups follow the display idea of the removed `parts` board, because there the box IS the state:
-the elements she has not sorted yet stand above, every group is a row with its name, and an
-element she puts in a group moves INTO that row, next to the name. Tapping it there takes it back
-out. Tapping a group row puts the element she holds into it; a group only takes something while
-she holds an element. What she holds is kept in the draft with the links, so a theme change does
-not drop it. One line of instruction until the first tap, nothing else; a screen reader hears
-"Hund – dog, Paar" / "…, in Nomen".
+the elements she has not sorted yet stand above as word pills, every group is a paper card with
+its name, and an element she puts in a group moves INTO that card, next to the name. Tapping it
+there takes it back out. Tapping a group's card puts the element she holds into it (the card is
+one target laid under its content, so no button stands inside another); a group only takes
+something while she holds an element, and shows it with a dashed primary ring. An empty group
+shows the dashed place "leer" (design `Tasks.jsx` `Groups`, #599). What she holds is kept in the
+draft with the links, so a theme change does not drop it. One line of instruction under the board
+until the first tap, nothing else; a screen reader hears "Hund – dog, Paar" / "…, in Nomen".
+Not taken from the design, and open with the owner: pairs matched by a shared number in two fixed
+columns (against #524's one row per pair), and the group card's inner measures (the `MATCH_*`
+maxima below are measured with the ones here).
 
 **The maxima are a measurement** (`contracts/structured.ts` `MATCH_*`). The walkthrough's match
 tasks are the largest the contract allows, every text near its cap ("zuordnen at its largest",
@@ -3045,12 +3065,14 @@ a bank only tapped (`tapped`), and in the summary a bank cloze counts like tappe
 recognition, not production.
 
 App: the text flows as words and gaps (`unitsOf`: a gap keeps the punctuation touching it, math
-stays whole). One look for every gap, typed or tapped: empty, a dashed blank; filled, her word
-in the accent on a soft tint without a frame (her words stand apart from the print); where she
-types or what the next bank word fills, the accent frame. Without a bank each gap is a small field in the line; the return key goes to the
+stays whole). A gap she taps full is the board's own (`components/lb/Slot.tsx`, design `Tasks.jsx`
+`Cloze`, #599): empty, the dashed slot on canvas; filled, her word in ink, a step bolder, on the
+light primary without a ring; what the next bank word fills, the 2 pt primary frame. A gap she
+types into is the app's one field in its cell form. Without a bank each gap is a small field in the line; the return key goes to the
 next gap and in the last one sends a complete text. With a bank, a tapped word fills the active
 gap (then the next empty one is active), a tap on a filled gap empties it, and a used word
-stays in place, muted. "Prüfen" waits until every gap has something. The text scrolls only when
+stays in place as an empty dashed outline (`Tasks.jsx` `WordBank`); one line under the bank says
+how, until the first word is placed. "Prüfen" waits until every gap has something. The text scrolls only when
 the keyboard leaves too little room (the screen keeps the question whole and the surface gives
 way); the focused gap is scrolled to, also after the keyboard shrank the window. Generated in a
 topic's practice and practice test, and read from a sheet (its printed word box as the bank;
@@ -3139,20 +3161,22 @@ Kategorie"). A wrong set is `incorrect`; the third miss shows the solution. What
 the conversation in words, one implementation for app and server (`markedText` in the contract):
 "Subjekt: die Oma; Prädikat: liest, vor", the sentence with her commas, "Re-gen-bo-gen".
 
-App: `MarkAnswer.tsx` in the answer shell. Every place is a `<Btn>` with `checked` (a checkbox to
-a screen reader, 44 pt high). Words and commas: the words stand on one calm surface (the same as a
-word to split), each a frameless tile of the small size, never narrower than 44 pt; the tiles touch,
+App: `MarkAnswer.tsx` in the answer shell. Every place is a target with `checked` (a checkbox to
+a screen reader, 44 pt high). Words and commas: the words stand as text on one paper panel (design
+`components/practice/Answers.jsx` `MarkText`, #599), each a frameless piece of the board in its
+text shape, never narrower than 44 pt; the pieces touch,
 so the sentence reads as a sentence and every point of a row is a target (#368: before, framed
 tiles with gaps took a third row from 59 characters on). Marked is the accent's light tint AND an
 underline AND, with categories, the category's digit ①②③ UNDER the word, in the meta text's size
-and full ink (the same digit as on its button in the `Segmented` row above) — its row is on every
+and full ink (the same digit as on its pill in the row of categories above: word pills that wrap,
+`components/lb/TileChoice.tsx`, so a long term stays whole) — its row is on every
 tile and a marked word is never set bold, so a mark never widens a tile and the rows stand before
 she taps — and a line under the text says in
 words what is marked ("Subjekt: die Oma; …"); a set comma is a comma after the word. Syllables:
 one word per row, never wrapped, its letters set as text in 30-pt cells (`Btn bare`, no padding,
 so the letters stay together); each letter but the last is a target 44 pt high and one cell wide,
 the cells touch, and a cut is a bar between the letters ("Getrennt: Re-gen-bo-gen" below). Colour
-is never the only signal. A second tap takes a mark back. One line in the same place says what a tap
+is never the only signal. A second tap takes a mark back. One line under the text says what a tap
 does, for every kind of marking (`practice.mark.how_*`), until the first "Prüfen" — then Buddy's
 reply needs the room. Marks and the chosen category live in the draft.
 
@@ -3285,11 +3309,13 @@ coordinate system `FunctionPlotFigure.tsx` draws for a graph she reads (lifted o
 Operated like the note line (#275): the paper is ONE target (`components/lb/TapSurface.tsx`, which
 the note line now uses too); a tap takes the crossing nearest the finger, so the whole square around
 a crossing is its target; a tap on her own point takes it away and the next tap puts that point
-back; the arrows of the one key row (`KeyRow`) move the point she set last one crossing (on a bar
-chart ← → choose a bar, ↑ ↓ pull it a step) and "Zurück" undoes the last step
-(`lib/practice/gridDraw.ts`). Without a finger — a screen reader, a keyboard — a point lands in the
-middle and is moved with the arrows. Never colour alone: points carry their names, the one the
-arrows move a ring, the mirror axis is dashed, the figure filled and her image only drawn, the
+back; "Zurück" in the one key row (`KeyRow`) undoes the last step, and on a bar chart "−" and "+"
+pull the chosen bar a step (`lib/practice/gridDraw.ts`). No arrow keys are drawn (owner rule 8,
+#599; design `components/practice/Answers.jsx` `GridBars`). Without a finger — a screen reader, a
+keyboard — a point lands in the middle and is moved one crossing by the paper's accessibility
+actions or a keyboard's arrow keys; on a bar chart the same two ways choose a bar and pull it
+(`GRID_ACTIONS`, `GRID_STEPS` in `GridAnswer.tsx`). Never colour alone: points carry their names,
+the one that moves a ring, the mirror axis is dashed, the figure filled and her image only drawn, the
 chosen bar's name bold, and one line under the paper says in words what is drawn and which point
 comes next ("A(3|2) · B(−2|1) · als Nächstes C"), also to a screen reader after every step. A bar chart has no such line: its values stand in the question and on its scale, and the line
 was the 37 pt too many on 360×740; the paper says them to a screen reader. Its rows may shrink to 20 pt.
@@ -3299,7 +3325,7 @@ was the 37 pt too many on 360×740; the paper says them to a screen reader. Its 
 paper is at most 8 units across and 6 up — up is the scarce direction, eight rows were 118 pt too
 tall on 360×740 under a three-line question and Buddy's reply —, a square between 22 and 44 pt
 (under the 44-pt rule, as the note line's staff positions are: the squares touch, the nearest
-crossing is taken, a miss costs one arrow tap); four points to plot (their coordinates stand in the
+crossing is taken, a miss costs a tap on the point and one more); four points to plot (their coordinates stand in the
 question, which keeps to three lines); a graph on x from −4 to 4 and y from −3 to 3; a mirror
 figure and its image within 8 × 6 squares; two to six bars, the tallest five steps, a label of at
 most 8 characters under four columns and 6 under five or six. Generated in a topic's practice and

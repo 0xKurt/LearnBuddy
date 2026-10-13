@@ -21,7 +21,6 @@ import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { PIN_PAGE } from '../lib/theme/pin.js';
 import { bottomRoom, GUTTER_APP, SPACE } from '../lib/theme/space.js';
-import { RADIUS } from '../lib/theme/radius.js';
 
 export default function Pin() {
   const { palette } = useTheme();
@@ -113,20 +112,30 @@ export default function Pin() {
         </Text>
         <View style={{ flexGrow: 1, minHeight: SPACE.xl }} />
         <View style={{ alignItems: 'center', gap: SPACE.lg }}>
-          {error ? (
-            <View
-              style={{
-                backgroundColor: palette.blush,
-                borderRadius: RADIUS.note,
-                paddingHorizontal: SPACE.lg,
-                paddingVertical: 10, // token-exempt: one or two lines, snug in the note
+          <PinPad
+            onComplete={(pin) => void submit(pin)}
+            resetKey={attempt}
+            disabled={busy}
+            // The dots turn to the danger colour (components/core/PinPad.jsx); the words stand
+            // right under the pad and are announced above — never colour alone.
+            error={error !== null}
+          />
+          {/* What went wrong, under the pad (design ui_kits/app/More.jsx:107). The line keeps its
+              room while there is nothing to say, so the pad never moves when it appears. */}
+          <Text
+            testID="pin-error"
+            style={[
+              TYPE.metaSemibold,
+              {
+                color: palette.danger,
+                textAlign: 'center',
+                minHeight: TYPE.metaSemibold.lineHeight,
                 maxWidth: PIN_PAGE.textWidth,
-              }}
-            >
-              <Text style={[TYPE.body, { color: palette.ink, textAlign: 'center' }]}>{error}</Text>
-            </View>
-          ) : null}
-          <PinPad onComplete={(pin) => void submit(pin)} resetKey={attempt} disabled={busy} />
+              },
+            ]}
+          >
+            {error ?? ''}
+          </Text>
           <View style={{ alignItems: 'center' }}>
             {/* Opening the parents' area: a forgotten PIN is set anew with the account's
                 password there (components/settings/PinCard.tsx). */}

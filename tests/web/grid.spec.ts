@@ -1,7 +1,9 @@
 // Browser walkthrough of drawing on a grid (issue #249), against the real API with the scripted
 // model (apps/api/src/testing/scenarios/grid.ts). She taps crossings to plot points, sets two
 // points of y = 2x − 1 (the app draws the line), mirrors a quadrilateral on squared paper and pulls
-// six bars; a tap on her point takes it away, the arrows move it, "Zurück" undoes. Every case is
+// six bars; a tap on her point takes it away, "Zurück" undoes. No arrow keys are drawn (owner
+// rule 8, #599): a keyboard's arrow keys move the point she set last, "+" and "−" pull the chosen
+// bar. Every case is
 // the LARGEST its mode may be (contracts/grid.ts), and every `shot` measures at 390×844 and 360×740
 // that nothing has to be scrolled (tests/web/fit.ts), also with Buddy's reply above the paper and
 // with the keyboard up for her question.
@@ -132,8 +134,12 @@ test('drawing on a grid: points, a line, a mirror image, bars — checked by cod
     page.getByText('Noch nicht ganz: (1|2) liegt nicht auf dem Graphen.'),
   ).toBeInViewport();
   await bothSchemes(page, '249e-grid-line-feedback');
-  // The arrow moves the point she set last, one crossing.
-  await key(page, 'Nach unten').click();
+  // No arrow key is drawn; with a keyboard the arrow key moves the point she set last, one
+  // crossing (a screen reader has the same steps as actions on the paper).
+  for (const arrow of ['Nach links', 'Nach oben', 'Nach unten', 'Nach rechts'])
+    await expect(page.getByRole('button', { name: arrow, exact: true })).toHaveCount(0);
+  await page.getByTestId('grid-paper').getByRole('button').focus();
+  await page.keyboard.press('ArrowDown');
   await expect(words(page)).toHaveText('(0|−1) · (1|1)');
   await right(page);
   await bothSchemes(page, '249f-grid-line-right');
@@ -174,6 +180,9 @@ test('drawing on a grid: points, a line, a mirror image, bars — checked by cod
     page.getByText('Noch nicht ganz: Die Säule für Traube stimmt noch nicht.'),
   ).toBeInViewport();
   await bothSchemes(page, '249k-grid-bars-feedback');
+  // The last bar she pulled is the chosen one: "+" pulls it a row higher.
+  for (const arrow of ['Säule davor', 'Säule danach'])
+    await expect(page.getByRole('button', { name: arrow, exact: true })).toHaveCount(0);
   await key(page, 'Höher').click();
   await right(page);
   await finish(page);

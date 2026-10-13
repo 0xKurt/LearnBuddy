@@ -111,7 +111,8 @@
     "hint_linked": "Undoes the link.",
     "hint_put": "Puts {{text}} here.",
     "hint_group_waits": "Tap something at the top first.",
-    "check_waits": "Once everything is matched."
+    "check_waits": "Once everything is matched.",
+    "empty": "empty"
   },
   "next": "Next",
   "cloze": {
@@ -119,7 +120,8 @@
     "gap_filled": "Gap {{n}} of {{total}}: {{word}}",
     "gap_clear": "Empties the gap again.",
     "word_used": "{{word}}, already used",
-    "check_waits": "Only once every gap has something in it."
+    "check_waits": "Only once every gap has something in it.",
+    "how_bank": "Tap a word – it goes into the marked gap. Tap a gap to empty it."
   },
   "order": {
     "how": "Tap them in order.",
@@ -263,7 +265,8 @@
     "cell_at": "row {{row}}, column {{column}}",
     "brick": "row {{row}}, brick {{n}}",
     "check_waits": "Only once every cell is filled in.",
-    "scroll": "Table, scrolls sideways"
+    "scroll": "Table, scrolls sideways",
+    "how": "Tap an empty cell and write in what is missing."
   },
   "drill": {
     "progress": "Task {{current}} of {{total}}",
@@ -334,8 +337,8 @@
     "paper_graph": "Coordinate system",
     "paper_mirror": "Squared paper with a mirror line",
     "paper_bars": "Bar chart",
-    "tap_hint": "Sets the next point on the crossing. Tapping a point takes it away.",
-    "tap_hint_bars": "Pulls the bar in this column up to here.",
+    "tap_hint": "Sets the next point on the crossing. Tapping a point takes it away. Without a tap it lands in the middle; then move it with the actions or with the arrow keys.",
+    "tap_hint_bars": "Pulls the bar in this column up to here. Without a tap the chosen bar grows one row; choose a bar and pull it with the actions or with the arrow keys.",
     "left": "Left",
     "up": "Up",
     "down": "Down",

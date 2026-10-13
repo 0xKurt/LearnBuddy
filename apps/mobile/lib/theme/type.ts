@@ -74,16 +74,17 @@ function typeOf(p: Palette) {
     questionCompact: { ...fontFace('500'), fontSize: 18, lineHeight: 25, color: p.ink },
     option: { ...fontFace('600'), fontSize: 16, lineHeight: 22, color: p.ink },
     optionBadge: { ...fontFace('700'), fontSize: 14, lineHeight: 14, color: p.ink },
-    board: { ...fontFace('600'), fontSize: 16, lineHeight: 22, color: p.ink },
+    /** A side of a pair, a table's first column (components/practice/Tasks.jsx Pairs, FillTable). */
     boardCompact: { ...fontFace('600'), fontSize: 15, lineHeight: 20, color: p.ink },
-    tableCell: { ...fontFace('400'), fontSize: 16, lineHeight: 22, color: p.ink },
+    /** A table's head, a group's name (Tasks.jsx FillTable, Groups). */
+    boardLabel: { ...fontFace('700'), fontSize: 14, lineHeight: 18, color: p.ink2 },
     bodyStrong: { ...body, ...fontFace('600') },
     quote: { ...meta, fontStyle: 'italic', color: p.primaryDk },
     metaMedium: { ...meta, ...fontFace('500') },
     metaSemibold: { ...meta, ...fontFace('600') },
     markPunctuation: { ...body, ...fontFace('800') },
     markLetter: { ...fontFace('500'), fontSize: 28, lineHeight: 34, color: p.ink },
-    musicSymbol: { ...fontFace('700'), fontSize: 32, lineHeight: 38, color: p.ink },
+    musicSymbol: { ...fontFace('700'), fontSize: 21, lineHeight: 28, color: p.ink },
     drillAnswer: {
       ...fontFace('700'),
       fontSize: 40,

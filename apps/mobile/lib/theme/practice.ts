@@ -7,7 +7,6 @@ import { RADIUS } from './radius.js';
 import { SPACE, TOUCH } from './space.js';
 
 export type OptionState = 'idle' | 'selected' | 'correct' | 'wrong' | 'dim';
-export type BoardState = 'tile' | 'picked' | 'placed' | 'slot' | 'correct' | 'wrong';
 
 const COLUMN_CELL_AIR = 1;
 
@@ -64,7 +63,6 @@ export const PRACTICE = {
   checkboxRadius: 6,
   checkboxBorder: 1.5,
   checkboxIcon: 14,
-  orderBadgeSize: 26,
   orderColumns: 4,
   orderGridTextMax: 6,
   tableWordColumn: 76,
@@ -84,57 +82,8 @@ export const PRACTICE = {
   markUnderline: 3,
   narrowPhone: 360,
   gridChoiceMax: 4,
-  successTint: 0.13,
-  dangerTint: 0.1,
   gridBasis: '45%' as const,
 } as const;
-
-function tint(hex: string, alpha: number): string {
-  const value = parseInt(hex.slice(1), 16);
-  return `rgba(${value >> 16},${(value >> 8) & 255},${value & 255},${alpha})`;
-}
-
-/** State skins shared by existing board controls; no separate button implementation. */
-export function boardSkin(p: Palette, state: BoardState) {
-  const color =
-    state === 'correct'
-      ? p.successText
-      : state === 'wrong'
-        ? p.danger
-        : state === 'picked' || state === 'placed'
-          ? p.primaryDk
-          : p.ink;
-  return {
-    bg:
-      state === 'picked' || state === 'placed'
-        ? p.primaryLt
-        : state === 'slot'
-          ? p.canvas
-          : state === 'correct'
-            ? tint(p.success, PRACTICE.successTint)
-            : state === 'wrong'
-              ? tint(p.danger, PRACTICE.dangerTint)
-              : p.paper,
-    color,
-    borderColor:
-      state === 'picked'
-        ? p.primary
-        : state === 'placed'
-          ? p.primaryLt
-          : state === 'correct'
-            ? p.success
-            : state === 'wrong'
-              ? p.danger
-              : p.hairlineStrong,
-    borderWidth:
-      state === 'picked' || state === 'correct' || state === 'wrong'
-        ? PRACTICE.selectedBorder
-        : state === 'slot'
-          ? PRACTICE.checkboxBorder
-          : PRACTICE.border,
-    borderStyle: state === 'slot' ? ('dashed' as const) : ('solid' as const),
-  };
-}
 
 export function optionLook(p: Palette, state: OptionState): ViewStyle {
   const borderWidth =

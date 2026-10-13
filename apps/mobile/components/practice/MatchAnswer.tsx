@@ -15,21 +15,36 @@
 // (kein Wort ist länger als MATCH_WORD_MAX). Wie viel hier höchstens steht, ist gemessen: die
 // MATCH_*-Grenzen in contracts/structured.ts passen ohne Scrollen auf 360×740.
 //
-// Mehr gibt es nicht — eine Zeile Anleitung bis zum ersten Tipp, die Elemente, „Prüfen"
+// Mehr gibt es nicht — die Elemente, darunter eine Zeile Anleitung bis zum ersten Tipp, „Prüfen"
 // (Minimalismus, Owner 02.10.). Auch was sie gerade hält, steht im Entwurf: ein Themenwechsel
 // baut den Baum neu auf (ThemeProvider).
+//
+// Aussehen (#599, Design components/practice/Tasks.jsx): jedes Stück ist die eine Brett-Kachel
+// (`components/lb/Tile.tsx`) — frei Papier, gehalten hell-violett mit Ring, zugeordnet
+// hell-violett ohne Ring, die Schrift immer Tinte. Eine Gruppe ist eine Papierkarte mit ihrem
+// Namen als Text; leer zeigt sie den gestrichelten Platz „leer", und solange sie etwas hält, trägt
+// jede Karte den gestrichelten Ring. Die ganze Karte nimmt an — die Dinge darin liegen DARÜBER,
+// nicht darin: ein Knopf in einem Knopf ist im Web ungültig (axe: nested-interactive).
+// Nicht übernommen, weil es dem Vertrag bzw. einer Owner-Entscheidung widerspricht (im PR
+// berichtet): die Paare mit Nummern in zwei festen Spalten (Owner 10.10., #524: EINE Zeile je
+// Paar) und die Maße der Gruppenkarte (Innenabstand 10/12, Schrift 16) — die MATCH_*-Grenzen sind
+// mit den Maßen hier vermessen.
 
 import type { MatchTaskView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
 import { speakMathText } from '../../lib/math/speak.js';
+import { BOARD, WORD_ROW } from '../../lib/theme/board.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
+import { BoardHint } from '../lb/BoardHint.js';
+import { Card } from '../lb/Card.js';
+import { PressArea } from '../lb/PressArea.js';
+import { Tile } from '../lb/Tile.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { AnswerShell } from './AnswerShell.js';
@@ -131,11 +146,6 @@ export function linksText(view: MatchTaskView, links: readonly Link[]): string {
     .join('; ');
 }
 
-/**
- * The words on an element: a caption's size on a tighter line, so a tile of a few words stays
- * one touch target tall. token-exempt: 14/18, between TYPE.meta and TYPE.body.
- */
-
 /** "Prüfen": everything linked; `shown` is her links in words, for the thread. */
 export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<MatchTaskView>) {
   const { palette } = useTheme();
@@ -165,160 +175,160 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
   const tap = (id: string) =>
     keep((now) => JSON.stringify(tapMatch(view, stateFrom(now, view), id)));
 
-  /** A thing to sort, above the groups or in its group's row: its state in words. */
+  /** A thing to sort, above the groups or in its group's card: a word pill, its state in words. */
   const element = (id: string) => {
     const group = links.find((k) => k.left === id)?.right ?? null;
     const isHeld = held === id;
     const me = spoken(id);
     return (
-      <View key={id} style={{ maxWidth: '100%' }}>
-        <Btn
-          variant={isHeld ? 'picked' : group ? 'placed' : 'tile'}
-          size="sm"
-          compact
-          disabled={disabled}
-          onPress={() => tap(id)}
-          accessibilityLabel={
-            isHeld
-              ? t('match.held', { text: me })
-              : group
-                ? t('match.in_group', { text: me, group: spoken(group) })
-                : t('match.no_group', { text: me })
-          }
-          accessibilityHint={group ? t('match.hint_linked') : freeHint(id, 'left')}
-          label={
-            <MathText
-              text={text.get(id) ?? ''}
-              accessible={false}
-              style={{
-                paddingVertical: SPACE.xs,
-                textAlign: 'center',
-                ...TYPE.boardCompact,
-                color: isHeld ? palette.primaryDk : group ? palette.primaryDk : palette.ink,
-              }}
-            />
-          }
-        >
-          {me}
-        </Btn>
-      </View>
+      <Tile
+        key={id}
+        shape="word"
+        state={isHeld ? 'picked' : group ? 'placed' : 'tile'}
+        disabled={disabled}
+        onPress={() => tap(id)}
+        accessibilityLabel={
+          isHeld
+            ? t('match.held', { text: me })
+            : group
+              ? t('match.in_group', { text: me, group: spoken(group) })
+              : t('match.no_group', { text: me })
+        }
+        accessibilityHint={group ? t('match.hint_linked') : freeHint(id, 'left')}
+        label={(color) => (
+          <MathText
+            text={text.get(id) ?? ''}
+            accessible={false}
+            style={{ textAlign: 'center', ...TYPE.boardCompact, color }}
+          />
+        )}
+      >
+        {me}
+      </Tile>
     );
   };
 
   /** Words on a pairing's tile, wrapping at word boundaries as far as they need. */
-  const tileText = (words: string, color: string) => (
-    <MathText
-      text={words}
-      accessible={false}
-      style={{ flex: 1, paddingVertical: SPACE.xs, ...TYPE.boardCompact, color }}
-    />
+  const tileText = (words: string) => (color: string) => (
+    <MathText text={words} accessible={false} style={{ ...TYPE.boardCompact, color }} />
   );
 
-  /** An open tile of a pairing: calm lilac, filled while she holds it. */
+  /** An open tile of a pairing: paper, the selected frame while she holds it. */
   const openTile = (id: string, side: 'left' | 'right') => {
     const isHeld = held === id;
     const me = spoken(id);
     return (
-      <Btn
+      <Tile
         key={id}
-        variant={isHeld ? 'picked' : 'tile'}
-        size="sm"
-        full
+        state={isHeld ? 'picked' : 'tile'}
+        tall
         grow
-        compact
         disabled={disabled}
         onPress={() => tap(id)}
         accessibilityLabel={
           isHeld ? t('match.held', { text: me }) : t('match.no_partner', { text: me })
         }
         accessibilityHint={freeHint(id, side)}
-        label={tileText(text.get(id) ?? '', isHeld ? palette.primaryDk : palette.primaryDk)}
+        label={tileText(text.get(id) ?? '')}
       >
         {me}
-      </Btn>
+      </Tile>
     );
   };
 
   /**
-   * A formed pair (issue #524): one row across the board, "links → rechts", in the one calm
-   * outline every pair shares. The text says what goes with what — no colour, no symbol to
-   * look up. It runs as ONE line of text over the whole width, so a term and a sentence of up
-   * to MATCH_ELEMENT_MAX take two lines, not the four a half-width column would need. A tap
+   * A formed pair (issue #524): one row across the board, "links → rechts", in the one placed
+   * look every pair shares. The text says what goes with what — no colour, no symbol to look up.
+   * It runs as ONE line of text over the whole width, so a term and a sentence of up to
+   * MATCH_ELEMENT_MAX take two lines, not the four a half-width column would need. A tap
    * dissolves it, and both tiles are back in their columns.
    */
   const pairRow = (link: Link) => {
     const left = spoken(link.left);
     const right = spoken(link.right);
     return (
-      <Btn
+      <Tile
         key={link.left}
-        variant="placed"
-        size="sm"
-        full
-        compact
+        state="placed"
         disabled={disabled}
         onPress={() => tap(link.left)}
         accessibilityLabel={t('match.paired', { left, right })}
         accessibilityHint={t('match.hint_linked')}
-        label={tileText(
-          `${text.get(link.left) ?? ''} → ${text.get(link.right) ?? ''}`,
-          palette.ink,
-        )}
+        label={tileText(`${text.get(link.left) ?? ''} → ${text.get(link.right) ?? ''}`)}
       >
         {`${left} – ${right}`}
-      </Btn>
+      </Tile>
     );
   };
 
   /**
-   * A group: one row, its name first and then what she has put in it. The row IS the state —
-   * no number to look up. The name takes what she holds; an element in the row goes back out
-   * with a tap. The elements stand NEXT to the name, not inside it: a button in a button is
-   * invalid on the web (axe: nested-interactive).
+   * A group: one card, its name first and then what she has put in it. The card IS the state —
+   * no number to look up. The whole card takes what she holds (a target laid under its content);
+   * an element in it goes back out with a tap. Empty, it shows the dashed place "leer"; while she
+   * holds something, the dashed ring says it can take it (Tasks.jsx `Groups`).
    */
   const group = (id: string) => {
     const name = spoken(id);
     const members = view.left.filter((e) => links.some((k) => k.left === e.id && k.right === id));
+    const takes = heldIsLeft && !disabled;
     return (
-      <View
-        key={id}
-        testID={`match-group-${id}`}
-        style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          gap: SPACE.sm,
-          padding: SPACE.xs,
-          borderRadius: RADIUS.md,
-          backgroundColor: palette.canvas,
-        }}
-      >
-        <Btn
-          variant="slot"
-          size="sm"
-          compact
-          // A group only receives: without something held there is nothing to put in it.
-          disabled={disabled || !heldIsLeft}
-          onPress={() => tap(id)}
-          accessibilityLabel={t('match.group', { group: name, count: members.length })}
-          accessibilityHint={
-            heldIsLeft ? t('match.hint_put', { text: spoken(held!) }) : t('match.hint_group_waits')
-          }
-          label={
+      <View key={id} testID={`match-group-${id}`}>
+        <Card
+          padding={SPACE.xs}
+          joined
+          style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: BOARD.gap }}
+        >
+          <PressArea
+            // A group only receives: without something held there is nothing to put in it.
+            disabled={disabled || !heldIsLeft}
+            onPress={() => tap(id)}
+            accessibilityRole="button"
+            accessibilityLabel={t('match.group', { group: name, count: members.length })}
+            accessibilityHint={
+              heldIsLeft
+                ? t('match.hint_put', { text: spoken(held!) })
+                : t('match.hint_group_waits')
+            }
+            accessibilityState={{ disabled: disabled || !heldIsLeft }}
+            style={FILL}
+          >
+            {/* The ring is drawn over the card, so it never moves what stands in it. */}
+            <View
+              style={{
+                ...FILL,
+                borderRadius: RADIUS.lg,
+                borderWidth: BOARD.group.ring,
+                borderStyle: 'dashed',
+                borderColor: takes ? palette.primary : 'transparent',
+              }}
+            />
+          </PressArea>
+          <View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={{
+              minHeight: BOARD.word.height,
+              justifyContent: 'center',
+              paddingLeft: SPACE.sm,
+            }}
+          >
             <MathText
               text={text.get(id) ?? ''}
               accessible={false}
-              style={{
-                paddingVertical: SPACE.xs,
-                ...TYPE.boardCompact,
-                color: heldIsLeft && !disabled ? palette.primaryDk : palette.ink2,
-              }}
+              style={{ ...TYPE.boardLabel, color: palette.ink }}
             />
-          }
-        >
-          {name}
-        </Btn>
-        {members.map((e) => element(e.id))}
+          </View>
+          {members.length === 0 ? (
+            <View pointerEvents="none">
+              <Tile shape="word" state="slot">
+                {t('match.empty')}
+              </Tile>
+            </View>
+          ) : (
+            members.map((e) => element(e.id))
+          )}
+        </Card>
       </View>
     );
   };
@@ -331,20 +341,12 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
       answer={
         // A pairing of sentences is a list she goes through (issue #524): it may scroll.
         <PartsArea list={!groups}>
-          <View style={{ gap: SPACE.sm }}>
-            {/* The one line of instruction, only until she has started (like an order's). */}
-            {started ? null : (
-              <Text style={[TYPE.meta, { color: palette.ink2 }]}>
-                {t(groups ? 'match.how_groups' : 'match.how_pairs')}
-              </Text>
-            )}
+          <View style={{ gap: BOARD.gap }}>
             {groups ? (
               <>
                 {/* What is still to be sorted; it empties as she sorts, and then it is gone. */}
                 {openLeft.length > 0 ? (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-                    {openLeft.map((e) => element(e.id))}
-                  </View>
+                  <View style={WORD_ROW}>{openLeft.map((e) => element(e.id))}</View>
                 ) : null}
                 <View style={{ gap: SPACE.xs }}>{view.right.map((g) => group(g.id))}</View>
               </>
@@ -353,18 +355,22 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
               // columns whose two tiles of a row are equally tall (issue #286: ragged boxes
               // looked like a form). Every pair takes one tile from each column, so the two
               // stay the same length.
-              <View style={{ gap: SPACE.sm }}>
+              <View style={{ gap: BOARD.gap }}>
                 {pairs.map(pairRow)}
                 {openLeft.map((e, i) => {
                   const r = openRight[i];
                   return (
-                    <View key={e.id} style={{ flexDirection: 'row', gap: SPACE.sm }}>
+                    <View key={e.id} style={{ flexDirection: 'row', gap: BOARD.gap }}>
                       <View style={{ flex: 1 }}>{openTile(e.id, 'left')}</View>
                       <View style={{ flex: 1 }}>{r ? openTile(r.id, 'right') : null}</View>
                     </View>
                   );
                 })}
               </View>
+            )}
+            {/* The one line of instruction, only until she has started — under the board. */}
+            {started ? null : (
+              <BoardHint>{t(groups ? 'match.how_groups' : 'match.how_pairs')}</BoardHint>
             )}
           </View>
         </PartsArea>
@@ -382,3 +388,5 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
     />
   );
 }
+
+const FILL = { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } as const;
