@@ -234,7 +234,7 @@ const LIBRARY_MORE: readonly LibraryEntry[] = [
     d: 'breathing',
     name: 'Atmungsorgane',
     n: ['Nasenhöhle', 'Kehlkopf', 'Luftröhre', 'Bronchien', 'Lunge', 'Zwerchfell'],
-    taps: [['Tippe auf den Kehlkopf.', 'Kehlkopf']],
+    taps: [['Tippe auf die Luftröhre.', 'Luftröhre']],
   },
   {
     d: 'digestion',

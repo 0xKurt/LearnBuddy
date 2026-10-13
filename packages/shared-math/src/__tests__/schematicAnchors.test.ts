@@ -1,6 +1,6 @@
 // Where the parts of the picture library's images stand (issue #599): the anchors line up with
 // the names part by part, every tap area is a finger wide and lies in its frame, a finger means
-// the part whose area holds it — the nearest anchor where two overlap, NOTHING outside every area —
+// the part whose area holds it — NOTHING outside every area —, no two areas of one image overlap,
 // and a tap is asked only for a part that has an area (its structure is covered by one) and whose
 // anchor stands clear of its neighbours'.
 
@@ -37,7 +37,7 @@ describe('the anchors of the images', () => {
     }
   });
 
-  it('every anchor and number lies in its frame; a tap area is at least 44 × 44 and holds its anchor', () => {
+  it('every anchor and number lies in its frame; a tap area lies in it too and holds its anchor', () => {
     for (const d of SCHEMATIC_IMAGE_IDS) {
       const { width, height } = schematicFrame(d);
       expect(width).toBe(SCHEMATIC_IMAGE_WIDTH);
@@ -48,7 +48,6 @@ describe('the anchors of the images', () => {
         }
         if (!a.tap) continue;
         const [x, y, w, h] = a.tap;
-        expect(Math.min(w, h), where).toBeGreaterThanOrEqual(44);
         expect(x >= 0 && y >= 0 && x + w <= width && y + h <= height, where).toBe(true);
         // Its own anchor lies in its tap area: a finger on the part hits it.
         expect(a.at[0] >= x && a.at[0] <= x + w && a.at[1] >= y && a.at[1] <= y + h, where).toBe(
@@ -81,25 +80,71 @@ describe('which part a finger means (`anchorAt`)', () => {
   });
 
   it('inside one tap area: that part', () => {
-    // The skull's area is [128, 0, 44, 44]; no other area of the skeleton is left.
+    // The skull's area is [122, 0, 56, 56]; no other area of the skeleton is left.
     expect(anchorAt(SCHEMATIC_ANCHORS.skeleton, 130, 40)).toBe(index('skeleton', 'skull'));
   });
 
-  it('where two tap areas overlap, the anchor nearest the finger wins', () => {
-    const flower = SCHEMATIC_ANCHORS.flower;
-    const [style, stigma] = [index('flower', 'style'), index('flower', 'stigma')];
-    const [a, b] = [flower[style]!, flower[stigma]!];
-    // The style's area is [127, 45, 44, 44], the stigma's [131, 21, 44, 44]: both hold the strip
-    // y 45 … 65. The style's anchor stands at y 67, the stigma's at y 43.
-    const inside = (p: typeof a, x: number, y: number) =>
-      p.tap !== null &&
-      x >= p.tap[0] &&
-      x <= p.tap[0] + p.tap[2] &&
-      y >= p.tap[1] &&
-      y <= p.tap[1] + p.tap[3];
-    for (const y of [50, 62]) expect(inside(a, 150, y) && inside(b, 150, y)).toBe(true);
-    expect(anchorAt(flower, 150, 62)).toBe(style);
-    expect(anchorAt(flower, 150, 50)).toBe(stigma);
+  it('no two tap areas of one image overlap, and each is a finger wide, in the smallest room', () => {
+    // A picture to tap stands at least as large as in the smallest room (`REGION_TAP_BOX`: 320 pt
+    // wide, or narrower where 330 pt of height allow less). There every area must be 44 pt each
+    // way and meet no other — else a finger on one structure would be taken for its neighbour.
+    const overlaps: string[] = [];
+    for (const d of SCHEMATIC_IMAGE_IDS) {
+      const pt = Math.min(320, (330 * 300) / schematicFrame(d).height) / 300;
+      const areas = SCHEMATIC_ANCHORS[d].flatMap((a) => (a.tap ? [{ id: a.id, tap: a.tap }] : []));
+      for (const { id, tap } of areas) {
+        expect(Math.min(tap[2], tap[3]) * pt, `${d}.${id} on the screen`).toBeGreaterThanOrEqual(
+          44,
+        );
+      }
+      areas.forEach((p, i) => {
+        for (const q of areas.slice(i + 1)) {
+          const [ax, ay, aw, ah] = p.tap;
+          const [bx, by, bw, bh] = q.tap;
+          if (ax < bx + bw && bx < ax + aw && ay < by + bh && by < ay + ah)
+            overlaps.push(`${d}: ${p.id} / ${q.id}`);
+        }
+      });
+    }
+    expect(overlaps).toEqual([]);
+  });
+
+  it('a finger on a structure means that part, never the neighbour its old area reached', () => {
+    // Read off the images (review of #599, round two): the stomach's lower left was taken for the
+    // pancreas, the ovary's bulb for the ovule, the coarse-focus knob's lower right for the fine
+    // focus. In the frame's units, at the frame's size and in the smallest room.
+    const ON: Array<[SchematicImageId, string, number, number]> = [
+      ['digestion', 'stomach', 172, 248],
+      ['digestion', 'stomach', 195, 225],
+      ['flower_section', 'ovary', 140, 130],
+      ['flower_section', 'ovary', 150, 110],
+      ['flower', 'ovary', 140, 130],
+      ['microscope', 'coarse_focus', 255, 290],
+      ['microscope', 'coarse_focus', 240, 265],
+      ['flower', 'style', 152, 70],
+      ['flower', 'stigma', 158, 40],
+      ['breathing', 'mouth', 120, 100],
+      ['ear', 'eardrum', 170, 150],
+      ['ear', 'ossicles', 162, 105],
+    ];
+    for (const [d, id, x, y] of ON) {
+      for (const least of [
+        0,
+        anchorFinger(Math.min(320, (330 * 300) / schematicFrame(d).height)),
+      ]) {
+        expect(anchorAt(SCHEMATIC_ANCHORS[d], x, y, least), `${d}.${id} at ${x}, ${y}`).toBe(
+          index(d, id),
+        );
+      }
+    }
+  });
+
+  it('drawn smaller than the smallest room, a finger in two grown areas means neither', () => {
+    // The ossicles' and the eardrum's areas meet at y 120; grown to 88 units they both hold it.
+    const ear = SCHEMATIC_ANCHORS.ear;
+    expect(anchorAt(ear, 160, 119)).toBe(index('ear', 'ossicles'));
+    expect(anchorAt(ear, 160, 121)).toBe(index('ear', 'eardrum'));
+    expect(anchorAt(ear, 160, 120, anchorFinger(150))).toBeNull();
   });
 
   it('outside every tap area a tap means nothing — never the nearest part', () => {
@@ -175,22 +220,22 @@ describe('what a tap may ask for (`schematicTappable`)', () => {
     tooth: [],
     insect: ['thorax'],
     bicycle: ['saddle', 'handlebar'],
-    microscope: ['light', 'diaphragm', 'coarse_focus', 'fine_focus'],
+    microscope: ['light', 'diaphragm', 'coarse_focus'],
     lab: [],
     heart: ['right_atrium', 'left_atrium'],
     ear: ['eustachian_tube', 'eardrum', 'ossicles', 'canals', 'cochlea', 'nerve'],
     skeleton: ['skull'],
-    organs: ['liver', 'trachea', 'brain'],
+    organs: ['liver', 'brain'],
     signs: ['stop', 'give_way', 'priority_road', 'crossing', 'cycle_path', 'one_way'],
     instruments: ['guitar', 'recorder', 'drum', 'trumpet', 'triangle', 'xylophone'],
     anlaut: ['apple', 'ball', 'house', 'sun', 'moon', 'fish', 'ice_cream', 'clock'],
-    flower_section: ['receptacle', 'ovary', 'style', 'stigma', 'ovule'],
+    flower_section: ['receptacle', 'ovary', 'style', 'stigma'],
     eye_front: [],
     insect_head: [],
     teeth: [],
     joint: [],
-    breathing: ['nasal_cavity', 'mouth', 'larynx', 'trachea'],
-    digestion: ['pancreas', 'stomach', 'appendix', 'rectum'],
+    breathing: ['nasal_cavity', 'mouth', 'trachea'],
+    digestion: ['stomach', 'appendix', 'rectum'],
     leaf: ['stoma'],
     neuron: ['nucleus'],
     mushroom: ['ring'],
@@ -203,7 +248,7 @@ describe('what a tap may ask for (`schematicTappable`)', () => {
     moon_phases: ['new_moon', 'first_quarter', 'full_moon', 'last_quarter'],
   };
 
-  it('exactly the parts with a tap area — 80 of 240 — and each stands 24 pt clear of the next', () => {
+  it('exactly the parts with a tap area — 75 of 240 — and each stands 24 pt clear of the next', () => {
     let [all, tappable] = [0, 0];
     for (const d of SCHEMATIC_IMAGE_IDS) {
       schematic(FIGURE_NAMES, d).parts.forEach(({ id }, i) => {
@@ -215,7 +260,7 @@ describe('what a tap may ask for (`schematicTappable`)', () => {
         if (area) tappable++;
       });
     }
-    expect([tappable, all]).toEqual([80, 240]);
+    expect([tappable, all]).toEqual([75, 240]);
   });
 
   it('what is drawn twice, larger than an area or going on elsewhere is named, never tapped', () => {

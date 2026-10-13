@@ -59,8 +59,8 @@ export type SchematicShape = {
 /**
  * Where a part of an image stands, in the image's frame (`SCHEMATIC_IMAGE_WIDTH` wide, y down,
  * origin top left): `at` the point on the motif its leader line starts at, `badge` where its
- * number stands, `tap` the area a finger hits as [x, y, width, height] — at least 44 × 44, and
- * where two areas overlap the anchor nearest the finger wins (`anchorAt`). `tap: null`: the part
+ * number stands, `tap` the area a finger hits as [x, y, width, height] — on its own structure,
+ * at least 44 pt each way on the narrowest phone, overlapping no other (`anchorAt`). `tap: null`: the part
  * is named only. Its structure is not covered by one area — larger, drawn more than once,
  * continuing elsewhere — or stands too close to the next; a finger on it would be recorded as
  * nothing or as another part, so it has no area: no question asks to tap it, no tap picks it.
@@ -212,14 +212,15 @@ export function anchorFinger(width: number): number {
 }
 
 /**
- * The part of an image a finger at (x, y) means, in the frame's units, or null: of the parts whose
- * tap area holds the point, the one whose anchor is nearest (HANDOFF §8: where areas overlap, the
- * nearest anchor counts). Outside every area a tap means NOTHING — never the nearest part: an
- * image's structures are not outlined in the data, so a finger beside an area may lie on another
- * structure, and a guess would be graded as her answer (CLAUDE.md rule 1). A part without an area
- * (`tap: null`) is never meant. `least`: the smallest a tap area may be (`anchorFinger`): a
- * smaller one grows about its middle, so a picture drawn narrower than its frame keeps 44 pt on
- * the screen.
+ * The part of an image a finger at (x, y) means, in the frame's units, or null: the part whose tap
+ * area holds the point. No two tap areas of one image overlap at any size a picture to tap is
+ * drawn in (`schematicAnchors.test.ts` holds the data to that), so at most one does. Outside every
+ * area a tap means NOTHING — never the nearest part: an image's structures are not outlined in the
+ * data, so a finger beside an area may lie on another structure, and a guess would be graded as
+ * her answer (CLAUDE.md rule 1). A part without an area (`tap: null`) is never meant. `least`: the
+ * smallest a tap area may be (`anchorFinger`): drawn narrower than the smallest room, an area
+ * grows about its middle to keep 44 pt — and should two grown areas then hold the finger, it
+ * means neither.
  */
 export function anchorAt(
   anchors: readonly SchematicAnchor[],
@@ -227,17 +228,14 @@ export function anchorAt(
   y: number,
   least = 0,
 ): number | null {
-  let [held, heldD] = [-1, Infinity];
-  anchors.forEach((a, i) => {
-    if (!a.tap) return;
+  const held = anchors.flatMap((a, i) => {
+    if (!a.tap) return [];
     const [tx, ty, tw, th] = a.tap;
     const [w, h] = [Math.max(tw, least), Math.max(th, least)];
     const [x0, y0] = [tx + (tw - w) / 2, ty + (th - h) / 2];
-    if (x < x0 || x > x0 + w || y < y0 || y > y0 + h) return;
-    const d = Math.hypot(a.at[0] - x, a.at[1] - y);
-    if (d < heldD) [held, heldD] = [i, d];
+    return x >= x0 && x < x0 + w && y >= y0 && y < y0 + h ? [i] : [];
   });
-  return held >= 0 ? held : null;
+  return held.length === 1 ? held[0]! : null;
 }
 
 /** How wide an image `height` high in its frame is drawn in the smallest room (`REGION_TAP_BOX`). */
@@ -247,12 +245,11 @@ function imageTapWidth(height: number): number {
 
 /**
  * Whether part `i` of an image can be asked for by a tap: it has a tap area — its structure is
- * covered by one, decided by looking at the image (`tap: null` otherwise) — and in the smallest
- * room the anchor of every other part with an area stands at least 24 pt away (`TAP_TARGET.image`,
- * the spacing of WCAG 2.2, 2.5.8): where two tap areas overlap the nearer anchor wins
- * (`anchorAt`), so that much around its own anchor means this part and no other. Both lungs, the
- * colon, the radius beside the ulna have no area: a question to tap one is dropped; naming it
- * stays possible.
+ * covered by one that overlaps no other part's, decided by looking at the image (`tap: null`
+ * otherwise) — and in the smallest room the anchor of every other part with an area stands at
+ * least 24 pt away (`TAP_TARGET.image`, the spacing of WCAG 2.2, 2.5.8). Both lungs, the colon,
+ * the radius beside the ulna, the pancreas against the stomach have no area: a question to tap one
+ * is dropped; naming it stays possible.
  */
 function anchorTappable(anchors: readonly SchematicAnchor[], i: number, height: number): boolean {
   const own = anchors[i];

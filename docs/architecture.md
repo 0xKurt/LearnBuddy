@@ -4255,19 +4255,22 @@ keeps our drawing until one exists (`SCHEMATIC_DRAWN`, with its reason).
   `at` the point on the motif, `badge` where its number stands (a column at x = 12 or 288; in a
   row picture its cell's corner), `tap` the area a finger hits ([x, y, w, h], at least 44 × 44; a
   row picture's whole cell). It was taken from the package's `anchors/<id>.json` and is the source
-  from here on: every anchor was looked at on its image and 75 that stood beside the named
+  from here on: every anchor was looked at on its image and 81 that stood beside the named
   structure were moved onto it (listed in ADR 0009). The circuit's outlines are
   `schematicShapes.data.ts` (`drawShapes.ts`, regions like a map's Länder). Names, anchors and
   shapes load with the first picture (`useFigureNames`, `useSchematicPictures`,
   `useSchematicShapes`, on `lib/lazyModule.ts`); only each picture's frame is eager
   (`schematicFrame`, its room while it loads).
-- **Which part a finger means** (`anchorAt`, `schematics.ts`): of the parts whose tap area holds
-  the point, the one whose anchor is nearest (HANDOFF §8); **outside every area, nothing** — the
-  one figure on which a tap can miss. The data has a point and an area per part, no outlines, so a
-  finger beside an area may lie on another structure, and a nearest-anchor guess would be graded
-  as her answer (rule 1). `TapFigure` then empties her place: no ring, and the line under the
-  figure says how to answer. Drawn narrower than its frame, a tap area keeps 44 pt on the screen
-  (`anchorFinger`).
+- **Which part a finger means** (`anchorAt`, `schematics.ts`): the part whose tap area holds the
+  point; **outside every area, nothing** — the one figure on which a tap can miss. The data has a
+  point and an area per part, no outlines, so a finger beside an area may lie on another
+  structure, and a nearest-anchor guess would be graded as her answer (rule 1). **No two tap areas
+  of one picture overlap** in the smallest room (guard in `schematicAnchors.test.ts`): each was
+  drawn onto its own structure, at least 44 pt each way on the narrowest phone; where two cannot
+  both sit on their own structure, one part is named only. So there is no "nearest anchor on
+  overlap". `TapFigure` empties her place on a miss: no ring, and the line under the figure says
+  how to answer. Drawn narrower than the smallest room, an area grows to keep 44 pt
+  (`anchorFinger`), and a finger in two grown areas means neither.
 - **What a tap may ask for** (`schematicTappable`): a part of an image that has a tap area
   (`tap` in the anchor data; `null` = named only) and whose anchor stands at least 24 pt from
   every other part's with an area in the smallest room (`REGION_TAP_BOX`; `TAP_TARGET.image`, the
@@ -4275,7 +4278,7 @@ keeps our drawing until one exists (`SCHEMATIC_DRAWN`, with its reason).
   its structure**, decided by looking at each of the 240 parts: what is clearly larger than its
   area, drawn more than once (both lungs, both arms, every myelin segment, upper and lower teeth)
   or continues elsewhere (the colon, the aorta) is named with a number, never tapped, and no
-  finger picks it — 160 parts, each with its reason in ADR 0009; 80 can be tapped, listed in
+  finger picks it — 165 parts, each with its reason in ADR 0009; 75 can be tapped, listed in
   `schematicAnchors.test.ts`. The circuit's parts as before: a whole finger (44 pt) inside the
   outline or around its point. The model sees every named-only part marked "\*".
 - **Rule 0, generation** (`apps/api/src/modules/practice/schematicCheck.ts`): a labelling draft

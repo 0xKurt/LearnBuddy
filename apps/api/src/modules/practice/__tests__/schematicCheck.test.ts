@@ -36,7 +36,11 @@ describe('the library in the model’s rules', () => {
     expect(partsOf('skeleton')).toContain('Schädel');
     // Drawn twice, going on elsewhere (#599 review): the lungs, the colon, the myelin.
     expect(partsOf('breathing')).toContain('Lunge*');
-    expect(partsOf('breathing')).toContain('Kehlkopf');
+    expect(partsOf('breathing')).toContain('Luftröhre');
+    // Lying against a neighbour, so that two finger-wide areas cannot both sit on their own.
+    expect(partsOf('digestion')).toContain('Bauchspeicheldrüse*');
+    expect(partsOf('digestion')).toContain('Magen');
+    expect(partsOf('microscope')).toContain('Feintrieb*');
     expect(partsOf('digestion')).toContain('Dickdarm*');
     expect(partsOf('neuron')).toContain('Myelinscheide*');
     expect(partsOf('flower_section')).toContain('Staubblatt*');
@@ -84,7 +88,7 @@ describe('the anchors the server decides with (#599)', () => {
     badge: xy,
     // Null: named only — no tap area, no tap question.
     tap: z
-      .tuple([z.number().min(0), z.number().min(0), z.number().min(44), z.number().min(44)])
+      .tuple([z.number().min(0), z.number().min(0), z.number().min(42), z.number().min(42)])
       .nullable(),
   });
 

@@ -130,7 +130,11 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
       tap('eye', 'Tippe auf die Pupille im Auge.', 'Pupille'),
       // One structure, covered by its area: stored.
       tap('flower_section', 'Tippe auf die Narbe.', 'Narbe'),
-      tap('breathing', 'Tippe auf den Kehlkopf.', 'Kehlkopf'),
+      tap('breathing', 'Tippe auf die Luftröhre.', 'Luftröhre'),
+      // Two finger-wide areas cannot both sit on their own structure: dropped as well.
+      tap('digestion', 'Tippe auf die Bauchspeicheldrüse.', 'Bauchspeicheldrüse'),
+      tap('microscope', 'Tippe auf den Feintrieb.', 'Feintrieb'),
+      tap('flower_section', 'Tippe auf die Samenanlage.', 'Samenanlage'),
       // The lung by its number: named, as before.
       {
         ...SCHEMATIC_ITEMS[2]!,
@@ -142,16 +146,16 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
     ]);
     expect(s.items.map((i) => [i.item.prompt, i.item.tap])).toEqual([
       ['Tippe auf die Narbe.', true],
-      ['Tippe auf den Kehlkopf.', true],
+      ['Tippe auf die Luftröhre.', true],
       ['Atmungsorgane: Wie heißt Teil 1?', false],
     ]);
     const rows = await env.db.query(`select 1 from items where learner_id = $1`, [l.learnerId]);
-    // The five taps on parts without an area were never stored.
+    // The eight taps on parts without an area were never stored.
     expect(rows).toHaveLength(3);
     // Graded by code, by the part's id: any of its names counts, another part does not.
-    const [stigma, larynx, lungs] = s.items.map((i) => i.item.id) as string[];
+    const [stigma, trachea, lungs] = s.items.map((i) => i.item.id) as string[];
     expect((await answer(l, s, stigma!, 'stigma')).body.verdict).toBe('correct');
-    expect((await answer(l, s, larynx!, 'Luftröhre')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, trachea!, 'Mundhöhle')).body.verdict).toBe('incorrect');
     expect((await answer(l, s, lungs!, 'Lungenflügel')).body.verdict).toBe('correct');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
