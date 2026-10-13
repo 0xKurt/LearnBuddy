@@ -40,6 +40,74 @@ async function motionSamples(page: Page): Promise<string[]> {
   });
 }
 
+/** Per watched words: every element they stand in, with how it looked on each frame. */
+type Watched = Map<string, Map<Element, string[]>>;
+type EntranceWindow = Window & { lbEntrances?: Watched };
+
+/**
+ * Watches how the given words come onto the screen, frame by frame, from now on. A message's
+ * entrance is a Reanimated shared value written to the element's style on every frame
+ * (components/lb/Motion.tsx `Rise`, `Appear`) — not a CSS animation, so no `animationstart` ever
+ * fires for it (#599). What is sampled is what she sees: for each element the words stand in,
+ * the opacity down its ancestors multiplied and their transforms. An entrance passes through
+ * many values; words that simply stand (or are dimmed once while sending) show one or two.
+ */
+async function watchEntrances(page: Page, words: readonly string[]): Promise<void> {
+  await page.evaluate((watched) => {
+    const seen: Watched = new Map(watched.map((w) => [w, new Map<Element, string[]>()]));
+    (window as EntranceWindow).lbEntrances = seen;
+    const look = (el: Element): string => {
+      let opacity = 1;
+      const transforms: string[] = [];
+      for (let e: Element | null = el; e && e !== document.body; e = e.parentElement) {
+        const style = getComputedStyle(e);
+        opacity *= parseFloat(style.opacity);
+        if (style.transform !== 'none') transforms.push(style.transform);
+      }
+      return `${opacity.toFixed(3)} ${transforms.join(';')}`;
+    };
+    const frame = () => {
+      // A later watch replaced this one: stop.
+      if ((window as EntranceWindow).lbEntrances !== seen) return;
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const parent = node.parentElement;
+        if (!parent) continue;
+        for (const [w, places] of seen) {
+          if (!node.textContent?.includes(w)) continue;
+          const looks = places.get(parent) ?? [];
+          looks.push(look(parent));
+          places.set(parent, looks);
+        }
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }, words);
+}
+
+/**
+ * Per watched words, of the element that was watched longest and of the one that changed most:
+ * how many frames, and how many different looks.
+ */
+async function entrances(page: Page): Promise<Array<{ frames: number; looks: number }>> {
+  return page.evaluate(() => {
+    const seen: Watched = (window as EntranceWindow).lbEntrances ?? new Map();
+    return [...seen.values()].map((places) => {
+      const all = [...places.values()];
+      return {
+        frames: Math.max(0, ...all.map((looks) => looks.length)),
+        looks: Math.max(0, ...all.map((looks) => new Set(looks).size)),
+      };
+    });
+  });
+}
+
+/** More looks than standing, or standing dimmed and then whole, can explain: it moved in. */
+const MOVED_IN = 3;
+/** Half a second of frames: longer than any entrance takes (lib/theme/motionDurations.ts). */
+const WATCHED_FRAMES = 30;
+
 test('theme foundation: fonts and live reduced motion for message entrances', async ({ page }) => {
   test.setTimeout(180_000);
   await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
@@ -81,46 +149,31 @@ test('theme foundation: fonts and live reduced motion for message entrances', as
   }
 
   await signUpMia(page, freshEmail('theme'));
-  await page.evaluate(() => {
-    document.documentElement.dataset.themeAnimations = '[]';
-    document.addEventListener(
-      'animationstart',
-      (event) => {
-        if (!(event.target instanceof HTMLElement)) return;
-        const durations: number[] = JSON.parse(
-          document.documentElement.dataset.themeAnimations ?? '[]',
-        );
-        durations.push(parseFloat(getComputedStyle(event.target).animationDuration));
-        document.documentElement.dataset.themeAnimations = JSON.stringify(durations);
-      },
-      true,
-    );
-  });
+  // The positive control: with motion allowed, the turn's messages move in (planTest's words).
+  await watchEntrances(page, [
+    'Ich schreibe am Freitag eine Mathearbeit über Brüche.',
+    'Eingetragen: Mathearbeit Brüche am',
+  ]);
   await planTest(page);
-  const durations = () =>
-    page.evaluate((): number[] =>
-      JSON.parse(document.documentElement.dataset.themeAnimations ?? '[]'),
-    );
-  await expect.poll(async () => (await durations()).some((duration) => duration > 0)).toBe(true);
-  // Finish the positive control's staggered CSS animations before recording the next turn.
   await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          document.getAnimations().filter((animation) => animation.playState === 'running').length,
-      ),
-    )
-    .toBe(0);
+    .poll(async () => (await entrances(page)).some(({ looks }) => looks >= MOVED_IN), {
+      message: 'with motion allowed a new message moves in',
+    })
+    .toBe(true);
+  // Live: the system asks for less motion while the app is open — the next turn just stands.
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.evaluate(() => {
-    document.documentElement.dataset.themeAnimations = '[]';
-  });
   const message = 'Mach die Übungen bitte kürzer.';
+  const reply = 'Mach ich – ab jetzt kurze Runden.';
+  await watchEntrances(page, [message, reply]);
   await page.getByLabel('Schreib Buddy …').fill(message);
   await page.getByRole('button', { name: 'Senden', exact: true }).click();
-  await expect(page.getByText('Mach ich – ab jetzt kurze Runden.', { exact: true })).toBeVisible();
+  await expect(page.getByText(reply, { exact: true })).toBeVisible();
+  // Watched for as long as an entrance would take, on both messages.
+  await expect
+    .poll(async () => Math.min(...(await entrances(page)).map(({ frames }) => frames)))
+    .toBeGreaterThanOrEqual(WATCHED_FRAMES);
   expect(
-    (await durations()).filter((duration) => duration > 0),
+    (await entrances(page)).filter(({ looks }) => looks >= MOVED_IN),
     'live reduced motion skips new message fades',
   ).toEqual([]);
 });

@@ -82,7 +82,7 @@ export default function LibraryScreen() {
         onRetry={() => void library.refetch()}
       />
     ) : (
-      <LibrarySkeleton label={t('common:loading')} />
+      <LibrarySkeleton label={t('common:loading')} capture />
     );
   } else {
     const empty = rows.length === 0;

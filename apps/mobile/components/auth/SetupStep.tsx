@@ -54,11 +54,7 @@ export function SetupStep({
     <>
       <ScrollView
         ref={form.scroll}
-        onLayout={form.controller.refresh}
-        onContentSizeChange={form.controller.refresh}
-        onScroll={(event) => {
-          form.offset.current = event.nativeEvent.contentOffset.y;
-        }}
+        {...form.follow}
         testID={scrollTestID}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{

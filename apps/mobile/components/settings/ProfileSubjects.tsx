@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { TYPE } from '../../lib/theme/type.js';
 import { ListGroup } from '../lb/ListGroup.js';
 import { LoadFailed } from '../lb/LoadFailed.js';
-import { LibrarySkeleton } from '../lb/Skeletons.js';
+import { GroupSkeleton } from '../lb/Skeletons.js';
 
 export function ProfileSubjects({
   cards,
@@ -24,7 +24,8 @@ export function ProfileSubjects({
       // A section of the profile page, not a screen: without the full-screen state's Buddy.
       <LoadFailed inline error={error} onRetry={onRetry} />
     ) : (
-      <LibrarySkeleton label={t('common:loading')} />
+      // The group's own box — its label, its rows — where the group will stand (#599).
+      <GroupSkeleton label={t('common:loading')} />
     );
   return (
     <ListGroup label={t('settings:profile.subjects')}>

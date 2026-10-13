@@ -7,8 +7,24 @@
 
 import { expect, test } from '@playwright/test';
 
+import { UI } from '../../apps/mobile/lib/theme/components';
+import { COMPOSER } from '../../apps/mobile/lib/theme/composer';
+import { HEADER } from '../../apps/mobile/lib/theme/header';
+import { SPACE } from '../../apps/mobile/lib/theme/space';
 import { freshEmail, PIN } from './coreLoop';
 import { partHeight, shot } from './fit';
+
+/**
+ * The Composer at rest, as the design draws it (components/composer/Composer.jsx): a box of her
+ * line of text over the row of tools, inside its hairline — 8 + 37 + 4 + 40 + 8 + 2 = 99 pt — in
+ * the bottom bar's room, 8 above and 12 below: 119 pt. With the 48 pt head that is 167 pt of a
+ * 740 pt phone.
+ */
+const COMPOSER_AT_REST =
+  SPACE.sm +
+  (COMPOSER.pad + COMPOSER.text.height + COMPOSER.gap + COMPOSER.slot + COMPOSER.pad) +
+  2 * UI.border +
+  SPACE.md;
 
 test('core loop · setup: a parent sets up, Mia picks her colours, first look at Buddy', async ({
   page,
@@ -131,10 +147,12 @@ test('core loop · setup: a parent sets up, Mia picks her colours, first look at
   const head = await partHeight(page, 'home-header', 'home');
   const bar = await partHeight(page, 'composer', 'home');
   console.log(`HOME 360x740: header ${head}pt, composer ${bar}pt`);
-  // Measured 29.09.: 52 pt head, 68 pt bar — 16 % of a 740 pt phone. The head is the mark
-  // alone since 30.09. (#125, #135), so this has room; the bound is what we keep, not what
-  // we hope for.
-  expect(head + bar, `head ${head}pt + composer ${bar}pt`).toBeLessThanOrEqual(160);
+  // Measured 29.09.: 52 pt head, 68 pt bar. Since the redesign (#599) the Composer is a box of
+  // two rows — 119 pt at rest by design — under a 48 pt head: 167 pt, 23 % of a 740 pt phone. The
+  // bound is what the tokens say, so a bar or head that grows past its design is red.
+  expect(COMPOSER_AT_REST, 'the Composer at rest, from its tokens').toBe(119);
+  expect(head, `head ${head}pt`).toBeLessThanOrEqual(HEADER.height);
+  expect(bar, `composer ${bar}pt`).toBeLessThanOrEqual(COMPOSER_AT_REST);
   await page.setViewportSize({ width: 390, height: 844 });
 
   // ── Nothing photographed yet: "Dein Material" says where her sheets will land (#189) ──

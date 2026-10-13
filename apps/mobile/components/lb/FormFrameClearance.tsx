@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef } from 'react';
-import { Keyboard, Platform, type ScrollView, type View } from 'react-native';
+import { Keyboard, Platform, type ScrollView, type ScrollViewProps, type View } from 'react-native';
 import { SPACE } from '../../lib/theme/space.js';
 
 export type Frame = Pick<View, 'measureInWindow'>;
@@ -102,5 +102,13 @@ export function useFormViewport(axis: 'vertical' | 'horizontal' = 'vertical') {
       controller.dispose();
     };
   }, [controller]);
-  return { scroll, offset, controller };
+  /** What the form's ScrollView reports back, so the focused field is measured again. */
+  const follow: Pick<ScrollViewProps, 'onLayout' | 'onContentSizeChange' | 'onScroll'> = {
+    onLayout: controller.refresh,
+    onContentSizeChange: controller.refresh,
+    onScroll: ({ nativeEvent }) => {
+      offset.current = nativeEvent.contentOffset[axis === 'horizontal' ? 'x' : 'y'];
+    },
+  };
+  return { scroll, offset, controller, follow };
 }

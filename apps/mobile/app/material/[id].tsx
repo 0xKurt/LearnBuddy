@@ -25,7 +25,7 @@ import { EmptyState } from '../../components/lb/EmptyState.js';
 import { ErrorNote } from '../../components/lb/ErrorNote.js';
 import { LbTextInput } from '../../components/lb/LbTextInput.js';
 import { ListGroup, Row } from '../../components/lb/ListGroup.js';
-import { LoadFailed } from '../../components/lb/LoadFailed.js';
+import { isGone, LoadFailed } from '../../components/lb/LoadFailed.js';
 import { QuestionsSkeleton } from '../../components/lb/Skeletons.js';
 import { Screen } from '../../components/lb/Screen.js';
 import { Sheet, SHEET_TEXT } from '../../components/lb/Sheet.js';
@@ -179,19 +179,21 @@ export default function MaterialScreen() {
     }
   }
 
+  // Back to where she came from; opened by a link, to her material.
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/library'));
+  // The sheet is not there any more (404): the head rests, and `LoadFailed` offers the way back
+  // alone.
+  const sheetGone = !data && query.isError && isGone(query.error);
+
   let content: ReactNode;
   if (!data || !material) {
     content = query.isError ? (
-      <LoadFailed error={query.error} busy={query.isFetching} onRetry={() => void query.refetch()}>
-        <Btn
-          variant="ghost"
-          pill
-          center
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/library'))}
-        >
-          {t('library:items.back')}
-        </Btn>
-      </LoadFailed>
+      <LoadFailed
+        error={query.error}
+        busy={query.isFetching}
+        onRetry={() => void query.refetch()}
+        back={{ label: t('library:items.back'), onPress: back }}
+      />
     ) : (
       <QuestionsSkeleton label={t('library:items.loading')} />
     );
@@ -208,16 +210,23 @@ export default function MaterialScreen() {
         : null;
     // No questions: all deleted, or the photos are not (yet) read — say which.
     const gone = data.items.length === 0 && material.status === 'ready';
-    let waiting: { title: string; body?: string } | null = null;
+    // `toList`: nothing can be done about it on this page — reading it again, deleting it and a
+    // new photo are the sheet's actions in her material, so the page leads there (#599).
+    let waiting: { title: string; body?: string; toList?: true } | null = null;
     if (data.items.length === 0 && !gone) {
       if (material.status === 'failed')
         waiting = {
           title: t(`library:failure.${material.failure_reason ?? 'model_error'}`),
           // Nothing came of this sheet BECAUSE of these tasks: they are the explanation.
           ...(missed ? { body: missed } : {}),
+          toList: true,
         };
       else if (material.status === 'awaiting_upload')
-        waiting = { title: t('library:incomplete_hint') };
+        waiting = {
+          title: t('library:incomplete_page.title'),
+          body: t('library:incomplete_page.body'),
+          toList: true,
+        };
       else waiting = { title: t('library:items.reading') };
     }
     // Where these questions came from (issue #259): a corrected test's are NEW tasks for what
@@ -262,7 +271,19 @@ export default function MaterialScreen() {
           />
         ) : waiting !== null ? (
           <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: GUTTER_APP }}>
-            <EmptyState title={waiting.title} body={waiting.body} />
+            <EmptyState
+              title={waiting.title}
+              body={waiting.body}
+              action={
+                waiting.toList ? (
+                  // To her material, as the button says — not "back" to wherever she came from
+                  // (as a subject that is gone does it, app/subject/[id].tsx).
+                  <Btn pill center onPress={() => router.replace('/library')}>
+                    {t('library:subject.back')}
+                  </Btn>
+                ) : undefined
+              }
+            />
           </View>
         ) : (
           <View style={{ gap: RHYTHM.stack, paddingHorizontal: GUTTER_APP }}>
@@ -299,11 +320,12 @@ export default function MaterialScreen() {
       leading={{
         icon: 'back',
         label: t('library:items.back'),
-        onPress: () => (router.canGoBack() ? router.back() : router.replace('/library')),
+        onPress: back,
       }}
       // Design ui_kits/app/Extra.jsx `SheetQuestions`: with a sheet open Buddy waits for what she
-      // wants to do with it; until it is there he thinks (`SystemState` "load-list").
-      state={material ? 'wait' : 'think'}
+      // wants to do with it; until it is there he thinks (`SystemState` "load-list") — and rests
+      // when there is no sheet to wait for (States.jsx "notfound").
+      state={material ? 'wait' : sheetGone ? 'idle' : 'think'}
       // What can be done with the sheet itself stands in ⋯ before the places, as a question's
       // "Frage passt nicht" does. The head itself carries the switch and ⋯ and nothing else.
       menu={{
@@ -311,7 +333,9 @@ export default function MaterialScreen() {
           ? [
               {
                 key: 'rename',
-                icon: 'pencil',
+                // Signs of their own: the pencil and the camera stand for places further down
+                // the same sheet (settings, a new photo), and were there twice (#599).
+                icon: 'keyboard',
                 // The row reads "Umbenennen" like the places beside it; a screen reader hears
                 // what is renamed.
                 label: t('library:rename'),
@@ -322,7 +346,7 @@ export default function MaterialScreen() {
                 ? [
                     {
                       key: 'add_page',
-                      icon: 'camera' as const,
+                      icon: 'plus' as const,
                       label: t('library:add_page'),
                       onPress: addPage,
                     },

@@ -20,7 +20,17 @@ export function useContactPage(
   const me = useMe();
   const home = useHome();
   if (!settings.data || !me.data)
-    return { ready: false, view: <SettingsPending {...head} queries={[settings, me]} /> };
+    return {
+      ready: false,
+      view: (
+        <SettingsPending
+          {...head}
+          // "Lernzeiten" opens with its paragraph, "Aufs Handy" with the one line of what holds.
+          start={onlyWhileAllowed ? 'lead' : 'answer'}
+          queries={[settings, me]}
+        />
+      ),
+    };
   const { account, learner } = me.data;
   if (!account || !learner) return { ready: false, view: <Redirect href="/" /> };
   if (onlyWhileAllowed && !settings.data.contact_enabled)

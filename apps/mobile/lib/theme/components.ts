@@ -57,6 +57,11 @@ export const UI = {
     icon: 20,
     more: 22,
     chevron: 18,
+    /**
+     * Beside a value the title keeps its own width (List.jsx: the value is `flex: none`, the
+     * design's are short) — up to this share of the row, so a long value still has room to wrap.
+     */
+    titleShare: '60%',
     /** The quiet action in the chevron's place (ui_kits/app/Library.jsx `RowAction`). */
     action: { height: 32, padStart: 14, padEnd: 12, icon: 15 },
   },

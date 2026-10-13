@@ -97,6 +97,13 @@ const CUT_TITLES: ReadonlyArray<{
     why: 'the sheet\'s name "Brüche kürzen und vergleichen" is the head\'s title (#607)',
   },
   {
+    // Measured in the final walkthrough (#599): 133 pt in the 132 pt column at 360; whole at 390.
+    // The other languages are wider (en 143, es 141, fr 188, it 212). Not renamed here.
+    screen: /^about$/,
+    widths: [360],
+    why: '"Über LearnBuddy" is 1 pt wider than the title column at 360: owner decision on the title',
+  },
+  {
     screen: /^(practice-(open|wrong|checking|correct)|done)$/,
     widths: [360],
     besideMore: true,
@@ -365,6 +372,10 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   await page.goto('/settings');
   await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toBeVisible();
   await head(page, 'settings', { pose: 'idle' });
+  // A page of the settings whose title is one point too wide at 360 (CUT_TITLES).
+  await page.goto('/settings/about');
+  await expect(page.getByRole('heading', { name: 'Über LearnBuddy', exact: true })).toBeVisible();
+  await head(page, 'about', { pose: 'idle' });
 
   await page.goto('/library');
   await page.getByRole('button', { name: /^Mathe: / }).click();

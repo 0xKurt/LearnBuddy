@@ -25,6 +25,8 @@ import { Icon } from './Icon.js';
 
 type Props = {
   onComplete: (pin: string) => void;
+  /** Her first key since the pad was cleared: what the screen said about the last entry goes. */
+  onStart?: () => void;
   /** Reset signal — when this value changes, clear the in-progress PIN. */
   resetKey?: unknown;
   disabled?: boolean;
@@ -48,7 +50,7 @@ const KEYS: ReadonlyArray<string | 'back' | null> = [
   'back',
 ];
 
-export function PinPad({ onComplete, resetKey, disabled = false, error = false }: Props) {
+export function PinPad({ onComplete, onStart, resetKey, disabled = false, error = false }: Props) {
   const { palette } = useTheme();
   const reduced = useMotionReduced();
   const { t } = useTranslation('common');
@@ -68,6 +70,7 @@ export function PinPad({ onComplete, resetKey, disabled = false, error = false }
   function press(key: string) {
     if (disabled) return;
     haptic.select();
+    if (untouched) onStart?.();
     setUntouched(false);
     if (key === 'back') {
       setEntered((p) => p.slice(0, -1));

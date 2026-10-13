@@ -134,13 +134,18 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   const { t } = useTranslation('common');
   const [focused, setFocused] = useState(false);
   const frame = useRef<View>(null);
+  // What a form keeps in view while this has the focus: a form field whole — its label, its box
+  // and the note under it, so an error is never left under the pinned action (#599); a cell its
+  // own frame.
+  const whole = useRef<View>(null);
+  const kept = variant === 'field' ? whole : frame;
   const clearance = useFormFrameClearance();
   useEffect(() => {
-    const current = frame.current;
+    const current = kept.current;
     return () => {
       if (current) clearance?.blur(current);
     };
-  }, [clearance]);
+  }, [clearance, kept]);
   const canClear = clearable === true && !showToggle && (rest.value ?? '').length > 0;
   // iOS has no live regions — the field says its error itself (lib/announcePlan.ts).
   useAnnounce(errorMessage);
@@ -182,7 +187,15 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
     </Pressable>
   );
   return (
-    <View style={cell ? { width: '100%' } : { gap: UI.field.labelGap }}>
+    <View
+      ref={whole}
+      collapsable={false}
+      // A note that appears under the focused field (an error while she types) is brought in too.
+      onLayout={() => {
+        if (variant === 'field' && focused) clearance?.refresh();
+      }}
+      style={cell ? { width: '100%' } : { gap: UI.field.labelGap }}
+    >
       {label ? (
         <Text
           accessibilityElementsHidden
@@ -197,7 +210,7 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
         testID={cell ? 'answer-cell-frame' : undefined}
         collapsable={false}
         onLayout={() => {
-          if ((variant === 'field' || cell) && focused) clearance?.refresh();
+          if (cell && focused) clearance?.refresh();
         }}
         style={[
           {
@@ -251,12 +264,12 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
             onKeyPress={webSubmit ?? onKeyPress}
             onFocus={(e) => {
               setFocused(true);
-              if ((variant === 'field' || cell) && frame.current) clearance?.focus(frame.current);
+              if ((variant === 'field' || cell) && kept.current) clearance?.focus(kept.current);
               onFocus?.(e);
             }}
             onBlur={(e) => {
               setFocused(false);
-              if (frame.current) clearance?.blur(frame.current);
+              if (kept.current) clearance?.blur(kept.current);
               onBlur?.(e);
             }}
             style={[

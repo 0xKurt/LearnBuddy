@@ -34,6 +34,7 @@ import { messageFor } from '../lib/errors.js';
 import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
+import { FormFrameContext, useFormViewport } from '../components/lb/FormFrameClearance.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 import { GUTTER_OUTER, pinnedBar, SPACE } from '../lib/theme/space.js';
 import { formDensity } from '../lib/keyboard.js';
@@ -86,6 +87,9 @@ export default function Welcome() {
   const compact = density !== 'roomy';
   // While she types, only the form fits (567 pt on the owner's phone, ~440 on a 360×740).
   const tight = density === 'tight';
+  // The field she is in stays whole above the pinned action — with the error under it, which the
+  // browser's own scroll-to-focus leaves below (9.5 pt under the CTA at 360×440, #599).
+  const form = useFormViewport();
 
   const emailOk = looksLikeEmail(email.trim());
   // Sign-in never enforces the sign-up rule: older accounts may have shorter
@@ -227,6 +231,8 @@ export default function Welcome() {
       <Glow />
       <KeyboardSafe style={{ flex: 1 }}>
         <ScrollView
+          ref={form.scroll}
+          {...form.follow}
           testID="scroll-form"
           contentContainerStyle={{
             // The margin before the app (design tokens/space.css `--space-gutter`).
@@ -304,125 +310,133 @@ export default function Welcome() {
           ) : null}
 
           {/* The switch, the fields and the line under them are one group (Welcome.jsx:18–24). */}
-          <View style={{ gap: AUTH.formGap }}>
-            <Segmented
-              options={[
-                { value: 'signup', label: t('welcome.mode_signup') },
-                { value: 'signin', label: t('welcome.mode_signin') },
-              ]}
-              value={mode}
-              onChange={(m) => {
-                setMode(m);
-                clearFailure();
-              }}
-            />
-            <Field
-              value={email}
-              onChangeText={(v) => {
-                setEmail(v);
-                clearFailure();
-                // A corrected address may ask for a fresh reset mail (review 28.09.).
-                setResetSent(false);
-              }}
-              onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
-              label={t('welcome.email')}
-              placeholder={t('welcome.email_placeholder')}
-              accessibilityLabel={t('welcome.email')}
-              autoCapitalize="none"
-              autoCorrect={false}
-              spellCheck={false}
-              clearable
-              autoComplete="email"
-              keyboardType="email-address"
-              // On sign-up, iOS AutoFill pairs a `username` field with `newPassword`
-              // to offer a strong password and save the credential.
-              textContentType={mode === 'signup' ? 'username' : 'emailAddress'}
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-              editable={!busy}
-              error={emailError}
-              errorMessage={emailError ? t('error.invalid_email') : undefined}
-            />
-            <Field
-              ref={passwordRef}
-              value={password}
-              onChangeText={(v) => {
-                setPassword(v);
-                clearFailure();
-              }}
-              onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
-              label={t('welcome.password')}
-              hint={mode === 'signup' && !passwordError ? t('welcome.password_hint') : undefined}
-              accessibilityLabel={t('welcome.password')}
-              secureTextEntry={!shown}
-              // Also while shown: capitalisation and autocorrect would rewrite the
-              // password the moment the eye is tapped.
-              autoCapitalize="none"
-              autoCorrect={false}
-              spellCheck={false}
-              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-              textContentType={mode === 'signup' ? 'newPassword' : 'password'}
-              returnKeyType={mode === 'signup' ? 'next' : 'go'}
-              {...(mode === 'signup' ? { submitBehavior: 'submit' as const } : {})}
-              onSubmitEditing={() =>
-                mode === 'signup' ? repeatRef.current?.focus() : void submit()
-              }
-              editable={!busy}
-              showToggle
-              shown={shown}
-              onToggle={() => setShown((s) => !s)}
-              toggleAccessibilityLabel={
-                shown ? t('welcome.hide_password') : t('welcome.show_password')
-              }
-              error={passwordError}
-              errorMessage={passwordError ? t('welcome.password_hint') : undefined}
-            />
-            {mode === 'signup' ? (
-              <Field
-                ref={repeatRef}
-                value={repeat}
-                onChangeText={(v) => {
-                  setRepeat(v);
+          <FormFrameContext.Provider value={form.controller}>
+            <View style={{ gap: AUTH.formGap }}>
+              <Segmented
+                options={[
+                  { value: 'signup', label: t('welcome.mode_signup') },
+                  { value: 'signin', label: t('welcome.mode_signin') },
+                ]}
+                value={mode}
+                onChange={(m) => {
+                  setMode(m);
                   clearFailure();
                 }}
-                label={t('welcome.password_repeat')}
-                accessibilityLabel={t('welcome.password_repeat')}
-                secureTextEntry={!shownRepeat}
+              />
+              <Field
+                value={email}
+                onChangeText={(v) => {
+                  setEmail(v);
+                  clearFailure();
+                  // A corrected address may ask for a fresh reset mail (review 28.09.).
+                  setResetSent(false);
+                }}
+                onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+                label={t('welcome.email')}
+                placeholder={t('welcome.email_placeholder')}
+                accessibilityLabel={t('welcome.email')}
                 autoCapitalize="none"
                 autoCorrect={false}
                 spellCheck={false}
-                autoComplete="new-password"
-                textContentType="newPassword"
-                returnKeyType="go"
-                onSubmitEditing={() => void submit()}
+                clearable
+                autoComplete="email"
+                keyboardType="email-address"
+                // On sign-up, iOS AutoFill pairs a `username` field with `newPassword`
+                // to offer a strong password and save the credential.
+                textContentType={mode === 'signup' ? 'username' : 'emailAddress'}
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                editable={!busy}
+                error={emailError}
+                errorMessage={emailError ? t('error.invalid_email') : undefined}
+              />
+              <Field
+                ref={passwordRef}
+                value={password}
+                onChangeText={(v) => {
+                  setPassword(v);
+                  clearFailure();
+                }}
+                onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+                label={t('welcome.password')}
+                hint={mode === 'signup' && !passwordError ? t('welcome.password_hint') : undefined}
+                accessibilityLabel={t('welcome.password')}
+                secureTextEntry={!shown}
+                // Also while shown: capitalisation and autocorrect would rewrite the
+                // password the moment the eye is tapped.
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                textContentType={mode === 'signup' ? 'newPassword' : 'password'}
+                returnKeyType={mode === 'signup' ? 'next' : 'go'}
+                {...(mode === 'signup' ? { submitBehavior: 'submit' as const } : {})}
+                onSubmitEditing={() =>
+                  mode === 'signup' ? repeatRef.current?.focus() : void submit()
+                }
                 editable={!busy}
                 showToggle
-                shown={shownRepeat}
-                onToggle={() => setShownRepeat((s) => !s)}
+                shown={shown}
+                onToggle={() => setShown((s) => !s)}
                 toggleAccessibilityLabel={
-                  shownRepeat ? t('welcome.hide_password') : t('welcome.show_password')
+                  shown ? t('welcome.hide_password') : t('welcome.show_password')
                 }
-                error={repeatError}
-                errorMessage={repeatError ? t('new_password.mismatch') : undefined}
+                error={passwordError}
+                errorMessage={passwordError ? t('welcome.password_hint') : undefined}
               />
-            ) : null}
-            {mode === 'signin' ? (
-              resetSent ? (
-                <Card tone="mint">
-                  <Text style={TYPE.body}>{t('welcome.reset_sent')}</Text>
-                </Card>
-              ) : (
-                <Btn variant="ghost" size="sm" pill busy={resetBusy} onPress={() => void forgot()}>
-                  {t('welcome.forgot')}
-                </Btn>
-              )
-            ) : tight ? null : (
-              <Text style={[TYPE.meta, { paddingHorizontal: AUTH.copyInset }]}>
-                {t('welcome.minor_hint')}
-              </Text>
-            )}
-          </View>
+              {mode === 'signup' ? (
+                <Field
+                  ref={repeatRef}
+                  value={repeat}
+                  onChangeText={(v) => {
+                    setRepeat(v);
+                    clearFailure();
+                  }}
+                  label={t('welcome.password_repeat')}
+                  accessibilityLabel={t('welcome.password_repeat')}
+                  secureTextEntry={!shownRepeat}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  spellCheck={false}
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  returnKeyType="go"
+                  onSubmitEditing={() => void submit()}
+                  editable={!busy}
+                  showToggle
+                  shown={shownRepeat}
+                  onToggle={() => setShownRepeat((s) => !s)}
+                  toggleAccessibilityLabel={
+                    shownRepeat ? t('welcome.hide_password') : t('welcome.show_password')
+                  }
+                  error={repeatError}
+                  errorMessage={repeatError ? t('new_password.mismatch') : undefined}
+                />
+              ) : null}
+              {mode === 'signin' ? (
+                resetSent ? (
+                  <Card tone="mint">
+                    <Text style={TYPE.body}>{t('welcome.reset_sent')}</Text>
+                  </Card>
+                ) : (
+                  <Btn
+                    variant="ghost"
+                    size="sm"
+                    pill
+                    busy={resetBusy}
+                    onPress={() => void forgot()}
+                  >
+                    {t('welcome.forgot')}
+                  </Btn>
+                )
+              ) : tight ? null : (
+                <Text style={[TYPE.meta, { paddingHorizontal: AUTH.copyInset }]}>
+                  {t('welcome.minor_hint')}
+                </Text>
+              )}
+            </View>
+          </FormFrameContext.Provider>
         </ScrollView>
         {/* The SafeAreaView keeps the bottom edge: no inset left to clear. */}
         <View

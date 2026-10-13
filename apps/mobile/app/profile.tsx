@@ -38,9 +38,10 @@ import { useAnnounce } from '../lib/announce.js';
 import { handoverContactKey } from '../lib/contact/state.js';
 import { ApiError } from '../lib/api/client.js';
 import { createLearner, getMe, getSettings } from '../lib/api/endpoints.js';
-import { keys, prefetchHome, queryClient, useSettings } from '../lib/api/queries.js';
+import { keys, prefetchHome, queryClient, useMe, useSettings } from '../lib/api/queries.js';
 import { ageOf, birthDateOf } from '../lib/birthDate.js';
 import { messageFor } from '../lib/errors.js';
+import { profileLeavesTo } from '../lib/gate.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
 import { currentSession } from '../lib/auth/session.js';
 import { signOutHere } from '../lib/leave.js';
@@ -123,6 +124,20 @@ export default function Profile() {
   const pinRepeatRef = useRef<LbTextInputRef>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  // A learner that exists already and was not made here (a reload right after the setup, decided
+  // from the copy kept on the device): she leaves as soon as `/me` says so (lib/gate.ts, #599).
+  const me = useMe();
+  // "The profile exists already" (`submit`): the page loads `/me` itself and opens the tour. Set
+  // before that, so the `/me` it loads cannot send her to Buddy over the tour.
+  const goingOn = useRef(false);
+  const leavesTo = profileLeavesTo(me.data, {
+    saving: answering !== null,
+    saved: answered !== null,
+    goingOn: goingOn.current,
+  });
+  useEffect(() => {
+    if (leavesTo) router.replace(leavesTo);
+  }, [leavesTo]);
   // A child has separate learner and parent forms with reachable scroll content. Then the
   // notification question, whose answer saves the profile — and for a child the hand-over. Then
   // Buddy's voice where there are voices to choose: it needs the profile, because the sample is
@@ -212,6 +227,7 @@ export default function Profile() {
       if (err instanceof ApiError && err.reason === 'learner_exists') {
         // Not this run's setup: what it showed is unknown, so the colours count nothing.
         noteVoiceStep(undefined);
+        goingOn.current = true;
         await goOn().catch(() => toast.show(messageFor(err), 'error'));
         return;
       }
@@ -453,7 +469,10 @@ export default function Profile() {
         // row, then the PIN as one block. Notifications are asked on the next page (ContactStep).
         <>
           <Checkbox checked={consent} onChange={setConsent} label={t('profile.child_consent')} />
-          <View style={{ gap: SPACE.md }}>
+          {/* One block, its parts 8 apart — 4 closer than the design's 12 (Onboarding.jsx:74): this
+              page carries one action more than the design's (the way back to the page before),
+              and with 12 it ran 7 pt past a 360×740 phone (#599, CLAUDE.md rule 16). */}
+          <View style={{ gap: RHYTHM.parts }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: RHYTHM.parts }}>
               <Icon name="shield" size={PROFILE.shield} color={palette.primaryDk} />
               <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>

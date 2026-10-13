@@ -23,7 +23,12 @@ type Props = {
   onRetry: () => void;
   /** The retry is in flight: the button shows it and takes no second tap. */
   busy?: boolean;
-  /** A second way on below the retry (back to the list). */
+  /**
+   * The screen's way back (to the list): quiet under the retry — and alone, as the main action,
+   * when the thing is gone and trying again cannot bring it back.
+   */
+  back?: { label: string; onPress: () => void };
+  /** Another way on below the retry that is no way back (signing out at the start gate). */
   children?: ReactNode;
   /**
    * One part of a page that goes on around it (a profile's subjects), not the screen's whole
@@ -32,11 +37,19 @@ type Props = {
   inline?: boolean;
 };
 
-export function LoadFailed({ error, onRetry, busy, children, inline = false }: Props) {
+/**
+ * The thing is not there any more (404): trying again cannot bring it back. The screen's head
+ * rests with it, and its way on is the one thing to offer (#599).
+ */
+export const isGone = (error: unknown): boolean =>
+  error instanceof ApiError && error.code === 'not_found';
+
+export function LoadFailed({ error, onRetry, busy, back, children, inline = false }: Props) {
   const { t } = useTranslation('common');
   const online = useOnline();
+  const gone = isGone(error);
   // Offline, or the thing is gone: nothing to think about (States.jsx "offline", "notfound").
-  const resting = !online || (error instanceof ApiError && error.code === 'not_found');
+  const resting = !online || gone;
   const retry = (
     <Btn pill center busy={busy} onPress={onRetry}>
       {t('common:actions.retry')}
@@ -49,9 +62,20 @@ export function LoadFailed({ error, onRetry, busy, children, inline = false }: P
         state={resting ? 'idle' : 'think'}
         title={messageFor(error)}
         action={
-          children ? (
+          back && gone ? (
+            // Gone: the way back alone. Without one the retry stays — never a screen whose only
+            // offer is something else (signing out at the start gate).
+            <Btn pill center onPress={back.onPress}>
+              {back.label}
+            </Btn>
+          ) : back || children ? (
             <View style={{ gap: RHYTHM.parts, alignItems: 'center' }}>
               {retry}
+              {back ? (
+                <Btn variant="ghost" pill center onPress={back.onPress}>
+                  {back.label}
+                </Btn>
+              ) : null}
               {children}
             </View>
           ) : (

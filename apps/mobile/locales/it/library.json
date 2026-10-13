@@ -46,6 +46,10 @@
     "notebook_entry": "Dal tuo quaderno: qualche domanda breve sull’ultima lezione, perfetta per domani mattina."
   },
   "incomplete_hint": "Le foto non sono arrivate complete. Elimina la scheda e fotografala di nuovo.",
+  "incomplete_page": {
+    "title": "Le foto non sono arrivate complete.",
+    "body": "Nel tuo materiale puoi eliminare la scheda e fotografarla di nuovo."
+  },
   "not_practicable_one": "Un esercizio l’ho lasciato fuori: «{{tasks}}». Quello non posso esercitarlo con te, ma ti spiego volentieri come si affronta.",
   "not_practicable_other": "Questi esercizi li ho lasciati fuori: {{tasks}}. Quelli non posso esercitarli con te, ma ti spiego volentieri come si affrontano.",
   "photos_deleted": "Le foto non sono più salvate. Elimina il foglio e fotografalo di nuovo.",
