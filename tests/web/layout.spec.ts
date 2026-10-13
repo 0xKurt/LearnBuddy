@@ -75,9 +75,11 @@ for (const viewport of [
     expect(more!.x).toBeGreaterThanOrEqual(0);
     expect(more!.x + more!.width).toBeLessThanOrEqual(viewport.width);
 
-    // Every way to start is reachable through ⋯ and fits inside the screen.
+    // Every way to start is reachable through ⋯ — its row into the start sheet (#599) — and
+    // fits inside the screen.
     // "Erklär mir was" is gone (owner decision 28.09.): explaining happens in the chat.
     await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+    await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
     await page.screenshot({ path: join(SHOTS, `30b-menu-${viewport.width}.png`) });
     for (const name of ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln']) {
       const b = await page.getByRole('button', { name, exact: true }).boundingBox();

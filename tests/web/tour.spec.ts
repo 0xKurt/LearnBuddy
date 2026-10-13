@@ -339,6 +339,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // scheme switch rebuilds the tree — the light shot comes from the run below. ──
   await setScheme(page, 'dark');
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
   await page.getByRole('button', { name: 'Hausaufgabe', exact: true }).click();
   chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Aufgabe fotografieren' }).click();
