@@ -49,6 +49,15 @@ describe('grouped memory entry', () => {
       expect(other).not.toHaveBeenCalled();
     },
   );
+  it('names its sheet by the thing itself, with two actions and no chevrons', () => {
+    renderInApp(<MemoryItem {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Möchte kurze Übungen/ }));
+    // ui_kits/app/More.jsx:39–44: the title is the item, not "Ändern" over a repeated statement.
+    expect(screen.getByRole('heading', { name: 'Möchte kurze Übungen' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Ändern' })).toBeNull();
+    for (const name of ['Ändern: Möchte kurze Übungen', 'Entfernen: Möchte kurze Übungen'])
+      expect(screen.getByRole('button', { name }).querySelectorAll('svg')).toHaveLength(1);
+  });
   it('retains the existing dirty/trimmed save guard and saving lock', () => {
     const on = props();
     const { rerender } = renderInApp(<MemoryItem {...on} editing draft="   " />);

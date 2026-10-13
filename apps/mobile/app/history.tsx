@@ -6,7 +6,7 @@
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { FlashList } from '@shopify/flash-list';
 import { useEffect, useState } from 'react';
-import { RefreshControl, View } from 'react-native';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -22,11 +22,28 @@ import { getThread, undoAction } from '../lib/api/endpoints.js';
 import { setHome, useHome } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { dayGroups } from '../lib/dayGroups.js';
-import { SPACE } from '../lib/theme/space.js';
+import { LIBRARY } from '../lib/theme/library.js';
+import { GUTTER_APP, SPACE } from '../lib/theme/space.js';
+import { formatDate, formatTime, localDateOf } from '../lib/time.js';
 import { mergeThread } from '../lib/threadMerge.js';
 
+/** "Gestern, 17:40": when the conversation last went on (ui_kits/app/More.jsx:51). */
+function lastSpoken(
+  iso: string,
+  language: string,
+): { day: 'today' | 'yesterday' | null; date: string; time: string } {
+  const now = new Date();
+  const day = localDateOf(iso);
+  const yesterday = localDateOf(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  return {
+    day: day === localDateOf(now) ? 'today' : day === yesterday ? 'yesterday' : null,
+    date: formatDate(iso, language),
+    time: formatTime(iso, language),
+  };
+}
+
 export default function History() {
-  const { t } = useTranslation('buddy');
+  const { t, i18n } = useTranslation('buddy');
   const insets = useSafeAreaInsets();
   const home = useHome();
   /** Every message seen here: older pages and each live window, once each. */
@@ -45,7 +62,7 @@ export default function History() {
   // for a thread that never loaded (same shape as app/memory.tsx).
   if (!home.data)
     return (
-      <Screen back title={t('thread.title')} state="think">
+      <Screen back title={t('memory:history.title')} state="think">
         {home.error ? (
           <LoadFailed error={home.error} onRetry={() => void home.refetch()} />
         ) : (
@@ -55,6 +72,14 @@ export default function History() {
     );
   const messages = mergeThread(seen, home.data.thread);
   const more = hasMore ?? home.data.thread_has_more;
+  const newest = messages.at(-1);
+  const last = newest ? lastSpoken(newest.created_at, i18n.language) : null;
+  const subtitle = last
+    ? t('memory:history.when', {
+        day: last.day ? t(`thread.${last.day}`) : last.date,
+        time: last.time,
+      })
+    : undefined;
 
   async function refresh() {
     setRefreshing(true);
@@ -117,21 +142,38 @@ export default function History() {
     }
   }
 
+  const pull = <RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />;
+  if (messages.length === 0)
+    return (
+      <Screen back title={t('memory:history.title')}>
+        {/* The empty page fills the room and brings its own gutter (ui_kits/app/Gaps.jsx:52). */}
+        <ScrollView
+          testID="scroll-thread"
+          contentContainerStyle={{ flexGrow: 1 }}
+          refreshControl={pull}
+        >
+          <EmptyState page title={t('thread.empty_title')} body={t('thread.empty_body')} />
+        </ScrollView>
+      </Screen>
+    );
+
   return (
-    <Screen back title={t('thread.title')}>
+    <Screen back title={t('memory:history.title')} subtitle={subtitle}>
       <FlashList
         testID="scroll-thread"
+        accessibilityLabel={t('thread.title')}
         data={dayGroups(messages)}
         keyExtractor={(g) => g.day}
         extraData={{ undoing, loading, more }}
         // A chat: it opens at the newest message; older pages load above without a jump.
         maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
         // Edge-to-edge: the newest message must clear the Android gesture/3-button bar.
-        contentContainerStyle={{ padding: SPACE.lg, paddingBottom: insets.bottom + SPACE.lg }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
-        ListEmptyComponent={
-          <EmptyState title={t('thread.empty_title')} body={t('thread.empty_body')} />
-        }
+        contentContainerStyle={{
+          paddingHorizontal: GUTTER_APP,
+          paddingTop: LIBRARY.pageTop,
+          paddingBottom: insets.bottom + SPACE.lg,
+        }}
+        refreshControl={pull}
         ListHeaderComponent={
           more ? (
             <View style={{ alignItems: 'center', marginBottom: SPACE.lg }}>

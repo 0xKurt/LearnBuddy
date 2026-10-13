@@ -1,5 +1,7 @@
 # Library redesign — #548
 
+> **Changed by #599 (library area).** This ledger describes the state of #548. Since #599 the rows follow `ui_kits/app/Library.jsx`: a sheet under "Zuletzt" is its name and what it holds, without a sign before it and without the day, and ends in the 32 pt pill with the arrow (`Row action`) instead of a 44 pt quiet button. The empty page is the design's (`ui_kits/app/Gaps.jsx:44–67`): one block at the start edge on the 20 pt gutter, one action with the camera. `LIBRARY` now holds `pageTop`/`pageBottom`; `emptyBodyWidth` is gone. `library:rename` is back in all five languages.
+
 Ready for review on published Material #582, main `caa1541c81c4085aa881afa693085f8cb946a4d4`. Twenty publication paths: nineteen owned files plus central delivery status. No new route, data contract, library or production fixture.
 
 ## Final source and tokens

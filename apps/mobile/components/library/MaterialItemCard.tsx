@@ -1,7 +1,8 @@
 // One question of a material: its text with math set properly (a part of a task with its letter
 // and, above the first, its material), its figure and choices, how it went the last time (in
-// words, never only a colour) and a quiet way to delete it. The solution is never part of this
-// view (docs/architecture.md §Material).
+// words, never only a colour) and ⋯ for what can be done with it — never a button of its own in
+// the card (implementation/MIGRATION.md §5). The solution is never part of this view
+// (docs/architecture.md §Material).
 
 import type { ItemResult, MaterialItemView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
@@ -13,9 +14,10 @@ import { RADIUS } from '../../lib/theme/radius.js';
 import { RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
+import { MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
+import { IconBtn } from '../lb/IconBtn.js';
 import { MathText } from '../math/MathText.js';
 import { lettered } from '../practice/PartStem.js';
 import { QuestionFigure } from '../practice/QuestionFigure.js';
@@ -32,10 +34,11 @@ type Props = {
   /** 1-based, as listed. */
   number: number;
   disabled: boolean;
-  onDelete: () => void;
+  /** Opens what can be done with this question. */
+  onMenu: () => void;
 };
 
-export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
+export function MaterialItemCard({ item, number, disabled, onMenu }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('library');
   const choices = item.kind === 'multiple_choice' && item.choices ? item.choices : null;
@@ -43,12 +46,36 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
   return (
     <Card>
       <View style={{ gap: RHYTHM.stack }}>
-        <View
-          style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: SPACE.sm }}
-        >
-          <Text style={TYPE.label}>{t('items.question_label', { number })}</Text>
-          {item.topic ? <Chip>{item.topic}</Chip> : null}
-          <Chip tone={RESULT_TONE[item.result]}>{t(`items.result.${item.result}`)}</Chip>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACE.sm }}>
+          <View
+            style={{
+              flex: 1,
+              minHeight: MATERIAL_DETAIL.menu.row,
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: SPACE.sm,
+            }}
+          >
+            <Text style={TYPE.label}>{t('items.question_label', { number })}</Text>
+            {item.topic ? <Chip>{item.topic}</Chip> : null}
+            <Chip tone={RESULT_TONE[item.result]}>{t(`items.result.${item.result}`)}</Chip>
+          </View>
+          {/* A full touch target whose sign sits on the card's edge line, level with the label. */}
+          <View
+            style={{
+              margin: MATERIAL_DETAIL.menu.margin,
+              marginRight: MATERIAL_DETAIL.menu.marginRight,
+            }}
+          >
+            <IconBtn
+              tone="plain"
+              icon="more"
+              disabled={disabled}
+              onPress={onMenu}
+              accessibilityLabel={t('items.more_label', { number })}
+            />
+          </View>
         </View>
         {/* A task in parts (#297): its material once, above its first part, as the sheet prints
             it — and every part with its letter. */}
@@ -91,18 +118,6 @@ export function MaterialItemCard({ item, number, disabled, onDelete }: Props) {
             ))}
           </View>
         ) : null}
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-          <Btn
-            size="sm"
-            variant="quiet"
-            pill
-            disabled={disabled}
-            onPress={onDelete}
-            accessibilityLabel={t('items.delete_label', { number })}
-          >
-            {t('items.delete')}
-          </Btn>
-        </View>
       </View>
     </Card>
   );

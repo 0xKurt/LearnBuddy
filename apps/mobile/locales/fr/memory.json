@@ -22,9 +22,10 @@
   "saved": "Modifié.",
   "removed": "Retiré. Buddy l'oublie.",
   "removed_undone": "C’est revenu.",
-  "confirm_title": "Tu veux retirer ça ?",
-  "confirm_body": "« {{statement}} » – Buddy l'oubliera.",
-  "confirm_cta": "Oui, retirer",
   "empty_title": "Rien de noté pour l'instant",
-  "empty_body": "Raconte simplement à Buddy ce qui t'attend. Ce que Buddy retient apparaîtra ici."
+  "empty_body": "Raconte simplement à Buddy ce qui t'attend. Ce que Buddy retient apparaîtra ici.",
+  "history": {
+    "title": "Historique",
+    "when": "{{day}}, {{time}}"
+  }
 }

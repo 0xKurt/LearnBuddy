@@ -22,9 +22,10 @@
   "saved": "Changed.",
   "removed": "Removed. Buddy forgets this.",
   "removed_undone": "Back again.",
-  "confirm_title": "Remove this?",
-  "confirm_body": "“{{statement}}” – Buddy will forget it.",
-  "confirm_cta": "Yes, remove",
   "empty_title": "Nothing here yet",
-  "empty_body": "Just tell Buddy what's coming up. Whatever Buddy keeps shows up here."
+  "empty_body": "Just tell Buddy what's coming up. Whatever Buddy keeps shows up here.",
+  "history": {
+    "title": "History",
+    "when": "{{day}}, {{time}}"
+  }
 }

@@ -93,8 +93,6 @@ export const UI = {
   entrance: { staggerCap: 4, slide: 28, slowMultiplier: 2, maxRows: 8, windowMs: 900 },
   /** A gap of a cloze: as wide as its word (per letter), within these bounds; dashed while empty. */
   slot: { minWidth: 64, maxWidth: 220, letter: 9.5, dashed: 1.5 },
-  /** A section heading's round mark and the tracking of its capitals. */
-  section: { dot: 10, tracking: 0.8 },
   /** A folded thing's one line: its sign and the chevron after its action. */
   fold: { icon: 18, chevron: 16 },
   /** The fade at a scrolling edge: one line of type tall, still 70 % of the ground at 35 %. */

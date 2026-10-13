@@ -12,6 +12,7 @@ const seam = vi.hoisted(() => ({
   isError: false,
   refetch: vi.fn(),
   remove: vi.fn(),
+  start: vi.fn(),
   attach: vi.fn(),
 }));
 vi.mock('expo-router', async (load) => ({
@@ -30,6 +31,7 @@ vi.mock('../../../lib/api/libraryQueries.js', () => ({
 vi.mock('../../../lib/api/endpoints.js', async (load) => ({
   ...(await load<typeof Endpoints>()),
   deleteMaterialItem: seam.remove,
+  startPractice: seam.start,
 }));
 vi.mock('../../../lib/capture/attachRequest.js', () => ({ attachInChat: seam.attach }));
 
@@ -76,25 +78,41 @@ beforeEach(() => {
   seam.data = ready();
   seam.isError = false;
   seam.remove.mockReset().mockResolvedValue(undefined);
+  // Never settles: the test is about the request, not about the practice screen after it.
+  seam.start.mockReset().mockReturnValue(new Promise(() => undefined));
   seam.refetch.mockReset();
   seam.attach.mockReset();
 });
 
 describe('saved material screen', () => {
-  it('shows its real heading, saved question and add-page target payload', () => {
+  it('carries the sheet in its head: its name, its subject and pages', () => {
+    seam.data = { ...ready(), material: { ...ready().material, photo_count: 2 } };
     renderInApp(<MaterialScreen />);
-    expect(screen.getByRole('heading', { name: 'Brüche' })).toBeDefined();
-    expect(screen.getByText('Mathe · 1 Aufgabe')).toBeDefined();
+    // ui_kits/app/Extra.jsx:111 — one heading, the sheet's own; no second title in the content.
+    expect(screen.getAllByRole('heading', { name: 'Brüche' })).toHaveLength(1);
+    expect(screen.queryByRole('heading', { name: 'Dein Material' })).toBeNull();
+    expect(screen.getByText('Mathe · 2 Seiten')).toBeDefined();
     expect(screen.getByText(item.prompt)).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Seite hinzufügen' }));
-    expect(seam.attach).toHaveBeenCalledWith({
-      open: 'menu',
-      link: { completes: 'm-1', purpose: 'study', add: true },
-    });
   });
 
-  it('keeps deletion explicit and confirmed with the original material/item IDs', async () => {
+  it('starts practising this sheet from the button beside its pages', () => {
     renderInApp(<MaterialScreen />);
+    fireEvent.click(screen.getByRole('button', { name: '„Brüche“ üben' }));
+    expect(screen.getByText('Daraus üben')).toBeDefined();
+    expect(seam.start).toHaveBeenCalledWith({ material_id: 'm-1', mode: 'practice' });
+  });
+
+  it('offers no practice while the sheet has nothing to practise', () => {
+    seam.data = { ...ready(), items: [], material: { ...ready().material, item_count: 0 } };
+    renderInApp(<MaterialScreen />);
+    expect(screen.queryByText('Daraus üben')).toBeNull();
+  });
+
+  it('keeps deletion out of the card: ⋯, the row in its sheet, then one confirmation', async () => {
+    renderInApp(<MaterialScreen />);
+    expect(screen.queryByRole('button', { name: 'Frage 1 löschen' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Mehr zu Frage 1' }));
+    expect(screen.getByRole('heading', { name: 'Frage 1' })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Frage 1 löschen' }));
     expect(seam.remove).not.toHaveBeenCalled();
     expect(screen.getByText('Frage löschen?')).toBeDefined();
@@ -112,6 +130,11 @@ describe('saved material screen', () => {
     seam.data = { ...ready(), items: [] };
     rerender(<MaterialScreen />);
     expect(screen.getByText('Hier sind keine Fragen mehr')).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Seite hinzufügen' })).toBeDefined();
+    // The empty page's one action fills the sheet again, for this sheet (issue #519).
+    fireEvent.click(screen.getByRole('button', { name: 'Seite hinzufügen' }));
+    expect(seam.attach).toHaveBeenCalledWith({
+      open: 'menu',
+      link: { completes: 'm-1', purpose: 'study', add: true },
+    });
   });
 });

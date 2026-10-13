@@ -47,13 +47,22 @@ test('core loop · material: what Buddy knows, the sheets, a subject empty or go
   await mathe.click();
   await expect(page.getByRole('heading', { name: 'Mathe' })).toBeVisible();
   await expect(page.getByText('Brüche kürzen und vergleichen').last()).toBeVisible();
-  await expect(page.getByText(/· 4 Aufgaben$/)).toBeVisible();
-  // What came up in this subject, to look up — no result and no progress next to it.
-  await expect(page.getByText('Darum ging es')).toBeVisible();
+  // The sheet's row in its subject: the day it came and what it holds. Looked for in that row —
+  // "Dein Material" stays mounted under this page and names the same sheet in "Zuletzt".
+  const sheetRow = page.getByRole('button', { name: 'Brüche kürzen und vergleichen', exact: true });
+  await expect(sheetRow.getByText(/· 4 Aufgaben$/)).toBeVisible();
+  // What came up in this subject, to look up — no result and no progress next to it. The same
+  // quiet label as "Blätter" (ui_kits/app/More.jsx:77–79), with nothing explaining it.
+  const topics = page.getByRole('heading', { name: 'Darum ging es', exact: true });
+  await expect(topics).toBeVisible();
+  await expect(topics).toHaveCSS('text-transform', 'none');
+  await expect(topics).toHaveCSS('font-size', '13px');
+  await expect(topics).toHaveCSS('letter-spacing', 'normal');
+  await expect(page.getByText('Themen, die in deinen Aufgaben vorkamen.')).toHaveCount(0);
   await shot(page, '14b-subject');
 
   // The questions made from the sheet, renaming it, taking out one question.
-  await page.getByRole('button', { name: 'Brüche kürzen und vergleichen', exact: true }).click();
+  await sheetRow.click();
   await page
     .locator('[aria-modal="true"]:visible')
     .getByRole('button', { name: 'Fragen ansehen', exact: true })
@@ -63,18 +72,24 @@ test('core loop · material: what Buddy knows, the sheets, a subject empty or go
   await expect(page.getByText('Auf Anhieb gewusst').first()).toBeVisible();
   // Renaming is the sheet's own action in the head's ⋯ (#599).
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
-  await page.getByRole('button', { name: '„Brüche kürzen und vergleichen“ umbenennen' }).click();
+  await page.getByRole('button', { name: 'Umbenennen', exact: true }).click();
   await page.getByLabel('Name des Blatts').fill('Brüche – Test Freitag');
   await page.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByText('Umbenannt.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Brüche – Test Freitag' })).toBeVisible();
-  await page.getByRole('button', { name: 'Frage 4 löschen' }).click();
+  // A question's ⋯ opens its sheet; deleting asks once more in the same sheet.
+  await page.getByRole('button', { name: 'Mehr zu Frage 4', exact: true }).click();
+  await page.getByRole('button', { name: 'Frage 4 löschen', exact: true }).click();
   await page.getByRole('button', { name: 'Löschen', exact: true }).last().click();
   await expect(page.getByText('Frage gelöscht.')).toBeVisible();
   await expect(page.getByText('Warum multipliziert man beim Erweitern')).toHaveCount(0);
   await shot(page, '16-material-questions');
   await page.getByRole('button', { name: 'Zurück' }).click();
-  await expect(page.getByText(/· 3 Aufgaben$/)).toBeVisible();
+  await expect(
+    page
+      .getByRole('button', { name: 'Brüche – Test Freitag', exact: true })
+      .getByText(/· 3 Aufgaben$/),
+  ).toBeVisible();
   // Out of the subject, out of "Dein Material", back to Buddy.
   await page.getByRole('button', { name: 'Zurück' }).click();
   await expect(page.getByRole('heading', { name: 'Dein Material' })).toBeVisible();

@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 
 import { ExerciseCard } from '../../components/library/ExerciseCard.js';
 import { MaterialCard } from '../../components/library/MaterialCard.js';
+import { KIND_TONE } from '../../components/library/tone.js';
+import { useStartMaterial } from '../../components/library/useStartMaterial.js';
 import { Btn } from '../../components/lb/Btn.js';
 import { Chip } from '../../components/lb/Chip.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
@@ -29,13 +31,12 @@ import { Sheet, SHEET_TEXT } from '../../components/lb/Sheet.js';
 import { LibrarySkeleton } from '../../components/lb/Skeletons.js';
 import { toast } from '../../components/lb/Toast.js';
 import { ApiError } from '../../lib/api/client.js';
-import { deleteMaterial, retryMaterial, startPractice } from '../../lib/api/endpoints.js';
-import { useMaterialAct } from '../../lib/api/useMaterialAct.js';
+import { deleteMaterial, retryMaterial } from '../../lib/api/endpoints.js';
 import { useLibrary } from '../../lib/api/libraryQueries.js';
-import { keys, queryClient, seedSession } from '../../lib/api/queries.js';
+import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { LIBRARY } from '../../lib/theme/library.js';
+import { GUTTER_APP, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { attachInChat } from '../../lib/capture/attachRequest.js';
 
@@ -63,7 +64,6 @@ function refreshAll(): void {
 }
 
 export default function SubjectScreen() {
-  const { palette } = useTheme();
   const { t } = useTranslation(['library', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const library = useLibrary();
@@ -75,7 +75,7 @@ export default function SubjectScreen() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   // Starting practice and deleting are not idempotent: one action at a time, even on a double tap.
   const acting = useRef(false);
-  const { busyId, act } = useMaterialAct(acting);
+  const { busyId, act, start } = useStartMaterial(acting);
 
   const view = library.data;
   const unsorted = id === 'unsorted';
@@ -94,6 +94,8 @@ export default function SubjectScreen() {
   const exercises = shown?.subject?.exercises ?? [];
   const topics = shown?.subject?.topics ?? [];
   const entering = useListEntrance(view !== undefined);
+  // The sheets carry their subject's tone; without a subject, the one of "anything else".
+  const tone = KIND_TONE[shown?.subject?.kind ?? 'other'];
 
   async function pull() {
     setPulling(true);
@@ -103,16 +105,6 @@ export default function SubjectScreen() {
       setPulling(false);
     }
   }
-
-  // Practise the sheet, or read its sentences aloud (issue #223 point 2) — the same way in,
-  // one server call that decides what the run holds. Which of the two a sheet offers is the
-  // card's business: it knows whether the sheet has sentences to read aloud at all.
-  const start = (m: MaterialView, mode: 'practice' | 'speak') =>
-    void act(m.id, async () => {
-      const session = await startPractice({ material_id: m.id, mode });
-      seedSession(session);
-      router.push(`/practice/${session.id}`);
-    });
 
   const readAgain = (m: MaterialView) =>
     void act(m.id, async () => {
@@ -178,19 +170,16 @@ export default function SubjectScreen() {
     // The subject is not in her material any more (renamed, merged, deleted while she was
     // elsewhere): say so plainly and offer the way back — never an empty screen.
     content = (
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <EmptyState
-          title={t('library:subject.gone_title')}
-          body={t('library:subject.gone_body')}
-          action={
-            // To her material, not "back": whatever brought her to a subject that is gone,
-            // the way on is the list — and the dead address leaves the history with it.
-            <Btn pill center onPress={() => router.replace('/library')}>
-              {t('library:subject.back')}
-            </Btn>
-          }
-        />
-      </View>
+      <EmptyState
+        page
+        title={t('library:subject.gone_title')}
+        body={t('library:subject.gone_body')}
+        action={
+          // To her material, not "back": whatever brought her to a subject that is gone,
+          // the way on is the list — and the dead address leaves the history with it.
+          <Btn onPress={() => router.replace('/library')}>{t('library:subject.back')}</Btn>
+        }
+      />
     );
   } else if (shown.sheets.length === 0 && exercises.length === 0 && topics.length === 0) {
     // Everything in this subject is gone (she deleted the last sheet right here). Calm, and
@@ -198,14 +187,15 @@ export default function SubjectScreen() {
     content = (
       <ScrollView
         testID="scroll-list"
-        contentContainerStyle={{ padding: SPACE.lg, flexGrow: 1, justifyContent: 'center' }}
+        contentContainerStyle={{ flexGrow: 1 }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
       >
         <EmptyState
+          page
           title={t('library:subject.empty_title')}
           body={t('library:subject.empty_body')}
           action={
-            <Btn size="lg" pill center onPress={() => attachInChat({ open: 'menu' })}>
+            <Btn icon="camera" onPress={() => attachInChat({ open: 'menu' })}>
               {t('library:capture')}
             </Btn>
           }
@@ -216,7 +206,12 @@ export default function SubjectScreen() {
     content = (
       <ScrollView
         testID="scroll-list"
-        contentContainerStyle={{ padding: SPACE.lg, paddingBottom: SPACE.xl, gap: SPACE.xl }}
+        contentContainerStyle={{
+          paddingHorizontal: GUTTER_APP,
+          paddingTop: LIBRARY.pageTop,
+          paddingBottom: LIBRARY.pageBottom,
+          gap: SPACE.xl,
+        }}
         refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
       >
         {shown.sheets.length > 0 ? (
@@ -226,10 +221,11 @@ export default function SubjectScreen() {
                 <MaterialCard
                   key={m.id}
                   material={m}
+                  tone={tone}
                   busy={busyId === m.id}
                   disabled={busyId !== null}
-                  onPractice={() => start(m, 'practice')}
-                  onSpeak={() => start(m, 'speak')}
+                  onPractice={() => start(m.id, 'practice')}
+                  onSpeak={() => start(m.id, 'speak')}
                   onOpen={() => router.push(`/material/${m.id}`)}
                   onRetry={() => readAgain(m)}
                   onDelete={() => askDelete(m)}
@@ -254,15 +250,10 @@ export default function SubjectScreen() {
         {topics.length > 0 ? (
           <Rise animate={entering(2)} index={2}>
             <Section title={t('library:subject.topics')}>
-              <View style={{ gap: SPACE.sm }}>
-                <Text style={[TYPE.small, { color: palette.ink2 }]}>
-                  {t('library:subject.topics_hint')}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-                  {topics.map((topic) => (
-                    <Chip key={topic}>{topic}</Chip>
-                  ))}
-                </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
+                {topics.map((topic) => (
+                  <Chip key={topic}>{topic}</Chip>
+                ))}
               </View>
             </Section>
           </Rise>

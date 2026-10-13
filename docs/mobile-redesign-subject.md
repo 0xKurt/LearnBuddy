@@ -1,5 +1,7 @@
 # Subject redesign — #548
 
+> **Changed by #599 (library area).** This ledger describes the state of #548. Since #599 a sheet's row carries its subject's tone tile with the sheet sign, the day and what it holds, and ends in the 32 pt pill (`ui_kits/app/More.jsx:70–71`). Its action sheet has "Fragen ansehen" with a chevron and the other rows without one, deleting in the danger colour (More.jsx:82–87). "Darum ging es" is the same sentence-case label as "Blätter"; its hint line and `library:subject.topics_hint` are gone. Empty and gone are the design's left-aligned block (`ui_kits/app/Gaps.jsx:44–67`). Starting a sheet lives in `components/library/useStartMaterial.ts`.
+
 Prepared on published Library #583, main `7ea4d4634de25b419db3b75d608c0ebb33db21a2`. Seventeen publication paths including central delivery status. No new route, schema, dictionary, library or production fixture. The Subject Sheet opener uses its factual material title through a pure optional MaterialRow label; Library retains its direct-questions label.
 
 ## Final source direction

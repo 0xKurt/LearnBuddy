@@ -1,5 +1,7 @@
 # Memory screen — #548
 
+> **Changed by #599 (library area).** This ledger describes the state of #548. Since #599 an entry's sheet carries the entry itself as its title, with two rows without chevrons (`ui_kits/app/More.jsx:39–44`), and "Entfernen" removes at once: the confirmation sheet and `memory:confirm_*` are gone, the toast's "Rückgängig" (server window `UNRETRACT_WINDOW_MINUTES`) is the way back (docs/UX-PRINCIPLES.md, undo over confirmation). Nothing kept is one quiet line in the page (More.jsx:37), not an empty state. `MEMORY.introGap` is gone: the page's parts stand 24 apart, a label 8 above its card.
+
 Frozen preparation on published Subject main `d6e9f4f33b4d3789ce5e7ca2c88b180f4a572a21`. Nine publication paths include the central delivery overview. No commit or PR.
 
 ## Final implementation

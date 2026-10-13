@@ -29,7 +29,7 @@ const question = (prompt: string, part: 'a' | 'b' | null) =>
   });
 
 const card = (item: MaterialItemView) => (
-  <MaterialItemCard item={item} number={1} disabled={false} onDelete={() => undefined} />
+  <MaterialItemCard item={item} number={1} disabled={false} onMenu={() => undefined} />
 );
 
 describe('a question in „Dein Material"', () => {
@@ -49,7 +49,7 @@ describe('a question in „Dein Material"', () => {
     renderInApp(card(question('Wie viele Liter sind 1 m³?', null)));
     expect(screen.getByText('Wie viele Liter sind 1 m³?')).toBeDefined();
   });
-  it('retains all actual choices, supplied figure and delete callback', () => {
+  it('retains all actual choices and the supplied figure, with ⋯ instead of a button in the card', () => {
     const item = MaterialItemView.parse({
       ...question('Welche Darstellung passt?', null),
       kind: 'multiple_choice',
@@ -58,13 +58,16 @@ describe('a question in „Dein Material"', () => {
       topic: 'Anzahlen',
       result: 'first_try',
     });
-    const onDelete = vi.fn();
-    renderInApp(<MaterialItemCard item={item} number={3} disabled={false} onDelete={onDelete} />);
+    const onMenu = vi.fn();
+    renderInApp(<MaterialItemCard item={item} number={3} disabled={false} onMenu={onMenu} />);
     expect(screen.getByText('Welche Darstellung passt?')).toBeTruthy();
     expect(screen.getByText('Sechs Punkte')).toBeTruthy();
     expect(screen.getByText('Acht Punkte')).toBeTruthy();
     expect(screen.getByRole('img', { name: /Zwanzigerfeld.*8 Punkte/ })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Frage 3 löschen' }));
-    expect(onDelete).toHaveBeenCalledTimes(1);
+    // Deleting is in the sheet ⋯ opens, never a button in the card (MIGRATION.md §5).
+    expect(screen.queryByText('Löschen')).toBeNull();
+    expect(screen.queryByRole('button', { name: /löschen/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Mehr zu Frage 3' }));
+    expect(onMenu).toHaveBeenCalledTimes(1);
   });
 });

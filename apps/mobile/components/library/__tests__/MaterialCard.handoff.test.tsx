@@ -35,7 +35,7 @@ function mounted() {
     onRetry: vi.fn(),
     onDelete: vi.fn(),
   };
-  const props = { material, busy: false, disabled: false, ...callbacks };
+  const props = { material, tone: 'sky' as const, busy: false, disabled: false, ...callbacks };
   const view = renderInApp(<MaterialCard {...props} />);
   const open = () => fireEvent.click(screen.getByRole('button', { name: 'Mein Blatt' }));
   const choose = () => {

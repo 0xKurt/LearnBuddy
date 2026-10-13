@@ -47,6 +47,7 @@ function show(material: MaterialView) {
   renderInApp(
     <MaterialCard
       material={material}
+      tone="lavender"
       busy={false}
       disabled={false}
       onPractice={onPractice}
@@ -94,6 +95,20 @@ describe('eine Blattkarte und die Sätze zum Vorlesen (Issue #223 Punkt 2)', () 
     show(sheet({ purpose: 'homework', speak_count: 2, session_status: null }));
     expect(screen.getByText('Weiter mit der Hausaufgabe')).toBeTruthy();
     expect(screen.queryByText('Sätze laut lesen')).toBeNull();
+  });
+});
+
+describe('das Sheet eines Blatts (ui_kits/app/More.jsx:82–87)', () => {
+  it('trägt den Namen des Blatts, und nur die Zeile, die woanders hinführt, hat einen Pfeil', () => {
+    show(sheet({ speak_count: 3 }));
+    fireEvent.click(screen.getByRole('button', { name: 'Unité 3' }));
+    expect(screen.getByRole('heading', { name: 'Unité 3' })).toBeTruthy();
+    const signs = (name: string) =>
+      screen.getByRole('button', { name }).querySelectorAll('svg').length;
+    // Zeichen und Pfeil — die anderen sind Aktionen: nur ihr Zeichen.
+    expect(signs('Fragen ansehen')).toBe(2);
+    expect(signs('Die Sätze aus „Unité 3“ laut lesen')).toBe(1);
+    expect(signs('„Unité 3“ löschen')).toBe(1);
   });
 });
 

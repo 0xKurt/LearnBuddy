@@ -69,4 +69,49 @@ describe('grouped material row', () => {
     expect(screen.queryByText('Üben')).toBeNull();
     expect(screen.getByText(/wird gelesen/)).toBeTruthy();
   });
+  it('stands in its subject with the tone tile, the sheet sign and the day it came', () => {
+    const { container } = renderInApp(
+      <MaterialRow
+        material={material}
+        tone="sky"
+        busy={false}
+        disabled={false}
+        onOpen={vi.fn()}
+        onStart={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('2. Okt. · 5 Aufgaben')).toBeTruthy();
+    // The sheet sign on its tile and the arrow in the pill (ui_kits/app/More.jsx:70).
+    expect(container.querySelectorAll('svg')).toHaveLength(2);
+  });
+  it('is its name and what it holds among the newest sheets, ending in the arrow pill', () => {
+    const { container } = renderInApp(
+      <MaterialRow
+        material={material}
+        busy={false}
+        disabled={false}
+        onOpen={vi.fn()}
+        onStart={vi.fn()}
+      />,
+    );
+    // No bare sign before the name and no day (ui_kits/app/Library.jsx:19,32).
+    expect(screen.getByText('5 Aufgaben')).toBeTruthy();
+    expect(container.querySelectorAll('svg')).toHaveLength(1);
+    const pill = screen.getByRole('button', { name: '„Mein Blatt“ üben' });
+    expect(pill.querySelector('svg')).not.toBeNull();
+  });
+  it('shows the chevron while there is nothing to start', () => {
+    const { container } = renderInApp(
+      <MaterialRow
+        material={{ ...material, status: 'processing' }}
+        busy={false}
+        disabled={false}
+        onOpen={vi.fn()}
+        onStart={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('wird gelesen')).toBeTruthy();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(container.querySelectorAll('svg')).toHaveLength(1);
+  });
 });

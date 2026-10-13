@@ -23,8 +23,9 @@ export function ExerciseCard({
   const title = exercise.title?.trim() || t('subject.exercise_untitled');
   const open = exercise.status === 'active';
   return (
+    // Its name and day alone, as the design's row has it (ui_kits/app/More.jsx:74): the sign
+    // before a name belongs to a sheet, on its subject's tile.
     <Row
-      icon="practice"
       title={title}
       sub={[
         formatDate(exercise.started_at, i18n.language),
