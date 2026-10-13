@@ -2,9 +2,10 @@
 // Flows.jsx `ResetInvalid`), as far as source and locale files can say it. What only a browser
 // can measure — a field whole above the pinned action, a title on one line — is tests/web.
 //
-//   · one count for the whole way: privacy 1, the profile 2, the voice 3, the colours 4 of 4;
+//   · one count for the whole way: privacy 1, the profile 2, the voice 3, the colours last;
 //     the cards that explain Buddy and the hand-over carry none;
-//   · the count reads as the design writes it ("2 von 4"), in five languages;
+//   · a total only where it is certain — never "4 von 4" after a voice page that was not there;
+//   · the count reads as the design writes it ("3 von 4"), in five languages;
 //   · the pages before the app keep their 20 pt margin, not the app's 16;
 //   · no lavender box on a setup page;
 //   · the hand-over's lines name what is set in bold, and are only ever drawn through `Trans`.
@@ -15,7 +16,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { GUTTER_APP, GUTTER_OUTER, pinnedBar } from '../../../lib/theme/space.js';
-import { SETUP_STATIONS, setupStep } from '../setupSteps.js';
+import { noteVoiceStep, SETUP_STATIONS, setupStep } from '../setupSteps.js';
 
 const ROOT = join(__dirname, '../../..');
 const source = (path: string) => readFileSync(join(ROOT, path), 'utf8');
@@ -37,12 +38,49 @@ const PAGES = [
 describe('the setup counts once, one to four', () => {
   it('numbers the four things it settles in the design’s order', () => {
     expect(SETUP_STATIONS).toEqual(['consent', 'profile', 'voice', 'look']);
-    expect(SETUP_STATIONS.map(setupStep)).toEqual([
-      { n: 1, count: 4 },
-      { n: 2, count: 4 },
+    // With the voice page (Buddy's own voices are there): the design's four.
+    expect(SETUP_STATIONS.map((station) => setupStep(station, true))).toEqual([
+      { n: 1 },
+      { n: 2 },
       { n: 3, count: 4 },
       { n: 4, count: 4 },
     ]);
+  });
+
+  it('never gives a number that is not true', () => {
+    // Before the profile exists nobody knows whether three or four steps follow (#526): the
+    // first two name their place and no total, whatever comes later.
+    for (const voice of [true, false, undefined]) {
+      expect(setupStep('consent', voice)).toEqual({ n: 1 });
+      expect(setupStep('profile', voice)).toEqual({ n: 2 });
+    }
+    // Without a voice page the colours are the third of three, not "4 von 4" after a gap.
+    expect(setupStep('look', false)).toEqual({ n: 3, count: 3 });
+    expect(setupStep('look', true)).toEqual({ n: 4, count: 4 });
+    // Opened on the cards, with no setup walked in this run: no number at all.
+    expect(setupStep('look', undefined)).toBeNull();
+    // Every count that carries a total is a step within it, and the steps never skip one.
+    for (const voice of [true, false]) {
+      const shown = SETUP_STATIONS.filter((station) => voice || station !== 'voice');
+      expect(shown.map((station) => setupStep(station, voice)?.n)).toEqual(
+        shown.map((_, index) => index + 1),
+      );
+      expect(setupStep('look', voice)?.count).toBe(shown.length);
+    }
+  });
+
+  it('counts the colours from what the profile page saw, and from nothing else', () => {
+    noteVoiceStep(undefined);
+    expect(setupStep('look')).toBeNull();
+    noteVoiceStep(false);
+    expect(setupStep('look')).toEqual({ n: 3, count: 3 });
+    noteVoiceStep(true);
+    expect(setupStep('look')).toEqual({ n: 4, count: 4 });
+    noteVoiceStep(undefined);
+    // The profile page says it where it decides, in both directions.
+    const profile = source('app/profile.tsx');
+    expect(profile).toContain('noteVoiceStep(voices);');
+    expect(profile).toContain('noteVoiceStep(undefined);');
   });
 
   it('gives every page its station and leaves the explaining cards and the hand-over without', () => {
@@ -74,11 +112,13 @@ describe('the setup counts once, one to four', () => {
   });
 
   it.each(LANGUAGES)(
-    'writes the count as the design does, without a word before it (%s)',
+    'writes the count as the design does, and a step alone as a step (%s)',
     (lang) => {
-      expect(locale(lang, 'common').onboarding!.step_label).toMatch(
-        /^\{\{n\}\} \S+ \{\{count\}\}$/,
-      );
+      const texts = locale(lang, 'common').onboarding!;
+      expect(texts.step_label).toMatch(/^\{\{n\}\} \S+ \{\{count\}\}$/);
+      // Where the total is not known yet: the step's number with its word, and no total.
+      expect(texts.step_only).toMatch(/^\S+ \{\{n\}\}$/);
+      expect(texts.step_only).not.toContain('count');
     },
   );
 });

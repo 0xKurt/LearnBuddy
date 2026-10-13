@@ -61,7 +61,7 @@ for (const look of ONBOARDING_LOOKS)
         tops.push(box!.y);
       }
       expect(tops).toEqual([...tops].sort((a, b) => a - b));
-      await expect(page.getByText('2 von 4', { exact: true })).toBeVisible();
+      await expect(page.getByText('Schritt 2', { exact: true })).toBeVisible();
       await onboardingShots(page, `contact-${look.family}-${look.dark}-${allow}`, look);
       const saved = page.waitForResponse(
         (r) => r.url().endsWith('/v1/learner') && r.request().method() === 'POST',

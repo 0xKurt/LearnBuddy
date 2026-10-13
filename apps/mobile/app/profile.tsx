@@ -22,6 +22,7 @@ import { Btn } from '../components/lb/Btn.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
 import { ContactStep, type ContactAnswer } from '../components/auth/ContactStep.js';
 import { SetupStep } from '../components/auth/SetupStep.js';
+import { noteVoiceStep } from '../components/auth/setupSteps.js';
 import { Icon } from '../components/lb/Icon.js';
 import { LanguageChoice } from '../components/lb/LanguageChoice.js';
 import { LANGUAGES } from '../lib/i18n/languages.js';
@@ -209,6 +210,8 @@ export default function Profile() {
     } catch (err) {
       // The profile exists already (e.g. the answer to the first tap got lost): go on.
       if (err instanceof ApiError && err.reason === 'learner_exists') {
+        // Not this run's setup: what it showed is unknown, so the colours count nothing.
+        noteVoiceStep(undefined);
         await goOn().catch(() => toast.show(messageFor(err), 'error'));
         return;
       }
@@ -227,7 +230,10 @@ export default function Profile() {
     const settings = await queryClient
       .fetchQuery({ queryKey: keys.settings, queryFn: getSettings })
       .catch(() => null);
-    if (settings?.natural_voice) setStep('voice');
+    const voices = settings?.natural_voice === true;
+    // The colours count from this: "4 von 4" after the voice page, "3 von 3" without it.
+    noteVoiceStep(voices);
+    if (voices) setStep('voice');
     else await finish();
   }
 
@@ -314,26 +320,34 @@ export default function Profile() {
           >
             {t('profile.next')}
           </Btn>
-          {/* One quiet action under the main one (design Onboarding.jsx:66–69). On the parents'
-              page it is the way back to the child's details — the way out is one tap further,
-              on the page before; a third row would take the form's room above the keyboard. */}
+          {/* The way out, on both pages and in the same place (design Onboarding.jsx:68, H-22):
+              the parents' page is where an adult reads which e-mail the account runs on and
+              may find it is the wrong one. */}
+          <Btn
+            variant="ghost"
+            size="sm"
+            pill
+            full
+            busy={leaving}
+            disabled={busy}
+            onPress={() => void leave()}
+          >
+            {t('profile.sign_out')}
+          </Btn>
+          {/* The parents' page follows a page the design does not have, so it also needs the
+              way back to it: a further quiet action, last, as on the notification page. */}
           {parentStep ? (
-            <Btn variant="ghost" size="sm" pill full onPress={() => setStep('learner')}>
-              {t('profile.back')}
-            </Btn>
-          ) : (
             <Btn
               variant="ghost"
               size="sm"
               pill
               full
-              busy={leaving}
-              disabled={busy}
-              onPress={() => void leave()}
+              disabled={leaving}
+              onPress={() => setStep('learner')}
             >
-              {t('profile.sign_out')}
+              {t('profile.back')}
             </Btn>
-          )}
+          ) : null}
         </>
       }
     >

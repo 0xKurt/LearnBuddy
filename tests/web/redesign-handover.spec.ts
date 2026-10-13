@@ -65,7 +65,7 @@ for (const look of ONBOARDING_LOOKS)
         'font-family',
         /Figtree_700Bold/,
       );
-      await expect(page.getByText(/^\d von 4$/)).toHaveCount(0);
+      await expect(page.getByText(/^\d von \d$|^Schritt \d$/)).toHaveCount(0);
       const instructionBox = await instruction.boundingBox();
       const proceedBox = await proceed.boundingBox();
       expect(instructionBox).not.toBeNull();

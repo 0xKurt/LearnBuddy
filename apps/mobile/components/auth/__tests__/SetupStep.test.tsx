@@ -5,6 +5,7 @@ import { Text } from 'react-native';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { GUTTER_OUTER } from '../../../lib/theme/space.js';
 import { SetupStep } from '../SetupStep.js';
+import { noteVoiceStep } from '../setupSteps.js';
 vi.mock('../../lb/BuddyOrb.js', () => ({
   BuddyOrb: ({ state }: { state?: string }) => <div data-testid="setup-orb" data-state={state} />,
 }));
@@ -51,29 +52,46 @@ it('forwards a caller-owned Orb state without introducing shell state', () => {
 });
 
 // Design ui_kits/app/Onboarding.jsx `OnbPage`: the orb is the first thing on the page, the count
-// stands at its right in the design's words ("2 von 4"), and the page keeps the margin of the
-// pages before the app (tokens/space.css `--space-gutter`, 20).
+// stands at its right in the design's words ("3 von 4") where the total is certain, and the page
+// keeps the margin of the pages before the app (tokens/space.css `--space-gutter`, 20).
 describe('SetupStep as the design’s page', () => {
-  it('says which of the four it is in the design’s words, and nothing where it is none', () => {
+  it('says which step it is, with a total only where that is certain, and nothing where it is none', () => {
+    const look = (run: string) => (
+      <SetupStep key={run} step="look" title="Farben" footer={null}>
+        <Text>Tiles</Text>
+      </SetupStep>
+    );
     const { rerender } = renderInApp(
       <SetupStep step="profile" title="Eltern" footer={null}>
         <Text>Fields</Text>
       </SetupStep>,
     );
-    expect(screen.getByTestId('setup-step').textContent).toBe('2 von 4');
+    // Before the profile exists the total is not known: the step, no "von 4".
+    expect(screen.getByTestId('setup-step').textContent).toBe('Schritt 2');
     rerender(
-      <SetupStep step="look" title="Farben" footer={null}>
-        <Text>Tiles</Text>
+      <SetupStep step="voice" title="Stimme" footer={null}>
+        <Text>Voices</Text>
       </SetupStep>,
     );
+    expect(screen.getByTestId('setup-step').textContent).toBe('3 von 4');
+    noteVoiceStep(true);
+    rerender(look('with'));
     expect(screen.getByTestId('setup-step').textContent).toBe('4 von 4');
+    // The voice page was left out: the colours are the third of three.
+    noteVoiceStep(false);
+    rerender(look('without'));
+    expect(screen.getByTestId('setup-step').textContent).toBe('3 von 3');
+    // Not known in this run of the app: no number rather than a guessed one.
+    noteVoiceStep(undefined);
+    rerender(look('unknown'));
+    expect(screen.queryByTestId('setup-step')).toBeNull();
     rerender(
       <SetupStep title="Sag es Buddy einfach" footer={null}>
         <Text>Card</Text>
       </SetupStep>,
     );
     expect(screen.queryByTestId('setup-step')).toBeNull();
-    expect(screen.queryByText(/Schritt/)).toBeNull();
+    expect(screen.queryByText(/Schritt|von \d/)).toBeNull();
   });
 
   it('keeps the margin before the app around the page and under it', () => {

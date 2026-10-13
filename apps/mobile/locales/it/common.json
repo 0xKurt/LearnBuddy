@@ -94,6 +94,7 @@
     "next": "Avanti",
     "start": "Si parte",
     "skip": "Salta",
-    "step_label": "{{n}} di {{count}}"
+    "step_label": "{{n}} di {{count}}",
+    "step_only": "Passo {{n}}"
   }
 }

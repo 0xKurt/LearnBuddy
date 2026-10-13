@@ -19,13 +19,16 @@ for (const look of ONBOARDING_LOOKS)
       await page.getByRole('button', { name: 'Weiter', exact: true }).click();
     await expect(page.getByText('Sag es Buddy einfach', { exact: true })).toBeVisible();
     for (let stage = 0; stage < 3; stage++) {
-      // The explaining cards are none of the setup's four (#599).
-      await expect(page.getByText(/von 4$/)).toHaveCount(0);
+      // The explaining cards are no step of the setup (#599).
+      await expect(page.getByText(/^\d von \d$|^Schritt \d$/)).toHaveCount(0);
       await onboardingShots(page, `intro-${look.family}-${look.dark}-${stage}`, look);
       await page.getByRole('button', { name: 'Weiter', exact: true }).click();
     }
     await expect(page.getByText('Such dir deine Farben aus', { exact: true })).toBeVisible();
-    await expect(page.getByText('4 von 4', { exact: true })).toBeVisible();
+    // The last step, counted as it was walked: four with the voice page, three without it.
+    await expect(
+      page.getByText(process.env.LB_DEV_SPEECH === 'fake' ? '4 von 4' : '3 von 3', { exact: true }),
+    ).toBeVisible();
     const family = page.getByRole('radio', {
       name: look.family === 'ocean' ? 'Meer' : 'Pastell',
       exact: true,

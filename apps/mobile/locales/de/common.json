@@ -94,6 +94,7 @@
     "next": "Weiter",
     "start": "Los geht's",
     "skip": "Überspringen",
-    "step_label": "{{n}} von {{count}}"
+    "step_label": "{{n}} von {{count}}",
+    "step_only": "Schritt {{n}}"
   }
 }
