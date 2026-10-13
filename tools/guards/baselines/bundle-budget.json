@@ -1,6 +1,6 @@
 {
-  "$comment": "Budget des Web-Bundles (Issue #313): das JavaScript, das index.html nach `expo export --platform web` lädt, roh und gzip (Stufe 9), in Bytes. Mehr als tolerancePercent darüber macht den Walkthrough rot. Gemessen auf claude/longtext-258 (main mit #388 und #252); angehoben für Lange Texte in der App (#258: EssayFeedback, lib/practice/essay.ts, Texte in 5 Sprachen) auf dem seit #234 gewachsenen main, keine neue Bibliothek. Ein höheres Budget nur mit Begründung im PR; ein kleineres Bundle senkt es (`node tools/guards/bundle-budget.mjs --shrink`). Siehe docs/engineering-guards.md.",
+  "$comment": "Budget des Web-Bundles (Issue #313): das JavaScript, das index.html nach `expo export --platform web` lädt, roh und gzip (Stufe 9), in Bytes. Mehr als tolerancePercent darüber macht den Walkthrough rot. Gemessen auf fix/599-cleanup (main 6cfe074c mit dem Aufräumen von #599); angehoben für das Redesign und seine Korrektur (#548, #599): rund 100 neue Dateien im Start-Bundle (Einstellungen als Seiten, die Bausteine in components/lb, Theme-Tokens, Chat-Karten) und expo-font für Figtree, keine weitere Bibliothek. Lizenzen, Bildnachweise und die Daten der Abbildungen laden getrennt und zählen nicht mit. Vorher 4 438 713 / 1 168 048 (#258). Ein höheres Budget nur mit Begründung im PR; ein kleineres Bundle senkt es (`node tools/guards/bundle-budget.mjs --shrink`). Siehe docs/engineering-guards.md.",
   "tolerancePercent": 5,
-  "bytes": 4438713,
-  "gzip": 1168048
+  "bytes": 4636403,
+  "gzip": 1231173
 }
