@@ -3,9 +3,9 @@
 // the keyboard on iOS, where it used to hide behind it (audit M-76, M-80). It belongs
 // to the screen it appeared on: a route change clears it, unless the caller said
 // survivesNavigation — the rules live in lib/toast.ts (issue #91). It stands above
-// the screen's real bottom bar; bars report their height through useToastBar. Looks:
-// a dark pill floating on a soft shadow; an error also carries a round warning mark
-// (never colour alone).
+// the screen's real bottom bar; bars report their height through useToastBar. Looks: the
+// design's ink pill on the float shadow (components/core/States.jsx `Toast`), at least 44 high,
+// its offer a full 44 pt target; an error also carries a round warning mark (never colour alone).
 
 import { usePathname } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -18,7 +18,7 @@ import { useKeyboardHeight } from '../../lib/useKeyboardHeight.js';
 import { MAX_FONT_SCALE } from './Btn.js';
 import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { TOAST } from '../../lib/theme/states.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
@@ -112,12 +112,12 @@ function Pill({
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: RHYTHM.parts,
+          gap: TOAST.gap,
+          minHeight: TOAST.minHeight,
           backgroundColor: palette.ink,
-          borderRadius: TOAST.radius,
-          // The pill's ends need more room than its top.
-          paddingHorizontal: SPACE.gutter,
-          paddingVertical: TOAST.padY,
+          borderRadius: RADIUS.round,
+          paddingLeft: TOAST.padStart,
+          paddingRight: TOAST.padEnd,
           maxWidth: TOAST.maxWidth,
           ...SHADOW.float,
         }}
@@ -146,18 +146,35 @@ function Pill({
             </Text>
           </View>
         ) : null}
-        {/* The toast's words and its offer, light on the dark pill. */}
-        <Text style={{ ...fontFace('400'), ...TOAST.words, flexShrink: 1, color: palette.paper }}>
+        {/* The toast's words (600 14), light on the dark pill. Their own room above and below
+            closes one line at the pill's 44 and lets a longer message grow. */}
+        <Text
+          style={{
+            ...fontFace('600'),
+            ...TOAST.words,
+            flexShrink: 1,
+            paddingVertical: TOAST.padY,
+            color: palette.paper,
+          }}
+        >
           {message}
         </Text>
         {action ? (
           <Pressable
+            testID="toast-offer"
             onPress={() => toast.act()}
-            hitSlop={SPACE.md}
             accessibilityRole="button"
             accessibilityLabel={action.label}
-            // The pill is as tall as its text; the target grows outwards through hitSlop.
-            style={{ justifyContent: 'center' }}
+            // A real box of 44 × 44 or more, as tall as the pill: padding, not `hitSlop`, which
+            // the web does not know — and this can be the only way back (#599).
+            style={{
+              alignSelf: 'stretch',
+              minHeight: TOAST.minHeight,
+              minWidth: TOAST.minHeight,
+              paddingHorizontal: TOAST.offerPad,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             {({ pressed }) => (
               <Text
@@ -165,17 +182,18 @@ function Pill({
                 style={{
                   ...fontFace('700'),
                   ...TOAST.words,
-                  color: palette.paper,
+                  // Told apart by its weight, its place at the pill's end and its role.
+                  color: palette.primaryLt,
                   opacity: pressed ? UI.pressed.link : 1,
-                  // Not colour alone: the offer is also the only underlined word here.
-                  textDecorationLine: 'underline',
                 }}
               >
                 {action.label}
               </Text>
             )}
           </Pressable>
-        ) : null}
+        ) : (
+          <View style={{ width: TOAST.endRoom }} />
+        )}
       </View>
     </View>
   );

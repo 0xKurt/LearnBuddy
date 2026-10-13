@@ -2,8 +2,8 @@
 // "ein Testlauf auf echten Daten sollte man sehen" — the dev client on the phone points
 // at production by design, and that must never be mistaken for a local run). Dev only:
 // a release build never renders this (`__DEV__` is false there, and the walkthrough
-// exports production bundles). The colour is deliberately outside the calm design
-// tokens — this is a diagnostic warning marker, not product UI.
+// exports production bundles). A diagnostic marker, not product UI: it wears the look's
+// own danger colour with paper on it (≥ 4.5:1 in every look, lib/theme/__tests__/contrast.test.ts).
 //
 // It sits at the TOP and leaves again by itself (issue #103): pinned to the bottom it
 // landed exactly on the composer and covered the input field — the owner read it as a
@@ -21,6 +21,7 @@ import { fadeIn, fadeOut } from '../../lib/theme/enter.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { DEV_NOTE } from '../../lib/theme/states.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { fontFace } from '../../lib/theme/type.js';
 
 declare const __DEV__: boolean;
@@ -30,6 +31,7 @@ const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?$/;
 
 export function DevHostNote() {
   const insets = useSafeAreaInsets();
+  const { palette } = useTheme();
   const [gone, setGone] = useState(false);
   const dev = typeof __DEV__ !== 'undefined' && __DEV__;
   const remote = dev && !LOCAL.test(ENV.API_URL);
@@ -57,13 +59,13 @@ export function DevHostNote() {
         // itself after six seconds.
         top: insets.top + HEADER_HEIGHT,
         left: SPACE.lg,
-        backgroundColor: 'rgba(178,58,58,0.92)',
+        backgroundColor: palette.danger,
         borderRadius: RADIUS.round,
         paddingHorizontal: DEV_NOTE.padX,
         paddingVertical: DEV_NOTE.padY,
       }}
     >
-      <Text style={{ ...fontFace('700'), color: '#ffffff', fontSize: DEV_NOTE.fontSize }}>
+      <Text style={{ ...fontFace('700'), color: palette.paper, fontSize: DEV_NOTE.fontSize }}>
         {`Dev-Build → ${host}`}
       </Text>
     </Animated.View>

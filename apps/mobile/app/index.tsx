@@ -5,19 +5,16 @@
 
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Btn } from '../components/lb/Btn.js';
-import { EmptyState } from '../components/lb/EmptyState.js';
+import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
 import { Screen } from '../components/lb/Screen.js';
 import { useMe } from '../lib/api/queries.js';
 import { currentSession } from '../lib/auth/session.js';
-import { messageFor } from '../lib/errors.js';
 import { gateRoute } from '../lib/gate.js';
 import { signOutHere } from '../lib/leave.js';
-import { RHYTHM } from '../lib/theme/space.js';
 
 export default function Index() {
   const signedIn = currentSession() !== null;
@@ -34,29 +31,26 @@ function SignedInGate() {
   if (me.isError) {
     // Retry, and always a way out (p2-gate-error-no-exit). Her unsent answers and photos
     // stay on the device for her next sign-in.
+    //
+    // The design's "failed" state (components/core/States.jsx `StateScreen`): Buddy thinks above
+    // the line. The design draws a head with a way back there (ui_kits/app/Extra.jsx:255); the
+    // gate has nowhere to go back to and no places a ⋯ could open, so the page stands without a
+    // head, like "update" and "deleting", and offers what is true here: try again, or sign out.
     return (
       <Screen>
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <EmptyState
-            title={messageFor(me.error)}
-            action={
-              <View style={{ gap: RHYTHM.parts, alignItems: 'center' }}>
-                <Btn onPress={() => void me.refetch()}>{t('actions.retry')}</Btn>
-                <Btn
-                  variant="ghost"
-                  size="sm"
-                  disabled={leaving}
-                  onPress={() => {
-                    setLeaving(true);
-                    void signOutHere({ keepLocalWork: true }).finally(() => setLeaving(false));
-                  }}
-                >
-                  {t('auth:profile.sign_out')}
-                </Btn>
-              </View>
-            }
-          />
-        </View>
+        <LoadFailed error={me.error} busy={me.isRefetching} onRetry={() => void me.refetch()}>
+          <Btn
+            variant="ghost"
+            size="sm"
+            disabled={leaving}
+            onPress={() => {
+              setLeaving(true);
+              void signOutHere({ keepLocalWork: true }).finally(() => setLeaving(false));
+            }}
+          >
+            {t('auth:profile.sign_out')}
+          </Btn>
+        </LoadFailed>
       </Screen>
     );
   }

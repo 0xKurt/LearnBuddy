@@ -44,6 +44,12 @@ const TEXT: Array<[keyof Palette, keyof Palette]> = [
   ['ink2', 'canvas'],
   // The hint over a picture in the full-screen viewer (components/lb/ZoomViewer.tsx).
   ['onViewerVeil', 'viewerVeil'],
+  // The system states (design components/core/States.jsx, #599): a toast's offer on its ink pill
+  // (its words are paper on ink, the first pair read the other way), the "sync" banner's accent
+  // text on primary-lt, and the developer's note, paper on danger.
+  ['primaryLt', 'ink'],
+  ['primaryDk', 'primaryLt'],
+  ['paper', 'danger'],
 ];
 const SHAPES: Array<[keyof Palette, keyof Palette]> = [
   ['primary', 'paper'],

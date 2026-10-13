@@ -60,15 +60,20 @@ for (const look of SCREEN_LOOKS) {
     await expect(row).toBeVisible();
     // The image of the removal comes last and nothing follows it: the toast stays 9 s, and two
     // screenshots inside that window made the undo above a race (seen once under load).
-    // `shot`, not `screenShots`: the toast's "Rückgängig" is 81×21 on the web, under the 44 pt
-    // the matrix demands (components/lb/Toast.tsx, outside this area — reported on #599).
+    // Hence one `shot` and not the four of `screenShots`.
     await row.click();
     await page
       .locator('[aria-modal="true"]')
       .getByRole('button', { name: 'Entfernen: Möchte kurze Übungen mit Pausen', exact: true })
       .click();
     await expect(row).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Rückgängig', exact: true })).toBeVisible();
+    const undo = page.getByRole('button', { name: 'Rückgängig', exact: true });
+    await expect(undo).toBeVisible();
+    // The only way back from a removal: a real 44 pt target on the web too, where `hitSlop`
+    // does nothing (components/lb/Toast.tsx, #599 — it was 81 × 21).
+    const target = await undo.boundingBox();
+    expect(target?.width ?? 0, 'the toast’s offer is at least 44 wide').toBeGreaterThanOrEqual(44);
+    expect(target?.height ?? 0, 'the toast’s offer is at least 44 high').toBeGreaterThanOrEqual(44);
     await shot(page, `redesign-memory-${appearance}-removed`);
   });
 }

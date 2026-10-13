@@ -317,8 +317,10 @@ describe('Segmented (components/core/Segmented.jsx)', () => {
 describe('text that carried a bare size and weight (owner rule 4)', () => {
   // The face itself cannot be read here: jsdom drops a `font-family` it does not know. That
   // these are Figtree is measured in the browser (tests/web/redesign-reset.spec.ts, the toast);
-  // this holds that giving them the face changed neither size nor weight.
-  it('keeps the size and weight of a banner, a filled slot and the toast', async () => {
+  // this holds the size and weight each has with the face: a filled slot as before the redesign;
+  // the banner and the toast as the design sets them (components/core/States.jsx:60–62,70 — the
+  // rest of both is `SystemStates.test.tsx`), the error's "!" as it was.
+  it('holds the size and weight of a banner, a filled slot and the toast', async () => {
     renderInApp(
       <>
         <Banner>Offline</Banner>
@@ -334,9 +336,9 @@ describe('text that carried a bare size and weight (owner rule 4)', () => {
     );
     const banner = own(screen.getByText('Offline'));
     expect([banner.fontSize, banner.lineHeight, banner.fontWeight]).toEqual([
-      '14px',
-      '20px',
-      '500',
+      '13px',
+      '18px',
+      '600',
     ]);
     const word = own(screen.getByText('Haus'));
     expect([word.fontSize, word.fontWeight]).toEqual(['17px', '600']);
@@ -347,11 +349,11 @@ describe('text that carried a bare size and weight (owner rule 4)', () => {
       }),
     );
     const words = own(await screen.findByText('Das hat nicht geklappt'));
-    expect([words.fontSize, words.lineHeight, words.fontWeight]).toEqual(['15px', '21px', '400']);
+    expect([words.fontSize, words.lineHeight, words.fontWeight]).toEqual(['14px', '20px', '600']);
     const mark = own(screen.getByText('!'));
     expect([mark.fontSize, mark.lineHeight, mark.fontWeight]).toEqual(['14px', '18px', '700']);
     const offer = own(screen.getByText('Nochmal'));
-    expect([offer.fontSize, offer.fontWeight]).toEqual(['15px', '700']);
+    expect([offer.fontSize, offer.fontWeight]).toEqual(['14px', '700']);
     act(() => toast.hide());
   });
 });

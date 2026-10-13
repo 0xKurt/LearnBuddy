@@ -27,9 +27,15 @@ The design folder decides the look (owner 12.10.); each point names its line the
 - `ListGroup.tsx` (`List.jsx`): title `TYPE.option` 600 16/22, value `TYPE.listValue` 400 15/20, 10 above and below, 2 between title and line under it, a lone icon in the accent at 20, tile letter `TYPE.listTile` 700 15 or the tile's icon at 18, `children` under the line, `action` for the 32 pt pill in the chevron's place (`ui_kits/app/Library.jsx`). `completed` and `destructive` are not in the design and stay as they are.
 - `Sheet.tsx` (`Sheet.jsx:4–14`): title optional and 4 in from the side, 16 between handle, title and parts, 30 under the last part (more where the safe area asks for it). The in-sheet close button stays (CLAUDE.md rule 14).
 - `Segmented.tsx` (`Segmented.jsx:6–12`): no `size`, no wrapping.
-- The system states keep their look (`implementation/MIGRATION.md` §5); their literals are tokens in `lib/theme/states.ts` (`SKELETON`, `TOAST`, `EMPTY_STATE`, `LOADING_STATE`, `DEV_NOTE`) and `UI.slot|section|fold|edgeFade|splash`. Text that carried a bare size and weight (Banner, Slot, Toast, DevHostNote) is set in Figtree at the same size.
+- The system states follow `components/core/States.jsx` (owner 12.10.: the design wins over `implementation/MIGRATION.md` §5, which kept their look); their measures are tokens in `lib/theme/states.ts` (`SKELETON`, `STATE_SCREEN`, `TOAST`, `BANNER`, `EMPTY_STATE`, `LOADING_STATE`, `DEV_NOTE`):
+  - `Skeleton.tsx` (`States.jsx:8–10`): bones in `canvas` with a corner of 8 that pulse 1.4 s (opacity 1 → .55 → 1) and stand still with Reduce Motion; the card under them is the app's card (paper, corner 20, soft shadow, 20 inside). `Skeletons.tsx` (`:13–31`) keeps a bone in the box of what it stands for: a list row's height, padding and tile, a line of the loaded text's type — only the bone inside is the design's (11 · 13 · 16 · 18 high, its share of the row).
+  - `EmptyState.tsx` without `page` is the design's `StateScreen` (`:45–52`): Buddy at 64 where `orb` says so, 800 22/28 over 400 15/22 (at most 300 wide), 14 apart, 40 above and below. `LoadFailed`, the gate's error, update, deleting and the crash screen use it. Deleting draws no progress line (the app does not know how far the deletion is) and keeps "Abmelden"; the gate's error and the crash screen have no head (nowhere to go back to; the crash screen stands above the router).
+  - `Toast.tsx` (`:60–62`): an ink pill at least 44 high, words 600 14, the offer 700 14 in `primaryLt` inside a real 44 pt box (padding — the web has no `hitSlop`). No check mark: the `info` tone also carries messages that confirm nothing. The error's "!" stays.
+  - `Banner.tsx` (`:70`): 600 13/18; with `bar` the edge-to-edge banner (at least 36 high, 8 / 16 inside, centred) the offline line uses, otherwise the rounded note inside a sheet. `info` is the design's "sync" (`primaryLt`, `primaryDk`).
+  - `DevHostNote.tsx`: `danger` with `paper` on it, from the palette.
+- Other literals moved to tokens in #603: `UI.slot|section|fold|edgeFade|splash`; a filled Slot is set in Figtree at the size it had.
 
-`DesignBase.test.tsx` holds these, each case with its design line.
+`DesignBase.test.tsx` holds these, each case with its design line; the system states are in `SystemStates.test.tsx` and `EmptyState.test.tsx`.
 
 Paths above are relative to `apps/mobile`. Screens, routes, shared contracts and BuddyOrb/moon are unchanged by this step.
 
