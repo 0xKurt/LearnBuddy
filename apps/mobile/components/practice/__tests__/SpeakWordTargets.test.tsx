@@ -67,6 +67,35 @@ describe('pronunciation word action targets', () => {
     expect(fine.style.color).toBe('');
   });
 
+  // The walkthrough's sentence (#599 correction): the judged words carry no signs, the sentence does.
+  it('writes the sentence as it stands: its final stop is there, outside the underline', () => {
+    const said: PronunciationFeedback = {
+      heard: 'the wether is nice today',
+      overall: 'almost',
+      words: ['The', 'weather', 'is', 'nice', 'today'].map((text) => ({
+        text,
+        ok: text !== 'today',
+        tip: text === 'today' ? 'Betone die zweite Silbe.' : null,
+      })),
+    };
+    const sentence = { ...item, prompt: 'The weather is nice today.' };
+    const spoken = [{ pronunciation: said }] as PracticeTurnView[];
+    const view = renderInApp(<SpeakCard item={sentence} turns={spoken} />);
+    expect(screen.getByLabelText(/today/).textContent).toBe('The weather is nice today.');
+    expect(screen.getByText('today').textContent).toBe('today');
+    view.unmount();
+    renderInApp(<SpeakCard item={sentence} turns={spoken} sessionId="spoken-session" />);
+    expect(screen.getByTestId('spoken-word-actions').textContent).toBe('Theweatherisnicetoday.');
+    expect(screen.getByRole('button', { name: 'Wort üben: today' }).textContent).toBe('today.');
+  });
+
+  // "is" stood at the start of its 44 pt target and left a hole before "nice".
+  it('a short word stands in the middle of its target, the room around it even', () => {
+    renderInApp(<SpeakCard item={item} turns={turns} sessionId="spoken-session" />);
+    for (const action of screen.getAllByRole('button'))
+      expect(styleOf(action).alignItems).toBe('center');
+  });
+
   it('puts what the underline means under the card, not into it', () => {
     renderInApp(<SpeakCard item={item} turns={turns} />);
     const legend = screen.getByTestId('speak-legend');

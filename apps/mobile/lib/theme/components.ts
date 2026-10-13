@@ -117,6 +117,16 @@ export const UI = {
   splash: { imageWidth: 200, ball: 285 / 1024, settle: 0.14, layer: 1000 },
 } as const;
 
+/**
+ * A title beside its value in one row (#599): the title keeps its own width up to its share and
+ * is never squeezed; the rest of the row is the value's — a short one ends at the row's edge, a
+ * long one wraps there. One pattern for a list row's value and a result row's state.
+ */
+export const ROW_SPLIT = {
+  title: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', maxWidth: UI.list.titleShare },
+  value: { flexGrow: 1, flexShrink: 1, textAlign: 'right' },
+} as const;
+
 const REST: ViewStyle = {};
 const DIP: ViewStyle = { transform: [{ scale: UI.pressScale }] };
 const DIM: ViewStyle = { opacity: PRESSED.control };

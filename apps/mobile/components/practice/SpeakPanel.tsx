@@ -32,6 +32,7 @@ import { speakItem } from '../../lib/api/endpoints.js';
 import { useOnline } from '../../lib/api/queries.js';
 import { WaitAborted } from '../../lib/api/whenOnline.js';
 import { messageFor } from '../../lib/errors.js';
+import { signsAround } from '../../lib/practice/spokenWords.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
 import { MAX_RECORDING_MS } from '../../lib/speech/voice.js';
@@ -79,15 +80,27 @@ function useWeak(): TextStyle {
 }
 
 function MarkedWords({
+  prompt,
   feedback,
   onWord,
 }: {
+  /** The sentence as it is written: its signs stand beside the judged words (`signsAround`). */
+  prompt: string;
   feedback: PronunciationFeedback;
   /** A word she taps: it opens on its own to listen to and to try again (issue #83). */
   onWord?: (word: PronunciationFeedback['words'][number]) => void;
 }) {
   const weak = useWeak();
   const { t } = useTranslation('practice');
+  const signs = signsAround(prompt, feedback.words);
+  // A word with the signs at it, which are not part of the mark ("today." — the stop stays plain).
+  const written = (w: SpokenWord, i: number) => (
+    <>
+      {signs[i]?.before}
+      <Text style={w.ok ? null : weak}>{w.text}</Text>
+      {signs[i]?.after}
+    </>
+  );
   const ok = feedback.words.filter((w) => w.ok).map((w) => w.text);
   const practise = feedback.words.filter((w) => !w.ok).map((w) => w.text);
   const summary = [
@@ -114,9 +127,12 @@ function MarkedWords({
               maxWidth: '100%',
               flexShrink: 1,
               justifyContent: 'center',
+              // A word shorter than its target stands in its middle: at its start, "is" left a
+              // hole before the next word.
+              alignItems: 'center',
             }}
           >
-            <Text style={[TYPE.question, w.ok ? null : weak]}>{w.text}</Text>
+            <Text style={TYPE.question}>{written(w, i)}</Text>
           </PressArea>
         ))}
       </View>
@@ -126,7 +142,7 @@ function MarkedWords({
       {feedback.words.map((w, i) => (
         <Text key={`${i}-${w.text}`}>
           {i > 0 ? ' ' : ''}
-          <Text style={w.ok ? null : weak}>{w.text}</Text>
+          {written(w, i)}
         </Text>
       ))}
     </Text>
@@ -205,6 +221,7 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
         ) : null}
         {marked ? (
           <MarkedWords
+            prompt={item.prompt}
             feedback={feedback}
             {...(sessionId && item.lang ? { onWord: setWord } : {})}
           />

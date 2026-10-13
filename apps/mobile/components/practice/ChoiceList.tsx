@@ -443,12 +443,17 @@ const LETTER_GAP = SPACE.md;
  */
 const EM_PER_CHAR = PRACTICE.optionCharacterEm;
 
-/** The room an option's text has in one line, by variant, on the narrow phone. */
+/**
+ * The room an option's text has in one line, by variant, on the narrow phone. Only options she
+ * ticks stand two by two (`TextChoices`), so a grid tile's mark is their box (`TickBox`), not the
+ * letter's badge: counted with the badge, the budget was eight characters, one short of the
+ * contract's short option (`SELECT_SHORT_CHARS`) — "Nominativ" sent six cases to one column.
+ */
 const GRID_TEXT_ROOM =
   (NARROW_PHONE - 2 * SCREEN_PAD - CARD_GAP) / 2 -
   (PRACTICE.optionPaddingStart + PRACTICE.optionPaddingEnd) -
   2 * PRACTICE.selectedBorder -
-  LETTER_COL -
+  PRACTICE.checkboxSize -
   LETTER_GAP;
 const LIST_TEXT_ROOM =
   NARROW_PHONE -

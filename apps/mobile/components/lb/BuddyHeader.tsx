@@ -15,8 +15,12 @@ import { IconBtn } from './IconBtn.js';
 import { Progress } from './Progress.js';
 import { ReadAloudSwitch } from './ReadAloudSwitch.js';
 
-/** Between the subtitle and its tail ("Frage 1 von 3 · noch 10 Min."): written here, once. */
-const SUBTITLE_JOIN = ' · ';
+/**
+ * Between the subtitle and its tail ("Frage 1 von 3 · noch 10 Min."): written here, once. The tail
+ * is a text of its own on one line (`nowrap`), and a browser drops an ordinary space a line starts
+ * with — it stood "Frage 1 von 3· noch 10 Min." —, so the first one is a no-break space.
+ */
+const SUBTITLE_JOIN = '\u00A0· ';
 
 export type BuddyHeaderProps = {
   title: string;

@@ -30,8 +30,8 @@ const FLOWER: readonly SchematicAnchor[] = [
   { id: 'petal', at: [64, 85], badge: [12, 103], tap: null },
   { id: 'receptacle', at: [125, 171], badge: [12, 181], tap: [103, 163, 44, 44] },
   { id: 'stamen', at: [118, 51], badge: [12, 51], tap: null },
-  { id: 'ovary', at: [125, 125], badge: [12, 129], tap: [116, 89, 48, 74] },
-  { id: 'style', at: [151, 62], badge: [12, 77], tap: [130, 47, 44, 42] },
+  { id: 'ovary', at: [125, 125], badge: [12, 129], tap: [116, 91, 48, 72] },
+  { id: 'style', at: [151, 62], badge: [12, 77], tap: [130, 47, 44, 44] },
   { id: 'stigma', at: [157, 38], badge: [288, 43], tap: [135, 3, 44, 44] },
 ];
 

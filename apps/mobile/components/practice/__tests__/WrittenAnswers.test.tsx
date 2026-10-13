@@ -16,12 +16,18 @@
 // Ob das Größte samt Buddys Antwort auf 360×740 passt, misst der Walkthrough
 // (tests/web/written.spec.ts), nicht diese Schicht.
 
-import type { ColumnCalcTaskView, FindErrorTaskView } from '@learnbuddy/shared-types/contracts';
+import {
+  COLUMN_SIGN,
+  type ColumnCalcTaskView,
+  type FindErrorTaskView,
+} from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { renderInApp } from '../../../testing/render.js';
-import { ColumnAnswer, digitOf, type StepOpen } from '../ColumnAnswer.js';
+import { PRACTICE } from '../../../lib/theme/practice.js';
+import { SPACE, TOUCH } from '../../../lib/theme/space.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
+import { ColumnAnswer, columnDigit, columnRoom, digitOf, type StepOpen } from '../ColumnAnswer.js';
 import { FindErrorAnswer } from '../FindErrorAnswer.js';
 
 /** The window the screen is laid out in: a roomy phone unless a test says otherwise. */
@@ -201,6 +207,25 @@ describe('schriftlich rechnen', () => {
     expect(digitOf('58')).toBe('8');
     expect(digitOf('a')).toBe('');
     expect(digitOf('')).toBe('');
+  });
+
+  // 174 : 5 on a 360-pt phone (#599 correction): six digit columns at their 44-pt frames and two
+  // signs are 316 pt. With the paper's own padding around the grid's viewport the room was 302
+  // and the quotient's last cell stood cut at the paper's edge; the viewport is the whole paper now.
+  it('gives the grid the whole paper: the simplest division fits a 360-pt phone unscrolled', () => {
+    const paper = 360 - 2 * SPACE.lg;
+    expect(columnRoom(paper)).toBe(318);
+    const digit = columnDigit(columnRoom(paper), 8, 2);
+    expect(digit).toBe(PRACTICE.columnDigitTarget);
+    expect(6 * digit + 2 * COLUMN_SIGN).toBeLessThanOrEqual(columnRoom(paper));
+    // A wider phone gives the columns more, up to a square; a longer division scrolls sideways.
+    expect(columnDigit(columnRoom(390 - 2 * SPACE.lg), 8, 2)).toBe(TOUCH + SPACE.xs);
+    expect(columnDigit(columnRoom(paper), 10, 2)).toBe(PRACTICE.columnDigitTarget);
+    expect(columnDigit(0, 8, 2)).toBe(PRACTICE.columnDigitTarget);
+    show();
+    const paperBox = styleOf(screen.getByTestId('column-paper'));
+    expect([paperBox.paddingLeft, paperBox.paddingRight]).toEqual(['0px', '0px']);
+    expect(paperBox.paddingTop).toBe(`${SPACE.sm}px`);
   });
 
   it('names every cell by what it is and its place, and reads a printed row as one number', () => {

@@ -14,7 +14,7 @@ import { answerFolds, formDensity } from '../keyboard.js';
 import { useFigureSizing } from '../math/figureSizing.js';
 import { useVisibleHeight } from '../useVisibleHeight.js';
 import { boardKeeps, newestReply, readsThrough, threadRoom, type Room } from './threadRoom.js';
-import { visualCaps, visualGrows, visualReach } from './visuals.js';
+import { CARD_REACH, visualCaps, visualGrows } from './visuals.js';
 
 /** The question on screen, and the window it is laid out in. */
 type Question = {
@@ -181,7 +181,7 @@ export function useScreenRoom() {
       // the card then only made an empty band under that row and squeezed the conversation — a
       // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
       growable: visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight',
-      reach: visualReach(item.figure),
+      reach: CARD_REACH,
       // A Diktat card before her first answer holds only the way to hear the word (issue #242):
       // it takes all the room the conversation does not use, so no empty band is left under it.
       fills: cardNatural > 0 && item.kind === 'spelling_dictation' && !q.dictationCompact,

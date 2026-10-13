@@ -19,6 +19,7 @@ import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { QuestionCard as PresentationCard, RunMeta, RunMetaLine } from '../lb/QuestionCard.js';
+import { boardCap, standsAlone } from '../../lib/practice/visuals.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { Progress } from '../lb/Progress.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
@@ -240,7 +241,10 @@ export function QuestionCard({
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
   const filled = fillableAnswer(prompt, answer);
-  const hasVisual = figure !== null || (image !== null && imageKey !== undefined);
+  // A labelled picture that is an image stands under the card, a card of its own (`standsAlone`).
+  const picture = figure && standsAlone(figure) ? figure : null;
+  const inCard = picture ? null : figure;
+  const hasVisual = inCard !== null || (image !== null && imageKey !== undefined);
   // Only a card that USES the room takes it (issue #143). #96 gave the card whatever the
   // conversation did not need, so a drawing could size itself from the measured space —
   // right for a figure, wrong for one line of text: "da steht nur eine kleine frage und
@@ -257,14 +261,14 @@ export function QuestionCard({
   // Hunderterfeld, about 27 pt each. That height comes with the drawing's sizing report.
   const drawingNatural = useDrawingNatural();
   const fullCard =
-    figure && drawingNatural > 0 && headHeight > 0
+    inCard && drawingNatural > 0 && headHeight > 0
       ? 2 * pad + headHeight + FIGURE_GAP + FIGURE_CHROME + drawingNatural
       : Infinity;
   const cardMin = grown ? Math.min(minHeight, fullCard) : 0;
   const figureRoom =
     grown && headHeight > 0 ? cardMin - 2 * pad - headHeight - FIGURE_GAP - FIGURE_CHROME : 0;
   const figureMax = figureRoom > (figureMaxHeight ?? 0) ? figureRoom : figureMaxHeight;
-  return (
+  const card = (
     <PresentationCard
       testID="question-card"
       extra={extra}
@@ -343,7 +347,7 @@ export function QuestionCard({
             />
           </ReadAgain>
         </View>
-        {figure && !compactFeedback ? (
+        {inCard && !compactFeedback ? (
           <View
             style={
               grown
@@ -352,7 +356,7 @@ export function QuestionCard({
             }
           >
             {/* While she types the drawing folds to one line (issue #379). */}
-            <QuestionFigure figure={figure} maxHeight={figureMax} folded={typing} />
+            <QuestionFigure figure={inCard} maxHeight={figureMax} folded={typing} />
           </View>
         ) : null}
         {image && imageKey && !compactFeedback ? (
@@ -362,6 +366,17 @@ export function QuestionCard({
         ) : null}
       </View>
     </PresentationCard>
+  );
+  if (!picture || compactFeedback) return card;
+  return (
+    <>
+      {card}
+      {/* As far under the question as her answer stands under both; folded while she types, like
+          every drawing (#379). */}
+      <View testID="question-picture" style={{ marginTop: PRACTICE.ordinaryBody.gap }}>
+        <QuestionFigure figure={picture} maxHeight={boardCap(viewHeight)} folded={typing} />
+      </View>
+    </>
   );
 }
 

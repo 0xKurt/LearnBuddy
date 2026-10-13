@@ -42,8 +42,11 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
         <>
           <Image
             source={pictures.images[figure.d]}
-            // The frame says what it shows (`describeSchematic`); the image adds no second voice.
+            // The frame says what it shows (`describeSchematic`); the image adds no second voice:
+            // decorative, also as the browser's <img> (expo-image writes this label as its `alt`;
+            // a missing one is read by the file's name, axe `image-alt`).
             accessible={false}
+            accessibilityLabel=""
             contentFit="contain"
             style={{ width, height }}
           />

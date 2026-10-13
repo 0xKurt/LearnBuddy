@@ -6,8 +6,9 @@
 //   so Buddy's newest turn shows whole (`threadRoom`'s `cardGrowTo` < 0).
 // - Whether it may grow into room the conversation leaves (`visualGrows`): every drawing and
 //   photo may, a note line only gives (issue #275 — it is read left to right at its own size).
-// - How far it may grow (`visualReach`): to half of what she sees; a tall labelled picture as far
-//   as the conversation leaves room (issue #462).
+// - How far it may grow: to half of what she sees (`CARD_REACH`).
+// - Which one is not in the card at all (`standsAlone`): a labelled picture that is an image
+//   stands under it as a card of its own, as tall as the picture she taps may be (`boardCap`).
 // - While she types (`formDensity` is `tight`, lib/keyboard.ts) the reading text steps down to
 //   its smaller share and the drawing folds to one line that opens it large (`QuestionCard`,
 //   `ZoomableFigure`, issues #233, #379): no cap fits a box diagram, which does not shrink.
@@ -15,7 +16,7 @@
 import { PRACTICE } from '../theme/practice.js';
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 
-import { schematicBounds } from '../../../../packages/shared-math/src/schematics.js';
+import { isImageSchematic } from '../../../../packages/shared-math/src/schematics.js';
 
 /** A drawing's cap: a share of what she sees. */
 const FIGURE_SHARE = PRACTICE.figureShare;
@@ -23,10 +24,11 @@ const FIGURE_SHARE = PRACTICE.figureShare;
 const IMAGE_SHARE = PRACTICE.imageShare;
 const IMAGE_MAX = PRACTICE.imageHeight;
 /**
- * A figure she answers IN (`FigureTapAnswer`, issues #248, #251): a share of what she sees, so a tall
- * one — the map of Germany — is drawn narrower rather than push "Prüfen" off a 360×740 phone. There
- * it is 330 pt, the room in which the server decides what a finger can tap
- * (`REGION_TAP_BOX` in packages/shared-math/src/regions.ts).
+ * A figure she answers IN (`FigureTapAnswer`, issues #248, #251) and a labelled picture she
+ * answers FROM (`standsAlone`): a share of what she sees, so a tall one — the map of Germany, the
+ * skeleton — is drawn narrower rather than push "Prüfen" off a 360×740 phone. There it is 330 pt,
+ * the room in which the server decides what a finger can tap (`REGION_TAP_BOX` in
+ * packages/shared-math/src/regions.ts).
  */
 const BOARD_SHARE = PRACTICE.boardShare;
 
@@ -38,23 +40,22 @@ const BOARD_SHARE = PRACTICE.boardShare;
 const KEEPS_ITS_SIZE: ReadonlySet<Figure['type']> = new Set(['staff', 'code']);
 
 export function visualGrows(figure: Figure | null | undefined): boolean {
-  return !figure || !KEEPS_ITS_SIZE.has(figure.type);
+  return !figure || !(KEEPS_ITS_SIZE.has(figure.type) || standsAlone(figure));
+}
+
+/**
+ * A labelled picture that is an image (#599; design ui_kits/app task-label) is not in the question
+ * card: it stands under it as a card of its own at card width, where its numbers are the design's
+ * size — in the card, under the drawings' cap, the bicycle stood 104 pt high on 360×740 and its
+ * numbers 9 pt. One sizing for it and for the picture she taps (`boardCap`). The circuit, the one
+ * picture we draw, is a drawing like any other.
+ */
+export function standsAlone(figure: Figure | null | undefined): boolean {
+  return figure?.type === 'schematic' && isImageSchematic(figure.d);
 }
 
 /** How far a card with a drawing or photo grows into the free room: a share of the window. */
-const CARD_REACH = PRACTICE.cardReach;
-
-/**
- * The share of what she sees a card with this figure may grow to (`threadRoom`): half. A labelled
- * picture taller than wide — the skeleton, the lab, an Anlaut chart — goes as far as the
- * conversation leaves room: its width is fixed by the phone, so only height makes it larger, and at
- * half of 360×740 the skeleton stood a third smaller than the free room allowed (issue #462).
- */
-export function visualReach(figure: Figure | null | undefined): number {
-  if (figure?.type !== 'schematic') return CARD_REACH;
-  const [x0, y0, x1, y1] = schematicBounds(figure.d);
-  return y1 - y0 > x1 - x0 ? 1 : CARD_REACH;
-}
+export const CARD_REACH = PRACTICE.cardReach;
 
 /**
  * The tallest a drawing and a photo may stand in the card. `cardGrowTo` < 0 is room the card
@@ -73,8 +74,8 @@ export function visualCaps(
 }
 
 /**
- * The tallest a figure she answers in may stand (`FigureTapAnswer`): it stands in the answer
- * instead of the card and gives nothing back to the conversation.
+ * The tallest a figure outside the card may stand — the one she answers in (`FigureTapAnswer`),
+ * a labelled picture under its question (`standsAlone`): it gives nothing back to the conversation.
  */
 export function boardCap(viewHeight: number): number {
   return Math.round(viewHeight * BOARD_SHARE);

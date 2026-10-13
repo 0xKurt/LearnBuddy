@@ -64,6 +64,13 @@ describe('SchematicBody', () => {
     expect(FIGURE_PICTURE.radius).toBe(14);
   });
 
+  it('the image is decorative for a screen reader: the frame around it says what it shows', async () => {
+    const { getByTestId } = renderInApp(<SchematicBody figure={labelled} width={300} />);
+    await loaded();
+    // An <img> without `alt` is read by its file name (axe `image-alt`, critical).
+    expect(getByTestId('schematic-picture').querySelector('img')?.getAttribute('alt')).toBe('');
+  });
+
   it('writes the numbers 1, 2, 3 on the parts, never a name', async () => {
     const { container } = renderInApp(<SchematicBody figure={labelled} width={300} />);
     await loaded();

@@ -58,6 +58,29 @@ const ROW = TOUCH + SPACE.xs;
 const HALF_ROW = ROW / 2;
 /** The line under the numbers: drawn, not a hairline — it is what the sum stands under. */
 const RULE = PRACTICE.columnRule;
+/** The room around the grid inside its sideways viewport: a focused cell's ring is drawn whole. */
+const RING = SPACE.xs;
+/** The least a digit's column is: the contract's legibility floor, and a full touch frame (#576). */
+const DIGIT_LEAST = Math.max(COLUMN_DIGIT_MIN, PRACTICE.columnDigitTarget);
+
+/**
+ * The room the grid has in a paper `paper` pt wide: all of it but the frame and the ring's room.
+ * The paper keeps no padding of its own at the sides — with it, 174 : 5 (316 pt at full frames)
+ * had 302 pt on a 360-pt phone and the quotient's last cell stood cut at the edge.
+ */
+export function columnRoom(paper: number): number {
+  return Math.floor(paper) - 2 * PRACTICE.border - 2 * RING;
+}
+
+/**
+ * A digit column's width in `room`: square where the phone allows, never under a full touch frame
+ * — a grid wider than the room scrolls sideways (rule 16). `room` 0: not measured yet.
+ */
+export function columnDigit(room: number, cols: number, signCount: number): number {
+  if (room <= 0) return DIGIT_LEAST;
+  const even = Math.floor((room - signCount * COLUMN_SIGN) / (cols - signCount));
+  return Math.max(DIGIT_LEAST, Math.min(ROW, even));
+}
 
 function isGap(cell: ColumnCalcTaskView['rows'][number]['cells'][number]): cell is ColumnGap {
   return 'id' in cell;
@@ -143,14 +166,7 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
   const cols = Math.max(...view.rows.map((r) => r.cells.length));
   const signs = Array.from({ length: cols }, (_, c) => signColumn(view.rows, c));
   const signCount = signs.filter(Boolean).length;
-  // Prefer square columns, retaining both the domain legibility floor and full touch frames.
-  const digitWidth =
-    width > 0
-      ? Math.max(
-          Math.max(COLUMN_DIGIT_MIN, PRACTICE.columnDigitTarget),
-          Math.min(ROW, Math.floor((width - signCount * COLUMN_SIGN) / (cols - signCount))),
-        )
-      : Math.max(COLUMN_DIGIT_MIN, PRACTICE.columnDigitTarget);
+  const digitWidth = columnDigit(width, cols, signCount);
   const colWidth = (c: number) => (signs[c] ? COLUMN_SIGN : digitWidth);
   const gridWidth = Array.from({ length: cols }, (_, c) => colWidth(c)).reduce((a, b) => a + b, 0);
 
@@ -312,19 +328,18 @@ export function ColumnAnswer({ view, draftKey, disabled, onSubmit, opens = null 
         >
           <View
             testID="column-paper"
-            onLayout={(e) =>
-              setWidth(Math.floor(e.nativeEvent.layout.width) - 2 * SPACE.sm - 2 * PRACTICE.border)
-            }
+            onLayout={(e) => setWidth(columnRoom(e.nativeEvent.layout.width))}
             style={{
               backgroundColor: ink.paper,
               borderWidth: PRACTICE.border,
               borderColor: ink.gridStrong,
               borderRadius: around(RADIUS.sm, SPACE.sm),
-              padding: SPACE.sm,
+              // Above and below only: at the sides the grid's viewport is the paper (`columnRoom`).
+              paddingVertical: SPACE.sm,
             }}
           >
             <PartsArea horizontal>
-              <View style={{ padding: SPACE.xs }}>{grid}</View>
+              <View style={{ padding: RING }}>{grid}</View>
             </PartsArea>
           </View>
         </PartsArea>

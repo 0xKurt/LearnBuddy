@@ -1,7 +1,7 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { boardCap, visualCaps, visualGrows, visualReach } from '../practice/visuals.js';
+import { boardCap, standsAlone, visualCaps, visualGrows } from '../practice/visuals.js';
 
 describe('the figure table (issue #310, step 5)', () => {
   it('lets every drawing grow but a note line, which only gives (#275)', () => {
@@ -12,16 +12,16 @@ describe('the figure table (issue #310, step 5)', () => {
     expect(visualGrows(null)).toBe(true);
   });
 
-  it('grows a card to half the window, a labelled picture taller than wide further (#462)', () => {
+  it('a labelled picture that is an image stands alone under the card; the circuit we draw does not', () => {
     const picture = (d: string) => ({ type: 'schematic', d, n: ['a', 'b'], ask: 1 }) as Figure;
-    expect(visualReach({ type: 'geometry' } as Figure)).toBe(0.5);
-    expect(visualReach(null)).toBe(0.5);
-    expect(visualReach(picture('bicycle'))).toBe(0.5);
-    expect(visualReach(picture('skeleton'))).toBe(1);
-    expect(visualReach(picture('digestion'))).toBe(1);
-    // Since the pictures are images (#599) the lab and the Anlaut chart are wider than high.
-    expect(visualReach(picture('lab'))).toBe(0.5);
-    expect(visualReach(picture('anlaut'))).toBe(0.5);
+    expect(standsAlone(picture('bicycle'))).toBe(true);
+    expect(standsAlone(picture('skeleton'))).toBe(true);
+    expect(standsAlone(picture('circuit'))).toBe(false);
+    expect(standsAlone({ type: 'geometry' } as Figure)).toBe(false);
+    expect(standsAlone(null)).toBe(false);
+    // It is not in the card: the card has nothing to grow around.
+    expect(visualGrows(picture('bicycle'))).toBe(false);
+    expect(visualGrows(picture('circuit'))).toBe(true);
   });
 
   it('caps a drawing at 14 % and a photo at 20 % (≤ 180 pt) of what she sees', () => {

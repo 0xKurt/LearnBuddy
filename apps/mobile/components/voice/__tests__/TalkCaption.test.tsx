@@ -76,6 +76,9 @@ describe('the one line', () => {
     expect(own(answer).color).toBe(css(paletteOf('pastell').ink2));
     // Longer than its room, it scrolls inside it instead of being cut.
     expect(own(screen.getByTestId('scroll-talk')).maxHeight).toBe('174px');
+    // And reachable without a pointer, like the app's other scroll regions (axe
+    // `scrollable-region-focusable`, walkthrough 33-talk-answer).
+    expect(screen.getByTestId('scroll-talk').getAttribute('tabindex')).toBe('0');
   });
 
   it('shows an answer that arrived whole in full while it is read (the help answer, rule 18)', () => {

@@ -7,6 +7,7 @@ import type { SessionItemView } from '@learnbuddy/shared-types/contracts';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { Text, View } from 'react-native';
 
+import { ROW_SPLIT } from '../../lib/theme/components.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { RESULT } from '../../lib/theme/results.js';
 import { RADIUS } from '../../lib/theme/radius.js';
@@ -113,27 +114,17 @@ export function ResultList({ variant = 'cards', title, rows, delay = 0, animate 
               >
                 <Icon name={skin.icon} size={RESULT.glyph} color={skin.color} />
               </View>
-              <View style={{ flex: 1, minWidth: 0, gap: RESULT.textGap }}>
+              {/* The title keeps its room, the state takes the rest and wraps there — the list
+                  row's own pattern (`ROW_SPLIT`): with the state unshrinkable at up to 45 % of the
+                  row, "Noch nicht beantwortet" cut the title down to a word per line on 360. */}
+              <View style={[ROW_SPLIT.title, { gap: RESULT.textGap }]}>
                 <InlineText text={tailTied(row.text)} style={TYPE.option} />
                 {row.detail ? <InlineText text={row.detail} style={TYPE.meta} /> : null}
                 {row.note ? (
                   <InlineText text={row.note} style={[TYPE.meta, { color: palette.ink2 }]} />
                 ) : null}
               </View>
-              {/* Never squeezed out by a long title, never wider than its share of the row: a
-                  long state ("Noch nicht beantwortet") wraps there instead of cutting the title
-                  down to a word per line on 360. */}
-              <Text
-                style={[
-                  TYPE.meta,
-                  {
-                    lineHeight: TYPE.option.lineHeight,
-                    flexShrink: 0,
-                    maxWidth: RESULT.labelShare,
-                    textAlign: 'right',
-                  },
-                ]}
-              >
+              <Text style={[TYPE.meta, { lineHeight: TYPE.option.lineHeight }, ROW_SPLIT.value]}>
                 {row.label}
               </Text>
             </View>

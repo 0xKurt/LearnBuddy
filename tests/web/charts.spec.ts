@@ -135,6 +135,23 @@ test('charts: every chart type drawn, read and judged by code', async ({ page })
     await page.setViewportSize({ width: 360, height: 740 });
     const box = await figure.boundingBox();
     expect(box?.width ?? 0, `${q.name}: figure width at 360`).toBeLessThanOrEqual(360 - 2 * 16);
+    // On both phones the chart keeps the width its labels are checked at (`CHART_WIDTH`, issue
+    // #501) — scaled below it, the climate chart stood squashed, its twelve month initials on top
+    // of each other. Measured while the question is open: once a typed answer is in, the question
+    // steps back to its closed line and shows no drawing (#597).
+    for (const phone of q.round ? [] : PHONES) {
+      await page.setViewportSize(phone);
+      await settle(page);
+      const drawn = await figure.evaluate((el) =>
+        Math.max(
+          0,
+          ...Array.from(el.querySelectorAll('svg'), (s) => s.getBoundingClientRect().width),
+        ),
+      );
+      expect(drawn, `${q.name} @${phone.width}: the chart's width`).toBeGreaterThanOrEqual(
+        CHART_WIDTH,
+      );
+    }
     await page.setViewportSize({ width: 390, height: 844 });
 
     if ('type' in q.answer) {
@@ -145,22 +162,6 @@ test('charts: every chart type drawn, read and judged by code', async ({ page })
       await page.getByRole('button', { name: 'Prüfen' }).click();
     }
     await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
-    // Answered, the card gives room back to the conversation; the chart still keeps the width its
-    // labels are checked at (`CHART_WIDTH`, issue #501) — scaled below it, the climate chart stood
-    // squashed, its twelve month initials on top of each other.
-    for (const phone of q.round ? [] : PHONES) {
-      await page.setViewportSize(phone);
-      await settle(page);
-      const drawn = await figure.evaluate((el) =>
-        Math.max(
-          0,
-          ...Array.from(el.querySelectorAll('svg'), (s) => s.getBoundingClientRect().width),
-        ),
-      );
-      expect(drawn, `${q.name} answered @${phone.width}: the chart's width`).toBeGreaterThanOrEqual(
-        CHART_WIDTH,
-      );
-    }
     await page.setViewportSize(PHONES[0]);
     if (n === 0) await shot(page, '67-chart-answered');
     if (n < QUESTIONS.length - 1) await page.getByRole('button', { name: 'Weiter' }).click();

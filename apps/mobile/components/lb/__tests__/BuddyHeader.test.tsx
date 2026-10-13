@@ -142,7 +142,9 @@ describe('the subtitle’s tail', () => {
   it('never shrinks, while the part before it gives way on one line', () => {
     show();
     const tail = screen.getByTestId('header-subtitle-tail');
-    expect(tail.textContent).toBe(' · encore 10 min');
+    // The tail is its own one-line text: an ordinary space at its start is dropped by the
+    // browser ("Question 1 sur 3· encore 10 min"), a no-break space is drawn.
+    expect(tail.textContent).toBe('\u00A0· encore 10 min');
     expect(styleOf(tail).flexShrink).toBe('0');
     expect(styleOf(tail).whiteSpace).toBe('nowrap');
     const lead = screen.getByText('Question 1 sur 3');

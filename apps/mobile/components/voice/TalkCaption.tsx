@@ -82,6 +82,8 @@ export function TalkCaption({
           <ScrollView
             ref={scroll}
             testID="scroll-talk"
+            // Reachable by keyboard, like the practice body (axe `scrollable-region-focusable`).
+            tabIndex={0}
             style={[
               { alignSelf: 'stretch', flexGrow: 0, maxHeight: lineRoom },
               cut === 'bottom' ? bottomEdgeMask() : cut === 'top' ? topEdgeMask : null,

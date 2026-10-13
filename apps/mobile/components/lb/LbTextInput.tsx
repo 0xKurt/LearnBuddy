@@ -278,7 +278,10 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
                 minWidth: 0,
                 // The bar's text keeps a complete editable touch target above the keys and
                 // tools. Multirow growth keeps its row bounds.
-                minHeight: top ? rows * LINE + 2 * SPACE.md : bar ? TOUCH : inner,
+                minHeight: top ? rows * LINE + 2 * SPACE.md : bar || cell ? TOUCH : inner,
+                // A cell's frame is one touch target, and so is what she taps in it: the field
+                // reaches over the frame's hairline instead of standing 42 pt inside it.
+                ...(cell ? { marginVertical: -UI.border } : {}),
                 maxHeight: lines ? Math.max(rows, maxRows) * LINE + 2 * SPACE.md : undefined,
                 paddingHorizontal: bar ? UI.field.composerHorizontal : cell ? SPACE.xs : SPACE.lg,
                 // A single line centres itself. A multiline one starting on one line is centred
