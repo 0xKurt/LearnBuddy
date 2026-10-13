@@ -41,13 +41,13 @@ export default function ProfileSettingsScreen() {
   };
   if (!me.data && me.error)
     return (
-      <Screen {...frame}>
+      <Screen {...frame} state="think">
         <LoadFailed error={me.error} onRetry={() => void me.refetch()} />
       </Screen>
     );
   if (!me.data)
     return (
-      <Screen {...frame}>
+      <Screen {...frame} state="think">
         <SettingsSkeleton label={t('common:loading')} />
       </Screen>
     );

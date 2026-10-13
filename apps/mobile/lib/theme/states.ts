@@ -46,18 +46,13 @@ export const SKELETON = {
     shortPill: 72,
     short: 84,
     tag: 90,
-    end: 96,
-    brand: 104,
     medium: 110,
     eyebrow: 120,
     longPill: 128,
     long: 150,
     startLabel: 52,
   },
-  /** A screen's head row, the practice head's rule under it and the row to the card. */
-  head: 52,
-  headRule: 4,
-  headGap: 10,
+  /** The practice progress row to the card under it. */
   progressGap: 10,
   /** A tinted card (the question, a memory): the padding its bones were drawn with (18, not a card's 20), and the question card's own corner. */
   tintPad: 18,

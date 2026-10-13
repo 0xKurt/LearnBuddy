@@ -1,20 +1,17 @@
 // The ⋯ menu on Buddy's home and the sheets its ways to start can open (issue #174). The ways to
 // start and their sheets are a domain's (components/buddy/extensions.ts `startMenu`, issue #107):
 // the learning domain's homework, vocabulary, speaking and test. Without one the menu holds only
-// the places. Each way closes the sheet it came from first: two modals in one frame do not come
-// up on iOS.
+// the places. The sheet itself, and the tick it leaves before a way opens the next one, is the
+// same on every screen (`HeaderMenu`).
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform } from 'react-native';
 
 import { startMenu } from './extensions.js';
-import { MenuSheet } from './MenuSheet.js';
+import { HeaderMenu } from './HeaderMenu.js';
 
-/** iOS can't present a sheet while another one is still sliding away. */
-export const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
+export { SHEET_SWAP_MS } from './HeaderMenu.js';
 
 type Props = {
   menuOpen: boolean;
@@ -32,24 +29,12 @@ export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Pro
   const [sheet, setSheet] = useState<string | null>(null);
   const menu = startMenu.get();
 
-  /** Same from the ⋯ menu: some of the ways to start open a sheet of their own (#174). */
-  function fromMenu(go: () => void): void {
-    onCloseMenu();
-    setTimeout(go, SHEET_SWAP_MS);
-  }
-
   return (
     <>
-      <MenuSheet
+      <HeaderMenu
         visible={menuOpen}
-        // Each way to start closes the sheet first: some of them open a sheet of their
-        // own, and two modals in one frame do not come up on iOS.
-        start={(menu?.items(next, t, { send, open: setSheet }) ?? []).map((i) => ({
-          ...i,
-          onPress: () => fromMenu(i.onPress),
-        }))}
-        canStart={canStart}
-        onGo={(path) => fromMenu(() => router.push(path))}
+        actions={menu?.items(next, t, { send, open: setSheet })}
+        canAct={canStart}
         onClose={onCloseMenu}
       />
       {menu ? <menu.Sheets open={sheet} onOpen={setSheet} /> : null}

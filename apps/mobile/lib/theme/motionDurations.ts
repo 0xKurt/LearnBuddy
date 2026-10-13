@@ -34,11 +34,6 @@ const TIMING = {
   recordingPulse: 700,
   /** The furthest the word reveal may trail the voice (lib/buddy/reveal). */
   wordRevealLag: 700,
-  /** When each part of the finished-session page arrives (practice/SessionSummary). */
-  summaryTitle: 260,
-  summaryCard: 460,
-  summaryLine: 140,
-  summaryReview: 900,
   /** Lead between a result heading and its first card (lb/ResultList). */
   resultCardLead: 60,
 } as const;

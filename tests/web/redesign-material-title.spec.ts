@@ -29,6 +29,8 @@ for (const look of SCREEN_LOOKS) {
     ).toBeVisible();
     await expect(page.getByText('Mathe · 4 Aufgaben', { exact: true })).toBeVisible();
     await screenShots(page, `material-title-${key}-original`);
+    // Renaming is the sheet's own action in the head's ⋯ (#599).
+    await page.getByRole('button', { name: 'Mehr', exact: true }).click();
     await page
       .getByRole('button', { name: '„Brüche kürzen und vergleichen“ umbenennen', exact: true })
       .click();
@@ -65,6 +67,7 @@ for (const look of SCREEN_LOOKS) {
         .toBe(true);
     }
     await screenShots(page, `material-title-${key}-long`);
+    await page.getByRole('button', { name: 'Mehr', exact: true }).click();
     await expect(
       page.getByRole('button', { name: `„${LONG_TITLE}“ umbenennen`, exact: true }),
     ).toBeVisible();

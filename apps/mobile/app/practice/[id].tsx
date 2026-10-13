@@ -37,12 +37,11 @@ import { CheckOverrideProvider } from '../../components/practice/CheckOverride.j
 
 import type { SpeakStreamEvent } from '@learnbuddy/shared-types/contracts';
 import { useLocalSearchParams } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ReadAloudSwitch } from '../../components/lb/ReadAloudSwitch.js';
 import { KeyboardSafe } from '../../components/lb/KeyboardSafe.js';
 import { SlideIn } from '../../components/lb/Motion.js';
 import { Screen } from '../../components/lb/Screen.js';
@@ -62,8 +61,10 @@ import { QuestionMenu, QuestionProgress } from '../../components/practice/Questi
 import { QuestionHelp, QuestionThread } from '../../components/practice/QuestionThread.js';
 import { AnswerFlow } from '../../components/practice/AnswerShell.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
+import { useSpeakPhase } from '../../components/practice/SpeakPanel.js';
 import { isRetryable } from '../../lib/api/apiError.js';
 import { usePracticeSession } from '../../lib/api/queries.js';
+import { practiceHeadState } from '../../lib/buddy/headState.js';
 import { messageFor } from '../../lib/errors.js';
 import { isForeign } from '../../lib/i18n/index.js';
 import { FigureSizingReport } from '../../lib/math/figureSizing.js';
@@ -100,6 +101,12 @@ export default function PracticeScreen() {
   const { heard, markHeard } = useHeardTexts(id);
   /** The pronunciation judgement while the model is still listening (issue #8). */
   const [speakLive, setSpeakLive] = useState<SpeakStreamEvent | null>(null);
+  /** What a speaking task does with her voice right now: the head's orb follows it. */
+  const speakPhase = useSpeakPhase((s) => s.phase);
+  // What was there when the screen opened stands still; a judgement that arrives now is fresh.
+  const knownTurns = useRef<ReadonlySet<string> | null>(null);
+  if (session && knownTurns.current === null)
+    knownTurns.current = new Set(session.turns.map((turn) => turn.id));
   // Measured: what the conversation's content really needs and what the question takes, so the
   // conversation can show whole turns in the room there is (issue #286, `useScreenRoom`).
   const measured = useScreenRoom();
@@ -144,7 +151,13 @@ export default function PracticeScreen() {
       );
     }
     return (
-      <Screen>
+      // Design ui_kits/app/Extra.jsx `SystemState` "load-question": the head is there at once,
+      // with the way out, and Buddy thinks while the questions are fetched.
+      <Screen
+        title={t('practice:title_fallback')}
+        state="think"
+        leading={{ icon: 'close', label: t('practice:end_label'), onPress: backToBuddy }}
+      >
         <PracticeSkeleton label={t('practice:loading')} />
       </Screen>
     );
@@ -202,6 +215,8 @@ export default function PracticeScreen() {
   const view = questionView(session, shown, pending);
   const { open } = view;
   const locked = busy || end.closing;
+  /** Her newest judged try at this question: what the head's orb answers (`practiceHeadState`). */
+  const lastTry = view.turns.filter((turn) => turn.role === 'learner' && turn.verdict).at(-1);
   // Which way she answers — exactly one (`answerForm`).
   const form = answerForm(item, open);
   // Her short answer appears in the gap of a fill-in sentence while she types.
@@ -368,18 +383,29 @@ export default function PracticeScreen() {
         label: t('practice:end_label'),
         hint: t(offers.testing ? 'practice:end_hint_test' : 'practice:end_hint'),
       }}
-      sound={<ReadAloudSwitch />}
-      right={
-        <QuestionMenu
-          session={session}
-          item={item}
-          open={open}
-          testing={offers.testing}
-          flaggable={offers.flaggable}
-          disabled={locked}
-          onCorner={(action) => corner.ask(action, item.id)}
-        />
-      }
+      state={practiceHeadState({
+        listening: speakPhase === 'hearing',
+        checking: busy || view.pendingText !== null || speakPhase === 'judging',
+        open,
+        fresh: lastTry !== undefined && knownTurns.current?.has(lastTry.id) === false,
+        // A test keeps its verdicts for the review: no celebration gives one away.
+        afterCorrect: !offers.testing && lastTry?.verdict === 'correct',
+      })}
+      // The question's own ⋯ ("Frage passt nicht", "Einspruch"), drawn only while it has something
+      // to offer: its action cannot stand in the shared menu before that sheet has room for it.
+      menu={{
+        own: (
+          <QuestionMenu
+            session={session}
+            item={item}
+            open={open}
+            testing={offers.testing}
+            flaggable={offers.flaggable}
+            disabled={locked}
+            onCorner={(action) => corner.ask(action, item.id)}
+          />
+        ),
+      }}
       footer={
         <QuestionProgress
           inHeader

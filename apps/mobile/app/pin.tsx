@@ -7,7 +7,6 @@ import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { BuddyOrb } from '../components/lb/BuddyOrb.js';
 import { Btn } from '../components/lb/Btn.js';
 import { PinPad } from '../components/lb/PinPad.js';
 import { Screen } from '../components/lb/Screen.js';
@@ -79,28 +78,30 @@ export default function Pin() {
   useAnnounce(error, { key: attempt, liveRegion: false });
 
   return (
-    <Screen>
+    <Screen
+      title={t('pin.title')}
+      // Design ui_kits/app/More.jsx `ParentPin`: Buddy waits for the PIN and speaks up when it was wrong.
+      state={error ? 'speak' : 'wait'}
+      leading={{ icon: 'close', label: t('pin.cancel'), onPress: () => router.back() }}
+      // No ⋯ here: this modal is the parents' one step, and the menu's places would lead out of it
+      // with the approval still pending (lib/adminFlow.ts).
+      menu={null}
+    >
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: GUTTER,
           paddingTop: SPACE.xl,
-          // Edge-to-edge: "Abbrechen" must clear the Android navigation bar.
+          // Edge-to-edge: the last button must clear the Android navigation bar.
           paddingBottom: bottomRoom(insets.bottom, SPACE.xl),
           gap: RHYTHM.sections,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <BuddyOrb size={64} />
-        <View style={{ gap: SPACE.sm, alignItems: 'center' }}>
-          <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-            {t('pin.title')}
-          </Text>
-          <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center', maxWidth: 360 }]}>
-            {detail ?? (purpose ? t(`pin.purpose.${purpose}`) : t('pin.body'))}
-          </Text>
-        </View>
+        <Text style={[TYPE.body, { color: palette.ink2, textAlign: 'center', maxWidth: 360 }]}>
+          {detail ?? (purpose ? t(`pin.purpose.${purpose}`) : t('pin.body'))}
+        </Text>
         {error ? (
           <View
             style={{
@@ -133,9 +134,6 @@ export default function Pin() {
             {t('pin.forgot')}
           </Btn>
         ) : null}
-        <Btn variant="ghost" pill center onPress={() => router.back()}>
-          {t('pin.cancel')}
-        </Btn>
       </ScrollView>
     </Screen>
   );

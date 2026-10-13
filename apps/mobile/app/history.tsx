@@ -45,7 +45,7 @@ export default function History() {
   // for a thread that never loaded (same shape as app/memory.tsx).
   if (!home.data)
     return (
-      <Screen back title={t('thread.title')}>
+      <Screen back title={t('thread.title')} state="think">
         {home.error ? (
           <LoadFailed error={home.error} onRetry={() => void home.refetch()} />
         ) : (

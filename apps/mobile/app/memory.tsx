@@ -152,7 +152,7 @@ export default function MemoryScreen() {
 
   if (!memory.data) {
     return (
-      <Screen back title={title}>
+      <Screen back title={title} state="think">
         {memory.error ? (
           <LoadFailed error={memory.error} onRetry={() => void refresh()} />
         ) : (

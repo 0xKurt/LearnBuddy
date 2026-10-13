@@ -6,8 +6,6 @@ export const RESULT = {
   staggerLimit: 5,
   legacyCardGap: 6,
   legacyCardGlyph: 18,
-  legacyOrb: 96,
-  legacyOrbTop: 36,
   row: 52,
   pad: 14,
   badge: SPACE.xl,

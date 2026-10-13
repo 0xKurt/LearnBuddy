@@ -31,6 +31,7 @@ export default function Deleting() {
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <EmptyState
           orb
+          state="think"
           title={t('deleting.title')}
           body={t('deleting.body')}
           action={

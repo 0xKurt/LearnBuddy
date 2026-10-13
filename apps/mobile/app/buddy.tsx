@@ -37,6 +37,7 @@ import { Composer } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard } from '../components/buddy/DecisionCard.js';
 import { Header } from '../components/buddy/Header.js';
+import { HeaderMenu } from '../components/buddy/HeaderMenu.js';
 import { HomeIntro } from '../components/buddy/HomeIntro.js';
 import { homeNotices, ResultViewBtn } from '../components/buddy/HomeNotices.js';
 import { HomeThread } from '../components/buddy/HomeThread.js';
@@ -107,25 +108,29 @@ export default function BuddyScreen() {
   const [cardHeight, setCardHeight] = useState(0);
   const [undoError, setUndoError] = useState<{ actionId: string; text: string } | null>(null);
 
-  if (home.isPending)
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
-        <HomeSkeleton label={t('common:loading')} />
-      </SafeAreaView>
-    );
   // A failed background refresh keeps what is on screen (audit M-71); the error screen is
   // only for a home that never loaded.
-  if (home.isError && !home.data) {
+  if (home.isPending || (home.isError && !home.data)) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg, justifyContent: 'center' }}>
-        <EmptyState
-          title={messageFor(home.error)}
-          action={
-            <Btn center onPress={() => void home.refetch()}>
-              {t('common:actions.retry')}
-            </Btn>
-          }
-        />
+      <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
+        {/* The head is there before the home is (design ui_kits/app/Extra.jsx `SystemState`):
+            Buddy thinks, and ⋯ already leads to the places — the ways to start need the home. */}
+        <Header state="think" onMenu={() => setMenuOpen(true)} />
+        {home.isPending ? (
+          <HomeSkeleton label={t('common:loading')} />
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <EmptyState
+              title={messageFor(home.error)}
+              action={
+                <Btn center onPress={() => void home.refetch()}>
+                  {t('common:actions.retry')}
+                </Btn>
+              }
+            />
+          </View>
+        )}
+        <HeaderMenu visible={menuOpen} onClose={() => setMenuOpen(false)} />
       </SafeAreaView>
     );
   }
@@ -212,6 +217,8 @@ export default function BuddyScreen() {
             sending: pending !== null,
             working: h.thread.some((m) => m.role === 'learner' && m.status === 'processing'),
             streaming: live !== null,
+            // Buddy is reading a sheet she sent (design ui_kits/app/Flows.jsx `ChatState`).
+            reading: h.now?.type === 'material_processing',
           })}
           onMenu={() => setMenuOpen(true)}
         />

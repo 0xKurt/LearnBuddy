@@ -37,20 +37,7 @@ export function PracticeSkeleton({ label }: { label: string }) {
   const { palette } = useTheme();
   return (
     <SkeletonGroup label={label} style={{ flex: 1, paddingHorizontal: SPACE.lg }}>
-      {/* The header: the session's title and "Beenden". */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          minHeight: SKELETON.head,
-          gap: SPACE.md,
-        }}
-      >
-        <Bone width="46%" {...SKELETON.text.title} />
-        <View style={{ flex: 1 }} />
-        <Bone width={SKELETON.width.end} {...SKELETON.touch} />
-      </View>
-      <View style={{ height: SKELETON.headRule }} />
+      {/* The head is the real one, with Buddy thinking (`Screen`, #599): no bones for it. */}
       <View
         style={{
           flexDirection: 'row',
@@ -211,26 +198,16 @@ export function QuestionsSkeleton({ label }: { label: string }) {
   );
 }
 
-/** Buddy's home before its first load: the header, the greeting, the start row, the chat, the field. */
+/**
+ * Buddy's home before its first load, under the real head (#599): the greeting, the start row,
+ * the chat, the field.
+ */
 export function HomeSkeleton({ label }: { label: string }) {
   return (
     <SkeletonGroup
       label={label}
       style={{ flex: 1, paddingHorizontal: SPACE.lg, paddingTop: SPACE.sm }}
     >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: SKELETON.headGap,
-          minHeight: SKELETON.head,
-        }}
-      >
-        <Bone width={SKELETON.width.brand} {...SKELETON.touch} />
-        <View style={{ flex: 1 }} />
-        <Bone width={SKELETON.touch.height} {...SKELETON.touch} />
-        <Bone width={SKELETON.touch.height} {...SKELETON.touch} />
-      </View>
       <View
         style={{ alignItems: 'center', marginTop: SKELETON.greetingTop, marginBottom: SPACE.lg }}
       >

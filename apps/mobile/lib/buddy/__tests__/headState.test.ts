@@ -1,8 +1,8 @@
-// The orb in the head is a claim about Buddy (issue #179, CLAUDE.md rule 5).
+// The orb in the head follows what is happening on the screen (issue #179; owner rule 1, #599).
 
 import { describe, expect, it } from 'vitest';
 
-import { headState, type HeadFacts } from '../headState.js';
+import { headState, practiceHeadState, type HeadFacts, type PracticeFacts } from '../headState.js';
 
 const quiet: HeadFacts = { sending: false, working: false, streaming: false };
 
@@ -23,10 +23,24 @@ describe('what the head says Buddy is doing', () => {
     expect(headState({ ...quiet, working: true, streaming: true })).toBe('speak');
   });
 
-  it('never claims to listen: the chat has no open microphone (#386, reading aloud is not listening)', () => {
+  it('listens while she writes or dictates (design App.jsx `typing`, decision on #599)', () => {
+    expect(headState({ ...quiet, typing: true })).toBe('listen');
+    // …but what Buddy himself is doing is the newer truth.
+    expect(headState({ ...quiet, typing: true, sending: true })).toBe('think');
+    expect(headState({ ...quiet, typing: true, streaming: true })).toBe('speak');
+  });
+
+  it('thinks while he reads a sheet she sent, and listens when she writes meanwhile', () => {
+    expect(headState({ ...quiet, reading: true })).toBe('think');
+    expect(headState({ ...quiet, reading: true, typing: true })).toBe('listen');
+  });
+
+  it('listens only when she is the one talking', () => {
     const all = [false, true].flatMap((sending) =>
       [false, true].flatMap((working) =>
-        [false, true].map((streaming) => headState({ sending, working, streaming })),
+        [false, true].flatMap((streaming) =>
+          [false, true].map((reading) => headState({ sending, working, streaming, reading })),
+        ),
       ),
     );
     expect(all).not.toContain('listen');
@@ -34,5 +48,35 @@ describe('what the head says Buddy is doing', () => {
 
   it('is idle when nothing is happening', () => {
     expect(headState(quiet)).toBe('idle');
+  });
+});
+
+const task: PracticeFacts = { checking: false, open: true, fresh: false, afterCorrect: false };
+
+describe('what the head of a task shows (MIGRATION §6)', () => {
+  it('waits while the task is open', () => {
+    expect(practiceHeadState(task)).toBe('wait');
+  });
+
+  it('thinks while her answer is checked, open or not', () => {
+    expect(practiceHeadState({ ...task, checking: true })).toBe('think');
+    expect(practiceHeadState({ ...task, checking: true, open: false })).toBe('think');
+  });
+
+  it('celebrates a right answer that just came back, and only that', () => {
+    const closed = { ...task, open: false };
+    expect(practiceHeadState({ ...closed, fresh: true, afterCorrect: true })).toBe('happy');
+    // Reopened later, or the reply to a wrong try: Buddy rests.
+    expect(practiceHeadState({ ...closed, fresh: false, afterCorrect: true })).toBe('idle');
+    expect(practiceHeadState({ ...closed, fresh: true, afterCorrect: false })).toBe('idle');
+  });
+
+  it('waits again after a try that was not right yet', () => {
+    expect(practiceHeadState({ ...task, fresh: true, afterCorrect: false })).toBe('wait');
+  });
+
+  it('listens while she says her answer, before anything else', () => {
+    expect(practiceHeadState({ ...task, listening: true })).toBe('listen');
+    expect(practiceHeadState({ ...task, listening: true, checking: true })).toBe('listen');
   });
 });

@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GUTTER, pinnedBar, RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { GUTTER, pinnedBar, SPACE } from '../../lib/theme/space.js';
 import { ONBOARDING } from '../../lib/theme/onboarding.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -22,8 +22,6 @@ export function SetupStep({
   children,
   footer,
   top = null,
-  compact = false,
-  variant = 'centered',
   lead,
   step,
   scrollTestID,
@@ -31,7 +29,6 @@ export function SetupStep({
 }: {
   title: string;
   orbState?: MoonState;
-  variant?: 'centered' | 'onboarding';
   lead?: string;
   step?: string;
   scrollTestID?: string;
@@ -43,13 +40,10 @@ export function SetupStep({
   footer: ReactNode;
   /** Above everything, outside the scroll: a way back. */
   top?: ReactNode;
-  /** The tighter rhythm a small phone needs (`formDensity`). */
-  compact?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const form = useFormViewport();
   const { palette } = useTheme();
-  const onboarding = variant === 'onboarding';
   const content = (
     <>
       <ScrollView
@@ -63,51 +57,35 @@ export function SetupStep({
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: onboarding ? 'flex-start' : 'center',
+          justifyContent: 'flex-start',
           paddingHorizontal: GUTTER,
-          paddingTop: onboarding ? ONBOARDING.top : compact ? SPACE.lg : SPACE.xl,
-          paddingBottom: onboarding ? ONBOARDING.bottom : compact ? SPACE.lg : SPACE.xl,
-          gap: onboarding ? ONBOARDING.gap : compact ? RHYTHM.stack : RHYTHM.sections,
+          paddingTop: ONBOARDING.top,
+          paddingBottom: ONBOARDING.bottom,
+          gap: ONBOARDING.gap,
         }}
       >
-        {onboarding ? (
-          <View style={{ gap: ONBOARDING.heroGap, paddingTop: ONBOARDING.heroTop }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <BuddyOrb size={ONBOARDING.orb} state={orbState} />
-              {step ? <Text style={TYPE.label}>{step}</Text> : null}
-            </View>
-            <Text accessibilityRole="header" style={TYPE.pageHeadline}>
-              {title}
-            </Text>
-            {lead ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{lead}</Text> : null}
+        <View style={{ gap: ONBOARDING.heroGap, paddingTop: ONBOARDING.heroTop }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <BuddyOrb size={ONBOARDING.orb} state={orbState} />
+            {step ? <Text style={TYPE.label}>{step}</Text> : null}
           </View>
-        ) : (
-          <>
-            <View style={{ alignItems: 'center' }}>
-              <BuddyOrb
-                state={orbState}
-                size={compact ? ONBOARDING.legacyOrb.compact : ONBOARDING.legacyOrb.roomy}
-              />
-            </View>
-            <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-              {title}
-            </Text>
-          </>
-        )}
+          <Text accessibilityRole="header" style={TYPE.pageHeadline}>
+            {title}
+          </Text>
+          {lead ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{lead}</Text> : null}
+        </View>
         {children}
       </ScrollView>
       <View
         style={[
           pinnedBar(insets.bottom),
-          onboarding
-            ? { gap: SPACE.xs, paddingBottom: insets.bottom + ONBOARDING.footerBottom }
-            : { gap: SPACE.sm },
+          { gap: SPACE.xs, paddingBottom: insets.bottom + ONBOARDING.footerBottom },
         ]}
       >
         {footer}
@@ -116,11 +94,7 @@ export function SetupStep({
   );
   return (
     <Screen>
-      {onboarding && top ? (
-        <View style={{ flexDirection: 'row', paddingHorizontal: GUTTER }}>{top}</View>
-      ) : (
-        top
-      )}
+      {top ? <View style={{ flexDirection: 'row', paddingHorizontal: GUTTER }}>{top}</View> : null}
       <FormFrameContext.Provider value={form.controller}>
         {keyboardSafe ? <KeyboardSafe>{content}</KeyboardSafe> : content}
       </FormFrameContext.Provider>

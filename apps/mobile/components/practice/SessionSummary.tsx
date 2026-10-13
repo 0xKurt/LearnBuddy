@@ -6,9 +6,8 @@
 // to are marked as such, not as wrong (audit M-36) — in the one result list the roleplay's
 // feedback uses too (lb/ResultList.tsx, issue #384).
 //
-// Screen completion groups factual sentences and results beneath the shared header.
-// Legacy cards retain their protected Orb and staggered arrival; live reduced motion
-// settles the existing arrival delay immediately.
+// The factual sentences and the results stand beneath the shared header, whose orb celebrates
+// (`RunResult`); nothing here draws a Buddy of its own (HANDOFF §4).
 // A session that just ended here also feels like one (a success haptic, once).
 
 import type {
@@ -16,21 +15,15 @@ import type {
   SessionItemView,
   SessionMode,
 } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { haptic } from '../../lib/haptics.js';
-import type { Palette } from '../../lib/theme/palettes.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { DURATION, useMotionReduced } from '../../lib/theme/motion.js';
 import { RESULT } from '../../lib/theme/results.js';
-import { RADIUS } from '../../lib/theme/radius.js';
-import { SHADOW } from '../../lib/theme/shadow.js';
-import { CARD_PAD, RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { RHYTHM } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
-import { Rise } from '../lb/Motion.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
 import { summaryLines } from '../../lib/practice/summaryLine.js';
@@ -38,7 +31,6 @@ import { timeUpLines } from '../../lib/practice/testClock.js';
 import { ResultList, type ResultRow } from '../lb/ResultList.js';
 
 type Props = {
-  presentation?: 'legacy' | 'screen';
   summary: PracticeSummary;
   mode: SessionMode;
   /** A practice test: the questions to go through, with their solutions. */
@@ -53,7 +45,6 @@ type Props = {
 };
 
 export function SessionSummary({
-  presentation = 'legacy',
   summary,
   mode,
   review = null,
@@ -90,82 +81,32 @@ export function SessionSummary({
       ? [{ key: 'shaky', text: t('summary.shaky', { topics: shaky.join(', ') }), strong: false }]
       : []),
   ];
-  if (presentation === 'screen') {
-    return (
-      <View style={{ gap: RHYTHM.sections }}>
-        <View style={{ gap: RESULT.introGap }}>
-          <Text accessibilityRole="header" style={TYPE.display}>
-            {homework
-              ? t('summary_help.title')
-              : mode === 'test'
-                ? t(ranOut ? 'summary_test.time_up_title' : 'summary_test.title')
-                : t('summary.title')}
-          </Text>
-          {sentences.map((line) => (
-            <Text key={line.key} style={[TYPE.body, { color: palette.ink2 }]}>
-              {line.text}
-            </Text>
-          ))}
-        </View>
-        {review && review.length > 0 ? (
-          <ResultList
-            variant="rows"
-            title={t('summary_test.review')}
-            rows={review.map((row, n) => reviewRow(row, n + 1, ranOut, t))}
-            animate={false}
-          />
-        ) : null}
-      </View>
-    );
-  }
   return (
     <View style={{ gap: RHYTHM.sections }}>
-      {/* token-exempt: room above the orb, the celebrating moon flies up to about 0.75 × its
-          size */}
-      <View style={{ alignItems: 'center', gap: RHYTHM.stack, paddingTop: RESULT.legacyOrbTop }}>
-        <OrbArrival celebrate={celebrate} />
-        <Rise slow delay={DURATION.summaryTitle}>
-          <Text accessibilityRole="header" style={[TYPE.display, { textAlign: 'center' }]}>
-            {homework
-              ? t('summary_help.title')
-              : review
-                ? t(ranOut ? 'summary_test.time_up_title' : 'summary_test.title')
-                : t('summary.title')}
+      <View style={{ gap: RESULT.introGap }}>
+        <Text accessibilityRole="header" style={TYPE.display}>
+          {homework
+            ? t('summary_help.title')
+            : mode === 'test'
+              ? t(ranOut ? 'summary_test.time_up_title' : 'summary_test.title')
+              : t('summary.title')}
+        </Text>
+        {sentences.map((line) => (
+          <Text key={line.key} style={[TYPE.body, { color: palette.ink2 }]}>
+            {line.text}
           </Text>
-        </Rise>
+        ))}
       </View>
-      {sentences.length > 0 ? (
-        <Rise slow delay={DURATION.summaryCard} style={[softCard(palette), { gap: SPACE.sm }]}>
-          {sentences.map((line, i) => (
-            <Rise key={line.key} slow delay={DURATION.summaryCard + (i + 1) * DURATION.summaryLine}>
-              <Text style={[TYPE.body, line.strong ? TYPE.bodyStrong : null]}>{line.text}</Text>
-            </Rise>
-          ))}
-        </Rise>
-      ) : null}
       {review && review.length > 0 ? (
-        <View style={{ marginTop: SPACE.xs }}>
-          <ResultList
-            title={t('summary_test.review')}
-            rows={review.map((r, n) => reviewRow(r, n + 1, ranOut, t))}
-            delay={DURATION.summaryReview}
-          />
-        </View>
+        <ResultList
+          variant="rows"
+          title={t('summary_test.review')}
+          rows={review.map((row, n) => reviewRow(row, n + 1, ranOut, t))}
+          animate={false}
+        />
       ) : null}
     </View>
   );
-}
-
-/** Keep only Buddy's own celebration; the surrounding result presentation stays calm. */
-function OrbArrival({ celebrate }: { celebrate: boolean }) {
-  const reduced = useMotionReduced();
-  const [moon, setMoon] = useState<MoonState>('idle');
-  useEffect(() => {
-    if (!celebrate) return;
-    const go = setTimeout(() => setMoon('happy'), reduced ? 0 : DURATION.gentle);
-    return () => clearTimeout(go);
-  }, [celebrate, reduced]);
-  return <BuddyOrb size={RESULT.legacyOrb} state={moon} />;
 }
 
 /** One question of a practice test as a row of the result list: its state and its solution. */
@@ -197,12 +138,3 @@ function reviewRow(row: SessionItemView, number: number, ranOut: boolean, t: TFu
     note: right ? null : row.explanation,
   };
 }
-
-/** A white card on a soft shadow (no hairline box). From the palette in use (issue #84). */
-const softCard = (p: Palette) =>
-  ({
-    backgroundColor: p.paper,
-    borderRadius: RADIUS.lg,
-    padding: CARD_PAD.base,
-    ...SHADOW.soft,
-  }) as const;

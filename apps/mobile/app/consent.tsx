@@ -94,7 +94,6 @@ export default function Consent() {
 
   return (
     <SetupStep
-      variant="onboarding"
       title={t(forHerself ? 'consent.own_title' : 'consent.title')}
       lead={t(forHerself ? 'consent.own_intro' : 'consent.intro')}
       scrollTestID="scroll-list"

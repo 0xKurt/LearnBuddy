@@ -73,14 +73,14 @@ export default function SettingsScreen() {
 
   if (loadError) {
     return (
-      <Screen back title={title}>
+      <Screen back title={title} state="think">
         <LoadFailed error={loadError} onRetry={() => void refresh()} />
       </Screen>
     );
   }
   if (!settings.data || !me.data) {
     return (
-      <Screen back title={title}>
+      <Screen back title={title} state="think">
         <SettingsSkeleton label={t('common:loading')} />
       </Screen>
     );

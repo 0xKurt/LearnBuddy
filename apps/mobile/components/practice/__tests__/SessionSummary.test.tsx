@@ -54,7 +54,6 @@ describe('SessionSummary — the Probetest review', () => {
   it('passes factual open and revealed states into the grouped screen review without changing solutions', () => {
     renderInApp(
       <SessionSummary
-        presentation="screen"
         summary={SUMMARY}
         mode="test"
         ranOut

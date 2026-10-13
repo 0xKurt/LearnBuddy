@@ -23,7 +23,9 @@ type Props = {
 export function PracticeStuck({ title, message, onRetry, onBack }: Props) {
   const { t } = useTranslation(['practice', 'common']);
   return (
-    <Screen title={title}>
+    // Design components/core/States.jsx "failed": Buddy thinks about what went wrong. The way
+    // back is the button in the page, so the head needs no second one.
+    <Screen title={title ?? t('practice:title_fallback')} state="think">
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <EmptyState
           title={message}
