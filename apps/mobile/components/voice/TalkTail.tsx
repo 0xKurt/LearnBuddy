@@ -41,6 +41,8 @@ export function TalkTail({
       <ScrollView
         ref={scroll}
         testID="scroll-talk"
+        // Reachable by keyboard, like the practice body (axe `scrollable-region-focusable`).
+        tabIndex={0}
         style={[{ flexGrow: 0, flexShrink: 1 }, more ? topEdgeMask : null]}
         contentContainerStyle={{
           paddingHorizontal: SPACE.lg,

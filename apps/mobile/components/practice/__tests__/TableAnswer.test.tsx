@@ -13,7 +13,9 @@
 import { act, fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { UI } from '../../../lib/theme/components.js';
 import { paletteOf } from '../../../lib/theme/palettes.js';
+import { TOUCH } from '../../../lib/theme/space.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { cellsFrom, gapsIn, TableAnswer } from '../TableAnswer.js';
 
@@ -39,6 +41,20 @@ const VALUES = {
 };
 
 describe('her cells', () => {
+  // The frame was 44 pt, the field she taps inside its hairline 42 (#599 correction): the field
+  // reaches over the hairline now, so what she taps is the whole frame — which stays 44.
+  it('makes the field she taps a whole touch target without growing its frame', () => {
+    renderInApp(
+      <TableAnswer view={VERBS} draftKey="tab0" disabled={false} onSubmit={() => undefined} />,
+    );
+    const field = styleOf(screen.getByLabelText('ich, Präteritum'));
+    expect(field.minHeight).toBe(`${TOUCH}px`);
+    expect([field.marginTop, field.marginBottom]).toEqual([`-${UI.border}px`, `-${UI.border}px`]);
+    expect(styleOf(screen.getAllByTestId('answer-cell-frame')[0]!).borderTopWidth).toBe(
+      `${UI.border}px`,
+    );
+  });
+
   it('walks the gaps row by row', () => {
     expect(gapsIn(VERBS).map((g) => g.id)).toEqual(['r0c2', 'r1c1', 'r1c2']);
   });

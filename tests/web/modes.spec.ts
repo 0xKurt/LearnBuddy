@@ -121,7 +121,12 @@ test('learning modes: explain, homework help without the solution, practice with
   // ⋯ is one list of places (#599); its row leads to the start sheet with the ways to start.
   await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+  // The start sheet's own "Schließen": the ⋯ list it came from is still closing under it.
+  await page
+    .locator('[aria-modal="true"]')
+    .filter({ has: page.getByRole('button', { name: 'Vokabeln', exact: true }) })
+    .getByRole('button', { name: 'Schließen', exact: true })
+    .click();
   await shot(page, '20-home-start-row');
 
   // ── "Erklär mir den Dativ" → the explanation is the answer, practice is offered ──
@@ -659,8 +664,9 @@ async function pathShots(page: Page, name: string): Promise<void> {
       await expect(page.getByRole('button', { name: 'Neue Zeile' })).toBeVisible();
       await settle(page);
       await page.screenshot({ path: join(SHOTS, `${name}-${scheme}-kb-${phone.width}.png`) });
-      // With the keyboard up the task still shows above the pinned bar.
-      await expect(page.getByTestId('scroll-question').last()).toBeInViewport();
+      // With the keyboard up the task still shows above the pinned bar. A typed question stands
+      // in the one scrolling practice body now (#608), which has no `scroll-question`: its card.
+      await expect(page.getByTestId('question-card').last()).toBeInViewport();
       const stack = await bottomStack(page, `${name}-${scheme}-kb`);
       expect(stack, `pinned bar with a three-line path ${stack}pt`).toBeLessThanOrEqual(
         room.height / 2,
@@ -773,7 +779,7 @@ async function keyRowShots(page: Page, name: string): Promise<void> {
       }
       // Nothing scrolls sideways.
       expect(await row.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(1);
-      await expect(page.getByTestId('scroll-question').last()).toBeInViewport();
+      await expect(page.getByTestId('question-card').last()).toBeInViewport();
     }
   }
   // The switch back to light remounts the whole tree (ThemeProvider). Let it land before she
@@ -1063,7 +1069,8 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
 }) => {
   await onboardChild(page);
   // ── Bilder als Antwortoptionen: „Welcher Graph passt?" (issue #231) ──
-  // Four parabolas two by two, the letter on each. A tap answers; holding one opens it large
+  // Four parabolas two by two, the letter on each. A tap picks one and "Prüfen" sends it
+  // (#608); holding one opens it large
   // in the figure viewer. Nowhere a formula: the texts behind the options are the answer.
   await page.getByLabel('Schreib Buddy …').fill('Ich will Parabeln erkennen üben');
   await page.getByRole('button', { name: 'Senden' }).click();
@@ -1071,7 +1078,8 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
   await page.getByRole('button', { name: "Los geht's" }).last().click();
   await expect(page.getByText('Welcher Graph passt zu', { exact: false })).toBeVisible();
   const graphOption = (letter: string) =>
-    page.getByRole('button', { name: new RegExp(`^${letter}: Graph durch`) });
+    page.getByRole('radio', { name: new RegExp(`^${letter}: Graph durch`) });
+  const checkGraph = page.getByRole('button', { name: 'Prüfen' });
   for (const letter of ['A', 'B', 'C', 'D']) await expect(graphOption(letter)).toBeVisible();
   await expect(page.getByText('y =', { exact: false })).toHaveCount(0);
   await bothSchemes(page, '40-figure-choices');
@@ -1088,6 +1096,7 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
   await expect(page.getByText('Schon ausprobiert')).toHaveCount(0);
   // A wrong graph: judged by its index, the card stays and says so in words.
   await graphOption('A').click();
+  await checkGraph.click();
   await expect(page.getByText('Schon ausprobiert')).toBeVisible();
   await expect(graphOption('A')).toBeDisabled();
   // Her tap is not echoed as a bubble while the question is open (issue #288): the tile says it,
@@ -1095,6 +1104,7 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
   await expect(page.getByText('y =', { exact: false })).toHaveCount(0);
   await bothSchemes(page, '42-figure-choice-tried');
   await graphOption('C').click();
+  await checkGraph.click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Geschafft!')).toBeVisible();

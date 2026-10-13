@@ -50,8 +50,15 @@ describe('ticking and unticking', () => {
 });
 
 describe('what counts as short', () => {
-  it('uses a narrower visual budget without changing the server contract limit', () => {
-    expect(gridCharsMax()).toBeLessThanOrEqual(SELECT_SHORT_CHARS);
+  // The contract calls an option of nine characters short (`SELECT_SHORT_CHARS`) and lets six of
+  // them through because they stand two by two: the app's budget is the same number.
+  it('is the contract’s short option: nine characters in one line of half a 360-pt phone', () => {
+    expect(gridCharsMax()).toBe(SELECT_SHORT_CHARS);
+  });
+
+  it('puts the six Latin cases two by two (tests/web/select-all.spec.ts, 45a)', () => {
+    const cases = ['Nominativ', 'Genitiv', 'Dativ', 'Akkusativ', 'Ablativ', 'Vokativ'];
+    expect(twoColumnChoices(cases, 6)).toBe(true);
   });
 
   it('puts up to six short options two by two, but never four to choose one beyond four', () => {

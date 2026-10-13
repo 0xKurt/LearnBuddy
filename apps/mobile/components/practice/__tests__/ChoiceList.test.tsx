@@ -64,13 +64,17 @@ function letter(name: string): HTMLElement {
 describe('welcher Satz Antworten zwei Spalten bekommt', () => {
   // Gemessen, nicht geraten: die Rechnung steht in ChoiceList.tsx. Wenn jemand Padding,
   // Buchstabenspalte oder Abstand ändert, wandert dieses Budget mit — und dieser Test sagt es.
-  it('rechnet acht Zeichen als längste Antwort aus, die EINE Zeile einer halben Breite hält', () => {
-    expect(gridCharsMax()).toBe(8);
+  // Zwei Spalten gibt es nur noch für Antworten zum Ankreuzen: gerechnet wird mit deren Kästchen
+  // (20 pt), nicht mit der Buchstabenmarke der Einfachauswahl (32 pt) — mit ihr waren es acht, und
+  // „Nominativ“ schickte sechs kurze Fälle in eine Spalte, 17 pt über 360×740 (#599-Korrektur).
+  it('rechnet neun Zeichen als längste Antwort aus, die EINE Zeile einer halben Breite hält', () => {
+    expect(gridCharsMax()).toBe(9);
   });
 
   it('nimmt kurze Antworten, die jede in eine Zeile passen', () => {
     expect(twoColumnChoices(['Paris', 'Lyon', 'Bern', 'Nizza'])).toBe(true);
-    expect(twoColumnChoices(['le cahier', 'la récré', 'le stylo', 'la gomme'])).toBe(false);
+    expect(twoColumnChoices(['le cahier', 'la récré', 'le stylo', 'la gomme'])).toBe(true);
+    expect(twoColumnChoices(['les cahiers', 'la récré', 'le stylo', 'la gomme'])).toBe(false);
   });
 
   it('nimmt „the homework“ nicht mehr: zwei Zeilen neben einer — die unruhige Reihe aus #288', () => {

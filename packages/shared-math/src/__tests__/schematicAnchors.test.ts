@@ -96,6 +96,9 @@ describe('which part a finger means (`anchorAt`)', () => {
         expect(Math.min(tap[2], tap[3]) * pt, `${d}.${id} on the screen`).toBeGreaterThanOrEqual(
           44,
         );
+        // And in the frame itself: on a 360-pt phone a picture stands 302 pt wide in its card,
+        // not 320 — the flower's style, 42 high, was 42.3 pt there (#599 correction).
+        expect(Math.min(tap[2], tap[3]), `${d}.${id} in its frame`).toBeGreaterThanOrEqual(44);
       }
       areas.forEach((p, i) => {
         for (const q of areas.slice(i + 1)) {

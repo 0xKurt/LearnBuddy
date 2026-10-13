@@ -119,7 +119,9 @@ test('a reading text: one text above every question, scrolling alone, folding aw
       // Answered in the dark room, and the closed state shot there: switching the room rebuilds
       // the screen, which then shows the next open question.
       await setScheme(page, 'dark');
-      await page.getByRole('button', { name: 'ein Bauer mit seinem Traktor' }).click();
+      // An option is a radio she picks; "Prüfen" sends it (#608).
+      await page.getByRole('radio', { name: 'ein Bauer mit seinem Traktor' }).click();
+      await page.getByRole('button', { name: 'Prüfen' }).click();
       await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
       await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 9–10');
       await shot(page, '97-reading-choice-closed-dark');
@@ -181,7 +183,8 @@ test('a text Buddy writes himself: at her stage, read like a photographed one (#
   // Buddy's own text: the card says whose question it is.
   await expect(page.getByTestId('question-meta').first()).toContainText('von Buddy');
   await bothSchemes(page, '98-reading-buddy', 'passage');
-  await page.getByRole('button', { name: 'unter einer Hecke' }).click();
+  await page.getByRole('radio', { name: 'unter einer Hecke' }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 9–11');
   await shot(page, '98-reading-buddy-closed');

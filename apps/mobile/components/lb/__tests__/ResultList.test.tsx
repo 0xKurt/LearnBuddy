@@ -76,7 +76,12 @@ describe('factual grouped result rows', () => {
     const [, column, state] = Array.from(row.children) as HTMLElement[];
     expect(state).toBe(screen.getByText(label));
     expect(styleOf(state!).textAlign).toBe('right');
-    expect(styleOf(state!).flexShrink).toBe('0');
+    // The title keeps its own width up to its share; the state gives way and wraps in the rest
+    // (`ROW_SPLIT`, as a list row's value): unshrinkable, it left the title a word per line.
+    expect(styleOf(state!).flexShrink).toBe('1');
+    expect(styleOf(state!).flexGrow).toBe('1');
+    expect(styleOf(column!).flexShrink).toBe('0');
+    expect(column!.style.maxWidth).toBe(UI.list.titleShare);
     expect(column!.contains(screen.getByText(label))).toBe(false);
     expect(Array.from(column!.children).map((line) => line.textContent)).toEqual([
       title,

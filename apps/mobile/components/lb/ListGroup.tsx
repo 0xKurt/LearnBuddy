@@ -3,7 +3,7 @@
 // have separate targets (#548).
 import { Children, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { pressedStyle, UI } from '../../lib/theme/components.js';
+import { pressedStyle, ROW_SPLIT, UI } from '../../lib/theme/components.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
 import type { SubjectTone } from '../../lib/theme/palettes.js';
 import { RADIUS } from '../../lib/theme/radius.js';
@@ -131,12 +131,8 @@ export function Row({
       <View
         style={[
           { gap: UI.list.lineGap },
-          // Beside a value the title is never squeezed: it keeps its own width up to its share
-          // and takes no more than that — the rest of the row is the value's (#599). Alone it
-          // takes the row.
-          value
-            ? { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', maxWidth: UI.list.titleShare }
-            : { flex: 1, minWidth: 0 },
+          // Beside a value the title is never squeezed (`ROW_SPLIT`, #599). Alone it takes the row.
+          value ? ROW_SPLIT.title : { flex: 1, minWidth: 0 },
         ]}
       >
         <Text
@@ -153,9 +149,7 @@ export function Row({
       {value ? (
         // The rest of the row: a short value ends at the row's edge (or before its chevron), a
         // long one wraps there, right-aligned.
-        <Text style={[TYPE.listValue, { flexGrow: 1, flexShrink: 1, textAlign: 'right' }]}>
-          {value}
-        </Text>
+        <Text style={[TYPE.listValue, ROW_SPLIT.value]}>{value}</Text>
       ) : null}
       {onPress && chevron && end == null ? (
         <Icon

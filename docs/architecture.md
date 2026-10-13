@@ -4340,8 +4340,10 @@ keeps our drawing until one exists (`SCHEMATIC_DRAWN`, with its reason).
   the number that is asked is filled in the accent (design `Drawn.jsx › Schematic`). Image and
   overlay scale together (`pictureLayout` in `lib/math/schematicLayout.ts`): the picture fills
   its width, its height follows its frame. `SchematicFigures.tsx` still draws the circuit, its
-  numbers in columns beside it (`schematicLayout` on `columnLabels`). A card with a picture taller
-  than wide grows into all the room the conversation leaves (`visualReach`). Tapping is
+  numbers in columns beside it (`schematicLayout` on `columnLabels`). A picture that is an image
+  stands under its question as a card of its own at card width (`standsAlone`,
+  lib/practice/visuals.ts; design task-label), as tall as the picture she taps may be (`boardCap`):
+  one sizing, and its numbers the design's size. Tapping is
   `TapFigure` with `tapLayout` (`pictureTaps`: `anchorAt` in the picture's frame; the chosen part
   is marked with a ring on its anchor). The line under it says "Teil gewählt"; the part's name is
   only in `aria-valuetext` (#409). `describeSchematic` says the picture and how many parts are

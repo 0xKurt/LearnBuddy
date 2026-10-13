@@ -53,7 +53,9 @@ test('solids, cube nets and points in space: read, answered, graded by code', as
 
   await expect(page.getByText('Welches dieser Netze', { exact: false })).toBeVisible();
   await bothSchemes(page, '97-net-choice');
-  await page.getByRole('button', { name: /^B: Sechs Quadrate/ }).click();
+  // A picture as an option is a radio she picks; "Prüfen" sends it (#608).
+  await page.getByRole('radio', { name: /^B: Sechs Quadrate/ }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
 
@@ -120,7 +122,7 @@ test('the rest of #255: irregular prisms, nets of solids, Würfelgebäude (#368,
   await expect(page.getByRole('img', { name: /Netz eines Körpers/ })).toBeVisible();
   await bothSchemes(page, '99-net-cuboid', 'question-figure');
   // The options are code's, not the model's: the cube stands next to the cuboid (#418).
-  await expect(page.getByRole('button', { name: 'Würfel', exact: true })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Würfel', exact: true })).toBeVisible();
   await chosen(page, 'Quader');
 
   // A cone's net (#418): four options code picked, the cone among its neighbours, marked by code.

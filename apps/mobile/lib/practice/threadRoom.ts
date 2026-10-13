@@ -119,7 +119,7 @@ export type RoomInput = {
   visual: boolean;
   /** It may grow (a note line only gives, issue #275). */
   growable: boolean;
-  /** How far: the share of the window the card may grow to (`visualReach`, #462). */
+  /** How far: the share of the window the card may grow to (`CARD_REACH`). */
   reach: number;
   /** The card takes ALL the room the conversation leaves (a Diktat before her answer, #242). */
   fills?: boolean;
