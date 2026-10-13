@@ -51,8 +51,9 @@ const ORB_HOLDERS = [
   'app/reset-password.tsx',
   'app/welcome.tsx',
   'components/auth/SetupStep.tsx',
-  // "Buddy arbeitet" in the conversation (issue #258) — a chat part, not this guard's to move.
-  'components/buddy/WorkingNote.tsx',
+  // The mini orb beside Buddy's newest line and his typing dots (design
+  // components/buddy/Message.jsx).
+  'components/buddy/ThreadOrb.tsx',
   'components/lb/BuddyHeader.tsx',
   'components/lb/EmptyState.tsx',
   'components/lb/LoadingState.tsx',
@@ -194,8 +195,8 @@ describe('every screen has the one head, with Buddy in it (owner rule 1, #599)',
   });
 });
 
-describe('Buddy is drawn once per screen (HANDOFF §4)', () => {
-  it('only by the head and by the pages whose stage he is', () => {
+describe('Buddy is drawn by the head, and small beside his newest line (HANDOFF §4)', () => {
+  it('only by the head, the thread’s mini orb and the pages whose stage he is', () => {
     expect(holders(/<BuddyOrb\b/)).toEqual(ORB_HOLDERS);
   });
 

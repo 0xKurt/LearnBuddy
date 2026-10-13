@@ -19,6 +19,9 @@
 // erzeugten Bytes die richtige Tonhöhe haben, misst `lib/music/__tests__/tone.test.ts`.
 
 import { parseStaffLine, type StaffWriteSurface } from '@learnbuddy/shared-types/contracts';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { fireEvent, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -115,6 +118,57 @@ describe('eine Note setzen', () => {
     expect(played).toHaveLength(2);
     for (const name of ['Höher', 'Tiefer'])
       expect(screen.queryByRole('button', { name })).toBeNull();
+  });
+
+  // Ohne gezeichnete Pfeile bleibt die Zeile ohne Zeiger beantwortbar (#599, Review von #608):
+  // der Tipp ohne Fingerposition setzt auf die mittlere Linie, die Pfeiltasten der Tastatur und
+  // die Aktionen des Screenreaders schieben die zuletzt gesetzte Note.
+  it('schiebt die gesetzte Note ohne Zeiger: Pfeiltasten auf dem Takt, jeder Schritt klingt', () => {
+    const seen = show();
+    tap(BAR1);
+    const bar = () => screen.getByRole('button', { name: /^Takt 1:/ });
+    for (let i = 0; i < 3; i++) fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    // H → A → G → F: dreimal eine Stelle tiefer, auf den ersten Zwischenraum.
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'F', octave: 4 } });
+    expect(played).toEqual([
+      { name: 'B', octave: 4 },
+      { name: 'A', octave: 4 },
+      { name: 'G', octave: 4 },
+      { name: 'F', octave: 4 },
+    ]);
+    fireEvent.keyDown(bar(), { key: 'ArrowUp' });
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'G', octave: 4 } });
+    // Es bleibt EINE Note: schieben ist nicht noch einmal setzen. Und der Takt nennt sie neu.
+    expect(seen.answer.bars[0]).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Takt 1: G als Viertelnote' })).toBeTruthy();
+    // An der Hilfslinie ist Schluss.
+    for (let i = 0; i < 12; i++) fireEvent.keyDown(bar(), { key: 'ArrowDown' });
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'C', octave: 4 } });
+    // Nach einer Pause bewegt sich nichts.
+    tap('Viertelpause setzen');
+    const before = played.length;
+    fireEvent.keyDown(bar(), { key: 'ArrowUp' });
+    expect(played).toHaveLength(before);
+    expect(seen.answer.bars[0]?.[0]).toMatchObject({ pitch: { name: 'C', octave: 4 } });
+  });
+
+  it('sagt dem Screenreader den Weg, den es gibt, in allen fünf Sprachen', () => {
+    // react-native-web gibt den Hinweis nicht ins DOM: geprüft wird der Satz, den der Takt trägt.
+    for (const lang of ['de', 'en', 'fr', 'es', 'it']) {
+      const staff = (
+        JSON.parse(
+          readFileSync(join(__dirname, `../../../locales/${lang}/practice.json`), 'utf8'),
+        ) as { staff: { bar_hint: string; higher: string; lower: string } }
+      ).staff;
+      // Die zwei Wörter sind die Namen der Screenreader-Aktionen auf dem Takt.
+      expect(staff.bar_hint, lang).toContain(staff.higher);
+      expect(staff.bar_hint, lang).toContain(staff.lower);
+    }
+    const de = JSON.parse(
+      readFileSync(join(__dirname, '../../../locales/de/practice.json'), 'utf8'),
+    ) as { staff: { bar_hint: string } };
+    expect(de.staff.bar_hint).toMatch(/mittleren Linie/);
+    expect(de.staff.bar_hint).toMatch(/Aktionen/);
   });
 
   it('nimmt den gewählten Wert und den Punkt mit', () => {

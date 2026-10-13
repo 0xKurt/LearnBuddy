@@ -17,6 +17,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isTyping } from '../../lib/buddy/typing.js';
 import { composerAfterSend } from '../../lib/buddy/unsent.js';
 import { pageHandler } from '../../lib/capture/pages.js';
 import { useDraft } from '../../lib/drafts.js';
@@ -125,8 +126,14 @@ export function Composer({
     }, []),
   );
 
-  // There are words of hers in the field, or the mic is taking them down.
-  const typing = focused && (text.length > 0 || voice.state !== 'idle');
+  // She is writing in the field, or the mic is taking her words down (`lib/buddy/typing.ts`).
+  const [fieldFocused, setFieldFocused] = useState(false);
+  const typing = isTyping({
+    onScreen: focused,
+    fieldFocused,
+    text,
+    dictating: voice.state !== 'idle',
+  });
   const tellTyping = useRef(onTyping);
   tellTyping.current = onTyping;
   useEffect(() => {
@@ -171,6 +178,8 @@ export function Composer({
         placeholder={t('buddy:composer.placeholder')}
         accessibilityLabel={t('buddy:composer.placeholder')}
         onSubmitEditing={send}
+        onFocus={() => setFieldFocused(true)}
+        onBlur={() => setFieldFocused(false)}
         voice={voice}
         micLabel={t('common:voice.message')}
         disabled={disabled}

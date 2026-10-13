@@ -7,7 +7,7 @@ import { useAnnounce } from '../../lib/announce.js';
 import { CHAT } from '../../lib/theme/chat.js';
 import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { ThreadOrb } from './WorkingNote.js';
+import { ThreadOrb } from './ThreadOrb.js';
 
 export function TypingBubble({ label }: { label: string }) {
   const { palette } = useTheme();

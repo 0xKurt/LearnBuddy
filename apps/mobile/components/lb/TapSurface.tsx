@@ -39,6 +39,12 @@ type Common = {
   accessibilityLabel?: string;
   /** What a touch does. */
   accessibilityHint?: string;
+  /**
+   * What a screen reader can do here besides the tap, without a finger position ("increment" and
+   * "decrement": the note line's pitch) — a path that is never drawn.
+   */
+  accessibilityActions?: ViewProps['accessibilityActions'];
+  onAccessibilityAction?: ViewProps['onAccessibilityAction'];
   disabled?: boolean;
   testID?: string;
   /** Layout only (size, flex) — never a colour. Without it the surface fills the box it sits in. */
@@ -70,6 +76,8 @@ export function TapSurface(props: Tapped | Dragged) {
     accessibilityLabel: props.accessibilityLabel,
     accessibilityHint: props.accessibilityHint,
     accessibilityState: { disabled },
+    accessibilityActions: props.accessibilityActions,
+    onAccessibilityAction: props.onAccessibilityAction,
   };
   return (
     <View testID={testID} style={style}>
@@ -90,6 +98,8 @@ type A11yProps = Pick<
   | 'accessibilityLabel'
   | 'accessibilityHint'
   | 'accessibilityState'
+  | 'accessibilityActions'
+  | 'onAccessibilityAction'
 >;
 type A11y = { a11y: A11yProps; disabled: boolean };
 

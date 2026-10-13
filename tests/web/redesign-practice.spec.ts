@@ -105,8 +105,16 @@ for (const family of ['pastell', 'ocean'] as const) {
       await wrong.click();
       await expect(wrong).toBeChecked();
       await shot(page, `practice-options-${key}-selected`);
-      await page.getByRole('button', { name: 'Mit Buddy sprechen', exact: true }).click();
+      // One primary slot (#599): with a choice made it holds "Prüfen". A second tap takes the
+      // choice back, and the slot is the conversation's again.
+      const talk = page.getByRole('button', { name: 'Mit Buddy sprechen', exact: true });
+      await expect(talk).toHaveCount(0);
+      await wrong.click();
+      await expect(wrong).not.toBeChecked();
+      await talk.click();
       await expect(page.getByRole('button', { name: 'Antwort sagen', exact: true })).toBeVisible();
+      await wrong.click();
+      await expect(wrong).toBeChecked();
       await shot(page, `practice-options-${key}-voice-check`);
       await page.getByRole('button', { name: 'Prüfen', exact: true }).click();
       await expect(page.getByText('Noch nicht ganz – probier', { exact: false })).toBeVisible();

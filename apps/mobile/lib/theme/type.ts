@@ -113,7 +113,7 @@ function typeOf(p: Palette) {
     voiceStatus: { ...body, ...fontFace('600') },
     chip: { ...fontFace('600'), fontSize: 14, lineHeight: 14, color: p.ink },
     metaStrong: { ...fontFace('700'), fontSize: 14, lineHeight: 20, color: p.ink2 },
-    /** The Composer's own words (components/composer/Composer.jsx): pill, key, count. */
+    /** The Composer's own words (components/composer/Composer.jsx): pill and key. */
     composerPill: {
       ...fontFace('700'),
       fontSize: 15,
@@ -122,7 +122,6 @@ function typeOf(p: Palette) {
       color: p.ink,
     },
     composerKey: { ...fontFace('600'), fontSize: 17, lineHeight: 17, color: p.primaryDk },
-    composerCount: { ...fontFace('600'), fontSize: 13, lineHeight: 13, color: p.ink2 },
 
     code: {
       fontFamily: MONOSPACE,

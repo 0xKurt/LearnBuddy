@@ -49,7 +49,9 @@ export function ChoiceAnswer({
           selected={selected}
           disabled={disabled}
           onChoose={(next) => {
-            if (!disabled) draft.setText(String(next));
+            // A second tap on her choice takes it back: nothing is ready then, and the Composer's
+            // one primary slot is the conversation's again (#599).
+            if (!disabled) draft.setText(next === selected ? '' : String(next));
           }}
         />
       }

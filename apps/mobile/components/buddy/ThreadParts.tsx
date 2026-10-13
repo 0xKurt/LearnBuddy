@@ -28,7 +28,7 @@ import { Btn } from '../lb/Btn.js';
 import { Chip } from '../lb/Chip.js';
 import { Icon, type IconName } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
-import { ThreadOrb } from './WorkingNote.js';
+import { ThreadOrb } from './ThreadOrb.js';
 
 /** Where what hangs under Buddy's line starts: under its text, past the orb's column. */
 export const UNDER_LINE = { paddingLeft: CHAT.orb.indent } as const;

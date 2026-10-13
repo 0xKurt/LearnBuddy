@@ -87,7 +87,7 @@ export const syntaxRules = {
   // ganzen App existieren, das immer benutzt wird."). Five files had built their own field from
   // React Native's TextInput — each with its own border, ring and padding. Every field is
   // components/lb/LbTextInput.tsx (a ref to one is `LbTextInputRef`); the input bar of the chat
-  // and of a typed answer is components/lb/InputBar.tsx, built from it.
+  // and of a typed answer is components/lb/Composer.tsx, built from it (#599).
   'one-text-field': forbid(
     'Ein Textfeld: TextInput nur in components/lb/LbTextInput.tsx (Issue #365).',
     [
@@ -95,7 +95,7 @@ export const syntaxRules = {
       "JSXOpeningElement[name.property.name='TextInput']",
       "ImportDeclaration[source.value='react-native'] > ImportSpecifier[imported.name='TextInput']",
     ],
-    'Ein Textfeld in der ganzen App: <LbTextInput> (components/lb/LbTextInput.tsx), für die Eingabeleiste <InputBar>; ein Ref heißt LbTextInputRef — Issue #365.',
+    'Ein Textfeld in der ganzen App: <LbTextInput> (components/lb/LbTextInput.tsx), für die Eingabeleiste <Composer>; ein Ref heißt LbTextInputRef — Issue #365.',
   ),
   // The scripted model's report is read in ONE place, after the background work has landed
   // (issue #323): `env.checkScript()` / `env.closeChecked()` in apps/api/src/testing/harness.ts.

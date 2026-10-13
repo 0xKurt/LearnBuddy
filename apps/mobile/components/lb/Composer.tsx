@@ -29,7 +29,7 @@ import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import { formDensity } from '../../lib/keyboard.js';
-import { pressedStyle } from '../../lib/theme/components.js';
+import { pressedStyle, UI } from '../../lib/theme/components.js';
 import { COMPOSER } from '../../lib/theme/composer.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
 import { circle, RADIUS } from '../../lib/theme/radius.js';
@@ -352,7 +352,7 @@ export function ActionPill({
             paddingLeft: COMPOSER.pill.padStart,
             paddingRight: COMPOSER.pill.padEnd,
             borderRadius: circle(COMPOSER.slot),
-            borderWidth: 1,
+            borderWidth: UI.border,
             borderColor: calm ? palette.hairlineStrong : 'transparent',
             backgroundColor: calm ? palette.canvas : palette.primary,
             ...(off ? null : pressedStyle(pressed, reduced)),

@@ -80,6 +80,11 @@ describe('a typed answer is written in the one input bar (issue #365)', () => {
     ).toBe(true);
     type(seen, 'Weil');
     expect(screen.queryByRole('button', { name: 'Mit Buddy sprechen' })).toBeNull();
+    // An emptied field gives the slot back to the conversation.
+    fireEvent.change(field(), { target: { value: '' } });
+    expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Mit Buddy sprechen' })).toBeTruthy();
+    type({ value: '' }, 'Weil');
     const checks = screen.getAllByRole('button', { name: 'Prüfen' });
     expect(checks).toHaveLength(1);
     // In the box's row of tools, under her text and where the chat sends (#522): her line has the

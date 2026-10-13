@@ -66,6 +66,13 @@ for (const look of SCREEN_LOOKS) {
     await screenShots(page, `practice-screen-${key}-feedback`);
     await page.getByRole('button', { name: 'Weiter', exact: true }).click();
     await expect(page.getByText('Wasserkreislauf in Lücke B', { exact: false })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Prüfen', exact: true })).toBeDisabled();
+    // Nothing typed yet: the one primary slot holds the conversation button, "Prüfen" comes
+    // with her first letter (#599).
+    await expect(page.getByRole('button', { name: 'Prüfen', exact: true })).toHaveCount(0);
+    await expect(
+      page
+        .locator('[data-testid="composer-primary"]:visible')
+        .getByRole('button', { name: 'Mit Buddy sprechen', exact: true }),
+    ).toBeVisible();
   });
 }

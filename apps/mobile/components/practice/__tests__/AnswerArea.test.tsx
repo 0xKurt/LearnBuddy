@@ -153,4 +153,21 @@ describe('die Optionen einer beantworteten Auswahlfrage', () => {
     expect(screen.queryByRole('button', { name: 'Weiter' })).toBeNull();
     expect(screen.queryByText('Deine Wahl')).toBeNull();
   });
+
+  // One primary slot (#599): "Prüfen" takes it once she has chosen. The way into a conversation
+  // stays reachable from there — she takes her choice back with a second tap.
+  it('geben den Gesprächsknopf zurück, wenn sie ihre Wahl mit einem zweiten Tipp zurücknimmt', () => {
+    const { answer } = show({ open: true, turns: [] });
+    const [two] = tiles();
+    expect(screen.getByRole('button', { name: 'Mit Buddy sprechen' })).toBeTruthy();
+    fireEvent.click(two!);
+    expect(screen.queryByRole('button', { name: 'Mit Buddy sprechen' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Prüfen' })).toBeTruthy();
+    fireEvent.click(two!);
+    expect(two!.getAttribute('aria-checked')).not.toBe('true');
+    expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
+    const talk = screen.getByRole('button', { name: 'Mit Buddy sprechen' });
+    expect(screen.getByTestId('composer-primary').contains(talk)).toBe(true);
+    expect(answer).not.toHaveBeenCalled();
+  });
 });
