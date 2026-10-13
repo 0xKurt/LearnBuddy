@@ -88,6 +88,12 @@ export const EMPTY_STATE = {
   bodyWidth: 320,
   /** The way on, set this much further from the lines above it. */
   actionGap: 6,
+  /**
+   * An empty or gone page inside the app (ui_kits/app/Gaps.jsx `Empty`): Buddy stays in the head,
+   * the content is one quiet block at the start edge — a bold line (800 26/32), a sentence, one
+   * action — set a little above the middle by the room under it.
+   */
+  page: { head: { fontSize: 26, lineHeight: 32, letterSpacing: -0.6 }, bottom: 80 },
 } as const;
 
 export const LOADING_STATE = {

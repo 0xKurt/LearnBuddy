@@ -1,5 +1,7 @@
 # Material detail — #548
 
+> **Changed by #599 (library area).** This ledger describes the state of #548. Since #599 the page follows `ui_kits/app/Extra.jsx:108–132` as far as the API carries it: the head holds the sheet's name and "Mathe · 2 Seiten" (one line, as every head title; the whole name is in the rename field), the sheet's pages are pinned under it as small paper pages (`components/library/SheetPages.tsx`, a sign — `MaterialView` has no picture of a page) with "Daraus üben" beside them, and the questions follow. A question's card has ⋯ instead of a delete button; its sheet names the question and asks once more before deleting. Renaming and "Seite hinzufügen" stand in the head's ⋯; the latter is also the empty page's one action. Not built: the design's conversation about the sheet, its Composer and the unclear-spot card on this page — `SendMessageRequest` carries no material, and the unclear spot is a home notice of the chat.
+
 Ready for review on published Capture #581, main `82df06813eacbd7fc3fbce351576e1d9759df225`. Fifteen publication paths: material route, EntryCard, MaterialItemCard and two focused tests; theme/materialDetail; two browser specs; this ledger, central delivery status and five library dictionaries removing only unused rename copy. No new route, contract, display string, library or production fixture.
 
 ## Final behavior and tokens

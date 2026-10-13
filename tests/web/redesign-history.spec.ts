@@ -15,7 +15,10 @@ for (const look of SCREEN_LOOKS)
     await expect(page.getByText('Cool – Handball merke ich mir.')).toBeVisible();
     await page.goto('/history');
     await expect(page).toHaveURL(/\/history$/);
-    await expect(page.getByRole('heading', { name: 'Chat mit Buddy', exact: true })).toBeVisible();
+    // ui_kits/app/More.jsx:51: the page is "Verlauf", and under it when she last wrote.
+    await expect(page.getByRole('heading', { name: 'Verlauf', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Chat mit Buddy', exact: true })).toHaveCount(0);
+    await expect(page.getByText(/^Heute, \d{2}:\d{2}$/)).toBeVisible();
     await expect(page.getByText('Ich spiele Handball', { exact: true })).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Senden', exact: true })).toHaveCount(0);
     await expect(page.getByLabel('Schreib Buddy …')).toHaveCount(0);

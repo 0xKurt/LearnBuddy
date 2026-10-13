@@ -12,13 +12,10 @@ import { RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { Btn } from '../components/lb/Btn.js';
-import { EmptyState } from '../components/lb/EmptyState.js';
 import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { MemorySkeleton } from '../components/lb/Skeletons.js';
 import { Screen } from '../components/lb/Screen.js';
-import { Sheet, SHEET_TEXT } from '../components/lb/Sheet.js';
 import { toast } from '../components/lb/Toast.js';
 import type { ToastAction } from '../lib/toast.js';
 import { MemoryItem } from '../components/memory/MemoryItem.js';
@@ -30,7 +27,9 @@ import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { MEMORY } from '../lib/theme/memory.js';
 import { DURATION, motionIsReduced } from '../lib/theme/motion.js';
-import { SPACE } from '../lib/theme/space.js';
+import { LIBRARY } from '../lib/theme/library.js';
+import { GUTTER_APP, SPACE } from '../lib/theme/space.js';
+import { useAnnounce } from '../lib/announce.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
 
 /** Temporary situations always carry an end; they expire by themselves. */
@@ -76,9 +75,6 @@ export default function MemoryScreen() {
   const [draft, setDraft] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
   const inFlight = useRef(false);
-  // Kept while the sheet slides out, so its text does not vanish mid-animation.
-  const [removeTarget, setRemoveTarget] = useState<MemoryView | null>(null);
-  const [removeOpen, setRemoveOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   async function refresh() {
@@ -119,13 +115,13 @@ export default function MemoryScreen() {
     }
   }
 
-  function confirmRemove() {
-    const m = removeTarget;
-    setRemoveOpen(false);
-    if (!m) return;
-    // The offer is real, not decoration: the server takes a fresh removal back
-    // (UNRETRACT_WINDOW_MINUTES, issue #133 position 12). A removal that has stood
-    // longer than that answers 404, and the message below says so plainly.
+  /**
+   * Removed at once from its sheet, with the way back in the toast (ui_kits/app/More.jsx:42,
+   * docs/UX-PRINCIPLES.md "undo over confirmation"). The offer is real, not decoration: the
+   * server takes a fresh removal back (UNRETRACT_WINDOW_MINUTES, issue #133 position 12). A
+   * removal that has stood longer than that answers 404, and the message below says so plainly.
+   */
+  function remove(m: MemoryView) {
     void change(m, { retract: true, version: m.version }, t('memory:removed'), {
       label: t('common:actions.undo'),
       run: () => void undoRemove(m.id, m.version + 1),
@@ -149,6 +145,9 @@ export default function MemoryScreen() {
   }
 
   const title = t('memory:title');
+  // Nothing kept is one quiet line in the page, not a state of its own (ui_kits/app/More.jsx:37);
+  // a screen reader still hears that the list is empty.
+  useAnnounce(memory.data?.memories.length === 0 ? t('memory:empty_title') : null);
 
   if (!memory.data) {
     return (
@@ -180,46 +179,35 @@ export default function MemoryScreen() {
       {text}
     </Text>
   );
+  /** The page's quiet running text (More.jsx `Lead`: 16/23, second ink, 4 in from the edge). */
+  const lead = (text: string, below: number) => (
+    <Text
+      style={[
+        TYPE.paragraph,
+        { color: palette.ink2, paddingHorizontal: SPACE.xs, marginBottom: below },
+      ]}
+    >
+      {text}
+    </Text>
+  );
 
   const renderRow = (row: Row, index: number) => {
     switch (row.type) {
+      // The page's rhythm (More.jsx `Body`): 24 between its parts, 8 from a label to its card.
       case 'intro':
-        return (
-          <Text
-            style={[
-              TYPE.body,
-              {
-                color: palette.ink2,
-                paddingHorizontal: SPACE.xs,
-                marginBottom: MEMORY.introGap,
-              },
-            ]}
-          >
-            {t('memory:intro')}
-          </Text>
-        );
+        return lead(t('memory:intro'), SPACE.xl);
       case 'empty':
-        // The one shared empty state, not a bespoke card (same action → same component).
-        return <EmptyState title={t('memory:empty_title')} body={t('memory:empty_body')} />;
+        return lead(t('memory:empty_body'), 0);
       case 'lasting':
-        return <View>{heading(t('memory:lasting'))}</View>;
+        return <View style={{ marginBottom: SPACE.sm }}>{heading(t('memory:lasting'))}</View>;
       case 'temporary':
         return (
-          <View style={{ marginTop: SPACE.lg, marginBottom: SPACE.md }}>
+          <View style={{ marginTop: SPACE.xl, marginBottom: SPACE.xs }}>
             {heading(t('memory:temporary'))}
           </View>
         );
       case 'temporary_hint':
-        return (
-          <Text
-            style={[
-              TYPE.body,
-              { color: palette.ink2, paddingHorizontal: SPACE.xs, marginBottom: SPACE.md },
-            ]}
-          >
-            {t('memory:temporary_hint')}
-          </Text>
-        );
+        return lead(t('memory:temporary_hint'), SPACE.sm);
       case 'memory': {
         const m = row.memory;
         return (
@@ -242,10 +230,7 @@ export default function MemoryScreen() {
               onSave={() =>
                 void change(m, { statement: draft.trim(), version: m.version }, t('memory:saved'))
               }
-              onRemove={() => {
-                setRemoveTarget(m);
-                setRemoveOpen(true);
-              }}
+              onRemove={() => remove(m)}
               onInputFocus={() => reveal(index)}
             />
           </Rise>
@@ -266,7 +251,8 @@ export default function MemoryScreen() {
           getItemType={(row) => row.type}
           extraData={{ editingId, draft, savingId }}
           contentContainerStyle={{
-            padding: SPACE.lg,
+            paddingHorizontal: GUTTER_APP,
+            paddingTop: LIBRARY.pageTop,
             paddingBottom: insets.bottom + MEMORY.bottomRoom,
           }}
           keyboardShouldPersistTaps="handled"
@@ -276,22 +262,6 @@ export default function MemoryScreen() {
           renderItem={({ item, index }) => renderRow(item, index)}
         />
       </KeyboardSafe>
-
-      <Sheet
-        visible={removeOpen}
-        title={t('memory:confirm_title')}
-        closeLabel={t('common:actions.cancel')}
-        onClose={() => setRemoveOpen(false)}
-      >
-        {removeTarget ? (
-          <Text style={[TYPE.body, SHEET_TEXT]}>
-            {t('memory:confirm_body', { statement: removeTarget.statement })}
-          </Text>
-        ) : null}
-        <Btn variant="danger" pill full onPress={confirmRemove}>
-          {t('memory:confirm_cta')}
-        </Btn>
-      </Sheet>
     </Screen>
   );
 }

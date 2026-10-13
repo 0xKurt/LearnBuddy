@@ -1,4 +1,6 @@
-// One material row and its factual actions; existing Library rules stay authoritative.
+// One sheet inside its subject and what can be done with it (ui_kits/app/More.jsx:70–71,82–87):
+// the row opens a sheet that carries the sheet's name and its actions — never a button in the row
+// beyond the one that starts it. Existing Library rules stay authoritative.
 import {
   FINAL_FAILURES,
   PHOTOS_GONE_AT_ONCE,
@@ -9,6 +11,7 @@ import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TYPE } from '../../lib/theme/type.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import type { SubjectTone } from '../../lib/theme/palettes.js';
 import { SHEET_SWAP_MS } from '../buddy/StartSheets.js';
 import { ListGroup, Row } from '../lb/ListGroup.js';
 import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
@@ -17,6 +20,8 @@ import { materialPrimaryOf } from './materialPresentation.js';
 
 type Props = {
   material: MaterialView;
+  /** Its subject's tone, for the tile before its name. */
+  tone: SubjectTone;
   busy: boolean;
   disabled: boolean;
   onPractice: () => void;
@@ -27,6 +32,7 @@ type Props = {
 };
 export function MaterialCard({
   material: m,
+  tone,
   busy,
   disabled,
   onPractice,
@@ -106,6 +112,8 @@ export function MaterialCard({
     <>
       <MaterialRow
         material={m}
+        tone={tone}
+        // The row opens what can be done with the sheet, so it is named by the sheet alone.
         accessibilityLabel={title}
         busy={busy}
         disabled={disabled}
@@ -129,7 +137,7 @@ export function MaterialCard({
         <ListGroup>
           {m.status === 'ready' ? (
             <Row
-              icon="book"
+              icon="sparkle"
               title={t('open')}
               onPress={() => choose('onOpen')}
               disabled={disabled}
@@ -138,6 +146,7 @@ export function MaterialCard({
           {m.status === 'ready' && speakable && !spokenOnly ? (
             <Row
               icon="mic"
+              chevron={false}
               title={t('speak')}
               accessibilityLabel={t('speak_label', { title })}
               onPress={() => choose('onSpeak')}
@@ -147,6 +156,7 @@ export function MaterialCard({
           {retryable ? (
             <Row
               icon="arrow"
+              chevron={false}
               title={t('retry')}
               accessibilityLabel={t('retry_label', { title })}
               onPress={() => choose('onRetry')}
@@ -155,6 +165,9 @@ export function MaterialCard({
           ) : null}
           <Row
             icon="trash"
+            iconTone="accent"
+            destructive
+            chevron={false}
             title={t('delete')}
             accessibilityLabel={t('delete_label', { title })}
             onPress={() => choose('onDelete')}

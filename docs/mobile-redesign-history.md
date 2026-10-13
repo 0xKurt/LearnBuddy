@@ -1,5 +1,7 @@
 # History screen redesign — #548
 
+> **Changed by #599 (library area).** This ledger describes the state of #548. Since #599 the page is titled "Verlauf" with the day and time of the newest message under it (`ui_kits/app/More.jsx:51`; `memory:history.title`, `memory:history.when`). `buddy:thread.title` names the list for a screen reader. The ⋯ menu still calls the place "Alle Nachrichten" (`buddy:area.history`) — that row belongs to the menu.
+
 Prepared on published Memory main `6d8166aec6552ee4a387362ae0e6dc266c4364bf`. Four publication paths including central delivery status; the three screen files are `apps/mobile/app/history.tsx`, `tests/web/redesign-history.spec.ts` and this ledger. Memory #585 is genuinely published. No new tokens, routes, API props or controllers.
 
 ## Final presentation and contracts

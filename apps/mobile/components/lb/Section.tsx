@@ -1,69 +1,19 @@
-// A quiet small heading over a group of cards; with `dot`, a round pastel mark
-// before it (a subject's colour in "Mein Stoff" — decorative, the name says it).
+// A quiet label over something that is not a list card — the topics of a subject as chips
+// (ui_kits/app/More.jsx:77–79). The same label a `ListGroup` carries, so the groups of one page
+// read as one family: 13/700, sentence case, 4 in from the edge, 8 above what it names.
 
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { UI } from '../../lib/theme/components.js';
-import { circle } from '../../lib/theme/radius.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 
-/** The round mark before the title. */
-const DOT = UI.section.dot;
-
-export function Section({
-  title,
-  children,
-  right,
-  dot,
-}: {
-  title: string;
-  children: ReactNode;
-  right?: ReactNode;
-  /** A colour for the round mark before the title. */
-  dot?: string;
-}) {
-  const { palette } = useTheme();
+export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <View style={{ gap: RHYTHM.parts }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: RHYTHM.parts,
-          paddingHorizontal: SPACE.xs,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, flex: 1 }}>
-          {dot ? (
-            <View
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={{ width: DOT, height: DOT, borderRadius: circle(DOT), backgroundColor: dot }}
-            />
-          ) : null}
-          <Text
-            accessibilityRole="header"
-            // textTransform, not toUpperCase(): some screen readers spell an
-            // all-caps string letter by letter.
-            style={[
-              TYPE.label,
-              {
-                flex: 1,
-                color: palette.ink2,
-                letterSpacing: UI.section.tracking,
-                textTransform: 'uppercase',
-              },
-            ]}
-          >
-            {title}
-          </Text>
-        </View>
-        {right}
-      </View>
+    <View style={{ gap: SPACE.sm }}>
+      <Text accessibilityRole="header" style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
+        {title}
+      </Text>
       {children}
     </View>
   );

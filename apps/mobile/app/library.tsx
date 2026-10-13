@@ -13,15 +13,13 @@
 
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ListGroup } from '../components/lb/ListGroup.js';
 import { LIBRARY } from '../lib/theme/library.js';
 import { MaterialRow } from '../components/library/MaterialRow.js';
-import { useMaterialAct } from '../lib/api/useMaterialAct.js';
-import { startPractice } from '../lib/api/endpoints.js';
-import { seedSession } from '../lib/api/queries.js';
+import { useStartMaterial } from '../components/library/useStartMaterial.js';
 import { SubjectCard } from '../components/library/SubjectCard.js';
 import { byActivity, hasSomething } from '../components/library/subjects.js';
 import { Btn } from '../components/lb/Btn.js';
@@ -31,9 +29,7 @@ import { Rise, useListEntrance } from '../components/lb/Motion.js';
 import { Screen } from '../components/lb/Screen.js';
 import { LibrarySkeleton } from '../components/lb/Skeletons.js';
 import { useLibrary } from '../lib/api/libraryQueries.js';
-import { useTheme } from '../lib/theme/ThemeProvider.js';
-import { TYPE } from '../lib/theme/type.js';
-import { SPACE } from '../lib/theme/space.js';
+import { GUTTER_APP, SPACE } from '../lib/theme/space.js';
 import type { LibrarySubject } from '@learnbuddy/shared-types/contracts';
 import { attachInChat } from '../lib/capture/attachRequest.js';
 
@@ -41,10 +37,9 @@ import { attachInChat } from '../lib/capture/attachRequest.js';
 type Row = { key: string; name: string; subject: LibrarySubject | null };
 
 export default function LibraryScreen() {
-  const { palette } = useTheme();
   const { t } = useTranslation(['library', 'common']);
   const library = useLibrary();
-  const { busyId, act } = useMaterialAct();
+  const { busyId, start } = useStartMaterial();
   const [pulling, setPulling] = useState(false);
 
   const view = library.data;
@@ -90,84 +85,67 @@ export default function LibraryScreen() {
       <LibrarySkeleton label={t('common:loading')} />
     );
   } else {
+    const empty = rows.length === 0;
     content = (
-      <>
-        <ScrollView
-          testID="scroll-list"
-          contentContainerStyle={{
-            padding: SPACE.lg,
-            paddingBottom: SPACE.xl,
-            gap: SPACE.xl,
-            ...(rows.length === 0 ? { flexGrow: 1 } : null),
-          }}
-          refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
-        >
-          {rows.length === 0 ? (
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-              <EmptyState
-                title={t('library:empty.title')}
-                action={
-                  // Body text sits here at 16 px (EmptyState's own body is smaller).
-                  <View style={{ alignItems: 'center', gap: SPACE.lg }}>
-                    <Text
-                      style={[
-                        TYPE.body,
-                        {
-                          color: palette.ink2,
-                          textAlign: 'center',
-                          maxWidth: LIBRARY.emptyBodyWidth,
-                        },
-                      ]}
-                    >
-                      {t('library:empty.body')}
-                    </Text>
-                    <Btn size="lg" pill center onPress={openCapture}>
-                      {t('library:capture')}
-                    </Btn>
-                  </View>
-                }
-              />
-            </View>
-          ) : (
-            <View style={{ gap: SPACE.xl }}>
-              <Btn variant="secondary" icon="camera" full onPress={openCapture}>
+      <ScrollView
+        testID="scroll-list"
+        contentContainerStyle={
+          // The empty page brings its own room (the wider gutter, ui_kits/app/Gaps.jsx:52).
+          empty
+            ? { flexGrow: 1 }
+            : {
+                paddingHorizontal: GUTTER_APP,
+                paddingTop: LIBRARY.pageTop,
+                paddingBottom: LIBRARY.pageBottom,
+                gap: SPACE.xl,
+              }
+        }
+        refreshControl={<RefreshControl refreshing={pulling} onRefresh={() => void pull()} />}
+      >
+        {empty ? (
+          <EmptyState
+            page
+            title={t('library:empty.title')}
+            body={t('library:empty.body')}
+            action={
+              <Btn icon="camera" onPress={openCapture}>
                 {t('library:capture')}
               </Btn>
-              <ListGroup label={t('library:subjects')}>
-                {rows.map((row, index) => (
-                  <Rise key={row.key} animate={entering(index)} index={index}>
-                    <SubjectCard
-                      subject={row.subject}
-                      name={row.name}
-                      onPress={() => router.push(`/subject/${row.key}`)}
-                    />
-                  </Rise>
+            }
+          />
+        ) : (
+          <>
+            <Btn variant="secondary" icon="camera" full onPress={openCapture}>
+              {t('library:capture')}
+            </Btn>
+            <ListGroup label={t('library:subjects')}>
+              {rows.map((row, index) => (
+                <Rise key={row.key} animate={entering(index)} index={index}>
+                  <SubjectCard
+                    subject={row.subject}
+                    name={row.name}
+                    onPress={() => router.push(`/subject/${row.key}`)}
+                  />
+                </Rise>
+              ))}
+            </ListGroup>
+            {recent.length > 0 ? (
+              <ListGroup label={t('library:recent')}>
+                {recent.map((material) => (
+                  <MaterialRow
+                    key={material.id}
+                    material={material}
+                    busy={busyId === material.id}
+                    disabled={busyId !== null}
+                    onOpen={() => router.push(`/material/${material.id}`)}
+                    onStart={(mode) => start(material.id, mode)}
+                  />
                 ))}
               </ListGroup>
-              {recent.length > 0 ? (
-                <ListGroup label={t('library:recent')}>
-                  {recent.map((material) => (
-                    <MaterialRow
-                      key={material.id}
-                      material={material}
-                      busy={busyId === material.id}
-                      disabled={busyId !== null}
-                      onOpen={() => router.push(`/material/${material.id}`)}
-                      onStart={(mode) =>
-                        void act(material.id, async () => {
-                          const session = await startPractice({ material_id: material.id, mode });
-                          seedSession(session);
-                          router.push(`/practice/${session.id}`);
-                        })
-                      }
-                    />
-                  ))}
-                </ListGroup>
-              ) : null}
-            </View>
-          )}
-        </ScrollView>
-      </>
+            ) : null}
+          </>
+        )}
+      </ScrollView>
     );
   }
 

@@ -15,7 +15,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { formatLastDay } from '../../lib/time.js';
 import { Btn } from '../lb/Btn.js';
 import { Row, ListGroup } from '../lb/ListGroup.js';
-import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
+import { Sheet } from '../lb/Sheet.js';
 import { SHEET_SWAP_MS } from '../buddy/StartSheets.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 
@@ -150,14 +150,15 @@ export function MemoryItem({
       </View>
       <Sheet
         visible={menuOpen}
-        title={t('edit')}
+        // The sheet is about this one thing: it carries its words (ui_kits/app/More.jsx:39–44).
+        title={memory.statement}
         closeLabel={t('cancel')}
         onClose={() => setMenuOpen(false)}
       >
-        <Text style={[TYPE.body, SHEET_TEXT]}>{memory.statement}</Text>
         <ListGroup>
           <Row
             icon="pencil"
+            chevron={false}
             title={t('edit')}
             accessibilityLabel={t('edit_a11y', { statement: memory.statement })}
             onPress={() => choose('edit')}
@@ -165,6 +166,9 @@ export function MemoryItem({
           />
           <Row
             icon="trash"
+            iconTone="accent"
+            destructive
+            chevron={false}
             title={t('remove')}
             accessibilityLabel={t('remove_a11y', { statement: memory.statement })}
             onPress={() => choose('remove')}

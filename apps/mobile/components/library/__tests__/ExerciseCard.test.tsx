@@ -13,8 +13,12 @@ const exercise: SubjectExercise = {
 describe('grouped exercise row', () => {
   it('keeps the real open state and navigation without showing a fabricated result', () => {
     const open = vi.fn();
-    const { rerender } = renderInApp(<ExerciseCard exercise={exercise} onPress={open} />);
+    const { rerender, container } = renderInApp(
+      <ExerciseCard exercise={exercise} onPress={open} />,
+    );
     expect(screen.getByText(/noch offen/)).toBeTruthy();
+    // No sign before its name — only the chevron at the end (ui_kits/app/More.jsx:74).
+    expect(container.querySelectorAll('svg')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: exercise.title! }));
     expect(open).toHaveBeenCalledTimes(1);
     rerender(<ExerciseCard exercise={{ ...exercise, status: 'finished' }} onPress={open} />);

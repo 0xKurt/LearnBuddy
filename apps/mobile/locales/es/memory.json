@@ -22,9 +22,10 @@
   "saved": "Cambiado.",
   "removed": "Quitado. Buddy lo olvida.",
   "removed_undone": "Ha vuelto.",
-  "confirm_title": "¿Quitar esto?",
-  "confirm_body": "“{{statement}}”: Buddy lo olvidará.",
-  "confirm_cta": "Sí, quitar",
   "empty_title": "Nada anotado todavía",
-  "empty_body": "Cuéntale a Buddy qué tienes pendiente. Lo que Buddy recuerde aparecerá aquí."
+  "empty_body": "Cuéntale a Buddy qué tienes pendiente. Lo que Buddy recuerde aparecerá aquí.",
+  "history": {
+    "title": "Historial",
+    "when": "{{day}}, {{time}}"
+  }
 }
