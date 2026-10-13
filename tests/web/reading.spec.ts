@@ -179,7 +179,7 @@ test('a text Buddy writes himself: at her stage, read like a photographed one (#
   await expect(page.getByRole('button', { name: 'Der Igel im Winter' }).first()).toBeVisible();
   await textAndQuestion(page, first);
   // Buddy's own text: the card says whose question it is.
-  await expect(page.getByText('Frage von Buddy').first()).toBeVisible();
+  await expect(page.getByTestId('question-meta').first()).toContainText('von Buddy');
   await bothSchemes(page, '98-reading-buddy', 'passage');
   await page.getByRole('button', { name: 'unter einer Hecke' }).click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();

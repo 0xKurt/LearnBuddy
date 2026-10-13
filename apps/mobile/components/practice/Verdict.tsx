@@ -1,4 +1,4 @@
-// Feedback carries its meaning in words. A fresh result may fade in; live reduced motion
+// Feedback carries its meaning in a sign and a word. A fresh result may fade in; live reduced motion
 // finishes that transition and cancels a finite answer nudge immediately.
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -13,7 +13,6 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { ACTIVE_MOTION, DURATION, EASE, useMotionReduced } from '../../lib/theme/motion.js';
 import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { CHAT } from '../../lib/theme/chat.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Icon } from '../lb/Icon.js';
 
@@ -42,9 +41,16 @@ export function VerdictTag({
     return () => cancelAnimation(shown);
   }, [fresh, reduced, shown]);
   const style = useAnimatedStyle(() => ({ opacity: shown.value }));
-  const right = verdict === 'correct';
-  const partial = verdict === 'partially_correct';
-  const color = right ? palette.successText : partial ? palette.warningText : palette.ink2;
+  // Icon and word, never the colour alone (design components/buddy/Message.jsx:24–31): a check on
+  // the "right" tint, a cross on the "wrong" tint for a miss and for "Fast" (ui_kits/app/Flows.jsx
+  // :40, :113 — the words stay the kind ones). An answer nobody could judge is neither: it keeps
+  // the quiet chip without a sign.
+  const skin =
+    verdict === 'correct'
+      ? ({ icon: 'check', bg: palette.mint, color: palette.successText } as const)
+      : verdict === 'unchecked'
+        ? ({ icon: null, bg: palette.canvas, color: palette.ink2 } as const)
+        : ({ icon: 'close', bg: palette.blush, color: palette.danger } as const);
   return (
     <Animated.View
       accessibilityRole="text"
@@ -53,8 +59,8 @@ export function VerdictTag({
         {
           flexDirection: 'row',
           alignItems: 'center',
-          gap: SPACE.xs,
-          backgroundColor: right ? palette.mint : partial ? palette.butter : palette.canvas,
+          gap: PRACTICE_SCREEN.verdictSignGap,
+          backgroundColor: skin.bg,
           borderRadius: PRACTICE_SCREEN.verdictRadius,
           paddingHorizontal: PRACTICE_SCREEN.verdictPadding,
           paddingVertical: PRACTICE_SCREEN.verdictPaddingVertical,
@@ -62,12 +68,12 @@ export function VerdictTag({
         style,
       ]}
     >
-      {right ? (
+      {skin.icon ? (
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Icon name="check" size={PRACTICE_SCREEN.verdictIcon} color={color} />
+          <Icon name={skin.icon} size={PRACTICE_SCREEN.verdictIcon} color={skin.color} />
         </View>
       ) : null}
-      <Text style={[TYPE.label, { color }]}>{label}</Text>
+      <Text style={[TYPE.label, { color: skin.color }]}>{label}</Text>
     </Animated.View>
   );
 }

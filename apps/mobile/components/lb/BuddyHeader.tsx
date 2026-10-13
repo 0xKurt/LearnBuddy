@@ -15,9 +15,18 @@ import { IconBtn } from './IconBtn.js';
 import { Progress } from './Progress.js';
 import { ReadAloudSwitch } from './ReadAloudSwitch.js';
 
+/** Between the subtitle and its tail ("Frage 1 von 3 · noch 10 Min."): written here, once. */
+const SUBTITLE_JOIN = ' · ';
+
 export type BuddyHeaderProps = {
   title: string;
   subtitle?: string;
+  /**
+   * What closes the subtitle and must stay whole: the time left in a test with time (design
+   * ui_kits/app/Tasks.jsx:185, `white-space: nowrap`). The subtitle before it may end in "…";
+   * this part never shrinks. `label`: its full words for a screen reader ("Noch 10 Minuten").
+   */
+  subtitleTail?: { text: string; label: string };
   /** What is happening on the screen, as the orb's pose (lib/buddy/headState.ts). */
   state?: MoonState;
   leading?: {
@@ -46,6 +55,7 @@ export type BuddyHeaderProps = {
 export function BuddyHeader({
   title,
   subtitle,
+  subtitleTail,
   state = 'idle',
   leading,
   menu,
@@ -109,9 +119,27 @@ export function BuddyHeader({
             {title}
           </Text>
           {subtitle ? (
-            <Text numberOfLines={1} ellipsizeMode="tail" style={TYPE.headerMeta}>
-              {subtitle}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
+                style={[TYPE.headerMeta, { flexShrink: 1, minWidth: 0 }]}
+              >
+                {subtitle}
+              </Text>
+              {subtitleTail ? (
+                <Text
+                  testID="header-subtitle-tail"
+                  accessibilityLabel={subtitleTail.label}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
+                  style={[TYPE.headerMeta, { flexShrink: 0 }]}
+                >
+                  {`${SUBTITLE_JOIN}${subtitleTail.text}`}
+                </Text>
+              ) : null}
+            </View>
           ) : null}
         </View>
         {trailing ?? (

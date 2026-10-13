@@ -9,7 +9,8 @@ import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
-import { ItemThread } from '../ItemThread.js';
+import { AnswerFlow } from '../AnswerShell.js';
+import { ItemThread, useWritesBelow } from '../ItemThread.js';
 
 const turn = (over: Partial<PracticeTurnView>): PracticeTurnView => ({
   id: '00000000-0000-4000-8000-000000000001',
@@ -51,6 +52,56 @@ describe('the thread under a question', () => {
   it('does not show it while it is sent either, only that Buddy is looking', () => {
     renderInApp(<ItemThread turns={[]} pending={ANSWER.text} echoAnswers={false} />);
     expect(screen.queryByText(ANSWER.text)).toBeNull();
+  });
+});
+
+// Buddy's mini orb (#599, design components/buddy/Message.jsx:17–19): beside the newest thing he
+// says, once — as in the chat. While he writes it stands at his dots.
+describe('Buddy’s mini orb in the thread', () => {
+  const OLDER = turn({
+    id: '00000000-0000-4000-8000-000000000003',
+    role: 'tutor',
+    text: 'Schau dir die Länder nochmal an.',
+  });
+  const lineOf = (text: string): HTMLElement => {
+    let node: HTMLElement | null = screen.getByText(text);
+    while (node && node.getAttribute('data-testid') !== 'thread-turn') node = node.parentElement;
+    if (!node) throw new Error(`no turn for: ${text}`);
+    return node;
+  };
+  const orbIn = (text: string) => lineOf(text).querySelector('[data-testid="thread-orb"]');
+
+  it('stands beside his newest line only; an older line keeps the column empty', () => {
+    renderInApp(<ItemThread turns={[OLDER, ANSWER, REPLY]} pending={null} />);
+    expect(screen.getAllByTestId('thread-orb')).toHaveLength(1);
+    expect(orbIn(REPLY.text)).not.toBeNull();
+    expect(orbIn(OLDER.text)).toBeNull();
+    expect(orbIn(ANSWER.text)).toBeNull();
+  });
+
+  it('moves to his dots while he looks at her answer', () => {
+    renderInApp(<ItemThread turns={[OLDER]} pending="x = 4" />);
+    expect(screen.getAllByTestId('thread-orb')).toHaveLength(1);
+    expect(orbIn(OLDER.text)).toBeNull();
+  });
+
+  it('follows the newest reply of the whole question where the screen names it', () => {
+    renderInApp(
+      <AnswerFlow.Provider value={{ thread: null, tools: null, newestReply: 'elsewhere' }}>
+        <ItemThread turns={[ANSWER, REPLY]} pending={null} />
+      </AnswerFlow.Provider>,
+    );
+    expect(screen.queryByTestId('thread-orb')).toBeNull();
+  });
+
+  it('steps aside while he writes another explanation under the thread', () => {
+    useWritesBelow.setState({ writing: true });
+    try {
+      renderInApp(<ItemThread turns={[ANSWER, REPLY]} pending={null} />);
+      expect(screen.queryByTestId('thread-orb')).toBeNull();
+    } finally {
+      useWritesBelow.setState({ writing: false });
+    }
   });
 });
 

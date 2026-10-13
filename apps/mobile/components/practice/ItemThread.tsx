@@ -1,9 +1,9 @@
 // The short conversation about one question: the learner's answers on the
-// right in the accent, Buddy's replies as plain full-width text. The header Orb
-// provides the Buddy state.
-// Only the latest answer carries its judgement, always in words and never as
-// "falsch", on a soft pastel chip (right = mint, almost = butter, not yet =
-// neutral); a turn that was not an attempt (a question, "no idea") gets none.
+// right in the accent, Buddy's replies as plain text with his mini orb beside the newest one
+// (design components/buddy/Message.jsx:17–19, as in the chat: `BuddyLine`). While he is writing
+// the orb stands at his dots instead (`Thinking`).
+// Only the latest answer carries its judgement, always as a sign and a word and never as
+// "falsch" (`VerdictTag`); a turn that was not an attempt (a question, "no idea") gets none.
 // What arrives while the screen is open moves a little (Buddy's reply rises in, a right
 // answer fades in, a "not yet" nudges her answer; Verdict.tsx); what was
 // there when the question opened just stands.
@@ -17,9 +17,10 @@
 // full width (issue #525): inside the bubble her quotes broke after three or four words.
 
 import type { PracticeTurnView } from '@learnbuddy/shared-types/contracts';
-import { useRef, type ReactNode } from 'react';
+import { useContext, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import { create } from 'zustand';
 
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { versionsOf, wordCount } from '../../lib/practice/essay.js';
@@ -29,11 +30,13 @@ import { DURATION } from '../../lib/theme/motion.js';
 import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
+import { BuddyLine, UNDER_LINE } from '../buddy/ThreadParts.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Chip } from '../lb/Chip.js';
 import { Rise } from '../lb/Motion.js';
 import { MathText } from '../math/MathText.js';
+import { AnswerFlow } from './AnswerShell.js';
 import { keepSpaces } from './CodeBlock.js';
 import { useSpokenMath } from '../math/useSpokenMath.js';
 import { EssayFeedback } from './EssayFeedback.js';
@@ -44,6 +47,13 @@ import { Nudge, VerdictTag, type VerdictKey } from './Verdict.js';
 
 /** The step between turns. */
 const GAP = SPACE.lg;
+
+/**
+ * Buddy is writing under this thread (another explanation, `Reexplain`): his orb stands at those
+ * dots, so no line above carries it. One question is on screen at a time; the explanations say so
+ * here and take it back when the reply is there (as `useSpeakPhase` does for the recorder).
+ */
+export const useWritesBelow = create<{ writing: boolean }>(() => ({ writing: false }));
 
 /** null verdict = the answer could not be judged (no model), nothing was graded. */
 function verdictKey(verdict: PracticeTurnView['verdict']): VerdictKey | null {
@@ -162,12 +172,25 @@ export function ItemThread({
     shown.map((turn) => turn.id),
     onTurnTops && ((pieces) => onTurnTops(Object.fromEntries(pieces.map((p) => [p.key, p.top])))),
   );
+  // Buddy's orb stands beside the newest thing he says, once: the newest reply of the whole
+  // question where the screen knows it (the thread and the explanations under it are two lists),
+  // else this list's own. While he writes, his dots carry it.
+  const flow = useContext(AnswerFlow);
+  const below = useWritesBelow((state) => state.writing);
   if (turns.length === 0 && pending === null) return null;
 
   let latestAnswerId: string | null = null;
+  let latestReplyId: string | null = null;
   for (const turn of turns) {
     if (turn.role === 'learner') latestAnswerId = turn.id;
+    else latestReplyId = turn.id;
   }
+  const orbAt =
+    pending !== null || below
+      ? null
+      : flow.newestReply !== undefined
+        ? flow.newestReply
+        : latestReplyId;
 
   return (
     <View style={{ gap }}>
@@ -213,7 +236,9 @@ export function ItemThread({
                 {bubble}
               </Nudge>
             ) : (
-              bubble
+              <View style={{ alignSelf: 'stretch' }}>
+                <BuddyLine orb={turn.id === orbAt}>{bubble}</BuddyLine>
+              </View>
             )}
             {verdict ? (
               <VerdictTag verdict={verdict} label={t(`verdict.${verdict}`)} fresh={fresh} />
@@ -224,7 +249,9 @@ export function ItemThread({
               </Card>
             ) : null}
             {pronunciation && !mine && turn.pronunciation ? (
-              <PronunciationNote feedback={turn.pronunciation} />
+              <View style={UNDER_LINE}>
+                <PronunciationNote feedback={turn.pronunciation} />
+              </View>
             ) : null}
             {/* An explanation's picture (#298), under the reply's bubble like its chips: drawn
                 from data the server checked, and opened large on a tap like every figure. */}
@@ -233,15 +260,15 @@ export function ItemThread({
                 <QuestionFigure figure={turn.figure} />
               </View>
             ) : null}
-            {/* Under the reply's bubble, not under Buddy's orb. */}
+            {/* Under the reply's words, not under Buddy's orb (`UNDER_LINE`). */}
             {turn.later === 'kept' ? (
-              <View style={{ alignSelf: 'stretch' }}>
+              <View style={[{ alignSelf: 'stretch' }, UNDER_LINE]}>
                 <Chip tone="primary" icon="check">
                   {t('ask.kept')}
                 </Chip>
               </View>
             ) : turn.later === 'offered' && later ? (
-              <View style={{ alignSelf: 'stretch' }}>
+              <View style={[{ alignSelf: 'stretch' }, UNDER_LINE]}>
                 <Btn
                   variant="ghost"
                   size="sm"

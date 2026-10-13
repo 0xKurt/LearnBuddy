@@ -61,7 +61,11 @@ async function onboardChild(page: Page): Promise<void> {
  * checks, except that the field itself scrolls — an essay in a field that shows ten lines of it
  * has to (`fit.ts` names only the conversation, a list and a reading text as scrolling, so the one
  * exception is made here, for this spec, and nowhere else). With the keyboard up on the small
- * phone the question and the field both stay in view.
+ * phone the field stays in view. The question heads the one scrolling conversation (#597; design
+ * ui_kits/app/Practice.jsx:24–34, Tasks.jsx:187–196: the question card is the body's first part
+ * and scrolls with it): before her first version it is in view too; once Buddy's feedback stands
+ * under it the conversation rests on that feedback, and the question is a scroll up away — never
+ * gone.
  */
 async function look(page: Page, name: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {
@@ -90,7 +94,14 @@ async function look(page: Page, name: string): Promise<void> {
     await settle(page);
     await page.screenshot({ path: join(SHOTS, `${tag}-kb.png`) });
     await expect(page.getByLabel('Deine Antwort'), `${tag} @kb: the field`).toBeInViewport();
-    await expect(page.getByText(TASK), `${tag} @kb: the question`).toBeInViewport();
+    const question = page.getByText(TASK);
+    if ((await page.getByTestId('essay-feedback').count()) > 0) {
+      // Under feedback the body rests on Buddy's newest words; the question is reached by
+      // scrolling the conversation, with the field still above the keyboard.
+      await question.scrollIntoViewIfNeeded();
+      await expect(page.getByLabel('Deine Antwort'), `${tag} @kb: the field`).toBeInViewport();
+    }
+    await expect(question, `${tag} @kb: the question`).toBeInViewport();
     await page.getByLabel('Deine Antwort').blur();
     expect(await a11y(page, tag), `${tag}: accessibility`).toEqual([]);
   }

@@ -7,7 +7,6 @@
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 
-import { CARD_PAD } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
@@ -16,9 +15,10 @@ export function HeardTextCard({ text }: { text: string }) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   return (
-    <Card tone="sky" padding={CARD_PAD.roomy} radius={24}>
+    <Card tone="sky">
       <Text style={[TYPE.bodyStrong, { color: palette.ink2 }]}>{t('listen.transcript_title')}</Text>
-      <Text style={TYPE.bodyStrong}>{text}</Text>
+      {/* The text itself reads as text, as before the redesign: only its title is strong. */}
+      <Text style={TYPE.body}>{text}</Text>
     </Card>
   );
 }

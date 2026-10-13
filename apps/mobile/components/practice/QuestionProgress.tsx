@@ -1,17 +1,22 @@
-// Practice header adapters: honest progress and the timed-test clock beneath the title,
-// with the existing flag/dispute confirmation flow behind its menu.
+// Practice header adapters: honest progress under the title — with the clock of a timed test
+// ticking behind it — and the existing flag/dispute confirmation flow behind its menu. What a
+// run says about itself stands in the page, not in a strip under the head: a test's rule in the
+// question card's meta line, homework's hint as a quiet line above the card (design
+// ui_kits/app/Tasks.jsx `test`, Flows.jsx:50).
 
 import type { ItemView, SessionView } from '@learnbuddy/shared-types/contracts';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
+import { View } from 'react-native';
 
+import { formDensity } from '../../lib/keyboard.js';
 import type { QuestionView } from '../../lib/practice/questionView.js';
 import type { CornerAction } from '../../lib/practice/useCornerConfirm.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
+import { QUESTION } from '../../lib/theme/question.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { canDisputeVerdict } from './DisputeVerdict.js';
-import { ProgressRow } from './Question.js';
+import { Hint, ProgressRow } from './Question.js';
 import { QuestionCorner } from './QuestionCorner.js';
 import { CircleBtn } from '../lb/CircleBtn.js';
 import { Sheet } from '../lb/Sheet.js';
@@ -45,8 +50,6 @@ export function QuestionProgress({
   receivedAt,
   onTimeUp,
 }: Props) {
-  const { palette } = useTheme();
-  const { t } = useTranslation('practice');
   if (testing && session.timer)
     return (
       <TestClockHeader
@@ -56,15 +59,53 @@ export function QuestionProgress({
         progress={{ ...progress, hideLabel: inHeader, active: open }}
       />
     );
+  return <ProgressRow {...progress} hideLabel={inHeader} active={open} />;
+}
+
+/** The head's second line: where she is ("Frage 1 von 3"). */
+export function progressLine(t: TFunction, progress: QuestionView['progress']): string {
+  return progress.preparing
+    ? t('practice:progress_more_coming', { current: progress.position })
+    : t('practice:progress', { current: progress.position, total: progress.total });
+}
+
+/**
+ * The time left in a test with time, as the head's subtitle closes with it ("noch 10 Min.";
+ * design ui_kits/app/Tasks.jsx:185) — never cut — and in full words for a screen reader.
+ * `minutes`: what the running clock shows (`useTestClock`), null without one.
+ */
+export function clockTail(
+  t: TFunction,
+  minutes: number | null,
+): { text: string; label: string } | undefined {
+  if (minutes === null) return undefined;
+  return {
+    text: t('practice:timer.chip', { count: minutes }),
+    label: t('practice:timer.left', { count: minutes }),
+  };
+}
+
+/**
+ * What a test says about itself in the question card's meta line: its rule, and from five
+ * minutes on the one gentle sentence (null: not a test).
+ */
+export function testMeta(t: TFunction, testing: boolean, soon: boolean): string | null {
+  if (!testing) return null;
+  return t(soon ? 'practice:timer.soon' : 'practice:test_meta');
+}
+
+/**
+ * Homework's quiet hint above the question (Flows.jsx:50), a body's step from the card. It steps
+ * aside while she types in tight keyboard room, like the card's meta line.
+ */
+export function HomeworkHint() {
+  const { t } = useTranslation('practice');
+  const seen = useVisibleHeight();
+  if (formDensity(seen.window, seen.overlap) === 'tight') return null;
   return (
-    <>
-      <ProgressRow {...progress} hideLabel={inHeader} active={open} />
-      {session.mode === 'help' || testing ? (
-        <Text style={[TYPE.meta, { color: palette.primaryDk }]}>
-          {t(testing ? 'test_note' : 'help_note')}
-        </Text>
-      ) : null}
-    </>
+    <View style={{ marginBottom: QUESTION.hintGap }}>
+      <Hint testID="homework-hint">{t('help_note')}</Hint>
+    </View>
   );
 }
 

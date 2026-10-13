@@ -124,3 +124,46 @@ describe('the two controls of every head (Header.jsx:23–25)', () => {
     expect(screen.queryByRole('button', { name: 'Mehr' })).toBeNull();
   });
 });
+
+// A test with time (#599, design ui_kits/app/Tasks.jsx:185 `white-space: nowrap`): the minutes
+// left close the subtitle and are never cut — only what stands before them may end in "…".
+describe('the subtitle’s tail', () => {
+  const show = () =>
+    renderInApp(
+      <BuddyHeader
+        title="Photosynthese – Probetest"
+        subtitle="Question 1 sur 3"
+        subtitleTail={{ text: 'encore 10 min', label: 'Encore 10 minutes' }}
+        menu={menu}
+        leading={back}
+      />,
+    );
+
+  it('never shrinks, while the part before it gives way on one line', () => {
+    show();
+    const tail = screen.getByTestId('header-subtitle-tail');
+    expect(tail.textContent).toBe(' · encore 10 min');
+    expect(styleOf(tail).flexShrink).toBe('0');
+    expect(styleOf(tail).whiteSpace).toBe('nowrap');
+    const lead = screen.getByText('Question 1 sur 3');
+    expect(styleOf(lead).flexShrink).toBe('1');
+    expect(styleOf(lead).minWidth).toBe('0px');
+    expect(styleOf(lead).textOverflow).toBe('ellipsis');
+    // One row, in the title's column: the head's geometry is as it was.
+    expect(styleOf(tail.parentElement!).flexDirection).toBe('row');
+    expect(tail.parentElement).toBe(lead.parentElement);
+  });
+
+  it('says the time in full words to a screen reader', () => {
+    show();
+    expect(screen.getByLabelText('Encore 10 minutes')).toBe(
+      screen.getByTestId('header-subtitle-tail'),
+    );
+  });
+
+  it('a head without one draws its subtitle as before', () => {
+    renderInApp(<BuddyHeader title="Titel" subtitle="2 von 5" menu={menu} leading={back} />);
+    expect(screen.queryByTestId('header-subtitle-tail')).toBeNull();
+    expect(screen.getByText('2 von 5')).toBeDefined();
+  });
+});

@@ -1,27 +1,34 @@
-// The head of a practice test she asked to sit with time (issue #241): the usual progress row
-// with the time left in a small chip in the row's fixed clock slot (issue #334.2: it never pushes
-// the bar out), and one quiet line under it.
+// The clock of a practice test she asked to sit with time (issue #241). It ticks here, in its own
+// component under the head's progress bar, so the rest of the practice screen is not rendered
+// again every second — and says what it knows through `useTestClock`: the screen puts the time
+// left into the head's subtitle ("Frage 1 von 3 · noch 10 Min.") and the test's rule into the
+// question card's meta line (design components/practice/Tasks.prompt.md "clock sits in the header
+// subtitle", ui_kits/app/Tasks.jsx `test`).
 //
 // Calm on purpose (lib/practice/testClock.ts): whole minutes, no red, no seconds ticking. The
-// line under the row says the test's rule ("Eine Antwort pro Frage, keine Tipps.") and changes
-// once, at five minutes, to a gentle sentence — said once to a screen reader too. Nothing else
-// moves. It ticks in its own component, so the rest of the practice screen is not rendered
-// again every second.
+// card's line changes once, at five minutes, to a gentle sentence — said once to a screen reader
+// too. Nothing else moves.
 
 import type { TestTimer } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
+import { create } from 'zustand';
 
 import { announce } from '../../lib/announce.js';
 import { clockLine, leftNow } from '../../lib/practice/testClock.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { TYPE } from '../../lib/theme/type.js';
-import { Chip } from '../lb/Chip.js';
 import { ProgressRow } from './Question.js';
 
 /** How often it looks at the clock. A display in whole minutes needs no more. */
 const TICK_MS = 1_000;
+
+/**
+ * What the running clock shows right now (null: no test with time is on screen). One test is on
+ * screen at a time; its clock says so here and takes it back when it goes (as `useSpeakPhase`).
+ */
+export const useTestClock = create<{ minutes: number | null; soon: boolean }>(() => ({
+  minutes: null,
+  soon: false,
+}));
 
 export function TestClockHeader({
   timer,
@@ -34,10 +41,9 @@ export function TestClockHeader({
   receivedAt: number;
   /** Once, when the time is up: the screen hands the test in. */
   onTimeUp: () => void;
-  /** The progress row as every run shows it; the clock takes the row's clock slot. */
+  /** The progress row as every run shows it. */
   progress: ComponentProps<typeof ProgressRow>;
 }) {
-  const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const [now, setNow] = useState(() => Date.now());
   const fired = useRef(false);
@@ -67,23 +73,11 @@ export function TestClockHeader({
     }
   }, [soon, count, t]);
 
-  return (
-    <>
-      <ProgressRow
-        {...progress}
-        clock={
-          <Chip
-            tone="primary"
-            icon="clock"
-            accessibilityLabel={line ? t('timer.left', { count: line.count }) : t('timer.up')}
-          >
-            {t('timer.chip', { count: line?.count ?? 0 })}
-          </Chip>
-        }
-      />
-      <Text testID="test-clock" style={[TYPE.metaMedium, { color: palette.primaryDk }]}>
-        {soon ? t('timer.soon') : t('timer.note')}
-      </Text>
-    </>
-  );
+  // Only a new minute (or the gentle sentence) reaches the screen, never every tick.
+  useEffect(() => {
+    useTestClock.setState({ minutes: count, soon });
+    return () => useTestClock.setState({ minutes: null, soon: false });
+  }, [count, soon]);
+
+  return <ProgressRow {...progress} />;
 }

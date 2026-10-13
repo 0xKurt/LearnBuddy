@@ -302,7 +302,8 @@ test('learning modes: explain, homework help without the solution, practice with
   // The offer card in the thread, not a sheet — and the button is taken from THAT card's own
   // words rather than from the order or the number of the buttons (see `offerStart`, issue #267).
   await offerStart(page, 'Brüche vergleichen').click();
-  await expect(page.getByText('Frage von Buddy')).toBeVisible();
+  // One meta line on the card: its topic where the title does not name it, then "von Buddy".
+  await expect(page.getByTestId('question-meta')).toContainText('von Buddy');
   await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
   // "Tipp": the next prepared hint at once — no model involved. The hints are written
   // in the background right after the start; give that a moment in the dev stack.
@@ -422,9 +423,10 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Senden' }).click();
   await expect(page.getByText('ein Probetest über die Römer', { exact: false })).toBeVisible();
   await offerStart(page, 'Die Römer').click();
-  await expect(
-    page.getByText('Probetest – eine Antwort pro Frage, keine Tipps.', { exact: false }),
-  ).toBeVisible();
+  // The test's rule stands in the question card's meta line (design ui_kits/app/Tasks.jsx:139).
+  await expect(page.getByTestId('question-meta')).toHaveText(
+    'Probetest · eine Antwort, keine Tipps',
+  );
   await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
   // The same bar in the Probetest (issue #402, report #388 §3): she may ask, but the test gives no
   // help — the reply is its fixed line, and asking costs no try (the options stay).
@@ -447,8 +449,11 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Lösung', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByText('Probetest geschafft!')).toBeVisible();
-  await expect(page.getByText('1 · Richtig')).toBeVisible();
-  await expect(page.getByText('2 · Übersprungen')).toBeVisible();
+  // Each row ends in its state, in a word (design ui_kits/app/Done.jsx:36).
+  await expect(page.getByTestId('scroll-list').getByText('Richtig', { exact: true })).toBeVisible();
+  await expect(
+    page.getByTestId('scroll-list').getByText('Übersprungen', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText('Lösung: 753')).toBeVisible();
   await shot(page, '29-test-review');
 
@@ -489,7 +494,7 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
     page.getByText('ein paar Fragen zu Brüchen vorbereitet', { exact: false }),
   ).toBeVisible();
   await offerStart(page, 'Brüche vergleichen').click();
-  await expect(page.getByText('Frage von Buddy')).toBeVisible();
+  await expect(page.getByTestId('question-meta')).toContainText('von Buddy');
 
   // ── Vorlesen: the speaker in the practice head, the chat's own switch (issue #386) ──
   // One tap reads the question in Buddy's voice — what is sent is the SPOKEN text, math in words,
@@ -1720,19 +1725,22 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   await shot(page, '40a-test-offer');
   await offerStart(page, 'Photosynthese').click();
 
-  // The time left: a small chip at the end of the progress row — whole minutes, no red, no
-  // seconds — and the test's one rule under it.
-  await expect(page.getByText('noch 10 Min.', { exact: true })).toBeVisible();
-  await expect(page.getByText('Eine Antwort pro Frage, keine Tipps.')).toBeVisible();
+  // The time left stands in the head's subtitle — whole minutes, no red, no seconds — and the
+  // test's one rule in the question card's meta line (design ui_kits/app/Tasks.jsx `test`).
+  // The minutes are the subtitle's own tail: never cut, whatever stands before them.
+  await expect(page.getByText('Frage 1 von 3', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('header-subtitle-tail')).toHaveText('· noch 10 Min.');
+  await expect(page.getByTestId('header-subtitle-tail')).toBeInViewport({ ratio: 1 });
+  await expect(page.getByTestId('question-meta')).toHaveText(
+    'Probetest · eine Antwort, keine Tipps',
+  );
   await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
   await shot(page, '40-test-clock');
-  // The clock has its own slot in the row and never pushes the bar out (issue #334.2), at 360 too.
+  // The clock is in the subtitle now; the bar under the head keeps its width, at 360 too.
   for (const width of [390, 360]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 740 });
     const bar = await page.getByTestId('progress-bar').boundingBox();
-    expect(bar?.width ?? 0, `the progress bar beside the clock @${width}`).toBeGreaterThanOrEqual(
-      80,
-    );
+    expect(bar?.width ?? 0, `the progress bar under the head @${width}`).toBeGreaterThanOrEqual(80);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await setScheme(page, 'dark');
@@ -1746,8 +1754,11 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   // Five minutes left: one quiet sentence in the same place, nothing more.
   await deadlineIn(5 * 60_000 - 2_000);
   await page.reload();
-  await expect(page.getByText('noch 5 Min.', { exact: true })).toBeVisible();
-  await expect(page.getByText('Schau in Ruhe, was du noch schaffst.')).toBeVisible();
+  await expect(page.getByText('Frage 2 von 3', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('header-subtitle-tail')).toHaveText('· noch 5 Min.');
+  await expect(page.getByTestId('question-meta')).toHaveText(
+    'Schau in Ruhe, was du noch schaffst.',
+  );
   await bothSchemes(page, '41-test-clock-five');
   await page.getByRole('radio', { name: 'In den Chloroplasten', exact: true }).click();
   await page.getByRole('button', { name: 'Prüfen' }).click();
@@ -1764,7 +1775,7 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   await expect(page.getByText('Die Zeit ist um', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText('In der Zeit hast du 2 von 3 Fragen beantwortet.')).toBeVisible();
   await expect(page.getByText('Was offen blieb, zählt nicht als falsch.')).toBeVisible();
-  await expect(page.getByText('3 · Nicht beantwortet')).toBeVisible();
+  await expect(page.getByText('Nicht beantwortet', { exact: true })).toBeVisible();
   await expect(page.getByText('Lösung: Traubenzucker')).toBeVisible();
   await bothSchemes(page, '42-test-time-up');
   // The end of the review: the question she did not get to, its solution, nothing marked wrong.

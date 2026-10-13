@@ -524,7 +524,7 @@ async function pronunciation(page: Page): Promise<void> {
   // screen — the owner read the bar as a toolbar. For a sentence she is to SAY there is
   // nothing to reveal: it stands in the card above.
   await expect(page.getByRole('button', { name: 'Lösung zeigen' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Diesmal überspringen' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Überspringen', exact: true })).toHaveCount(1);
   // Hearing it is one control with a quieter variant beside it, not two equal buttons.
   await expect(page.getByRole('button', { name: 'Anhören', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Langsam anhören' })).toBeVisible();

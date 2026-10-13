@@ -10,7 +10,7 @@
 // #186: "und ich weiss auch nicht wieso das vom design so anders ist". The bar carried five
 // controls in four shapes — a text link, two equal outlined boxes, one large filled button
 // and a ghost button. It carries two now: one large filled pill (the single leading action,
-// which always says what pressing it will do) and small pills for everything quiet.
+// which always says what pressing it will do) and chips for everything quiet (#599).
 //
 // No other layer can reach these states. The browser walkthrough launches Chromium with
 // `--use-fake-ui-for-media-stream`, which grants the microphone on purpose so the
@@ -22,6 +22,8 @@ import type { AudioMime, ItemView } from '@learnbuddy/shared-types/contracts';
 import { act, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { UI } from '../../../lib/theme/components.js';
+import { paletteOf } from '../../../lib/theme/palettes.js';
 import { RADIUS } from '../../../lib/theme/radius.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { SpeakPanel } from '../SpeakPanel.js';
@@ -152,6 +154,8 @@ const barButtons = (): Element[] => screen.getAllByRole('button');
 const leading = (): Element[] => barButtons().filter((b) => skin(b).minHeight === '54px');
 
 const TRANSPARENT = 'rgba(0, 0, 0, 0)';
+const rgb = (hex: string): string =>
+  `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
 
 beforeEach(() => {
   recorder.phase = 'idle';
@@ -233,19 +237,26 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
     expect(skin(leading()[0]!).borderTopLeftRadius).toBe(`${RADIUS.round}px`);
   });
 
-  it('gives everything else one shape, whatever it does', () => {
+  // Design ui_kits/app/Flows.jsx:119–121 (#599): three chips above the primary.
+  it('gives everything else one shape, whatever it does: the chip, in one row above the lead', () => {
     renderPanel({ skip: true });
     const quiet = barButtons().filter((b) => skin(b).minHeight !== '54px');
-    expect(quiet.map(named)).toEqual(['Anhören', 'Langsam anhören', 'Diesmal überspringen']);
+    expect(quiet.map(named)).toEqual(['Anhören', 'Langsam anhören', 'Überspringen']);
+    const row = screen.getByTestId('speak-chips');
     for (const button of quiet) {
-      const box = skin(button);
-      // One size (and a 44 pt touch target), one roundness, no outline. Before this,
-      // listening was an outlined 12 pt box and skipping a 48 pt ghost button — three
-      // shapes for three things that are all "quietly available".
-      expect(box.minHeight, named(button)).toBe('44px');
-      expect(box.borderTopLeftRadius, named(button)).toBe(`${RADIUS.round}px`);
-      expect(box.borderTopWidth, named(button)).toBe('0px');
+      expect(row.contains(button), named(button)).toBe(true);
+      // One size, one roundness, one fine edge — and a whole touch target around it. Before
+      // this, listening was a grey pill, "Langsam" a text link and skipping a ghost button
+      // under the lead: three shapes for three things that are all "quietly available".
+      const chip = styleOf(button.querySelector('div > div')!);
+      expect(chip.minHeight, named(button)).toBe(`${UI.chip.height}px`);
+      expect(chip.borderTopLeftRadius, named(button)).toBe(`${RADIUS.round}px`);
+      expect(chip.borderTopWidth, named(button)).toBe('1px');
+      expect(styleOf(button).minHeight, named(button)).toBe('44px');
     }
+    // The row stands before the lead, never under it.
+    const lead = leading()[0]!;
+    expect(row.compareDocumentPosition(lead) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('offers listening once, with "langsam" as its variant rather than a second way', () => {
@@ -258,10 +269,8 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
     expect(listen.textContent).toBe('Anhören');
     expect(slow.textContent).toBe('Langsam');
 
-    // And they are not of equal rank. Two signals, neither of them colour alone: only the
-    // listening itself carries a fill and the speaker icon.
-    expect(skin(listen).backgroundColor).not.toBe(TRANSPARENT);
-    expect(skin(slow).backgroundColor).toBe(TRANSPARENT);
+    // And they are not of equal rank, by a signal that is not colour: only the listening
+    // itself carries the speaker.
     expect(listen.querySelector('svg'), 'the action carries the speaker').toBeTruthy();
     expect(slow.querySelector('svg'), 'its variant does not repeat the icon').toBeNull();
   });
@@ -306,6 +315,28 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
     for (const name of ['Anhören', 'Langsam anhören']) {
       expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled, name).toBe(true);
     }
-    expect(screen.queryByRole('button', { name: 'Diesmal überspringen' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Überspringen' })).toBeNull();
+  });
+
+  it('says "Fertig" on the primary, with a tick, while she speaks (Flows.jsx:123)', () => {
+    recorder.phase = 'recording';
+    renderPanel();
+    const lead = leading()[0]!;
+    expect(lead.textContent).toBe('Fertig');
+    // The filled accent, not the grey "soft" skin the stop button had.
+    expect(skin(lead).backgroundColor).toBe(rgb(paletteOf('pastell').primary));
+    expect(lead.querySelector('path')?.getAttribute('d')).toBe('M5 12l5 5 9-10');
+  });
+
+  it('waits on the primary itself while Buddy listens, instead of a status row (Flows.jsx:124)', async () => {
+    outside.speakItem.mockReturnValue(new Promise(() => undefined));
+    renderPanel({ skip: true });
+    await act(async () => {
+      recorder.onRecorded?.(RECORDING);
+    });
+    expect(leading().map(named)).toEqual(['Buddy hört zu …']);
+    expect(leading()[0]!.getAttribute('aria-disabled')).toBe('true');
+    expect(leading()[0]!.getAttribute('aria-busy')).toBe('true');
+    expect(screen.queryByRole('progressbar', { name: 'Buddy hört zu …' })).toBeNull();
   });
 });

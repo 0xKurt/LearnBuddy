@@ -118,10 +118,12 @@ it('cancels fresh judgement and nudge on a live preference change without replay
   expect(screen.getByLabelText('Stimmt')).toBeDefined();
 });
 
-it('announces pending status with no content Orb or repeating animation', () => {
+it('announces pending status beside Buddy’s one mini orb', () => {
   renderInApp(<Thinking label="Buddy schaut nach …" />);
   expect(screen.getByText('Buddy schaut nach …').getAttribute('aria-live')).toBe('polite');
-  expect(state.orb).not.toHaveBeenCalled();
+  // The mini orb beside his dots (design components/buddy/Cards.jsx:96–103, #599) — and only it.
+  expect(state.orb).toHaveBeenCalledTimes(1);
+  expect(screen.getAllByTestId('thread-orb')).toHaveLength(1);
 });
 
 it('preserves current zoom when live reduction cancels its ongoing transition', () => {
@@ -224,7 +226,7 @@ it('keeps a small photo target at least44 on web without depending on native hit
   expect(style.minHeight).toBe('44px');
 });
 
-it('renders tutor feedback as full-width plain text with its accessible speaker and no content Orb', () => {
+it('renders tutor feedback as plain text with its accessible speaker, his mini orb beside it', () => {
   renderInApp(
     <ItemThread
       pending={null}
@@ -248,5 +250,6 @@ it('renders tutor feedback as full-width plain text with its accessible speaker 
   expect(parseFloat(style.paddingTop || '0')).toBe(0);
   expect(style.alignSelf).toBe('stretch');
   expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)');
-  expect(state.orb).not.toHaveBeenCalled();
+  // His newest line carries the mini orb (design components/buddy/Message.jsx:17–19, #599).
+  expect(state.orb).toHaveBeenCalledTimes(1);
 });

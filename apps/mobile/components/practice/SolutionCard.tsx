@@ -10,7 +10,7 @@ import { Text, View } from 'react-native';
 import { useAnnounce } from '../../lib/announce.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
-import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Card } from '../lb/Card.js';
@@ -29,7 +29,7 @@ export function SolutionCard({ answer, numeric, code = false }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   return (
-    <Card tone="sky" padding={CARD_PAD.roomy} radius={24}>
+    <Card tone="sky">
       <Text style={[TYPE.bodyStrong, { color: palette.ink2 }]}>{t('solution.title')}</Text>
       <View>
         {code ? (
@@ -41,7 +41,8 @@ export function SolutionCard({ answer, numeric, code = false }: Props) {
           />
         )}
       </View>
-      <Text style={[TYPE.bodyStrong, { color: palette.ink2 }]}>{t('solution.calm')}</Text>
+      {/* A plain line under the solution, as before the redesign: only the title is strong. */}
+      <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('solution.calm')}</Text>
     </Card>
   );
 }
@@ -53,10 +54,10 @@ export function SelfSolvedCard() {
   // iOS has no live regions: the card says itself when it appears (lib/announce.ts).
   useAnnounce(t('self_solved.title'));
   return (
-    <Card tone="mint" padding={CARD_PAD.roomy} radius={24}>
+    <Card tone="mint">
       <View accessibilityLiveRegion="polite">
         <Text style={TYPE.title}>{t('self_solved.title')}</Text>
-        <Text style={[TYPE.bodyStrong, { color: palette.ink2, marginTop: SPACE.xs }]}>
+        <Text style={[TYPE.body, { color: palette.ink2, marginTop: SPACE.xs }]}>
           {t('self_solved.body')}
         </Text>
       </View>

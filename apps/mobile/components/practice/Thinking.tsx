@@ -1,12 +1,16 @@
-// The real pending state stays visible and announced. Only the header Orb self-animates.
+// The real pending state stays visible and announced: Buddy's mini orb, thinking, three still dots
+// and the words (design components/buddy/Cards.jsx:96–103, as the chat's `TypingBubble`). Only
+// the orb moves by itself.
 import { Text, View } from 'react-native';
 import { useAnnounce } from '../../lib/announce.js';
+import { CHAT } from '../../lib/theme/chat.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { RADIUS, circle } from '../../lib/theme/radius.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { ThreadOrb } from '../buddy/ThreadOrb.js';
 import { Rise } from '../lb/Motion.js';
 
 export function Thinking({ label }: { label: string }) {
@@ -17,6 +21,7 @@ export function Thinking({ label }: { label: string }) {
       delay={DURATION.practicePendingArrival}
       style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
     >
+      <ThreadOrb size={CHAT.typing.orb} state="think" />
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"

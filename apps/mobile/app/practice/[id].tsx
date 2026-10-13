@@ -57,7 +57,16 @@ import { ItemCard } from '../../components/practice/ItemCard.js';
 import { NoQuestion } from '../../components/practice/NoQuestion.js';
 import { PracticeStuck } from '../../components/practice/PracticeStuck.js';
 import { CornerSheet } from '../../components/practice/QuestionCorner.js';
-import { QuestionMenu, QuestionProgress } from '../../components/practice/QuestionProgress.js';
+import { RunMeta } from '../../components/lb/QuestionCard.js';
+import {
+  HomeworkHint,
+  clockTail,
+  progressLine,
+  QuestionMenu,
+  QuestionProgress,
+  testMeta,
+} from '../../components/practice/QuestionProgress.js';
+import { useTestClock } from '../../components/practice/TestClock.js';
 import { QuestionHelp, QuestionThread } from '../../components/practice/QuestionThread.js';
 import { AnswerFlow } from '../../components/practice/AnswerShell.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
@@ -106,6 +115,8 @@ export default function PracticeScreen() {
   // What was there when the screen opened stands still; a judgement that arrives now is fresh.
   const knownTurns = useRef<ReadonlySet<string> | null>(null);
   const judgedDraft = useRef<{ id: string; text: string } | null>(null);
+  /** A test with time: the minutes left and its gentle sentence, as its clock reports them. */
+  const clock = useTestClock();
   if (session && knownTurns.current === null)
     knownTurns.current = new Set(session.turns.map((turn) => turn.id));
   // Measured: what the conversation's content really needs and what the question takes, so the
@@ -250,40 +261,48 @@ export default function PracticeScreen() {
     (originalForm.choices !== null && !item.choice_figures?.length);
   const questionCard = (
     <SlideIn key={item.id}>
+      {/* Homework says what it is as a quiet line above the question (design
+          ui_kits/app/Flows.jsx:50). It stands in the question's own measured column, outside the
+          card: the room the conversation gets is what is left under both. */}
+      {session.mode === 'help' ? <HomeworkHint /> : null}
       <FigureSizingReport.Provider value={measured.figureSizing}>
         <View
           ref={measured.cardRef}
           onLayout={(e) => room.onCard(Math.round(e.nativeEvent.layout.height))}
         >
-          <ItemCard
-            extra={
-              <QuestionTools
-                item={item}
-                sessionId={session.id}
-                // A foreign vocabulary word has its own "Anhören" (its pronunciation is the
-                // point); that IS its read-aloud button, so it never gets a second one.
-                hearWord={item.kind === 'vocab' && isForeign(item.prompt_lang)}
-                heard={heard}
-                markHeard={markHeard}
-                disabled={locked}
-              />
-            }
-            sessionId={session.id}
-            shown={shown}
-            title={title}
-            view={view}
-            form={form}
-            speakLive={speakLive}
-            heard={heard}
-            markHeard={markHeard}
-            disabled={locked}
-            minHeight={
-              !ordinaryBody && room.cardGrowTo > 0 ? room.cardNatural + room.cardGrowTo : undefined
-            }
-            caps={room.caps}
-            filling={filling}
-            readAgain={readAgain}
-          />
+          <RunMeta.Provider value={testMeta(t, offers.testing, clock.soon)}>
+            <ItemCard
+              extra={
+                <QuestionTools
+                  item={item}
+                  sessionId={session.id}
+                  // A foreign vocabulary word has its own "Anhören" (its pronunciation is the
+                  // point); that IS its read-aloud button, so it never gets a second one.
+                  hearWord={item.kind === 'vocab' && isForeign(item.prompt_lang)}
+                  heard={heard}
+                  markHeard={markHeard}
+                  disabled={locked}
+                />
+              }
+              sessionId={session.id}
+              shown={shown}
+              title={title}
+              view={view}
+              form={form}
+              speakLive={speakLive}
+              heard={heard}
+              markHeard={markHeard}
+              disabled={locked}
+              minHeight={
+                !ordinaryBody && room.cardGrowTo > 0
+                  ? room.cardNatural + room.cardGrowTo
+                  : undefined
+              }
+              caps={room.caps}
+              filling={filling}
+              readAgain={readAgain}
+            />
+          </RunMeta.Provider>
         </View>
       </FigureSizingReport.Provider>
     </SlideIn>
@@ -376,11 +395,9 @@ export default function PracticeScreen() {
   return (
     <Screen
       title={title}
-      subtitle={
-        view.progress.preparing
-          ? t('practice:progress_more_coming', { current: view.progress.position })
-          : t('practice:progress', { current: view.progress.position, total: view.progress.total })
-      }
+      // In a test with time, the minutes left stand beside where she is (`progressLine`).
+      subtitle={progressLine(t, view.progress)}
+      subtitleTail={clockTail(t, offers.testing ? clock.minutes : null)}
       leading={{
         icon: 'close',
         onPress: () => void end.close(),

@@ -19,11 +19,22 @@ export const PRACTICE_SCREEN = {
   pendingGap: 5,
   verdictGap: 6,
   fadedOpacity: 0.7,
+  /**
+   * The verdict under her answer (design components/buddy/Message.jsx:28): 26 high — the label's
+   * 18 pt line and 4 above and below —, 10 at the sides, its sign 14 and 5 before the word.
+   */
   verdictRadius: RADIUS.round,
-  verdictPadding: SPACE.md,
+  verdictPadding: 10,
   verdictPaddingVertical: SPACE.xs,
   verdictIcon: 14,
+  verdictSignGap: 5,
   nudgeOffsets: [-7, -4, -2] as const,
+  /**
+   * A row of chips that may wrap (design components/core/Chip.jsx `ChipRow`): 8 between two
+   * chips. Between two rows it is what the 44 pt targets around the 34 pt chips need to touch
+   * without overlapping.
+   */
+  chipRow: { columnGap: SPACE.sm, rowGap: 2 * UI.chip.reach },
   imageHeight: PRACTICE.imageHeight,
   imageRatio: 4 / 3,
   viewerHintTop: 58,

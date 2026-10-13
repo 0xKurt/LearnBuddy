@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { renderInApp, styleOf, commonBox } from '../../../testing/render.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { paletteOf } from '../../../lib/theme/palettes.js';
 import { UI } from '../../../lib/theme/components.js';
 import { ResultList, type ResultRow } from '../ResultList.js';
@@ -57,31 +57,66 @@ describe('factual grouped result rows', () => {
     });
   });
 
-  it('places the status beside a wrapping title without clipping either line or truncating detail', () => {
+  it('puts the state at the row’s right end and the notes under the title (Done.jsx:30–36)', () => {
     const title = 'Brüche mit verschiedenen Nennern vergleichen';
-    const label = '3 · Noch nicht beantwortet';
+    const label = 'Noch nicht beantwortet';
     const detail = 'Lösung: beide Brüche auf Achtel bringen';
+    const note = 'Erst erweitern, dann vergleichen.';
+    renderInApp(
+      <ResultList
+        variant="rows"
+        title="Rückblick"
+        rows={[{ key: 'open', status: 'open', right: false, label, text: title, detail, note }]}
+      />,
+    );
+    const row = rowBox(title);
+    expect(styleOf(row).flexDirection).toBe('row');
+    expect(styleOf(row).alignItems).toBe('flex-start');
+    // Sign · title column · state: the state is the row's last child, not a line of the column.
+    const [, column, state] = Array.from(row.children) as HTMLElement[];
+    expect(state).toBe(screen.getByText(label));
+    expect(styleOf(state!).textAlign).toBe('right');
+    expect(styleOf(state!).flexShrink).toBe('0');
+    expect(column!.contains(screen.getByText(label))).toBe(false);
+    expect(Array.from(column!.children).map((line) => line.textContent)).toEqual([
+      title,
+      detail,
+      note,
+    ]);
+    // The title is the design's 600 16/22; the state's line is as tall, so both start level.
+    expect(screen.getByText(title).style.lineHeight).toBe('22px');
+    expect(state!.style.lineHeight).toBe('22px');
+    // Actual 360/390 geometry belongs to the ordered browser integration; jsdom has no layout.
+  });
+
+  it('keeps the word before a closing fraction on its line, so the fraction is no orphan', () => {
     renderInApp(
       <ResultList
         variant="rows"
         title="Rückblick"
         rows={[
           {
-            key: 'open',
-            status: 'open',
-            right: false,
-            label,
-            text: title,
-            detail,
+            key: 'a',
+            status: 'correct',
+            right: true,
+            label: 'Richtig',
+            text: 'Welcher Bruch ist größer: $\\frac{2}{3}$ oder $\\frac{3}{5}$?',
+            detail: null,
+          },
+          {
+            key: 'b',
+            status: 'correct',
+            right: true,
+            label: 'Richtig',
+            text: 'Was ist 6 · 7?',
+            detail: null,
           },
         ]}
       />,
     );
-    const heading = commonBox(screen.getByText(title), screen.getByText(label));
-    expect(styleOf(heading).flexDirection).toBe('row');
-    expect(styleOf(heading).flexWrap).toBe('wrap');
-    expect(styleOf(screen.getByText(label)).whiteSpace).not.toBe('nowrap');
-    expect(screen.getByText(detail)).toBeDefined();
-    // Actual360/390 geometry belongs to the ordered browser integration; jsdom has no layout.
+    const rows = document.body.textContent ?? '';
+    expect(rows).toContain('oder\u00A0');
+    expect(rows).toContain('größer: ');
+    expect(rows).toContain('Was ist 6 · 7?');
   });
 });

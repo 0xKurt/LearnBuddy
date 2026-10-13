@@ -1,5 +1,6 @@
-// Shared factual results: grouped screen rows show compact solutions and worked notes;
-// legacy cards retain their strong takeaway typography. Actual status/copy comes from callers.
+// Shared factual results. Grouped screen rows (design ui_kits/app/Done.jsx:28–38): the state's
+// sign, the title with its notes under it, the state's word at the right end. Legacy cards
+// retain their strong takeaway typography. Actual status/copy comes from callers.
 // Only the first few legacy cards stagger; screen rows remain immediate.
 
 import type { SessionItemView } from '@learnbuddy/shared-types/contracts';
@@ -24,7 +25,7 @@ export type ResultRow = {
   right: boolean;
   /** Factual session state, when the row represents a practice question. */
   status?: SessionItemView['status'];
-  /** The small line on top: "1 · Richtig", "Geschafft". */
+  /** The state in a word: at the row's right end ("Richtig"), on a card's top line ("Geschafft"). */
   label: string;
   /** What it was about: the question, the task on her role card. */
   text: string;
@@ -43,6 +44,16 @@ type Props = {
   /** False where it was already there (an older message in the chat): it stands still. */
   animate?: boolean;
 };
+
+/**
+ * A title that ends in math ("… oder $\frac{3}{5}$?") keeps the word before it on the same line:
+ * in the narrow title column a stacked fraction with its question mark wrapped alone onto a last
+ * line (#599). The space becomes a no-break one, which the math layout honours
+ * (lib/math/lineBreak.ts) and plain text does anyway.
+ */
+function tailTied(text: string): string {
+  return text.replace(/ (\$[^$]+\$[^\s$]*)$/, '\u00A0$1');
+}
 
 /** Only states the server actually carries; labels are never parsed to choose presentation. */
 function stateSkin(
@@ -79,6 +90,7 @@ export function ResultList({ variant = 'cards', title, rows, delay = 0, animate 
               key={row.key}
               style={{
                 flexDirection: 'row',
+                alignItems: 'flex-start',
                 gap: SPACE.md,
                 minHeight: RESULT.row,
                 paddingHorizontal: SPACE.lg,
@@ -102,31 +114,28 @@ export function ResultList({ variant = 'cards', title, rows, delay = 0, animate 
                 <Icon name={skin.icon} size={RESULT.glyph} color={skin.color} />
               </View>
               <View style={{ flex: 1, minWidth: 0, gap: RESULT.textGap }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    alignItems: 'flex-start',
-                    gap: SPACE.sm,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexGrow: 1,
-                      flexShrink: 1,
-                      minWidth: RESULT.titleMinWidth,
-                      maxWidth: '100%',
-                    }}
-                  >
-                    <InlineText text={row.text} style={TYPE.cell} />
-                  </View>
-                  <Text style={[TYPE.meta, { flexShrink: 1, maxWidth: '100%' }]}>{row.label}</Text>
-                </View>
+                <InlineText text={tailTied(row.text)} style={TYPE.option} />
                 {row.detail ? <InlineText text={row.detail} style={TYPE.meta} /> : null}
                 {row.note ? (
                   <InlineText text={row.note} style={[TYPE.meta, { color: palette.ink2 }]} />
                 ) : null}
               </View>
+              {/* Never squeezed out by a long title, never wider than its share of the row: a
+                  long state ("Noch nicht beantwortet") wraps there instead of cutting the title
+                  down to a word per line on 360. */}
+              <Text
+                style={[
+                  TYPE.meta,
+                  {
+                    lineHeight: TYPE.option.lineHeight,
+                    flexShrink: 0,
+                    maxWidth: RESULT.labelShare,
+                    textAlign: 'right',
+                  },
+                ]}
+              >
+                {row.label}
+              </Text>
             </View>
           );
         })}

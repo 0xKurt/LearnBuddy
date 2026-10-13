@@ -51,7 +51,6 @@ function typeOf(p: Palette) {
     display,
     pageHeadline: { ...display, fontSize: 30, lineHeight: 36, letterSpacing: -0.8 },
     question,
-    questionStrong: { ...question, ...fontFace('700') },
     title,
     body,
     /** Live and pending recognized words keep body geometry and the current face. */
@@ -61,7 +60,14 @@ function typeOf(p: Palette) {
     reviewDetail: { ...fontFace('400'), fontSize: 15, lineHeight: 22, color: p.ink2 },
     profileExplanation: { ...fontFace('400'), fontSize: 13, lineHeight: 19, color: p.ink2 },
     label,
-    questionBig: { ...fontFace('800'), fontSize: 56, lineHeight: 64, color: p.ink },
+    /** A Kopfrechnen task and its slot: `800 52px/1`, −1 (design ui_kits/app/Flows.jsx:83). */
+    questionBig: {
+      ...fontFace('800'),
+      fontSize: 52,
+      lineHeight: 52,
+      letterSpacing: -1,
+      color: p.ink,
+    },
     questionMedium: { ...fontFace('800'), fontSize: 44, lineHeight: 53, color: p.ink },
     questionLong: { ...fontFace('800'), fontSize: 34, lineHeight: 41, color: p.ink },
     questionFeedback: {
@@ -85,13 +91,6 @@ function typeOf(p: Palette) {
     markPunctuation: { ...body, ...fontFace('800') },
     markLetter: { ...fontFace('500'), fontSize: 28, lineHeight: 34, color: p.ink },
     musicSymbol: { ...fontFace('700'), fontSize: 21, lineHeight: 28, color: p.ink },
-    drillAnswer: {
-      ...fontFace('700'),
-      fontSize: 40,
-      lineHeight: 48,
-      letterSpacing: 1,
-      color: p.ink,
-    },
     identity: {
       ...fontFace('800'),
       fontSize: 22,

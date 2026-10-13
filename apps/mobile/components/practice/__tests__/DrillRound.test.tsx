@@ -10,7 +10,11 @@ import { act, fireEvent, screen } from '@testing-library/react';
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { renderInApp } from '../../../testing/render.js';
+import { paletteOf } from '../../../lib/theme/palettes.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
+
+const rgb = (hex: string): string =>
+  `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
 
 const answerDrill = vi.fn();
 vi.mock('../../../lib/api/endpoints.js', async (orig) => ({
@@ -131,6 +135,37 @@ describe('die Runde', () => {
       expect(screen.queryByRole('button', { name: gone })).toBeNull();
     }
     expect(screen.getByText('Aufgabe 1 von 2')).toBeTruthy();
+  });
+
+  // Design ui_kits/app/Flows.jsx:82–87 (#599): die Fragekarte jeder Aufgabe.
+  it('zeigt eine Metazeile und Aufgabe, „=“ und Feld in einer Zeile; das Feld füllt sich mit', () => {
+    show();
+    expect(screen.getByText('Kopfrechnen · so schnell du kannst')).toBeTruthy();
+    const row = screen.getByTestId('drill-task');
+    expect(styleOf(row).flexDirection).toBe('row');
+    expect(row.textContent).toBe('7 · 8 =?');
+    // Die Überschrift ist die Aufgabe allein; das Gleichheitszeichen ist Zeichnung.
+    expect(screen.getByRole('heading', { name: '7 · 8' })).toBeTruthy();
+    // 800 52/1 mit −1 Laufweite, Aufgabe wie Feld.
+    const task = screen.getByText('7 · 8').style;
+    expect([task.fontSize, task.lineHeight, task.letterSpacing, task.fontWeight]).toEqual([
+      '52px',
+      '52px',
+      '-1px',
+      '800',
+    ]);
+    const slot = screen.getByTestId('drill-slot');
+    const p = paletteOf('pastell');
+    expect(styleOf(slot).borderTopStyle).toBe('dashed');
+    expect(styleOf(slot).backgroundColor).toBe(rgb(p.canvas));
+    expect(slot.textContent).toBe('?');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Deine Antwort' }), {
+      target: { value: '56' },
+    });
+    expect(slot.textContent).toBe('56');
+    expect(styleOf(slot).borderTopStyle).toBe('solid');
+    expect(styleOf(slot).borderTopWidth).toBe('2px');
+    expect(styleOf(slot).backgroundColor).toBe(rgb(p.primaryLt));
   });
 
   it('„Prüfen“ wartet, bis etwas getippt ist; Löschen nimmt die letzte Ziffer', () => {

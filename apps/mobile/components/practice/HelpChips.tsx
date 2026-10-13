@@ -6,10 +6,12 @@
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { SPACE } from '../../lib/theme/space.js';
+import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { Chip } from '../lb/Chip.js';
 import { DURATION } from '../../lib/theme/motion.js';
 import { Rise } from '../lb/Motion.js';
+
+const CHIP_ROW = PRACTICE_SCREEN.chipRow;
 
 type Props = {
   /** Ask for the next prepared hint. */
@@ -41,7 +43,7 @@ export function HelpChips({
 
   return (
     <Rise delay={DURATION.quick}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.xs }}>
+      <View testID="help-chips" style={[{ flexDirection: 'row', flexWrap: 'wrap' }, CHIP_ROW]}>
         {onHint && hintOffered ? (
           <Chip
             selected

@@ -132,6 +132,7 @@
     "check_waits": "Erst wenn alle einen Platz haben."
   },
   "origin_buddy": "Frage von Buddy",
+  "origin_buddy_topic": "{{topic}} · von Buddy",
   "progress": "Frage {{current}} von {{total}}",
   "progress_more_coming": "Frage {{current}} · ich schreibe noch mehr",
   "reexplain": {
@@ -160,6 +161,7 @@
   },
   "speak": {
     "instruction": "Sag es laut",
+    "meta_topic": "{{topic}} · sag es laut",
     "record": "Sprechen",
     "record_again": "Nochmal sagen",
     "record_stop": "Fertig",
@@ -173,7 +175,6 @@
     "send_failed": "Deine Aufnahme ist noch nicht bei Buddy angekommen.",
     "resend": "Nochmal senden",
     "record_new": "Neu aufnehmen",
-    "skip": "Diesmal überspringen",
     "denied": "Ohne Mikrofon kann ich dich nicht hören. Du kannst es in den Einstellungen erlauben.",
     "denied_web": "Ohne Mikrofon kann ich dich nicht hören. Erlaube es oben in deinem Browser und tipp dann nochmal auf Sprechen.",
     "open_settings": "Einstellungen öffnen",
@@ -218,8 +219,8 @@
   "summary": {
     "finished": "Fertig",
     "title": "Geschafft!",
-    "secure": "Heute ohne Tipp geschafft: {{topics}}",
-    "shaky": "Schauen wir nochmal an: {{topics}}"
+    "secure": "Heute ohne Tipp geschafft: {{topics}}.",
+    "shaky": "Schauen wir nochmal an: {{topics}}."
   },
   "summary_help": {
     "title": "Hausaufgabe geschafft"
@@ -246,7 +247,7 @@
     "time_up_rest": "Was offen blieb, zählt nicht als falsch.",
     "unanswered": "Nicht beantwortet"
   },
-  "test_note": "Probetest – eine Antwort pro Frage, keine Tipps. Das Ergebnis siehst du am Ende.",
+  "test_meta": "Probetest · eine Antwort, keine Tipps",
   "thread": {
     "you": "Du",
     "buddy": "Buddy",
@@ -270,6 +271,7 @@
   },
   "drill": {
     "progress": "Aufgabe {{current}} von {{total}}",
+    "meta": "Kopfrechnen · so schnell du kannst",
     "end_hint": "Zurück zu Buddy. Was du gerechnet hast, bleibt gespeichert.",
     "placeholder": "Ergebnis …",
     "slash": "Bruchstrich",
@@ -294,7 +296,6 @@
     "chip_other": "noch {{count}} Min.",
     "left_one": "Noch {{count}} Minute",
     "left_other": "Noch {{count}} Minuten",
-    "note": "Eine Antwort pro Frage, keine Tipps.",
     "soon": "Schau in Ruhe, was du noch schaffst.",
     "up": "Die Zeit ist um – dein Ergebnis kommt gleich."
   },

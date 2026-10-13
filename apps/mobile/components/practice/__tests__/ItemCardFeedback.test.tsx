@@ -81,8 +81,7 @@ describe('actual question feedback classification', () => {
   it('compacts closed typed feedback even though the closed answer form is no longer typed', () => {
     const form = show(shown('correct'));
     expect(form.typed).toBe(false);
-    expect(screen.queryByText('Frage von Buddy')).toBeNull();
-    expect(screen.queryByText('Einmaleins')).toBeNull();
+    expect(screen.queryByText('Einmaleins · von Buddy')).toBeNull();
     const prompt = screen.getByRole('heading', { name: '6 · 7' });
     expect(prompt.style.fontSize).toBe('15px');
     expect(prompt.style.lineHeight).toBe('21px');
@@ -90,13 +89,11 @@ describe('actual question feedback classification', () => {
   });
   it('keeps the original question for an open retry after a wrong attempt', () => {
     expect(show(shown('open')).typed).toBe(true);
-    expect(screen.getByText('Frage von Buddy')).toBeDefined();
-    expect(screen.getByText('Einmaleins')).toBeDefined();
+    expect(screen.getByText('Einmaleins · von Buddy')).toBeDefined();
   });
   it('keeps a closed choice question normal rather than disguising insufficient conversation room', () => {
     show(shown('correct', true));
-    expect(screen.getByText('Frage von Buddy')).toBeDefined();
-    expect(screen.getByText('Einmaleins')).toBeDefined();
+    expect(screen.getByText('Einmaleins · von Buddy')).toBeDefined();
   });
   it('retains real part context and the prompt letter in compact feedback', () => {
     const value = shown('correct');
