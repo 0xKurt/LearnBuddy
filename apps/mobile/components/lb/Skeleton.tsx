@@ -1,33 +1,31 @@
-// Skeleton loading: soft placeholders shaped like what is coming (a card, a few lines,
-// a bubble), with a slow light sweeping across them, instead of a spinner in an empty
-// screen. Every block in one <SkeletonGroup> sweeps in step. Purely decorative: the
-// group is one element for a screen reader that says what is loading (`label`).
-// Reduce motion: the blocks stand still (no sweep).
+// Skeleton loading (design components/core/States.jsx `Skel`): quiet shapes in the real layout
+// instead of a spinner in an empty screen — canvas-coloured bones that pulse softly, all in one
+// <SkeletonGroup> in step. Purely decorative: the group is one element for a screen reader that
+// says what is loading (`label`). Reduce motion: the bones stand still.
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { View, type DimensionValue, type ViewStyle } from 'react-native';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { View, type DimensionValue, type TextStyle, type ViewStyle } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
-  interpolate,
   type SharedValue,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { UI } from '../../lib/theme/components.js';
+import { ACTIVE_MOTION, useMotionReduced } from '../../lib/theme/motion.js';
 import { RADIUS } from '../../lib/theme/radius.js';
-import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
+import { SHADOW } from '../../lib/theme/shadow.js';
+import { CARD_PAD } from '../../lib/theme/space.js';
 import { SKELETON } from '../../lib/theme/states.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { useSvgId } from '../../lib/theme/svgId.js';
 import { Appear } from './Motion.js';
 
-const Sweep = createContext<SharedValue<number> | null>(null);
+/** 0 at rest, 1 at the pulse's low point; null while nothing moves. */
+const Pulse = createContext<SharedValue<number> | null>(null);
 
 type GroupProps = {
   /** What is loading, for a screen reader ("Ich hole deine Fragen …"). */
@@ -37,31 +35,48 @@ type GroupProps = {
 };
 
 export function SkeletonGroup({ label, children, style }: GroupProps) {
-  const progress = useSharedValue(0);
-  const reduced = useReducedMotion();
+  const pulse = useSharedValue(0);
+  const reduced = useMotionReduced();
   useEffect(() => {
-    if (reduced) return;
-    progress.value = withRepeat(
-      withTiming(1, { duration: SKELETON.sweepMs, easing: Easing.inOut(Easing.quad) }),
+    if (reduced) {
+      cancelAnimation(pulse);
+      pulse.value = 0;
+      return;
+    }
+    // `lb-pulse`: down in half the time, back up in the other half, for as long as it loads.
+    pulse.value = withRepeat(
+      withTiming(1, {
+        duration: SKELETON.pulseMs / 2,
+        easing: Easing.bezier(...SKELETON.pulseEase),
+        ...ACTIVE_MOTION,
+      }),
       -1,
-      false,
+      true,
+      undefined,
+      ACTIVE_MOTION.reduceMotion,
     );
-    return () => cancelAnimation(progress);
-  }, [reduced, progress]);
+    return () => cancelAnimation(pulse);
+  }, [reduced, pulse]);
   return (
-    <Sweep.Provider value={reduced ? null : progress}>
+    <Pulse.Provider value={reduced ? null : pulse}>
       <Appear
         accessible
         accessibilityRole="progressbar"
         accessibilityLabel={label}
         accessibilityState={{ busy: true }}
-        style={style}
+        style={{ flex: style?.flex }}
       >
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {/* The layout belongs to the element that holds the bones: its gap and its room reach
+            them (on the element around it they reached one child, and nothing stood apart). */}
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={style}
+        >
           {children}
         </View>
       </Appear>
-    </Sweep.Provider>
+    </Pulse.Provider>
   );
 }
 
@@ -69,8 +84,11 @@ type BoneProps = {
   width?: DimensionValue;
   height: number;
   radius?: number;
-  /** A darker or lighter base (on a pastel card, a white bone reads better). */
-  tone?: 'lilac' | 'white';
+  /**
+   * `canvas` is a bone (States.jsx:9). `selected` stands for a bubble of hers (:21), `paper` for
+   * an answer she can pick (:27) or the input bar: paper with a hairline.
+   */
+  tone?: 'canvas' | 'selected' | 'paper';
   style?: ViewStyle;
 };
 
@@ -79,50 +97,50 @@ export function Bone({
   width = '100%',
   height,
   radius = SKELETON.radius,
-  tone = 'lilac',
+  tone = 'canvas',
   style,
 }: BoneProps) {
-  const progress = useContext(Sweep);
-  const [w, setW] = useState(0);
-  const id = useSvgId('sk');
-  const light = w * SKELETON.light;
-  const sweep = useAnimatedStyle(() => {
-    if (!progress) return { opacity: 0 };
-    return {
-      opacity: 1,
-      transform: [{ translateX: interpolate(progress.value, [0, 1], [-light, w]) }],
-    };
-  }, [progress, w, light]);
+  const { palette } = useTheme();
+  const pulse = useContext(Pulse);
+  const beat = useAnimatedStyle(
+    () => ({ opacity: pulse ? 1 - pulse.value * (1 - SKELETON.pulseLow) : 1 }),
+    [pulse],
+  );
   return (
-    <View
-      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+    <Animated.View
       style={[
-        {
-          width,
-          height,
-          borderRadius: radius,
-          overflow: 'hidden',
-          backgroundColor: tone === 'white' ? 'rgba(255,255,255,0.75)' : BONE,
-        },
+        { width, height, borderRadius: radius },
+        tone === 'paper'
+          ? {
+              backgroundColor: palette.paper,
+              borderWidth: UI.border,
+              borderColor: palette.hairline,
+            }
+          : { backgroundColor: tone === 'selected' ? palette.primaryLt : palette.canvas },
         style,
+        beat,
       ]}
-    >
-      {w > 0 && progress ? (
-        <Animated.View
-          style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, width: light }, sweep]}
-        >
-          <Svg width="100%" height="100%" preserveAspectRatio="none">
-            <Defs>
-              <LinearGradient id={id} x1="0" y1="0" x2="1" y2="0">
-                <Stop offset="0" stopColor="#ffffff" stopOpacity={0} />
-                <Stop offset="0.5" stopColor="#ffffff" stopOpacity={SKELETON.lightPeak} />
-                <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
-              </LinearGradient>
-            </Defs>
-            <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${id})`} />
-          </Svg>
-        </Animated.View>
-      ) : null}
+    />
+  );
+}
+
+/**
+ * A bone in the box of the line of text it stands for: as tall as that text's line, the bone in
+ * its middle — so what loads takes the room the words will take, and nothing jumps.
+ */
+export function BoneText({
+  type,
+  width,
+  height = SKELETON.line.row,
+}: {
+  /** The type role the loaded text has (`TYPE.option`, `TYPE.meta` …). */
+  type: TextStyle;
+  width: DimensionValue;
+  height?: number;
+}) {
+  return (
+    <View style={{ height: type.lineHeight, justifyContent: 'center' }}>
+      <Bone width={width} height={height} />
     </View>
   );
 }
@@ -130,46 +148,44 @@ export function Bone({
 /** A few lines of text, the last one shorter. */
 export function BoneLines({
   lines = 3,
-  height = SKELETON.text.meta.height,
+  height = SKELETON.line.row,
   gap = SKELETON.lineGap,
-  last = SKELETON.lastLine,
-  tone,
+  last = SKELETON.width.short,
 }: {
   lines?: number;
   height?: number;
   gap?: number;
   last?: DimensionValue;
-  tone?: BoneProps['tone'];
 }) {
   return (
     <View style={{ gap }}>
       {Array.from({ length: lines }, (_, i) => (
-        <Bone
-          key={i}
-          height={height}
-          radius={height / 2}
-          tone={tone}
-          width={i === lines - 1 ? last : '100%'}
-        />
+        <Bone key={i} height={height} width={i === lines - 1 ? last : '100%'} />
       ))}
     </View>
   );
 }
 
-/** A white card on the page (the shape of a library or memory row). */
-export function BoneCard({ children, style }: { children: ReactNode; style?: ViewStyle }) {
+/**
+ * The paper card bones stand on (States.jsx:14): the app's card — paper, its corner, the soft
+ * shadow, no line around it. `padding` 0 for a card of rows, which bring their own.
+ */
+export function BoneCard({
+  children,
+  padding = CARD_PAD.card,
+  gap = SKELETON.cardGap,
+  style,
+}: {
+  children: ReactNode;
+  padding?: number;
+  gap?: number;
+  style?: ViewStyle;
+}) {
   const { palette } = useTheme();
   return (
     <View
       style={[
-        {
-          backgroundColor: palette.paper,
-          borderRadius: RADIUS.card,
-          padding: CARD_PAD.base,
-          gap: SPACE.md,
-          borderWidth: UI.border,
-          borderColor: palette.hairline,
-        },
+        { backgroundColor: palette.paper, borderRadius: RADIUS.lg, padding, gap, ...SHADOW.soft },
         style,
       ]}
     >
@@ -178,5 +194,8 @@ export function BoneCard({ children, style }: { children: ReactNode; style?: Vie
   );
 }
 
-/** The pale lilac of a placeholder: visible on white and on the page, never loud. */
-const BONE = '#ece7f6';
+/** The line between two rows of one card, as `ListGroup` draws it. */
+export function BoneRule() {
+  const { palette } = useTheme();
+  return <View style={{ height: UI.border, backgroundColor: palette.hairline }} />;
+}

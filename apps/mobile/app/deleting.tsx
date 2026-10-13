@@ -2,6 +2,10 @@
 // deletion_running): nothing can be changed any more, so the app says so calmly and
 // offers the one thing left to do — signing out. Once the deletion is done the session
 // ends by itself and the start screen follows (docs/privacy.md §Export and deletion).
+//
+// The design's state (components/core/States.jsx `StateScreen` "deleting": no head, Buddy
+// thinking) — without its progress line: the app is told that the deletion runs, not how far it
+// is, and a bar would claim what is not known (CLAUDE.md rule 5). Signing out stays.
 
 import { useState } from 'react';
 import { View } from 'react-native';

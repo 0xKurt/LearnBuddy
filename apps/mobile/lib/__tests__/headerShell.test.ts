@@ -1,6 +1,9 @@
 // One head on every screen (owner rule 1, #599; design components/buddy/Header.jsx, HANDOFF §4):
 // Buddy's orb sits in the head, the head carries the Vorlesen switch and ⋯, and no page draws a
-// second Buddy in its content. Read from the source, like `oneVoice.test.ts`:
+// second Buddy in its content — but for the two places the design itself draws one: the
+// full-screen state (components/core/States.jsx `StateScreen`: a failed load, update, deleting, a
+// crash — through `EmptyState`) and the mini orb beside his newest line in the thread
+// (components/buddy/Message.jsx). Read from the source, like `oneVoice.test.ts`:
 //
 //   · every route renders the shared head (`Screen` with a title or a way back, or the chat's
 //     `Header`) — unless it stands in HEADLESS with the reason the design gives;
@@ -35,7 +38,8 @@ const HEADLESS: Record<string, string> = {
   talk: 'the conversation: the large orb is the stage (HANDOFF §4, ui_kits/app/Talk.jsx)',
   update: 'design `SystemState`: no head, the page’s own orb waits (States.jsx `StateScreen`)',
   deleting: 'design `SystemState`: no head, the page’s own orb thinks (States.jsx `StateScreen`)',
-  index: 'the gate: it redirects; its one error page has no head and no orb yet (open on #599)',
+  index:
+    'the gate: it redirects; its one error page has nowhere to go back to — no head, the page’s own orb thinks (States.jsx `StateScreen`)',
 };
 
 /** Files that draw `<Screen>` without a head: the shells of the headless pages above. */

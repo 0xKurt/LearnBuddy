@@ -1,12 +1,17 @@
 // What a screen shows when its content never loaded (issue #311): what went wrong in her
 // words, "Nochmal versuchen", and — where the screen has one — a second way on below it. The
 // one "load failed → try again" of the app's screens (library, a subject, a sheet, memory,
-// the history, settings); a failed background refresh keeps what is on screen instead.
+// the history, settings); a failed background refresh keeps what is on screen instead. It is the
+// design's full-screen state (components/core/States.jsx `StateScreen`): Buddy at 64 above the
+// line — thinking about what failed, at rest where there is no connection or the thing is gone
+// (:37–40).
 
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { ApiError } from '../../lib/api/apiError.js';
+import { useOnline } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { RHYTHM } from '../../lib/theme/space.js';
 import { Btn } from './Btn.js';
@@ -20,10 +25,18 @@ type Props = {
   busy?: boolean;
   /** A second way on below the retry (back to the list). */
   children?: ReactNode;
+  /**
+   * One part of a page that goes on around it (a profile's subjects), not the screen's whole
+   * content: no Buddy. The design draws him only in the full-screen state (States.jsx:34).
+   */
+  inline?: boolean;
 };
 
-export function LoadFailed({ error, onRetry, busy, children }: Props) {
+export function LoadFailed({ error, onRetry, busy, children, inline = false }: Props) {
   const { t } = useTranslation('common');
+  const online = useOnline();
+  // Offline, or the thing is gone: nothing to think about (States.jsx "offline", "notfound").
+  const resting = !online || (error instanceof ApiError && error.code === 'not_found');
   const retry = (
     <Btn pill center busy={busy} onPress={onRetry}>
       {t('common:actions.retry')}
@@ -32,6 +45,8 @@ export function LoadFailed({ error, onRetry, busy, children }: Props) {
   return (
     <View style={{ flex: 1, justifyContent: 'center' }}>
       <EmptyState
+        orb={!inline}
+        state={resting ? 'idle' : 'think'}
         title={messageFor(error)}
         action={
           children ? (

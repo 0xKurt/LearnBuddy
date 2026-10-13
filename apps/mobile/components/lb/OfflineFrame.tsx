@@ -1,5 +1,6 @@
 // A calm line at the top of the app while the device is offline. It sits above
-// the screens (never over their back button or title) and takes the top safe
+// the screens (never over their back button or title; the design draws it under the
+// head, which only the screens' own shells could do) and takes the top safe
 // area itself, so screens below it get no second notch gap: the hook insets
 // are handed on with top = 0, and the native SafeAreaView measures its own
 // position anyway. Queries and answers wait meanwhile (lib/api/queries.ts,
@@ -14,7 +15,6 @@ import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area
 import { announce } from '../../lib/announce.js';
 import { useOnline } from '../../lib/api/queries.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { Banner } from './Banner.js';
 
 export function OfflineFrame({ children }: { children: ReactNode }) {
@@ -35,17 +35,18 @@ export function OfflineFrame({ children }: { children: ReactNode }) {
   return (
     <View style={{ flex: 1, backgroundColor: palette.bg }}>
       {online ? null : (
+        // The design's offline banner (components/core/States.jsx `Banner`): canvas from edge to
+        // edge, and up under the status bar, whose room it takes.
         <View
           accessibilityLiveRegion="polite"
           style={{
-            paddingTop: insets.top + SPACE.sm,
-            paddingBottom: SPACE.sm,
-            paddingLeft: insets.left + SPACE.lg,
-            paddingRight: insets.right + SPACE.lg,
-            backgroundColor: palette.bg,
+            paddingTop: insets.top,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+            backgroundColor: palette.canvas,
           }}
         >
-          <Banner tone="info">{message}</Banner>
+          <Banner bar>{message}</Banner>
         </View>
       )}
       <SafeAreaInsetsContext.Provider value={online ? insets : { ...insets, top: 0 }}>

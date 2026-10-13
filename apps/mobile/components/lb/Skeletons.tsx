@@ -1,242 +1,256 @@
-// The skeletons of the screens that load (components/lb/Skeleton.tsx): each one has the
-// shape of what arrives — the practice question, the cards of "Mein Stoff", the entries
-// Buddy remembers, the conversation — so nothing jumps when the real content comes.
+// The skeletons of the screens that load (design components/core/States.jsx `SkeletonScreen`:
+// chat, list, question, settings — and the app's own pages built from the same parts). Each has
+// the shape of what arrives, so nothing jumps when the real content comes: where a bone stands in
+// for something the loaded screen draws, its box is measured with that screen's own tokens (the
+// page's margins, a list row, a line of its type) and only the bone inside is the design's.
 
-import { View, type ViewStyle } from 'react-native';
+import type { ReactNode } from 'react';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { Palette } from '../../lib/theme/palettes.js';
+import { CHAT } from '../../lib/theme/chat.js';
+import { UI } from '../../lib/theme/components.js';
+import { COMPOSER } from '../../lib/theme/composer.js';
+import { LIBRARY } from '../../lib/theme/library.js';
+import { MATERIAL_DETAIL } from '../../lib/theme/materialDetail.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { RADIUS } from '../../lib/theme/radius.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { SETTINGS } from '../../lib/theme/settings.js';
+import { bottomRoom, CARD_PAD, GUTTER_APP, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { SKELETON } from '../../lib/theme/states.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { Bone, BoneCard, BoneLines, SkeletonGroup } from './Skeleton.js';
+import { TYPE } from '../../lib/theme/type.js';
+import { Bone, BoneCard, BoneRule, BoneText, SkeletonGroup } from './Skeleton.js';
 
-// The measures are the shapes of the screens these stand in for, kept as they were (#311) and
-// named in `SKELETON` (lib/theme/states.ts): a step of the spacing scale instead would move the
-// bones, and with them the jump this file exists to avoid. A width in per cent is how much of its
-// row a line of text takes; they differ on purpose, so the bones read as text and not as a grid.
+const { line, width } = SKELETON;
 
-/** A tinted card on the page: the question and memory cards, with Card's own padding. */
-function tintCard(p: Palette): ViewStyle {
-  return {
-    backgroundColor: p.lavender,
-    borderRadius: RADIUS.card,
-    padding: SKELETON.tintPad,
-  };
-}
+/** `n` of something, one under the other. */
+const times = (n: number, each: (i: number) => ReactNode) =>
+  Array.from({ length: n }, (_, i) => each(i));
 
-/** One of Buddy's bubbles: a card whose corner next to the orb is tucked in. */
-const BUDDY_BUBBLE: ViewStyle = {
-  padding: SKELETON.bubblePad,
-  borderRadius: RADIUS.card,
-  borderBottomLeftRadius: SKELETON.bubbleTuck,
-};
-
-/** The practice screen: where she is, the question card, the answer at the bottom. */
-export function PracticeSkeleton({ label }: { label: string }) {
-  const { palette } = useTheme();
+/**
+ * A group of rows on one paper card under its label — `ListGroup` and `Row` while they load
+ * (States.jsx:15,24,29): the row's height and padding, its tile, the boxes of its two lines.
+ */
+function Rows({
+  rows,
+  tile = false,
+  sub = false,
+}: {
+  rows: number;
+  tile?: boolean;
+  sub?: boolean;
+}) {
   return (
-    <SkeletonGroup label={label} style={{ flex: 1, paddingHorizontal: SPACE.lg }}>
-      {/* The head is the real one, with Buddy thinking (`Screen`, #599): no bones for it. */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: SPACE.md,
-          marginBottom: SKELETON.progressGap,
-        }}
-      >
-        <Bone width={SKELETON.width.short} {...SKELETON.text.label} />
-        <Bone width="auto" {...SKELETON.progress} style={{ flex: 1 }} />
-      </View>
-      <View
-        style={[
-          tintCard(palette),
-          { borderRadius: SKELETON.questionRadius, gap: SKELETON.questionGap },
-        ]}
-      >
-        <Bone width={SKELETON.width.eyebrow} {...SKELETON.text.meta} tone="white" />
-        <BoneLines
-          lines={2}
-          height={SKELETON.text.title.height}
-          gap={SKELETON.questionLineGap}
-          last="70%"
-          tone="white"
-        />
-      </View>
-      <View style={{ flex: 1 }} />
-      <View style={{ paddingBottom: SPACE.lg }}>
-        <Bone {...SKELETON.cta} />
-      </View>
-    </SkeletonGroup>
-  );
-}
-
-/** "Mein Stoff": a subject heading and a few sheets with their buttons. */
-export function LibrarySkeleton({ label }: { label: string }) {
-  return (
-    <SkeletonGroup label={label} style={{ padding: SPACE.lg, gap: SPACE.md }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: SPACE.sm,
-          paddingHorizontal: SPACE.xs,
-        }}
-      >
-        <Bone width={SKELETON.dot.height} {...SKELETON.dot} />
-        <Bone width={SKELETON.width.dotLabel} {...SKELETON.text.meta} />
-      </View>
-      {[0, 1, 2].map((i) => (
-        <BoneCard key={i}>
-          <View style={{ flexDirection: 'row', gap: SKELETON.markGap, alignItems: 'center' }}>
-            <Bone width={SKELETON.touch.height} {...SKELETON.touch} />
-            <View style={{ flex: 1, gap: SPACE.sm }}>
-              <Bone width={i === 1 ? '64%' : '82%'} {...SKELETON.text.name} />
-              <Bone width="46%" {...SKELETON.text.meta} />
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', gap: SKELETON.pillGap }}>
-            <Bone width={SKELETON.width.shortPill} {...SKELETON.pill} />
-            <Bone width={SKELETON.width.longPill} {...SKELETON.pill} />
-          </View>
-        </BoneCard>
-      ))}
-    </SkeletonGroup>
-  );
-}
-
-/** "Was Buddy über dich weiß": the intro, a heading and the entries. */
-export function MemorySkeleton({ label }: { label: string }) {
-  const { palette } = useTheme();
-  return (
-    <SkeletonGroup label={label} style={{ padding: SPACE.lg, gap: SKELETON.introGap }}>
+    <View style={{ gap: SPACE.sm }}>
       <View style={{ paddingHorizontal: SPACE.xs }}>
-        <BoneLines lines={2} height={SKELETON.text.intro.height} last="74%" />
+        <BoneText type={TYPE.label} width={width.label} height={line.meta} />
       </View>
-      <View style={{ gap: SPACE.md }}>
-        <Bone
-          width={SKELETON.width.medium}
-          {...SKELETON.text.title}
-          style={{ marginHorizontal: SPACE.xs }}
-        />
-        {[0, 1].map((i) => (
-          <View key={i} style={[tintCard(palette), { gap: SPACE.md }]}>
-            <Bone width={i === 0 ? '58%' : '72%'} {...SKELETON.text.name} tone="white" />
-            <Bone width="44%" {...SKELETON.text.meta} tone="white" />
-            <View style={{ flexDirection: 'row' }}>
-              <Bone width={SKELETON.width.short} {...SKELETON.pill} tone="white" />
+      <BoneCard padding={0} gap={0}>
+        {times(rows, (i) => (
+          <View key={i}>
+            {i ? <BoneRule /> : null}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: SPACE.md,
+                minHeight: UI.list.row,
+                paddingHorizontal: SPACE.lg,
+                paddingVertical: UI.list.padY,
+              }}
+            >
+              {tile ? <Bone width={UI.list.tile} height={UI.list.tile} radius={RADIUS.sm} /> : null}
+              <View style={{ flex: 1, gap: UI.list.lineGap }}>
+                <BoneText type={TYPE.option} width={sub ? width.name : width.setting} />
+                {sub ? <BoneText type={TYPE.meta} width={width.meta} height={line.meta} /> : null}
+              </View>
             </View>
           </View>
         ))}
-      </View>
-    </SkeletonGroup>
+      </BoneCard>
+    </View>
   );
 }
 
-/** A conversation: her bubbles on the right, Buddy's on the left with the small orb. */
-export function ChatSkeleton({ label, rows = 4 }: { label: string; rows?: number }) {
-  const widths = ['56%', '70%', '38%', '62%', '48%', '66%'] as const;
+/** Two lines Buddy says: in the thread they start after his orb's column (States.jsx:20). */
+function BuddyLines() {
   return (
-    <SkeletonGroup label={label} style={{ padding: SPACE.lg, gap: SPACE.lg }}>
-      {Array.from({ length: rows }, (_, i) => {
-        const mine = i % 2 === 0;
-        const width = widths[i % widths.length] ?? '60%';
-        return mine ? (
-          <View key={i} style={{ alignItems: 'flex-end' }}>
-            <Bone width={width} {...SKELETON.touch} />
+    <View style={{ paddingLeft: CHAT.orb.indent }}>
+      <BoneText type={TYPE.body} width={width.long} height={line.text} />
+      <BoneText type={TYPE.body} width={width.short} height={line.text} />
+    </View>
+  );
+}
+
+/** One bubble of hers at the end edge, as tall as a one-line message (States.jsx:21). */
+function OwnBubble() {
+  return (
+    <View style={{ alignItems: 'flex-end' }}>
+      <Bone
+        tone="selected"
+        width={width.bubble}
+        height={TYPE.body.lineHeight + CHAT.mine.paddingVertical + CHAT.mine.paddingVertical}
+        radius={CHAT.mine.borderRadius}
+      />
+    </View>
+  );
+}
+
+/** The Composer's box at rest: its padding, her line of text, the row of tools. */
+const BAR = COMPOSER.pad + COMPOSER.text.height + COMPOSER.gap + COMPOSER.slot + COMPOSER.pad;
+
+/**
+ * The input bar at the bottom, where the Composer will stand, in `BottomBar`'s room. `inset`
+ * where the screen leaves the bottom safe area to its bar (`Screen`); the home's loading shell
+ * takes it itself.
+ */
+function Bar({ inset = false }: { inset?: boolean }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      style={{
+        paddingHorizontal: SPACE.lg,
+        paddingTop: SPACE.sm,
+        paddingBottom: bottomRoom(inset ? insets.bottom : 0, SPACE.md),
+      }}
+    >
+      <Bone tone="paper" height={BAR} radius={RADIUS.bar} />
+    </View>
+  );
+}
+
+/** The practice screen under its head: the question card, four answers, the bar (States.jsx:25–28). */
+export function PracticeSkeleton({ label }: { label: string }) {
+  return (
+    <SkeletonGroup label={label} style={{ flex: 1 }}>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: SPACE.lg,
+          paddingTop: PRACTICE.ordinaryBody.paddingTop,
+          gap: PRACTICE.ordinaryBody.gap,
+        }}
+      >
+        <BoneCard padding={CARD_PAD.base} gap={PRACTICE.contentGap}>
+          <BoneText type={TYPE.label} width={width.label} height={line.meta} />
+          <View>
+            <BoneText type={TYPE.question} width={width.question} height={line.question} />
+            <BoneText type={TYPE.question} width={width.answer} height={line.question} />
           </View>
-        ) : (
-          <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
-            <Bone width={SKELETON.orb.height} {...SKELETON.orb} />
-            <BoneCard style={{ width, ...BUDDY_BUBBLE }}>
-              <BoneLines lines={2} height={SKELETON.text.tag.height} gap={SPACE.sm} last="54%" />
-            </BoneCard>
-          </View>
-        );
-      })}
+        </BoneCard>
+        <View style={{ gap: PRACTICE.optionGap }}>
+          {times(SKELETON.options, (i) => (
+            <Bone key={i} tone="paper" height={PRACTICE.optionHeight} radius={RADIUS.md} />
+          ))}
+        </View>
+      </View>
+      <Bar inset />
     </SkeletonGroup>
   );
 }
 
-/** A screen of settings: a few white cards with a heading and two rows. */
+/** "Dein Material", a subject, the subjects of a profile: one list of rows with their tiles. */
+export function LibrarySkeleton({ label }: { label: string }) {
+  return (
+    <SkeletonGroup
+      label={label}
+      style={{ paddingHorizontal: GUTTER_APP, paddingTop: LIBRARY.pageTop, gap: SPACE.xl }}
+    >
+      <Rows rows={SKELETON.rows} tile sub />
+    </SkeletonGroup>
+  );
+}
+
+/** "Was Buddy über dich weiß": the page's two lines, then what he remembers as rows. */
+export function MemorySkeleton({ label }: { label: string }) {
+  return (
+    <SkeletonGroup
+      label={label}
+      style={{ paddingHorizontal: GUTTER_APP, paddingTop: LIBRARY.pageTop, gap: SPACE.xl }}
+    >
+      <View style={{ paddingHorizontal: SPACE.xs }}>
+        <BoneText type={TYPE.paragraph} width={width.long} height={line.text} />
+        <BoneText type={TYPE.paragraph} width={width.short} height={line.text} />
+      </View>
+      <Rows rows={SKELETON.rows} sub />
+    </SkeletonGroup>
+  );
+}
+
+/** A conversation: what Buddy said after his orb's column, her bubbles at the end edge. */
+export function ChatSkeleton({ label, rows = 4 }: { label: string; rows?: number }) {
+  return (
+    <SkeletonGroup
+      label={label}
+      style={{ paddingHorizontal: GUTTER_APP, paddingTop: LIBRARY.pageTop, gap: SPACE.lg }}
+    >
+      {times(rows, (i) => (i % 2 ? <OwnBubble key={i} /> : <BuddyLines key={i} />))}
+    </SkeletonGroup>
+  );
+}
+
+/** A page of settings: two groups of rows (States.jsx:29). */
 export function SettingsSkeleton({ label }: { label: string }) {
   return (
-    <SkeletonGroup label={label} style={{ padding: SPACE.lg, gap: SPACE.lg }}>
-      {[0, 1, 2].map((i) => (
-        <BoneCard key={i}>
-          <Bone width={i === 1 ? '40%' : '52%'} {...SKELETON.text.heading} />
-          <BoneLines lines={2} last="66%" />
-          <Bone width={i === 0 ? SKELETON.width.long : SKELETON.width.medium} {...SKELETON.pill} />
-        </BoneCard>
+    <SkeletonGroup
+      label={label}
+      style={{ paddingHorizontal: GUTTER_APP, paddingTop: SETTINGS.page.top, gap: SPACE.xl }}
+    >
+      {SKELETON.settingsGroups.map((rows, i) => (
+        <Rows key={i} rows={rows} />
       ))}
     </SkeletonGroup>
   );
 }
 
-/** The questions of one sheet: the sheet's card, then a few question cards. */
+/** The questions of one sheet: a card each — which question it is, then its two lines. */
 export function QuestionsSkeleton({ label }: { label: string }) {
-  const { palette } = useTheme();
   return (
-    <SkeletonGroup label={label} style={{ padding: SPACE.lg, gap: SPACE.md }}>
-      <BoneCard>
-        <Bone width="70%" {...SKELETON.text.title} />
-        <Bone width="40%" {...SKELETON.text.meta} />
-      </BoneCard>
-      {[0, 1, 2].map((i) => (
-        <View key={i} style={[tintCard(palette), { gap: SKELETON.tagGap }]}>
-          <Bone width={SKELETON.width.tag} {...SKELETON.text.tag} tone="white" />
-          <BoneLines
-            lines={2}
-            height={SKELETON.text.label.height}
-            last={i === 2 ? '44%' : '72%'}
-            tone="white"
-          />
-        </View>
+    <SkeletonGroup
+      label={label}
+      style={{ paddingHorizontal: GUTTER_APP, paddingTop: GUTTER_APP, gap: RHYTHM.stack }}
+    >
+      {times(SKELETON.cards, (i) => (
+        <BoneCard key={i} gap={RHYTHM.stack}>
+          <View style={{ minHeight: MATERIAL_DETAIL.menu.row, justifyContent: 'center' }}>
+            <Bone width={width.label} height={line.meta} />
+          </View>
+          <View>
+            <BoneText type={TYPE.body} width={width.long} height={line.text} />
+            <BoneText
+              type={TYPE.body}
+              width={i % 2 ? width.name : width.short}
+              height={line.text}
+            />
+          </View>
+        </BoneCard>
       ))}
     </SkeletonGroup>
   );
 }
 
 /**
- * Buddy's home before its first load, under the real head (#599): the greeting, the start row,
- * the chat, the field.
+ * Buddy's home before its first load, under the real head (States.jsx:19–23, Extra.jsx:236): the
+ * conversation ends at the bottom — what he said, a bubble of hers, one of his cards — above the
+ * bar.
  */
 export function HomeSkeleton({ label }: { label: string }) {
   return (
-    <SkeletonGroup
-      label={label}
-      style={{ flex: 1, paddingHorizontal: SPACE.lg, paddingTop: SPACE.sm }}
-    >
-      <View
-        style={{ alignItems: 'center', marginTop: SKELETON.greetingTop, marginBottom: SPACE.lg }}
-      >
-        <Bone width={SKELETON.width.long} {...SKELETON.text.greeting} />
+    <SkeletonGroup label={label} style={{ flex: 1 }}>
+      <View style={{ flex: 1, justifyContent: 'flex-end', padding: SPACE.lg, gap: SPACE.lg }}>
+        <BuddyLines />
+        <OwnBubble />
+        <BoneCard padding={CARD_PAD.thread}>
+          <Bone width={width.label} height={line.meta} />
+          <Bone width={width.title} height={line.text} />
+          <Bone
+            width={SKELETON.button.width}
+            height={SKELETON.button.height}
+            radius={RADIUS.round}
+          />
+        </BoneCard>
       </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        {[0, 1, 2, 3, 4].map((i) => (
-          <View key={i} style={{ alignItems: 'center', gap: SPACE.sm }}>
-            <Bone width={SKELETON.touch.height} {...SKELETON.touch} />
-            <Bone width={SKELETON.width.startLabel} {...SKELETON.text.tiny} />
-          </View>
-        ))}
-      </View>
-      <View
-        style={{ flex: 1, justifyContent: 'flex-end', gap: SPACE.lg, paddingVertical: SPACE.lg }}
-      >
-        <View style={{ alignItems: 'flex-end' }}>
-          <Bone width="52%" {...SKELETON.touch} />
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACE.sm }}>
-          <Bone width={SKELETON.orb.height} {...SKELETON.orb} />
-          <BoneCard style={{ width: '72%', ...BUDDY_BUBBLE }}>
-            <BoneLines lines={3} height={SKELETON.text.tag.height} gap={SPACE.sm} last="48%" />
-          </BoneCard>
-        </View>
-      </View>
-      <View style={{ paddingBottom: SPACE.lg }}>
-        <Bone {...SKELETON.bar} />
-      </View>
+      <Bar />
     </SkeletonGroup>
   );
 }

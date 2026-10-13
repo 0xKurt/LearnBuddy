@@ -21,7 +21,8 @@ export function ProfileSubjects({
   const { t } = useTranslation(['settings', 'common']);
   if (loading)
     return error ? (
-      <LoadFailed error={error} onRetry={onRetry} />
+      // A section of the profile page, not a screen: without the full-screen state's Buddy.
+      <LoadFailed inline error={error} onRetry={onRetry} />
     ) : (
       <LibrarySkeleton label={t('common:loading')} />
     );

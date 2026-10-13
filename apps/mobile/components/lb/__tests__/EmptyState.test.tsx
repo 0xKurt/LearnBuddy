@@ -1,18 +1,23 @@
-// The two layouts of "nothing here" (#599 library): the empty page inside the app, as the design
-// draws it (ui_kits/app/Gaps.jsx:44–67), and the centred system state it must not change
-// (components/core/States.jsx:45–56 — update, deleting, load failed).
+// The two layouts of "nothing here" (#599): the empty page inside the app, as the design draws it
+// (ui_kits/app/Gaps.jsx:44–67) — untouched by the system states — and the full-screen state
+// (components/core/States.jsx:45–52 `StateScreen`: a failed load, update, deleting, a crash).
+// The numbers are the design's, written out: a token compared with itself would hold nothing.
 //
 // Declared styles only — jsdom lays nothing out; where it sits on a phone is tests/web.
 
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { GUTTER_OUTER } from '../../../lib/theme/space.js';
-import { EMPTY_STATE } from '../../../lib/theme/states.js';
-import { renderInApp } from '../../../testing/render.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { Btn } from '../Btn.js';
 import { EmptyState } from '../EmptyState.js';
 import { Section } from '../Section.js';
+
+vi.mock('../BuddyOrb.js', () => ({
+  BuddyOrb: ({ size, state }: { size: number; state?: string }) => (
+    <div data-testid="orb" data-size={size} data-state={state ?? 'idle'} />
+  ),
+}));
 
 /** What the component itself declares on this element (react-native-web sets it inline). */
 const own = (el: Element) => (el as HTMLElement).style;
@@ -23,8 +28,8 @@ const action = (
   </Btn>
 );
 
-describe('EmptyState', () => {
-  it('as a page: one block at the start edge — bold line, sentence, one action with its sign', () => {
+describe('EmptyState as a page (Gaps.jsx `Empty`) — the content variant, unchanged', () => {
+  it('is one block at the start edge: bold line 800 26/32, sentence, one action with its sign', () => {
     renderInApp(
       <EmptyState
         page
@@ -34,26 +39,86 @@ describe('EmptyState', () => {
       />,
     );
     const head = screen.getByRole('heading', { name: 'Hier landen deine Blätter' });
-    expect(own(head).fontSize).toBe(`${EMPTY_STATE.page.head.fontSize}px`);
-    expect(own(head).fontWeight).toBe('800');
+    expect([
+      own(head).fontSize,
+      own(head).lineHeight,
+      own(head).fontWeight,
+      own(head).letterSpacing,
+    ]).toEqual(['26px', '32px', '800', '-0.6px']);
     expect(own(head).textAlign).not.toBe('center');
-    expect(own(screen.getByText('Fotografier ein Blatt.')).textAlign).not.toBe('center');
+    const body = screen.getByText('Fotografier ein Blatt.');
+    expect([own(body).fontSize, own(body).lineHeight]).toEqual(['17px', '25px']);
+    expect(own(body).textAlign).not.toBe('center');
     const block = head.parentElement?.parentElement as Element;
-    expect(own(block).paddingLeft).toBe(`${GUTTER_OUTER}px`);
-    expect(own(block).paddingBottom).toBe(`${EMPTY_STATE.page.bottom}px`);
+    expect(own(block).paddingLeft).toBe('20px');
+    expect(own(block).paddingRight).toBe('20px');
+    expect(own(block).paddingBottom).toBe('80px');
+    expect(own(block).justifyContent).toBe('center');
+    expect(styleOf(block).gap).toBe('24px');
+    expect(styleOf(head.parentElement as Element).gap).toBe('8px');
     const button = screen.getByRole('button', { name: 'Neues Blatt fotografieren' });
     expect(button.querySelector('svg')).not.toBeNull();
     expect(own(button.parentElement as Element).alignSelf).toBe('flex-start');
   });
 
-  it('as a system state stays centred at its own size', () => {
+  it('draws no Buddy of its own: he is in the head', () => {
+    renderInApp(<EmptyState page orb state="think" title="Leer" />);
+    expect(screen.queryByTestId('orb')).toBeNull();
+  });
+});
+
+describe('EmptyState as the full-screen state (States.jsx `StateScreen`)', () => {
+  const show = (orb: boolean) =>
     renderInApp(
-      <EmptyState title="Bitte einmal aktualisieren" body="Es gibt eine neue Version." />,
+      <EmptyState
+        orb={orb}
+        state="think"
+        title="Das hat nicht geklappt"
+        body="Versuch es gleich nochmal."
+        action={action}
+      />,
     );
-    const head = screen.getByRole('heading', { name: 'Bitte einmal aktualisieren' });
-    expect(own(head).textAlign).toBe('center');
-    expect(own(head).fontSize).toBe(`${EMPTY_STATE.title.fontSize}px`);
-    expect(own(screen.getByText('Es gibt eine neue Version.')).textAlign).toBe('center');
+
+  it('sets one bold line 800 22/28 over one sentence 400 15/22 of at most 300, centred', () => {
+    show(true);
+    const head = screen.getByRole('heading', { name: 'Das hat nicht geklappt' });
+    expect([
+      own(head).fontSize,
+      own(head).lineHeight,
+      own(head).fontWeight,
+      own(head).letterSpacing,
+      own(head).textAlign,
+    ]).toEqual(['22px', '28px', '800', '0px', 'center']);
+    const body = own(screen.getByText('Versuch es gleich nochmal.'));
+    expect([
+      body.fontSize,
+      body.lineHeight,
+      body.fontWeight,
+      body.textAlign,
+      body.maxWidth,
+    ]).toEqual(['15px', '22px', '400', 'center', '300px']);
+  });
+
+  it('stands 14 apart, 40 above and below, 24 at the sides, the way on 6 further down', () => {
+    show(true);
+    const column = screen.getByRole('heading').parentElement as Element;
+    expect(own(column).alignItems).toBe('center');
+    expect(styleOf(column).gap).toBe('14px');
+    expect([own(column).paddingTop, own(column).paddingBottom]).toEqual(['40px', '40px']);
+    expect([own(column).paddingLeft, own(column).paddingRight]).toEqual(['24px', '24px']);
+    const button = screen.getByRole('button', { name: 'Neues Blatt fotografieren' });
+    expect(own(button.parentElement as Element).marginTop).toBe('6px');
+  });
+
+  it('puts Buddy at 64 above the line, in the state the screen gives him — and only when asked', () => {
+    const first = show(true);
+    const orb = screen.getByTestId('orb');
+    expect([orb.dataset.size, orb.dataset.state]).toEqual(['64', 'think']);
+    // The first thing in the column, in its 14 pt rhythm: no margin of its own.
+    expect(orb.parentElement?.firstElementChild).toBe(orb);
+    first.unmount();
+    show(false);
+    expect(screen.queryByTestId('orb')).toBeNull();
   });
 });
 
