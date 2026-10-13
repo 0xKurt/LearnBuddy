@@ -45,9 +45,9 @@ import { HomeTop } from '../components/buddy/HomeTop.js';
 import { StartSheets } from '../components/buddy/StartSheets.js';
 import { Btn } from '../components/lb/Btn.js';
 import { EDGE_FADE } from '../components/lb/EdgeFade.js';
-import { EmptyState } from '../components/lb/EmptyState.js';
 import { Glow } from '../components/lb/Glow.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+import { LoadFailed } from '../components/lb/LoadFailed.js';
 import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { useAnnounce } from '../lib/announce.js';
 import { newId } from '../lib/api/client.js';
@@ -63,7 +63,6 @@ import { useHomePhotos } from '../lib/buddy/useHomePhotos.js';
 import { useHomeSend } from '../lib/buddy/useHomeSend.js';
 import { useSessionStart } from '../lib/buddy/useSessionStart.js';
 import { useThreadFollow } from '../lib/buddy/useThreadFollow.js';
-import { messageFor } from '../lib/errors.js';
 import { useClosedCard } from '../lib/homeCard.js';
 import { homeLayout, topKey } from '../lib/homeLayout.js';
 import { askAttach } from '../lib/capture/attachRequest.js';
@@ -121,16 +120,11 @@ export default function BuddyScreen() {
         {home.isPending ? (
           <HomeSkeleton label={t('common:loading')} />
         ) : (
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <EmptyState
-              title={messageFor(home.error)}
-              action={
-                <Btn center onPress={() => void home.refetch()}>
-                  {t('common:actions.retry')}
-                </Btn>
-              }
-            />
-          </View>
+          <LoadFailed
+            error={home.error}
+            busy={home.isRefetching}
+            onRetry={() => void home.refetch()}
+          />
         )}
         <HeaderMenu visible={menuOpen} onClose={() => setMenuOpen(false)} />
       </SafeAreaView>

@@ -25,9 +25,14 @@ type Props = {
   busy?: boolean;
   /** A second way on below the retry (back to the list). */
   children?: ReactNode;
+  /**
+   * One part of a page that goes on around it (a profile's subjects), not the screen's whole
+   * content: no Buddy. The design draws him only in the full-screen state (States.jsx:34).
+   */
+  inline?: boolean;
 };
 
-export function LoadFailed({ error, onRetry, busy, children }: Props) {
+export function LoadFailed({ error, onRetry, busy, children, inline = false }: Props) {
   const { t } = useTranslation('common');
   const online = useOnline();
   // Offline, or the thing is gone: nothing to think about (States.jsx "offline", "notfound").
@@ -40,7 +45,7 @@ export function LoadFailed({ error, onRetry, busy, children }: Props) {
   return (
     <View style={{ flex: 1, justifyContent: 'center' }}>
       <EmptyState
-        orb
+        orb={!inline}
         state={resting ? 'idle' : 'think'}
         title={messageFor(error)}
         action={

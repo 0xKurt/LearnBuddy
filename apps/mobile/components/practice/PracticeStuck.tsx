@@ -32,6 +32,8 @@ export function PracticeStuck({ title, message, onRetry, onBack }: Props) {
     >
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <EmptyState
+          orb
+          state="think"
           title={message}
           action={
             <View style={{ gap: SPACE.sm, alignItems: 'center' }}>

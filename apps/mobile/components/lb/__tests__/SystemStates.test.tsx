@@ -17,6 +17,7 @@ import { ApiError } from '../../../lib/api/apiError.js';
 import type * as MotionTokens from '../../../lib/theme/motion.js';
 import { toast, toastDuration } from '../../../lib/toast.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
+import { ProfileSubjects } from '../../settings/ProfileSubjects.js';
 import { Banner } from '../Banner.js';
 import { ListGroup, Row } from '../ListGroup.js';
 import { LoadFailed } from '../LoadFailed.js';
@@ -445,6 +446,23 @@ describe('a load that failed (States.jsx:37–40, ui_kits/app/Extra.jsx:255–25
       <LoadFailed error={new ApiError('not_found', 'x', 404)} onRetry={() => undefined} />,
     );
     expect(orb().state).toBe('idle');
+  });
+
+  it('draws no Buddy as one part of a page: a profile’s subjects that did not load (States.jsx:34)', () => {
+    const onRetry = vi.fn();
+    renderInApp(
+      <ProfileSubjects
+        cards={[]}
+        loading
+        error={new ApiError('internal', 'x', 500)}
+        onRetry={onRetry}
+      />,
+    );
+    expect(screen.queryByTestId('orb')).toBeNull();
+    // What it says and the way on are the same as on a full screen.
+    expect(screen.getByRole('heading').textContent).not.toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Nochmal versuchen' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });
 
