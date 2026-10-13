@@ -105,6 +105,7 @@ export default function PracticeScreen() {
   const speakPhase = useSpeakPhase((s) => s.phase);
   // What was there when the screen opened stands still; a judgement that arrives now is fresh.
   const knownTurns = useRef<ReadonlySet<string> | null>(null);
+  const judgedDraft = useRef<{ id: string; text: string } | null>(null);
   if (session && knownTurns.current === null)
     knownTurns.current = new Set(session.turns.map((turn) => turn.id));
   // Measured: what the conversation's content really needs and what the question takes, so the
@@ -217,6 +218,10 @@ export default function PracticeScreen() {
   const locked = busy || end.closing;
   /** Her newest judged try at this question: what the head's orb answers (`practiceHeadState`). */
   const lastTry = view.turns.filter((turn) => turn.role === 'learner' && turn.verdict).at(-1);
+  // What stood in her answer field when that try's judgement arrived: once it differs, she has
+  // started again and the head waits for her.
+  if (lastTry && judgedDraft.current?.id !== lastTry.id)
+    judgedDraft.current = { id: lastTry.id, text: drafts.text };
   // Which way she answers — exactly one (`answerForm`).
   const form = answerForm(item, open);
   // Her short answer appears in the gap of a fill-in sentence while she types.
@@ -390,6 +395,13 @@ export default function PracticeScreen() {
         fresh: lastTry !== undefined && knownTurns.current?.has(lastTry.id) === false,
         // A test keeps its verdicts for the review: no celebration gives one away.
         afterCorrect: !offers.testing && lastTry?.verdict === 'correct',
+        // Not right yet: Buddy speaks until she writes her next answer (the draft she had when
+        // his words arrived is the fact; `judgedDraft` above).
+        replying:
+          !offers.testing &&
+          lastTry !== undefined &&
+          lastTry.verdict !== 'correct' &&
+          judgedDraft.current?.text === drafts.text,
       })}
       // The question's own ⋯ ("Frage passt nicht", "Einspruch"), drawn only while it has something
       // to offer: its action cannot stand in the shared menu before that sheet has room for it.

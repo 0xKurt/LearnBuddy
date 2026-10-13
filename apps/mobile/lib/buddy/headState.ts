@@ -32,9 +32,10 @@ export type HeadFacts = {
 export function headState(f: HeadFacts): MoonState {
   if (f.streaming) return 'speak';
   if (f.sending || f.working) return 'think';
-  // 'listen' is the orb's pose while she is the one talking — the moon leans in — not a claim
-  // that a microphone is open (decision on #599: the design and owner rule 1 over the earlier
-  // reading of CLAUDE.md rule 5 here). The conversation screen's microphone is app/talk.tsx's.
+  // Manager decision recorded on #599, announced to the owner on 12 and 13 Oct without
+  // objection: the chat header orb shows `listen` while she types or dictates, as the prototype
+  // (`App.jsx`) and owner rule 1 ask; the state is the orb's pose, not a claim about an open
+  // microphone. The owner can reverse it.
   if (f.typing) return 'listen';
   if (f.reading) return 'think';
   return 'idle';
@@ -51,17 +52,25 @@ export type PracticeFacts = {
   fresh: boolean;
   /** …and it answers a try of hers that was right. Never true where verdicts are hidden. */
   afterCorrect: boolean;
+  /**
+   * …or a try that was not right yet, and his words about it are still the newest thing on
+   * screen: she has not started her next answer. Never true where verdicts are hidden.
+   */
+  replying?: boolean;
 };
 
 /**
- * The head of a task (implementation/MIGRATION.md §6): waiting while it is open, thinking while
- * her answer is checked, and after the feedback what `moonForReply` says — a right answer that
- * just came back celebrates, anything else rests. The celebration ends by itself (moon.ts).
+ * The head of a task (design ui_kits/app/App.jsx:57–68, Tasks.jsx:176; MIGRATION §6): waiting
+ * while it is open, thinking while her answer is checked, then the feedback — a right answer
+ * that just came back celebrates (`moonForReply`; it ends by itself, moon.ts), one that is not
+ * right yet has Buddy speaking until she starts again. A reply that was already there when the
+ * screen opened moves nothing.
  */
 export function practiceHeadState(f: PracticeFacts): MoonState {
   if (f.listening) return 'listen';
   if (f.checking) return 'think';
   const reply = moonForReply({ fresh: f.fresh, afterCorrect: f.afterCorrect });
   if (reply !== 'idle') return reply;
+  if (f.fresh && f.replying) return 'speak';
   return f.open ? 'wait' : 'idle';
 }
