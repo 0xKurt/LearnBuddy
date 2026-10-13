@@ -60,7 +60,7 @@ export function PickerField<T extends string>({
   return (
     <>
       <Btn
-        variant="outline"
+        variant="secondary"
         // A full-width form value stays readable and can wrap. Native automatic fitting
         // shrank the selected region severely during keyboard review; md avoids that path.
         size="md"
@@ -85,8 +85,8 @@ export function PickerField<T extends string>({
       >
         {body ? <Text style={[TYPE.small, SHEET_TEXT]}>{body}</Text> : null}
         <ChoiceOptions
-          selectedVariant="primary"
-          unselectedVariant="outline"
+          chosenAs="primary"
+          unselectedVariant="secondary"
           showCheck={false}
           options={options}
           value={value}

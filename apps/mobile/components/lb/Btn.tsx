@@ -9,22 +9,12 @@ import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { CONTROL, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { tileSkin } from '../../lib/theme/board.js';
 import { Icon, type IconName } from './Icon.js';
 
-type Variant =
-  | 'primary'
-  | 'secondary'
-  | 'quiet'
-  | 'soft'
-  | 'outline'
-  | 'ghost'
-  | 'danger'
-  // Not a button's variants: the answer board's states live in `Tile` (MIGRATION.md §5). These
-  // two stay until their last two callers have moved (`BOARD_LEFT` in
-  // lib/__tests__/boardTiles.test.ts names them); nothing new may use them.
-  | 'tile'
-  | 'picked';
+// The design's four (components/core/Btn.jsx) and two kept from before the redesign: `soft` and
+// `danger` have no design form yet. The answer board's states are not a button's variants: they
+// live in `Tile` (MIGRATION.md §5, lib/__tests__/boardTiles.test.ts).
+type Variant = 'primary' | 'secondary' | 'quiet' | 'soft' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 type Common = {
@@ -45,8 +35,6 @@ type Common = {
   size?: Size;
   iconRight?: IconName;
   full?: boolean;
-  /** Fill the container's height too (tiles in a grid row stay equally tall). */
-  grow?: boolean;
   /** Centre a button that is not full width (it sits at the start otherwise). */
   center?: boolean;
   /** Let a long label wrap onto several lines (answer choices, starters) instead of shrinking it. */
@@ -165,7 +153,6 @@ type VariantSkin = {
   color: string;
   borderColor: string;
   borderWidth: number;
-  borderStyle?: 'solid' | 'dashed';
 };
 
 // Built from the palette the button is rendering with: as a module constant this froze the
@@ -173,14 +160,11 @@ type VariantSkin = {
 // cards (issue #84, the one capture the first scanner missed because the type annotation
 // spans lines).
 const variantStyle = (p: Palette): Record<Variant, VariantSkin> => ({
-  tile: tileSkin(p, 'tile'),
-  picked: tileSkin(p, 'picked'),
   primary: { bg: p.primary, color: p.onPrimary, borderColor: 'transparent', borderWidth: 0 },
   quiet: { bg: p.canvas, color: p.ink, borderColor: 'transparent', borderWidth: 0 },
   secondary: { bg: p.paper, color: p.ink, borderColor: p.hairlineStrong, borderWidth: UI.border },
   // Not one of the design's four: the accent tint it had before the redesign (owner rule 2).
   soft: { bg: p.primaryLt, color: p.primaryDk, borderColor: 'transparent', borderWidth: 0 },
-  outline: { bg: p.paper, color: p.ink, borderColor: p.hairlineStrong, borderWidth: UI.border },
   ghost: { bg: 'transparent', color: p.primaryDk, borderColor: 'transparent', borderWidth: 0 },
   danger: {
     bg: 'transparent',
@@ -208,7 +192,6 @@ export function Btn(props: Props) {
     bare = false,
     icon,
     iconRight,
-    grow = false,
     disabled = false,
     onDisabledPress,
     busy = false,
@@ -229,8 +212,7 @@ export function Btn(props: Props) {
   const base = variantStyle(palette)[variant];
   const active = tone ? { ...base, bg: tones.bg[tone], color: palette.ink, borderWidth: 0 } : base;
   const v = active;
-  const board = variant === 'tile' || variant === 'picked';
-  const radius = board ? RADIUS.md : pill || !wrap ? RADIUS.round : RADIUS.md;
+  const radius = pill || !wrap ? RADIUS.round : RADIUS.md;
   // A tap on the waiting button answers ("what is missing?") instead of being swallowed.
   // The button itself STAYS truly disabled — un-disabling it made the web lose its
   // `disabled` attribute and read as ready (RN Web's Pressable overwrites any passed
@@ -271,7 +253,6 @@ export function Btn(props: Props) {
                 : center
                   ? ('center' as const)
                   : ('flex-start' as const),
-              ...(grow ? { flexGrow: 1 } : {}),
             }),
         // Disabled and busy treatment follows the design; semantic disabled state remains intact.
         opacity: busy ? UI.busyOpacity : disabled ? UI.disabledOpacity : 1,
@@ -287,14 +268,12 @@ export function Btn(props: Props) {
             ...(wrap
               ? { minHeight: s.height, paddingVertical: SPACE.md }
               : { minHeight: s.height }),
-            ...(grow ? { flexGrow: 1 } : {}),
             gap: icon || iconRight || busy ? SPACE.sm : 0,
             paddingHorizontal: bare ? 0 : compact ? BTN_PAD_COMPACT : s.paddingHorizontal,
             backgroundColor: v.bg,
             borderRadius: radius,
             borderWidth: v.borderWidth,
             borderColor: v.borderColor,
-            borderStyle: v.borderStyle,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: wrap ? 'flex-start' : 'center',
@@ -308,10 +287,7 @@ export function Btn(props: Props) {
         >
           {busy ? (
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-              <BusyIndicator
-                size="small"
-                color={variant === 'outline' || tone ? palette.primaryDk : v.color}
-              />
+              <BusyIndicator size="small" color={tone ? palette.primaryDk : v.color} />
             </View>
           ) : icon ? (
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -319,7 +295,7 @@ export function Btn(props: Props) {
                 name={icon}
                 size={UI.button.icon}
                 // A muted button's icon steps back with its label (issue #97).
-                color={!muted && (variant === 'outline' || tone) ? palette.primaryDk : v.color}
+                color={!muted && tone ? palette.primaryDk : v.color}
               />
             </View>
           ) : null}
@@ -367,7 +343,6 @@ export function Btn(props: Props) {
     <View
       style={{
         alignSelf: full ? 'stretch' : center ? 'center' : 'flex-start',
-        ...(grow ? { flexGrow: 1 } : {}),
       }}
     >
       {button}

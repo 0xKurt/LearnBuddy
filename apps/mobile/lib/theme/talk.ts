@@ -3,7 +3,6 @@ import { FORM_DENSITY } from './layout.js';
 // Conversation-mode frame (design ui_kits/app/Talk.jsx:22–45); Orb/moon rendering and speech
 // behavior stay shared (#548).
 export const TALK = {
-  glowHeight: 700,
   /** Between the orb and what stands under it (Talk.jsx:25). */
   groupGap: 36,
   compactBelow: FORM_DENSITY.compactBelow,

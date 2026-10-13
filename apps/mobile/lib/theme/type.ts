@@ -86,7 +86,6 @@ function typeOf(p: Palette) {
     boardLabel: { ...fontFace('700'), fontSize: 14, lineHeight: 18, color: p.ink2 },
     bodyStrong: { ...body, ...fontFace('600') },
     quote: { ...meta, fontStyle: 'italic', color: p.primaryDk },
-    metaMedium: { ...meta, ...fontFace('500') },
     metaSemibold: { ...meta, ...fontFace('600') },
     markPunctuation: { ...body, ...fontFace('800') },
     markLetter: { ...fontFace('500'), fontSize: 28, lineHeight: 34, color: p.ink },

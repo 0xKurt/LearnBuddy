@@ -9,12 +9,20 @@
 
 import { useTranslation } from 'react-i18next';
 
-import type { IconName } from '../lb/Icon.js';
-import { ListGroup, Row } from '../lb/ListGroup.js';
-import { Sheet } from '../lb/Sheet.js';
+import type { IconName } from './Icon.js';
+import { ListGroup, Row } from './ListGroup.js';
+import { Sheet } from './Sheet.js';
 
 /** Something a screen offers: in the ⋯ menu a row, in the start sheet a way to start. */
 export type StartItem = { key: string; label: string; icon: IconName; onPress: () => void };
+
+/**
+ * What a screen puts before the places: a row like theirs with a short label. It does something
+ * here, so it ends in no chevron — unless it `leads` on to a list of its own (the chat's ways to
+ * start). `accessibilityLabel` is the whole sentence where the short label needs its object
+ * ("„Brüche“ umbenennen").
+ */
+export type MenuAction = StartItem & { accessibilityLabel?: string; leads?: boolean };
 
 /** Where a row leads. `capture` is no screen: the chat's bar takes the photo (owner 12.10.). */
 export type Place = 'capture' | 'library' | 'memory' | 'history' | 'settings' | 'profile';
@@ -32,7 +40,7 @@ const PLACES: ReadonlyArray<{ place: Place; icon: IconName; label: string }> = [
 type Props = {
   visible: boolean;
   /** What this screen puts before the places. */
-  actions: readonly StartItem[];
+  actions: readonly MenuAction[];
   /** False while one of them would race something in flight. */
   canAct: boolean;
   /** Opens a place; the sheet closes itself first (two modals in one frame fail on iOS). */
@@ -55,6 +63,8 @@ export function MenuSheet({ visible, actions, canAct, onGo, onClose }: Props) {
             key={action.key}
             icon={action.icon}
             title={action.label}
+            accessibilityLabel={action.accessibilityLabel}
+            chevron={action.leads === true}
             disabled={!canAct}
             onPress={action.onPress}
           />

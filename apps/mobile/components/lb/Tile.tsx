@@ -8,6 +8,8 @@
 //   · step — Option's height and corners, wraps, with a round badge for its number (an order);
 //   · word — a 40 pt pill on one line (a word bank, the things of a grouping, a category);
 //   · cell — a short thing in a grid place, centred (an order of numbers);
+//   · row  — a row of a list she picks one from, its content the caller's (a line of a
+//            Fehlerdetektiv, the chosen row of a choice in a sheet);
 //   · text — a word or a line set in running text: no frame, the light primary when marked
 //            (components/practice/Answers.jsx MarkText).
 //
@@ -34,7 +36,7 @@ import { MAX_FONT_SCALE } from './Btn.js';
 import { Icon } from './Icon.js';
 
 export type { TileState } from '../../lib/theme/board.js';
-type TileShape = 'step' | 'word' | 'cell' | 'text';
+type TileShape = 'step' | 'word' | 'cell' | 'row' | 'text';
 
 type Props = {
   /** Its words; also what a screen reader says unless `accessibilityLabel` is set. */
@@ -60,7 +62,10 @@ type Props = {
   grow?: boolean;
   /** Its words a step smaller, 15/20 (Tasks.jsx Pairs; a category's name beside two others). */
   dense?: boolean;
-  /** A side of a pair: the taller step (Tasks.jsx Pairs: at least 64). */
+  /**
+   * A side of a pair: the taller step (Tasks.jsx Pairs: at least 64). A row: as tall as the
+   * regular button it stands among.
+   */
   tall?: boolean;
   /** Keeps its place and shows nothing: a word of the bank that is in a gap now. */
   hollow?: boolean;
@@ -71,7 +76,7 @@ type Props = {
 
 /** Where the piece stands in its parent, by shape. */
 function place(shape: TileShape, full: boolean, grow: boolean): ViewStyle {
-  const stretch = full || shape === 'step' || shape === 'cell';
+  const stretch = full || shape === 'step' || shape === 'cell' || shape === 'row';
   return {
     alignSelf: stretch ? 'stretch' : 'flex-start',
     maxWidth: '100%',
@@ -109,6 +114,13 @@ function box(shape: TileShape, inset: number, grow: boolean, tall: boolean): Vie
         justifyContent: 'center',
         borderRadius: RADIUS.md,
       };
+    case 'row':
+      return {
+        minHeight: tall ? BOARD.row.tall : BOARD.row.minHeight,
+        paddingHorizontal: BOARD.row.pad - inset,
+        borderRadius: RADIUS.md,
+        ...(grow ? { flexGrow: 1 } : {}),
+      };
     case 'text':
       return { minHeight: TOUCH, justifyContent: 'center', borderRadius: BOARD.mark.radius };
   }
@@ -141,7 +153,7 @@ export function Tile({
   const framed = shape !== 'text';
   const inset = framed ? skin.borderWidth - PRACTICE.border : 0;
   // Its words take the room the piece has: a step always, anything else when it is a whole row.
-  const wide = shape === 'step' || full;
+  const wide = shape === 'step' || shape === 'row' || full;
 
   const words =
     label === undefined ? (

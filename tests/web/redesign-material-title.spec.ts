@@ -31,11 +31,15 @@ for (const look of SCREEN_LOOKS) {
     ).toHaveCount(1);
     await expect(page.getByText('Mathe · 1 Seite', { exact: true })).toBeVisible();
     await screenShots(page, `material-title-${key}-original`);
-    // Renaming is the sheet's own action in the head's ⋯ (#599).
+    // Renaming is the sheet's own action in the head's ⋯ (#599): a row like the places, which
+    // reads "Umbenennen" and says what it renames to a screen reader.
     await page.getByRole('button', { name: 'Mehr', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Umbenennen', exact: true })).toBeVisible();
+    const rename = page.getByRole('button', { name: /umbenennen$/i });
+    await expect(rename).toBeVisible();
+    await expect(rename).toHaveAccessibleName('„Brüche kürzen und vergleichen“ umbenennen');
+    await expect(rename.getByText('Umbenennen', { exact: true })).toBeVisible();
     await screenShots(page, `material-title-${key}-menu`, true);
-    await page.getByRole('button', { name: 'Umbenennen', exact: true }).click();
+    await page.getByRole('button', { name: /umbenennen$/i }).click();
     await page.getByLabel('Name des Blatts').fill(LONG_TITLE);
     await screenShots(page, `material-title-${key}-rename`, true);
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -54,7 +58,7 @@ for (const look of SCREEN_LOOKS) {
     }
     await screenShots(page, `material-title-${key}-long`);
     await page.getByRole('button', { name: 'Mehr', exact: true }).click();
-    await page.getByRole('button', { name: 'Umbenennen', exact: true }).click();
+    await page.getByRole('button', { name: /umbenennen$/i }).click();
     await expect(page.getByLabel('Name des Blatts')).toHaveValue(LONG_TITLE);
   });
 }

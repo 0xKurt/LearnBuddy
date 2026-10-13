@@ -5,11 +5,10 @@ import { View } from 'react-native';
 
 import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
-import { SETTINGS } from '../../lib/theme/settings.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { PressArea } from '../lb/PressArea.js';
+import { PressArea } from './PressArea.js';
 
 type Props = {
   on: boolean;
@@ -21,7 +20,7 @@ type Props = {
 
 export function Toggle({ on, onChange, label, disabled = false }: Props) {
   const { palette } = useTheme();
-  const { width, height, pad, knob } = SETTINGS.toggle;
+  const { width, height, pad, knob } = UI.toggle;
   return (
     <PressArea
       onPress={() => onChange(!on)}

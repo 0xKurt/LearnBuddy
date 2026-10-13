@@ -1,5 +1,7 @@
 # Done completion — #548
 
+> Superseded by #599 (redesign correction, October 2026): component and route names below describe the state before it.
+
 Integrated on published Practice #569, main `f71f59b930f592f21a2be9a83c3f1dedb2404af1`; awaiting final source review.
 
 ## Exact scope and result

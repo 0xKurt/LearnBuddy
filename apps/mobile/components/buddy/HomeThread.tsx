@@ -146,7 +146,7 @@ function NewReplyPill({ onPress }: { onPress: () => void }) {
         <Btn
           size="sm"
           pill
-          variant="outline"
+          variant="secondary"
           accessibilityLabel={t('buddy:thread.new_reply_label')}
           onPress={onPress}
         >

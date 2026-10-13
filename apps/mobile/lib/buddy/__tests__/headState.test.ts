@@ -1,8 +1,14 @@
 // The orb in the head follows what is happening on the screen (issue #179; owner rule 1, #599).
 
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { headState, practiceHeadState, type HeadFacts, type PracticeFacts } from '../headState.js';
+import {
+  headState,
+  practiceHeadState,
+  useThreadRecording,
+  type HeadFacts,
+  type PracticeFacts,
+} from '../headState.js';
 
 const quiet: HeadFacts = { sending: false, working: false, streaming: false };
 
@@ -111,5 +117,49 @@ describe('what the head of a task shows (MIGRATION §6)', () => {
   it('listens while she says her answer, before anything else', () => {
     expect(practiceHeadState({ ...task, listening: true })).toBe('listen');
     expect(practiceHeadState({ ...task, listening: true, checking: true })).toBe('listen');
+  });
+});
+
+describe('a recording on a card in the thread (two rehearsal cards can stand in it)', () => {
+  const recording = () => useThreadRecording.getState().on;
+  const say = (card: string, on: boolean) => useThreadRecording.getState().set(card, on);
+
+  beforeEach(() => useThreadRecording.setState({ cards: new Set(), on: false }));
+
+  it('runs while one card records, and ends with that card', () => {
+    expect(recording()).toBe(false);
+    say('a', true);
+    expect(recording()).toBe(true);
+    say('a', false);
+    expect(recording()).toBe(false);
+  });
+
+  it('is not ended by another card that mounts, stops or goes while the first records', () => {
+    say('a', true);
+    // A second card comes into the thread: it does not record, and says so.
+    say('b', false);
+    expect(recording()).toBe(true);
+    // …and leaves again (its effect's clean-up).
+    say('b', false);
+    expect(recording()).toBe(true);
+    say('a', false);
+    expect(recording()).toBe(false);
+  });
+
+  it('runs until the last of two recording cards has stopped', () => {
+    say('a', true);
+    say('b', true);
+    say('a', false);
+    expect(recording()).toBe(true);
+    say('b', false);
+    expect(recording()).toBe(false);
+  });
+
+  it('keeps its state when a card says again what it said before', () => {
+    say('a', true);
+    const before = useThreadRecording.getState();
+    say('a', true);
+    say('b', false);
+    expect(useThreadRecording.getState()).toBe(before);
   });
 });

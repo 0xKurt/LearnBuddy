@@ -113,6 +113,10 @@ export const useHome = () =>
     },
   });
 
+/**
+ * The home a step brought back, for every screen. Not written when it is older than the one held
+ * (`writeHome`: a turn's answer that arrives after a later step's).
+ */
 export function setHome(home: BuddyHome): void {
   // A turn that finishes after sign-out never refills the cleared cache (shared phone).
   if (!currentSession()) return;

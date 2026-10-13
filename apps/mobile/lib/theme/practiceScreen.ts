@@ -7,7 +7,6 @@ const rhythmPadMin = 2 * TOUCH;
 
 /** Practice feedback and the existing image viewer's presentation geometry. */
 export const PRACTICE_SCREEN = {
-  speakerGlyph: PRACTICE.actionIcon,
   evidenceGlyph: PRACTICE.essaySignIcon,
   evidenceRule: UI.border,
   rhythmPadPreferred: 3 * TOUCH,

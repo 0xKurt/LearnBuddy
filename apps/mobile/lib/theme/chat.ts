@@ -7,7 +7,6 @@ export const CHAT = {
   followSlack: SPACE.xl,
   reveal: { charactersPerSecond: 90 },
   marker: { orderedWidth: 18, bulletWidth: 12 },
-  notice: { thumbWidth: 32, thumbHeight: 42 },
   reading: {
     statusOffset: 1,
     minHeight: 60,
@@ -43,7 +42,6 @@ export const CHAT = {
   tail: 6,
   failedBorder: 1,
   mineWidth: '82%' as const,
-  buddyWidth: '100%' as const,
   /** A card of Buddy's takes the thread's whole width (components/practice/PracticeReady.jsx). */
   cardWidth: '100%' as const,
   /**

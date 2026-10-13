@@ -67,6 +67,41 @@ describe('the ⋯ menu (App.jsx:125–134)', () => {
     expect(router.pushed).toEqual([]);
   });
 
+  it('draws a screen’s own action as a row like the places: short label, whole sentence spoken, no chevron', () => {
+    const signs = (name: string | RegExp) =>
+      screen.getByRole('button', { name }).querySelectorAll('svg').length;
+    renderInApp(
+      <HeaderMenu
+        visible
+        actions={[
+          {
+            key: 'rename',
+            label: 'Umbenennen',
+            accessibilityLabel: '„Brüche“ umbenennen',
+            icon: 'pencil',
+            onPress: () => undefined,
+          },
+          {
+            key: 'start',
+            label: 'Was willst du üben?',
+            icon: 'practice',
+            leads: true,
+            onPress: () => undefined,
+          },
+        ]}
+        onClose={() => undefined}
+      />,
+    );
+    expect(rows()).toEqual(['„Brüche“ umbenennen', 'Was willst du üben?', ...PLACES]);
+    const rename = screen.getByRole('button', { name: '„Brüche“ umbenennen' });
+    expect(within(rename).getByText('Umbenennen')).toBeTruthy();
+    // Its sign, and nothing at its end: it does something here. A place, and an action that
+    // leads on to a list of its own, end in the chevron.
+    expect(signs('„Brüche“ umbenennen')).toBe(1);
+    expect(signs('Was willst du üben?')).toBe(2);
+    expect(signs('Verlauf')).toBe(2);
+  });
+
   it('puts what only this screen can do before the places, and holds it while it would race', async () => {
     const rename = vi.fn();
     const actions = [

@@ -6,10 +6,13 @@
 //   · a tap on one of her points takes it away — and the next tap puts that point back, so a point
 //     set wrong is fixed with two taps, never with a hunt for a tiny target;
 //   · when every point is set, a tap elsewhere moves the one she set or moved last;
-//   · the arrow keys move that point one crossing (a bar: ← → choose it, ↑ ↓ pull it one step);
+//   · on a bar chart "−" and "+" in the one key row pull the chosen bar one step;
 //   · "Zurück" undoes the last step, whatever it was (undo over confirmation, UX-PRINCIPLES).
-// A tap without a finger (a screen reader, a keyboard) lands in the middle of the paper and is
-// moved from there with the arrows — one way for everyone, as on the note line (#275).
+// No arrow keys are drawn (owner rule 8, #599). Without a finger on the paper, `nudge` moves the
+// point set last one crossing (a bar: choose it, pull it one step): from a screen reader's actions
+// on the paper, or a hardware keyboard's arrow keys in the browser (`GRID_STEPS` in
+// components/practice/GridAnswer.tsx). A tap without a finger lands in the middle of the paper and
+// is moved from there the same way, as on the note line (#275).
 //
 // Kept in the question's draft (`lib/drafts.ts`) as JSON, read back with every value checked
 // against the paper: a theme switch or a restart never loses her drawing, a stale one never
@@ -31,7 +34,7 @@ export type GridDrawState = {
   points: Array<GridXY | null>;
   /** A bar chart: each bar's value, in the order of the bars. */
   bars: number[];
-  /** The point or bar the arrows move. */
+  /** The point or bar a step without a finger (`nudge`) moves. */
   selected: number | null;
 };
 
@@ -149,7 +152,10 @@ export function tapBar(
   return step(kept, { ...now, bars, selected: bar });
 }
 
-/** An arrow key: the chosen point one crossing further, or another bar / its height a step. */
+/**
+ * A step without a finger (a screen reader's action, a hardware arrow key, "−" / "+" of a bar):
+ * the chosen point one crossing further, or another bar / its height a step.
+ */
 export function nudge(kept: GridKept, view: GridDrawTaskView, dx: number, dy: number): GridKept {
   const { now } = kept;
   const { frame, sheet } = view;

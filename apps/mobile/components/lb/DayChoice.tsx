@@ -6,11 +6,10 @@ import { Text, View } from 'react-native';
 
 import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
-import { SETTINGS } from '../../lib/theme/settings.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { formatWeekday, localeTag } from '../../lib/time.js';
-import { PressArea } from '../lb/PressArea.js';
+import { PressArea } from './PressArea.js';
 
 /** ISO weekdays, Monday first. */
 const DAYS = [1, 2, 3, 4, 5, 6, 7] as const;
@@ -35,7 +34,7 @@ type Props = {
 
 export function DayChoice({ value, onToggle, label, locale, disabled = false }: Props) {
   const { palette } = useTheme();
-  const { height, inset, bleed } = SETTINGS.day;
+  const { height, inset, bleed } = UI.day;
   return (
     <View
       role="group"

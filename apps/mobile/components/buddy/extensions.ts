@@ -17,7 +17,7 @@ import type { ComponentType, ReactNode } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 
 import { registry, slot } from '../../lib/registry.js';
-import type { StartItem } from './MenuSheet.js';
+import type { StartItem } from '../lb/MenuSheet.js';
 
 // ─────────────── the conversation ───────────────
 

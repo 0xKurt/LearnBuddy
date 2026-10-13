@@ -1,5 +1,7 @@
 # Talk presentation
 
+> Superseded by #599 (redesign correction, October 2026): component and route names below describe the state before it.
+
 Based on published Chat #567 (`ca68604e`). The Talk route retains its genuine conversation, speech controller, last-three-message tail, capture/navigation callbacks and protected large Orb/moon. Published Home, Chat, Clearance, undo and voice contracts remain intact.
 
 ## Scope and reuse

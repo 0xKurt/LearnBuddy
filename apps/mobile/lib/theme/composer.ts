@@ -18,7 +18,7 @@ const reach = (face: number) => (TOUCH - face) / 2;
 export const COMPOSER = {
   slot: SLOT,
   slotReach: reach(SLOT),
-  rows: { base: 1, tall: 3, roomy: 10, tight: 4 },
+  rows: { tall: 3, roomy: 10, tight: 4 },
   /** Help chips above the box, the box's own padding, text · keys · tools, and tool to tool. */
   chipsGap: 10,
   pad: 8,

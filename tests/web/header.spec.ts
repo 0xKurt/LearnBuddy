@@ -448,7 +448,7 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   await page.goto(material);
   await page.waitForTimeout(1800);
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
-  // The entry reads "Umbenennen", alone or after the sheet's name: either way it ends in it.
+  // The row reads "Umbenennen"; its accessible name is the whole sentence, "„…“ umbenennen".
   await page
     .locator('[aria-modal="true"]:visible')
     .getByRole('button', { name: /umbenennen$/i })

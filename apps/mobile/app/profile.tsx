@@ -434,7 +434,7 @@ export default function Profile() {
                 <Text style={[TYPE.paragraph, { paddingHorizontal: SPACE.xs }]}>
                   {t('profile.too_young_self')}
                 </Text>
-                <Btn pill variant="outline" icon="shield" onPress={adultIsHere}>
+                <Btn pill variant="secondary" icon="shield" onPress={adultIsHere}>
                   {t('profile.adult_here')}
                 </Btn>
               </View>

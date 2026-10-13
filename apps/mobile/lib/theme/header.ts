@@ -13,7 +13,6 @@ export const HEADER = {
   gap: { brand: 10, page: SPACE.sm },
   /** How far the orb's slot moves left: by what stands before it, not by the title's weight. */
   orbOffset: { leading: -SPACE.sm, bare: -SPACE.md },
-  glow: 260,
 } as const;
 
 /** The brand head: a title alone, with neither a line under it nor a way back before it. */

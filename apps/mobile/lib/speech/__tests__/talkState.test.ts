@@ -2,14 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  heardHim,
-  newerHome,
-  talkHeadline,
-  talkStatus,
-  type MicState,
-  type TalkPhase,
-} from '../talkState.js';
+import { heardHim, talkHeadline, talkStatus, type MicState, type TalkPhase } from '../talkState.js';
 
 const MICS: MicState[] = ['idle', 'starting', 'recording', 'transcribing'];
 const PHASES: TalkPhase[] = ['listening', 'thinking', 'speaking', 'paused'];
@@ -98,17 +91,5 @@ describe('the one status line (design ui_kits/app/Talk.jsx:28)', () => {
     expect(heardHim(true, 'listening', 'speaking')).toBe(false);
     expect(heardHim(true, 'thinking', 'idle')).toBe(false);
     expect(heardHim(true, 'paused', 'idle')).toBe(false);
-  });
-});
-
-describe('a home that comes back late (the turn still in flight when she ended the scene)', () => {
-  it('does not replace a newer one', () => {
-    expect(newerHome({ context_version: 7 }, { context_version: 8 })).toBe(false);
-  });
-
-  it('is taken when it is as new or newer, and when there is none yet', () => {
-    expect(newerHome({ context_version: 8 }, { context_version: 8 })).toBe(true);
-    expect(newerHome({ context_version: 9 }, { context_version: 8 })).toBe(true);
-    expect(newerHome({ context_version: 1 }, undefined)).toBe(true);
   });
 });

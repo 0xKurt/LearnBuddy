@@ -2,11 +2,12 @@ import type { BuddyHome, BuddySettingsView } from '@learnbuddy/shared-types/cont
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 
-import { writeHome } from '../homeCache.js';
+import { newerHome, writeHome } from '../homeCache.js';
 import { keys } from '../keys.js';
 
-// Only identity matters here: the cache stores whatever it is given.
-const home = (tag: string) => ({ tag }) as unknown as BuddyHome;
+// Only identity and the context fence matter here: the cache stores whatever it is given.
+const home = (tag: string, context_version = 1) =>
+  ({ tag, context_version }) as unknown as BuddyHome;
 
 function deferred<T>() {
   let resolve!: (v: T) => void;
@@ -55,5 +56,55 @@ describe('writing a fresh home into the cache', () => {
     const client = new QueryClient();
     writeHome(client, home('after turn'));
     expect(client.getQueryState(keys.settings)).toBeUndefined();
+  });
+});
+
+// Two requests can be on their way at once: a turn and a tap, a spoken turn and "Gespräch
+// beenden". The answer built first can arrive last (CLAUDE.md rule 4: the context fence).
+describe('a home that comes back late', () => {
+  it('is older when its context version is lower, and only then', () => {
+    expect(newerHome({ context_version: 7 }, { context_version: 8 })).toBe(false);
+    expect(newerHome({ context_version: 8 }, { context_version: 8 })).toBe(true);
+    expect(newerHome({ context_version: 9 }, { context_version: 8 })).toBe(true);
+    expect(newerHome({ context_version: 1 }, undefined)).toBe(true);
+  });
+
+  it('is dropped: the newer home stays, and nothing else is touched', async () => {
+    const client = new QueryClient();
+    client.setQueryData(keys.home, home('scene ended', 8));
+    client.setQueryData(keys.memory, { memories: [] });
+    // A poll asked after the newer home was written is not cancelled by the late one.
+    const poll = deferred<BuddyHome>();
+    const inFlight = client.fetchQuery({
+      queryKey: keys.home,
+      queryFn: () => poll.promise,
+      staleTime: 0,
+    });
+
+    expect(writeHome(client, home('turn from before', 7))).toBe(false);
+
+    expect(client.getQueryData(keys.home)).toEqual(home('scene ended', 8));
+    expect(client.getQueryState(keys.memory)?.isInvalidated).toBe(false);
+    poll.resolve(home('poll', 9));
+    await expect(inFlight).resolves.toEqual(home('poll', 9));
+  });
+
+  it('is written when it is as new as the one held, or newer', () => {
+    const client = new QueryClient();
+    client.setQueryData(keys.home, home('held', 8));
+    expect(writeHome(client, home('same step, more thread', 8))).toBe(true);
+    expect(client.getQueryData(keys.home)).toEqual(home('same step, more thread', 8));
+    expect(writeHome(client, home('next step', 9))).toBe(true);
+    expect(client.getQueryData(keys.home)).toEqual(home('next step', 9));
+  });
+
+  it('is written when no home is held: a first load, or the cache cleared at sign-out', () => {
+    const client = new QueryClient();
+    expect(writeHome(client, home('first', 3))).toBe(true);
+    expect(client.getQueryData(keys.home)).toEqual(home('first', 3));
+    // Another learner on the same phone starts lower: the cleared cache holds nothing to compare.
+    client.clear();
+    expect(writeHome(client, home('other learner', 1))).toBe(true);
+    expect(client.getQueryData(keys.home)).toEqual(home('other learner', 1));
   });
 });

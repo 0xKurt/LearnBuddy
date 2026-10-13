@@ -91,7 +91,7 @@ type Props = {
   messages: MessageView[];
   /** Local message being sent right now (optimistic). */
   pending: { text: string } | null;
-  /** What Buddy tells now, with buttons (NoticeBubble), after the messages. */
+  /** What Buddy tells now, with buttons (`ChatCard`), after the messages. */
   notices?: ReactNode[];
   /**
    * Buddy's reply while it is still being written (only for an answer that changes

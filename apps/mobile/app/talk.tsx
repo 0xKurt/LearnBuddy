@@ -26,7 +26,7 @@
 // chat, where the feedback stands. The microphone stays: here it is how a turn ends in the
 // browser and how she interrupts him.
 
-import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
+import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,8 +48,7 @@ import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
 import { useVoiceInput } from '../components/voice/useVoiceInput.js';
 import { newId } from '../lib/api/client.js';
 import { sendMessageStreamed } from '../lib/api/endpoints.js';
-import { keys } from '../lib/api/keys.js';
-import { queryClient, setHome, useHome } from '../lib/api/queries.js';
+import { setHome, useHome } from '../lib/api/queries.js';
 import { useAnnounce } from '../lib/announce.js';
 import { useScreenReader } from '../lib/useScreenReader.js';
 import { messageFor, turnFailureText } from '../lib/errors.js';
@@ -65,13 +64,7 @@ import { warmRecognition } from '../lib/speech/recognize.js';
 import { BargeGate } from '../lib/speech/bargeIn.js';
 import { bargeSupported, useBargeMonitor } from '../lib/speech/bargeMonitor.js';
 import { voiceStore } from '../lib/speech/voiceState.js';
-import {
-  heardHim,
-  newerHome,
-  talkHeadline,
-  talkStatus,
-  type TalkPhase,
-} from '../lib/speech/talkState.js';
+import { heardHim, talkHeadline, talkStatus, type TalkPhase } from '../lib/speech/talkState.js';
 import { afterReply } from '../lib/speech/talkTurn.js';
 import { voiceLocale } from '../lib/speech/voice.js';
 import { useSay } from '../lib/speech/say.js';
@@ -240,9 +233,9 @@ export default function TalkScreen() {
         speakAlong().feed(e.text, e.done);
       });
       // Her tap on "Gespräch beenden" may have been answered while this turn was on its way:
-      // the home it brings back is then the older one, with the scene still running, and must
-      // not be written over the newer (lib/speech/talkState.ts `newerHome`).
-      if (newerHome(res.home, queryClient.getQueryData<BuddyHome>(keys.home))) setHome(res.home);
+      // the home it brings back is then the older one, with the scene still running, and is
+      // not written over the newer (lib/api/homeCache.ts `writeHome`, the context fence).
+      setHome(res.home);
       if (stale()) return;
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
