@@ -2,7 +2,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { talkHeadline, type MicState, type TalkPhase } from '../talkState.js';
+import {
+  heardHim,
+  newerHome,
+  talkHeadline,
+  talkStatus,
+  type MicState,
+  type TalkPhase,
+} from '../talkState.js';
 
 const MICS: MicState[] = ['idle', 'starting', 'recording', 'transcribing'];
 const PHASES: TalkPhase[] = ['listening', 'thinking', 'speaking', 'paused'];
@@ -36,5 +43,72 @@ describe('what the conversation screen says', () => {
       if (mic === 'starting' || mic === 'transcribing') continue;
       expect(talkHeadline('paused', mic)).toBe('buddy:talk.paused');
     }
+  });
+});
+
+describe('the one status line (design ui_kits/app/Talk.jsx:28)', () => {
+  const base = {
+    phase: 'listening' as TalkPhase,
+    mic: 'recording' as MicState,
+    endsByItself: true,
+    voice: 'idle' as const,
+    heard: false,
+  };
+
+  it('says how her turn ends only while the recorder really runs', () => {
+    expect(talkStatus(base)).toBe('buddy:talk.listening_sub');
+    expect(talkStatus({ ...base, endsByItself: false })).toBe('buddy:talk.tap_when_done');
+    expect(talkStatus({ ...base, mic: 'starting' })).toBe('buddy:talk.getting_ready');
+    expect(talkStatus({ ...base, mic: 'idle' })).toBe('buddy:talk.listening');
+    expect(talkStatus({ ...base, mic: 'transcribing' })).toBe('buddy:talk.thinking');
+  });
+
+  it('never says "Buddy spricht" before his first audio is heard', () => {
+    const speaking = { ...base, phase: 'speaking' as TalkPhase, mic: 'idle' as MicState };
+    expect(talkStatus({ ...speaking, voice: 'idle' })).toBe('buddy:talk.thinking');
+    expect(talkStatus({ ...speaking, voice: 'loading' })).toBe('buddy:talk.thinking');
+    expect(talkStatus({ ...speaking, voice: 'speaking' })).toBe('buddy:talk.speaking');
+  });
+
+  it('holds "Buddy spricht" across the gap between two sentences of one reply', () => {
+    const between = {
+      ...base,
+      phase: 'speaking' as TalkPhase,
+      mic: 'idle' as MicState,
+      heard: true,
+    };
+    expect(talkStatus({ ...between, voice: 'loading' })).toBe('buddy:talk.speaking');
+    expect(talkStatus({ ...between, voice: 'idle' })).toBe('buddy:talk.speaking');
+  });
+
+  it('never says it after his last word: the phase has moved on', () => {
+    for (const phase of ['listening', 'thinking', 'paused'] as TalkPhase[])
+      for (const mic of MICS)
+        expect(talkStatus({ ...base, phase, mic, heard: true, voice: 'idle' })).not.toBe(
+          'buddy:talk.speaking',
+        );
+  });
+
+  it('remembers that he was heard for this reply only', () => {
+    expect(heardHim(false, 'speaking', 'loading')).toBe(false);
+    expect(heardHim(false, 'speaking', 'speaking')).toBe(true);
+    expect(heardHim(true, 'speaking', 'loading')).toBe(true);
+    expect(heardHim(true, 'speaking', 'idle')).toBe(true);
+    // Any other phase starts over, whatever the voice store still holds.
+    expect(heardHim(true, 'listening', 'speaking')).toBe(false);
+    expect(heardHim(true, 'thinking', 'idle')).toBe(false);
+    expect(heardHim(true, 'paused', 'idle')).toBe(false);
+  });
+});
+
+describe('a home that comes back late (the turn still in flight when she ended the scene)', () => {
+  it('does not replace a newer one', () => {
+    expect(newerHome({ context_version: 7 }, { context_version: 8 })).toBe(false);
+  });
+
+  it('is taken when it is as new or newer, and when there is none yet', () => {
+    expect(newerHome({ context_version: 8 }, { context_version: 8 })).toBe(true);
+    expect(newerHome({ context_version: 9 }, { context_version: 8 })).toBe(true);
+    expect(newerHome({ context_version: 1 }, undefined)).toBe(true);
   });
 });

@@ -24,6 +24,8 @@ export const TALK = {
    */
   lineMax: 6,
   lineMaxCompact: 3,
+  /** The row of controls: its side buttons stand this far from the edges (Talk.jsx:32). */
+  rowInset: 28,
   sideSize: 52,
   micHeight: 64,
   micPadding: 26,

@@ -1,6 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { renderInApp } from '../../../testing/render.js';
+import { voiceStore } from '../../../lib/speech/voiceState.js';
 import { CheckBar } from '../CheckBar.js';
 
 const mic = vi.hoisted(() => ({
@@ -92,4 +93,58 @@ it('keeps recording central, then puts ready Check in the same central slot and 
   fireEvent.click(screen.getByRole('button', { name: 'Keyboard' }));
   act(() => mic.onText('verspätet'));
   expect(spoken).not.toHaveBeenCalled();
+});
+
+// Practice in conversation as the design has it (ui_kits/app/Gaps.jsx:133–144, #599).
+it('says "Ich höre zu." only while the recorder runs, and "Buddy spricht …" only while he is heard', () => {
+  // A new element each time: the same one would not render again.
+  const bar = () => (
+    <CheckBar talk={{ prompt: 'Frage', lang: null, disabled: false, onText: () => undefined }} />
+  );
+  mic.state = 'idle';
+  const view = renderInApp(bar());
+  expect(screen.queryByTestId('talk-row-status')).toBeNull();
+  mic.state = 'starting';
+  view.rerender(bar());
+  expect(screen.queryByText('Ich höre zu.')).toBeNull();
+  mic.state = 'recording';
+  view.rerender(bar());
+  expect(screen.getByTestId('talk-row-status').textContent).toBe('Ich höre zu.');
+  mic.state = 'idle';
+  view.rerender(bar());
+  act(() => voiceStore.set({ phase: 'loading' }));
+  expect(screen.queryByTestId('talk-row-status')).toBeNull();
+  act(() => voiceStore.set({ phase: 'speaking' }));
+  expect(screen.getByTestId('talk-row-status').textContent).toBe('Buddy spricht …');
+  act(() => voiceStore.reset());
+});
+
+it('shows no greyed Check beside the running microphone, and none of the Composer’s chips', () => {
+  mic.state = 'recording';
+  const view = renderInApp(
+    <CheckBar
+      ready={false}
+      disabled={false}
+      onPress={() => undefined}
+      waitsHint="Wähle zuerst eine Antwort."
+      spoken={{ prompt: 'Frage', lang: null, disabled: false, onText: () => undefined }}
+      chips={<span>Tipp</span>}
+    />,
+  );
+  expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
+  expect(screen.queryByText('Tipp')).toBeNull();
+  // Chosen while it records: the Check is there, and it can be pressed.
+  view.rerender(
+    <CheckBar
+      ready
+      disabled={false}
+      onPress={() => undefined}
+      waitsHint=""
+      spoken={{ prompt: 'Frage', lang: null, disabled: false, onText: () => undefined }}
+    />,
+  );
+  expect(screen.getByRole('button', { name: 'Prüfen' }).getAttribute('aria-disabled')).not.toBe(
+    'true',
+  );
+  mic.state = 'idle';
 });

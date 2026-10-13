@@ -23,6 +23,13 @@ describe('what the head says Buddy is doing', () => {
     expect(headState({ ...quiet, working: true, streaming: true })).toBe('speak');
   });
 
+  it('listens while a recording of hers runs on a card in the thread (the rehearsal)', () => {
+    expect(headState({ ...quiet, recording: true })).toBe('listen');
+    expect(headState({ ...quiet, recording: false })).toBe('idle');
+    // What Buddy is doing still beats it.
+    expect(headState({ ...quiet, recording: true, streaming: true })).toBe('speak');
+  });
+
   it('listens while she writes or dictates (design App.jsx `typing`, decision on #599)', () => {
     expect(headState({ ...quiet, typing: true })).toBe('listen');
     // …but what Buddy himself is doing is the newer truth.

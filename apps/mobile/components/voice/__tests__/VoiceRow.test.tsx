@@ -100,6 +100,75 @@ describe('Talk voice controls presentation', () => {
     expect(press).toHaveBeenCalledTimes(1);
     expect(screen.getByText('Fertig')).toBeTruthy();
   });
+  it('keeps the Talk pill on the action colour with its shadow while it records (Talk.jsx:34–37)', () => {
+    const row = (state: VoiceInput['state']) => (
+      <VoiceRow
+        presentation="talk"
+        left={left}
+        right={right}
+        size="lg"
+        mic={{ voice: voice(state), label: 'Sprechen', visibleLabel: 'Fertig', disabled: false }}
+      />
+    );
+    const idle = renderInApp(row('idle'));
+    const resting = styleOf(screen.getByRole('button', { name: 'Sprechen' }).firstElementChild!);
+    const [fill, shadow] = [resting.backgroundColor, resting.boxShadow];
+    expect(shadow).not.toBe('');
+    idle.unmount();
+    renderInApp(row('recording'));
+    // Told by the word and by its name and value for a screen reader, not by a darker fill.
+    const button = screen.getByRole('button', { name: 'Aufnahme stoppen' });
+    const face = styleOf(button.firstElementChild!);
+    expect(face.backgroundColor).toBe(fill);
+    expect(face.boxShadow).toBe(shadow);
+    expect(screen.getByText('Fertig')).toBeTruthy();
+  });
+  it('keeps the round mic’s darker stop face while it records, outside the conversation', () => {
+    const row = (state: VoiceInput['state']) => (
+      <VoiceRow
+        left={left}
+        right={right}
+        size="md"
+        mic={{ voice: voice(state), label: 'Antwort sagen', disabled: false }}
+      />
+    );
+    const idle = renderInApp(row('idle'));
+    const fill = styleOf(
+      screen.getByRole('button', { name: 'Antwort sagen' }).firstElementChild!,
+    ).backgroundColor;
+    idle.unmount();
+    renderInApp(row('recording'));
+    expect(
+      styleOf(screen.getByRole('button', { name: 'Aufnahme stoppen' }).firstElementChild!)
+        .backgroundColor,
+    ).not.toBe(fill);
+  });
+  it('puts the side buttons at the two ends of the row in the conversation (Talk.jsx:32)', () => {
+    const view = renderInApp(
+      <VoiceRow
+        presentation="talk"
+        left={left}
+        right={right}
+        size="lg"
+        mic={{ voice: voice('idle'), label: 'Sprechen', disabled: false }}
+      />,
+    );
+    const end = (name: string) =>
+      styleOf(screen.getByRole('button', { name }).parentElement!).justifyContent;
+    expect(end('Tastatur')).toBe('flex-start');
+    expect(end('Foto')).toBe('flex-end');
+    view.unmount();
+    renderInApp(
+      <VoiceRow
+        left={left}
+        right={right}
+        size="md"
+        mic={{ voice: voice('idle'), label: 'Antwort sagen', disabled: false }}
+      />,
+    );
+    expect(end('Tastatur')).toBe('center');
+    expect(end('Foto')).toBe('center');
+  });
   it('keeps circle recording static while preserving its stop action', async () => {
     const stop = watchReducedMotion();
     const loop = vi.spyOn(Animated, 'loop');

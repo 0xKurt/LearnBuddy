@@ -10,6 +10,8 @@ import { renderInApp } from '../../../testing/render.js';
 import { TalkCaption } from '../TalkCaption.js';
 
 const REPLY = 'Okay! Wie sicher fühlst du dich schon beim Kürzen?';
+/** A reply that was written in front of her. */
+const HIS = { who: 'buddy' as const, id: 't1', text: REPLY, whole: false };
 
 /** What the component itself declares on this element (react-native-web sets it inline). */
 const own = (el: Element) => (el as HTMLElement).style;
@@ -47,9 +49,7 @@ describe('the one line', () => {
   });
 
   it('shows the sentence Buddy’s voice is on, in full ink — never two lines of reply at once', () => {
-    renderInApp(
-      <TalkCaption status="Buddy spricht …" line={{ who: 'buddy', text: REPLY, speaking: true }} />,
-    );
+    renderInApp(<TalkCaption status="Buddy spricht …" line={{ ...HIS, speaking: true }} />);
     // Before a sentence is known the reply stands as it is.
     expect(screen.getByText(REPLY)).toBeTruthy();
     act(() =>
@@ -68,10 +68,7 @@ describe('the one line', () => {
 
   it('keeps his whole answer readable, quietly, once he is silent', () => {
     renderInApp(
-      <TalkCaption
-        status="Bereit, wenn du es bist."
-        line={{ who: 'buddy', text: REPLY, speaking: false }}
-      />,
+      <TalkCaption status="Bereit, wenn du es bist." line={{ ...HIS, speaking: false }} />,
     );
     // Whatever the voice store still holds: nothing of it is marked as being said.
     act(() => voiceStore.set({ phase: 'speaking', text: REPLY, sentences: ['Okay!'], index: 0 }));
@@ -79,5 +76,38 @@ describe('the one line', () => {
     expect(own(answer).color).toBe(css(paletteOf('pastell').ink2));
     // Longer than its room, it scrolls inside it instead of being cut.
     expect(own(screen.getByTestId('scroll-talk')).maxHeight).toBe('174px');
+  });
+
+  it('shows an answer that arrived whole in full while it is read (the help answer, rule 18)', () => {
+    const HELP = 'Das klingt schwer. Ruf die Nummer gegen Kummer an: 116 111.';
+    renderInApp(
+      <TalkCaption
+        status="Buddy spricht …"
+        line={{ who: 'buddy', id: 't2', text: HELP, whole: true, speaking: true }}
+      />,
+    );
+    // His voice is on the first sentence: the number in the second one is on screen all the same.
+    act(() =>
+      voiceStore.set({
+        phase: 'speaking',
+        text: HELP,
+        sentences: ['Das klingt schwer.', 'Ruf die Nummer gegen Kummer an: 116 111.'],
+        index: 0,
+      }),
+    );
+    const answer = screen.getByText(HELP);
+    expect(own(answer).color).toBe(css(paletteOf('pastell').ink));
+    expect(screen.queryByText('Das klingt schwer.')).toBeNull();
+  });
+
+  it('keeps that answer in full ink once he is silent', () => {
+    const HELP = 'Ruf an: 116 111.';
+    renderInApp(
+      <TalkCaption
+        status="Tipp aufs Mikro, wenn du fertig bist."
+        line={{ who: 'buddy', id: 't2', text: HELP, whole: true, speaking: false }}
+      />,
+    );
+    expect(own(screen.getByText(HELP)).color).toBe(css(paletteOf('pastell').ink));
   });
 });

@@ -53,7 +53,7 @@ import { useAnnounce } from '../lib/announce.js';
 import { newId } from '../lib/api/client.js';
 import { answerContactOptIn, reportOutcome, undoAction } from '../lib/api/endpoints.js';
 import { useHome, usePrefetchSession } from '../lib/api/queries.js';
-import { headState } from '../lib/buddy/headState.js';
+import { headState, useThreadRecording } from '../lib/buddy/headState.js';
 import { greetingOnScreen, threadOnScreen, VISIBLE_MESSAGES } from '../lib/buddy/homeThread.js';
 import { newestBuddyId, showNewReply } from '../lib/buddy/newReply.js';
 import { greetingRoom } from '../lib/buddy/sessionAnchor.js';
@@ -90,6 +90,7 @@ export default function BuddyScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   /** She is writing or dictating a message (the Composer says so): the head's orb listens. */
   const [typing, setTyping] = useState(false);
+  const recording = useThreadRecording((s) => s.on);
   const thread = home.data?.thread;
   const newestReply = thread ? newestBuddyId(thread) : null;
   const follow = useThreadFollow(newestReply);
@@ -218,6 +219,8 @@ export default function BuddyScreen() {
             reading: h.now?.type === 'material_processing',
             // She is writing or dictating in the Composer: Buddy leans in.
             typing,
+            // Her talk is being recorded on the rehearsal card.
+            recording,
           })}
           onMenu={() => setMenuOpen(true)}
         />

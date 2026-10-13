@@ -6,7 +6,14 @@ import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { paletteOf } from '../../../lib/theme/palettes.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
+
+/** A colour as the browser reports it. */
+function cssOf(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+}
 import { DrillOfferCard } from '../../learn/DrillOfferCard.js';
 import { OfferCard } from '../../learn/OfferCard.js';
 import { AreaCard } from '../AreaCard.js';
@@ -35,6 +42,53 @@ const frameOf = (text: string) => {
   while (node && styleOf(node).borderTopLeftRadius !== '20px') node = node.parentElement;
   return node!;
 };
+
+describe('a practice mode’s card (components/practice/Modes.jsx:20–50)', () => {
+  it('has the 40 pt tile in the mode’s tone, a quiet label, and a start as wide as its words', () => {
+    renderInApp(
+      <ChatCard
+        mode="peach"
+        icon="voice"
+        label="Englisch · Rollenspiel"
+        title="At the bakery"
+        primary={{ label: 'Gespräch starten', icon: 'voice', fit: true, onPress: () => undefined }}
+      />,
+    );
+    const frame = frameOf('At the bakery');
+    const tile = frame.firstElementChild!.firstElementChild!;
+    expect([styleOf(tile).width, styleOf(tile).height]).toEqual(['40px', '40px']);
+    expect(styleOf(tile).borderTopLeftRadius).toBe('12px');
+    expect(styleOf(tile).backgroundColor).toBe(cssOf(paletteOf('pastell').peach));
+    expect(typeOf('Englisch · Rollenspiel').color).toBe(cssOf(paletteOf('pastell').ink2));
+    // Not stretched over the card: the button's own row holds it at the start.
+    const start = screen.getByRole('button', { name: 'Gespräch starten' });
+    expect(styleOf(start.parentElement!).flexGrow).not.toBe('1');
+    expect(start.querySelector('svg')).not.toBeNull();
+  });
+
+  it('is mint for a rehearsal', () => {
+    renderInApp(<ChatCard mode="mint" icon="mic" label="Probevortrag" title="Vulkane" />);
+    const tile = frameOf('Vulkane').firstElementChild!.firstElementChild!;
+    expect(styleOf(tile).backgroundColor).toBe(cssOf(paletteOf('pastell').mint));
+  });
+
+  it('leaves every other card as it was: 48 pt tile, a button over the card’s width', () => {
+    renderInApp(
+      <ChatCard
+        tone="accent"
+        icon="sparkle"
+        label="Übung bereit"
+        title="Brüche"
+        primary={{ label: "Los geht's", onPress: () => undefined }}
+      />,
+    );
+    const tile = frameOf('Brüche').firstElementChild!.firstElementChild!;
+    expect([styleOf(tile).width, styleOf(tile).height]).toEqual(['48px', '48px']);
+    expect(styleOf(tile).backgroundColor).toBe(cssOf(paletteOf('pastell').primaryLt));
+    const start = screen.getByRole('button', { name: "Los geht's" });
+    expect(styleOf(start.parentElement!).flexGrow).toBe('1');
+  });
+});
 
 describe('PracticeReady (PracticeReady.jsx:6–20)', () => {
   it('is paper, radius 20, 16 inside, with a 48 pt lavender tile, the accent label and a 700 17 title', () => {

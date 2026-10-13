@@ -67,14 +67,15 @@ export function RoleplayCard({ roleplay }: { roleplay: Roleplay }) {
   // On the conversation screen the scene is already being spoken: no second way in there.
   const spoken = usePathname() === '/talk';
   const label = roleplayLabel(t, roleplay.language);
-  // The tile's sign is the one the strip above the chat shows for a running scene. The design's
-  // tile carries the waveform, which in the app is the talk button's alone
-  // (lib/__tests__/oneVoice.test.ts, CLAUDE.md rule 19).
+  // The waveform is the sign of conversation mode: on the talk button, and here, where the
+  // card's start is the design's second way into it (Modes.jsx:23, :27; the guard that keeps it
+  // to these two is lib/__tests__/oneVoice.test.ts).
 
   if (roleplay.status !== 'active')
     return (
       <ChatCard
-        icon="speak"
+        mode="peach"
+        icon="voice"
         label={label}
         title={roleplay.scene}
         titleLines={2}
@@ -84,14 +85,21 @@ export function RoleplayCard({ roleplay }: { roleplay: Roleplay }) {
 
   return (
     <ChatCard
-      tone="accent"
-      icon="speak"
+      mode="peach"
+      icon="voice"
       label={label}
       title={roleplay.scene}
       titleLines={2}
       heading
       primary={
-        spoken ? null : { label: t('buddy:roleplay.start'), onPress: () => router.push('/talk') }
+        spoken
+          ? null
+          : {
+              label: t('buddy:roleplay.start'),
+              icon: 'voice',
+              fit: true,
+              onPress: () => router.push('/talk'),
+            }
       }
     >
       {/* Who plays whom (Modes.jsx:11–15). Her own role is not part of the card's data, so

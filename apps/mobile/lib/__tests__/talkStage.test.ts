@@ -56,10 +56,18 @@ describe('the stage (Talk.jsx:22–45)', () => {
     expect(talk).toMatch(
       /const listening = phase === 'listening' && voice\.state === 'recording';/,
     );
-    expect(talk).toMatch(/const status = listening\s*\?/);
-    // "Buddy spricht" only while he is heard: his voice on its way is thinking, as the moon shows.
-    expect(talk).toMatch(/: orbMode === 'thinking'\s*\? t\('buddy:talk\.thinking'\)\s*: headline;/);
+    // What the status says is decided in lib/speech/talkState.ts (`talkStatus`, tested there).
+    expect(talk).toMatch(/const status = t\(\s*talkStatus\(\{/);
     expect(talk).toMatch(/talkHeadline\(listening \? 'listening' : phase, voice\.state\)/);
+  });
+
+  it('never writes an older home over a newer one when a turn comes back late', () => {
+    // Her turn and "Gespräch beenden" can both be on their way (lib/speech/talkState.ts).
+    const talk = code('app/talk.tsx');
+    expect(talk.match(/\bsetHome\(/g)).toHaveLength(1);
+    expect(talk).toMatch(
+      /if \(newerHome\(res\.home, queryClient\.getQueryData<BuddyHome>\(keys\.home\)\)\) setHome\(res\.home\);/,
+    );
   });
 
   it('gives the orb the state of what really happens, never a constant', () => {
