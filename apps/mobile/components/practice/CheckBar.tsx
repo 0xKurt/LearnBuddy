@@ -16,6 +16,7 @@ import { createContext, useContext, useEffect, useRef, type ReactNode, type Ref 
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { useAnnounce } from '../../lib/announce.js';
 import { mergeTranscript } from '../../lib/speech/spoken.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TALK } from '../../lib/theme/talk.js';
@@ -301,6 +302,9 @@ function TalkRow({
   });
   useHandsFreeMic(voice, disabled, prompt);
   const recording = voice.state === 'recording';
+  // The line is gone, not what it told a screen reader: that the recorder — which starts by
+  // itself here — runs (lib/announce.ts).
+  useAnnounce(recording ? t('buddy:talk.listening') : null);
   const selectedCheck = check ? (
     <View testID="answer-action">
       <ActionPill

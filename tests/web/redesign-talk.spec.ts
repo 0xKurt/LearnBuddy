@@ -103,8 +103,9 @@ for (const sample of [
       .click();
     await expect(page.getByText(LISTENING, { exact: true })).toBeVisible();
     // A card to tap in the thread: there the thread's newest stands under the orb (issue #40).
-    const tail = page.locator('[data-testid="scroll-talk"]:visible');
-    const ready = tail.getByRole('button', { name: "Los geht's", exact: true });
+    // The caption's line has the same test id (TalkCaption): the tail is the one with the card.
+    const ready = page.getByRole('button', { name: "Los geht's", exact: true });
+    const tail = page.locator('[data-testid="scroll-talk"]:visible').filter({ has: ready });
     await expect(ready).toBeVisible();
     await screenTargets(page);
     await shot(page, `talk-${key}-${sample.phone.width}-long-card`, { phones: [sample.phone] });

@@ -89,13 +89,16 @@ describe.skipIf(!dbReady)('the bar on top after an offer', () => {
     // She has not tapped it: there is nothing to resume.
     expect((await now())?.type).not.toBe('resume_practice');
 
-    // She taps "Los geht's" and answers the first of two: now it is hers to go on with.
+    // She taps "Los geht's" and leaves without touching a question: still nothing to resume.
     const tapped = await l.api.post<SessionView>('/practice/topic', {
       client_request_id: action!.id,
       kind: 'practice',
       text: 'Brüche üben',
     });
     expect(tapped.body.id).toBe(prepared[0]!.id);
+    expect((await now())?.type).not.toBe('resume_practice');
+
+    // She answers the first of two: now it is hers to go on with.
     const first = tapped.body.items[0]!;
     const answered = await l.api.post<AnswerResponse>(
       `/practice/sessions/${tapped.body.id}/answer`,
@@ -106,6 +109,37 @@ describe.skipIf(!dbReady)('the bar on top after an offer', () => {
       type: 'resume_practice',
       session_id: tapped.body.id,
       remaining: 1,
+    });
+  });
+
+  it('counts a hint she took as work in it: then there is something to go on with', async () => {
+    const other = await onboard(env, { relation: 'child', name: 'Nele', birthDate: '2014-04-12' });
+    env.llm.script('buddy_turn', offer('Prozent üben'));
+    env.llm.script('explain', generated('Prozent'));
+    const sent = await other.api.post<SendMessageResponse>('/buddy/messages', {
+      client_message_id: randomUUID(),
+      text: 'Ich will Prozent üben',
+    });
+    const action = sent.body.home.thread
+      .flatMap((m) => m.actions)
+      .find((a) => a.summary.tool === 'offer_learning');
+    await env.flushBackground();
+    const tapped = await other.api.post<SessionView>('/practice/topic', {
+      client_request_id: action!.id,
+      kind: 'practice',
+      text: 'Prozent üben',
+    });
+    const home = async () => (await other.api.get<BuddyHome>('/buddy')).body.now;
+    expect((await home())?.type).not.toBe('resume_practice');
+    // The row as practice/hint.ts leaves it after "Tipp" (written here directly: the hint's own
+    // model call is not this test's subject): no attempt, the question still open.
+    await env.db.query(
+      `update session_items set hints_used = 1 where session_id = $1 and item_id = $2`,
+      [tapped.body.id, tapped.body.items[0]!.item.id],
+    );
+    expect(await home()).toMatchObject({
+      type: 'resume_practice',
+      session_id: tapped.body.id,
     });
   });
 

@@ -510,7 +510,7 @@ export default function TalkScreen() {
           // otherwise the stage stands in the middle (Talk.jsx:24).
           justifyContent: roleplay ? 'flex-start' : 'center',
           // The tail brings its own room for the fade at its top edge (TalkTail).
-          gap: threaded ? SPACE.sm : SPACE.xl,
+          gap: threaded ? TALK.tailGap : SPACE.xl,
         }}
       >
         {/* Conversation mode is the explicit large-Orb exception (HANDOFF §4). */}

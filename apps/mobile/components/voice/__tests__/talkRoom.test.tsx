@@ -85,6 +85,45 @@ describe('the help answer on the conversation screen', () => {
     expect(room.line).toBe(700 - stageAbove(TALK.stageSize));
   });
 
+  // Review of #618: without a floor a split screen gave the help answer no height at all, and
+  // up to ~490 pt of room fewer lines than a sentence gets.
+  it.each([0, 150, 204, 300, 420])(
+    'never gets less than a sentence’s lines, at a measured room of %i',
+    (middle) => {
+      const room = talkRoom({ height: 700, middle, live: false, whole: true, text: 11 * LINE });
+      expect(room.line).toBeGreaterThanOrEqual(TALK.lineMax * LINE);
+      expect(room.stage).toBe(TALK.compactStageSize);
+      // Longer than its room: it scrolls, and the cut is shown.
+      expect(lineCut({ content: 11 * LINE, room: room.line, atEnd: false })).toBe('bottom');
+    },
+  );
+
+  // Review of #618: in a scene the pill stands between orb and status and the tail shares the
+  // room; neither was counted, so 13–21 pt ran under the controls with no fade.
+  it('counts the scene’s pill and the tail’s gap (live, 360×740 with a phone’s insets)', () => {
+    const pill = 2 * SPACE.sm + TYPE.headerMeta.lineHeight + SPACE.md;
+    const above = (size: number) => Math.round(size * 1.5) + pill + TYPE.label.lineHeight + 10;
+    expect(stageAbove(TALK.liveStageSize, true)).toBe(above(TALK.liveStageSize));
+    expect(stageAbove(TALK.liveStageSize, true)).toBe(254);
+    const middle = middleOf(740, { top: 24, bottom: 24 });
+    const text = wrapped(360).length * LINE;
+    const room = talkRoom({
+      height: 740,
+      middle,
+      live: true,
+      role: true,
+      tail: true,
+      whole: true,
+      text,
+    });
+    // The stage gave way, and what the line gets ends above the controls.
+    expect(room.stage).toBe(TALK.compactStageSize);
+    expect(above(room.stage) + room.line + TALK.tailGap).toBeLessThanOrEqual(middle);
+    // Eleven lines do not fit there: the rest scrolls, with the cut shown.
+    expect(room.line).toBeLessThan(text);
+    expect(lineCut({ content: text, room: room.line, atEnd: false })).toBe('bottom');
+  });
+
   it('lets the stage give way before a word is cut', () => {
     const text = 9 * LINE;
     // Room for the stage and eight lines: the smaller stage frees the rest.
@@ -96,9 +135,9 @@ describe('the help answer on the conversation screen', () => {
 
   it('scrolls only when even that is not enough — and shows the cut', () => {
     const text = 9 * LINE;
-    const middle = stageAbove(TALK.compactStageSize) + 4 * LINE;
+    const middle = stageAbove(TALK.compactStageSize) + 7 * LINE;
     const room = talkRoom({ height: 700, middle, live: false, whole: true, text });
-    expect(room).toEqual({ stage: TALK.compactStageSize, line: 4 * LINE });
+    expect(room).toEqual({ stage: TALK.compactStageSize, line: 7 * LINE });
     expect(lineCut({ content: text, room: room.line, atEnd: false })).toBe('bottom');
     // At its end the last line — the one that may hold the number — is not the faded one.
     expect(lineCut({ content: text, room: room.line, atEnd: true })).toBe('top');

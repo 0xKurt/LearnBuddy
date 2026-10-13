@@ -50,7 +50,15 @@ export function TalkStage({
   const { t } = useTranslation('buddy');
   const whole = line?.who === 'buddy' && line.whole;
   const [text, setText] = useState<number | null>(null);
-  const room = talkRoom({ height, middle, live, whole, text: whole ? text : null });
+  const room = talkRoom({
+    height,
+    middle,
+    live,
+    role: role !== null,
+    tail: !keepRoom,
+    whole,
+    text: whole ? text : null,
+  });
   return (
     <View style={{ alignItems: 'center', flexShrink: 0, paddingHorizontal: SPACE.xxl }}>
       <TalkOrb
@@ -65,9 +73,9 @@ export function TalkStage({
           style={{
             backgroundColor: palette.paper,
             borderRadius: RADIUS.round,
-            paddingVertical: SPACE.sm,
-            paddingHorizontal: SPACE.md,
-            marginBottom: SPACE.md,
+            paddingVertical: TALK.rolePill.padV,
+            paddingHorizontal: TALK.rolePill.padH,
+            marginBottom: TALK.rolePill.below,
           }}
         >
           <Text numberOfLines={1} style={TYPE.headerMeta}>
