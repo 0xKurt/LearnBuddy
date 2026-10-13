@@ -4,8 +4,9 @@
 //
 //   · one count for the whole way: privacy 1, the profile 2, the voice 3, the colours last;
 //     the cards that explain Buddy and the hand-over carry none;
-//   · a total only where it is certain — never "4 von 4" after a voice page that was not there;
-//   · the count reads as the design writes it ("3 von 4"), in five languages;
+//   · the design's "x von 4" from the first page; never "4 von 4" after a voice page that was
+//     not there, and no number where this run did not walk the setup;
+//   · the count reads as the design writes it ("2 von 4"), in five languages;
 //   · the pages before the app keep their 20 pt margin, not the app's 16;
 //   · no lavender box on a setup page;
 //   · the hand-over's lines name what is set in bold, and are only ever drawn through `Trans`.
@@ -38,34 +39,37 @@ const PAGES = [
 describe('the setup counts once, one to four', () => {
   it('numbers the four things it settles in the design’s order', () => {
     expect(SETUP_STATIONS).toEqual(['consent', 'profile', 'voice', 'look']);
-    // With the voice page (Buddy's own voices are there): the design's four.
+    // With the voice page (Buddy's own voices are there): the design's four, from the first.
     expect(SETUP_STATIONS.map((station) => setupStep(station, true))).toEqual([
-      { n: 1 },
-      { n: 2 },
+      { n: 1, count: 4 },
+      { n: 2, count: 4 },
       { n: 3, count: 4 },
       { n: 4, count: 4 },
     ]);
   });
 
-  it('never gives a number that is not true', () => {
-    // Before the profile exists nobody knows whether three or four steps follow (#526): the
-    // first two name their place and no total, whatever comes later.
+  it('counts to the design’s four early, and at the end only what was walked', () => {
+    // Before the profile exists nothing says whether the voice page will come (#526): the
+    // early pages are the design's, whatever comes later.
     for (const voice of [true, false, undefined]) {
-      expect(setupStep('consent', voice)).toEqual({ n: 1 });
-      expect(setupStep('profile', voice)).toEqual({ n: 2 });
+      expect(setupStep('consent', voice)).toEqual({ n: 1, count: 4 });
+      expect(setupStep('profile', voice)).toEqual({ n: 2, count: 4 });
     }
+    expect(setupStep('voice', true)).toEqual({ n: 3, count: 4 });
     // Without a voice page the colours are the third of three, not "4 von 4" after a gap.
     expect(setupStep('look', false)).toEqual({ n: 3, count: 3 });
     expect(setupStep('look', true)).toEqual({ n: 4, count: 4 });
     // Opened on the cards, with no setup walked in this run: no number at all.
     expect(setupStep('look', undefined)).toBeNull();
-    // Every count that carries a total is a step within it, and the steps never skip one.
+    // The numbers a family reads never skip one, with or without the voice page.
     for (const voice of [true, false]) {
       const shown = SETUP_STATIONS.filter((station) => voice || station !== 'voice');
       expect(shown.map((station) => setupStep(station, voice)?.n)).toEqual(
         shown.map((_, index) => index + 1),
       );
-      expect(setupStep('look', voice)?.count).toBe(shown.length);
+      // …and the last one is the last of its own total.
+      const last = setupStep('look', voice)!;
+      expect(last.n).toBe(last.count);
     }
   });
 
@@ -112,13 +116,12 @@ describe('the setup counts once, one to four', () => {
   });
 
   it.each(LANGUAGES)(
-    'writes the count as the design does, and a step alone as a step (%s)',
+    'writes the count as the design does, without a word before it (%s)',
     (lang) => {
       const texts = locale(lang, 'common').onboarding!;
       expect(texts.step_label).toMatch(/^\{\{n\}\} \S+ \{\{count\}\}$/);
-      // Where the total is not known yet: the step's number with its word, and no total.
-      expect(texts.step_only).toMatch(/^\S+ \{\{n\}\}$/);
-      expect(texts.step_only).not.toContain('count');
+      // The form without a total is gone: every number shown has one.
+      expect(texts.step_only).toBeUndefined();
     },
   );
 });

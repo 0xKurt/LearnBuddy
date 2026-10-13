@@ -1,6 +1,6 @@
 # Contact setup screen migration
 
-> **Changed by #599 (onboarding area).** This ledger describes the state of #548. The question stays a page of its own (#518; docs/architecture.md "Asked in the setup"): the design's tick row on the parents' page would make an overlooked box a final "no". It looks like the design's pages: "Ja, erlauben" is the one main action, "Nein, danke" a ghost button instead of the grey bar, and "Zurück" the small one below it — no round button above Buddy. It says "Schritt 2".
+> **Changed by #599 (onboarding area).** This ledger describes the state of #548. The question stays a page of its own (#518; docs/architecture.md "Asked in the setup"): the design's tick row on the parents' page would make an overlooked box a final "no". It looks like the design's pages: "Ja, erlauben" is the one main action, "Nein, danke" a ghost button instead of the grey bar, and "Zurück" the small one below it — no round button above Buddy. It says "2 von 4".
 
 Profile #556 is merged. This independent step replaces the centered notification question with the shared onboarding title/lead: a small left Buddy, wrapping headline/body, leading 44 pt Back at the canonical gutter, one primary allow action and quiet skip. ContactStep uses canonical IconBtn and delegates its top inset to SetupStep; there is no double wrapper.
 

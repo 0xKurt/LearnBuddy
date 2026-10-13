@@ -78,6 +78,6 @@ it('asks with one main action and quiet ones below it, and nothing is answered i
   // An opt-in: no box, no switch, nothing that could stand ticked before an adult decides.
   expect(screen.queryByRole('checkbox')).toBeNull();
   expect(screen.queryByRole('switch')).toBeNull();
-  // The second step of the setup, like the pages before it — the total is not known yet.
-  expect(screen.getByTestId('setup-step').textContent).toBe('Schritt 2');
+  // The second of the setup's four, like the pages before it.
+  expect(screen.getByTestId('setup-step').textContent).toBe('2 von 4');
 });

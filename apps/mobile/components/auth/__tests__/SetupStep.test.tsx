@@ -52,10 +52,10 @@ it('forwards a caller-owned Orb state without introducing shell state', () => {
 });
 
 // Design ui_kits/app/Onboarding.jsx `OnbPage`: the orb is the first thing on the page, the count
-// stands at its right in the design's words ("3 von 4") where the total is certain, and the page
+// stands at its right in the design's words ("2 von 4"), and the page
 // keeps the margin of the pages before the app (tokens/space.css `--space-gutter`, 20).
 describe('SetupStep as the design’s page', () => {
-  it('says which step it is, with a total only where that is certain, and nothing where it is none', () => {
+  it('says which of the four it is in the design’s words, counts the end as it was walked, and nothing where it is none', () => {
     const look = (run: string) => (
       <SetupStep key={run} step="look" title="Farben" footer={null}>
         <Text>Tiles</Text>
@@ -66,8 +66,7 @@ describe('SetupStep as the design’s page', () => {
         <Text>Fields</Text>
       </SetupStep>,
     );
-    // Before the profile exists the total is not known: the step, no "von 4".
-    expect(screen.getByTestId('setup-step').textContent).toBe('Schritt 2');
+    expect(screen.getByTestId('setup-step').textContent).toBe('2 von 4');
     rerender(
       <SetupStep step="voice" title="Stimme" footer={null}>
         <Text>Voices</Text>

@@ -1,6 +1,6 @@
 # Parent Profile form migration
 
-> **Changed by #599 (onboarding area).** This ledger describes the state of #548. Every page of the profile says "Schritt 2". The parents' page keeps "Abmelden" under "Weiter" as the design has it (`Onboarding.jsx:68`) and adds "Zurück" below it; `SetupStep` has no `top` slot any more and nothing stands above Buddy (`ui_kits/app/Onboarding.jsx` `OnbPage`). The parents' page is the consent row, then the PIN block 12 apart with its fields 12 apart; `PROFILE.pinGap` is gone. The note for a learner under 16 is words on the page, not a lavender box. Margin 20.
+> **Changed by #599 (onboarding area).** This ledger describes the state of #548. Every page of the profile says "2 von 4". The parents' page keeps "Abmelden" under "Weiter" as the design has it (`Onboarding.jsx:68`) and adds "Zurück" below it; `SetupStep` has no `top` slot any more and nothing stands above Buddy (`ui_kits/app/Onboarding.jsx` `OnbPage`). The parents' page is the consent row, then the PIN block 12 apart with its fields 12 apart; `PROFILE.pinGap` is gone. The note for a learner under 16 is words on the page, not a lavender box. Margin 20.
 
 Consent #555 is merged. This independent step replaces only the learner/parent form presentation in app/profile.tsx and BirthDateFields: raw inputs become Field, LanguageFlags becomes LanguageChoice, the parent card becomes a plain consent/PIN form, and the duplicate Screen/KeyboardSafe/ScrollView shell becomes onboarding SetupStep with one keyboard avoider and pinned actions.
 

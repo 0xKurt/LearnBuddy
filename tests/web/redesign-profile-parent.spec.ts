@@ -122,7 +122,7 @@ for (const look of ONBOARDING_LOOKS)
       expect(out!.y).toBeGreaterThanOrEqual(forward!.y + forward!.height);
       expect(back!.y).toBeGreaterThanOrEqual(out!.y + out!.height);
       expect(back!.y + back!.height).toBeLessThanOrEqual(phone.height);
-      await expect(page.getByText('Schritt 2', { exact: true })).toBeVisible();
+      await expect(page.getByText('2 von 4', { exact: true })).toBeVisible();
       await shot(page, `profile-parent-fields-${look.family}-${look.dark}-${phone.width}`, {
         phones: [phone],
       });

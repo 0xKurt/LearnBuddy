@@ -20,7 +20,7 @@ for (const look of ONBOARDING_LOOKS)
     await expect(page.getByText('Sag es Buddy einfach', { exact: true })).toBeVisible();
     for (let stage = 0; stage < 3; stage++) {
       // The explaining cards are no step of the setup (#599).
-      await expect(page.getByText(/^\d von \d$|^Schritt \d$/)).toHaveCount(0);
+      await expect(page.getByText(/^\d von \d$/)).toHaveCount(0);
       await onboardingShots(page, `intro-${look.family}-${look.dark}-${stage}`, look);
       await page.getByRole('button', { name: 'Weiter', exact: true }).click();
     }

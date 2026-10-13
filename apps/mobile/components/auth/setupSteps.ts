@@ -7,19 +7,17 @@
 // counts for one way. A page that settles nothing carries no number: those three cards and the
 // hand-over. Every page of the profile (who learns, the parents, notifications) is the second.
 //
-// The count never says what is not true. The voice page exists only where Buddy's own voices are
-// there for her language (issue #526), and that is known once the profile exists — so:
-//   · privacy and the profile say which step they are, without a total ("Schritt 1", "Schritt 2"):
-//     whether three or four follow cannot be known yet;
-//   · the voice page, when it is shown, is "3 von 4";
-//   · the colours are "4 von 4" after a voice page and "3 von 3" without one — and carry no
-//     number when this run of the app did not see which it was (opened on the cards).
+// The normal way is the design's: 1, 2, 3, 4 of 4. The voice page exists only where Buddy's own
+// voices are there for her language (issue #526) and the settings could be read — the server says
+// so in the learner's settings, which exist only once the profile does. Nothing the app reads
+// before that carries it (`/me` has `capabilities.model|push`, no voice; `/v1/health` is the
+// operators' page, has no contract and knows the provider but not her language), so the early
+// pages count to the design's four. Where the voice page was then left out, the count never
+// skips a number: the colours are "3 von 3", not "4 von 4" after a step that was not there. When
+// this run of the app did not walk the setup (opened on the cards), they carry no number.
 
 export const SETUP_STATIONS = ['consent', 'profile', 'voice', 'look'] as const;
 export type SetupStation = (typeof SETUP_STATIONS)[number];
-
-/** Which step, and of how many where that is certain. */
-export type SetupCount = { n: number; count?: number };
 
 /**
  * Whether the voice page was shown on this way through the setup. A module value like the
@@ -32,15 +30,13 @@ export function noteVoiceStep(shown: boolean | undefined): void {
   way.voice = shown;
 }
 
-/** Where a station stands, or null where no true number can be given. */
+/** Where a station stands (what `common:onboarding.step_label` is given), or null: no number. */
 export function setupStep(
   station: SetupStation,
   voice: boolean | undefined = way.voice,
-): SetupCount | null {
+): { n: number; count: number } | null {
   const total = SETUP_STATIONS.length;
-  if (station === 'consent') return { n: 1 };
-  if (station === 'profile') return { n: 2 };
-  if (station === 'voice') return { n: 3, count: total };
+  if (station !== 'look') return { n: SETUP_STATIONS.indexOf(station) + 1, count: total };
   if (voice === undefined) return null;
   return voice ? { n: total, count: total } : { n: total - 1, count: total - 1 };
 }

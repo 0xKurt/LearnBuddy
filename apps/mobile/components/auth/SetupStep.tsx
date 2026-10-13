@@ -47,13 +47,9 @@ export function SetupStep({
   const form = useFormViewport();
   const { palette } = useTheme();
   const { t } = useTranslation('common');
-  // With a total only where it is certain (setupSteps.ts): never a number that is not true.
+  // The design's "x von 4"; at the end counted as it was walked, or not at all (setupSteps.ts).
   const at = step ? setupStep(step) : null;
-  const count = at
-    ? at.count === undefined
-      ? t('onboarding.step_only', { n: at.n })
-      : t('onboarding.step_label', { n: at.n, count: at.count })
-    : null;
+  const count = at ? t('onboarding.step_label', at) : null;
   const content = (
     <>
       <ScrollView
