@@ -544,7 +544,7 @@ describe('what was agreed says where it will appear — once (issue #204)', () =
   });
 });
 
-describe("the feedback after a roleplay is the Probetest's result list (issue #384)", () => {
+describe('the feedback after a roleplay is its result card (issue #384, #599)', () => {
   const ended: MessageView = {
     ...buddySaid([]),
     id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
@@ -561,7 +561,8 @@ describe("the feedback after a roleplay is the Probetest's result list (issue #3
   it('shows each task with its state, her own words and the better line — not the text', () => {
     renderInApp(<Conversation messages={[ended]} pending={null} busy={false} />);
     expect(screen.getByRole('heading', { name: "So lief's" })).toBeTruthy();
-    expect(screen.getByText('Geschafft')).toBeTruthy();
+    // A managed task carries a tick; the word for it is what a screen reader hears.
+    expect(screen.getByLabelText('Geschafft: Begrüßen: „Hello“')).toBeTruthy();
     expect(screen.getByText('Begrüßen')).toBeTruthy();
     expect(screen.getByText('„Hello“')).toBeTruthy();
     expect(screen.getByText('Noch nicht dabei')).toBeTruthy();

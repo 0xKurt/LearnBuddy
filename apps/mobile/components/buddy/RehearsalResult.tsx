@@ -1,26 +1,27 @@
-// What a rehearsal measured (issue #264), as the same "So lief's" list the Probetest and the
-// roleplay end with (lb/ResultList.tsx) — one result card in the whole app. Read from the numbers
-// the server computed (`MessageView.rehearsal`), never parsed out of the message's text. No grade
-// and no score (CLAUDE.md rule 6): the length against the length she was given, her pace, the
-// hesitation sounds, which parts of a talk were heard — or, read aloud, the words to look at again.
+// What a rehearsal measured (issue #264), as the design's one result card (`ModeResult`,
+// components/practice/Modes.jsx:52–66) — the same card a roleplay ends with: what it was and how
+// long, a tick for what fits, and the box for next time. Read from the numbers the server
+// computed (`MessageView.rehearsal`), never parsed out of the message's text. No grade and no
+// score (CLAUDE.md rule 6): the length against the length she was given, her pace, the hesitation
+// sounds, which parts of a talk were heard — or, read aloud, the words to look at again.
 
 import type { RehearsalView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 
 import { lengthVerdict, wordsToPractise } from '../../lib/buddy/rehearsal.js';
 import { formatClock } from '../../lib/speech/voice.js';
-import { ResultList, type ResultRow } from '../lb/ResultList.js';
+import { ModeResult, type ModeRow } from './RoleplayModeResult.js';
 
 export function RehearsalResult({ rehearsal: r }: { rehearsal: RehearsalView }) {
   const { t } = useTranslation(['buddy', 'practice']);
-  const pace: ResultRow = {
+  const pace: ModeRow = {
     key: 'pace',
     right: true,
     label: t('buddy:rehearse.result.pace'),
     text: t('buddy:rehearse.result.pace_text', { wpm: r.words_per_minute }),
     detail: null,
   };
-  const rows: ResultRow[] =
+  const rows: ModeRow[] =
     r.kind === 'read_aloud'
       ? readRows(r, pace, t)
       : [
@@ -41,13 +42,19 @@ export function RehearsalResult({ rehearsal: r }: { rehearsal: RehearsalView }) 
             detail: null,
           })),
         ];
-  // In the chat it arrives like every card there (Conversation's riseIn): no motion of its own.
-  return <ResultList title={t('practice:summary_test.review')} rows={rows} animate={false} />;
+  const what = t(r.kind === 'talk' ? 'buddy:rehearse.talk' : 'buddy:rehearse.read_aloud');
+  return (
+    <ModeResult
+      label={`${what} · ${formatClock(r.duration_s * 1000)}`}
+      title={t('practice:summary_test.review')}
+      rows={rows}
+    />
+  );
 }
 
 type T = ReturnType<typeof useTranslation>['t'];
 
-function lengthRow(r: RehearsalView, t: T): ResultRow {
+function lengthRow(r: RehearsalView, t: T): ModeRow {
   const verdict = lengthVerdict(r.duration_s, r.target_s);
   const duration = formatClock(r.duration_s * 1000);
   return {
@@ -65,7 +72,7 @@ function lengthRow(r: RehearsalView, t: T): ResultRow {
   };
 }
 
-function readRows(r: RehearsalView, pace: ResultRow, t: T): ResultRow[] {
+function readRows(r: RehearsalView, pace: ModeRow, t: T): ModeRow[] {
   const words = wordsToPractise(r);
   return [
     pace,

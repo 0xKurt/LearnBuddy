@@ -2,12 +2,13 @@
 //
 //   · the card Buddy offers is the recorder: the passage to read stands whole on it, the length she
 //     was given says itself, and the one button starts the recording — no screen of its own;
-//   · the result is Buddy's message, shown as the one "So lief's" list: the length against the
-//     length she was given, never a score; a part of the talk "heard" only as the server said;
+//   · the result is Buddy's message, shown as the one result card (#599): the length against the
+//     length she was given, never a score; a part of the talk "heard" only as the server said —
+//     what fits carries a tick, the rest stands in the box for next time;
 //   · a recording shorter than the minimum is never stretched to it.
 
 import type { MessageView, RehearsalView } from '@learnbuddy/shared-types/contracts';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { lengthVerdict, sentDuration, wordsToPractise } from '../../../lib/buddy/rehearsal.js';
@@ -130,6 +131,22 @@ describe('what a rehearsal measured', () => {
     ]) {
       expect(screen.getByText(text), text).toBeTruthy();
     }
+  });
+
+  it('is one card: what it was and how long, ticks, and one box for next time', () => {
+    show(message({ text: 'Dein Probevortrag dauerte 4:00 Minuten.', rehearsal: TALK }));
+    expect(screen.getByText('Probevortrag · 4:00')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: "So lief's" })).toBeTruthy();
+    const good = within(screen.getByTestId('mode-result-good'));
+    expect(good.getByText('120 Wörter pro Minute')).toBeTruthy();
+    expect(good.getByText('Einleitung')).toBeTruthy();
+    const next = within(screen.getByTestId('mode-result-next'));
+    expect(next.getByText('Nächstes Mal')).toBeTruthy();
+    for (const text of ['Etwas kurz – da ist noch Zeit', 'Pausenlaute', 'Schluss', 'Hauptteil'])
+      expect(next.getByText(text), text).toBeTruthy();
+    // The text is not shown beside the card, and the card asks for nothing.
+    expect(screen.queryByText(/dauerte 4:00 Minuten/)).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('names the words of the text to look at again, each once', () => {

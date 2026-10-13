@@ -57,9 +57,13 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
 
   // ── Asked for in the chat: the role card stands under Buddy's first line ──
   await send(page, 'Lass uns ein Rollenspiel auf Englisch machen, ich bin im Café');
-  await expect(page.getByText('ROLLENSPIEL · ENGLISCH', { exact: true })).toBeVisible();
-  await expect(page.getByText('Buddy spielt: Kellner')).toBeVisible();
+  // The thread's one card (#599, design components/practice/Modes.jsx:20–31): what it is, the
+  // scene, who Buddy plays, her tasks, and the way into the spoken scene.
+  await expect(page.getByText('Englisch · Rollenspiel', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Im Café in London' })).toBeVisible();
+  await expect(page.getByText('Kellner', { exact: true })).toBeVisible();
   await expect(page.getByText('Nach dem Preis fragen')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gespräch starten' })).toHaveCount(1);
   // The way out is pinned above the conversation, where it stays when the card has scrolled
   // away with the scene — one button, not one on the card as well.
   const end = page.getByRole('button', { name: "Beenden – wie lief's?" });
@@ -86,9 +90,13 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
   await shot(page, '42-roleplay-hint-dark');
 
   // ── By voice in the conversation mode: it listens in English while the scene runs ──
+  // The conversation screen is the live scene now (ui_kits/app/Extra.jsx:186–205): its name on
+  // top, who Buddy plays, the lines as bubbles, and its own way to end it.
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
-  await expect(page.getByText(buddyDe.talk.title, { exact: true })).toBeVisible();
-  await expect(page.getByText('Ich höre zu.')).toBeVisible();
+  await expect(page.getByText(buddyDe.talk.tap_when_done)).toBeVisible();
+  await expect(page.getByText('Buddy spielt: Kellner')).toBeVisible();
+  await expect(page.getByText('Englisch · Rollenspiel', { exact: true }).last()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gespräch beenden' })).toHaveCount(1);
   const transcribed = page.waitForRequest((r) => r.url().endsWith('/v1/voice/transcribe'));
   await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
@@ -107,11 +115,13 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
   await shot(page, '43b-roleplay-strip-dark');
   // The card has scrolled away by now; the strip carries the way out.
   await page.getByTestId('roleplay-strip').getByRole('button').click();
-  // The Probetest's "So lief's" list (issue #384), from the structured feedback — not the text.
+  // The one result card (issue #384, #599), from the structured feedback — not the text: a tick
+  // for what she managed, and one box for next time.
   await expect(page.getByRole('heading', { name: "So lief's" })).toBeVisible();
   await expect(page.getByText('„Hello“', { exact: true })).toBeVisible();
   await expect(page.getByText('Nach dem Preis fragen', { exact: true }).last()).toBeVisible();
   await expect(page.getByText('Noch nicht dabei', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('mode-result-next').getByText('Nächstes Mal')).toBeVisible();
   await expect(page.getByText('„How much it costs?“', { exact: true })).toBeVisible();
   await expect(page.getByText('„How much does it cost?“', { exact: true })).toBeVisible();
   // The invented quote is not shown, and the text is not shown beside the card.

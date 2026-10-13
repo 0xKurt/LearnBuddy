@@ -289,7 +289,6 @@
     "thinking": "Ich denke nach …",
     "speaking": "Buddy spricht …",
     "paused": "Bereit, wenn du es bist.",
-    "paused_sub": "Tipp aufs Mikro und sprich.",
     "slow": "Das dauert gerade länger – die Antwort kommt gleich im Chat.",
     "end": "Beenden",
     "speak": "Sprechen",
@@ -297,8 +296,6 @@
     "interrupt": "Unterbrechen und sprechen",
     "photo": "Foto",
     "photo_label": "Foto zeigen",
-    "tap_orb": "Tipp auf Buddy, dann hört er dir zu.",
-    "barge_sub": "Sprich einfach dazwischen, dann hört er dir zu.",
     "finish": "Fertig"
   },
   "thread": {
@@ -380,8 +377,10 @@
     "label": "Rollenspiel",
     "plays": "Buddy spielt: {{role}}",
     "tasks": "Deine Aufgaben",
+    "start": "Gespräch starten",
     "end": "Beenden – wie lief's?",
     "end_hint": "Buddy hört auf und sagt dir zu jeder Aufgabe, wie es lief.",
+    "end_talk": "Gespräch beenden",
     "ended": "Vorbei. Die Rückmeldung steht im Gespräch.",
     "lang": {
       "de": "Deutsch",
@@ -404,6 +403,8 @@
     "hint_talk": "Halte deinen Vortrag, als ob die Klasse zuhört. Höchstens 10 Minuten.",
     "hint_talk_minutes": "Vorgesehen sind {{minutes}} Minuten. Halte ihn, als ob die Klasse zuhört.",
     "hint_read": "Lies den Text laut vor. Höchstens 2 Minuten.",
+    "live_target": "Ziel {{target}} · ich höre zu",
+    "live": "Ich höre zu · höchstens {{max}}",
     "too_short": "Das war sehr kurz. Starte die Aufnahme und sprich, bis du fertig bist.",
     "result": {
       "length": "Länge",
@@ -438,5 +439,8 @@
       "slides": "Folien",
       "rehearsal": "Probevortrag"
     }
+  },
+  "mode_result": {
+    "next": "Nächstes Mal"
   }
 }

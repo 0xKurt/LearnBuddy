@@ -5230,17 +5230,22 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   never read unasked, and neither listens — there is no spoken answer to them.
 - **Conversation mode** (`app/talk.tsx`, the waveform in the chat's input bar): hands-free, in the same
   conversation as the chat. She speaks → written down → Buddy answers (a normal turn) → the answer
-  is read aloud → Buddy listens again. The screen is a camera angle on that one thread, not a
-  second rendering of it (issue #18): the newest messages stand as the chat's own bubbles
-  (`components/buddy/Conversation.tsx`), bottom-anchored and following their end — her words form
-  as her own bubble while she speaks, Buddy's reply streams into his, and while he reads it aloud
-  the sentence being read stands out in it (`components/buddy/ReadAlongBubble.tsx`); his offers
-  and open-area buttons are the chat's cards, and a tapped offer keeps the voice on (issue #40).
-  Buddy himself sits small over the button row (`TalkOrb`, 96 pt with halo); his state is the
-  moon's movement plus a one-line caption with a quiet hint under it. On the phone listening ends
+  is read aloud → Buddy listens again. The orb is the stage (#599, design `ui_kits/app/Talk.jsx`):
+  Buddy stands large in the middle (`TalkOrb`, 150 pt with halo; `lib/theme/talk.ts`), his state is
+  the moon's movement plus ONE status line, and under it stands one line of words
+  (`components/voice/TalkCaption.tsx`, decided in `components/voice/talkLine.ts`): her own while
+  she speaks and while Buddy thinks, the sentence Buddy's voice is on while he speaks
+  (`lib/speech/voiceState.ts`) — and once he is silent his whole answer, quiet, until she says
+  something (a help answer with a number must not vanish with his voice, rule 18); what is longer
+  than its room scrolls inside it. The screen is still a camera angle
+  on that one thread (issue #18): where its newest message carries something to tap or to look at
+  (his offers and open-area buttons, a result) or a roleplay runs, the newest messages stand under
+  the orb as the chat's own bubbles and cards (`components/buddy/Conversation.tsx`, with the
+  read-along of `components/buddy/ReadAlongBubble.tsx`) in place of that line, and a tapped offer
+  keeps the voice on (issue #40). On the phone listening ends
   by itself when she pauses: the on-device recogniser (`untilPause`), or on the recording path a
   pause of 1.6 s after clear speech, measured from the recorder's level (`lib/speech/pauseEnd.ts`,
-  issue #523) — the hint then says so instead of asking for a tap. The browser's recorder measures
+  issue #523) — the status line then says so instead of asking for a tap. The browser's recorder measures
   no level, so there she taps the mic when done (`voice.endsByItself`).
   Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once.
   **She can also just talk over him** (barge-in, issue #35), in the browser and on Android:
@@ -5260,8 +5265,8 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   echo cancellation is weak his residue is loud, the bar rises with it and she has to speak up:
   a missed barge-in, never a false one. Frames between sentences (his next one still on its
   way) count for nothing — calibrating on silence would let his first loud syllable through.
-  The hint under "Buddy spricht …" says "Sprich einfach dazwischen" only once the ear really
-  hears (a level arrived), otherwise it keeps naming the tap. On Android the ear lets go of
+  The screen has no hint for it since #599 (one status line, design `Talk.jsx:28`): the mic pill
+  says "Unterbrechen" while he speaks, and talking over him simply works. On Android the ear lets go of
   the mic before the on-device recogniser starts (two captures must not race for one device);
   in the browser it stays open until the recorder runs, so the recorder finds the device
   awake. **Not on iOS:** expo-audio cannot put the session into the voice-processing mode
@@ -5306,13 +5311,14 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   The moon runs on the UI thread: one Reanimated frame callback per moving orb writes a pose that
   a few animated views read (moon in front and behind the glass, trail dots, ping, reflection) —
   no JS re-render per frame. Tapping Buddy while he
-  speaks stops him and listens ("Tipp auf Buddy, dann hört er dir zu.", issue #35); where the
-  barge-in ear hears, the hint says she can just talk instead. Two quiet synthesised tones
+  speaks stops him and listens (issue #35), as the mic pill ("Unterbrechen") does. "Buddy spricht …"
+  stands only while he is heard: while his voice is still on its way the line says he is thinking,
+  as the moon shows (rule 5). Two quiet synthesised tones
   (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
   iOS they play in a session that obeys the silent switch, then talk mode's session is restored
-  (needs live verification on a phone); the web plays none. The camera next to "Tastatur"
-  opens capture (`from=talk`): the photo goes into the same conversation and she comes back to
-  talk mode, which says while it is being read. Walkthrough: one full turn
+  (needs live verification on a phone); the web plays none. The camera next to the mic pill
+  hands the photo to the chat's bar with the camera open (`lib/capture/attachRequest.ts`, owner
+  12.10.: photos go through the chat bar): it goes into the same conversation. Walkthrough: one full turn
   with Chromium's fake microphone and a scripted transcript.
 - **Pronunciation** — see Learning modes (`speak`). A judgement that lands after "Beenden" is
   refused (the write locks the session first, 409). Offline, the recording waits for the
@@ -5339,8 +5345,15 @@ the role; code holds the frame (CLAUDE.md rule 1).
   card, from her photographed one when she has one. Code refuses it in her own app language (a
   roleplay practises a foreign one), in a concern, beside a practice prepared in the same answer,
   with two equal points, or while one is running (one per learner, a partial unique index). The
-  card (`components/buddy/RoleplayCard.tsx`) shows the scene, the role and her tasks; once over
-  it shrinks to a quiet line. The way out is **not** on the card: after a few lines the card has
+  card (`components/buddy/RoleplayCard.tsx`, on the thread's one `ChatCard`; design
+  `components/practice/Modes.jsx:20–31`) shows the language, the scene, who Buddy plays and her
+  tasks, and "Gespräch starten", which opens the conversation screen — typing her lines in the
+  chat works as before. While the scene runs, the conversation screen (`app/talk.tsx`) is its
+  live view (design `ui_kits/app/Extra.jsx:186–205`): the scene's name on top, the 120 pt orb, who
+  Buddy plays, the lines as bubbles, and "Gespräch beenden", which ends the scene like the strip
+  does (`components/buddy/RoleplayLive.ts`) and returns to the chat, where the feedback stands.
+  No route of its own (rule 16). Once over the card is a quiet line. The way out is **not** on
+  the card: after a few lines the card has
   scrolled away with the scene (the first walkthrough found its button behind "Ältere
   Nachrichten"), so while it runs one strip above the conversation (`RoleplayStrip`, in the slot
   of the focus line, from `BuddyHome.roleplay`) names it and carries the one way out: the round ✕
@@ -5381,9 +5394,12 @@ the role; code holds the frame (CLAUDE.md rule 1).
   `endRoleplayByTap` for the tap). The thread serves the checked feedback from the one stored
   version as `MessageView.roleplay_feedback` (`RoleplayFeedback` in the contract, read by
   `roleplayFeedbacks`, scoped to her and validated against the contract; null everywhere else):
-  never copied, never parsed out of the text. The app shows it in place of the text as the
-  Probetest's "So lief's" list (`components/lb/ResultList.tsx`, the one result card both use;
-  `components/buddy/RoleplayResult.tsx` maps points and better lines onto it). The text stays for
+  never copied, never parsed out of the text. The app shows it in place of the text as ONE
+  result card (`components/buddy/RoleplayModeResult.tsx`, design `Modes.jsx:52–66`, shared with a
+  rehearsal): a tick for each task she managed with her own words, and one box "Nächstes Mal"
+  for what was not there yet and for the better lines (`components/buddy/RoleplayResult.tsx` maps
+  points and better lines onto it). No "Nochmal" button: a second round is asked of Buddy like the
+  first. The text stays for
   reading aloud and copying. No card where nothing was played, for a concern (its fixed caring
   text stays as it is), or for a scene she left.
 - **Her tap on "end"** in the strip (`POST /buddy/roleplays/:id/end`): with lines played, one feedback call,
@@ -5438,8 +5454,10 @@ own (CLAUDE.md rule 16).
 - **The card that records** (tool `offer_rehearsal`, `components/buddy/RehearseCard.tsx`): kind
   `talk` (up to 10 min, for a planned talk or none) or `read_aloud` (up to 2 min, the passage itself
   in the offer, 15–220 words, checked by code). The card shows the talk's title or the whole
-  passage, the length she was given, one button that starts and ends the recording (the shared
-  `RecordingStatus` line while it runs), 24 kbit/s mono (`useRecording({ long })`).
+  passage, the length she was given, one button that starts and ends the recording; while it
+  runs the card shows the running time large and the given length beside "ich höre zu" (design
+  `Modes.jsx:40–50`; the large orb of that state is not drawn in the chat, where Buddy stands in
+  the head), 24 kbit/s mono (`useRecording({ long })`). It is the thread's one `ChatCard`.
 - **Measured by code** (`POST /buddy/rehearsals`, `buddy/rehearse.ts`, `talkMeasure.ts`): one
   model call (`transcribe` budget) writes down what was said — hesitation sounds in curly braces, a
   transcription mark, so code COUNTS them and never decides from a word list (rule 3) — and for a
@@ -5451,7 +5469,8 @@ own (CLAUDE.md rule 16).
   edit distance over words; a number may be said in words; a repetition is no error). The talk's
   open rehearsal step is done by evidence. Buddy's message carries the result
   (`buddy_messages.rehearsal_id`, `MessageView.rehearsal`), its words written by code from the
-  numbers; the app shows it as the one "So lief's" list (`RehearsalResult`). No score, no grade.
+  numbers; the app shows it as the one result card (`RehearsalResult` on
+  `RoleplayModeResult.tsx`): what fits with a tick, the rest in the box for next time. No score, no grade.
 - **Privacy**: the recording lives in the request's memory only, the transcript is never stored;
   `rehearsals` keeps the numbers and the given text's words (docs/privacy.md, docs/dpia.md R14). The
   same recording sent twice is one rehearsal; another learner's card is 404; no speech is 422 and

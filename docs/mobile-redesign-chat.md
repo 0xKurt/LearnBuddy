@@ -57,7 +57,7 @@ these parts no longer holds:
 - A receipt is `Chip tone="receipt"` under the line's text; "Zurücknehmen" is a quiet line
   (ink-2 600 14 with the undo sign, `Gaps.jsx:83–85`), no longer a ghost button. The undo sheet
   and its logic are unchanged.
-- `NoticeBubble` is gone and `OfferShell` only serves `RehearseCard` until its group: every
+- `NoticeBubble` is gone, and so is `OfferShell` since the roleplay / rehearse group (#599 talk): every
   offer and every notice in the thread is `components/buddy/ChatCard.tsx` (`PracticeReady` /
   `ChatCard`, `PracticeReady.jsx`), full width, 16 inside.
 - The ⋯ menu is one list of six places on every screen (`App.jsx:125–134`); the four ways to

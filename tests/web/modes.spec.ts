@@ -590,18 +590,18 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   // (A fake microphone; in the browser there is no pause detection, so she taps when done.)
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
   await expect(page.getByText(buddyDe.talk.title, { exact: true })).toBeVisible();
-  await expect(page.getByText('Ich höre zu.')).toBeVisible();
-  await expect(page.getByText('Tipp aufs Mikro, wenn du fertig bist.')).toBeVisible();
+  // One status line while the microphone records (#599): how her turn ends here.
+  await expect(page.getByText(buddyDe.talk.tap_when_done)).toBeVisible();
   await shot(page, '32-talk-listening');
   await page.waitForTimeout(1500);
   const streamed = page.waitForResponse((r) => r.url().endsWith('/v1/buddy/messages'));
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
   // Buddy's reply comes as a stream (shown while it is written, read aloud once stored).
   expect((await streamed).headers()['content-type']).toContain('text/event-stream');
-  // Her words stand as her own bubble in the one thread (issue #18) — the chat
-  // underneath carries it too, so the last one is the talk screen's.
+  // Her words stand as the one line under the orb while Buddy thinks (#599), and in the one
+  // thread (issue #18) — the chat underneath carries them, so they are found either way.
   await expect(page.getByText('Was steht diese Woche an?').last()).toBeVisible();
-  // The answer on the conversation screen (the chat underneath has it too).
+  // The answer on the conversation screen, as that line (the chat underneath has it too).
   await expect(
     page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),
   ).toBeVisible();
@@ -616,7 +616,7 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   // rebuild, so the switch comes first and the conversation opens in it.
   await setScheme(page, 'dark');
   await page.getByRole('button', { name: 'Mit Buddy sprechen' }).click();
-  await expect(page.getByText('Ich höre zu.')).toBeVisible();
+  await expect(page.getByText(buddyDe.talk.tap_when_done)).toBeVisible();
   await shot(page, '32-talk-listening-dark');
   await page.getByRole('button', { name: 'Beenden' }).last().click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();

@@ -15,7 +15,15 @@ import { expect, test } from '@playwright/test';
 import { CHROMIUM } from './chromium';
 import { PHONES, shot } from './fit';
 import { recordPerf } from './perf';
-import { FIXTURES, onboardTalker, REPLY, sayOneThing, voiceAsSilence, voiceFile } from './talk';
+import {
+  FIXTURES,
+  LISTENING,
+  onboardTalker,
+  REPLY,
+  sayOneThing,
+  voiceAsSilence,
+  voiceFile,
+} from './talk';
 
 /** Her voice sets in this long after the ear opens: time for the speaking state's shot. */
 const QUIET_MS = 6000;
@@ -48,14 +56,12 @@ for (const phone of PHONES) {
       await expect(page.getByText(REPLY).last()).toBeVisible();
       await expect(page.getByText('Buddy spricht …')).toBeVisible();
       const speaking = Date.now();
-      // Only once the ear really hears does the screen say she can just talk (rule 5).
-      await expect(page.getByText('Sprich einfach dazwischen, dann hört er dir zu.')).toBeVisible();
       // `shot` names the 360 one itself (…-360.png).
       await shot(page, `34-talk-speaking-${scheme}`, { phones: [phone] });
       await expect(page.getByText('Buddy spricht …')).toBeVisible();
 
       // Her voice comes in: he stops long before his 20 s are over, and the mic runs.
-      await expect(page.getByText('Ich höre zu.')).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText(LISTENING)).toBeVisible({ timeout: 15_000 });
       const stoppedAfter = Date.now() - speaking;
       // …and not before her voice: the file opens with QUIET_MS of silence for each stream it
       // feeds (measured with 3 s: he stopped 3.9 s in — her voice plus the gate's 300 ms, plus

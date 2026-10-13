@@ -10,7 +10,7 @@ import { RecordingStatus } from '../RecordingStatus.js';
 const preference = vi.hoisted(() => ({ reduced: false }));
 vi.mock('../../../lib/theme/motion.js', () => ({
   useMotionReduced: () => preference.reduced,
-  DURATION: { recordingPulse: 700, voicePulse: 1200 },
+  DURATION: { voicePulse: 1200 },
 }));
 vi.mock('../../../lib/theme/composer.js', () => ({ COMPOSER: { slot: 40 } }));
 
@@ -19,29 +19,24 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('stops an already mounted recording pulse when reduced motion changes and resumes when allowed', () => {
-  const start = vi.fn();
-  const stop = vi.fn();
-  vi.spyOn(Animated, 'loop').mockReturnValue({ start, stop, reset: vi.fn() } as never);
-  const view = renderInApp(<RecordingStatus elapsedMs={1000} maxMs={30000} />);
-  expect(start).toHaveBeenCalledTimes(1);
-  preference.reduced = true;
-  view.rerender(<RecordingStatus elapsedMs={2000} maxMs={30000} />);
-  expect(stop).toHaveBeenCalledTimes(1);
-  expect(start).toHaveBeenCalledTimes(1);
-  preference.reduced = false;
-  view.rerender(<RecordingStatus elapsedMs={3000} maxMs={30000} />);
-  expect(start).toHaveBeenCalledTimes(2);
-  view.unmount();
-  expect(stop).toHaveBeenCalledTimes(2);
-});
-
-it('never starts a recording pulse when reduced motion is enabled on mount', () => {
-  preference.reduced = true;
-  const loop = vi.spyOn(Animated, 'loop');
-  renderInApp(<RecordingStatus elapsedMs={1000} maxMs={30000} />);
-  expect(loop).not.toHaveBeenCalled();
-});
+it.each([false, true])(
+  'shows a running recording with a dot that stands still (reduced motion: %s)',
+  (reduced) => {
+    // Only the orb moves by itself (HANDOFF §4, #599): no loop of the dot's own, with or
+    // without reduced motion, on mount or when the preference changes.
+    preference.reduced = reduced;
+    const loop = vi.spyOn(Animated, 'loop');
+    const timing = vi.spyOn(Animated, 'timing');
+    const view = renderInApp(<RecordingStatus elapsedMs={1000} maxMs={30000} />);
+    preference.reduced = !reduced;
+    view.rerender(<RecordingStatus elapsedMs={2000} maxMs={30000} />);
+    expect(loop).not.toHaveBeenCalled();
+    expect(timing).not.toHaveBeenCalled();
+    expect(view.getByTestId('recording-dot').style.opacity).toBe('');
+    // The time is what shows that it runs.
+    expect(view.getByText('Ich höre mit … 0:02 / 0:30')).toBeTruthy();
+  },
+);
 
 it('keeps recording microphone static and stoppable across preference changes', () => {
   const loop = vi.spyOn(Animated, 'loop');

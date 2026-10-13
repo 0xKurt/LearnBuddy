@@ -289,7 +289,6 @@
     "thinking": "Thinking …",
     "speaking": "Buddy is speaking …",
     "paused": "Ready when you are.",
-    "paused_sub": "Tap the mic and speak.",
     "slow": "This is taking longer – the answer will show up in the chat.",
     "end": "End",
     "speak": "Speak",
@@ -297,8 +296,6 @@
     "interrupt": "Interrupt and speak",
     "photo": "Photo",
     "photo_label": "Show a photo",
-    "tap_orb": "Tap Buddy and he'll listen to you.",
-    "barge_sub": "Just start talking and he'll listen.",
     "finish": "Done"
   },
   "thread": {
@@ -380,8 +377,10 @@
     "label": "Roleplay",
     "plays": "Buddy plays: {{role}}",
     "tasks": "Your tasks",
+    "start": "Start the conversation",
     "end": "End – how did it go?",
     "end_hint": "Buddy stops and tells you how each task went.",
+    "end_talk": "End the conversation",
     "ended": "Over. The feedback is in the conversation.",
     "lang": {
       "de": "German",
@@ -404,6 +403,8 @@
     "hint_talk": "Give your talk as if the class were listening. 10 minutes at most.",
     "hint_talk_minutes": "{{minutes}} minutes are planned. Give it as if the class were listening.",
     "hint_read": "Read the text aloud. 2 minutes at most.",
+    "live_target": "Goal {{target}} · I’m listening",
+    "live": "I’m listening · {{max}} at most",
     "too_short": "That was very short. Start the recording and talk until you are done.",
     "result": {
       "length": "Length",
@@ -438,5 +439,8 @@
       "slides": "Slides",
       "rehearsal": "Rehearsal"
     }
+  },
+  "mode_result": {
+    "next": "Next time"
   }
 }

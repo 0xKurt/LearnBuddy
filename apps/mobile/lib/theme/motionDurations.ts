@@ -30,8 +30,6 @@ const TIMING = {
   keyboardReveal: 280,
   /** One beat of the microphone's pulse (voice/MicButton before the redesign; no caller today). */
   voicePulse: 1200,
-  /** One beat of the recording dot (voice/RecordingStatus). */
-  recordingPulse: 700,
   /** The furthest the word reveal may trail the voice (lib/buddy/reveal). */
   wordRevealLag: 700,
   /** Lead between a result heading and its first card (lb/ResultList). */

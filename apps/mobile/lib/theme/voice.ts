@@ -12,7 +12,7 @@ export const VOICE = {
     opacity: 0.7,
     border: 3,
   },
-  dot: { size: 12, lowOpacity: 0.35 },
+  dot: { size: 12 },
   statusDot: 10,
   rowHeight: SPACE.xl,
   statusHeight: 22,
