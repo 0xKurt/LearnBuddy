@@ -144,7 +144,7 @@ test('the routes no other walkthrough stops at: the PIN, an update, a deletion r
   await onboardChild(page, 'routes');
   // The parents' PIN, as a step asks for it.
   await openMenu(page, 'Einstellungen');
-  await page.getByRole('button', { name: 'Öffnen', exact: true }).click();
+  await page.getByRole('button', { name: /^Anmeldung und PIN/ }).click();
   await expect(page.getByRole('button', { name: 'PIN vergessen?' })).toBeVisible();
   await shot(page, '387-route-pin');
   await page.getByRole('button', { name: 'Abbrechen' }).last().click();

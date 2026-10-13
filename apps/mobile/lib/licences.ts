@@ -4,7 +4,7 @@
 // the bundle is red in `bundle:check` (pre-commit and CI). Each text is stored once and shared by
 // the packages that carry it word for word.
 //
-// Loaded on demand (`lazyModule`, components/settings/LicencesSheet.tsx): nobody opening the app
+// Loaded on demand (`lazyModule`, components/settings/LicencesPage.tsx): nobody opening the app
 // to practise downloads a hundred licence texts.
 
 import data from './licences.json';

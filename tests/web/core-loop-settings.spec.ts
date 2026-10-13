@@ -28,15 +28,20 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await expect(page.getByText(/^Ja – nie nach/)).toBeVisible({ timeout: 1_000 });
   await expect(page.getByText('Für Eltern')).toBeVisible();
   await shot(page, '15-settings');
-  // Every group is closed with what is set now; one tap opens it.
-  await page.getByRole('button', { name: 'Benachrichtigungen', exact: true }).click();
+  // Every row says what is set now; one tap opens its page (#589).
+  await page.getByRole('button', { name: /^Aufs Handy, Ja – nie nach/ }).click();
+  await expect(page.getByRole('heading', { name: 'Aufs Handy', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nicht mehr erlauben' })).toBeVisible();
   // Where the note about phone messages lives, calmly (instead of a toast on the home).
   await expect(page.getByText(/Alles kommt hier in der App\./)).toBeVisible();
-  await shot(page, '15b-settings-contact', { opened: true });
-  // Buddy's voice: no group at all without his own voices — the phone's voice would read
+  await shot(page, '15b-settings-contact');
+  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toBeVisible();
+  // Buddy's voice: no row at all without his own voices — the phone's voice would read
   // every sample alike (issue #526).
-  await expect(page.getByRole('button', { name: 'Buddys Stimme' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Buddys Stimme/ })).toHaveCount(0);
+  await page.goto('/settings/voice');
+  await expect(page).toHaveURL(/\/settings$/);
   await openLicences(page, '15d-settings-about', '15e-settings-licences');
 
   // ── The look: every option previews in ITS OWN colours, and night stays readable ──
@@ -44,7 +49,7 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   // the night background — the axe pass at every shot is what catches that class now.)
   const darkSwitch = page.getByRole('radio', { name: 'Dunkel', exact: true });
   await expect(darkSwitch).not.toBeChecked();
-  await expect(page.getByRole('radio', { name: 'Wie das Handy', exact: true })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'System', exact: true })).toBeChecked();
   await shot(page, '15f-settings-look', { opened: true });
   // Two axes since issue #140: the colours are one choice, dark is another. Dark with the
   // colours kept is the combination the owner asked for — "blau eingestellt, blaue highlights".
@@ -70,7 +75,7 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
   await openMenu('Einstellungen');
   await page.getByRole('radio', { name: 'Pastell' }).click();
   await page.getByRole('radio', { name: 'Hell', exact: true }).click();
-  const system = page.getByRole('radio', { name: 'Wie das Handy', exact: true });
+  const system = page.getByRole('radio', { name: 'System', exact: true });
   await system.click();
   await expect(system).toBeChecked();
   await page.reload();
@@ -94,23 +99,24 @@ test('core loop · settings: messages, voice, the look by day and by night', asy
 });
 
 /**
- * „Über LearnBuddy“ → Lizenzen (issue #493): one closed entry; the sheet lists what the app ships,
- * each package folded until she taps it, then its licence text under it.
+ * „Über LearnBuddy“ → Lizenzen (issues #493, #589): each a page of its own. The licences list
+ * what the app ships, one row per package; a tap opens its licence text under the row. Ends back
+ * on the settings.
  */
-async function openLicences(page: Page, about: string, sheet: string): Promise<void> {
-  const entry = page.getByRole('button', { name: 'Lizenzen', exact: true });
-  if (!(await entry.isVisible()))
-    await page.getByRole('button', { name: 'Über LearnBuddy' }).click();
-  await entry.scrollIntoViewIfNeeded();
-  await expect(entry).toBeVisible();
-  await shot(page, about, { opened: true });
-  await entry.click();
+async function openLicences(page: Page, about: string, licences: string): Promise<void> {
+  const back = () => page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  await page.getByRole('button', { name: 'Über LearnBuddy', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Über LearnBuddy', exact: true })).toBeVisible();
+  await shot(page, about);
+  await page.getByRole('button', { name: 'Lizenzen', exact: true }).click();
   await expect(page.getByText(/mit freier Software gebaut/)).toBeVisible();
   const first = page.getByRole('button', { name: /^@babel\/runtime [\d.]+, MIT$/ });
   await expect(page.getByText(/Permission is hereby granted/)).toHaveCount(0);
   await first.click();
   await expect(page.getByText(/Permission is hereby granted/)).toBeVisible();
-  await shot(page, sheet, { opened: true });
-  await page.getByRole('button', { name: 'Schließen' }).click();
+  await shot(page, licences, { opened: true });
+  await back();
   await expect(page.getByText(/mit freier Software gebaut/)).toHaveCount(0);
+  await back();
+  await expect(page.getByRole('heading', { name: 'Einstellungen', exact: true })).toBeVisible();
 }

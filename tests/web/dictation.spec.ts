@@ -176,13 +176,13 @@ test("the setup at night, and Buddy's voice in the settings (issues #518, #526)"
   // core-loop-setup's and the Diktat's above).
   await onboardChild(page, true);
   await setScheme(page, 'light');
-  // The same list in the settings: closed with the voice she has, opened the picker.
+  // The same list in the settings: a row with the voice she has, and its page with the picker.
   await openMenu(page, 'Einstellungen');
   await expect(page.getByText('Warm', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Buddys Stimme' }).click();
   await expect(page.getByRole('radio', { name: 'Warm' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('button', { name: 'Hörprobe: Klar' })).toBeVisible();
-  // The open group is the settings' own store (`useFolds`), so it stands through the rebuild.
+  // The page is a route of its own (#589), so it stands through the rebuild.
   await bothSchemes(page, '15c-settings-voice');
   await expect(page.getByRole('radio', { name: 'Warm' })).toBeVisible();
 });

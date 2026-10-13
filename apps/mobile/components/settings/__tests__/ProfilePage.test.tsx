@@ -1,16 +1,13 @@
-// requires live verification in Claude Code session — actual learner request/registry edges
-// are held here; the real Expo focus/Back and server payloads are exercised by browser flows.
+// requires live verification in Claude Code session — the learner request and the subject
+// registry are the edges held here; the real Expo focus/Back and server payloads are exercised
+// by tests/web/redesign-profile-view.spec.ts. The save's fences are LearnerSave.test.tsx.
 import { LearnerView, MeResponse } from '@learnbuddy/shared-types/contracts';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { useState } from 'react';
-import { onlineManager } from '@tanstack/react-query';
 import * as endpoints from '../../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../../lib/api/queries.js';
-import * as locale from '../../../lib/i18n/index.js';
 import { renderInApp } from '../../../testing/render.js';
-import { ProfilePage, type ProfileEditor } from '../ProfilePage.js';
-import { toast } from '../../lb/Toast.js';
+import { ProfilePage } from '../ProfilePage.js';
 const subjects = vi.hoisted(() => ({ reads: vi.fn(), enabled: true }));
 vi.mock('../../buddy/extensions.js', () => ({
   profileSubjects: {
@@ -48,229 +45,90 @@ const account = {
   deletion_running: false,
   consent_current: true,
 };
-function cache(next: LearnerView) {
+function Page({
+  active = true,
+  onSubject = vi.fn(),
+}: {
+  active?: boolean;
+  onSubject?: (id: string) => void;
+}) {
+  return (
+    <ProfilePage learner={learner} account={account} active={active} onOpenSubject={onSubject} />
+  );
+}
+beforeEach(() => {
   queryClient.setQueryData(
     keys.me,
     MeResponse.parse({
       account,
-      learner: next,
+      learner,
       consent_version: 'v1',
       capabilities: { model: true, push: false },
     }),
   );
-}
-function Page({
-  person = learner,
-  active = true,
-  initial = 'language' as ProfileEditor,
-  onSubject = vi.fn(),
-}: {
-  person?: LearnerView;
-  active?: boolean;
-  initial?: ProfileEditor;
-  onSubject?: (id: string) => void;
-}) {
-  const [editor, setEditor] = useState(initial);
-  return (
-    <ProfilePage
-      learner={person}
-      account={account}
-      editor={editor}
-      active={active}
-      onEdit={setEditor}
-      onOpenSubject={onSubject}
-    />
-  );
-}
-beforeEach(() => {
-  cache(learner);
   subjects.enabled = true;
   subjects.reads.mockClear();
 });
 afterEach(() => {
-  onlineManager.setOnline(true);
   queryClient.clear();
   vi.restoreAllMocks();
 });
-async function choose(name = 'English') {
-  await act(async () => {
-    fireEvent.click(screen.getByRole('radio', { name }));
-  });
-}
-it('uses the latest cached version, prevents duplicate saves and applies only confirmed locale', async () => {
-  cache({ ...learner, version: 7 });
-  let resolve!: (v: LearnerView) => void;
-  const update = vi.spyOn(endpoints, 'updateLearner').mockImplementation(
-    () =>
-      new Promise((done) => {
-        resolve = done;
-      }),
-  );
-  const apply = vi.spyOn(locale, 'applyLocale').mockImplementation(() => undefined);
+
+it('shows the design’s rows — name, class, Bundesland — and no row the design does not have', () => {
   renderInApp(<Page />);
-  await choose();
-  expect(update).toHaveBeenCalledWith({ locale: 'en', version: 7 });
-  expect(apply).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole('radio', { name: 'Français', hidden: true }));
-  expect(update).toHaveBeenCalledTimes(1);
-  await act(async () => resolve({ ...learner, locale: 'en', version: 8 }));
-  expect(queryClient.getQueryData<MeResponse>(keys.me)?.learner?.version).toBe(8);
-  expect(apply).toHaveBeenCalledWith('en');
+  expect(screen.getByText('Über dich')).toBeTruthy();
+  expect(screen.getByText('Name')).toBeTruthy();
+  expect(screen.getByText('Klasse')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Bundesland, Hessen' })).toBeTruthy();
+  // With a class the level has no row of its own; the language lives in the settings.
+  expect(screen.queryByText('Lernbereich')).toBeNull();
+  expect(screen.queryByText('Sprache')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Abmelden' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Konto löschen' })).toBeTruthy();
 });
-it('keeps confirmed locale on failure and permits explicit retry', async () => {
+
+it('corrects the Bundesland in the shared choice sheet with one versioned save, without a sub-page', async () => {
   const update = vi
     .spyOn(endpoints, 'updateLearner')
-    .mockRejectedValueOnce(new Error('offline'))
-    .mockResolvedValueOnce({ ...learner, locale: 'en', version: 3 });
-  const apply = vi.spyOn(locale, 'applyLocale').mockImplementation(() => undefined);
+    .mockResolvedValue({ ...learner, curriculum_region: 'by', version: 3 });
   renderInApp(<Page />);
-  await choose();
+  fireEvent.click(screen.getByRole('button', { name: 'Bundesland, Hessen' }));
+  expect(await screen.findByText('In welchem Bundesland geht dein Kind zur Schule?')).toBeTruthy();
+  expect((await screen.findByRole('radio', { name: 'Hessen' })).getAttribute('aria-checked')).toBe(
+    'true',
+  );
+  await act(async () => {
+    fireEvent.click(screen.getByRole('radio', { name: 'Bayern' }));
+  });
+  expect(update).toHaveBeenCalledWith({ curriculum_region: 'by', version: 2 });
+  await waitFor(() =>
+    expect(queryClient.getQueryData<MeResponse>(keys.me)?.learner?.curriculum_region).toBe('by'),
+  );
+});
+
+it('says a failed correction on the page and keeps what the server has', async () => {
+  vi.spyOn(endpoints, 'updateLearner').mockRejectedValue(new Error('offline'));
+  renderInApp(<Page />);
+  fireEvent.click(screen.getByRole('button', { name: 'Bundesland, Hessen' }));
+  await act(async () => {
+    fireEvent.click(await screen.findByRole('radio', { name: 'Bayern' }));
+  });
   await waitFor(() =>
     expect(screen.getByText("Da ist was schiefgegangen. Versuch's gleich nochmal.")).toBeTruthy(),
   );
-  expect(screen.getByRole('radio', { name: 'Deutsch' }).getAttribute('aria-checked')).toBe('true');
-  expect(apply).not.toHaveBeenCalled();
-  await choose();
-  await waitFor(() => expect(apply).toHaveBeenCalledWith('en'));
-  expect(update).toHaveBeenCalledTimes(2);
+  expect(screen.getByRole('button', { name: 'Bundesland, Hessen' })).toBeTruthy();
 });
-it.each(['resolve', 'reject'] as const)(
-  'invalidates old local %s feedback across leave and return',
-  async (kind) => {
-    let resolve!: (v: LearnerView) => void;
-    let reject!: (v: Error) => void;
-    vi.spyOn(endpoints, 'updateLearner').mockImplementation(
-      () =>
-        new Promise((done, fail) => {
-          resolve = done;
-          reject = fail;
-        }),
-    );
-    const show = vi.spyOn(toast, 'show').mockImplementation(() => undefined);
-    const apply = vi.spyOn(locale, 'applyLocale').mockImplementation(() => undefined);
-    const view = renderInApp(<Page />);
-    await choose();
-    view.rerender(<Page active={false} />);
-    expect(screen.queryByRole('radio')).toBeNull();
-    view.rerender(<Page />);
-    await act(async () =>
-      kind === 'resolve'
-        ? resolve({ ...learner, locale: 'en', version: 3 })
-        : reject(new Error('offline')),
-    );
-    expect(show).not.toHaveBeenCalled();
-    expect(screen.queryByText("Da ist was schiefgegangen. Versuch's gleich nochmal.")).toBeNull();
-    if (kind === 'resolve') {
-      expect(queryClient.getQueryData<MeResponse>(keys.me)?.learner?.locale).toBe('en');
-      expect(apply).toHaveBeenCalledWith('en');
-    }
-  },
-);
-it('rejects older confirmed responses after a newer authoritative view', async () => {
-  let resolve!: (v: LearnerView) => void;
-  vi.spyOn(endpoints, 'updateLearner').mockImplementation(
-    () =>
-      new Promise((done) => {
-        resolve = done;
-      }),
-  );
-  const apply = vi.spyOn(locale, 'applyLocale').mockImplementation(() => undefined);
-  renderInApp(<Page />);
-  await choose();
-  cache({ ...learner, locale: 'fr', version: 9 });
-  await act(async () => resolve({ ...learner, locale: 'en', version: 3 }));
-  expect(queryClient.getQueryData<MeResponse>(keys.me)?.learner?.locale).toBe('fr');
-  expect(apply).not.toHaveBeenCalled();
-});
-it.each(['clear', 'replace'] as const)(
-  'does not restore/apply a delayed response after cache %s',
-  async (kind) => {
-    let resolve!: (v: LearnerView) => void;
-    vi.spyOn(endpoints, 'updateLearner').mockImplementation(
-      () =>
-        new Promise((done) => {
-          resolve = done;
-        }),
-    );
-    const apply = vi.spyOn(locale, 'applyLocale').mockImplementation(() => undefined);
-    const show = vi.spyOn(toast, 'show').mockImplementation(() => undefined);
-    renderInApp(<Page />);
-    await choose();
-    if (kind === 'clear') queryClient.clear();
-    else cache({ ...learner, id: '33333333-3333-4333-8333-333333333333', version: 1 });
-    await act(async () => resolve({ ...learner, locale: 'en', version: 3 }));
-    expect(apply).not.toHaveBeenCalled();
-    expect(show).not.toHaveBeenCalled();
-    if (kind === 'clear') expect(queryClient.getQueryData(keys.me)).toBeUndefined();
-    else expect(queryClient.getQueryData<MeResponse>(keys.me)?.learner?.id).not.toBe(learner.id);
-  },
-);
-it.each(['clear', 'replace'] as const)('does not start a save from %s cache', async (kind) => {
-  const update = vi.spyOn(endpoints, 'updateLearner');
-  renderInApp(<Page />);
-  if (kind === 'clear') queryClient.clear();
-  else cache({ ...learner, id: '33333333-3333-4333-8333-333333333333' });
-  await choose();
-  expect(update).not.toHaveBeenCalled();
-});
-it('unmounts subject controls while hidden, keeps factual page usable without a registered subject slot and navigates exact ID directly', () => {
+
+it('unmounts subject controls while hidden, keeps the page usable without a registered subject slot and navigates the exact ID', () => {
   const onSubject = vi.fn();
-  const view = renderInApp(<Page initial={null} onSubject={onSubject} />);
+  const view = renderInApp(<Page onSubject={onSubject} />);
   expect(subjects.reads).toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: 'Mathe: Brüche' }));
   expect(onSubject).toHaveBeenCalledWith('22222222-2222-4222-8222-222222222222');
-  view.rerender(<Page initial={null} active={false} />);
+  view.rerender(<Page active={false} />);
   expect(screen.queryByRole('button', { name: 'Mathe: Brüche' })).toBeNull();
   subjects.enabled = false;
-  view.rerender(<Page initial={null} />);
-  expect(screen.getByRole('button', { name: 'Sprache, Deutsch' })).toBeTruthy();
+  view.rerender(<Page />);
+  expect(screen.getByRole('button', { name: 'Bundesland, Hessen' })).toBeTruthy();
   expect(screen.queryByRole('dialog')).toBeNull();
-});
-it('keeps a held old route save locked across a newly mounted editor instance', async () => {
-  let resolve!: (v: LearnerView) => void;
-  const update = vi.spyOn(endpoints, 'updateLearner').mockImplementation(
-    () =>
-      new Promise((done) => {
-        resolve = done;
-      }),
-  );
-  vi.spyOn(locale, 'applyLocale').mockImplementation(() => undefined);
-  const old = renderInApp(<Page />);
-  await choose();
-  old.unmount();
-  renderInApp(<Page />);
-  await choose('Français');
-  expect(update).toHaveBeenCalledTimes(1);
-  await act(async () => resolve({ ...learner, locale: 'en', version: 3 }));
-});
-
-it('rejects a held save after the real Me Query is cleared and recreated with the same learner IDs', async () => {
-  let finish!: (next: LearnerView) => void;
-  vi.spyOn(endpoints, 'updateLearner').mockImplementation(
-    () =>
-      new Promise((resolve) => {
-        finish = resolve;
-      }),
-  );
-  const apply = vi.spyOn(locale, 'applyLocale').mockImplementation(() => undefined);
-  renderInApp(<Page />);
-  await choose();
-  queryClient.clear();
-  cache(learner);
-  await act(async () => finish({ ...learner, locale: 'en', version: 3 }));
-  expect(queryClient.getQueryData<MeResponse>(keys.me)?.learner?.locale).toBe('de');
-  expect(apply).not.toHaveBeenCalled();
-});
-
-it('attempts the existing transport while offline and exposes its failure for explicit retry', async () => {
-  const request = vi
-    .spyOn(endpoints, 'updateLearner')
-    .mockRejectedValue(new Error('offline transport'));
-  onlineManager.setOnline(false);
-  renderInApp(<Page />);
-  await choose();
-  expect(request).toHaveBeenCalledWith({ locale: 'en', version: learner.version });
-  expect(screen.getByRole('radio', { name: 'Deutsch' }).getAttribute('aria-disabled')).not.toBe(
-    'true',
-  );
 });

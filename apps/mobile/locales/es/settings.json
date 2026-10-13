@@ -2,7 +2,7 @@
   "title": "Ajustes",
   "saved": "Guardado.",
   "clock": "{{time}}",
-  "pin_first": "Para esto hace falta el PIN de los padres. Todavía no hay ninguno. Se crea más abajo, en “Para los padres”.",
+  "pin_first": "Para esto hace falta el PIN de los padres. Todavía no hay ninguno. Se crea en Ajustes, en “Para los padres”, en “Acceso y PIN”.",
   "contact": {
     "question": "Notificaciones",
     "state_on": "Sí – nunca después de las {{quiet}}.",
@@ -18,7 +18,6 @@
     "allowed_no_device": "Permitido. Pero no se ha podido registrar este móvil. Encontrarás los mensajes de Buddy aquí, en la app.",
     "stopped": "Desactivado. Los mensajes previstos ya no se enviarán.",
     "minor_hint": "Para permitir más hace falta el PIN de tus padres. Menos, siempre se puede.",
-    "no_pin_hint": "Para eso, tus padres tienen que crear primero un PIN más abajo.",
     "pause_question": "¿Hacer una pausa?",
     "pause_hint": "Durante la pausa no llega nada al móvil.",
     "pause_until": "Pausa hasta el {{date}} inclusive.",
@@ -28,16 +27,11 @@
     "paused_toast": "Pausa hasta el {{date}} inclusive.",
     "pause_ended_toast": "Pausa terminada.",
     "quiet_question": "¿Cuándo no?",
-    "quiet_answer": "No después de las {{start}} ni antes de las {{end}}.",
     "quiet_start": "No después de",
     "quiet_end": "No antes de",
     "window_question": "¿Cuándo prefieres?",
-    "window_answer": "Entre las {{start}} y las {{end}}.",
     "window_hint": "Cuando Buddy te escriba por su cuenta, será en esta franja.",
     "window_option": "{{start}}–{{end}}",
-    "weekdays_question": "¿Qué días no?",
-    "weekdays_answer": "Nunca estos días: {{days}}.",
-    "weekdays_allow_all": "Volver a permitir todos los días",
     "device_no_token": "Este móvil todavía no está registrado. Hasta entonces, todo llega solo aquí, en la app.",
     "device_invalid": "El móvil registrado ya no está disponible. Por eso todo llega solo aquí, en la app.",
     "device_register": "Registrar este móvil",
@@ -45,12 +39,17 @@
     "device_not_possible": "Ahora mismo no se puede en este móvil. Puede que las notificaciones estén desactivadas en los ajustes del sistema.",
     "summary": "Buddy te escribe entre las {{start}} y las {{end}}, nunca después de las {{quiet}}.",
     "tell_buddy": "Díselo a Buddy cuando quieras tranquilidad.",
-    "more": "Ajustar horarios",
-    "less": "Mostrar menos",
     "device_elsewhere": "Los mensajes de Buddy llegan ahora a otro dispositivo, no a este móvil.",
     "only_important": "Has pedido que Buddy escriba menos: al móvil solo llega lo realmente importante. Lo demás te espera en la app.",
     "only_important_end": "Todo al móvil otra vez",
-    "only_important_ended": "Buddy vuelve a enviarte todo al móvil."
+    "only_important_ended": "Buddy vuelve a enviarte todo al móvil.",
+    "phone": "En el móvil",
+    "times": "Horarios",
+    "days": "Días",
+    "days_question": "¿Cuándo puede escribir Buddy?",
+    "weekend": "Fin de semana tranquilo",
+    "weekend_hint": "Ningún mensaje el sábado ni el domingo.",
+    "no_pin_hint": "Para eso, tus padres tienen que crear primero un PIN: en Ajustes, en “Para los padres”, en “Acceso y PIN”."
   },
   "profile": {
     "title": "Tu perfil",
@@ -81,8 +80,6 @@
   "adult": {
     "title_minor": "Para los padres",
     "title_self": "Tu cuenta",
-    "intro_minor": "Aquí los padres gestionan la cuenta. Solo se abre con su PIN.",
-    "intro_self": "Tus datos y tu inicio de sesión.",
     "needs_pin": "Solo se puede con el PIN de los padres.",
     "pin": {
       "title": "PIN de los padres",
@@ -108,18 +105,15 @@
     },
     "export": {
       "title": "Exportar datos",
-      "body": "Todo lo guardado, como archivo. Para conservarlo o pasarlo.",
-      "cta": "Crear exportación",
       "working": "Creando la exportación…",
       "share_title": "Exportación de LearnBuddy",
       "share_failed": "No se pudo entregar el archivo. Inténtalo de nuevo.",
       "shared": "La exportación se ha entregado.",
-      "saved": "La exportación se ha guardado como archivo."
+      "saved": "La exportación se ha guardado como archivo.",
+      "body": "Todo lo guardado, como archivo. Para conservarlo o pasarlo."
     },
     "delete": {
       "title": "Eliminar la cuenta",
-      "body": "Todo se elimina definitivamente pasados 7 días. Hasta entonces, puedes cancelarlo.",
-      "cta": "Eliminar la cuenta…",
       "scheduled": "La eliminación está programada: a partir del {{date}} a las {{time}}. Hasta entonces, puedes cancelarla.",
       "running": "Tu cuenta se está eliminando ahora mismo. Ya no se puede cancelar.",
       "cancel": "Cancelar la eliminación",
@@ -127,21 +121,20 @@
       "confirm_title": "¿Seguro que quieres eliminar la cuenta?",
       "confirm_body": "Dentro de 7 días se eliminará todo definitivamente: cuenta, perfil, conversaciones, fotos y ejercicios. Hasta entonces, puedes cancelarlo aquí.",
       "confirm_cta": "Sí, eliminar dentro de 7 días",
-      "scheduled_toast": "La eliminación está programada."
+      "scheduled_toast": "La eliminación está programada.",
+      "body": "Todo se elimina definitivamente pasados 7 días. Hasta entonces, puedes cancelarlo."
     },
     "signout": {
-      "title": "Cerrar sesión",
-      "body": "Sesión iniciada como {{email}}.",
-      "body_no_email": "Has iniciado sesión.",
       "cta": "Cerrar sesión",
       "confirm_title": "¿Seguro que quieres cerrar sesión?",
       "confirm_body": "Para volver a iniciar sesión hacen falta el correo electrónico y la contraseña.",
       "confirm_cta": "Sí, cerrar sesión",
       "confirm_unsent": "En este dispositivo hay respuestas o fotos que aún no se enviaron. Al cerrar sesión se borran. Con conexión se envían enseguida: espera un momento.",
-      "confirm_cta_unsent": "Cerrar sesión igualmente"
+      "confirm_cta_unsent": "Cerrar sesión igualmente",
+      "body": "Sesión iniciada como {{email}}.",
+      "body_no_email": "Has iniciado sesión."
     },
     "access": {
-      "email_title": "Dirección de correo",
       "email_unknown": "La dirección no está guardada en este móvil.",
       "email_cta": "Cambiar correo",
       "email_sheet_title": "Cambiar dirección de correo",
@@ -154,7 +147,6 @@
       "email_pending_body_no_old": "Hemos enviado un correo de confirmación a la dirección actual y otro a {{new_email}}. La nueva dirección solo vale cuando se confirmen los enlaces. Hasta entonces, todo sigue con la dirección actual.",
       "email_changed": "La dirección de correo ha cambiado.",
       "done": "Listo",
-      "password_title": "Contraseña",
       "password_cta": "Cambiar contraseña",
       "password_sheet_title": "Cambiar contraseña",
       "password_intro": "La nueva contraseña vale a partir de ahora. Los demás dispositivos donde habéis iniciado sesión tendrán que volver a entrar.",
@@ -165,34 +157,35 @@
       "password_saved": "Nueva contraseña guardada. Los demás dispositivos tienen que volver a entrar.",
       "password_saved_others_unsure": "Nueva contraseña guardada. Ahora mismo no pudimos confirmar si se cerró la sesión en los demás dispositivos."
     },
-    "open": "Abrir",
-    "close": "Cerrar",
     "profile": {
       "title": "Corregir el perfil",
       "current": "{{name}}, nacido/a el {{date}}",
       "body": "¿El nombre o la fecha de nacimiento no son correctos? Aquí se puede corregir.",
-      "cta": "Corregir",
       "sheet_title": "Corregir el perfil",
       "name": "Nombre",
       "save": "Guardar",
       "saved": "Perfil guardado."
     },
-    "forgot_intro": "Ponéis un PIN nuevo con la contraseña de la cuenta. Todo lo demás de aquí sigue cerrado hasta entonces."
+    "forgot_intro": "Ponéis un PIN nuevo con la contraseña de la cuenta. Todo lo demás de aquí sigue cerrado hasta entonces.",
+    "allow_contact": "Permitir notificaciones",
+    "manage_minor": "Acceso y PIN",
+    "manage_self": "Acceso y perfil",
+    "intro_minor": "Aquí los padres gestionan la cuenta. Solo se abre con su PIN.",
+    "intro_self": "Tus datos y tu inicio de sesión."
   },
   "about": {
     "title": "Sobre LearnBuddy",
-    "version_question": "¿Qué versión?",
-    "version": "LearnBuddy {{version}}",
     "privacy": "Política de privacidad",
     "imprint": "Aviso legal",
     "support_question": "¿Preguntas o algún problema?",
     "support_hint": "Escríbenos a {{email}}.",
-    "support_cta": "Escribir un correo",
     "licences": "Licencias",
     "licences_intro": "LearnBuddy está hecho con software libre. Toca un paquete para leer su licencia.",
     "licences_loading": "Cargando licencias",
     "open_failed": "No se ha podido abrir el enlace. Vuelve a intentarlo en un momento.",
-    "open_mail_failed": "Aquí no hay ninguna app de correo configurada. Puedes escribirnos a {{email}}."
+    "open_mail_failed": "Aquí no hay ninguna app de correo configurada. Puedes escribirnos a {{email}}.",
+    "version_label": "Versión",
+    "contact": "Contacto"
   },
   "voice": {
     "title": "La voz de Buddy",
@@ -214,6 +207,8 @@
     },
     "question": "¿Qué colores te gustan?",
     "title": "Aspecto",
-    "mode_label": "Claro u oscuro"
+    "mode_label": "Claro u oscuro",
+    "colour": "Color",
+    "mode_system_short": "Sistema"
   }
 }

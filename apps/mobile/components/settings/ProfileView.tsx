@@ -59,14 +59,18 @@ export function ProfileView({
       </View>
       <ListGroup label={t('profile.about_you')}>
         <Row title={t('profile.name')} icon="pencil" value={learner.display_name} />
-        <Row
-          title={t('profile.level_label')}
-          icon="sparkle"
-          value={t(`profile.level_${learner.level}`)}
-        />
+        {/* Her class, as the design has it (ui_kits/app/Extra.jsx `Profile`); a learner without
+            one — a student, an adult — reads where she learns instead. The design's "Schulform"
+            has no row: the profile holds no school type. */}
         {learner.grade !== null ? (
           <Row title={t('profile.grade_label')} icon="file" value={String(learner.grade)} />
-        ) : null}
+        ) : (
+          <Row
+            title={t('profile.level_label')}
+            icon="sparkle"
+            value={t(`profile.level_${learner.level}`)}
+          />
+        )}
         {children}
       </ListGroup>
       {subjects}

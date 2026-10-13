@@ -14,17 +14,16 @@ import { updateLearner } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { birthDateOf, formatBirthDate, partsOf } from '../../lib/birthDate.js';
 import { messageFor } from '../../lib/errors.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { SETTINGS } from '../../lib/theme/settings.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { BirthDateFields, type DateParts } from '../auth/BirthDateFields.js';
 import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
+import { Row } from '../lb/ListGroup.js';
 import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { AdultCancelled, asAdultIfNeeded, useAdultOpener } from './adultGate.js';
-import { Row } from './Row.js';
 
 type Props = {
   learner: LearnerView;
@@ -104,25 +103,15 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
 
   return (
     <>
-      <Card>
-        <Row
-          question={t('settings:adult.profile.title')}
-          answer={t('settings:adult.profile.current', {
-            name: learner.display_name,
-            date: formatBirthDate(learner.birth_date, i18n.language),
-          })}
-          hint={t('settings:adult.profile.body')}
-        >
-          {minor ? (
-            <Text style={[TYPE.body, { color: palette.ink2 }]}>
-              {t('settings:adult.needs_pin')}
-            </Text>
-          ) : null}
-          <Btn pill variant="outline" onPress={() => void start()} disabled={!enabled || opening}>
-            {t('settings:adult.profile.cta')}
-          </Btn>
-        </Row>
-      </Card>
+      <Row
+        title={t('settings:adult.profile.title')}
+        sub={t('settings:adult.profile.current', {
+          name: learner.display_name,
+          date: formatBirthDate(learner.birth_date, i18n.language),
+        })}
+        disabled={!enabled || opening}
+        onPress={() => void start()}
+      />
 
       <Sheet
         visible={open}
@@ -135,23 +124,26 @@ export function ProfileFixCard({ learner, pinSet, enabled }: Props) {
           </Btn>
         }
       >
-        <View style={{ gap: SPACE.sm }}>
-          <Text style={[TYPE.bodyStrong, SHEET_TEXT]}>{t('settings:adult.profile.name')}</Text>
-          <LbTextInput
-            value={name}
-            onChangeText={setName}
-            maxLength={40}
-            autoCorrect={false}
-            spellCheck={false}
-            autoCapitalize="words"
-            autoComplete="name-given"
-            textContentType="givenName"
-            accessibilityLabel={t('settings:adult.profile.name')}
-            editable={!busy}
-          />
-        </View>
-        <View style={{ gap: SPACE.sm }}>
-          <Text style={[TYPE.bodyStrong, SHEET_TEXT]}>{t('auth:profile.birth_date')}</Text>
+        <Text style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}>
+          {t('settings:adult.profile.body')}
+        </Text>
+        {/* The field's own label (components/core/Field.jsx: 700 13/18), not one drawn here. */}
+        <LbTextInput
+          label={t('settings:adult.profile.name')}
+          value={name}
+          onChangeText={setName}
+          maxLength={40}
+          autoCorrect={false}
+          spellCheck={false}
+          autoCapitalize="words"
+          autoComplete="given-name"
+          textContentType="givenName"
+          editable={!busy}
+        />
+        <View style={{ gap: SETTINGS.fieldGap }}>
+          <Text style={[TYPE.label, SHEET_TEXT, { color: palette.ink2 }]}>
+            {t('auth:profile.birth_date')}
+          </Text>
           <BirthDateFields value={date} onChange={setDate} editable={!busy} />
           {dateComplete && !birthDate ? (
             <Text
