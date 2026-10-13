@@ -57,9 +57,10 @@ import { ItemCard } from '../../components/practice/ItemCard.js';
 import { NoQuestion } from '../../components/practice/NoQuestion.js';
 import { PracticeStuck } from '../../components/practice/PracticeStuck.js';
 import { CornerSheet } from '../../components/practice/QuestionCorner.js';
-import { RunMeta } from '../../components/practice/Question.js';
+import { RunMeta } from '../../components/lb/QuestionCard.js';
 import {
   HomeworkHint,
+  clockTail,
   progressLine,
   QuestionMenu,
   QuestionProgress,
@@ -395,7 +396,8 @@ export default function PracticeScreen() {
     <Screen
       title={title}
       // In a test with time, the minutes left stand beside where she is (`progressLine`).
-      subtitle={progressLine(t, view.progress, offers.testing ? clock.minutes : null)}
+      subtitle={progressLine(t, view.progress)}
+      subtitleTail={clockTail(t, offers.testing ? clock.minutes : null)}
       leading={{
         icon: 'close',
         onPress: () => void end.close(),

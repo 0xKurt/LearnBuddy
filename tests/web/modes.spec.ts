@@ -1727,7 +1727,10 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
 
   // The time left stands in the head's subtitle — whole minutes, no red, no seconds — and the
   // test's one rule in the question card's meta line (design ui_kits/app/Tasks.jsx `test`).
-  await expect(page.getByText('Frage 1 von 3 · noch 10 Min.', { exact: true })).toBeVisible();
+  // The minutes are the subtitle's own tail: never cut, whatever stands before them.
+  await expect(page.getByText('Frage 1 von 3', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('header-subtitle-tail')).toHaveText('· noch 10 Min.');
+  await expect(page.getByTestId('header-subtitle-tail')).toBeInViewport({ ratio: 1 });
   await expect(page.getByTestId('question-meta')).toHaveText(
     'Probetest · eine Antwort, keine Tipps',
   );
@@ -1751,7 +1754,8 @@ test('a test with time: a calm clock, a quiet hint, and how far she got (issue #
   // Five minutes left: one quiet sentence in the same place, nothing more.
   await deadlineIn(5 * 60_000 - 2_000);
   await page.reload();
-  await expect(page.getByText('Frage 2 von 3 · noch 5 Min.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Frage 2 von 3', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('header-subtitle-tail')).toHaveText('· noch 5 Min.');
   await expect(page.getByTestId('question-meta')).toHaveText(
     'Schau in Ruhe, was du noch schaffst.',
   );

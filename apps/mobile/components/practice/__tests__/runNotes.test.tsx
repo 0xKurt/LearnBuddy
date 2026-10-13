@@ -8,12 +8,21 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { act, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { i18n } from '../../../lib/i18n/index.js';
-import { renderInApp } from '../../../testing/render.js';
-import { QuestionCard, RunMeta } from '../Question.js';
-import { HomeworkHint, progressLine, QuestionProgress, testMeta } from '../QuestionProgress.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
+import { QuestionCard as PlainCard, RunMeta } from '../../lb/QuestionCard.js';
+import { QuestionCard } from '../Question.js';
+import {
+  clockTail,
+  HomeworkHint,
+  progressLine,
+  QuestionProgress,
+  testMeta,
+} from '../QuestionProgress.js';
+import { SpeakCard } from '../SpeakPanel.js';
 import { TestClockHeader, useTestClock } from '../TestClock.js';
 
 const seen = vi.hoisted(() => ({ window: 844, overlap: 0, visible: 844 }));
@@ -28,12 +37,15 @@ afterEach(() => {
 });
 
 describe('a test with time', () => {
-  it('puts the minutes left into the head’s second line, beside where she is', () => {
-    expect(progressLine(t, PROGRESS, null)).toBe('Frage 1 von 3');
-    expect(progressLine(t, PROGRESS, 10)).toBe('Frage 1 von 3 · noch 10 Min.');
-    expect(progressLine(t, { ...PROGRESS, preparing: true }, null)).toBe(
+  it('says where she is, and the minutes left as a tail of its own with their full words', () => {
+    expect(progressLine(t, PROGRESS)).toBe('Frage 1 von 3');
+    expect(progressLine(t, { ...PROGRESS, preparing: true })).toBe(
       'Frage 1 · ich schreibe noch mehr',
     );
+    expect(clockTail(t, null)).toBeUndefined();
+    // The short form for the eye, the whole words for a screen reader — as the chip had them.
+    expect(clockTail(t, 10)).toEqual({ text: 'noch 10 Min.', label: 'Noch 10 Minuten' });
+    expect(clockTail(t, 1)).toEqual({ text: 'noch 1 Min.', label: 'Noch 1 Minute' });
   });
 
   it('says its rule in the card’s meta line, and the gentle sentence from five minutes on', () => {
@@ -42,15 +54,52 @@ describe('a test with time', () => {
     expect(testMeta(t, true, true)).toBe('Schau in Ruhe, was du noch schaffst.');
   });
 
-  it('the card shows that line in place of topic and origin', () => {
-    renderInApp(
-      <RunMeta.Provider value="Probetest · eine Antwort, keine Tipps">
-        <QuestionCard prompt="Welches Gas?" topic="Photosynthese" fromBuddy />
-      </RunMeta.Provider>,
-    );
-    expect(screen.getByTestId('question-meta').textContent).toBe(
-      'Probetest · eine Antwort, keine Tipps',
-    );
+  const RULE = 'Probetest · eine Antwort, keine Tipps';
+  const inTest = (card: ReactElement) =>
+    renderInApp(<RunMeta.Provider value={RULE}>{card}</RunMeta.Provider>);
+  /** Whole on as many lines as it needs: never one ellipsized line. */
+  const wraps = () => {
+    const line = styleOf(screen.getByTestId('run-meta'));
+    expect(line.whiteSpace).not.toBe('nowrap');
+    expect(line.textOverflow).not.toBe('ellipsis');
+  };
+
+  it('the card shows that line in place of topic and origin, wrapping', () => {
+    inTest(<QuestionCard prompt="Welches Gas?" topic="Photosynthese" fromBuddy />);
+    expect(screen.getByTestId('question-meta').textContent).toBe(RULE);
+    expect(screen.getAllByText(RULE)).toHaveLength(1);
+    wraps();
+  });
+
+  it('keeps it while she types in tight keyboard room and once the question is closed', () => {
+    Object.assign(seen, { window: 440, visible: 440 });
+    const view = inTest(<QuestionCard prompt="Welches Gas?" topic="Photosynthese" fromBuddy />);
+    expect(screen.getByText(RULE)).toBeDefined();
+    view.unmount();
+    Object.assign(seen, { window: 844, visible: 844 });
+    inTest(<QuestionCard prompt="Welches Gas?" topic="Photosynthese" fromBuddy compactFeedback />);
+    expect(screen.getByText(RULE)).toBeDefined();
+  });
+
+  it('stands on every card kind: a sentence to say and a Diktat, also its compact row', () => {
+    const speak = { id: 'i', prompt: 'The weather is nice.', lang: 'en', topic: 'Sprechen' };
+    const view = inTest(<SpeakCard item={speak as never} turns={[]} />);
+    expect(screen.getAllByText(RULE)).toHaveLength(1);
+    expect(screen.queryByText('Sprechen · sag es laut')).toBeNull();
+    wraps();
+    view.unmount();
+    const plain = inTest(<PlainCard meta="Origin">Diktat</PlainCard>);
+    expect(screen.getAllByText(RULE)).toHaveLength(1);
+    expect(screen.queryByText('Origin')).toBeNull();
+    plain.unmount();
+    inTest(<PlainCard compact>Diktat</PlainCard>);
+    expect(screen.getAllByText(RULE)).toHaveLength(1);
+  });
+
+  it('outside a test no card draws it', () => {
+    renderInApp(<PlainCard meta="Origin">Frage</PlainCard>);
+    expect(screen.queryByTestId('run-meta')).toBeNull();
+    expect(screen.getByText('Origin')).toBeDefined();
   });
 
   it('ticks under the head and reports whole minutes; no pill and no line of its own', () => {

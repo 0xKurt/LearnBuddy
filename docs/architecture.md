@@ -4685,8 +4685,8 @@ word list, so it stays a prompt rule.
   to (`lifecycle.ts`). `SessionView.timer` = `{ minutes, remaining_ms, ran_out }`; the app counts
   down from the moment the view arrived (never its wall clock against a deadline), shows whole
   minutes in the head's subtitle beside where she is ("Frage 1 von 3 · noch 10 Min." — no red,
-  no seconds; #599, design `ui_kits/app/Tasks.jsx` `test`), the test's one rule in the question
-  card's meta line, and at five minutes that line turns into one quiet sentence ("Schau in
+  no seconds, never cut; #599, design `ui_kits/app/Tasks.jsx` `test`), the test's one rule on
+  every question card's meta line, and at five minutes that line turns into one quiet sentence ("Schau in
   Ruhe, was du noch schaffst."), announced once (`TestClock.tsx`, `QuestionProgress.tsx`,
   `lib/practice/testClock.ts`). The offer card carries a clock and the minutes. At zero the app
   hands the test in once no answer is on its way.

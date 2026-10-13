@@ -62,20 +62,27 @@ export function QuestionProgress({
   return <ProgressRow {...progress} hideLabel={inHeader} active={open} />;
 }
 
-/**
- * The head's second line: where she is and, in a test with time, how much of it is left
- * ("Frage 1 von 3 · noch 10 Min."; design ui_kits/app/Tasks.jsx:185). `minutes`: what the running
- * clock shows (`useTestClock`), null without one.
- */
-export function progressLine(
-  t: TFunction,
-  progress: QuestionView['progress'],
-  minutes: number | null,
-): string {
-  const where = progress.preparing
+/** The head's second line: where she is ("Frage 1 von 3"). */
+export function progressLine(t: TFunction, progress: QuestionView['progress']): string {
+  return progress.preparing
     ? t('practice:progress_more_coming', { current: progress.position })
     : t('practice:progress', { current: progress.position, total: progress.total });
-  return minutes === null ? where : `${where} · ${t('practice:timer.chip', { count: minutes })}`;
+}
+
+/**
+ * The time left in a test with time, as the head's subtitle closes with it ("noch 10 Min.";
+ * design ui_kits/app/Tasks.jsx:185) — never cut — and in full words for a screen reader.
+ * `minutes`: what the running clock shows (`useTestClock`), null without one.
+ */
+export function clockTail(
+  t: TFunction,
+  minutes: number | null,
+): { text: string; label: string } | undefined {
+  if (minutes === null) return undefined;
+  return {
+    text: t('practice:timer.chip', { count: minutes }),
+    label: t('practice:timer.left', { count: minutes }),
+  };
 }
 
 /**

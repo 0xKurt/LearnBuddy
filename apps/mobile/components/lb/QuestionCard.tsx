@@ -2,7 +2,7 @@
 // question, and what the adapter hangs under it. Content slots only; the practice adapters own
 // prompts, figures, audio and disclosure. A drawing brings its own frame (`FigureView`), so the
 // card adds none around it.
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { PRACTICE } from '../../lib/theme/practice.js';
@@ -12,9 +12,33 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 
+/**
+ * What the run says about itself on every card, in place of topic and origin: a test's rule
+ * (design ui_kits/app/Tasks.jsx:139, "Probetest · eine Antwort, keine Tipps") and, from five
+ * minutes on, its one gentle sentence. null: the card's own meta line.
+ */
+export const RunMeta = createContext<string | null>(null);
+
+/**
+ * That line: whole, on as many lines as it needs, on every card kind and in every state of the
+ * card — it is the rule she sits the test under, not decoration. Nothing outside a test.
+ */
+export function RunMetaLine() {
+  const { palette } = useTheme();
+  const run = useContext(RunMeta);
+  if (run === null) return null;
+  return (
+    <Text testID="run-meta" style={[TYPE.label, { color: palette.ink2 }]}>
+      {run}
+    </Text>
+  );
+}
+
 type Props = {
   /** "Thema · von Buddy": one line, gone once the card is `compact`. */
   meta?: ReactNode;
+  /** The adapter draws `RunMetaLine` itself, inside what it measures (`practice/Question`). */
+  ownsRunMeta?: boolean;
   children: ReactNode;
   extra?: ReactNode;
   /** After her answer: the question steps back to a quiet line (`14px 18px`). */
@@ -31,10 +55,12 @@ export function QuestionCard({
   extra,
   compact = false,
   snug = false,
+  ownsRunMeta = false,
   style,
   testID,
 }: Props) {
   const { palette } = useTheme();
+  const run = useContext(RunMeta);
   return (
     <View
       testID={testID}
@@ -51,7 +77,11 @@ export function QuestionCard({
         style,
       ]}
     >
-      {compact ? null : typeof meta === 'string' ? (
+      {run !== null ? (
+        ownsRunMeta ? null : (
+          <RunMetaLine />
+        )
+      ) : compact ? null : typeof meta === 'string' ? (
         <Text numberOfLines={1} style={[TYPE.label, { color: palette.ink2 }]}>
           {meta}
         </Text>

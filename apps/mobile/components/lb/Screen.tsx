@@ -17,6 +17,7 @@ type Props = {
   title?: string;
   back?: boolean;
   subtitle?: string;
+  subtitleTail?: BuddyHeaderProps['subtitleTail'];
   /** What is happening on this screen, as the orb's pose; idle when nothing is. */
   state?: BuddyHeaderProps['state'];
   progress?: BuddyHeaderProps['progress'];
@@ -39,6 +40,7 @@ type Props = {
 export function Screen({
   title,
   subtitle,
+  subtitleTail,
   state,
   progress,
   back = false,
@@ -62,6 +64,7 @@ export function Screen({
         <BuddyHeader
           title={title ?? ''}
           subtitle={subtitle}
+          subtitleTail={subtitleTail}
           state={state}
           progress={progress}
           trailing={right}

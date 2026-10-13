@@ -5,7 +5,7 @@
 // answer it stands in the gap, so she sees the whole sentence.
 
 import type { Figure, ItemImage, ItemView, TaskPartView } from '@learnbuddy/shared-types/contracts';
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -18,7 +18,7 @@ import { QUESTION } from '../../lib/theme/question.js';
 import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { QuestionCard as PresentationCard } from '../lb/QuestionCard.js';
+import { QuestionCard as PresentationCard, RunMeta, RunMetaLine } from '../lb/QuestionCard.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { Progress } from '../lb/Progress.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
@@ -177,13 +177,6 @@ const PASSAGE_SHARE_SHORT = PRACTICE.passageShareShort;
 /** The card's padding, and the gap between the prompt and the drawing. */
 const FIGURE_GAP = SPACE.md;
 
-/**
- * What the run says about itself in the card's meta line, in place of topic and origin: a
- * test's rule (design ui_kits/app/Tasks.jsx:139, "Probetest · eine Antwort, keine Tipps").
- * null: the question's own line.
- */
-export const RunMeta = createContext<string | null>(null);
-
 /** A quiet line in the page (design ui_kits/app/Flows.jsx:15, `Hint`): meta type, ink-2, 4 in. */
 export function Hint({ children, testID }: { children: string; testID?: string }) {
   const { palette } = useTheme();
@@ -239,11 +232,10 @@ export function QuestionCard({
   // row steps aside like the drawing does (#419, #484). On 360×440 a part's situation over its
   // folded chart, the question and the bar with its keys ran 10 pt past the window and the header
   // stood cut (#387); the part's letter still stands before the question ("a) …").
-  const runMeta = useContext(RunMeta);
+  // In a test the run's rule stands there instead, always (`RunMetaLine`): it does not step aside.
+  const inRun = useContext(RunMeta) !== null;
   const meta =
-    !compactFeedback &&
-    !typing &&
-    (runMeta !== null || fromBuddy || Boolean(shownTopic) || part !== null);
+    !inRun && !compactFeedback && !typing && (fromBuddy || Boolean(shownTopic) || part !== null);
   const { t } = useTranslation('practice');
   // What the header row and the prompt keep for themselves; the rest is the figure's.
   const [headHeight, setHeadHeight] = useState(0);
@@ -278,6 +270,7 @@ export function QuestionCard({
       extra={extra}
       compact={compactFeedback}
       snug={small}
+      ownsRunMeta
       style={grown ? { minHeight: cardMin } : null}
     >
       <View style={grown ? { flexGrow: 1 } : null}>
@@ -285,6 +278,11 @@ export function QuestionCard({
           <PassagePanel passage={passage} maxHeight={Math.round(viewHeight * passageShare)} />
         ) : null}
         <View onLayout={(e) => setHeadHeight(Math.round(e.nativeEvent.layout.height))}>
+          {inRun ? (
+            <View testID="question-meta" style={{ marginBottom: SPACE.md }}>
+              <RunMetaLine />
+            </View>
+          ) : null}
           {meta ? (
             // Where it comes from and what it is about are one quiet line (design
             // components/practice/Option.jsx:30, "Brüche · von Buddy"): never a second (it would
@@ -294,14 +292,7 @@ export function QuestionCard({
               testID="question-meta"
               style={{ flexDirection: 'row', alignItems: 'center', marginBottom: SPACE.md }}
             >
-              {runMeta !== null ? (
-                <Text
-                  numberOfLines={1}
-                  style={[TYPE.label, { color: palette.ink2, flex: 1, minWidth: 0 }]}
-                >
-                  {runMeta}
-                </Text>
-              ) : part ? (
+              {part ? (
                 <>
                   {fromBuddy ? (
                     <Text style={[TYPE.label, { color: palette.ink2 }]}>
