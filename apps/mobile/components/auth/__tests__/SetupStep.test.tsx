@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
 import { renderInApp, styleOf } from '../../../testing/render.js';
+import { GUTTER_OUTER } from '../../../lib/theme/space.js';
 import { SetupStep } from '../SetupStep.js';
 vi.mock('../../lb/BuddyOrb.js', () => ({
   BuddyOrb: ({ state }: { state?: string }) => <div data-testid="setup-orb" data-state={state} />,
@@ -49,14 +50,57 @@ it('forwards a caller-owned Orb state without introducing shell state', () => {
   expect(screen.getByTestId('setup-orb').dataset.state).toBe('idle');
 });
 
-it('places the back control in a leading gutter row', () => {
-  renderInApp(
-    <SetupStep top={<button>Back</button>} title="Parent" footer={null}>
-      <Text>Fields</Text>
-    </SetupStep>,
-  );
-  const row = screen.getByRole('button', { name: 'Back' }).parentElement!;
-  expect(styleOf(row).flexDirection).toBe('row');
-  expect(styleOf(row).paddingLeft).toBe('16px');
-  expect(styleOf(row).paddingRight).toBe('16px');
+// Design ui_kits/app/Onboarding.jsx `OnbPage`: the orb is the first thing on the page, the count
+// stands at its right in the design's words ("2 von 4"), and the page keeps the margin of the
+// pages before the app (tokens/space.css `--space-gutter`, 20).
+describe('SetupStep as the design’s page', () => {
+  it('says which of the four it is in the design’s words, and nothing where it is none', () => {
+    const { rerender } = renderInApp(
+      <SetupStep step="profile" title="Eltern" footer={null}>
+        <Text>Fields</Text>
+      </SetupStep>,
+    );
+    expect(screen.getByTestId('setup-step').textContent).toBe('2 von 4');
+    rerender(
+      <SetupStep step="look" title="Farben" footer={null}>
+        <Text>Tiles</Text>
+      </SetupStep>,
+    );
+    expect(screen.getByTestId('setup-step').textContent).toBe('4 von 4');
+    rerender(
+      <SetupStep title="Sag es Buddy einfach" footer={null}>
+        <Text>Card</Text>
+      </SetupStep>,
+    );
+    expect(screen.queryByTestId('setup-step')).toBeNull();
+    expect(screen.queryByText(/Schritt/)).toBeNull();
+  });
+
+  it('keeps the margin before the app around the page and under it', () => {
+    renderInApp(
+      <SetupStep title="Step" footer={<button>Continue</button>}>
+        <Text>Copy</Text>
+      </SetupStep>,
+    );
+    const margin = `${GUTTER_OUTER}px`;
+    expect(margin).toBe('20px');
+    const page = screen.getByRole('heading', { name: 'Step' }).parentElement!.parentElement!;
+    expect(styleOf(page).paddingLeft).toBe(margin);
+    expect(styleOf(page).paddingRight).toBe(margin);
+    const bar = screen.getByRole('button', { name: 'Continue' }).parentElement!;
+    expect(styleOf(bar).paddingLeft).toBe(margin);
+    expect(styleOf(bar).paddingRight).toBe(margin);
+  });
+
+  it('puts nothing above the orb: the page starts with Buddy', () => {
+    renderInApp(
+      <SetupStep title="Parent" footer={<button>Zurück</button>}>
+        <Text>Fields</Text>
+      </SetupStep>,
+    );
+    const orb = screen.getByTestId('setup-orb');
+    const back = screen.getByRole('button', { name: 'Zurück' });
+    // DOCUMENT_POSITION_FOLLOWING: the way back comes after the orb, in the bar below.
+    expect(orb.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 });

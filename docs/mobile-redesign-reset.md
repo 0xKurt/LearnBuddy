@@ -1,5 +1,7 @@
 # Password-reset migration — screen 5b
 
+> **Changed by #599 (onboarding area).** This ledger describes the state of #548. The page keeps the margin of the pages before the app (20). Orb, title, words, field and the two actions stand in one column 16 apart (`RESET.gap`, `ui_kits/app/Flows.jsx` `ResetInvalid`). `auth:reset.invalid_body` keeps "nur kurz und nur einmal": how long a link is valid is the provider's setting, and the design's "eine Stunde" is not proven here.
+
 Tracking #548. Files announced before implementation: app/reset-password.tsx; components/auth/NewPasswordFields.tsx; lib/theme/reset.ts; semantic TYPE.pageHeadline in lib/theme/type.ts during integration; auth locale keys in de/en/es/fr/it; related verification later.
 
 Replacements: centered large recovery introduction becomes left-aligned small Orb and title/body; invalid-link warning card becomes the reference inline email request form with one pinned 'send new link' action and a ghost way back; offline/checking/new-password phases retain their meaning. NewPasswordFields uses the sole base Field implementation with labels, a password hint and the existing visibility/focus/mismatch behavior.

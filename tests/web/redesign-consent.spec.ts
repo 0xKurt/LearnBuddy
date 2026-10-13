@@ -37,6 +37,8 @@ for (const family of ['pastell', 'ocean'] as const) {
       const heading = page.getByRole('heading', { name: 'Kurz zum Datenschutz', exact: true });
       await expect(heading).toHaveCSS('color', await cssColor(page, palette.ink));
       await expect(heading).toHaveCSS('font-family', /Figtree_800ExtraBold/);
+      // The first of the setup's four, in the design's words (Onboarding.jsx:43, #599).
+      await expect(page.getByText('1 von 4', { exact: true })).toBeVisible();
       const checkbox = page.getByRole('checkbox', {
         name: 'Ich habe das gelesen und bin einverstanden.',
         exact: true,

@@ -93,7 +93,9 @@ it('corrects the Bundesland in the shared choice sheet with one versioned save, 
     .mockResolvedValue({ ...learner, curriculum_region: 'by', version: 3 });
   renderInApp(<Page />);
   fireEvent.click(screen.getByRole('button', { name: 'Bundesland, Hessen' }));
-  expect(await screen.findByText('In welchem Bundesland geht dein Kind zur Schule?')).toBeTruthy();
+  // Her own page speaks to her: the sheet used to ask the parents about "dein Kind" here (#599).
+  expect(await screen.findByText('In welchem Bundesland gehst du zur Schule?')).toBeTruthy();
+  expect(screen.queryByText(/dein Kind|deinem Kind/)).toBeNull();
   expect((await screen.findByRole('radio', { name: 'Hessen' })).getAttribute('aria-checked')).toBe(
     'true',
   );

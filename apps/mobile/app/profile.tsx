@@ -19,8 +19,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import { BirthDateFields, type DateParts } from '../components/auth/BirthDateFields.js';
 import { CheckPoints } from '../components/auth/CheckPoints.js';
 import { Btn } from '../components/lb/Btn.js';
-import { IconBtn } from '../components/lb/IconBtn.js';
-import { Card } from '../components/lb/Card.js';
 import { Checkbox } from '../components/lb/Checkbox.js';
 import { ContactStep, type ContactAnswer } from '../components/auth/ContactStep.js';
 import { SetupStep } from '../components/auth/SetupStep.js';
@@ -45,10 +43,10 @@ import { messageFor } from '../lib/errors.js';
 import { applyLocale, currentLocale } from '../lib/i18n/index.js';
 import { currentSession } from '../lib/auth/session.js';
 import { signOutHere } from '../lib/leave.js';
+import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { formDensity } from '../lib/keyboard.js';
-import { useVisibleHeight } from '../lib/useVisibleHeight.js';
+import { UI } from '../lib/theme/components.js';
 import { RHYTHM, SPACE } from '../lib/theme/space.js';
 import { useFormDraft } from '../lib/drafts.js';
 
@@ -58,10 +56,6 @@ const onlyDigits = (value: string) => value.replace(/\D+/g, '');
 export default function Profile() {
   const { palette } = useTheme();
   const { t } = useTranslation('auth');
-  // Smaller visible form space uses compact spacing; required fields remain reachable by scroll.
-  const view = useVisibleHeight();
-  // From what is visible: the keyboard keeps the window's height (issue #289).
-  const compact = formDensity(view.window, view.overlap) !== 'roomy';
   const [relation, setRelation] = useState<'self' | 'child' | null>(null);
   const [name, setName] = useState('');
   const [date, setDate] = useState<DateParts>({ day: '', month: '', year: '' });
@@ -160,7 +154,7 @@ export default function Profile() {
 
   // The first thing this step still needs, in screen order — shown once she asked (tap
   // on the waiting CTA, issue #97). Under 16 with "Ich selbst" everything is filled and
-  // the lavender card explains; the hint points there instead of repeating the fields.
+  // the note under the date explains; the hint points there instead of repeating the fields.
   const waitHint = parentStep
     ? !consent
       ? t('profile.cta_hint_consent')
@@ -304,16 +298,8 @@ export default function Profile() {
     <SetupStep
       keyboardSafe
       scrollTestID="scroll-form"
+      step="profile"
       title={parentStep ? t('profile.parent_title') : t('profile.title')}
-      top={
-        parentStep ? (
-          <IconBtn
-            icon="back"
-            onPress={() => setStep('learner')}
-            accessibilityLabel={t('profile.back')}
-          />
-        ) : null
-      }
       footer={
         <>
           {whyWait > 0 ? <WaitHint>{waitHint}</WaitHint> : null}
@@ -328,17 +314,26 @@ export default function Profile() {
           >
             {t('profile.next')}
           </Btn>
-          <Btn
-            variant="ghost"
-            size="sm"
-            pill
-            center
-            busy={leaving}
-            disabled={busy}
-            onPress={() => void leave()}
-          >
-            {t('profile.sign_out')}
-          </Btn>
+          {/* One quiet action under the main one (design Onboarding.jsx:66–69). On the parents'
+              page it is the way back to the child's details — the way out is one tap further,
+              on the page before; a third row would take the form's room above the keyboard. */}
+          {parentStep ? (
+            <Btn variant="ghost" size="sm" pill full onPress={() => setStep('learner')}>
+              {t('profile.back')}
+            </Btn>
+          ) : (
+            <Btn
+              variant="ghost"
+              size="sm"
+              pill
+              full
+              busy={leaving}
+              disabled={busy}
+              onPress={() => void leave()}
+            >
+              {t('profile.sign_out')}
+            </Btn>
+          )}
         </>
       }
     >
@@ -354,26 +349,22 @@ export default function Profile() {
       )}
       {relation && !parentStep ? (
         <>
-          <Labelled label={relation === 'self' ? t('profile.name_self') : t('profile.name_child')}>
-            <Field
-              clearable
-              value={name}
-              onChangeText={setName}
-              maxLength={40}
-              // Autocorrect must never rewrite the name Buddy will call her by.
-              autoCorrect={false}
-              spellCheck={false}
-              autoCapitalize="words"
-              // The phones want RN's token, the browser the HTML one — "name-given" is
-              // not a valid autocomplete value in HTML (axe: autocomplete-valid, #73).
-              autoComplete={Platform.OS === 'web' ? 'given-name' : 'name-given'}
-              textContentType="givenName"
-              returnKeyType="done"
-              accessibilityLabel={
-                relation === 'self' ? t('profile.name_self') : t('profile.name_child')
-              }
-            />
-          </Labelled>
+          <Field
+            label={relation === 'self' ? t('profile.name_self') : t('profile.name_child')}
+            clearable
+            value={name}
+            onChangeText={setName}
+            maxLength={40}
+            // Autocorrect must never rewrite the name Buddy will call her by.
+            autoCorrect={false}
+            spellCheck={false}
+            autoCapitalize="words"
+            // The phones want RN's token, the browser the HTML one — "name-given" is
+            // not a valid autocomplete value in HTML (axe: autocomplete-valid, #73).
+            autoComplete={Platform.OS === 'web' ? 'given-name' : 'name-given'}
+            textContentType="givenName"
+            returnKeyType="done"
+          />
           {/* Language before the date: the date fields open the keyboard, and a
                   section below them was simply never seen (user feedback 2026-09-28 —
                   "Let's go" was tappable while fields still hid under the keyboard).
@@ -423,47 +414,39 @@ export default function Profile() {
               </Text>
             )}
             {tooYoungSelf ? (
-              // Not a dead end: what applies, and the real next step (user feedback #5).
-              <Card tone="lavender" padding={SPACE.lg}>
-                <View style={{ gap: RHYTHM.parts }}>
-                  <Text style={[TYPE.body, { color: palette.ink }]}>
-                    {t('profile.too_young_self')}
-                  </Text>
-                  <Btn pill variant="outline" icon="shield" onPress={adultIsHere}>
-                    {t('profile.adult_here')}
-                  </Btn>
-                </View>
-              </Card>
+              // Not a dead end: what applies, and the real next step (user feedback #5). Words on
+              // the page, no tinted box: lavender is Buddy's state or a choice (HANDOFF §4).
+              <View style={{ gap: RHYTHM.parts, paddingTop: SPACE.xs }}>
+                <Text style={[TYPE.paragraph, { paddingHorizontal: SPACE.xs }]}>
+                  {t('profile.too_young_self')}
+                </Text>
+                <Btn pill variant="outline" icon="shield" onPress={adultIsHere}>
+                  {t('profile.adult_here')}
+                </Btn>
+              </View>
             ) : null}
           </Labelled>
         </>
       ) : null}
       {parentStep && handedOver ? (
         // The account was made by the teenager: say whose e-mail it runs on.
-        <Text style={[TYPE.small, { color: palette.ink, paddingHorizontal: SPACE.xs }]}>
+        <Text style={[TYPE.paragraph, { paddingHorizontal: SPACE.xs }]}>
           {t('profile.handover_email', { email: currentSession()?.email ?? '' })}
         </Text>
       ) : null}
       {parentStep ? (
-        // The plain parent form carries consent and PIN; notifications are asked next.
-        // Required fields and explanation remain reachable above the pinned action.
-        <View>
-          <View style={{ gap: compact ? SPACE.sm : SPACE.md }}>
-            <Checkbox checked={consent} onChange={setConsent} label={t('profile.child_consent')} />
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: RHYTHM.parts,
-                marginTop: PROFILE.pinGap,
-              }}
-            >
-              <Icon name="shield" size={PROFILE.shield} color={palette.primary} />
+        // The parents' page as the design has it (Onboarding.jsx:70–86): the consent as a tick
+        // row, then the PIN as one block. Notifications are asked on the next page (ContactStep).
+        <>
+          <Checkbox checked={consent} onChange={setConsent} label={t('profile.child_consent')} />
+          <View style={{ gap: SPACE.md }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: RHYTHM.parts }}>
+              <Icon name="shield" size={PROFILE.shield} color={palette.primaryDk} />
               <Text style={[TYPE.title, { flex: 1 }]}>{t('profile.pin_title')}</Text>
             </View>
             <Text style={TYPE.paragraph}>{t('profile.pin_body')}</Text>
             {/* Visible labels: the second field is the repetition (user feedback #20). */}
-            <View style={{ flexDirection: 'row', gap: RHYTHM.parts }}>
+            <View style={{ flexDirection: 'row', gap: SPACE.md }}>
               <View style={{ flex: 1 }}>
                 <Field
                   label={t('profile.pin_label')}
@@ -503,15 +486,17 @@ export default function Profile() {
             {pinRepeat.length === 4 && pin !== pinRepeat ? (
               <Text
                 accessibilityLiveRegion="polite"
-                style={[TYPE.small, { color: palette.danger }]}
+                style={[TYPE.meta, { color: palette.danger, paddingHorizontal: SPACE.xs }]}
               >
                 {t('profile.pin_mismatch')}
               </Text>
             ) : (
-              <Text style={[TYPE.small, { color: palette.ink2 }]}>{t('profile.pin_forgot')}</Text>
+              <Text style={[TYPE.meta, { paddingHorizontal: SPACE.xs }]}>
+                {t('profile.pin_forgot')}
+              </Text>
             )}
           </View>
-        </View>
+        </>
       ) : null}
     </SetupStep>
   );
@@ -557,17 +542,17 @@ function Handover({
       orbState="happy"
       title={t('profile.handover_title')}
       footer={
-        <View style={{ gap: SPACE.md }}>
-          <Text style={[TYPE.bodyStrong, { textAlign: 'center' }]}>
+        <>
+          <Text style={[TYPE.title, { textAlign: 'center', paddingBottom: SPACE.md }]}>
             {t('profile.handover_body', { name })}
           </Text>
           <Btn size="lg" pill full busy={busy} onPress={onDone}>
             {t('profile.handover_cta', { name })}
           </Btn>
-        </View>
+        </>
       }
     >
-      <CheckPoints points={points} plain />
+      <CheckPoints points={points} />
     </SetupStep>
   );
 }
@@ -581,8 +566,13 @@ function Handover({
 function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
   const { t } = useTranslation('auth');
   const settings = useSettings();
+  // Buddy speaks while a sample is being read, and only then (design Onboarding.jsx:103 shows
+  // the page mid-sample): the orb's pose follows the voice, not the page.
+  const voice = useBuddyVoice();
   return (
     <SetupStep
+      step="voice"
+      orbState={voice.phase === 'speaking' ? 'speak' : 'idle'}
       title={t('profile.voice_title')}
       lead={t('profile.voice_body')}
       footer={
@@ -596,10 +586,13 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
   );
 }
 
-/** A row of the profile step: its label, and the field under it. */
+/**
+ * A row of the profile step whose control has no label of its own (the language, the Bundesland,
+ * the three date fields together): the label a `Field` draws, at the same distance.
+ */
 function Labelled({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <View style={{ gap: SPACE.sm }}>
+    <View style={{ gap: UI.field.labelGap }}>
       <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>{label}</Text>
       {children}
     </View>

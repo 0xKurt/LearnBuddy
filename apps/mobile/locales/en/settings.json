@@ -201,7 +201,6 @@
     },
     "hint": "On this device only. You can change it any time.",
     "mode": {
-      "system": "Like the phone",
       "light": "Light",
       "dark": "Dark"
     },

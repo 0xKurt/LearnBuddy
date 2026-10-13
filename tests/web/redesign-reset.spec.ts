@@ -51,6 +51,12 @@ for (const family of ['pastell', 'ocean'] as const) {
       const field = page.getByLabel('E-Mail', { exact: true });
       const submit = page.getByRole('button', { name: requestName, exact: true });
       await expect(submit).toBeDisabled();
+      // The margin of the pages before the app (design Flows.jsx:257, #599).
+      const heading = await page
+        .getByRole('heading', { name: 'Dieser Link gilt nicht mehr' })
+        .boundingBox();
+      expect(heading).not.toBeNull();
+      expect(heading!.x).toBe(20);
       for (const phone of PHONES) {
         await page.setViewportSize(phone);
         await wholeAboveAction(page, field);

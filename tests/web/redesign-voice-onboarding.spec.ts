@@ -50,6 +50,8 @@ for (const { look, french } of cases)
         })
         .getByRole('radio'),
     ).toHaveCount(6);
+    // The third of the setup's four (design Onboarding.jsx:103, #599).
+    await expect(page.getByText(french ? '3 sur 4' : '3 von 4', { exact: true })).toBeVisible();
     const copy = (french ? buddyFr : buddyDe).voice_pick;
     const continueLabel = (french ? authFr : authDe).profile.voice_cta;
     for (const name of Object.values(copy.name))

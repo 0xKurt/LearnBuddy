@@ -35,7 +35,7 @@ import { chooseDeviceLocale, currentLocale } from '../lib/i18n/index.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
-import { GUTTER, pinnedBar, RHYTHM, SPACE } from '../lib/theme/space.js';
+import { GUTTER_OUTER, pinnedBar, SPACE } from '../lib/theme/space.js';
 import { formDensity } from '../lib/keyboard.js';
 import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 
@@ -229,10 +229,11 @@ export default function Welcome() {
         <ScrollView
           testID="scroll-form"
           contentContainerStyle={{
-            paddingHorizontal: GUTTER,
+            // The margin before the app (design tokens/space.css `--space-gutter`).
+            paddingHorizontal: GUTTER_OUTER,
             // Tight: the form is the first thing, so it gets SPACE.md from the edge, not 4.
             paddingTop: AUTH.top,
-            paddingBottom: AUTH.bottom,
+            paddingBottom: AUTH.formBottom,
             gap,
           }}
           keyboardShouldPersistTaps="handled"
@@ -302,18 +303,19 @@ export default function Welcome() {
             </Card>
           ) : null}
 
-          <Segmented
-            options={[
-              { value: 'signup', label: t('welcome.mode_signup') },
-              { value: 'signin', label: t('welcome.mode_signin') },
-            ]}
-            value={mode}
-            onChange={(m) => {
-              setMode(m);
-              clearFailure();
-            }}
-          />
-          <View style={{ gap: RHYTHM.parts }}>
+          {/* The switch, the fields and the line under them are one group (Welcome.jsx:18–24). */}
+          <View style={{ gap: AUTH.formGap }}>
+            <Segmented
+              options={[
+                { value: 'signup', label: t('welcome.mode_signup') },
+                { value: 'signin', label: t('welcome.mode_signin') },
+              ]}
+              value={mode}
+              onChange={(m) => {
+                setMode(m);
+                clearFailure();
+              }}
+            />
             <Field
               value={email}
               onChangeText={(v) => {
@@ -324,6 +326,7 @@ export default function Welcome() {
               }}
               onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
               label={t('welcome.email')}
+              placeholder={t('welcome.email_placeholder')}
               accessibilityLabel={t('welcome.email')}
               autoCapitalize="none"
               autoCorrect={false}
@@ -404,25 +407,33 @@ export default function Welcome() {
                 errorMessage={repeatError ? t('new_password.mismatch') : undefined}
               />
             ) : null}
+            {mode === 'signin' ? (
+              resetSent ? (
+                <Card tone="mint">
+                  <Text style={TYPE.body}>{t('welcome.reset_sent')}</Text>
+                </Card>
+              ) : (
+                <Btn variant="ghost" size="sm" pill busy={resetBusy} onPress={() => void forgot()}>
+                  {t('welcome.forgot')}
+                </Btn>
+              )
+            ) : tight ? null : (
+              <Text style={[TYPE.meta, { paddingHorizontal: AUTH.copyInset }]}>
+                {t('welcome.minor_hint')}
+              </Text>
+            )}
           </View>
-          {mode === 'signin' ? (
-            resetSent ? (
-              <Card tone="mint">
-                <Text style={TYPE.body}>{t('welcome.reset_sent')}</Text>
-              </Card>
-            ) : (
-              <Btn variant="ghost" size="sm" pill busy={resetBusy} onPress={() => void forgot()}>
-                {t('welcome.forgot')}
-              </Btn>
-            )
-          ) : tight ? null : (
-            <Text style={[TYPE.meta, { paddingHorizontal: AUTH.copyInset }]}>
-              {t('welcome.minor_hint')}
-            </Text>
-          )}
         </ScrollView>
         {/* The SafeAreaView keeps the bottom edge: no inset left to clear. */}
-        <View testID="auth-primary" style={[pinnedBar(0), { gap: SPACE.sm }]}>
+        <View
+          testID="auth-primary"
+          style={[
+            pinnedBar(0),
+            // The design's lower edge where the page has room; a small phone keeps the three
+            // fields whole above the action instead (rule 16, tests/web/redesign-welcome.spec.ts).
+            { gap: SPACE.sm, paddingBottom: compact ? AUTH.compactBottom : AUTH.bottom },
+          ]}
+        >
           {failure ? (
             <>
               <Text

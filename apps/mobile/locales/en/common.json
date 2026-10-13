@@ -94,6 +94,6 @@
     "next": "Next",
     "start": "Let's go",
     "skip": "Skip",
-    "step_label": "Step {{n}} of {{count}}"
+    "step_label": "{{n}} of {{count}}"
   }
 }

@@ -1,5 +1,7 @@
 # Consent migration — screen 5c
 
+> **Changed by #599 (onboarding area).** This ledger describes the state of #548. The page says "1 von 4" while it is the setup (no profile yet; `components/auth/setupSteps.ts`), nothing when a changed text is agreed to later. `CheckPoints` is plain rows only: the boxed variants and `ONBOARDING.legacyFacts` are gone. Margin 20 (`GUTTER_OUTER`).
+
 Tracking #548. Integrated onto merged Reset #554 (`f3e76a43`); Welcome #553 and foundations #549–#552 are dependencies.
 
 ## Scope and replacements

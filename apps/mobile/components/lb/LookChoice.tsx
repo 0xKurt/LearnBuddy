@@ -78,21 +78,20 @@ export function FamilyChoice({ variant = 'settings' }: { variant?: 'settings' | 
 }
 
 /**
- * System / light / dark. In the settings it stands in a row that already asks the question
- * (ui_kits/app/Settings.jsx:32–34), so it is the switch alone, and "System" is the design's short
- * word — "Wie das Handy" broke into two lines on a 360 pt phone. The setup keeps its own label
- * and the longer words.
+ * System / light / dark, with "System" as the design's short word in both places
+ * (ui_kits/app/Settings.jsx:32–34, Gaps.jsx:34) — "Wie das Handy" broke into two lines on a
+ * 360 pt phone. In the settings it stands in a row that already asks the question, so it is the
+ * switch alone; the setup puts its own label above it.
  */
 export function ModeChoice({ variant = 'onboarding' }: { variant?: 'settings' | 'onboarding' }) {
   const { t } = useTranslation('settings');
   const { mode, choose } = useTheme();
   const bare = variant === 'settings';
-  const options: Array<{ value: Mode; label: string }> = (['system', 'light', 'dark'] as const).map(
-    (value) => ({
-      value,
-      label: bare && value === 'system' ? t('look.mode_system_short') : t(`look.mode.${value}`),
-    }),
-  );
+  const options: Array<{ value: Mode; label: string }> = [
+    { value: 'system', label: t('look.mode_system_short') },
+    { value: 'light', label: t('look.mode.light') },
+    { value: 'dark', label: t('look.mode.dark') },
+  ];
   const control = (
     <Segmented options={options} value={mode} onChange={(next) => choose({ mode: next })} />
   );

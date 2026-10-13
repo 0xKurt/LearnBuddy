@@ -46,6 +46,11 @@ export function bottomRoom(safeBottom: number, gap: number = SPACE.lg): number {
   return safeBottom + gap;
 }
 
+/** The bar pinned under a page before the app (sign-in, reset, setup): its margin is theirs. */
 export function pinnedBar(safeBottom: number): ViewStyle {
-  return { paddingHorizontal: GUTTER, paddingTop: SPACE.sm, paddingBottom: bottomRoom(safeBottom) };
+  return {
+    paddingHorizontal: GUTTER_OUTER,
+    paddingTop: SPACE.sm,
+    paddingBottom: bottomRoom(safeBottom),
+  };
 }

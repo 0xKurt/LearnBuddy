@@ -106,11 +106,19 @@ for (const look of ONBOARDING_LOOKS)
     for (const phone of PHONES) {
       await page.setViewportSize(phone);
       await reachableFields(page);
+      // The way back is the quiet action under "Weiter", in the bar below the page — nothing
+      // stands above Buddy any more (design Onboarding.jsx `OnbPage`, #599). It keeps the margin
+      // of the pages before the app (20) and a whole touch target.
       const back = await page.getByRole('button', { name: 'Zurück', exact: true }).boundingBox();
+      const forward = await next.boundingBox();
       expect(back).not.toBeNull();
-      expect(back!.x).toBe(16);
-      expect(back!.width).toBe(44);
-      expect(back!.height).toBe(44);
+      expect(forward).not.toBeNull();
+      expect(back!.x).toBe(20);
+      expect(back!.width).toBe(phone.width - 40);
+      expect(back!.height).toBeGreaterThanOrEqual(44);
+      expect(back!.y).toBeGreaterThanOrEqual(forward!.y + forward!.height);
+      expect(back!.y + back!.height).toBeLessThanOrEqual(phone.height);
+      await expect(page.getByText('2 von 4', { exact: true })).toBeVisible();
       await shot(page, `profile-parent-fields-${look.family}-${look.dark}-${phone.width}`, {
         phones: [phone],
       });

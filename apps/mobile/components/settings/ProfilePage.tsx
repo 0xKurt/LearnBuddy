@@ -96,8 +96,9 @@ export function ProfilePage({ learner, account, active, pinActive = false, onOpe
                   ? tAuth(`region.names.${learner.curriculum_region}`)
                   : tAuth('region.choose')
               }
-              question={tAuth('region.title_child')}
-              body={tAuth('region.why_child')}
+              // Her own page: the sheet speaks to her, not to her parents about her (#599).
+              question={tAuth('region.title')}
+              body={tAuth('region.why')}
               options={regions}
               selected={learner.curriculum_region}
               disabled={saving}

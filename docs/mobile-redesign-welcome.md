@@ -1,5 +1,7 @@
 # Welcome migration — screen 5a
 
+> **Changed by #599 (onboarding area).** This ledger describes the state of #548. The page keeps the margin of the pages before the app (20, `GUTTER_OUTER`; `pinnedBar()` too). The switch, the fields and the line under them are one group 12 apart (`AUTH.formGap`, `ui_kits/app/Welcome.jsx:18–24`), the e-mail field shows an address to type (`auth:welcome.email_placeholder`), and the pinned action keeps the design's lower edge of 26 where the page is roomy. "Passwort wiederholen" stays (owner 28.09.).
+
 Tracking #548. Preflight scope announced before implementation: `app/welcome.tsx`, pure `components/lb/LanguageChoice.tsx` and its tests, `lib/theme/auth.ts`, Welcome/language browser tests, the scoped auth-form fit rule, and design/UX ledgers. No locale, route, authentication library, API, schema or dependency changes.
 
 ## Replacements and preserved behavior

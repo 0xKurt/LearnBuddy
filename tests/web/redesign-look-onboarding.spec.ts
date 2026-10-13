@@ -19,10 +19,13 @@ for (const look of ONBOARDING_LOOKS)
       await page.getByRole('button', { name: 'Weiter', exact: true }).click();
     await expect(page.getByText('Sag es Buddy einfach', { exact: true })).toBeVisible();
     for (let stage = 0; stage < 3; stage++) {
+      // The explaining cards are none of the setup's four (#599).
+      await expect(page.getByText(/von 4$/)).toHaveCount(0);
       await onboardingShots(page, `intro-${look.family}-${look.dark}-${stage}`, look);
       await page.getByRole('button', { name: 'Weiter', exact: true }).click();
     }
     await expect(page.getByText('Such dir deine Farben aus', { exact: true })).toBeVisible();
+    await expect(page.getByText('4 von 4', { exact: true })).toBeVisible();
     const family = page.getByRole('radio', {
       name: look.family === 'ocean' ? 'Meer' : 'Pastell',
       exact: true,
@@ -33,8 +36,8 @@ for (const look of ONBOARDING_LOOKS)
     await mode.click();
     await expect(mode).toBeChecked();
     await onboardingShots(page, `look-${look.family}-${look.dark}`, look);
-    await page.getByRole('radio', { name: 'Wie das Handy', exact: true }).click();
-    await expect(page.getByRole('radio', { name: 'Wie das Handy', exact: true })).toBeChecked();
+    await page.getByRole('radio', { name: 'System', exact: true }).click();
+    await expect(page.getByRole('radio', { name: 'System', exact: true })).toBeChecked();
     await page.emulateMedia({ colorScheme: look.dark ? 'dark' : 'light' });
     // OS appearance changes rebuild native views; wait for the actual palette paint.
     const primary = Number.parseInt(

@@ -1,5 +1,7 @@
 # Voice onboarding and shared picker
 
+> **Changed by #599 (onboarding area).** This ledger describes the state of #548. The step says "3 von 4", and the orb speaks while a sample is being read (`useBuddyVoice`), as the design shows the page (`ui_kits/app/Onboarding.jsx:103`). The tiles themselves are unchanged.
+
 Integrated on published main `ff84060040e997149e608210e40932706980911a`, including Contact #557 and isolated database fixture fix #559. VoiceStep uses the left-aligned onboarding shell and one pinned Continue action. The shared picker presents the six actual voices in three columns, with a full-width named radio above a separate preview/stop target. Each target is at least 44 pt; descriptions remain visible beneath the tiles. Selected tiles use the active primaryLt surface and primary frame.
 
 ## Files and tokens

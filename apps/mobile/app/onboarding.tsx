@@ -18,8 +18,6 @@ import { prefetchHome, useMe, useSettings } from '../lib/api/queries.js';
 import { gateRoute } from '../lib/gate.js';
 import { registerDeviceForPush } from '../lib/push.js';
 import { useAnnounce } from '../lib/announce.js';
-import { formDensity } from '../lib/keyboard.js';
-import { useVisibleHeight } from '../lib/useVisibleHeight.js';
 import { INTRO } from '../lib/theme/intro.js';
 import { RHYTHM, SPACE } from '../lib/theme/space.js';
 
@@ -50,8 +48,6 @@ export default function Onboarding() {
       return value;
     });
   };
-  const view = useVisibleHeight();
-  const compact = formDensity(view.window, view.overlap) !== 'roomy';
   const key = STEPS[step] ?? 's1';
   const last = step === STEPS.length - 1;
   const settings = useSettings();
@@ -84,10 +80,13 @@ export default function Onboarding() {
 
   return (
     <SetupStep
-      orbState={last ? 'happy' : 'idle'}
+      // Buddy rests on all four cards, the colours included (design Gaps.jsx:20: no pose given);
+      // he is happy on the hand-over, where something is done (Onboarding.jsx:128).
       title={t(`onboarding.${key}_title`)}
       lead={t(`onboarding.${key}_body`)}
-      step={t('onboarding.step_label', { n: step + 1, count: STEPS.length })}
+      // The colours are the last of the setup's four; the three cards before them explain and
+      // settle nothing, so they carry no number (components/auth/setupSteps.ts).
+      step={last ? 'look' : undefined}
       footer={
         <>
           <Btn size="lg" pill full onPress={() => (last ? done() : setStep((s) => s + 1))}>
@@ -101,11 +100,12 @@ export default function Onboarding() {
         </>
       }
     >
+      {/* Two blocks of the page, at the page's own distance (design Gaps.jsx:21–36). */}
       {key === 's4' ? (
-        <View style={{ gap: compact ? SPACE.sm : SPACE.md }}>
+        <>
           <FamilyChoice variant="onboarding" />
           <ModeChoice />
-        </View>
+        </>
       ) : null}
       {step === 0 ? (
         <View
