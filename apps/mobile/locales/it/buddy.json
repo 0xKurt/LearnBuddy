@@ -138,12 +138,11 @@
     "practice": "Fare un po’ di pratica"
   },
   "menu": {
-    "open": "Apri il menu",
     "title": "Altro",
     "memory": "Cosa sa Buddy di te",
     "library": "Il tuo materiale",
     "settings": "Impostazioni",
-    "short": "Altro"
+    "history": "Cronologia"
   },
   "message": {
     "title_buddy": "Messaggio di Buddy",

@@ -45,3 +45,21 @@ Task visualization directory `learnbuddy-redesign/chat` contains external diagno
 Diagnostic specs are artifact-only and removed from discovery. Native runtime, physical voice/provider behavior and in-flight platform gesture cancellation remain unverified. Talk's analogous active-scroll work belongs to its later unit. These checks do not claim native compliance or a final whole-app walkthrough.
 
 The later History unit must exercise the shared chooser, its keyed modal error and genuine failed retry/success on the actual History screen after this unit publishes. Current Chat runtime does not claim that separate screen proof. The 64-sheet/card images precede the final factual-text-only correction; the 16 narrow images prove those current text roles. Prior 32 PNGs in `matrix-before-undo-sheet` are provenance for the previous inline undo surface, not final sheet proof.
+
+## Correction of 13 October (#599, area chat)
+
+The audit of 12 October found the thread off the design; what this document says above about
+these parts no longer holds:
+
+- Buddy's lines stand beside his mini orb (`ThreadOrb`, 26 pt, the existing `BuddyOrb`): at the
+  newest line only, older lines keep the column (`Message.jsx:17–19`). The typing status is the
+  22 pt orb and three still dots (`Cards.jsx:96–103`), not a line of text.
+- A receipt is `Chip tone="receipt"` under the line's text; "Zurücknehmen" is a quiet line
+  (ink-2 600 14 with the undo sign, `Gaps.jsx:83–85`), no longer a ghost button. The undo sheet
+  and its logic are unchanged.
+- `NoticeBubble` is gone and `OfferShell` only serves `RehearseCard` until its group: every
+  offer and every notice in the thread is `components/buddy/ChatCard.tsx` (`PracticeReady` /
+  `ChatCard`, `PracticeReady.jsx`), full width, 16 inside.
+- The ⋯ menu is one list of six places on every screen (`App.jsx:125–134`); the four ways to
+  start moved into the start sheet "Was willst du üben?" (`Extra.jsx` `StartSheet`,
+  `Modes.jsx` `ChoiceList`), which the chat's menu leads to.

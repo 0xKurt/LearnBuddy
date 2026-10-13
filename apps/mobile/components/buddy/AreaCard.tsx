@@ -1,21 +1,14 @@
 // Buddy pointed to a part of the app ("Zeig mir meine Blätter", "Ich will
 // die Sprache ändern"): one button that opens it. Nothing happens on its own.
 // A photo is no screen of its own (issue #519): its button opens the chat's + menu.
+// Drawn as the thread's one card (`ChatCard`, #599).
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { router, usePathname, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
 
 import { askAttach, attachInChat } from '../../lib/capture/attachRequest.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { SHADOW } from '../../lib/theme/shadow.js';
-import { CHAT as CHAT_STYLE } from '../../lib/theme/chat.js';
-import { UI } from '../../lib/theme/components.js';
-import { TYPE } from '../../lib/theme/type.js';
-import { circle, RADIUS } from '../../lib/theme/radius.js';
-import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
-import { Btn } from '../lb/Btn.js';
-import { Icon, type IconName } from '../lb/Icon.js';
+import type { IconName } from '../lb/Icon.js';
+import { ChatCard } from './ChatCard.js';
 
 type Area = Extract<ActionSummary, { tool: 'open_area' }>['area'];
 
@@ -37,11 +30,7 @@ const AREA_ICON: Record<Area, IconName> = {
   capture: 'camera',
 };
 
-/** The round mark with the area's icon. */
-const DISC = UI.iconButton.composer;
-
 export function AreaCard({ area }: { area: Area }) {
-  const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   const here = usePathname();
   const label = t(`area.${area}`);
@@ -54,35 +43,15 @@ export function AreaCard({ area }: { area: Area }) {
     else attachInChat({ open: 'menu' });
   };
   return (
-    <View
-      style={[
-        {
-          backgroundColor: palette.paper,
-          borderRadius: RADIUS.lg,
-          padding: CARD_PAD.snug,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: SPACE.md,
-        },
-        SHADOW.soft,
-      ]}
-    >
-      <View
-        style={{
-          width: DISC,
-          height: DISC,
-          borderRadius: circle(DISC),
-          backgroundColor: palette.lavender,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Icon name={AREA_ICON[area]} size={CHAT_STYLE.overlay.glyph} color={palette.primary} />
-      </View>
-      <Text style={[TYPE.cell, { flex: 1 }]}>{label}</Text>
-      <Btn size="sm" pill onPress={open} accessibilityLabel={t('area.open_label', { what: label })}>
-        {t('area.open')}
-      </Btn>
-    </View>
+    <ChatCard
+      tone="accent"
+      icon={AREA_ICON[area]}
+      title={label}
+      primary={{
+        label: t('area.open'),
+        accessibilityLabel: t('area.open_label', { what: label }),
+        onPress: open,
+      }}
+    />
   );
 }

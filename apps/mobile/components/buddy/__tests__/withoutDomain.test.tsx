@@ -66,6 +66,9 @@ describe('the core without a domain', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Einstellungen' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Verlauf' })).toBeTruthy();
+    // No way into a start sheet nobody fills (#599), and none of a domain's ways.
+    expect(screen.queryByRole('button', { name: 'Was willst du üben?' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Hausaufgabe' })).toBeNull();
   });
 });

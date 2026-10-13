@@ -1716,7 +1716,8 @@ only after the app is closed and opened again do they show up as what waits.
 dem extra step"). There is no capture screen any more: every place that asks for a page hands its
 wish to the chat's input bar (`lib/capture/attachRequest.ts`: what the pages are for — step, goal,
 homework, the sheet whose pages they complete — and what opens first). The card "Foto machen", the
-⋯ menu's homework and vocabulary "Foto", "Nochmal fotografieren" for missing pages and "Neues
+⋯ menu's "Blatt fotografieren" (from any screen: back to the chat, then its bar), the start
+sheet's homework and vocabulary "Foto", "Nochmal fotografieren" for missing pages and "Neues
 Foto" for a sheet that could not be read open the **camera at once**; the library, a subject, a
 sheet's "Seite hinzufügen" and Buddy's "Fotos" area open the **+ menu** (`AttachMenu`: Kamera ·
 Fotos · Dateien, with one line of what the pages are for, or the photo tip, and the privacy line).
@@ -5495,7 +5496,9 @@ card next to "nothing working" — the app polls closely only while something is
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx` puts the screen
 together from parts with one job each (issue #311): what is drawn in `components/buddy/HomeTop`
 (the layer on top), `HomeThread` (the conversation, its fade and "↓ Neue Antwort"), `HomeIntro`
-(before there is a conversation), `HomeNotices` and `StartSheets` (the ⋯ menu and its sheets);
+(before there is a conversation), `HomeNotices` and `StartSheets` (the ⋯ menu — one list of six
+places on every screen, `HeaderMenu`/`MenuSheet`, design `ui_kits/app/App.jsx:125–134` — and,
+from the chat, its row into the start sheet "Was willst du üben?" with the ways to start, #599);
 the state in `lib/buddy/useHomeSend` (sending, Stopp, Vorlesen), `useThreadFollow`,
 `useSessionStart`, `homeThread.ts` (pure: what the thread shows), `useHomePhotos`, `useHomeAct`
 and `useContactOptIn`. Top to bottom:
@@ -5519,11 +5522,15 @@ issue #94) and, since issue #204, the prepared practice — the bar names it wit
 count and its minutes, which is word for word what the `prepare_practice` receipt says, so that
 receipt's line leaves the thread while the bar stands (`preparedIn`). It stays in what can be
 taken back, and closing the bar brings the line back. Everything told rather than acted on stands at
-the end of the conversation as a notice with its buttons (`components/buddy/NoticeBubble.tsx`):
+the end of the conversation as the thread's one card with its buttons (`components/buddy/ChatCard.tsx`,
+#599 — the same card every offer under a message is drawn with, design
+`components/practice/PracticeReady.jsx`; a receipt is a canvas chip under Buddy's line and
+"Zurücknehmen" a quiet line of its own, `components/buddy/ThreadParts.tsx`):
 a sheet that could not be read ("Nochmal lesen" right there), a finished practice (the same
 kind words as the summary — never a hit rate; the full summary one tap away), the open
-**decision** (messages to the phone, how the test went — quieter buttons, so there is one
-violet button, the bar's), photos not sent yet, and "Buddy is working"
+**decision** (messages to the phone, how the test went — its answers as pills in the card),
+photos not sent yet, and "Buddy is working" (while a bar is on top, a card's main action is the
+paper button, so there is one violet button, the bar's)
 (`lib/homeLayout.ts` keeps these rules pure and tested). The system notes (no model, background
 work stale) join the layer on top. The bar **lies over** the greeting and the row of ways to
 start, directly under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the
@@ -5941,7 +5948,7 @@ adds something, and draws each of them sensibly while it is empty
   `confirm_delete` go the same way), a message drawn in place of its bubble (roleplay feedback,
   rehearsal result), the line that follows Buddy's voice in /talk, the line on top of the thread
   (a running roleplay), the finished practice among the notices, the stages of a sheet being
-  read, and the ways to start in the ⋯ menu with the sheets they open.
+  read, and the ways to start in the start sheet with the sheets they open.
 - **Text** (`lib/buddy/notation.ts`, `components/lb/InlineText.tsx`, `lib/speech/say.ts`): where
   $…$ math stands (Markdown keeps it whole), how it is drawn (`MathText`) and how it is said.
   Without a domain a reply is plain text without its markers.

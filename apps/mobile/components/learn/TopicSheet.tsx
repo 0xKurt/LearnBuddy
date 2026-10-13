@@ -133,7 +133,8 @@ export function TopicSheet({ kind, onClose }: Props) {
               <Btn
                 key={example}
                 size="sm"
-                variant="soft"
+                // A suggestion is a paper pill with a border (Modes.jsx:99, `TopicSuggestions`).
+                variant="secondary"
                 disabled={preparing}
                 accessibilityHint={t('learn:topic.example_hint')}
                 onPress={() => {

@@ -84,6 +84,14 @@ export const workingOn = slot<(h: BuddyHome) => ReactNode>('Zeile über dem Gesp
 /** How loud a notice's button is: the violet one belongs to the bar on top when there is one. */
 export type Quiet = 'soft' | 'primary';
 
+/**
+ * The button that says it (components/core/Btn.jsx): the paper one while the bar on top holds
+ * the screen's one primary (HANDOFF §4), the primary otherwise.
+ */
+export function quietVariant(quiet: Quiet): 'secondary' | 'primary' {
+  return quiet === 'soft' ? 'secondary' : 'primary';
+}
+
 /** The finished practice, told at the end of the conversation (components/buddy/HomeNotices). */
 export const resultNotice = slot<
   ComponentType<{
@@ -110,8 +118,8 @@ export const readingSteps =
   >('Lese-Stufen');
 
 /**
- * The ways to start in the ⋯ menu and the sheets they open. `open` names one of the domain's
- * own sheets; the menu closes first (two modals in one frame do not come up on iOS).
+ * The ways to start in the start sheet and the sheets they open. `open` names one of the domain's
+ * own sheets; the start sheet closes first (two modals in one frame do not come up on iOS).
  */
 export type StartMenu = {
   items(

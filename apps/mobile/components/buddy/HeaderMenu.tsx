@@ -1,16 +1,28 @@
 // What ⋯ in the head opens — on every screen the same sheet, wired once (#599, owner rule 1;
-// Engineering-Regel 3). The places are always there (`MenuSheet`); a screen may put its own ways
-// before them: the chat its ways to start (`StartSheets`), a practice question its one quiet
-// action. Each way closes the sheet first — some open a sheet of their own, and two modals in
-// one frame do not come up on iOS.
+// Engineering-Regel 3; design ui_kits/app/App.jsx:125–134, one menu for the whole app). The six
+// places are always there (`MenuSheet`); a screen may put its own action before them: the chat
+// the way into its start sheet (`StartSheets`), a sheet its renaming. Each row closes the sheet
+// first — some open a sheet of their own, and two modals in one frame do not come up on iOS.
 
-import { router, usePathname } from 'expo-router';
+import { router, usePathname, type Href } from 'expo-router';
 import { Platform } from 'react-native';
 
-import { MenuSheet, type StartItem } from './MenuSheet.js';
+import { askAttach, attachInChat } from '../../lib/capture/attachRequest.js';
+import { MenuSheet, type Place, type StartItem } from './MenuSheet.js';
 
 /** iOS can't present a sheet while another one is still sliding away. */
 export const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
+
+/** The chat: where a photo is taken (lib/capture/attachRequest.ts). */
+const CHAT = '/buddy';
+
+const ROUTE: Record<Exclude<Place, 'capture'>, Href> = {
+  library: '/library',
+  memory: '/memory',
+  history: '/history',
+  settings: '/settings',
+  profile: '/settings/profile',
+};
 
 type Props = {
   visible: boolean;
@@ -27,13 +39,23 @@ export function HeaderMenu({ visible, onClose, actions = [], canAct = true }: Pr
     onClose();
     setTimeout(go, SHEET_SWAP_MS);
   };
+  const open = (place: Place): void => {
+    // "Blatt fotografieren" is no page (owner 12.10.: photos go through the chat bar): the
+    // chat's bar opens its camera — from any other screen after going back to the chat.
+    if (place === 'capture') {
+      if (here === CHAT) askAttach({ open: 'camera' });
+      else attachInChat({ open: 'camera' });
+      return;
+    }
+    // The place she is already in: the sheet closes and she is there, not there twice.
+    if (ROUTE[place] !== here) router.push(ROUTE[place]);
+  };
   return (
     <MenuSheet
       visible={visible}
-      start={actions.map((action) => ({ ...action, onPress: () => leave(action.onPress) }))}
-      canStart={canAct}
-      // The place she is already in: the sheet closes and she is there, not there twice.
-      onGo={(path) => leave(() => (path === here ? undefined : router.push(path)))}
+      actions={actions.map((action) => ({ ...action, onPress: () => leave(action.onPress) }))}
+      canAct={canAct}
+      onGo={(place) => leave(() => open(place))}
       onClose={onClose}
     />
   );

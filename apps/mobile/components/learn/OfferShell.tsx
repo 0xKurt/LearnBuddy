@@ -1,7 +1,7 @@
-// The frame of an offer Buddy puts under his message: the soft accent card, a row with its icon and
-// what it is in small capitals, and below it what the offer holds. One frame for every offer (to
-// learn, OfferCard; to rehearse or read aloud, RehearseCard, issue #264), so the same kind of thing
-// looks the same in the chat.
+// The frame of the offer to rehearse or read aloud (RehearseCard, issue #264): a paper card, a row
+// with its icon and what it is, and below it what the offer holds. Every other offer and notice in
+// the thread is the one card now (components/buddy/ChatCard.tsx, #599); this frame goes when the
+// roleplay / rehearse group moves RehearseCard onto its design (components/practice/Modes.jsx).
 
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';

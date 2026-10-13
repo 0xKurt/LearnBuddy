@@ -44,6 +44,10 @@ beforeEach(() => {
   motion.cancel.mockClear();
 });
 
+// Buddy's mini orb beside his newest line moves by itself (owner rule 1) — that is his own
+// motion, not an entrance of the thread, which is what these tests count.
+vi.mock('../../lb/BuddyOrb.js', () => ({ BuddyOrb: () => null }));
+
 vi.mock('../../lb/PressArea.js', () => ({
   PressArea: ({ children }: { children: ReactNode | ((pressed: boolean) => ReactNode) }) => (
     <div data-testid="held-message">

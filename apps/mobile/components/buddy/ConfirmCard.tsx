@@ -7,24 +7,25 @@
 // Now the model can only propose; the tap is the answer (docs/UX-PRINCIPLES.md §18 — the
 // library's confirm sheet, in the conversation).
 //
-// Deleting a sheet cannot be taken back, so the card says the name of what would go and
-// never pre-selects the destructive side: "Behalten" is the calm default, and the
-// dangerous button says exactly what it does.
+// Deleting a sheet cannot be taken back, so the card says the name of what would go, and the
+// dangerous button says exactly what it does. It is the thread's one card (`ChatCard`) in the
+// design's confirm shape (components/buddy/Cards.jsx `ConfirmCard`, destructive): the blush
+// tile, the danger ink on a paper pill — never a red fill, never the violet button — and
+// "Behalten" as the ghost beside it.
 
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { answerConfirmation } from '../../lib/api/endpoints.js';
 import { useAnnounce } from '../../lib/announce.js';
 import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { CARD_PAD, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
+import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { toast } from '../lb/Toast.js';
+import { CardChoices, CardDone, ChatCard } from './ChatCard.js';
 
 type Confirm = Extract<ActionSummary, { tool: 'confirm_delete' }>;
 
@@ -58,52 +59,56 @@ export function ConfirmCard({ confirm }: { confirm: Confirm }) {
     }
   }
 
+  const title = t(`buddy:confirm.${what}_title`);
+  // What was decided stays in the card it was asked in (Cards.jsx:42–43).
   if (settled) {
     return (
-      <Card padding={CARD_PAD.base}>
-        <Text style={[TYPE.body, { color: palette.ink2 }]}>{settled}</Text>
-      </Card>
+      <ChatCard tone="warn" icon="trash" title={title} detail={name || null}>
+        <CardDone>{settled}</CardDone>
+      </ChatCard>
     );
   }
 
+  const destroy = t(`buddy:confirm.${what}_delete`);
   return (
-    <Card padding={CARD_PAD.base}>
-      <View style={{ gap: SPACE.md }}>
-        <Text accessibilityRole="header" style={TYPE.title}>
-          {t(`buddy:confirm.${what}_title`)}
-        </Text>
-        {name ? (
-          <Text numberOfLines={3} style={[TYPE.body, { color: palette.ink2 }]}>
-            {name}
-          </Text>
-        ) : null}
-        {/* Said once, plainly: this is the part that cannot be taken back. */}
-        <Text style={[TYPE.small, { color: palette.ink2 }]}>{t(`buddy:confirm.${what}_body`)}</Text>
-        {/* Keeping it is the calm way out and stands first; the other button says what it
-            does, never just "Ja". */}
-        <View style={{ gap: SPACE.sm }}>
-          <Btn
-            pill
-            full
-            busy={busy === 'no'}
-            disabled={busy === 'yes'}
-            onPress={() => void answer(false)}
-          >
-            {t('buddy:confirm.keep')}
-          </Btn>
-          <Btn
-            variant="ghost"
-            pill
-            full
-            center
-            busy={busy === 'yes'}
-            disabled={busy === 'no'}
-            onPress={() => void answer(true)}
-          >
-            {t(`buddy:confirm.${what}_delete`)}
-          </Btn>
-        </View>
-      </View>
-    </Card>
+    <ChatCard
+      tone="warn"
+      icon="trash"
+      title={title}
+      // The name of what would go, then — said once, plainly — that it cannot be taken back.
+      detail={[name, t(`buddy:confirm.${what}_body`)].filter(Boolean).join('\n')}
+    >
+      <CardChoices>
+        {/* The dangerous button says exactly what it does, never just "Ja" — in the danger ink
+            on paper, never a red fill (Cards.jsx:34, :46); keeping it is the quiet way out. */}
+        <Btn
+          variant="secondary"
+          size="sm"
+          busy={busy === 'yes'}
+          disabled={busy === 'no'}
+          onPress={() => void answer(true)}
+          label={
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
+              style={[TYPE.action, { color: palette.danger }]}
+            >
+              {destroy}
+            </Text>
+          }
+        >
+          {destroy}
+        </Btn>
+        <Btn
+          variant="ghost"
+          size="sm"
+          busy={busy === 'no'}
+          disabled={busy === 'yes'}
+          onPress={() => void answer(false)}
+        >
+          {t('buddy:confirm.keep')}
+        </Btn>
+      </CardChoices>
+    </ChatCard>
   );
 }

@@ -1,6 +1,6 @@
-// The sheets the learning domain's ways to start open from the ⋯ menu (issue #174): homework or
-// vocabulary — by photo or typed — and the topic sheet. The menu and which sheet is up are the
-// core's (components/buddy/StartSheets.tsx, issue #107); a sheet is named "homework", "vocab" or
+// The sheets the learning domain's ways to start open (issue #174): homework or vocabulary — by
+// photo or typed — and the topic sheet. The start sheet that lists the ways, and which sheet is
+// up, are the core's (components/buddy/StartSheets.tsx, issue #107); a sheet is named "homework", "vocab" or
 // "topic:<kind>". Each way closes the sheet it came from first: two modals in one frame do not
 // come up on iOS.
 
@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { askAttach } from '../../lib/capture/attachRequest.js';
 import type { StartMenu } from '../buddy/extensions.js';
 import { SHEET_SWAP_MS } from '../buddy/StartSheets.js';
-import { ChoiceSheet } from './ChoiceSheet.js';
+import { ChoiceSheet } from '../buddy/ChoiceSheet.js';
 import { TopicSheet } from './TopicSheet.js';
 import type { TopicKind } from './useStartTopic.js';
 

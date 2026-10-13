@@ -1,5 +1,6 @@
 // First-visit Home: Buddy stays in the shared header; the real learner greeting and
-// three ways to start stand directly above the shared Composer (#548).
+// three ways to start stand directly above the shared Composer (#548), 24 in from the sides and
+// from the bar (design ui_kits/app/Home.jsx:12).
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,6 @@ import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
-import { UI } from '../../lib/theme/components.js';
 import { HOME } from '../../lib/theme/home.js';
 import { ListGroup, Row } from '../lb/ListGroup.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -35,7 +35,8 @@ export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto }: Props) 
       contentContainerStyle={{
         flexGrow: 1,
         justifyContent: 'flex-end',
-        padding: SPACE.lg,
+        paddingHorizontal: SPACE.xl,
+        paddingBottom: SPACE.xl,
         gap: HOME.sections,
       }}
       keyboardShouldPersistTaps="handled"
@@ -62,24 +63,13 @@ export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto }: Props) 
       <ListGroup>
         <Row
           icon="calendar"
-          iconTone="accent"
-          iconSize={UI.iconButton.glyph}
           title={t('buddy:suggest.exam')}
           chevron={false}
           onPress={() => onSend(t('buddy:suggest.exam'))}
         />
-        <Row
-          iconTone="accent"
-          iconSize={UI.iconButton.glyph}
-          icon="camera"
-          title={t('buddy:intro.photo')}
-          chevron={false}
-          onPress={onPhoto}
-        />
+        <Row icon="camera" title={t('buddy:intro.photo')} chevron={false} onPress={onPhoto} />
         <Row
           icon="sparkle"
-          iconTone="accent"
-          iconSize={UI.iconButton.glyph}
           title={t('buddy:intro.practice')}
           chevron={false}
           onPress={() => onSend(t('buddy:intro.practice'))}
