@@ -181,17 +181,19 @@ export default function MaterialScreen() {
 
   // Back to where she came from; opened by a link, to her material.
   const back = () => (router.canGoBack() ? router.back() : router.replace('/library'));
-  // The sheet is not there any more (404): the way back is what is left, as the main action.
+  // The sheet is not there any more (404): the head rests, and `LoadFailed` offers the way back
+  // alone.
   const sheetGone = !data && query.isError && isGone(query.error);
 
   let content: ReactNode;
   if (!data || !material) {
     content = query.isError ? (
-      <LoadFailed error={query.error} busy={query.isFetching} onRetry={() => void query.refetch()}>
-        <Btn variant={sheetGone ? 'primary' : 'ghost'} pill center onPress={back}>
-          {t('library:items.back')}
-        </Btn>
-      </LoadFailed>
+      <LoadFailed
+        error={query.error}
+        busy={query.isFetching}
+        onRetry={() => void query.refetch()}
+        back={{ label: t('library:items.back'), onPress: back }}
+      />
     ) : (
       <QuestionsSkeleton label={t('library:items.loading')} />
     );
@@ -274,7 +276,9 @@ export default function MaterialScreen() {
               body={waiting.body}
               action={
                 waiting.toList ? (
-                  <Btn pill center onPress={back}>
+                  // To her material, as the button says — not "back" to wherever she came from
+                  // (as a subject that is gone does it, app/subject/[id].tsx).
+                  <Btn pill center onPress={() => router.replace('/library')}>
                     {t('library:subject.back')}
                   </Btn>
                 ) : undefined

@@ -127,7 +127,14 @@ export default function Profile() {
   // A learner that exists already and was not made here (a reload right after the setup, decided
   // from the copy kept on the device): she leaves as soon as `/me` says so (lib/gate.ts, #599).
   const me = useMe();
-  const leavesTo = profileLeavesTo(me.data, answering !== null || answered !== null);
+  // "The profile exists already" (`submit`): the page loads `/me` itself and opens the tour. Set
+  // before that, so the `/me` it loads cannot send her to Buddy over the tour.
+  const goingOn = useRef(false);
+  const leavesTo = profileLeavesTo(me.data, {
+    saving: answering !== null,
+    saved: answered !== null,
+    goingOn: goingOn.current,
+  });
   useEffect(() => {
     if (leavesTo) router.replace(leavesTo);
   }, [leavesTo]);
@@ -220,6 +227,7 @@ export default function Profile() {
       if (err instanceof ApiError && err.reason === 'learner_exists') {
         // Not this run's setup: what it showed is unknown, so the colours count nothing.
         noteVoiceStep(undefined);
+        goingOn.current = true;
         await goOn().catch(() => toast.show(messageFor(err), 'error'));
         return;
       }

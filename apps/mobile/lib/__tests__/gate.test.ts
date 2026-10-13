@@ -129,15 +129,25 @@ describe('the profile page with a learner that exists already', () => {
   const done = { account: account(), learner };
   const grown = { account: account(), learner: { own_consent_due: true } as Learner };
 
+  const idle = { saving: false, saved: false, goingOn: false };
+
   it('leaves as soon as `/me` has a learner it did not make on this visit', () => {
-    expect(profileLeavesTo(done, false)).toBe('/buddy');
-    expect(profileLeavesTo(grown, false)).toBe('/consent');
+    expect(profileLeavesTo(done, idle)).toBe('/buddy');
+    expect(profileLeavesTo(grown, idle)).toBe('/consent');
   });
 
   it('stays while there is none, while `/me` is unknown, and through its own later steps', () => {
-    expect(profileLeavesTo({ account: account(), learner: null }, false)).toBeNull();
-    expect(profileLeavesTo(undefined, false)).toBeNull();
-    // The hand-over and the voice follow the learner it just made.
-    expect(profileLeavesTo(done, true)).toBeNull();
+    expect(profileLeavesTo({ account: account(), learner: null }, idle)).toBeNull();
+    expect(profileLeavesTo(undefined, idle)).toBeNull();
+    // While the answer is being saved, and for the hand-over and the voice after it.
+    expect(profileLeavesTo(done, { ...idle, saving: true })).toBeNull();
+    expect(profileLeavesTo(done, { ...idle, saved: true })).toBeNull();
+  });
+
+  // "The profile exists already": the page loads `/me` itself and goes on to the tour. Once the
+  // save is no longer in flight nothing else said "mine", and the page sent her to `/buddy` over
+  // the tour it had just opened (review of #619).
+  it('does not overrule its own way on when the learner turned out to exist already', () => {
+    expect(profileLeavesTo(done, { ...idle, goingOn: true })).toBeNull();
   });
 });

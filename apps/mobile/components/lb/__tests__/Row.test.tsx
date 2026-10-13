@@ -37,6 +37,15 @@ describe('a row with a value', () => {
     expect(value.textAlign).toBe('right');
   });
 
+  // The title must not take the room it does not fill: with it growing, a short value stood
+  // short of the row's edge (Profile "Name" ~44 pt at 360, About "Version" ~78 pt at 390).
+  it('gives the rest of the row to the value, so a short one ends at the edge', () => {
+    renderInApp(<Row title="Version" value="1.4.0" />);
+    expect(column('Version').style.flexGrow).toBe('0');
+    const value = screen.getByText('1.4.0').style;
+    expect([value.flexGrow, value.flexShrink, value.textAlign]).toEqual(['1', '1', 'right']);
+  });
+
   it('leaves a row without one as it was: the title takes the room and wraps in it', () => {
     renderInApp(<Row title="Ein sehr langer Titel, der umbrechen darf" />);
     const title = column('Ein sehr langer Titel, der umbrechen darf').style;

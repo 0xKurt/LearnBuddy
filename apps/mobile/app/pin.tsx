@@ -16,6 +16,7 @@ import { useAnnounce } from '../lib/announce.js';
 import { ApiError } from '../lib/api/client.js';
 import { openAdminSession } from '../lib/api/endpoints.js';
 import { messageFor } from '../lib/errors.js';
+import { afterFirstKey, type PinError } from '../lib/pinError.js';
 import { formatTime } from '../lib/time.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
@@ -26,7 +27,8 @@ export default function Pin() {
   const { palette } = useTheme();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation('auth');
-  const [error, setError] = useState<string | null>(null);
+  const [problem, setProblem] = useState<PinError | null>(null);
+  const error = problem?.text ?? null;
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const done = useRef(false);
@@ -54,17 +56,18 @@ export default function Pin() {
       if (!finishAdmin(true)) clearAdminToken();
       router.back();
     } catch (err) {
-      if (err instanceof ApiError && err.reason === 'wrong_pin') setError(t('pin.wrong'));
+      const stays = (text: string) => setProblem({ text, passes: false });
+      if (err instanceof ApiError && err.reason === 'wrong_pin')
+        setProblem({ text: t('pin.wrong'), passes: true });
       else if (err instanceof ApiError && err.code === 'pin_locked') {
         const until = err.details?.until;
-        setError(
+        stays(
           typeof until === 'string'
             ? t('pin.locked_until', { time: formatTime(until, i18n.language) })
             : t('pin.locked'),
         );
-      } else if (err instanceof ApiError && err.reason === 'pin_not_set')
-        setError(t('pin.not_set'));
-      else setError(messageFor(err));
+      } else if (err instanceof ApiError && err.reason === 'pin_not_set') stays(t('pin.not_set'));
+      else stays(messageFor(err));
       setAttempt((a) => a + 1);
     } finally {
       inFlight.current = false;
@@ -114,8 +117,9 @@ export default function Pin() {
         <View style={{ alignItems: 'center', gap: SPACE.lg }}>
           <PinPad
             onComplete={(pin) => void submit(pin)}
-            // Her next PIN begins: the line about the last one goes with the red dots (#599).
-            onStart={() => setError(null)}
+            // Her next PIN begins: "stimmt nicht" goes with the red dots (#599); a lockout or a
+            // missing PIN is still true and stays (lib/pinError.ts).
+            onStart={() => setProblem(afterFirstKey)}
             resetKey={attempt}
             disabled={busy}
             // The dots turn to the danger colour (components/core/PinPad.jsx); the words stand

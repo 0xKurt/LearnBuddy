@@ -72,12 +72,16 @@ export function guardRoute(
  * from the copy kept on the device, and that copy is written a moment after `/me` changes
  * (lib/api/persist.ts `WRITE_AFTER_MS`), so it can still be the one without a learner (#599).
  * `null`: stay.
+ *
+ * `own`: the page is on its own way and decides itself where it leads — the profile is being
+ * saved, was saved on this visit (the hand-over and the voice follow), or turned out to exist
+ * already and the page is going on to the tour.
  */
 export function profileLeavesTo(
   me: Me | undefined,
-  madeHere: boolean,
+  own: { saving: boolean; saved: boolean; goingOn: boolean },
 ): Exclude<GateRoute, '/profile'> | null {
-  if (madeHere || !me?.learner) return null;
+  if (own.saving || own.saved || own.goingOn || !me?.learner) return null;
   const belongs = gateRoute(me);
   return belongs === '/profile' ? null : belongs;
 }

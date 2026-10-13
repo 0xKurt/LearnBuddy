@@ -131,10 +131,11 @@ export function Row({
       <View
         style={[
           { gap: UI.list.lineGap },
-          // Beside a value the title is never squeezed: it keeps its own width up to its share,
-          // and a long value wraps in what is left (#599). Alone it takes the row.
+          // Beside a value the title is never squeezed: it keeps its own width up to its share
+          // and takes no more than that — the rest of the row is the value's (#599). Alone it
+          // takes the row.
           value
-            ? { flexGrow: 1, flexShrink: 0, flexBasis: 'auto', maxWidth: UI.list.titleShare }
+            ? { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', maxWidth: UI.list.titleShare }
             : { flex: 1, minWidth: 0 },
         ]}
       >
@@ -150,7 +151,11 @@ export function Row({
         {sub ? <Text style={TYPE.meta}>{sub}</Text> : null}
       </View>
       {value ? (
-        <Text style={[TYPE.listValue, { flexShrink: 1, textAlign: 'right' }]}>{value}</Text>
+        // The rest of the row: a short value ends at the row's edge (or before its chevron), a
+        // long one wraps there, right-aligned.
+        <Text style={[TYPE.listValue, { flexGrow: 1, flexShrink: 1, textAlign: 'right' }]}>
+          {value}
+        </Text>
       ) : null}
       {onPress && chevron && end == null ? (
         <Icon
