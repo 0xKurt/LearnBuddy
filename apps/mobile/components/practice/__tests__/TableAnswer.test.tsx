@@ -124,6 +124,31 @@ describe('a table she fills in', () => {
     expect(screen.queryByRole('button', { name: 'Bruchstrich' })).toBeNull();
   });
 
+  // Owner rule 8 (#599): digits come from the phone's number pad wherever the answer is digits.
+  it('opens the number pad for a whole number, and the full keyboard for any other cell', () => {
+    const wall = {
+      ...VALUES,
+      rows: [
+        [
+          { text: 'f(x)' },
+          { id: 'r0c1', input: 'math' as const, whole: true },
+          { id: 'r0c2', input: 'math' as const, whole: false },
+        ],
+      ],
+    };
+    renderInApp(
+      <TableAnswer view={wall} draftKey="tab-pad" disabled={false} onSubmit={() => undefined} />,
+    );
+    expect(screen.getByLabelText('f(x), 1').getAttribute('inputmode')).toBe('numeric');
+    // A decimal, a fraction or a term needs signs and letters no number pad has.
+    expect(screen.getByLabelText('f(x), 2').getAttribute('inputmode')).not.toBe('numeric');
+    // The pad has no minus: the one key over the table writes it.
+    const cell = screen.getByLabelText('f(x), 1');
+    fireEvent.focus(cell);
+    fireEvent.click(screen.getByRole('button', { name: 'minus' }));
+    expect((cell as HTMLInputElement).value).toBe('-');
+  });
+
   it('keeps word cells free of the math keys', () => {
     renderInApp(
       <TableAnswer view={VERBS} draftKey="tab4" disabled={false} onSubmit={() => undefined} />,

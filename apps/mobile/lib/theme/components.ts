@@ -41,7 +41,6 @@ export const UI = {
     centeredPadding: (height: number) => (height - inputLine()) / 2,
     labelGap: 6,
     maxRows: 5,
-    toolGap: 2,
     composerHorizontal: 10,
     composerBottom: 6,
     toggleIcon: 20,

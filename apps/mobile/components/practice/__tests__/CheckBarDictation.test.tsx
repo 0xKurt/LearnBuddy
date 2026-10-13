@@ -10,9 +10,6 @@ const dictation = vi.hoisted(() => ({
   purpose: '',
   cancel: vi.fn(),
 }));
-vi.mock('../../../lib/theme/composer.js', () => ({
-  COMPOSER: { slot: 40, rows: { tall: 3, roomy: 10, tight: 4 } },
-}));
 vi.mock('../../voice/useVoiceInput.js', () => ({
   useVoiceInput: ({ onText, purpose }: { onText: (said: string) => void; purpose: string }) => {
     dictation.onText = onText;
@@ -20,8 +17,8 @@ vi.mock('../../voice/useVoiceInput.js', () => ({
     return { state: 'idle', cancel: dictation.cancel };
   },
 }));
-vi.mock('../../lb/InputBar.js', () => ({
-  InputBar: ({
+vi.mock('../../lb/Composer.js', () => ({
+  Composer: ({
     value,
     voice,
     micLabel,
@@ -37,6 +34,7 @@ vi.mock('../../lb/InputBar.js', () => ({
       <button disabled={disabled} aria-label={micLabel} data-has-voice={String(Boolean(voice))} />
     </div>
   ),
+  ActionPill: () => null,
 }));
 
 function Board({ disabled = false }: { disabled?: boolean }) {

@@ -197,7 +197,7 @@
     "undo": "Undo",
     "toggle_on": "{{label}}, on",
     "bar_crowded": "There is no room for another symbol in bar {{n}}.",
-    "bar_hint": "Tap where the note should go. Then move it with “Higher” and “Lower”.",
+    "bar_hint": "Tap where the note should go. Without a tap it lands on the middle line; then move it with “Higher” and “Lower” in the actions, or with the arrow keys.",
     "higher": "Higher",
     "lower": "Lower",
     "placed": "{{what}} {{where}}, bar {{bar}}",
@@ -268,6 +268,7 @@
   "drill": {
     "progress": "Task {{current}} of {{total}}",
     "end_hint": "Back to Buddy. What you worked out stays saved.",
+    "placeholder": "Result …",
     "slash": "Fraction bar",
     "right": "Right: {{task}}",
     "was": "It was: {{task}}",

@@ -9,9 +9,9 @@
 // the fact comes back through the schedule.
 //
 // No count of misses at the end (CLAUDE.md rule 6): one line about a row, from the server.
-// Minimalism (#224): no settings, no instructions, no timer, no score. The head carries only
-// what every practice head has (`HeadActions`): the Vorlesen switch — on, the task is read
-// aloud, a tap on it reads it again (#434) — and the round ✕.
+// Minimalism (#224): no settings, no instructions, no timer, no score. The head is the one
+// head of every screen (`Screen`, #599): the round ✕, Buddy, the Vorlesen switch — on, the task
+// is read aloud, a tap on it reads it again (#434).
 
 import type { SessionItemView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
@@ -25,13 +25,13 @@ import { newId } from '../../lib/api/client.js';
 import { answerDrill, startDrill } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
+import { practiceHeadState } from '../../lib/buddy/headState.js';
 import { haptic } from '../../lib/haptics.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Composer } from '../lb/Composer.js';
 import { KeyRow } from '../lb/KeyRow.js';
-import { ReadAloudSwitch } from '../lb/ReadAloudSwitch.js';
 import { DRILL } from '../../lib/theme/drill.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { CARD_PAD } from '../../lib/theme/space.js';
@@ -99,6 +99,8 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
   const lastItem = lastSent ? session.items.find((i) => i.item.id === lastSent[0]) : undefined;
 
   const last = drill.last;
+  /** The verdict that was already there when the round came on screen: old news to the orb. */
+  const lastAtStart = useRef(last?.item_id ?? null);
   // A screen reader hears what the server decided about the task she just answered.
   useEffect(() => {
     if (last && pending.size === 0) {
@@ -119,16 +121,20 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
         try {
           const view = await answerDrill(session.id, next.itemId, next.text);
           queue.current.shift();
+          if (view.drill?.last?.item_id === next.itemId) {
+            if (view.drill.last.correct) haptic.success();
+            else haptic.soft();
+          }
+          // The server's view first, then the task off the waiting list: storing it takes a
+          // moment (`store` waits for a running fetch to stop), and a task that is neither
+          // waiting nor yet closed would stand on the card again — with what she types for the
+          // next one going into its draft and vanishing (#599, modes.spec "Kopfrechnen").
+          await onChange(view);
           setPending((p) => {
             const m = new Map(p);
             m.delete(next.itemId);
             return m;
           });
-          if (view.drill?.last?.item_id === next.itemId) {
-            if (view.drill.last.correct) haptic.success();
-            else haptic.soft();
-          }
-          await onChange(view);
         } catch (err) {
           // Whatever did not arrive is hers to answer again: the server's view says which.
           queue.current = [];
@@ -257,7 +263,15 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
         label: t('practice:end_label'),
         hint: t('practice:drill.end_hint'),
       }}
-      sound={<ReadAloudSwitch />}
+      // The design's round (ui_kits/app/Flows.jsx:66–80): Buddy waits on the open task and is
+      // glad when a right answer comes back. Nothing here waits for the server, so he never
+      // "thinks": the next task is already on the card.
+      state={practiceHeadState({
+        checking: false,
+        open: Boolean(current),
+        fresh: last !== null && last.item_id !== lastAtStart.current,
+        afterCorrect: last?.correct === true,
+      })}
       footer={
         <ProgressRow
           position={position}
@@ -318,12 +332,18 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
           value={typed}
           onChangeText={changeTyped}
           editable={Boolean(current)}
-          keyboardType="numeric"
+          // The phone's own number pad, never digit keys of ours (owner rule 8; design
+          // components/practice/Tasks.prompt.md "Kopfrechnen").
+          keyboardType="number-pad"
           inputMode="numeric"
           maxLength={MAX_TYPED}
+          count={false}
           autoFocus
+          placeholder={t('practice:drill.placeholder')}
           accessibilityLabel={t('practice:answer.label')}
+          submitBehavior="submit"
           onSubmitEditing={submit}
+          // A fraction's bar is not on a number pad: the one key the pad lacks.
           keys={
             drill.input === 'fraction' ? (
               <KeyRow
@@ -341,11 +361,7 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
               />
             ) : null
           }
-          primary={
-            <Btn pill variant={ready ? 'primary' : 'quiet'} disabled={!ready} onPress={submit}>
-              {t('practice:check')}
-            </Btn>
-          }
+          action={{ kind: 'check', ready, onPress: submit }}
         />
       </BottomBar>
     </Screen>

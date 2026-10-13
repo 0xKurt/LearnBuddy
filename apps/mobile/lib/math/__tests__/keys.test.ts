@@ -4,7 +4,17 @@
 import { describe, expect, it } from 'vitest';
 
 import { pagesOf } from '../../keyRow.js';
-import { cellKeys, keysFor, slotsOf, typedUnder, type KeyContext } from '../keys.js';
+import {
+  cellKeys,
+  glyphOf,
+  insertionOf,
+  isLetterKey,
+  keysFor,
+  modeFor,
+  slotsOf,
+  typedUnder,
+  type KeyContext,
+} from '../keys.js';
 
 const ask = (over: Partial<KeyContext>): KeyContext => ({
   kind: 'numeric',
@@ -15,12 +25,27 @@ const ask = (over: Partial<KeyContext>): KeyContext => ({
   ...over,
 });
 
-describe('keysFor: what the question needs, chosen from the question', () => {
-  it('gives a chemistry formula the index, charge and arrow keys, and no math keys', () => {
+describe('keysFor: the design’s rows, chosen from the question (#599)', () => {
+  it('gives a chemistry formula the design’s row and no math keys (Tasks.jsx:162)', () => {
     const keys = keysFor(
       ask({ kind: 'formula', subjectKind: 'chemistry', prompt: 'Stelle die Gleichung auf.' }),
     );
-    expect(keys).toEqual(['sub', 'charge', 'plus', 'reacts', 'equilibrium', 'brackets']);
+    // ₂ → + ⁺, and the equilibrium arrow no phone keyboard has; brackets are the device's.
+    expect(keys).toEqual(['sub', 'reacts', 'plus', 'charge', 'equilibrium']);
+    expect(modeFor(ask({ kind: 'formula', subjectKind: 'chemistry', prompt: '' }))).toBe('chem');
+  });
+
+  it('leads the chemistry row with the elements the question itself writes', () => {
+    const keys = keysFor(
+      ask({
+        kind: 'formula',
+        subjectKind: 'chemistry',
+        prompt: 'Gleiche aus: $N_{2} + 3H_{2} \\rightleftharpoons 2NH_{3}$',
+      }),
+    );
+    expect(keys.slice(0, 4)).toEqual(['letter:N', 'letter:H', 'sub', 'reacts']);
+    expect(glyphOf('letter:N')).toBe('N');
+    expect(insertionOf('letter:H')).toEqual({ text: 'H' });
   });
 
   it('knows a reaction by the arrow in the question, whatever the subject', () => {
@@ -35,40 +60,85 @@ describe('keysFor: what the question needs, chosen from the question', () => {
     expect(keysFor(limit)).not.toContain('reacts');
   });
 
-  it('gives a math formula the exponent, =, and the comparisons first when it shows one', () => {
-    const plain = keysFor(
-      ask({ kind: 'formula', subjectKind: 'math', prompt: 'Löse $x^{2} = 9$.' }),
-    );
-    expect(plain.slice(0, 4)).toEqual(['newline', 'power', 'fraction', 'equals']);
+  it('gives an equation `x = + − / ( )` (Practice.jsx:39), its variable from the question', () => {
+    const plain = ask({ kind: 'formula', subjectKind: 'math', prompt: 'Löse $2x + 3 = 11$.' });
+    expect(keysFor(plain).slice(0, 7)).toEqual([
+      'newline',
+      'letter:x',
+      'equals',
+      'plus',
+      'minus',
+      'fraction',
+      'brackets',
+    ]);
+    expect(modeFor(plain)).toBe('formula');
+    // Another letter is another key; a unit or a command names no variable.
+    expect(keysFor({ ...plain, prompt: 'Löse $3a = 12$.' })).toContain('letter:a');
+    expect(
+      keysFor({ ...plain, prompt: 'Rechne $\\frac{1}{2} \\cdot 4\\,\\text{cm}$.' }).filter(
+        isLetterKey,
+      ),
+    ).toEqual([]);
+  });
+
+  it('gives an inequality `x xⁿ ≤ ≥ / √` first (Tasks.jsx:156), the equation row after it', () => {
     const ineq = keysFor(
       ask({ kind: 'formula', subjectKind: 'math', prompt: 'Löse $x^{2} \\le 3$.' }),
     );
-    expect(ineq.slice(0, 6)).toEqual(['newline', 'power', 'lt', 'le', 'gt', 'ge']);
+    expect(ineq.slice(0, 7)).toEqual([
+      'newline',
+      'letter:x',
+      'power',
+      'le',
+      'ge',
+      'fraction',
+      'sqrt',
+    ]);
+    // Nothing a formula may need is lost: the other row follows on the next page.
+    expect(ineq).toEqual(expect.arrayContaining(['equals', 'plus', 'minus', 'brackets']));
   });
 
-  it('gives a number its signs, and a root or π only where the question shows one', () => {
+  it('offers no key the phone’s own keyboard has: digits, the comma, < and >', () => {
+    const all = [
+      ...keysFor(ask({})),
+      ...keysFor(ask({ unit: 'cm²' })),
+      ...keysFor(ask({ kind: 'formula', subjectKind: 'math', prompt: 'Löse $x < 3$.' })),
+    ];
+    for (const gone of ['decimal', 'lt', 'gt', 'degree']) expect(all).not.toContain(gone);
+  });
+
+  it('gives a measure `· : + − =` (Flows.jsx:57), and a root or π only where it is shown', () => {
+    const measure = ask({ unit: 'cm²', prompt: 'Berechne den Flächeninhalt.' });
+    expect(keysFor(measure)).toEqual(['newline', 'times', 'divide', 'plus', 'minus', 'equals']);
+    expect(modeFor(measure)).toBe('calc');
+    // The unit itself is no key: a path line with a unit in it is refused by the step check.
+    expect(keysFor(measure).filter(isLetterKey)).toEqual([]);
+    expect(insertionOf('divide')).toEqual({ text: ':' });
     const n = keysFor(ask({}));
-    expect(n.slice(0, 4)).toEqual(['newline', 'fraction', 'decimal', 'minus']);
     expect(n).not.toContain('sqrt');
     expect(n).not.toContain('pi');
     expect(keysFor(ask({ prompt: 'Berechne $\\sqrt{2} \\cdot \\pi$.' }))).toEqual(
       expect.arrayContaining(['sqrt', 'pi']),
     );
-    // A measure is computed and written with a decimal separator: those come first.
-    expect(keysFor(ask({ unit: 'cm²' })).slice(1, 4)).toEqual(['decimal', 'times', 'minus']);
   });
 
-  it('gives a word answer and the other kinds no row at all', () => {
-    expect(keysFor(ask({ kind: 'short', prompt: 'Wie heißt die Hauptstadt?' }))).toEqual([]);
-    expect(keysFor(ask({ kind: 'vocab' }))).toEqual([]);
-    expect(keysFor(ask({ kind: 'long' }))).toEqual([]);
-    expect(keysFor(ask({ kind: 'multiple_choice' }))).toEqual([]);
+  it('gives a word answer and the other kinds no row and no mode chip', () => {
+    for (const none of [
+      ask({ kind: 'short', prompt: 'Wie heißt die Hauptstadt?' }),
+      ask({ kind: 'vocab' }),
+      ask({ kind: 'long' }),
+      ask({ kind: 'multiple_choice' }),
+    ]) {
+      expect(keysFor(none)).toEqual([]);
+      expect(modeFor(none)).toBeNull();
+    }
   });
 
-  it('gives a table gap with a whole number only its sign (#286 finding 5)', () => {
+  it('gives a table gap only what its keyboard lacks (#286 finding 5)', () => {
+    // A whole number on the number pad: its sign.
     expect(cellKeys('math', true)).toEqual(['minus']);
     expect(cellKeys('text', false)).toEqual([]);
-    expect(cellKeys('math', false)).toEqual(['decimal', 'fraction', 'minus', 'power', 'brackets']);
+    expect(cellKeys('math', false)).toEqual(['minus', 'power']);
   });
 });
 

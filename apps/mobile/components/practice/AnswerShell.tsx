@@ -1,5 +1,5 @@
 // One existing practice flow: ordinary question, answer and feedback share a scrolling
-// body with shortcut Chips in the pinned Composer. Structured forms retain their measured
+// body with shortcut Chips directly above the pinned Composer. Structured forms retain their measured
 // board, spacer and folding behavior. Forms keep all real drafts and answer payloads.
 import {
   createContext,
@@ -71,12 +71,12 @@ export function AnswerShell({
   const compact = formDensity(seen.window, seen.overlap) !== 'roomy';
   const ask = useContext(AskRoute);
   const flow = useContext(AnswerFlow);
-  const typedUnderBoard = answer !== null && 'input' in action && action.input !== undefined;
+  const typedUnderBoard = answer !== null && 'field' in action && action.field !== undefined;
   const typing = typedUnderBoard && action.typing === true;
   // Typed fields may have no answer board. While she edits in the tight keyboard room,
   // the optional hint row folds; the full source, keys and Check retain their minimum sizes.
   const toolsFolded =
-    (boardEditing || ('input' in action && action.input !== undefined && action.typing === true)) &&
+    (boardEditing || ('field' in action && action.field !== undefined && action.typing === true)) &&
     formDensity(seen.window, seen.overlap) === 'tight';
   const { onFocused } = ask;
   useEffect(() => {
@@ -199,7 +199,7 @@ function OrdinaryBody({
           {flow.thread}
         </View>
       </ScrollView>
-      <CheckBar {...action} keys={keys} before={flow.tools} />
+      <CheckBar {...action} keys={keys} chips={flow.tools} />
     </>
   );
 }

@@ -1,23 +1,20 @@
 // The one text field of the app (issue #365): every place she types into — a form field, the
-// input bar of the chat and of a practice answer (`InputBar`), a cloze's gap, a table's cell — is
+// Composer of the chat and of every practice (`Composer`), a cloze's gap, a table's cell — is
 // this component, and this is the only file that renders React Native's `TextInput`
 // (`lb/one-text-field`, docs/engineering-guards.md). Before it there were five hand-built fields
 // that only looked alike, each with its own border, ring and padding.
 //
 // One look, three sizes (`variant`):
 //   · field — a form field: 52 pt high, the frame corner;
-//   · bar   — the input bar at the bottom of the chat and of a practice answer: a floating box
-//             that holds its own controls and grows with the text. Built like the Claude app's
-//             (owner 09.10., issue #522): her text on top over the full width, and under it one
-//             row of tools — `start` and `chips` on the left, `end` (mic, the round send arrow)
-//             on the right. Empty, it is one compact line with the controls beside the text, so a
-//             small phone keeps its room; the tools fold under the text with the first letter.
-//             The text is never squeezed into a column beside the controls again;
+//   · bar   — the Composer's box (`components/lb/Composer.tsx`, the only caller): a floating
+//             box that grows with the text. Her text on top over the full width, and `under` it
+//             what the Composer puts there — its keys and its row of tools (design
+//             components/composer/Composer.jsx, issue #599). A hairline frame that does not
+//             change with the focus: the box is the one place she types on its screen;
 //   · cell  — a gap in a line of text or a table's cell: one touch high, centred, as wide as the
 //             place it stands in, her words in the accent.
-// The same everywhere: paper, a hairline frame, and while it has focus the violet frame with a
-// soft halo (never colour alone: the halo is a shape). Errors show a red frame and the message
-// below. The frame is the View around the text, so the ring and the controls inside it are one
+// A field and a cell: paper, a frame, and while it has focus the violet frame with a soft halo
+// (never colour alone: the halo is a shape). Errors show a red frame and the message below. The frame is the View around the text, so the ring and the controls inside it are one
 // thing, and the browser never draws its own black box around the bare text.
 
 import { forwardRef, type ReactNode, useState, useRef, useEffect } from 'react';
@@ -38,6 +35,7 @@ import { useAnnounce } from '../../lib/announce.js';
 import { growsWithText } from '../../lib/growsWithText.js';
 import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { UI } from '../../lib/theme/components.js';
+import { COMPOSER } from '../../lib/theme/composer.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
@@ -55,26 +53,10 @@ export const LINE = UI.field.line;
 const FIELD_HEIGHT = UI.field.height;
 /** How many lines a growing field shows before it scrolls inside itself, unless told otherwise. */
 const MAX_ROWS = UI.field.maxRows;
-/** The bar's chips: one row that gives way before the controls do. */
-const CHIPS = {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: SPACE.sm,
-  flexShrink: 1,
-} as const;
-
 export type LbTextInputProps = Omit<TextInputProps, 'style'> & {
   /** field (default), bar (the input bar's box) or cell (a gap, a table's cell). */
   variant?: 'field' | 'bar' | 'cell';
-  /** Composer tools keep their own row, including when its field is empty. */
-  stackTools?: boolean;
-  /** Inside the frame, the tools' start (the chat's +, the camera). */
-  start?: ReactNode;
-  /** Bar only: beside `start`, what goes with the answer (its unit, how her math is read). */
-  chips?: ReactNode;
-  /** Inside the frame, the tools' end (the mic, the round send arrow, the waveform). */
-  end?: ReactNode;
-  /** Inside the frame, under the text and above the bar's tools (the math keys she types with). */
+  /** Bar only: inside the frame under her text — the Composer's keys and its row of tools. */
   under?: ReactNode;
   /** A multiline field's lines before it grows (a list of words wants a few). */
   rows?: number;
@@ -128,10 +110,6 @@ function submitsOnEnter(
 export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function LbTextInput(
   {
     variant = 'field',
-    stackTools = false,
-    start = null,
-    chips = null,
-    end = null,
     under = null,
     rows = 1,
     maxRows = MAX_ROWS,
@@ -172,12 +150,8 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
   const lines = rest.multiline === true;
   // A multiline field with several rows starts its text at the top, like a page.
   const top = lines && rows > 1;
-  // The bar's text over the full width, its tools in a row under it: as soon as there is text,
-  // and always for a page of several rows (issue #522).
-  const stacked = bar && (stackTools || (rest.value ?? '') !== '' || rows > 1);
-  // What the frame keeps inside its hairline: a form field 52 pt, a cell and the bar's text
-  // one touch target (the bar adds its padding around it).
-  const inner = bar ? TOUCH : (cell ? TOUCH : FIELD_HEIGHT) - UI.border * 2;
+  // What the frame keeps inside its hairline: a form field 52 pt, a cell one touch target.
+  const inner = (cell ? TOUCH : FIELD_HEIGHT) - UI.border * 2;
   const webSubmit =
     Platform.OS === 'web' && lines && rest.submitBehavior === 'submit'
       ? (e: NativeSyntheticEvent<TextInputKeyPressEventData>) =>
@@ -229,13 +203,21 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
           {
             backgroundColor: palette.paper,
             borderWidth: UI.border,
-            borderColor: error ? palette.danger : focused ? palette.primary : palette.field,
+            // The Composer's box keeps its hairline whatever has the focus (Composer.jsx:39).
+            borderColor: bar
+              ? palette.hairlineStrong
+              : error
+                ? palette.danger
+                : focused
+                  ? palette.primary
+                  : palette.field,
             borderRadius: bar ? RADIUS.bar : cell ? RADIUS.sm : RADIUS.md,
-            padding: stacked ? SPACE.sm : bar ? SPACE.xs : 0,
-            gap: stacked ? SPACE.xs : undefined,
-            // The halo: the same ring on every field (iOS/Android new architecture, the web).
+            padding: bar ? COMPOSER.pad : 0,
+            gap: bar ? COMPOSER.gap : undefined,
+            // The halo: the same ring on every field and cell (iOS/Android new architecture,
+            // the web).
             outlineStyle: 'solid',
-            outlineWidth: focused ? SPACE.xs : 0,
+            outlineWidth: focused && !bar ? SPACE.xs : 0,
             outlineColor: palette.ring,
           },
           bar ? SHADOW.float : null,
@@ -244,15 +226,12 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
         <View
           style={{
             flexDirection: 'row',
-            // flex-end: while the bar grows over several lines its controls stay on its last
-            // line, like every messenger (user feedback, issue #187).
-            alignItems: bar ? 'flex-end' : top ? 'flex-start' : 'center',
-            // 2, off the scale: the text carries its own xs padding on each side — a full step
-            // here would double the air inside the pill.
-            gap: bar ? UI.field.toolGap : 0,
+            alignItems: top ? 'flex-start' : 'center',
+            // One line of her text is 37 pt of the box; the 44 pt she can touch reaches over
+            // the box's own padding above and the gap below (lib/theme/composer.ts).
+            marginVertical: bar && !top ? -COMPOSER.text.reach : undefined,
           }}
         >
-          {stacked ? null : start}
           <TextInput
             ref={ref}
             placeholderTextColor={palette.placeholder}
@@ -284,33 +263,27 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
               {
                 flex: 1,
                 minWidth: 0,
-                // Stacked text retains the supplied padding and a complete editable touch
-                // target above the keys/tools. Multirow growth keeps its existing row bounds.
-                minHeight: top
-                  ? rows * LINE + 2 * SPACE.md
-                  : stacked
-                    ? Math.max(TOUCH, LINE + SPACE.sm + (under === null ? 0 : SPACE.sm))
-                    : inner,
+                // The bar's text keeps a complete editable touch target above the keys and
+                // tools. Multirow growth keeps its row bounds.
+                minHeight: top ? rows * LINE + 2 * SPACE.md : bar ? TOUCH : inner,
                 maxHeight: lines ? Math.max(rows, maxRows) * LINE + 2 * SPACE.md : undefined,
-                paddingHorizontal: stacked
-                  ? UI.field.composerHorizontal
-                  : bar || cell
-                    ? SPACE.xs
-                    : SPACE.lg,
-                // A bar without a control before the text keeps the screen's gutter inside it.
-                paddingLeft: bar && !stacked && start === null ? SPACE.md : undefined,
+                paddingHorizontal: bar ? UI.field.composerHorizontal : cell ? SPACE.xs : SPACE.lg,
                 // A single line centres itself. A multiline one starting on one line is centred
                 // by its padding: (height − LINE) / 2 above and below.
                 paddingVertical: top
                   ? SPACE.md
-                  : stacked
+                  : bar
                     ? undefined
                     : lines
                       ? // Half the room the line leaves keeps it centered.
                         UI.field.centeredPadding(inner)
                       : 0,
-                ...(stacked
-                  ? { paddingTop: SPACE.sm, paddingBottom: UI.field.composerBottom }
+                // The box's line: 8 above, 6 below (Composer.jsx:43), inside its touch target.
+                ...(bar && !top
+                  ? {
+                      paddingTop: SPACE.sm + COMPOSER.text.reach,
+                      paddingBottom: UI.field.composerBottom + COMPOSER.text.reach,
+                    }
                   : {}),
                 ...face,
                 lineHeight: LINE,
@@ -326,20 +299,9 @@ export const LbTextInput = forwardRef<LbTextInputRef, LbTextInputProps>(function
               lines ? growsWithText(rest.value ?? '') : null,
             ]}
           />
-          {stacked || chips === null ? null : (
-            <View style={[CHIPS, { alignSelf: 'center' }]}>{chips}</View>
-          )}
-          {stacked ? null : end}
           {canClear || (showToggle && onToggle) ? corner : null}
         </View>
-        {under}
-        {stacked ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-            {start}
-            <View style={[CHIPS, { flex: 1 }]}>{chips}</View>
-            {end}
-          </View>
-        ) : null}
+        {bar ? under : null}
       </View>
       {/* A note under the field, like the label above it and the hint it replaces (welcome's
           "Mindestens 8 Zeichen."): `small`, in from the frame's edge by the same xs. At `body`

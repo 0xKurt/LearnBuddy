@@ -3,19 +3,27 @@
 //
 // Chosen by code from the question itself — its kind, its unit, its subject and the notation
 // in its text — never from the answer key, which the app does not have while a question is
-// open. Three rows exist:
+// open. The rows are the design's (issue #599), in the design's order, and they hold only what
+// the phone's own keyboard does not offer at a tap — digits, letters, the comma, < and > are the
+// device's (design components/practice/Tasks.prompt.md "Tasten"):
 //
-//   - chemistry (a formula in Chemie, or a question whose text shows a reaction arrow):
-//     lower the next digits (H₂O), raise a charge (SO₄²⁻), +, the reaction arrow, the
-//     equilibrium arrow and brackets — "2 H₂ + O₂ → 2 H₂O" without leaving the row. What the
-//     keys write is what the counting check reads (apps/api/src/modules/practice/chemistry.ts);
-//   - math: the exponent, the fraction bar, =, the comparisons, root, π …, ordered so that what
-//     the question shows comes first (an inequality puts < ≤ > ≥ up front);
-//   - a number: the decimal separator, the fraction bar and the minus sign, plus the
-//     operators a written path needs.
+//   - "Chemie" (a formula in Chemie, or a question whose text shows a reaction arrow) —
+//     ui_kits/app/Tasks.jsx:162: the elements the question names, lower the next digits (H₂O),
+//     the reaction arrow, +, raise a charge (SO₄²⁻); the equilibrium arrow where a reaction may
+//     be one. What the keys write is what the counting check reads
+//     (apps/api/src/modules/practice/chemistry.ts);
+//   - "Formel" — ui_kits/app/Practice.jsx:39 (`x = + − / ( )`) and Tasks.jsx:156
+//     (`x xⁿ ≤ ≥ / √`): the question's variable, then the row of an equation — or, where the
+//     question shows a comparison, the row of an inequality first; the other row follows;
+//   - "Rechnen" (a number) — ui_kits/app/Flows.jsx:57 (`· : + − =`) beside a unit, the equation
+//     row for a bare number; a power, a root or π where the question shows one.
 //
-// A table cell whose key is a whole number gets only the minus (issue #286 finding 5): the
-// phone's digits write the rest, and a row of /, √, π over a number wall is noise.
+// The design's rows also show the unit itself as a key ("cm²"). It is not offered: a line of a
+// written path with a unit in it is refused by the step check (apps/api/…/steps.ts), and the
+// unit stands as a chip beside the field (#522).
+//
+// A table cell whose key is a whole number is typed on the phone's number pad and gets only the
+// minus, which that pad does not have (issue #286 finding 5).
 //
 // The row never scrolls sideways (a key she has to scroll to find is a key she does not know
 // exists): as many keys as fit on one line, and a "…" key that shows the next ones — the one
@@ -27,28 +35,37 @@ import type { ItemKind, SubjectKind } from '@learnbuddy/shared-types/contracts';
 
 import { mathSpans } from './parse.js';
 
-export type KeyId =
+/** A letter the question itself names — its variable, an element — as a key ("letter:x"). */
+type LetterKey = `letter:${string}`;
+
+export function isLetterKey(id: KeyId): id is LetterKey {
+  return id.startsWith('letter:');
+}
+
+type SignKey =
   | 'newline'
   | 'power'
   | 'sub'
   | 'charge'
   | 'fraction'
-  | 'decimal'
   | 'minus'
   | 'plus'
   | 'times'
+  | 'divide'
   | 'equals'
-  | 'lt'
   | 'le'
-  | 'gt'
   | 'ge'
   | 'pm'
   | 'brackets'
   | 'sqrt'
   | 'pi'
-  | 'degree'
   | 'reacts'
   | 'equilibrium';
+
+export type KeyId = SignKey | LetterKey;
+
+/** The Composer's mode chip: what the keys are for ("Formel", "Rechnen", "Chemie"). */
+export type KeyMode = 'formula' | 'calc' | 'chem';
 
 /** A key that does not write a character but changes what the next digits become. */
 export type ScriptMode = 'power' | 'sub' | 'charge';
@@ -82,68 +99,90 @@ const ROOT = /\\sqrt(?![a-zA-Z])|√/;
 const PI = /\\pi(?![a-zA-Z])|π/;
 const POWER = /\^|[²³]/;
 
-/** The keys of a chemistry formula, in the order she reaches for them. */
-const CHEMISTRY: readonly KeyId[] = ['sub', 'charge', 'plus', 'reacts', 'equilibrium', 'brackets'];
+const PLUS_MINUS = /\\pm(?![a-zA-Z])|±/;
+
+/** The math without its LaTeX commands (`\frac`, `\text{cm}`): what is left names letters. */
+function lettersOf(math: string): string {
+  return math.replace(/\\text\{[^}]*\}/g, ' ').replace(/\\[a-zA-Z]+/g, ' ');
+}
+
+/** The question's variable: the first small letter that stands alone ("2x + 3", never "cm"). */
+function variableOf(math: string): KeyId[] {
+  for (const run of lettersOf(math).matchAll(/[A-Za-z]+/g))
+    if (/^[a-z]$/.test(run[0])) return [`letter:${run[0]}`];
+  return [];
+}
+
+/** The first two elements the question writes ("N₂ + 3H₂" → N, H). */
+function elementsOf(math: string): KeyId[] {
+  const found = [...lettersOf(math).matchAll(/[A-Z][a-z]?/g)].map((m): KeyId => `letter:${m[0]}`);
+  return unique(found).slice(0, 2);
+}
+
+/** ui_kits/app/Tasks.jsx:162, after the elements: `₂ → + ⁺`. */
+const CHEMISTRY: readonly KeyId[] = ['sub', 'reacts', 'plus', 'charge', 'equilibrium'];
+/** ui_kits/app/Practice.jsx:39, after the variable: `= + − / ( )`. */
+const EQUATION: readonly KeyId[] = ['equals', 'plus', 'minus', 'fraction', 'brackets'];
+/** ui_kits/app/Tasks.jsx:156, after the variable: `xⁿ ≤ ≥ / √`. */
+const INEQUATION: readonly KeyId[] = ['power', 'le', 'ge', 'fraction', 'sqrt'];
+/** ui_kits/app/Flows.jsx:57, without its unit: `· : + − =`. */
+const MEASURE: readonly KeyId[] = ['times', 'divide', 'plus', 'minus', 'equals'];
+
+/** What the question is typed as, or null where it gets no keys. */
+function typedAs(ctx: KeyContext): { mode: KeyMode; math: string } | null {
+  // A line of a worked solution she writes right (Fehlerdetektiv, #260) is typed like a formula.
+  const kind = ctx.kind === 'find_error' ? 'formula' : ctx.kind;
+  if (kind !== 'numeric' && kind !== 'formula' && kind !== 'short') return null;
+  const math = mathOf(ctx.prompt);
+  const formulaLike = kind === 'formula' || (kind === 'short' && math !== '');
+  if (formulaLike && (ctx.subjectKind === 'chemistry' || REACTION.test(math)))
+    return { mode: 'chem', math };
+  if (kind === 'short' && math === '') return null;
+  return { mode: kind === 'numeric' ? 'calc' : 'formula', math };
+}
+
+/** The mode chip of a question that is answered with a single typed value — or none at all. */
+export function modeFor(ctx: KeyContext): KeyMode | null {
+  return typedAs(ctx)?.mode ?? null;
+}
 
 /** The keys of a question that is answered with a single typed value — or none at all. */
 export function keysFor(ctx: KeyContext): KeyId[] {
-  const { subjectKind } = ctx;
-  // A line of a worked solution she writes right (Fehlerdetektiv, #260) is typed like a formula.
-  const kind = ctx.kind === 'find_error' ? 'formula' : ctx.kind;
-  if (kind !== 'numeric' && kind !== 'formula' && kind !== 'short') return [];
-  const math = mathOf(ctx.prompt);
-  const reaction = REACTION.test(math);
-  const formulaLike = kind === 'formula' || (kind === 'short' && math !== '');
-  if (formulaLike && (subjectKind === 'chemistry' || reaction)) return [...CHEMISTRY];
-  if (kind === 'short' && math === '') return [];
+  const typed = typedAs(ctx);
+  if (typed === null) return [];
+  const { mode, math } = typed;
+  if (mode === 'chem') return unique([...elementsOf(math), ...CHEMISTRY]);
 
   const lead: KeyId[] = ctx.path ? ['newline'] : [];
   const shown = (re: RegExp, ids: KeyId[]): KeyId[] => (re.test(math) ? ids : []);
-  if (kind === 'numeric') {
-    // A measure (a unit stands next to the field — an area, a length) is computed ("7 · 4") and
-    // written with a decimal separator far more often than as a fraction; a bare number is the
-    // other way round.
-    const number: KeyId[] = ctx.unit
-      ? ['decimal', 'times', 'minus', 'fraction']
-      : ['fraction', 'decimal', 'minus'];
+  if (mode === 'calc') {
     return unique([
       ...lead,
-      ...number,
+      ...(ctx.unit ? MEASURE : [...variableOf(math), ...EQUATION]),
       ...shown(POWER, ['power']),
       ...shown(ROOT, ['sqrt']),
       ...shown(PI, ['pi']),
-      'times',
-      'equals',
-      'brackets',
     ]);
   }
-  const compare: KeyId[] = ['lt', 'le', 'gt', 'ge'];
-  const inequality = INEQUALITY.test(math);
+  const rows = INEQUALITY.test(math) ? [...INEQUATION, ...EQUATION] : [...EQUATION, ...INEQUATION];
   return unique([
     ...lead,
-    'power',
-    ...(inequality ? compare : []),
-    'fraction',
-    'equals',
-    'minus',
+    ...variableOf(math),
+    ...rows,
     'times',
-    'brackets',
-    'sqrt',
-    'pi',
-    ...(inequality ? [] : compare),
-    'pm',
-    'decimal',
+    ...shown(PI, ['pi']),
+    ...shown(PLUS_MINUS, ['pm']),
   ]);
 }
 
 /** A gap of a table: a whole number needs nothing beyond the digits; any other number its signs. */
 export function cellKeys(input: 'math' | 'text', whole: boolean): KeyId[] {
   if (input !== 'math') return [];
-  // A whole number: the digits are the phone's, but its sign is not on every keyboard (an
-  // Android letter keyboard hides "−"). So the minus alone — no fraction bar, no root, no π.
+  // A whole number is typed on the number pad (`cellKeyboard`), which has no sign: the minus
+  // alone — no fraction bar, no root, no π.
   if (whole) return ['minus'];
-  // A number or a short term: its signs, and the exponent for a term like x².
-  return ['decimal', 'fraction', 'minus', 'power', 'brackets'];
+  // A number or a short term on the full keyboard: its sign, and the exponent for a term like x².
+  return ['minus', 'power'];
 }
 
 function unique(ids: KeyId[]): KeyId[] {
@@ -163,12 +202,11 @@ export function slotsOf(id: KeyId): number {
 // ─────────────── what a key writes ───────────────
 
 /** What a key inserts at the cursor; the cursor lands `caret` characters in (default: after it). */
-export function insertionOf(id: Exclude<KeyId, ScriptMode | 'newline'>, decimal: string) {
+export function insertionOf(id: Exclude<KeyId, ScriptMode | 'newline'>) {
+  if (isLetterKey(id)) return { text: glyphOf(id) };
   switch (id) {
     case 'fraction':
       return { text: '/' };
-    case 'decimal':
-      return { text: decimal };
     // Shown as a real minus sign, typed as the plain one every checker reads.
     case 'minus':
       return { text: '-' };
@@ -176,14 +214,13 @@ export function insertionOf(id: Exclude<KeyId, ScriptMode | 'newline'>, decimal:
       return { text: ' + ' };
     case 'times':
       return { text: '·' };
+    // The division sign the expression reader takes (packages/shared-math expression.ts).
+    case 'divide':
+      return { text: ':' };
     case 'equals':
       return { text: ' = ' };
-    case 'lt':
-      return { text: ' < ' };
     case 'le':
       return { text: ' ≤ ' };
-    case 'gt':
-      return { text: ' > ' };
     case 'ge':
       return { text: ' ≥ ' };
     case 'pm':
@@ -197,8 +234,6 @@ export function insertionOf(id: Exclude<KeyId, ScriptMode | 'newline'>, decimal:
       return { text: '√()', caret: 2 };
     case 'pi':
       return { text: 'π' };
-    case 'degree':
-      return { text: '°' };
     case 'reacts':
       return { text: ' → ' };
     case 'equilibrium':
@@ -207,7 +242,8 @@ export function insertionOf(id: Exclude<KeyId, ScriptMode | 'newline'>, decimal:
 }
 
 /** What the key shows. */
-export function glyphOf(id: Exclude<KeyId, 'newline'>, decimal: string): string {
+export function glyphOf(id: Exclude<KeyId, 'newline'>): string {
+  if (isLetterKey(id)) return id.slice('letter:'.length);
   switch (id) {
     case 'power':
       return 'xⁿ';
@@ -217,22 +253,18 @@ export function glyphOf(id: Exclude<KeyId, 'newline'>, decimal: string): string 
       return 'x⁺⁻';
     case 'fraction':
       return '/';
-    case 'decimal':
-      return decimal;
     case 'minus':
       return '−';
     case 'plus':
       return '+';
     case 'times':
       return '·';
+    case 'divide':
+      return ':';
     case 'equals':
       return '=';
-    case 'lt':
-      return '<';
     case 'le':
       return '≤';
-    case 'gt':
-      return '>';
     case 'ge':
       return '≥';
     case 'pm':
@@ -243,8 +275,6 @@ export function glyphOf(id: Exclude<KeyId, 'newline'>, decimal: string): string 
       return '√';
     case 'pi':
       return 'π';
-    case 'degree':
-      return '°';
     case 'reacts':
       return '→';
     case 'equilibrium':

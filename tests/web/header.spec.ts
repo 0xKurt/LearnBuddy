@@ -178,6 +178,8 @@ async function say(page: Page, n: number): Promise<void> {
   await page.setViewportSize(phone);
   const release = await slow(page, /\/buddy\/messages$/, 'POST', 1200);
   await page.getByLabel('Schreib Buddy …').fill(SAID[n]!);
+  // She is writing: Buddy leans in (design ui_kits/app/App.jsx:46, `headState` `typing`).
+  await passing(page, 'chat-listening', 'listen', variant);
   await page.getByTestId('composer-primary').getByRole('button', { name: 'Senden' }).click();
   await passing(page, 'chat-thinking', 'think', variant);
   // An answer is written out word by word only when it changes nothing; where it is, it shows.

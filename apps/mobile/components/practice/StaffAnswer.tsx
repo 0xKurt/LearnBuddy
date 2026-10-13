@@ -27,10 +27,10 @@
 // hören.** Hier übernommen, mit sichtbaren Tasten statt einer Geste, die man erst kennen muss
 // (genau der Preis, den #275 an „grob tippen, dann ↑/↓" bemängelt hat):
 //
-//   · Jedes Bedienelement ist ≥ 44 pt: der Takt (rund 100 × 200 pt), die Pfeile, jede Taste.
-//     Die Tonhöhe ist kein Tippziel mehr, sondern ein Wert des Tipps, so wie die Stelle auf
-//     einem Schieberegler — und ein Fehlgriff kostet einen Tipp auf „höher" oder „tiefer", nicht
-//     „Zurück" und einen zweiten Versuch auf 11 pt.
+//   · Jedes Bedienelement ist ≥ 44 pt: der Takt (rund 100 × 200 pt), jede Taste. Die Tonhöhe
+//     ist kein Tippziel mehr, sondern ein Wert des Tipps, so wie die Stelle auf einem
+//     Schieberegler — ein Fehlgriff kostet „Zurück" und einen Tipp in denselben großen Takt,
+//     nicht einen zweiten Versuch auf 11 pt.
 //   · Die Zeile bleibt ganz zu sehen (Regel 16), mit Hilfslinien: nichts vom Inhalt fällt weg.
 //   · Sie setzt die Note selbst auf die Linie — die Fähigkeit, die geübt wird, bleibt ihre. Die
 //     Fläche sagt NICHT, welcher Ton unter dem Finger liegt (keine Beschriftung): sonst würde sie
@@ -38,8 +38,11 @@
 //     ihn — für jemanden, der die Linien nicht sieht, ist das die Zeile.
 //
 // Wo keine Fingerposition vorliegt (Tastatur, Screenreader-Doppeltipp, Testbaum), landet die
-// Note auf der mittleren Linie — die Mitte des Takts ist genau dort, die Zeile ist symmetrisch —
-// und wird mit denselben Pfeilen an ihren Platz geschoben. Ein Weg für alle, kein zweiter daneben.
+// Note auf der mittleren Linie — die Mitte des Takts ist genau dort, die Zeile ist symmetrisch.
+// Gezeichnete Pfeiltasten gibt es nicht mehr (Owner-Regel 8, #599): wer sieht und tippt, setzt die
+// Note mit dem Finger. Wer keinen Finger auf der Zeile hat, schiebt die zuletzt gesetzte Note
+// ohne gezeichnetes Bedienelement: mit den Aktionen „erhöhen"/„verringern" des Screenreaders auf
+// dem Takt, im Browser mit Pfeil hoch / Pfeil runter (`nudge`).
 //
 // Gestochen wird mit `components/math/StaffLine.tsx` (VexFlow, issue #312), also mit demselben
 // Stecher wie die Zeile, die sie LIEST: eine Viertel sieht hier so aus wie dort, und auf der
@@ -62,7 +65,7 @@ import {
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Platform, Text, View, type AccessibilityActionEvent } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
 import { playPitch } from '../../lib/music/play.js';
@@ -102,8 +105,7 @@ const WIDTH_IN_GAPS = (bars: number) => (headUnits(true) + TAIL_UNITS) / SPACE_U
 export const STAFF_ANSWER_MIN = writeHeight(GAP_MIN);
 
 /** Die Stellen, die es gibt: eine Hilfslinie über und unter den fünf Linien. */
-export const clampStep = (step: number) =>
-  Math.max(-STAFF_STEP_MAX, Math.min(STAFF_STEP_MAX, step));
+const clampStep = (step: number) => Math.max(-STAFF_STEP_MAX, Math.min(STAFF_STEP_MAX, step));
 
 /** Was sie bisher geschrieben hat, und womit sie gerade schreibt. */
 export type StaffAnswerState = {
@@ -166,7 +168,7 @@ export function staffLineOf(answer: StaffAnswerState): string {
  * Die Note, die „höher" und „tiefer" bewegen: das zuletzt gesetzte Zeichen, wenn es eine Note
  * ist. Takt und Platz darin, oder null (leer, oder zuletzt kam eine Pause).
  */
-export function lastNote(answer: StaffAnswerState): { bar: number; index: number } | null {
+function lastNote(answer: StaffAnswerState): { bar: number; index: number } | null {
   for (let b = answer.bars.length - 1; b >= 0; b--) {
     const bar = answer.bars[b] as StaffElement[];
     if (bar.length === 0) continue;
@@ -265,6 +267,42 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
     put(bar, { el: 'note', pitch, value: answer.value, dotted: answer.dotted });
   }
 
+  /**
+   * Die zuletzt gesetzte Note eine Stelle höher oder tiefer — der Weg ohne Fingerposition
+   * (Screenreader-Aktion, Pfeiltaste der Tastatur). Jeder Schritt klingt und wird gesagt; an der
+   * Hilfslinie ist Schluss, nach einer Pause bewegt sich nichts.
+   */
+  function nudge(by: 1 | -1): void {
+    if (disabled || moving === null) return;
+    const el = answer.bars[moving.bar]?.[moving.index];
+    if (el?.el !== 'note') return;
+    const from = staffStep(el.pitch, surface.clef);
+    const step = clampStep(from + by);
+    if (step === from) return;
+    const moved: StaffElement = { ...el, pitch: pitchAt(step) };
+    playPitch(moved.pitch);
+    onChange({
+      ...answer,
+      bars: answer.bars.map((b, i) =>
+        i === moving.bar ? b.map((x, k) => (k === moving.index ? moved : x)) : b,
+      ),
+    });
+    announce(t('staff.moved', { what: elementWord(tm, moved), where: stepWord(tm, step) }));
+  }
+  const onAction = (e: AccessibilityActionEvent) =>
+    nudge(e.nativeEvent.actionName === 'increment' ? 1 : -1);
+  /** Im Browser dieselben zwei Schritte mit den Pfeiltasten, solange ein Takt den Fokus hat. */
+  const onKeys =
+    Platform.OS === 'web'
+      ? {
+          onKeyDown: (e: { key: string; preventDefault: () => void }) => {
+            if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+            e.preventDefault();
+            nudge(e.key === 'ArrowUp' ? 1 : -1);
+          },
+        }
+      : {};
+
   /** Wo der erste Takt beginnt und wie viel hinter dem letzten frei bleibt — wie gestochen. */
   const startX = (headUnits(true) * gap) / SPACE_UNITS;
   const tailX = (TAIL_UNITS * gap) / SPACE_UNITS;
@@ -299,7 +337,7 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
             mit gemessenen Zahlen: so sitzen sie schon im ersten Bild richtig, und sie stimmen
             mit den gestochenen Takten überein, weil die alle gleich breit sind und hinter
             demselben Kopf beginnen (`staff/geometry.ts`). */}
-        <View style={{ ...ABSOLUTE_FILL, flexDirection: 'row' }}>
+        <View style={{ ...ABSOLUTE_FILL, flexDirection: 'row' }} {...onKeys}>
           {/* Vor dem ersten Takt stehen Schlüssel und Taktart; dort wird nicht geschrieben. */}
           <View style={{ width: startX }} />
           {answer.bars.map((bar, b) => (
@@ -319,6 +357,11 @@ export function StaffAnswer({ surface, answer, disabled, onChange }: Props) {
                     : bar.map((el) => elementWord(tm, el)).join(', '),
               })}
               accessibilityHint={t('staff.bar_hint')}
+              accessibilityActions={[
+                { name: 'increment', label: t('staff.higher') },
+                { name: 'decrement', label: t('staff.lower') },
+              ]}
+              onAccessibilityAction={onAction}
               disabled={disabled}
               onTap={(at) => tapBar(b, at?.y ?? null)}
               style={{ flex: 1 }}

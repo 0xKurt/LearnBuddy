@@ -2,12 +2,12 @@
 // whether she knew it.
 //
 // The screen is built like every practice screen, in the same places (issue #384, report #388
-// §9 "the bar per form"): the header with the Vorlesen switch and the round ✕ (`HeadActions`,
-// #434), where she is (the progress row), the one thing in front of her (the card), the
-// conversation under it once she asks, and the one input bar at the bottom (`CheckBar` `own`).
+// §9 "the bar per form"): the one head of every screen with the round ✕, Buddy and the Vorlesen
+// switch (`Screen`, #434, #599), where she is (the progress row), the one thing in front of her (the card), the
+// conversation under it once she asks, and the one Composer at the bottom (`CheckBar` `own`).
 // Its field is her question to the tutor ("Frag zur Aufgabe …", `POST …/ask`: never graded,
 // never a rating); its action is the card's: "Umdrehen" where "Prüfen" stands on a board, then
-// "Noch nicht" / "Wusste ich" across under the pill, where a typed answer's "Prüfen" stands. No
+// "Noch nicht" / "Wusste ich" as a row under the box (not in the design: as before it). No
 // answer field, no "Tipp", no "Lösung zeigen": there is nothing to grade here.
 //
 // Two decisions that are deliberate and would be easy to undo by accident:
@@ -35,6 +35,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { announce } from '../../lib/announce.js';
 import { recordCard } from '../../lib/api/endpoints.js';
 import { useDraft } from '../../lib/drafts.js';
+import { practiceHeadState } from '../../lib/buddy/headState.js';
 import { haptic } from '../../lib/haptics.js';
 import { isForeign } from '../../lib/i18n/index.js';
 import { useOneCall } from '../../lib/practice/useOneCall.js';
@@ -44,14 +45,12 @@ import { TYPE } from '../../lib/theme/type.js';
 import { UI } from '../../lib/theme/components.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
-import { EndButton } from '../lb/EndButton.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
 import { Rise } from '../lb/Motion.js';
 import { Screen } from '../lb/Screen.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { CheckBar } from './CheckBar.js';
-import { HeadActions } from './HeadActions.js';
 import { ItemThread } from './ItemThread.js';
 import { PassEnd } from './PassEnd.js';
 import { ListenButton } from './ListenButton.js';
@@ -177,18 +176,23 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
   );
 
   return (
-    // The practice screens' header (issue #334.1, #384): the run's name on one line and the round ✕.
+    // The one head (issues #334.1, #384, #599): the round ✕, Buddy, the run's name on one line.
     <Screen
       title={title}
-      right={
-        <HeadActions>
-          <EndButton
-            onPress={onClose}
-            label={t('practice:cards.end_label')}
-            hint={t('practice:cards.end_hint')}
-          />
-        </HeadActions>
-      }
+      leading={{
+        icon: 'close',
+        onPress: onClose,
+        label: t('practice:cards.end_label'),
+        hint: t('practice:cards.end_hint'),
+      }}
+      // Buddy waits on the card in front of her, and thinks while her rating or her question is
+      // with the server. Nothing here is right or wrong, so he never celebrates.
+      state={practiceHeadState({
+        checking: busy || asked.pending !== null,
+        open: true,
+        fresh: false,
+        afterCorrect: false,
+      })}
     >
       <View style={{ flex: 1, paddingHorizontal: SPACE.lg, gap: SPACE.md }}>
         <ProgressRow
@@ -279,7 +283,7 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
         own={
           faceUp
             ? {
-                inBar: (
+                primary: (
                   <Btn
                     size="sm"
                     pill
@@ -294,11 +298,11 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
                     {t('practice:cards.turn')}
                   </Btn>
                 ),
-                across: null,
+                row: null,
               }
             : {
-                inBar: null,
-                across: (
+                primary: null,
+                row: (
                   <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
                     {rating(
                       'not_yet',

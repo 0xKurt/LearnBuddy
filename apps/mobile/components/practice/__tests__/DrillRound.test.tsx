@@ -117,6 +117,14 @@ describe('die Runde', () => {
       expect(screen.queryByRole('button', { name: d })).toBeNull();
     }
     expect(screen.getAllByRole('textbox', { name: 'Deine Antwort' })).toHaveLength(1);
+    // Die Ziffern kommen vom Zahlenfeld des Handys (Owner-Regel 8), nie von eigenen Tasten.
+    expect(screen.getByRole('textbox', { name: 'Deine Antwort' }).getAttribute('inputmode')).toBe(
+      'numeric',
+    );
+    // „Prüfen" ist die Pille des einen Composers, mit ihrem Zeichen, im Primär-Slot.
+    const check = screen.getByRole('button', { name: 'Prüfen' });
+    expect(screen.getByTestId('composer-primary').contains(check)).toBe(true);
+    expect(check.querySelector('svg')).not.toBeNull();
     // Ganze Zahlen: kein Bruchstrich auf dem Block.
     expect(screen.queryByRole('button', { name: 'Bruchstrich' })).toBeNull();
     for (const gone of ['Tipp', 'Lösung zeigen', 'Überspringen', 'Weiter']) {
@@ -167,6 +175,49 @@ describe('die Runde', () => {
       await Promise.resolve();
     });
     expect(onChange).toHaveBeenCalledWith(answered);
+  });
+
+  // Die Runde aus `modes.spec.ts`, bei der „Prüfen" aus blieb (#599): die Antwort des Servers ist
+  // da, die Sitzung aber noch nicht gespeichert (`store` wartet erst auf `cancelQueries`). In
+  // dieser Lücke stand die schon beantwortete Aufgabe wieder auf der Karte, und was sie tippte,
+  // ging in deren Entwurf und war mit der nächsten Aufgabe weg.
+  it('zeigt die beantwortete Aufgabe nie wieder, während die Antwort des Servers gespeichert wird', async () => {
+    let answered: (v: SessionView) => void = () => undefined;
+    answerDrill.mockReturnValue(new Promise<SessionView>((r) => (answered = r)));
+    let stored: () => void = () => undefined;
+    const onChange = vi.fn(() => new Promise<void>((r) => (stored = r)));
+    const next = round({
+      items: [task(A, '7 · 8', { status: 'correct' }), task(B, '6 · 7')],
+    });
+    const shown = (session: SessionView) => (
+      <DrillRound session={session} title="Einmaleins" onChange={onChange} onClose={vi.fn()} />
+    );
+    const view = renderInApp(shown(round()));
+    const input = () =>
+      screen.getByRole('textbox', { name: 'Deine Antwort' }) as HTMLTextAreaElement;
+    fireEvent.change(input(), { target: { value: '56' } });
+    fireEvent.click(key('Prüfen'));
+    expect(await screen.findByText('6 · 7')).toBeTruthy();
+    // Sie tippt schon die nächste Antwort.
+    fireEvent.change(input(), { target: { value: '42' } });
+    await act(async () => {
+      answered(next);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(onChange).toHaveBeenCalledOnce();
+    // Der Server hat geantwortet, gespeichert ist noch nichts: die Karte bleibt bei Aufgabe 2.
+    expect(screen.queryByText('7 · 8')).toBeNull();
+    expect(screen.getByText('6 · 7')).toBeTruthy();
+    expect(input().value).toBe('42');
+    expect(key('Prüfen').getAttribute('aria-disabled')).not.toBe('true');
+    await act(async () => {
+      // Gespeichert: die Sitzung, wie der Server sie hält, steht jetzt auf dem Bildschirm.
+      view.rerender(shown(next));
+      stored();
+      await Promise.resolve();
+    });
+    expect(input().value).toBe('42');
   });
 
   it('zeigt nach einer falschen Antwort die richtige — ohne Wertung', () => {

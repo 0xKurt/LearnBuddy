@@ -89,8 +89,10 @@ for (const family of ['Pastell', 'Meer'] as const) {
         await page.setViewportSize(phone);
         await answer.fill('3/4');
         await expect(page.getByLabel('Vorschau deiner Antwort: 3 Viertel')).toBeVisible();
+        // The help chips stand directly above the Composer while the question is open, typed
+        // text or not (design ui_kits/app/Flows.jsx:56: `['Tipp', 'Rechenweg zeigen']`).
         await expect(page.getByTestId('bottom-bar').getByText('Tipp', { exact: true })).toHaveCount(
-          0,
+          1,
         );
         await shot(
           page,

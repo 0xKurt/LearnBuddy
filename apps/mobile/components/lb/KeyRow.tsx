@@ -9,14 +9,15 @@
 // The line (lib/keyRow.ts): never sideways, equal places, each ≥ TOUCH; when the keys do not fit,
 // the last place is "…" and turns to the next page.
 //
-// A key:
-//   · writes or does something — paper, a soft shadow, the sign in the accent;
-//   · is a switch (`on`: a raise/lower mode, the sharp, the dot) — lit while it is on, and its
-//     name says so (the caller's label: "Kreuz ♯, ist an"), colour is never the only signal;
-//   · is one of a choice (`selected`, in a row with `role="radiogroup"`: the note values) — lit,
-//     and a radio with `aria-checked`;
-//   · is quiet (`quiet`: "…", "Zurück") — the same shape on the lavender ground without the
-//     shadow: it changes nothing she wrote.
+// A key (design components/composer/Composer.jsx:46–50): a flat canvas tile 38 pt high inside the
+// Composer's box, the sign in the accent — never a floating pill of its own. Its touch target
+// stays 44 pt; what that reaches beyond the tile is handed back as margin.
+//   · it writes or does something;
+//   · it is a switch (`on`: a raise/lower mode, the sharp, the dot) or one of a choice
+//     (`selected`, in a row with `role="radiogroup"`: the note values) — then it carries the
+//     selected frame (2 pt primary on the light primary, ui_kits/app/Tasks.jsx:122), and its
+//     name says so (the caller's label: "Kreuz ♯, ist an"; a radio with `aria-checked`): colour is
+//     never the only signal.
 //
 // Built here because a raw Pressable belongs in components/lb (CLAUDE.md rule 13, Engineering-
 // Regel 2) and neither <Btn> nor <PadKey> is a key of a paged row that must not take the focus.
@@ -27,7 +28,10 @@ import { Pressable, Text, View } from 'react-native';
 
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import { KEY_GAP, keyWidth, NARROW_ROW, pagesOf, placesOnLine, slotsIn } from '../../lib/keyRow.js';
-import { SHADOW } from '../../lib/theme/shadow.js';
+import { pressedStyle, UI } from '../../lib/theme/components.js';
+import { COMPOSER } from '../../lib/theme/composer.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -50,7 +54,7 @@ export type Key = {
   on?: boolean;
   /** One of a choice (`role="radiogroup"`): chosen or not. */
   selected?: boolean;
-  /** Changes nothing she wrote ("…", "Zurück"): the quieter face. */
+  /** Changes nothing she wrote ("…", "Zurück"). */
   quiet?: boolean;
   disabled?: boolean;
 };
@@ -107,9 +111,7 @@ export function KeyRow({
       style={{
         flexDirection: 'row',
         gap: KEY_GAP,
-        // token-exempt: the keys' soft shadow needs this much room, or the row's edge cuts it
-        paddingVertical: 2,
-        minHeight: TOUCH + 4,
+        paddingVertical: COMPOSER.key.padY,
       }}
     >
       {shown.map((key) => (
@@ -130,7 +132,6 @@ export function KeyRow({
             face: '…',
             label: t('keys.more'),
             hint: t('keys.more_hint'),
-            quiet: true,
             onPress: () => setPage((p) => (p + 1) % pages.length),
           }}
           width={keyWidth(row, slots, 1)}
@@ -142,10 +143,7 @@ export function KeyRow({
   );
 }
 
-/**
- * One key. The shadow sits on an outer View (a clipped Pressable would cut it off); the
- * Pressable holds no background, the inner View shows the press and a lit key.
- */
+/** One key: the Pressable holds no background, the tile inside shows the press and the choice. */
 function OneKey({
   k,
   width,
@@ -158,64 +156,61 @@ function OneKey({
   keepsFocus: boolean;
 }) {
   const { palette } = useTheme();
+  const reduced = useMotionReduced();
   const lit = k.on === true || k.selected === true;
-  const quiet = k.quiet === true && !lit;
-  const ink = lit ? palette.paper : disabled ? palette.ink2 : palette.primaryDk;
-  // A pill: its corner is half its height.
-  const round = TOUCH / 2;
+  const ink = disabled ? palette.ink2 : palette.primaryDk;
   return (
-    <View
-      style={[
-        {
-          width,
-          borderRadius: round,
-          backgroundColor: lit ? palette.primary : quiet ? palette.lavender : palette.paper,
-          opacity: disabled ? 0.6 : 1,
-        },
-        quiet || disabled ? null : SHADOW.soft,
-      ]}
+    <Pressable
+      {...(keepsFocus ? KEEPS_FOCUS : {})}
+      onPress={k.onPress}
+      disabled={disabled}
+      accessibilityRole={k.selected === undefined ? 'button' : 'radio'}
+      accessibilityLabel={k.label}
+      accessibilityHint={k.hint}
+      accessibilityState={{
+        disabled,
+        ...(k.selected === undefined ? {} : { selected: k.selected, checked: k.selected }),
+      }}
+      // A radio says whether it is chosen; on the web `accessibilityState.checked` alone does
+      // not become `aria-checked` (axe: aria-required-attr, issue #73).
+      {...(k.selected === undefined ? {} : { 'aria-checked': k.selected })}
+      style={{
+        width,
+        minHeight: TOUCH,
+        marginVertical: -COMPOSER.key.reach,
+        justifyContent: 'center',
+      }}
     >
-      <Pressable
-        {...(keepsFocus ? KEEPS_FOCUS : {})}
-        onPress={k.onPress}
-        disabled={disabled}
-        accessibilityRole={k.selected === undefined ? 'button' : 'radio'}
-        accessibilityLabel={k.label}
-        accessibilityHint={k.hint}
-        accessibilityState={{
-          disabled,
-          ...(k.selected === undefined ? {} : { selected: k.selected, checked: k.selected }),
-        }}
-        // A radio says whether it is chosen; on the web `accessibilityState.checked` alone does
-        // not become `aria-checked` (axe: aria-required-attr, issue #73).
-        {...(k.selected === undefined ? {} : { 'aria-checked': k.selected })}
-        android_ripple={{ color: palette.lavender, borderless: false }}
-        style={{ borderRadius: round, overflow: 'hidden' }}
-      >
-        {({ pressed }) => (
-          <View
-            style={{
-              height: TOUCH,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: round,
-              backgroundColor: pressed && !lit ? palette.lavender : 'transparent',
-            }}
-          >
-            {typeof k.face === 'string' ? (
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={MAX_FONT_SCALE}
-                style={[k.word ? TYPE.caption : TYPE.title, { color: ink, fontWeight: '600' }]}
-              >
-                {k.face}
-              </Text>
-            ) : (
-              k.face(ink)
-            )}
-          </View>
-        )}
-      </Pressable>
-    </View>
+      {({ pressed }) => (
+        <View
+          testID="key-tile"
+          style={{
+            height: COMPOSER.key.height,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: RADIUS.sm,
+            backgroundColor: lit ? palette.primaryLt : palette.canvas,
+            borderWidth: lit ? COMPOSER.key.selectedBorder : 0,
+            borderColor: palette.primary,
+            ...(disabled ? { opacity: UI.disabledOpacity } : pressedStyle(pressed, reduced)),
+          }}
+        >
+          {typeof k.face === 'string' ? (
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
+              style={[
+                k.word ? [TYPE.caption, { fontWeight: '600' }] : TYPE.composerKey,
+                { color: ink },
+              ]}
+            >
+              {k.face}
+            </Text>
+          ) : (
+            k.face(ink)
+          )}
+        </View>
+      )}
+    </Pressable>
   );
 }

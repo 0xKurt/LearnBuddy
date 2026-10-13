@@ -206,19 +206,17 @@ test('learning modes: explain, homework help without the solution, practice with
   // Typed math is previewed as it will be read — named, not divided (issue #175).
   await page.getByLabel('Deine Antwort').fill('3/4');
   await expect(page.getByLabel('Vorschau deiner Antwort: 3 Viertel')).toBeVisible();
-  // The pinned bar holds what she types with and "Prüfen", nothing else (#365): the math keys and
-  // the input bar (with its preview), "Prüfen" at its end while she types, like the chat's bar. What the bar
-  // takes, the question loses on a small phone with the keyboard open — help is a chip in the
-  // conversation, not a row down here (issue #16).
+  // The pinned bar holds the one Composer (#365, #599) and, directly above it, the help chips
+  // (since #597, design ui_kits/app/Flows.jsx:56): the keys are tiles inside the box, "Prüfen" is
+  // in its primary slot.
   await page.setViewportSize({ width: 360, height: 740 });
   const stack = await bottomStack(page, 'practice-typed-math');
   const pinned = page.getByTestId('bottom-bar');
   await expect(pinned.getByLabel('Deine Antwort')).toBeVisible();
-  await expect(pinned.getByText('Tipp')).toHaveCount(0);
-  // While she types "Prüfen" is in the box itself (#365), one box since #522: the bar's padding
-  // (8 + 12), the box's padding and frame (10), her line (38), the key row (48) and the tools with
-  // the drawn fraction among them (44): 160 pt.
-  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(176);
+  await expect(pinned.getByText('Tipp', { exact: true })).toHaveCount(1);
+  // The bar's padding (8 + 12), the chips (34) and their gap (10), then the box: frame and
+  // padding (18), her line (37), the key row (42), the tools (40) and two gaps of 4: 209 pt.
+  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(212);
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
 
   // ── Ein Rechenweg mit einem Rechenfehler: Code nennt die Zeile (issues #209, #274) ──
@@ -235,11 +233,14 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(page.getByText('Bis Zeile 1 stimmt alles', { exact: false })).toBeVisible();
   // A near miss, not a wrong answer: her way is mostly right, so the question stays OPEN — the
   // answer field is still there and so is the hint. The field was emptied when the answer went
-  // out; while she is still in it, the mic has the bar's end, like the chat's (#365) — out of it,
-  // „Prüfen" stands under the bar and waits (#310: one bar for every form).
+  // out: nothing is ready to check, so the one primary slot holds the conversation button and
+  // „Prüfen" comes back with her next digit (#599).
   await expect(answer).toBeVisible();
   await answer.blur();
-  await expect(page.getByRole('button', { name: 'Prüfen' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Prüfen', exact: true })).toHaveCount(0);
+  await expect(
+    pinned.getByRole('button', { name: 'Mit Buddy sprechen', exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Einen Tipp bekommen' })).toBeVisible();
 
   // ── Der Rechenweg wird in der App getippt, nicht nur von den Tests geschickt (issue #221) ──
@@ -1089,7 +1090,7 @@ test('pictures as options: four graphs two by two, a tap answers, holding opens 
 });
 
 // Its own test: note lines need only a learner and Buddy (issues #226, #275).
-test('note lines: read four, then write one — set with a tap, move with Höher/Tiefer (#275)', async ({
+test('note lines: read four, then write one — set with a tap on the line, no arrow keys (#275, #599)', async ({
   page,
 }) => {
   // Nine stops, each at both sizes, light and dark: 2.4 min before issue #464, 2.7 min of the
@@ -1176,11 +1177,16 @@ test('note lines: read four, then write one — set with a tap, move with Höher
   // E on the first line: one tap, on the line.
   await tapAt(1, -4);
   await bar(1, 'E als Viertelnote');
-  // A finger a line too low (F instead of G) is no new attempt: "Höher" moves THAT note.
+  // A finger a line too low (F instead of G): there are no arrow keys (owner rule 8) — "Zurück"
+  // takes the note away, and a tap on the right line sets it.
   await tapAt(1, -3);
   await bar(1, 'E als Viertelnote, F als Viertelnote');
   await bothSchemes(page, '75-staff-write-moving');
-  await page.getByRole('button', { name: 'Höher' }).click();
+  for (const arrow of ['Höher', 'Tiefer'])
+    await expect(page.getByRole('button', { name: arrow, exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  await bar(1, 'E als Viertelnote');
+  await tapAt(1, -2);
   await bar(1, 'E als Viertelnote, G als Viertelnote');
   await page.getByRole('radio', { name: 'halbe Note', exact: true }).click();
   await tapAt(1, 0);
@@ -1210,8 +1216,9 @@ test('note lines: read four, then write one — set with a tap, move with Höher
       `${await target.getAttribute('aria-label')}: above Prüfen`,
     ).toBeLessThanOrEqual(checkTop);
   }
-  // Her line stays; one step down and it is right.
-  await page.getByRole('button', { name: 'Tiefer' }).click();
+  // Her line stays; the last note taken back and set one step lower, and it is right.
+  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  await tapAt(2, 4);
   await bar(2, 'A als Viertelnote, Viertelpause, F als halbe Note');
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
@@ -1327,18 +1334,22 @@ test('formulas: math keys page by page, the new notation drawn, only the sign ov
   await field.click();
   await expect(page.getByRole('toolbar', { name: 'Mathe-Zeichen' })).toBeVisible();
   await keyRowShots(page, '76-math-keys-page1');
-  await field.pressSequentially('x');
-  await tap('Hochzahl');
-  await field.pressSequentially('2');
-  // ≤ is not on the first page of this question: "…" turns to the next keys.
+  // The question writes no comparison sign, so its first page is the equation row of the design
+  // (`x = + −` after the path's own key, ui_kits/app/Practice.jsx:39): the exponent and ≤ are on
+  // the next ones, and "…" turns to them. How the keys fall on pages depends on the width.
+  await expect(key('x')).toBeVisible();
+  await expect(key('gleich')).toBeVisible();
   await expect(key('kleiner gleich')).toHaveCount(0);
-  await tap('Weitere Zeichen');
+  const turnTo = async (name: string): Promise<void> => {
+    await field.focus();
+    for (let i = 0; i < 4 && (await key(name).count()) === 0; i++) await tap('Weitere Zeichen');
+    await tap(name);
+  };
+  await field.pressSequentially('x');
+  await turnTo('Hochzahl');
   await keyRowShots(page, '77-math-keys-more');
-  // How the keys fall on pages depends on the width; "…" turns until ≤ shows.
-  await field.focus();
-  for (let i = 0; i < 4 && (await key('kleiner gleich').count()) === 0; i++)
-    await tap('Weitere Zeichen');
-  await tap('kleiner gleich');
+  await field.pressSequentially('2');
+  await turnTo('kleiner gleich');
   await field.pressSequentially('3');
   await expect(field).toHaveValue('x² ≤ 3');
   await page.getByRole('button', { name: 'Prüfen' }).click();

@@ -4,8 +4,9 @@
 //
 //   · Vorlesen is switched by one component, the speaker in the header (`ReadAloudSwitch`), and
 //     the chat's head and the practice head both render it;
-//   · Gespräch is entered by the waveform (`TalkButton`) at the end of the input bar — in the chat
-//     and in practice — and its controls are one row (`VoiceRow`), the conversation screen's;
+//   · Gespräch is entered by the blue waveform (`TalkButton`) in the Composer's primary slot — in
+//     the chat and in practice — and its controls are one row (`VoiceRow`), the conversation
+//     screen's;
 //   · what #386 removed stays removed: the headphones, the practice's own switch, "Frage vorlesen"
 //     in the card, the "Nochmal vorlesen" pill, the chat's voice-first bar.
 
@@ -47,15 +48,23 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
     expect(holders(/<ReadAloudSwitch\b/)).toEqual([
       // The shared header draws the switch itself: the chat, practice and every other screen.
       'components/lb/BuddyHeader.tsx',
-      // Still handed to `Screen` by the Kopfrechnen round; the head no longer reads it.
-      'components/practice/DrillRound.tsx',
-      // Card passes retain their existing header adapter (#434).
-      'components/practice/HeadActions.tsx',
     ]);
   });
 
   it('is in the head of every practice: a question, a Kopfrechnen round, a card pass (#434)', () => {
-    expect(holders(/<HeadActions\b/)).toEqual(['components/practice/CardPass.tsx']);
+    // Each of them stands in the one `Screen`, whose head draws the switch; none builds a right
+    // end of its own (the card pass's `HeadActions` is gone, #599).
+    const source = (file: string) => app.find((s) => s.file === file)!.text;
+    for (const file of [
+      'app/practice/[id].tsx',
+      'components/practice/DrillRound.tsx',
+      'components/practice/CardPass.tsx',
+    ]) {
+      expect(source(file), file).toMatch(/<Screen\b/);
+      expect(source(file), file).not.toMatch(/\bsound=\{|\bright=\{/);
+    }
+    expect(holders(/\bHeadActions\b/)).toEqual([]);
+    expect(existsSync(join(ROOT, 'components/practice/HeadActions.tsx'))).toBe(false);
   });
 
   it('is drawn exactly once by the shared header, whoever renders it', () => {
@@ -79,12 +88,25 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
 
 describe('Gespräch: one way in, one row of controls (#386)', () => {
   it('is entered by the waveform at the end of the input bar, in the chat and in practice', () => {
-    expect(holders(/<TalkButton\b/)).toEqual([
+    // One place draws it: the Composer's primary slot (#599). A screen only says that a
+    // conversation can start here (`onTalk`).
+    expect(holders(/<TalkButton\b/)).toEqual(['components/lb/Composer.tsx']);
+    expect(holders(/\bonTalk[=:]/)).toEqual([
+      'app/buddy.tsx',
       'components/buddy/Composer.tsx',
+      'components/lb/Composer.tsx',
       // Options she can say (the bar holds her question) and a typed answer.
       'components/practice/CheckBar.tsx',
       'components/practice/TypedAnswer.tsx',
     ]);
+  });
+
+  it('is the filled waveform and never a second, quieter one among the tools', () => {
+    // The mark itself is drawn by the talk button alone: no file hands `icon="voice"` to a
+    // button of its own (the grey circle left of "Prüfen", #599).
+    expect(holders(/icon=["']voice["']/)).toEqual(['components/voice/TalkButton.tsx']);
+    const talk = app.find((s) => s.file === 'components/voice/TalkButton.tsx')!.text;
+    expect(talk).toMatch(/icon="voice"\s+filled\s+size=\{COMPOSER\.slot\}/);
   });
 
   it('is started and ended in one place — and carried on from the conversation screen', () => {
@@ -100,7 +122,7 @@ describe('Gespräch: one way in, one row of controls (#386)', () => {
     // The round mic stands in the row, the input bar and the topic sheet — no second big mic
     // (the chat's voice-first bar, the practice voice slot).
     expect(holders(/<MicButton\b/)).toEqual([
-      'components/lb/InputBar.tsx',
+      'components/lb/Composer.tsx',
       'components/learn/TopicSheet.tsx',
       'components/voice/VoiceRow.tsx',
     ]);

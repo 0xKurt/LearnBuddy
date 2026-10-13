@@ -4,8 +4,7 @@ import { renderInApp, styleOf } from '../../../testing/render.js';
 import { paletteOf } from '../../../lib/theme/palettes.js';
 import { useTheme } from '../../../lib/theme/ThemeProvider.js';
 import { watchReducedMotion } from '../../../lib/theme/motion.js';
-import { InputBar } from '../../lb/InputBar.js';
-import { IconBtn } from '../../lb/IconBtn.js';
+import { Composer } from '../../lb/Composer.js';
 import { MicButton } from '../MicButton.js';
 import type { VoiceInput } from '../useVoiceInput.js';
 
@@ -67,14 +66,14 @@ it.each(['idle', 'recording', 'starting', 'transcribing'] as const)(
     const input = voice(state);
     renderInApp(
       <>
-        <InputBar
+        <Composer
           maxLength={100}
           value=""
           accessibilityLabel="Nachricht"
           voice={input}
           micLabel="Diktieren"
           disabled={state === 'recording'}
-          after={<IconBtn icon="voice" filled accessibilityLabel="Gespräch" onPress={vi.fn()} />}
+          onTalk={vi.fn()}
         />
         <ThemeControl />
       </>,
@@ -87,7 +86,7 @@ it.each(['idle', 'recording', 'starting', 'transcribing'] as const)(
     expect(styleOf(paint).width).toBe('40px');
     expect(styleOf(paint).backgroundColor).toBe(cssColor(paletteOf('pastell').canvas));
     expect(styleOf(paint).borderWidth).toBe('0px');
-    const primary = screen.getByRole('button', { name: 'Gespräch' });
+    const primary = screen.getByRole('button', { name: 'Mit Buddy sprechen' });
     expect(screen.getByTestId('composer-primary').contains(primary)).toBe(true);
     expect(styleOf(face(primary)).backgroundColor).toBe(cssColor(paletteOf('pastell').primary));
     fireEvent.click(screen.getByRole('button', { name: 'Change theme' }));
@@ -115,7 +114,7 @@ it('keeps quiet transcribing busy/disabled while the live preference stops and r
   try {
     await act(async () => {});
     renderInApp(
-      <InputBar
+      <Composer
         maxLength={100}
         value=""
         accessibilityLabel="Nachricht"

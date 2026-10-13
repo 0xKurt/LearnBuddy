@@ -1,37 +1,41 @@
-// Presentation adapter for the one Composer: typed/board checks, tutor questions, Next,
-// flashcard decisions and the existing hands-free voice row. Domain callbacks stay with callers.
+// The practice adapter of the one Composer (`components/lb/Composer.tsx`, issue #599): it maps what
+// a form hands the answer shell — a check, a typed answer's field, "Weiter", a flashcard's own
+// action — onto the Composer's props, and adds her question to the tutor as the field of every
+// form that is not typed (#402). It draws no bar of its own: one `BottomBar`, the Composer in it.
+//
+// Two things stand in that bar that the design's Composer does not draw; they stay as before the
+// redesign (owner rule 2): the conversation row while a question is answered hands-free
+// (`VoiceRow`, #386, in the Composer's place) and a pass's own row of answers under the box (the
+// flashcards' two equal decisions, #384). Domain callbacks stay with the callers.
 
 import { useCheckOverride } from './CheckOverride.js';
 
 import { ASK_TEXT_MAX } from '@learnbuddy/shared-types/contracts';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  type ComponentProps,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useRef, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { mergeTranscript } from '../../lib/speech/spoken.js';
-import { COMPOSER } from '../../lib/theme/composer.js';
 import { Btn } from '../lb/Btn.js';
 import { BottomBar } from '../lb/BottomBar.js';
-import { CircleBtn } from '../lb/CircleBtn.js';
-import { InputBar } from '../lb/InputBar.js';
+import { ActionPill, Composer, type ComposerAction, type ComposerProps } from '../lb/Composer.js';
+import type { LbTextInputRef } from '../lb/LbTextInput.js';
 import { MicStatus } from '../voice/MicButton.js';
-import { TalkButton } from '../voice/TalkButton.js';
 import { useConversation } from '../voice/useConversation.js';
 import { useHandsFreeMic } from '../voice/useHandsFreeMic.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { VoiceRow } from '../voice/VoiceRow.js';
 
+/** A typed answer's field: the Composer's, without what the shell adds (the chips, the action). */
+type AnswerField = Omit<ComposerProps, 'action' | 'chips'> & {
+  inputRef?: Ref<LbTextInputRef>;
+};
+
 /** "Prüfen": what a form hands to the bar — when its answer may go, how it goes, and why it waits. */
 type Check = {
   /** Optional voice route alongside a durable selection and its Check action. */
   spoken?: Spoken;
+  /** The answer can be said: conversation mode starts from the primary slot while nothing is ready. */
   canTalk?: boolean;
   /** Her answer is complete. */
   ready: boolean;
@@ -40,23 +44,13 @@ type Check = {
   onPress: () => void;
   /** Said while it waits: what is still missing. */
   waitsHint: string;
-  /**
-   * The input bar a typed answer is written in (`InputBar`, issue #365), with the keys she types
-   * with: right above "Prüfen", in the same pinned bar, like the chat's. Handed what stands at the
-   * bar's end while she types: "Prüfen" itself (null while there is nothing to check) — and
-   * "Prüfen" across, for the essay's writing view (`WritingSheet`, issue #525).
-   */
-  input?: (checkInBar: ReactNode, checkAcross: ReactNode) => ReactNode;
-  /**
-   * She is typing in that bar: "Prüfen" stands in the bar itself (`CheckInBar`), as "Senden" does
-   * in the chat, and the full-width one steps aside — with the keyboard up on a small phone it
-   * would push the bar she types in under the keyboard.
-   */
+  /** A typed answer: the Composer's field is her answer (issue #365), not her question. */
+  field?: AnswerField;
+  /** The essay's writing view (`WritingSheet`, issue #525), handed its own "Prüfen". */
+  sheet?: (check: ReactNode) => ReactNode;
+  /** She is typing in that field: the board above it folds (`AnswerShell`). */
   typing?: boolean;
 };
-
-/** The tile is the action; `canTalk`: the options can be said, so the waveform stands in the bar. */
-type Tap = { tap: true; canTalk?: boolean };
 
 /** A spoken answer in a conversation (issue #386): what the conversation row's mic needs. */
 type Spoken = {
@@ -72,19 +66,22 @@ type Spoken = {
   onReadAgain?: () => void;
 };
 
-/** Gespräch: the conversation row in the bar's place. */
+/** Gespräch: the conversation row in the Composer's place. */
 type Talk = { talk: Spoken };
 
-/** The question's own pinned bar ("Weiter", the recorder), in the action's place. */
+/** The question's own pinned footer (the pronunciation recorder). */
 type OwnBar = { bar: ReactNode };
 
 /** Closed question: the same primary slot advances to the next question. */
 type Next = { next: { onPress: () => void; disabled?: boolean } };
 
-/** A pass's own action (the flashcards, #384): at the pill's end, or across under the pill. */
-type Own = { own: { inBar: ReactNode | null; across: ReactNode | null } };
+/**
+ * A pass's own action (the flashcards, #384): in the primary slot ("Umdrehen"), or as a row of
+ * answers under the box (two equal decisions).
+ */
+type Own = { own: { primary: ReactNode | null; row: ReactNode | null } };
 
-export type CheckAction = Check | Tap | OwnBar | Own | Talk | Next;
+export type CheckAction = Check | OwnBar | Own | Talk | Next;
 
 /** Her question to the tutor about the question on screen (issue #402): the bar's field. */
 type Ask = {
@@ -113,67 +110,158 @@ export const AskRoute = createContext<AskState>({
   onFocused: () => undefined,
 });
 
-export function CheckBar(provided: CheckAction & { keys?: ReactNode; before?: ReactNode }) {
+/**
+ * "Prüfen" in the primary slot. While nothing is ready and the answer can be said, the slot is
+ * the conversation's (the Composer's `onTalk`); otherwise the quiet pill waits in its place.
+ */
+function checkOf(check: Check, canTalk: boolean): ComposerAction | null {
+  if (!check.ready && canTalk) return null;
+  return {
+    kind: 'check',
+    ready: check.ready,
+    disabled: check.disabled,
+    onPress: check.onPress,
+    waitsHint: check.waitsHint,
+  };
+}
+
+export function CheckBar(provided: CheckAction & { keys?: ReactNode; chips?: ReactNode }) {
   const override = useCheckOverride();
   const action = override ?? provided;
-  // A custom recorder owns its own footer; ordinary input actions share this one bar.
+  const { keys = null, chips = null } = provided;
+  // A custom recorder owns its own footer; every other form shares this one bar.
   if ('bar' in action) return <>{action.bar}</>;
-  let content: ReactNode;
-  if ('spoken' in action && action.spoken) content = <TalkRow {...action.spoken} check={action} />;
-  else if ('next' in action) content = <NextBar {...action.next} />;
-  else if ('own' in action) content = <OwnAction {...action.own} />;
-  else if ('talk' in action) content = <TalkRow {...action.talk} />;
-  else if ('tap' in action) content = <TapBar canTalk={action.canTalk === true} />;
-  else content = <CheckButton {...action} />;
+  const said =
+    'spoken' in action && action.spoken
+      ? { ...action.spoken, check: action }
+      : 'talk' in action
+        ? action.talk
+        : null;
   return (
     <BottomBar>
-      {provided.before}
-      {content}
+      {said ? (
+        <>
+          {chips}
+          <TalkRow {...said} />
+        </>
+      ) : 'field' in action && action.field ? (
+        <TypedComposer check={action} field={action.field} keys={keys} chips={chips} />
+      ) : (
+        <AskComposer action={action as Asked} keys={keys} chips={chips} />
+      )}
     </BottomBar>
   );
 }
 
-function NextBar({ onPress, disabled }: Next['next']) {
-  const { t } = useTranslation('practice');
-  const field = useAskField(
-    <Btn size="sm" pill keepsFocus onPress={onPress} disabled={disabled}>
-      {t('next')}
-    </Btn>,
-  );
+/** A typed answer: the Composer's field is her answer, "Prüfen" its action. */
+function TypedComposer({
+  check,
+  field: { inputRef, ...field },
+  keys,
+  chips,
+}: {
+  check: Check;
+  field: AnswerField;
+  keys: ReactNode;
+  chips: ReactNode;
+}) {
   return (
     <>
-      <InputBar {...field} />
+      <Composer
+        {...field}
+        ref={inputRef}
+        chips={chips}
+        keys={field.keys ?? keys}
+        action={checkOf(check, Boolean(field.onTalk))}
+      />
+      {check.sheet?.(<SheetCheck {...check} />)}
     </>
   );
 }
 
-/** Options she taps: the tile is the answer, the bar holds her question — and the waveform. */
-function TapBar({ canTalk }: { canTalk: boolean }) {
-  const field = useAskField(null);
+/** What a form without a typed answer hands the bar. */
+type Asked = Exclude<CheckAction, OwnBar | Talk>;
+
+/**
+ * Every other form: the Composer's field is her question to the tutor ("Frag zur Aufgabe …",
+ * issue #402). Its action is the form's — "Prüfen", "Weiter", a pass's own — and, once she has
+ * typed a question, the chat's send arrow in the same slot.
+ */
+function AskComposer({
+  action,
+  keys,
+  chips,
+}: {
+  action: Asked;
+  keys: ReactNode;
+  chips: ReactNode;
+}) {
+  const ask = useContext(AskRoute);
   const conversation = useConversation();
+  const { t } = useTranslation(['practice', 'common']);
+  const latest = useRef(ask);
+  latest.current = ask;
+  const voice = useVoiceInput({
+    purpose: 'message',
+    lang: null,
+    onText: (said) => {
+      const current = latest.current;
+      if (!current.disabled)
+        current.onChange(mergeTranscript(current.value, said, 'append', ASK_TEXT_MAX));
+    },
+  });
+  const cancel = useRef(voice.cancel);
+  cancel.current = voice.cancel;
+  useEffect(() => {
+    if (ask.disabled) cancel.current();
+  }, [ask.disabled]);
+  useEffect(() => () => cancel.current(), []);
+  const asking = ask.value.trim().length > 0;
+  const send = () => {
+    if (asking && !ask.disabled) ask.onSend();
+  };
+  const canTalk = 'canTalk' in action && action.canTalk === true;
+  const own: ComposerAction | null =
+    'next' in action
+      ? { kind: 'next', ...action.next }
+      : 'own' in action
+        ? action.own.primary === null
+          ? null
+          : { kind: 'own', node: action.own.primary }
+        : checkOf(action, canTalk);
   return (
     <>
-      <InputBar {...field} after={canTalk ? <TalkButton onPress={conversation.start} /> : null} />
-    </>
-  );
-}
-
-/** A pass's own action: her question in the field, the action where "Prüfen" stands. */
-function OwnAction({ inBar, across }: Own['own']) {
-  const field = useAskField(inBar);
-  return (
-    <>
-      <InputBar {...field} />
-      {across}
+      <Composer
+        // The walkthrough finds the question's field by this (tests/web/fit.ts).
+        testID="ask-field"
+        value={ask.value}
+        maxLength={ASK_TEXT_MAX}
+        onChangeText={ask.onChange}
+        placeholder={t('practice:ask.placeholder')}
+        accessibilityLabel={t('practice:ask.label')}
+        submitBehavior="submit"
+        returnKeyType="send"
+        onSubmitEditing={send}
+        onFocus={() => ask.onFocused(true)}
+        onBlur={() => ask.onFocused(false)}
+        disabled={ask.disabled}
+        voice={voice}
+        micLabel={t('common:voice.message')}
+        chips={chips}
+        keys={keys}
+        action={asking ? { kind: 'send', onPress: send, disabled: ask.disabled } : own}
+        onTalk={canTalk && !asking ? conversation.start : null}
+      />
+      {'own' in action ? action.own.row : null}
     </>
   );
 }
 
 /**
- * Gespräch (issue #386): the conversation screen's row in the bar — "Tastatur" (back to the input
- * bar) · the mic · "Nochmal vorlesen". As on /talk the mic listens by itself once the question has
- * been read (the hands-free loop, `useHandsFreeMic`; the screen arms it); listening ends by itself
- * when she pauses (on the phone).
+ * Gespräch (issue #386): the conversation screen's row in the bar — "Tastatur" (back to the
+ * Composer) · the mic · "Nochmal vorlesen". As on /talk the mic listens by itself once the
+ * question has been read (the hands-free loop, `useHandsFreeMic`; the screen arms it); listening
+ * ends by itself when she pauses (on the phone).
  */
 function TalkRow({
   prompt,
@@ -183,7 +271,7 @@ function TalkRow({
   onReadAgain,
   check,
 }: Spoken & { check?: Check }) {
-  const { t } = useTranslation(['common', 'buddy']);
+  const { t } = useTranslation(['common', 'buddy', 'practice']);
   const conversation = useConversation();
   const submitted = useRef(false);
   const locked = useRef(disabled);
@@ -205,17 +293,21 @@ function TalkRow({
   });
   useHandsFreeMic(voice, disabled, prompt);
   const selectedCheck = check ? (
-    <CheckBtn
-      {...check}
-      onPress={() => {
-        if (submitted.current || disabled || !check.ready) return;
-        submitted.current = true;
-        voice.cancel();
-        check.onPress();
-      }}
-      quiet={voice.state !== 'idle'}
-      place="pill"
-    />
+    <View testID="answer-action">
+      <ActionPill
+        label={t('practice:check')}
+        icon="check"
+        off={disabled || !check.ready}
+        quiet={voice.state !== 'idle'}
+        {...(check.ready ? {} : { hint: check.waitsHint })}
+        onPress={() => {
+          if (submitted.current || disabled || !check.ready) return;
+          submitted.current = true;
+          voice.cancel();
+          check.onPress();
+        }}
+      />
+    </View>
   ) : null;
   return (
     <>
@@ -253,119 +345,19 @@ function TalkRow({
   );
 }
 
-function CheckButton(check: Check & { keys?: ReactNode }) {
-  const { t } = useTranslation('buddy');
-  const { input, keys } = check;
-  const conversation = useConversation();
-  const field = useAskField(<CheckBtn {...check} place="pill" />);
-  return (
-    <>
-      {input ? (
-        <>{input(<CheckBtn {...check} place="pill" />, <CheckBtn {...check} place="across" />)}</>
-      ) : (
-        // A form without a typed answer: her question in the field, "Prüfen" its action (#402).
-        <InputBar
-          {...field}
-          under={keys}
-          chips={
-            check.canTalk ? (
-              <CircleBtn
-                icon="voice"
-                size={COMPOSER.slot}
-                onPress={conversation.start}
-                accessibilityLabel={t('talk.open')}
-              />
-            ) : null
-          }
-        />
-      )}
-    </>
-  );
-}
-
-/**
- * The input bar's field as her question (issue #402): "Frag zur Aufgabe …", and at the box's end
- * the form's "Prüfen" (none under options) — or the chat's round send arrow, once she has typed a
- * question.
- */
-function useAskField(check: ReactNode): ComponentProps<typeof InputBar> {
-  const ask = useContext(AskRoute);
-  const { t } = useTranslation(['practice', 'buddy', 'common']);
-  const latest = useRef(ask);
-  latest.current = ask;
-  const voice = useVoiceInput({
-    purpose: 'message',
-    lang: null,
-    onText: (said) => {
-      const current = latest.current;
-      if (!current.disabled)
-        current.onChange(mergeTranscript(current.value, said, 'append', ASK_TEXT_MAX));
-    },
-  });
-  const cancel = useRef(voice.cancel);
-  cancel.current = voice.cancel;
-  useEffect(() => {
-    if (ask.disabled) cancel.current();
-  }, [ask.disabled]);
-  useEffect(() => () => cancel.current(), []);
-  const asking = ask.value.trim().length > 0;
-  const send = () => {
-    if (asking && !ask.disabled) ask.onSend();
-  };
-  return {
-    // The walkthrough finds the question's field by this (tests/web/fit.ts).
-    testID: 'ask-field',
-    value: ask.value,
-    maxLength: ASK_TEXT_MAX,
-    onChangeText: ask.onChange,
-    placeholder: t('practice:ask.placeholder'),
-    accessibilityLabel: t('practice:ask.label'),
-    submitBehavior: 'submit',
-    returnKeyType: 'send',
-    onSubmitEditing: send,
-    onFocus: () => ask.onFocused(true),
-    onBlur: () => ask.onFocused(false),
-    disabled: ask.disabled,
-    voice,
-    micLabel: t('common:voice.message'),
-    action: asking ? (
-      <CircleBtn
-        icon="send"
-        filled
-        size={COMPOSER.slot}
-        keepsFocus
-        onPress={send}
-        disabled={ask.disabled}
-        accessibilityLabel={t('buddy:composer.send')}
-      />
-    ) : (
-      check
-    ),
-  };
-}
-
-/** The same check: in the Composer, or in the essay modal's own pinned footer. */
-function CheckBtn({
-  ready,
-  disabled,
-  onPress,
-  waitsHint,
-  place,
-  quiet = false,
-}: Check & { quiet?: boolean; place: 'across' | 'pill' }) {
+/** The essay's writing view has its own pinned footer: the same check, over its width. */
+function SheetCheck({ ready, disabled, onPress, waitsHint }: Check) {
   const { t } = useTranslation('practice');
-  const hint = ready ? undefined : waitsHint;
   return (
     <View testID="answer-action">
       <Btn
-        variant={ready && !quiet ? 'primary' : 'quiet'}
-        size={place === 'across' ? 'md' : 'sm'}
+        variant={ready ? 'primary' : 'quiet'}
+        size="md"
         pill
-        full={place === 'across'}
-        keepsFocus={place === 'pill'}
+        full
         disabled={disabled || !ready}
         onPress={onPress}
-        accessibilityHint={hint}
+        accessibilityHint={ready ? undefined : waitsHint}
       >
         {t('check')}
       </Btn>

@@ -113,6 +113,15 @@ function typeOf(p: Palette) {
     voiceStatus: { ...body, ...fontFace('600') },
     chip: { ...fontFace('600'), fontSize: 14, lineHeight: 14, color: p.ink },
     metaStrong: { ...fontFace('700'), fontSize: 14, lineHeight: 20, color: p.ink2 },
+    /** The Composer's own words (components/composer/Composer.jsx): pill and key. */
+    composerPill: {
+      ...fontFace('700'),
+      fontSize: 15,
+      lineHeight: 15,
+      letterSpacing: -0.1,
+      color: p.ink,
+    },
+    composerKey: { ...fontFace('600'), fontSize: 17, lineHeight: 17, color: p.primaryDk },
 
     code: {
       fontFamily: MONOSPACE,

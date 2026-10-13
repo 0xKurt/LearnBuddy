@@ -24,7 +24,7 @@ function keyName(node) {
 
 /**
  * The properties of the top-level `const <name> = { … }` (with or without a type annotation,
- * exported or not).
+ * exported or not) — or, for `const <name> = [ … ]`, its strings as entries.
  * @param {string} source
  * @param {string} name
  * @returns {Entry[]}
@@ -48,6 +48,13 @@ export function objectLiteral(source, name) {
         (init.type === 'TSAsExpression' || init.type === 'TSSatisfiesExpression')
       )
         init = /** @type {Node} */ (init.expression);
+      // A plain list of names (`const X = ['a.tsx', …]`): every string is an entry.
+      if (init?.type === 'ArrayExpression')
+        return /** @type {Node[]} */ (init.elements).map((element) => {
+          const key = element === null ? null : stringOf(element);
+          if (key === null) throw new Error(`${name}: nur Zeichenketten (kein Spread, kein Loch)`);
+          return { key, value: element };
+        });
       if (init?.type !== 'ObjectExpression')
         throw new Error(`${name} ist kein Objekt-Literal — die Liste muss lesbar bleiben`);
       return /** @type {Node[]} */ (init.properties).map((p) => {
@@ -132,6 +139,10 @@ export const SOURCE_LISTS = {
   // Routes drawn without the shared head, and heads whose right end is still their own (#599).
   'apps/mobile/lib/__tests__/headerShell.test.ts#HEADLESS': (s) => sourceList(s, 'HEADLESS'),
   'apps/mobile/lib/__tests__/headerShell.test.ts#OWN_END': (s) => sourceList(s, 'OWN_END'),
+  // The shells without a head, who draws Buddy, and the one head without ⋯ (#599).
+  'apps/mobile/lib/__tests__/headerShell.test.ts#BARE_SHELL': (s) => sourceList(s, 'BARE_SHELL'),
+  'apps/mobile/lib/__tests__/headerShell.test.ts#ORB_HOLDERS': (s) => sourceList(s, 'ORB_HOLDERS'),
+  'apps/mobile/lib/__tests__/headerShell.test.ts#NO_MENU': (s) => sourceList(s, 'NO_MENU'),
 };
 
 /** "a/b.ts#NAME(…)" → "a/b.ts" */

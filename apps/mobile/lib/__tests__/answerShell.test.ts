@@ -60,8 +60,7 @@ const SPACER: Record<string, string> = {
 
 /** Who writes "Prüfen" (the key `check`) on a button. */
 const CHECK: Record<string, string> = {
-  'CheckBar.tsx': 'the shell’s action',
-  'DrillRound.tsx': 'Kopfrechnen’s pad (#243)',
+  'CheckBar.tsx': 'outside the Composer: the conversation row’s check, the essay sheet’s footer',
 };
 
 /** What fills the shell's `keys` slot: each is the one key row with its own keys (step 4). */
@@ -112,9 +111,24 @@ describe('the answer shell is the only place for an answer and its action (#310)
   });
 
   it('writes "Prüfen" only through its listed owners', () => {
+    // In the bar the word is the Composer's own (`components/lb/Composer.tsx`): a form or a
+    // round only says `kind: 'check'`.
     expect(holders((s) => /\bt\('(practice:)?check'\)/.test(s.text))).toEqual(
       Object.keys(CHECK).sort(),
     );
+  });
+
+  it('has no arrow keys on the note line: a note is set by a tap on the staff (rule 8)', () => {
+    const { text } = sources.find((s) => s.name === 'StaffKeys.tsx')!;
+    for (const gone of [
+      "'higher'",
+      "'lower'",
+      'nudge',
+      "icon('up')",
+      "icon('down')",
+      'staff.higher',
+    ])
+      expect(text.includes(gone), `StaffKeys.tsx still has ${gone}`).toBe(false);
   });
 
   it('handles the keyboard once, in the screen (rule 15)', () => {

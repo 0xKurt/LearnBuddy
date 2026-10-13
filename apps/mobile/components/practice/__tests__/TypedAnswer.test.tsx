@@ -57,6 +57,7 @@ describe('a typed answer is written in the one input bar (issue #365)', () => {
     show('long', 'Erklär mir, warum der Mond Phasen hat.', null);
     const bottom = screen.getByTestId('bottom-bar');
     const input = field();
+    fireEvent.change(input, { target: { value: 'Weil' } });
     const check = screen.getByRole('button', { name: 'Prüfen' });
     expect(bottom.contains(input)).toBe(true);
     expect(bottom.contains(check)).toBe(true);
@@ -70,11 +71,20 @@ describe('a typed answer is written in the one input bar (issue #365)', () => {
   it('while she types, "Prüfen" stands in the box itself, like the chat\'s send arrow', () => {
     const seen = show('long', 'Erklär mir, warum der Mond Phasen hat.', null);
     fireEvent.focus(field());
-    // Pending Check keeps the one primary slot and cannot submit an empty answer.
-    const pending = screen.getByRole('button', { name: 'Prüfen' }) as HTMLButtonElement;
-    expect(pending.disabled).toBe(true);
-    expect(screen.getByTestId('composer-primary').contains(pending)).toBe(true);
+    // Nothing to check yet: the one primary slot is the conversation's, as in the chat.
+    expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
+    expect(
+      screen
+        .getByTestId('composer-primary')
+        .contains(screen.getByRole('button', { name: 'Mit Buddy sprechen' })),
+    ).toBe(true);
     type(seen, 'Weil');
+    expect(screen.queryByRole('button', { name: 'Mit Buddy sprechen' })).toBeNull();
+    // An emptied field gives the slot back to the conversation.
+    fireEvent.change(field(), { target: { value: '' } });
+    expect(screen.queryByRole('button', { name: 'Prüfen' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Mit Buddy sprechen' })).toBeTruthy();
+    type({ value: '' }, 'Weil');
     const checks = screen.getAllByRole('button', { name: 'Prüfen' });
     expect(checks).toHaveLength(1);
     // In the box's row of tools, under her text and where the chat sends (#522): her line has the
@@ -87,18 +97,38 @@ describe('a typed answer is written in the one input bar (issue #365)', () => {
     expect(box().contains(screen.getByRole('button', { name: 'Prüfen' }))).toBe(true);
   });
 
-  it('keeps tools below empty text and pending Check in the one primary slot', () => {
-    show('numeric', 'Wie groß ist die Fläche?', 'math');
+  it('keeps tools below empty text and the check in the one primary slot', () => {
+    const seen = show('numeric', 'Wie groß ist die Fläche?', 'math');
     // The field keeps full width even before the first character.
     expect(
       field().parentElement!.contains(screen.getByRole('button', { name: 'Antwort sagen' })),
     ).toBe(false);
     expect(box().contains(screen.getByRole('button', { name: 'Antwort sagen' }))).toBe(true);
-    expect(
-      screen
-        .getByTestId('composer-primary')
-        .contains(screen.getByRole('button', { name: 'Prüfen' })),
-    ).toBe(true);
+    type(seen, '28');
+    const primary = screen.getByTestId('composer-primary');
+    expect(primary.contains(screen.getByRole('button', { name: 'Prüfen' }))).toBe(true);
+    expect(primary.querySelectorAll('[role="button"]')).toHaveLength(1);
+  });
+
+  it('opens the phone’s full keyboard for a number: a sign, a comma, a path need it', () => {
+    show('numeric', 'Wie groß ist die Fläche?', 'math');
+    // Not the number pad: the answer may be negative, a decimal, a fraction or a written path,
+    // and the app does not know which while the question is open (#599, reported).
+    expect(field().getAttribute('inputmode')).not.toBe('numeric');
+  });
+
+  it('names its keys with the mode chip, which puts them away and brings them back', () => {
+    show('formula', 'Löse nach $x$ auf: $2x + 3 = 11$', 'math');
+    const chip = screen.getByRole('button', { name: 'Formel' });
+    expect(box().contains(chip)).toBe(true);
+    // The design's row for an equation, after the path's own key: x = + − / ( ).
+    const row = screen.getByRole('toolbar', { name: 'Mathe-Zeichen' });
+    expect(box().contains(row)).toBe(true);
+    expect(screen.getByRole('button', { name: 'x' })).toBeDefined();
+    fireEvent.click(chip);
+    expect(screen.queryByRole('toolbar')).toBeNull();
+    fireEvent.click(chip);
+    expect(screen.getByRole('toolbar', { name: 'Mathe-Zeichen' })).toBeDefined();
   });
 });
 

@@ -197,7 +197,7 @@
     "undo": "Deshacer",
     "toggle_on": "{{label}}, activado",
     "bar_crowded": "En el compás {{n}} ya no cabe otro signo.",
-    "bar_hint": "Toca donde debe ir la nota. Después muévela con «Más alto» y «Más bajo».",
+    "bar_hint": "Toca donde debe ir la nota. Sin tocar, queda en la línea central; después muévela con «Más alto» y «Más bajo» en las acciones o con las flechas del teclado.",
     "higher": "Más alto",
     "lower": "Más bajo",
     "placed": "{{what}} {{where}}, compás {{bar}}",
@@ -268,6 +268,7 @@
   "drill": {
     "progress": "Cuenta {{current}} de {{total}}",
     "end_hint": "Volver con Buddy. Lo que has calculado queda guardado.",
+    "placeholder": "Resultado …",
     "slash": "Barra de fracción",
     "right": "Correcto: {{task}}",
     "was": "Era: {{task}}",

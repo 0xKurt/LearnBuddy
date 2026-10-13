@@ -625,6 +625,14 @@ describe('source lists: the Ausnahmelisten a source test keeps are compared with
     assert.throws(() => sourceList('const OWN_BAR = { ...rest };', 'OWN_BAR'), /einfache/);
   });
 
+  it('reads a plain list of names as entries, and a longer one is growth (#599)', () => {
+    const before = sourceList("const HOLDERS = ['a.tsx'];", 'HOLDERS');
+    const after = sourceList("const HOLDERS = ['a.tsx', `b.tsx`] as const;", 'HOLDERS');
+    assert.deepEqual(before, { 'a.tsx': 1 });
+    assert.deepEqual(growth(before, after), ['neu: b.tsx (1)']);
+    assert.throws(() => sourceList('const HOLDERS = [...more];', 'HOLDERS'), /Zeichenketten/);
+  });
+
   it('turns a new entry or a larger count into growth', () => {
     const before = sourceList("const L = { 'A.tsx': { count: 1 } };", 'L');
     const after = sourceList("const L = { 'A.tsx': { count: 2 }, 'B.tsx': { count: 1 } };", 'L');

@@ -4,7 +4,6 @@ import { beforeEach, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
 import { Btn } from '../../lb/Btn.js';
-import { InputBar } from '../../lb/InputBar.js';
 import { AnswerFlow, AnswerShell } from '../AnswerShell.js';
 
 const seen = vi.hoisted(() => ({ window: 440, visible: 440, overlap: 0 }));
@@ -29,17 +28,14 @@ function Typed({ hint, body = false }: { hint: () => void; body?: boolean }) {
           onPress: () => undefined,
           waitsHint: '',
           typing: focused,
-          input: (check) => (
-            <InputBar
-              value={value}
-              maxLength={100}
-              onChangeText={setValue}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              accessibilityLabel="Deine Antwort"
-              action={check}
-            />
-          ),
+          field: {
+            value,
+            maxLength: 100,
+            onChangeText: setValue,
+            onFocus: () => setFocused(true),
+            onBlur: () => setFocused(false),
+            accessibilityLabel: 'Deine Antwort',
+          },
         }}
       />
     </AnswerFlow.Provider>

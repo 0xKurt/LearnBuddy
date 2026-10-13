@@ -197,7 +197,7 @@
     "undo": "Annulla",
     "toggle_on": "{{label}}, attivo",
     "bar_crowded": "Nella battuta {{n}} non c'è più posto per un altro segno.",
-    "bar_hint": "Tocca dove deve andare la nota. Poi spostala con «Più su» e «Più giù».",
+    "bar_hint": "Tocca dove deve andare la nota. Senza toccare finisce sulla linea centrale; poi spostala con «Più su» e «Più giù» nelle azioni o con i tasti freccia.",
     "higher": "Più su",
     "lower": "Più giù",
     "placed": "{{what}} {{where}}, battuta {{bar}}",
@@ -268,6 +268,7 @@
   "drill": {
     "progress": "Calcolo {{current}} di {{total}}",
     "end_hint": "Torna da Buddy. Quello che hai calcolato resta salvato.",
+    "placeholder": "Risultato …",
     "slash": "Linea di frazione",
     "right": "Giusto: {{task}}",
     "was": "Era: {{task}}",

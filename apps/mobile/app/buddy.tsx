@@ -89,6 +89,8 @@ export default function BuddyScreen() {
     }, []),
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  /** She is writing or dictating a message (the Composer says so): the head's orb listens. */
+  const [typing, setTyping] = useState(false);
   const thread = home.data?.thread;
   const newestReply = thread ? newestBuddyId(thread) : null;
   const follow = useThreadFollow(newestReply);
@@ -154,6 +156,7 @@ export default function BuddyScreen() {
         key="decision"
         decision={h.decision}
         busy={busy}
+        quiet={quiet}
         onOptIn={(enable) =>
           enable ? void enableContact(false) : void act(() => answerContactOptIn(false))
         }
@@ -208,8 +211,8 @@ export default function BuddyScreen() {
       <KeyboardSafe style={{ flex: 1 }} enabled={focusedScreen}>
         {/* Buddy, his name, and one way into everything else (issue #174). The owner drew
             it: orb left, LearnBuddy beside it, three dots right. The row of four circles
-            that used to stand here moved into those dots, and the orb that stood beside
-            every single reply is gone with it — one Buddy, in one place. */}
+            that used to stand here moved into those dots. In the thread only his newest line
+            carries the mini orb (`ThreadOrb`, design components/buddy/Message.jsx). */}
         <Header
           // What Buddy is doing, from the same facts the thread uses (issue #179):
           // `pending` alone said idle while the answer was being written.
@@ -219,6 +222,8 @@ export default function BuddyScreen() {
             streaming: live !== null,
             // Buddy is reading a sheet she sent (design ui_kits/app/Flows.jsx `ChatState`).
             reading: h.now?.type === 'material_processing',
+            // She is writing or dictating in the Composer: Buddy leans in.
+            typing,
           })}
           onMenu={() => setMenuOpen(true)}
         />
@@ -307,6 +312,7 @@ export default function BuddyScreen() {
           onStop={() => void stopReply()}
           onSend={(text) => send(text)}
           onTalk={() => router.push('/talk')}
+          onTyping={setTyping}
         />
       </KeyboardSafe>
 
