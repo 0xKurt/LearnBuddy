@@ -7,8 +7,8 @@
 // (with secure e-mail change to the old and the new address) and the new
 // address counts only once confirmed, so that is what the sheet says.
 
-import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { clearAdminToken } from '../../lib/admin.js';
@@ -18,31 +18,31 @@ import { setPassword as savePasswordOnServer } from '../../lib/api/endpoints.js'
 import { looksLikeEmail, passwordProblem } from '../../lib/auth/recovery.js';
 import { changeEmail, signIn } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { NewPasswordFields } from '../auth/NewPasswordFields.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { LbTextInput } from '../lb/LbTextInput.js';
+import { ListGroup, Row } from '../lb/ListGroup.js';
 import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
 import { asAdultIfNeeded, useAdultOpener } from './adultGate.js';
-import { Divider, Row } from './Row.js';
 
 type Props = {
   minor: boolean;
   pinSet: boolean;
   /** The account's e-mail from the stored session ('' when unknown). */
   email: string;
-  /** False while another account task runs (AdultSection). */
+  /** False while another account task runs. */
   enabled: boolean;
+  /** A row of the same card, before the sign-in's own (correcting the profile). */
+  first?: ReactNode;
 };
 
 type Open = 'email' | 'password' | null;
 
-export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
-  const { palette } = useTheme();
+export function AccountAccessCard({ minor, pinSet, email, enabled, first }: Props) {
   const { t } = useTranslation(['settings', 'common']);
   const [open, setOpen] = useState<Open>(null);
   const { opening, open: openAsAdult } = useAdultOpener(minor, pinSet, 'credentials');
@@ -146,35 +146,20 @@ export function AccountAccessCard({ minor, pinSet, email, enabled }: Props) {
 
   return (
     <>
-      <Card>
-        <View style={{ gap: SPACE.lg }}>
-          <Row
-            question={t('settings:adult.access.email_title')}
-            answer={email || undefined}
-            hint={email ? undefined : t('settings:adult.access.email_unknown')}
-          >
-            {minor ? (
-              <Text style={[TYPE.body, { color: palette.ink2 }]}>
-                {t('settings:adult.needs_pin')}
-              </Text>
-            ) : null}
-            <Btn pill variant="outline" onPress={() => void start('email')} disabled={locked}>
-              {t('settings:adult.access.email_cta')}
-            </Btn>
-          </Row>
-          <Divider />
-          <Row question={t('settings:adult.access.password_title')}>
-            {minor ? (
-              <Text style={[TYPE.body, { color: palette.ink2 }]}>
-                {t('settings:adult.needs_pin')}
-              </Text>
-            ) : null}
-            <Btn pill variant="outline" onPress={() => void start('password')} disabled={locked}>
-              {t('settings:adult.access.password_cta')}
-            </Btn>
-          </Row>
-        </View>
-      </Card>
+      <ListGroup>
+        {first}
+        <Row
+          title={t('settings:adult.access.email_cta')}
+          sub={email || t('settings:adult.access.email_unknown')}
+          disabled={locked}
+          onPress={() => void start('email')}
+        />
+        <Row
+          title={t('settings:adult.access.password_cta')}
+          disabled={locked}
+          onPress={() => void start('password')}
+        />
+      </ListGroup>
 
       <Sheet
         visible={open === 'email'}

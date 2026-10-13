@@ -18,7 +18,6 @@
     "allowed_no_device": "Allowed. This phone couldn't be registered, though. You'll find Buddy's messages here in the app.",
     "stopped": "Switched off. Planned messages won't be sent.",
     "minor_hint": "Allowing more needs your parents' PIN. Less is always possible.",
-    "no_pin_hint": "For that, your parents first set a PIN below.",
     "pause_question": "Take a break?",
     "pause_hint": "During a break nothing is sent to your phone.",
     "pause_until": "Break up to and including {{date}}.",
@@ -28,16 +27,11 @@
     "paused_toast": "Break up to and including {{date}}.",
     "pause_ended_toast": "Break ended.",
     "quiet_question": "When not?",
-    "quiet_answer": "Not after {{start}} and not before {{end}}.",
     "quiet_start": "Not after",
     "quiet_end": "Not before",
     "window_question": "When is best?",
-    "window_answer": "Between {{start}} and {{end}}.",
     "window_hint": "When Buddy gets in touch unprompted, it's at this time.",
     "window_option": "{{start}}–{{end}}",
-    "weekdays_question": "Which days not?",
-    "weekdays_answer": "Never on these days: {{days}}.",
-    "weekdays_allow_all": "Allow all days again",
     "device_no_token": "This phone isn't registered yet. Until then everything arrives here in the app only.",
     "device_invalid": "The registered phone can no longer be reached. So everything arrives here in the app only.",
     "device_register": "Register this phone",
@@ -45,12 +39,16 @@
     "device_not_possible": "That isn't possible on this phone right now. Maybe notifications are off in the system settings.",
     "summary": "Buddy gets in touch between {{start}} and {{end}}, never after {{quiet}}.",
     "tell_buddy": "Just tell Buddy when you want some quiet.",
-    "more": "Adjust times",
-    "less": "Show less",
     "device_elsewhere": "Buddy’s messages currently go to another device, not to this phone.",
     "only_important": "You asked Buddy to write less often: only what really matters reaches your phone. Everything else waits in the app.",
     "only_important_end": "Everything to my phone again",
-    "only_important_ended": "Buddy sends everything to your phone again."
+    "only_important_ended": "Buddy sends everything to your phone again.",
+    "phone": "On your phone",
+    "times": "Learning times",
+    "days": "Days",
+    "days_question": "When may Buddy write?",
+    "weekend": "Quiet weekends",
+    "weekend_hint": "No messages on Saturday and Sunday."
   },
   "profile": {
     "title": "Your profile",
@@ -81,8 +79,6 @@
   "adult": {
     "title_minor": "For parents",
     "title_self": "Your account",
-    "intro_minor": "This is where parents manage the account. It opens only with their PIN.",
-    "intro_self": "Your data and your sign-in.",
     "needs_pin": "Needs the parents' PIN.",
     "pin": {
       "title": "Parents' PIN",
@@ -108,8 +104,6 @@
     },
     "export": {
       "title": "Export data",
-      "body": "Everything stored, as a file. To keep or pass on.",
-      "cta": "Create export",
       "working": "Creating the export …",
       "share_title": "LearnBuddy export",
       "share_failed": "The file couldn't be handed over. Please try again.",
@@ -118,8 +112,6 @@
     },
     "delete": {
       "title": "Delete account",
-      "body": "Everything is deleted for good after 7 days. Until then you can cancel it.",
-      "cta": "Delete account …",
       "scheduled": "Deletion is scheduled: from {{date}} at {{time}}. Until then you can cancel it.",
       "running": "Your account is being deleted right now. This can no longer be cancelled.",
       "cancel": "Cancel deletion",
@@ -130,9 +122,6 @@
       "scheduled_toast": "The deletion is scheduled."
     },
     "signout": {
-      "title": "Sign out",
-      "body": "Signed in as {{email}}.",
-      "body_no_email": "You are signed in.",
       "cta": "Sign out",
       "confirm_title": "Really sign out?",
       "confirm_body": "Signing in again needs the e-mail address and the password.",
@@ -141,7 +130,6 @@
       "confirm_cta_unsent": "Sign out anyway"
     },
     "access": {
-      "email_title": "E-mail address",
       "email_unknown": "The address isn't stored on this phone.",
       "email_cta": "Change e-mail",
       "email_sheet_title": "Change e-mail address",
@@ -154,7 +142,6 @@
       "email_pending_body_no_old": "We sent one confirmation e-mail to the current address and one to {{new_email}}. The new address only counts once the links in them are confirmed. Until then, everything stays with the current address.",
       "email_changed": "The e-mail address has been changed.",
       "done": "Done",
-      "password_title": "Password",
       "password_cta": "Change password",
       "password_sheet_title": "Change password",
       "password_intro": "The new password counts from now on. Other devices you are signed in on will have to sign in again.",
@@ -165,34 +152,33 @@
       "password_saved": "New password saved. Other devices have to sign in again.",
       "password_saved_others_unsure": "New password saved. We could not confirm just now whether the other devices were signed out."
     },
-    "open": "Open",
-    "close": "Close",
     "profile": {
       "title": "Correct the profile",
       "current": "{{name}}, born {{date}}",
       "body": "Is the name or the birth date wrong? You can put it right here.",
-      "cta": "Correct",
       "sheet_title": "Correct the profile",
       "name": "Name",
       "save": "Save",
       "saved": "Profile saved."
     },
-    "forgot_intro": "You set a new PIN with the account's password. Everything else here stays closed until then."
+    "forgot_intro": "You set a new PIN with the account's password. Everything else here stays closed until then.",
+    "allow_contact": "Allow notifications",
+    "manage_minor": "Sign-in and PIN",
+    "manage_self": "Sign-in and profile"
   },
   "about": {
     "title": "About LearnBuddy",
-    "version_question": "Which version?",
-    "version": "LearnBuddy {{version}}",
     "privacy": "Privacy policy",
     "imprint": "Legal notice",
     "support_question": "Questions or a problem?",
     "support_hint": "Write to us at {{email}}.",
-    "support_cta": "Write an e-mail",
     "licences": "Licenses",
     "licences_intro": "LearnBuddy is built with open-source software. Tap a package to read its license.",
     "licences_loading": "Loading licenses",
     "open_failed": "The link couldn't be opened. Try again in a moment.",
-    "open_mail_failed": "No mail app is set up here. You can reach us at {{email}}."
+    "open_mail_failed": "No mail app is set up here. You can reach us at {{email}}.",
+    "version_label": "Version",
+    "contact": "Contact"
   },
   "voice": {
     "title": "Buddy's voice",
@@ -214,6 +200,8 @@
     },
     "question": "Which colours do you like?",
     "title": "Look",
-    "mode_label": "Light or dark"
+    "mode_label": "Light or dark",
+    "colour": "Colour",
+    "mode_system_short": "System"
   }
 }

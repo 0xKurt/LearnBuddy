@@ -5,8 +5,11 @@
 // then signs in again with the account's e-mail (renewing the sign-in time)
 // and sends the PIN once more. The password never leaves this form except to
 // Supabase Auth.
+//
+// One row on the parents' page says whether a PIN is set; a tap opens its fields under it, on
+// the page and not in a sheet — the number pad needs the room, and nothing lies over it.
 
-import { type ReactNode, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -16,33 +19,19 @@ import { setPin } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { signIn } from '../../lib/auth/supabase.js';
 import { messageFor } from '../../lib/errors.js';
-import { UI } from '../../lib/theme/components.js';
-import { RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { SETTINGS } from '../../lib/theme/settings.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
-import { Card } from '../lb/Card.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
+import { ListGroup, Row } from '../lb/ListGroup.js';
 import { toast } from '../lb/Toast.js';
-import { Row } from './Row.js';
+import { Hint } from './SettingsPage.js';
 
 type Reason = 'pin_required' | 'reauth_required';
 
 const onlyDigits = (text: string, max: number) => text.replace(/\D/g, '').slice(0, max);
-
-/** A visible label above an input (the input carries the same label for screen readers). */
-function Labeled({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
-  const { palette } = useTheme();
-  return (
-    <View style={{ gap: UI.field.labelGap }}>
-      <Text accessibilityElementsHidden importantForAccessibility="no" style={TYPE.bodyStrong}>
-        {label}
-      </Text>
-      {hint ? <Text style={[TYPE.body, { color: palette.ink2 }]}>{hint}</Text> : null}
-      {children}
-    </View>
-  );
-}
 
 type Props = {
   pinSet: boolean;
@@ -68,6 +57,7 @@ export function PinCard({ pinSet, email }: Props) {
   const repeatRef = useRef<LbTextInputRef>(null);
   const passwordRef = useRef<LbTextInputRef>(null);
 
+  const mismatch = repeat.length === 4 && pin !== repeat;
   const pinOk = /^\d{4}$/.test(pin) && pin === repeat;
   const currentOk = current === '' || /^\d{4,8}$/.test(current);
   const withPassword = reason !== null && email !== '' && password.length > 0;
@@ -79,9 +69,8 @@ export function PinCard({ pinSet, email }: Props) {
         : true;
   const canSave = pinOk && currentOk && proofOk && !busy;
 
-  // iOS has no live regions: the mismatch, the re-auth prompt and a save error
-  // say themselves (lib/announce.ts suppresses the Android duplicate).
-  useAnnounce(repeat.length === 4 && pin !== repeat ? t('settings:adult.pin.mismatch') : null);
+  // iOS has no live regions: the re-auth prompt and a save error say themselves
+  // (lib/announce.ts suppresses the Android duplicate); the mismatch is the field's own note.
   useAnnounce(reason ? t(`settings:adult.pin.reason_${reason}`) : null);
   useAnnounce(error);
 
@@ -124,26 +113,23 @@ export function PinCard({ pinSet, email }: Props) {
   }
 
   return (
-    <Card>
-      <Row
-        question={t('settings:adult.pin.title')}
-        answer={pinSet ? t('settings:adult.pin.is_set') : t('settings:adult.pin.not_set')}
-        hint={t('settings:adult.pin.body')}
-      >
-        {!open ? (
-          <Btn pill variant="outline" onPress={() => setOpen(true)}>
-            {pinSet ? t('settings:adult.pin.change') : t('settings:adult.pin.create')}
-          </Btn>
-        ) : (
-          // The PIN's fields: a field's label clear of the one above.
-          <View style={{ gap: RHYTHM.stack }}>
-            {pinSet ? (
-              <Labeled
-                label={t('settings:adult.pin.current')}
-                hint={t('settings:adult.pin.current_hint')}
-              >
+    <>
+      <ListGroup label={t('settings:adult.pin.title')}>
+        <Row
+          title={pinSet ? t('settings:adult.pin.change') : t('settings:adult.pin.create')}
+          sub={pinSet ? t('settings:adult.pin.is_set') : t('settings:adult.pin.not_set')}
+          expanded={open}
+          disabled={busy}
+          onPress={() => (open ? close() : setOpen(true))}
+        >
+          {open ? (
+            // The PIN's fields, each under the field's own label (components/core/Field.jsx).
+            <View style={{ gap: SETTINGS.formGap }}>
+              {pinSet ? (
                 <LbTextInput
                   ref={currentRef}
+                  label={t('settings:adult.pin.current')}
+                  hint={t('settings:adult.pin.current_hint')}
                   value={current}
                   onChangeText={(v) => setCurrent(onlyDigits(v, 8))}
                   keyboardType="number-pad"
@@ -151,14 +137,12 @@ export function PinCard({ pinSet, email }: Props) {
                   secureTextEntry
                   autoComplete="off"
                   placeholder={t('auth:profile.pin_placeholder')}
-                  accessibilityLabel={t('settings:adult.pin.current')}
                   editable={!busy}
                 />
-              </Labeled>
-            ) : null}
-            <Labeled label={t('settings:adult.pin.new')}>
+              ) : null}
               <LbTextInput
                 ref={pinRef}
+                label={t('settings:adult.pin.new')}
                 value={pin}
                 onChangeText={(v) => {
                   const next = onlyDigits(v, 4);
@@ -171,13 +155,11 @@ export function PinCard({ pinSet, email }: Props) {
                 secureTextEntry
                 autoComplete="off"
                 placeholder={t('auth:profile.pin_placeholder')}
-                accessibilityLabel={t('settings:adult.pin.new')}
                 editable={!busy}
               />
-            </Labeled>
-            <Labeled label={t('settings:adult.pin.repeat')}>
               <LbTextInput
                 ref={repeatRef}
+                label={t('settings:adult.pin.repeat')}
                 value={repeat}
                 onChangeText={(v) => setRepeat(onlyDigits(v, 4))}
                 keyboardType="number-pad"
@@ -185,29 +167,21 @@ export function PinCard({ pinSet, email }: Props) {
                 secureTextEntry
                 autoComplete="off"
                 placeholder={t('auth:profile.pin_placeholder')}
-                accessibilityLabel={t('settings:adult.pin.repeat')}
                 editable={!busy}
-                error={repeat.length === 4 && pin !== repeat}
+                error={mismatch}
+                errorMessage={mismatch ? t('settings:adult.pin.mismatch') : undefined}
               />
-            </Labeled>
-            {repeat.length === 4 && pin !== repeat ? (
-              <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
-                {t('settings:adult.pin.mismatch')}
-              </Text>
-            ) : null}
 
-            {reason ? (
-              <View style={{ gap: SPACE.sm }}>
-                <Text accessibilityLiveRegion="polite" style={TYPE.body}>
-                  {t(`settings:adult.pin.reason_${reason}`)}
-                </Text>
-                {email ? (
-                  <Labeled
-                    label={t('settings:adult.pin.password')}
-                    hint={t('settings:adult.pin.account', { email })}
-                  >
+              {reason ? (
+                <View style={{ gap: SPACE.sm }}>
+                  <Text accessibilityLiveRegion="polite" style={TYPE.body}>
+                    {t(`settings:adult.pin.reason_${reason}`)}
+                  </Text>
+                  {email ? (
                     <LbTextInput
                       ref={passwordRef}
+                      label={t('settings:adult.pin.password')}
+                      hint={t('settings:adult.pin.account', { email })}
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry={!showPassword}
@@ -223,35 +197,38 @@ export function PinCard({ pinSet, email }: Props) {
                       autoCorrect={false}
                       autoComplete="current-password"
                       textContentType="password"
-                      accessibilityLabel={t('settings:adult.pin.password')}
                       editable={!busy}
                     />
-                  </Labeled>
-                ) : (
-                  <Text style={[TYPE.body, { color: palette.ink2 }]}>
-                    {t('settings:adult.pin.no_email')}
-                  </Text>
-                )}
+                  ) : (
+                    <Text style={[TYPE.body, { color: palette.ink2 }]}>
+                      {t('settings:adult.pin.no_email')}
+                    </Text>
+                  )}
+                </View>
+              ) : null}
+
+              {error ? (
+                <Text
+                  accessibilityLiveRegion="polite"
+                  style={[TYPE.body, { color: palette.danger }]}
+                >
+                  {error}
+                </Text>
+              ) : null}
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
+                <Btn pill onPress={() => void save()} busy={busy} disabled={!canSave}>
+                  {t('settings:adult.pin.save')}
+                </Btn>
+                <Btn pill variant="ghost" onPress={close} disabled={busy}>
+                  {t('common:actions.cancel')}
+                </Btn>
               </View>
-            ) : null}
-
-            {error ? (
-              <Text accessibilityLiveRegion="polite" style={[TYPE.body, { color: palette.danger }]}>
-                {error}
-              </Text>
-            ) : null}
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
-              <Btn pill onPress={() => void save()} busy={busy} disabled={!canSave}>
-                {t('settings:adult.pin.save')}
-              </Btn>
-              <Btn pill variant="ghost" onPress={close} disabled={busy}>
-                {t('common:actions.cancel')}
-              </Btn>
             </View>
-          </View>
-        )}
-      </Row>
-    </Card>
+          ) : null}
+        </Row>
+      </ListGroup>
+      <Hint>{t('settings:adult.pin.body')}</Hint>
+    </>
   );
 }

@@ -54,10 +54,6 @@ const PLACED: Record<string, { count: number; why: string }> = {
     count: 1,
     why: '"Ich höre zu …" follows its spinner in one row; the spinner is on the edge',
   },
-  'components/settings/LicencesSheet.tsx': {
-    count: 1,
-    why: 'a licence text under its own row, at the row’s inset',
-  },
 };
 
 function sources(dir: string): string[] {

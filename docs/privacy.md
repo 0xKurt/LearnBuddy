@@ -77,9 +77,11 @@ Architecture: [architecture.md](architecture.md). Previous specification: [legac
   route that takes the PIN lock it for 15 minutes — every time the same, no escalation — counted
   atomically; token valid 5 minutes, HMAC-signed, bound to the account; the app drops it as soon
   as the one step it was asked for is done, when the app goes to the background and when the
-  parents leave the settings, so the child holding the phone afterwards cannot use it). The
-  parents' area itself (their e-mail, sign-out, export, deletion) opens for a profile under 16
-  only with the PIN, and closes when the app goes to the background. A
+  parents leave the settings page they are on, so the child holding the phone afterwards cannot
+  use it). For a profile under 16 the export, the deletion and signing out each ask for the PIN
+  when tapped; the parents' page itself (their e-mail, the password, the PIN, correcting the
+  profile) opens only with the PIN, and closes when the parents leave it and when the app goes
+  to the background. A
   forgotten PIN is replaced after signing in again with the password (at most 5 times an hour,
   never while the PIN is locked). Reducing
   contact (pause, quieter) never needs the PIN. Buddy's own tools can never increase contact.

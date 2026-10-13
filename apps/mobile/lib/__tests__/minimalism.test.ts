@@ -68,6 +68,18 @@ const ROUTES: Record<string, string> = {
     'owner-required full-page factual profile and confirmed settings edits (#589), independent of model output; onboarding remains /profile',
   settings:
     "contact opt-in, the parents' area behind the PIN, export and deletion are explicit controls the code enforces (rule 6), never a model's reading of a sentence",
+  'settings/contact':
+    "the contact opt-in itself: allowing, stopping and pausing Buddy's messages are taps the server checks against the adult's PIN (rule 6), not a sentence the model reads; a page instead of the fold the owner rejected (#589)",
+  'settings/times':
+    'days, time of day and quiet hours for messages: a day back or a later hour loosens contact and is decided by code with the PIN (rule 6) — in the chat Buddy may only reduce; design page Lernzeiten (#589)',
+  'settings/parents':
+    "the adult's PIN, the sign-in's e-mail and password and the birth-date correction are secrets and account data the model must never see; opened only through the PIN gate (docs/privacy.md)",
+  'settings/voice':
+    'choosing a voice is done by ear: six samples she replays and compares with one tap each, where a chat reply could only describe them or change it blind (ADR 0008); design page Stimme (#589)',
+  'settings/about':
+    'the privacy notice, the imprint and the support address must be reachable directly, without a conversation and without the model answering (legal notices); design page Über LearnBuddy (#589)',
+  'settings/licences':
+    'the licence texts of everything the app ships must travel with it verbatim (MIT, Apache-2.0, OFL §2): a generated list, never model words; design page Lizenzen (#493, #589)',
 
   // ── the work itself ──
   'practice/[id]':

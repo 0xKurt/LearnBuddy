@@ -5566,11 +5566,17 @@ what was agreed can only reach her here while messages to the phone are off. No 
 lists. Nothing on the home is found by scrolling (`docs/UX-PRINCIPLES.md` §32). Anything else she simply says
 (Buddy answers with an `offer_learning` button). The composer is one floating bar: camera,
 field, mic ("Senden" once there is text), and the waveform into a conversation; there is no
-voice-first bar beside it (#386). Settings for the learner are closed groups, each with what is set now, one open at a
-time (`components/settings/Group.tsx`): contact (on/off, a one-line summary, "Zeiten anpassen"
-for the rare loosening), the language, about; the parents' area is closed until opened, and
-for a minor's profile it opens only with the parents' PIN ("PIN vergessen?" opens just the PIN
-card, where a new PIN needs the account's password; `lib/parentsGate.ts`).
+voice-first bar beside it (#386). Settings for the learner are groups of rows, each row with what is set now
+(`app/settings.tsx`, design `ui_kits/app/Settings.jsx`); a row leads to a page of its own and
+nothing unfolds in place (#589): "Aufs Handy" (contact on/off, a pause, this device),
+"Lernzeiten" (days, time of day, quiet hours — only while contact is allowed), Buddy's voice,
+"Über LearnBuddy" and "Lizenzen" (`app/settings/*`, `components/settings/SettingsPage.tsx`).
+The language and the Bundesland are a short pick in the shared choice sheet
+(`components/settings/ChoiceRow.tsx`). The parents' group lists allowing messages, the export
+and the deletion as rows — for a minor each asks for the parents' PIN — and the way to the
+parents' page (PIN, profile correction, e-mail, password), which for a minor's profile opens
+only with the parents' PIN ("PIN vergessen?" opens just the PIN there, where a new PIN needs
+the account's password; `lib/parentsGate.ts`, `components/settings/parentsArea.ts`).
 Setting up a child's profile is two short steps (the child, then consent and the parents' PIN),
 then a hand-over: what is set (consent, PIN, messages to the phone off) and "Gib Lena jetzt das
 Handy". Someone under 16 choosing "Ich selbst" gets no dead end: "Eine erwachsene Person ist

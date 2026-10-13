@@ -18,7 +18,6 @@
     "allowed_no_device": "Erlaubt. Dieses Handy konnte aber nicht angemeldet werden. Buddys Nachrichten findest du dann hier in der App.",
     "stopped": "Ausgeschaltet. Geplante Nachrichten werden nicht mehr verschickt.",
     "minor_hint": "Mehr erlauben geht nur mit der PIN deiner Eltern. Weniger geht immer.",
-    "no_pin_hint": "Dafür legen deine Eltern zuerst unten eine PIN fest.",
     "pause_question": "Pause machen?",
     "pause_hint": "In der Pause kommt nichts aufs Handy.",
     "pause_until": "Pause bis einschließlich {{date}}.",
@@ -28,16 +27,11 @@
     "paused_toast": "Pause bis einschließlich {{date}}.",
     "pause_ended_toast": "Pause beendet.",
     "quiet_question": "Wann nicht?",
-    "quiet_answer": "Nicht nach {{start}} Uhr und nicht vor {{end}} Uhr.",
     "quiet_start": "Nicht nach",
     "quiet_end": "Nicht vor",
     "window_question": "Wann am liebsten?",
-    "window_answer": "Zwischen {{start}} und {{end}} Uhr.",
     "window_hint": "Wenn Buddy sich von selbst meldet, dann in dieser Zeit.",
     "window_option": "{{start}}–{{end}}",
-    "weekdays_question": "An welchen Tagen nicht?",
-    "weekdays_answer": "Nie an diesen Tagen: {{days}}.",
-    "weekdays_allow_all": "Wieder alle Tage erlauben",
     "device_no_token": "Dieses Handy ist noch nicht angemeldet. Bis dahin kommt alles nur hier in der App.",
     "device_invalid": "Das angemeldete Handy ist nicht mehr erreichbar. Deshalb kommt alles nur hier in der App.",
     "device_register": "Dieses Handy anmelden",
@@ -45,12 +39,16 @@
     "device_not_possible": "Das geht auf diesem Handy gerade nicht. Vielleicht sind Benachrichtigungen in den Systemeinstellungen aus.",
     "summary": "Buddy meldet sich zwischen {{start}} und {{end}} Uhr, nie nach {{quiet}} Uhr.",
     "tell_buddy": "Sag Buddy einfach, wenn du Ruhe willst.",
-    "more": "Zeiten anpassen",
-    "less": "Weniger anzeigen",
     "device_elsewhere": "Buddys Nachrichten gehen gerade an ein anderes Gerät, nicht an dieses Handy.",
     "only_important": "Du hast dir gewünscht, dass Buddy seltener schreibt: aufs Handy kommt nur noch, was wirklich wichtig ist. Alles andere wartet in der App.",
     "only_important_end": "Wieder alles aufs Handy",
-    "only_important_ended": "Buddy schreibt dir wieder alles aufs Handy."
+    "only_important_ended": "Buddy schreibt dir wieder alles aufs Handy.",
+    "phone": "Aufs Handy",
+    "times": "Lernzeiten",
+    "days": "Tage",
+    "days_question": "Wann darf Buddy schreiben?",
+    "weekend": "Ruhe am Wochenende",
+    "weekend_hint": "Keine Nachrichten am Samstag und Sonntag."
   },
   "profile": {
     "title": "Dein Profil",
@@ -81,8 +79,6 @@
   "adult": {
     "title_minor": "Für Eltern",
     "title_self": "Dein Konto",
-    "intro_minor": "Hier regeln Eltern das Konto. Öffnen geht nur mit ihrer PIN.",
-    "intro_self": "Deine Daten und deine Anmeldung.",
     "needs_pin": "Geht nur mit der PIN der Eltern.",
     "pin": {
       "title": "PIN der Eltern",
@@ -108,8 +104,6 @@
     },
     "export": {
       "title": "Daten exportieren",
-      "body": "Alles, was gespeichert ist, als Datei. Zum Sichern oder Weitergeben.",
-      "cta": "Export erstellen",
       "working": "Export wird erstellt …",
       "share_title": "LearnBuddy-Export",
       "share_failed": "Die Datei ließ sich nicht übergeben. Versuch es nochmal.",
@@ -118,8 +112,6 @@
     },
     "delete": {
       "title": "Konto löschen",
-      "body": "Alles wird nach 7 Tagen endgültig gelöscht. Bis dahin kannst du es abbrechen.",
-      "cta": "Konto löschen …",
       "scheduled": "Die Löschung ist geplant: ab {{date}} um {{time}} Uhr. Bis dahin kannst du sie abbrechen.",
       "running": "Dein Konto wird gerade gelöscht. Das lässt sich nicht mehr abbrechen.",
       "cancel": "Löschung abbrechen",
@@ -130,9 +122,6 @@
       "scheduled_toast": "Die Löschung ist geplant."
     },
     "signout": {
-      "title": "Abmelden",
-      "body": "Angemeldet als {{email}}.",
-      "body_no_email": "Du bist angemeldet.",
       "cta": "Abmelden",
       "confirm_title": "Wirklich abmelden?",
       "confirm_body": "Zum Wiederanmelden braucht es die E-Mail-Adresse und das Passwort.",
@@ -141,7 +130,6 @@
       "confirm_cta_unsent": "Trotzdem abmelden"
     },
     "access": {
-      "email_title": "E-Mail-Adresse",
       "email_unknown": "Die Adresse ist auf diesem Handy nicht gespeichert.",
       "email_cta": "E-Mail ändern",
       "email_sheet_title": "E-Mail-Adresse ändern",
@@ -154,7 +142,6 @@
       "email_pending_body_no_old": "Wir haben eine Bestätigungs-Mail an die bisherige Adresse und eine an {{new_email}} geschickt. Die neue Adresse gilt erst, wenn die Links darin bestätigt sind. Bis dahin bleibt alles bei der bisherigen Adresse.",
       "email_changed": "Die E-Mail-Adresse ist geändert.",
       "done": "Fertig",
-      "password_title": "Passwort",
       "password_cta": "Passwort ändern",
       "password_sheet_title": "Passwort ändern",
       "password_intro": "Das neue Passwort gilt ab sofort. Andere Geräte, auf denen ihr angemeldet seid, müssen sich danach neu anmelden.",
@@ -165,34 +152,33 @@
       "password_saved": "Neues Passwort gespeichert. Andere Geräte müssen sich neu anmelden.",
       "password_saved_others_unsure": "Neues Passwort gespeichert. Ob andere Geräte abgemeldet wurden, konnten wir gerade nicht bestätigen."
     },
-    "open": "Öffnen",
-    "close": "Schließen",
     "profile": {
       "title": "Profil korrigieren",
       "current": "{{name}}, geboren am {{date}}",
       "body": "Stimmt der Name oder das Geburtsdatum nicht? Hier lässt es sich richtigstellen.",
-      "cta": "Korrigieren",
       "sheet_title": "Profil korrigieren",
       "name": "Name",
       "save": "Speichern",
       "saved": "Profil gespeichert."
     },
-    "forgot_intro": "Eine neue PIN legt ihr mit dem Passwort des Kontos fest. Alles andere hier bleibt bis dahin zu."
+    "forgot_intro": "Eine neue PIN legt ihr mit dem Passwort des Kontos fest. Alles andere hier bleibt bis dahin zu.",
+    "allow_contact": "Benachrichtigungen erlauben",
+    "manage_minor": "Anmeldung und PIN",
+    "manage_self": "Anmeldung und Profil"
   },
   "about": {
     "title": "Über LearnBuddy",
-    "version_question": "Welche Version?",
-    "version": "LearnBuddy {{version}}",
     "privacy": "Datenschutzerklärung",
     "imprint": "Impressum",
     "support_question": "Fragen oder ein Problem?",
     "support_hint": "Schreib uns an {{email}}.",
-    "support_cta": "E-Mail schreiben",
     "licences": "Lizenzen",
     "licences_intro": "LearnBuddy ist mit freier Software gebaut. Tipp ein Paket an, dann steht seine Lizenz darunter.",
     "licences_loading": "Lizenzen werden geladen",
     "open_failed": "Der Link ließ sich nicht öffnen. Versuch es gleich nochmal.",
-    "open_mail_failed": "Hier ist keine Mail-App eingerichtet. Du erreichst uns unter {{email}}."
+    "open_mail_failed": "Hier ist keine Mail-App eingerichtet. Du erreichst uns unter {{email}}.",
+    "version_label": "Version",
+    "contact": "Kontakt"
   },
   "voice": {
     "title": "Buddys Stimme",
@@ -214,6 +200,8 @@
     },
     "question": "Welche Farben magst du?",
     "title": "Aussehen",
-    "mode_label": "Hell oder dunkel"
+    "mode_label": "Hell oder dunkel",
+    "colour": "Farbe",
+    "mode_system_short": "System"
   }
 }
