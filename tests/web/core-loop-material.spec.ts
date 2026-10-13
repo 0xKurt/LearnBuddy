@@ -61,6 +61,8 @@ test('core loop · material: what Buddy knows, the sheets, a subject empty or go
   await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
   await expect(page.getByText(/^Welcher Bruch ist größer:/).first()).toBeVisible();
   await expect(page.getByText('Auf Anhieb gewusst').first()).toBeVisible();
+  // Renaming is the sheet's own action in the head's ⋯ (#599).
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
   await page.getByRole('button', { name: '„Brüche kürzen und vergleichen“ umbenennen' }).click();
   await page.getByLabel('Name des Blatts').fill('Brüche – Test Freitag');
   await page.getByRole('button', { name: 'Speichern' }).click();

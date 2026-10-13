@@ -5171,9 +5171,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   | | Vorlesen (`readAloud`) | Gespräch (`conversation`) |
   |---|---|---|
   | What happens | Buddy reads aloud, does not listen | hands-free: Buddy reads and listens |
-  | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — the chat's head and the practice head | the waveform at the end of the input bar (`TalkButton`) |
+  | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — part of the one head of every screen (`components/lb/BuddyHeader.tsx`, #599), beside ⋯, which opens the same menu everywhere (`components/buddy/HeaderMenu.tsx`) | the waveform at the end of the input bar (`TalkButton`) |
   | In the chat | replies are read aloud | opens the conversation screen (`app/talk.tsx`) |
-  | In practice | the question when it appears, the feedback, "Anders erklären"; also a Kopfrechnen task (as math in words) and a card's front, never its back (#434). The switch stands in every practice head (`components/practice/HeadActions.tsx`), and a tap on the question itself reads it again (`components/lb/ReadAgain.tsx`, "Nochmal vorlesen" for a screen reader) | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
+  | In practice | the question when it appears, the feedback, "Anders erklären"; also a Kopfrechnen task (as math in words) and a card's front, never its back (#434). The switch stands in every practice head (the shared `BuddyHeader`; a card pass still through `components/practice/HeadActions.tsx`), and a tap on the question itself reads it again (`components/lb/ReadAgain.tsx`, "Nochmal vorlesen" for a screen reader) | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
   | Kept | on the device (`lb.voiceMode`, the old single flag's key) | not kept: she starts it |
   A conversation includes reading aloud (`readsAloud`); switching the speaker off ends it, and
   "Tastatur" ends it without touching her Vorlesen choice. Before #386 one flag did both, set by
@@ -5203,7 +5203,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   where a spoken answer can be the whole answer: a typed answer (not a Diktat, not a path written
   line by line, not a line that belongs to a board) and options with letters. Boards, the note
   line, the fraction bar, tapped words, Kopfrechnen and flash cards have no spoken answer and no
-  waveform; the speaker stands in every practice head (`components/practice/HeadActions.tsx`): the
+  waveform; the speaker stands in every practice head (`components/lb/BuddyHeader.tsx`): the
   question screen's, Kopfrechnen's and the flash cards', which read their task and front too but
   never listen (#434). One listening
   belongs to one turn (`lib/speech/turnGuard.ts`): answering another way (a tap, the screen locking

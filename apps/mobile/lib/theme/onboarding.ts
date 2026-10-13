@@ -25,6 +25,5 @@ export const ONBOARDING = {
     opticalTop: -1,
     glyph: CHECK_GLYPH,
   },
-  legacyOrb: { compact: 64, roomy: 72 },
   legacyFacts: { badge: BADGE, glyph: 15, opticalTop: -1 },
 } as const;

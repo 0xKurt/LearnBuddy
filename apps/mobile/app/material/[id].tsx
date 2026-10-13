@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaterialItemCard } from '../../components/library/MaterialItemCard.js';
 import { Btn } from '../../components/lb/Btn.js';
-import { IconBtn } from '../../components/lb/IconBtn.js';
 import { Card } from '../../components/lb/Card.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { ErrorNote } from '../../components/lb/ErrorNote.js';
@@ -280,17 +279,24 @@ export default function MaterialScreen() {
         label: t('library:items.back'),
         onPress: () => (router.canGoBack() ? router.back() : router.replace('/library')),
       }}
-      right={
-        material ? (
-          <IconBtn
-            icon="pencil"
-            tone="plain"
-            disabled={deleting || renaming}
-            onPress={openRename}
-            accessibilityLabel={t('library:rename_label', { title })}
-          />
-        ) : undefined
-      }
+      // Design ui_kits/app/Extra.jsx `SheetQuestions`: with a sheet open Buddy waits for what she
+      // wants to do with it; until it is there he thinks (`SystemState` "load-list").
+      state={material ? 'wait' : 'think'}
+      // Renaming is this sheet's own action: it stands in ⋯ before the places, as a question's
+      // "Frage passt nicht" does. The head itself carries the switch and ⋯ and nothing else.
+      menu={{
+        actions: material
+          ? [
+              {
+                key: 'rename',
+                icon: 'pencil',
+                label: t('library:rename_label', { title }),
+                onPress: openRename,
+              },
+            ]
+          : [],
+        canAct: !deleting && !renaming,
+      }}
     >
       {content}
 

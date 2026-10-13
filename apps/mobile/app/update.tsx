@@ -43,6 +43,7 @@ export default function UpdateRequired() {
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <EmptyState
           orb
+          state="wait"
           title={t('common:update.title')}
           body={t('errors:code.update_required')}
           action={

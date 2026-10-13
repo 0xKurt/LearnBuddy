@@ -47,7 +47,9 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
       title={title}
       subtitle={t('practice:summary.finished')}
       state={session.timer?.ran_out === true ? 'idle' : 'happy'}
-      leading={{ icon: 'close', label: t('practice:back_to_buddy'), onPress: onBack }}
+      // The head closes (design ui_kits/app/Done.jsx: `leading="close"`); "Zurück zu Buddy" is the
+      // one button of that name, at the bottom.
+      leading={{ icon: 'close', onPress: onBack }}
     >
       <ScrollView
         testID="scroll-list"
@@ -60,7 +62,6 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
         keyboardShouldPersistTaps="handled"
       >
         <SessionSummary
-          presentation="screen"
           celebrate={celebrate}
           summary={summary}
           mode={session.mode}

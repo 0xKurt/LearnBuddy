@@ -9,16 +9,19 @@ import { SPACE } from '../../lib/theme/space.js';
 import { EMPTY_STATE } from '../../lib/theme/states.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { BuddyOrb } from './BuddyOrb.js';
+import { BuddyOrb, type MoonState } from './BuddyOrb.js';
 
 export function EmptyState({
   orb = false,
+  state,
   title,
   body,
   action,
 }: {
-  /** A small Buddy above the title (friendly empty states). */
+  /** A small Buddy above the title: only on a page without a head (update, deleting). */
   orb?: boolean;
+  /** What that Buddy is doing (design components/core/States.jsx `StateScreen`). */
+  state?: MoonState;
   title: string;
   body?: string;
   action?: React.ReactNode;
@@ -38,7 +41,7 @@ export function EmptyState({
     >
       {orb ? (
         <View style={{ marginBottom: SPACE.xs }}>
-          <BuddyOrb size={EMPTY_STATE.orb} />
+          <BuddyOrb size={EMPTY_STATE.orb} state={state} />
         </View>
       ) : null}
       <Text

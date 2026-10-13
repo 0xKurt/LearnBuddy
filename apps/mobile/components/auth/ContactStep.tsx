@@ -47,7 +47,6 @@ export function ContactStep({
   );
   return (
     <SetupStep
-      variant="onboarding"
       lead={forChild ? t('profile.contact_body_child') : t('profile.contact_body_self')}
       title={
         forChild ? t('profile.contact_title_child', { name }) : t('profile.contact_title_self')

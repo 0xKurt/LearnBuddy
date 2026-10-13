@@ -43,11 +43,11 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
     expect(holders(/\bsetReadAloud\(/)).toEqual(['components/lb/ReadAloudSwitch.tsx']);
   });
 
-  it('stands in the chat’s head and in the practice head', () => {
+  it('stands in the one head of every screen (#599)', () => {
     expect(holders(/<ReadAloudSwitch\b/)).toEqual([
-      // The shared header receives the switch through its sound slot.
-      'app/practice/[id].tsx',
-      'components/buddy/Header.tsx',
+      // The shared header draws the switch itself: the chat, practice and every other screen.
+      'components/lb/BuddyHeader.tsx',
+      // Still handed to `Screen` by the Kopfrechnen round; the head no longer reads it.
       'components/practice/DrillRound.tsx',
       // Card passes retain their existing header adapter (#434).
       'components/practice/HeadActions.tsx',
@@ -58,19 +58,14 @@ describe('Vorlesen: one switch, the same in the chat and in practice (#386)', ()
     expect(holders(/<HeadActions\b/)).toEqual(['components/practice/CardPass.tsx']);
   });
 
-  it('passes exactly one speaker through the shared header sound slot', () => {
-    expect(holders(/sound=\{<ReadAloudSwitch\s*\/>\}/)).toEqual([
-      'app/practice/[id].tsx',
-      'components/buddy/Header.tsx',
-      'components/practice/DrillRound.tsx',
-    ]);
+  it('is drawn exactly once by the shared header, whoever renders it', () => {
     const source = (file: string) => app.find((s) => s.file === file)!.text;
     expect(source('components/buddy/Header.tsx')).toMatch(/<BuddyHeader\b/);
     expect(source('app/practice/[id].tsx')).toMatch(/<Screen\b/);
     expect(source('components/lb/Screen.tsx')).toMatch(/<BuddyHeader\b/);
-    expect(source('components/lb/Screen.tsx')).toMatch(/sound=\{sound\}/);
-    // A shared header must neither drop nor duplicate the caller's speaker control.
-    expect(source('components/lb/BuddyHeader.tsx').match(/\{sound\}/g)).toHaveLength(1);
+    // A caller's speaker is neither passed on nor drawn a second time.
+    expect(source('components/lb/Screen.tsx')).not.toMatch(/sound=/);
+    expect(source('components/lb/BuddyHeader.tsx').match(/<ReadAloudSwitch\b/g)).toHaveLength(1);
   });
 
   it('reads again with a tap on the question itself, wherever one is read (#434)', () => {

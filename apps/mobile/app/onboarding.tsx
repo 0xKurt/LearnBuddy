@@ -84,7 +84,6 @@ export default function Onboarding() {
 
   return (
     <SetupStep
-      variant="onboarding"
       orbState={last ? 'happy' : 'idle'}
       title={t(`onboarding.${key}_title`)}
       lead={t(`onboarding.${key}_body`)}

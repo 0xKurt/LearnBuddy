@@ -277,7 +277,7 @@ export default function SubjectScreen() {
   const deleteTitle = deleteTarget?.title ?? t('library:untitled');
 
   return (
-    <Screen back title={shown?.name ?? t('library:title')}>
+    <Screen back title={shown?.name ?? t('library:title')} state={view ? 'idle' : 'think'}>
       {content}
       <Sheet
         visible={sheetOpen}

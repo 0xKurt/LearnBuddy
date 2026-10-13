@@ -1,20 +1,25 @@
-// Pure presentation: navigation, sound preferences and domain state stay with its caller.
+// The head of every screen (design components/buddy/Header.jsx; owner rule 1, #599): Buddy's orb,
+// the title on one line, then the two controls every head carries — the Vorlesen switch and ⋯.
+// Presentation only: where a button leads and what the orb shows is its caller's (`Screen`, the
+// chat's `Header`), which is why ⋯ has no default here — a head cannot be drawn without saying
+// what its menu opens (CLAUDE.md rule 12).
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { HEADER, headerOrbSlot } from '../../lib/theme/header.js';
+import { HEADER, headerIsBrand, headerOrbSlot } from '../../lib/theme/header.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { MAX_FONT_SCALE } from './Btn.js';
 import { BuddyOrb, type MoonState } from './BuddyOrb.js';
-import { CircleBtn } from './CircleBtn.js';
+import { IconBtn } from './IconBtn.js';
 import { Progress } from './Progress.js';
+import { ReadAloudSwitch } from './ReadAloudSwitch.js';
 
 export type BuddyHeaderProps = {
   title: string;
   subtitle?: string;
+  /** What is happening on the screen, as the orb's pose (lib/buddy/headState.ts). */
   state?: MoonState;
-  brand?: boolean;
   leading?: {
     icon: 'back' | 'close';
     label?: string;
@@ -22,10 +27,19 @@ export type BuddyHeaderProps = {
     disabled?: boolean;
     onPress: () => void;
   };
+  /**
+   * What ⋯ opens — or, as `own`, the ⋯ a screen still draws itself with its own sheet (a practice
+   * question's "Frage passt nicht"). `null` only where a menu would mislead (the parents' PIN
+   * pad). Both exceptions are counted in lib/__tests__/headerShell.test.ts.
+   */
+  menu: { onPress: () => void } | { own: ReactNode } | null;
   footer?: ReactNode;
-  sound?: ReactNode;
-  trailing?: ReactNode;
   progress?: { total: number; current: number; part?: number; label: string };
+  /**
+   * A head that still brings its own right end INSTEAD of the switch and ⋯: the card pass, until
+   * the practice area moves it onto `leading` (#599). No new caller.
+   */
+  trailing?: ReactNode;
   testID?: string;
 };
 
@@ -33,14 +47,14 @@ export function BuddyHeader({
   title,
   subtitle,
   state = 'idle',
-  brand = false,
   leading,
+  menu,
   footer,
-  sound,
-  trailing,
   progress,
+  trailing,
   testID,
 }: BuddyHeaderProps) {
+  const brand = headerIsBrand({ subtitle, leading });
   const size = brand ? HEADER.orb.brand : HEADER.orb.page;
   return (
     <View
@@ -61,8 +75,8 @@ export function BuddyHeader({
         }}
       >
         {leading ? (
-          <CircleBtn
-            plain
+          <IconBtn
+            tone="plain"
             icon={leading.icon}
             onPress={leading.onPress}
             accessibilityLabel={leading.label}
@@ -71,10 +85,12 @@ export function BuddyHeader({
           />
         ) : null}
         <View
+          // The pose the head shows, where the walkthrough can read it (tests/web/header.spec.ts).
+          testID={`header-orb-${state}`}
           style={{
             width: headerOrbSlot(brand),
             height: size,
-            marginLeft: brand ? HEADER.orbOffset.brand : HEADER.orbOffset.page,
+            marginLeft: leading ? HEADER.orbOffset.leading : HEADER.orbOffset.bare,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -98,8 +114,16 @@ export function BuddyHeader({
             </Text>
           ) : null}
         </View>
-        {sound}
-        {trailing}
+        {trailing ?? (
+          <>
+            <ReadAloudSwitch />
+            {menu === null ? null : 'own' in menu ? (
+              menu.own
+            ) : (
+              <IconBtn tone="plain" icon="more" onPress={menu.onPress} />
+            )}
+          </>
+        )}
       </View>
       {footer || progress ? (
         <View testID="buddy-header-footer" style={{ paddingHorizontal: SPACE.sm }}>

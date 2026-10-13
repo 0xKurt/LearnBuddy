@@ -47,6 +47,8 @@ for (const look of SCREEN_LOOKS)
     const path = page.url();
     await expect(page.getByText(/^Welcher Bruch ist größer:/).first()).toBeVisible();
     await screenShots(page, `material-${key}`);
+    // Renaming is the sheet's own action in the head's ⋯ (#599).
+    await page.getByRole('button', { name: 'Mehr', exact: true }).click();
     await page
       .getByRole('button', { name: '„Brüche kürzen und vergleichen“ umbenennen', exact: true })
       .click();

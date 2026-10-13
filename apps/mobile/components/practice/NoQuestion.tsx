@@ -60,8 +60,14 @@ export function NoQuestion({
   if (coming || (active && !finishFailed)) {
     const waitsFor = coming ? 'more_coming' : timeUp ? 'timer.up' : 'finishing';
     return (
-      <Screen title={title}>
-        <LoadingState label={t(waitsFor)} />
+      // Design ui_kits/app/Extra.jsx `SystemState` "load-question": Buddy thinks in the head, with
+      // the way out beside him — and no second Buddy in the page.
+      <Screen
+        title={title}
+        state="think"
+        leading={{ icon: 'close', label: t('end_label'), onPress: backToBuddy }}
+      >
+        <LoadingState orb={false} label={t(waitsFor)} />
       </Screen>
     );
   }

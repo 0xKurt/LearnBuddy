@@ -24,6 +24,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { create } from 'zustand';
 import { Linking, Platform, Text, View } from 'react-native';
 
 import { BusyIndicator } from '../lb/BusyIndicator.js';
@@ -283,6 +284,15 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
 
 type Pending = { clientTurnId: string; itemId: string; mime: AudioMime; base64: string };
 
+/**
+ * What the speaking task is doing with her voice right now (null: nothing), for the screen's
+ * head: its orb listens, then thinks (design ui_kits/app/Flows.jsx `Speak`). One panel is on
+ * screen at a time; it says so here and takes it back when it goes.
+ */
+export const useSpeakPhase = create<{ phase: 'hearing' | 'judging' | null }>(() => ({
+  phase: null,
+}));
+
 type PanelProps = {
   item: ItemView;
   sessionId: string;
@@ -408,6 +418,11 @@ export function SpeakPanel({
 
   const recording = rec.phase === 'recording';
   const busy = sending === 'sending' || rec.phase === 'starting' || rec.phase === 'stopping';
+  const phase = recording ? 'hearing' : sending === 'sending' ? 'judging' : null;
+  useEffect(() => {
+    useSpeakPhase.setState({ phase });
+    return () => useSpeakPhase.setState({ phase: null });
+  }, [phase]);
   const locked = disabled || busy || sending === 'failed';
 
   function toggleRecording(): void {

@@ -172,7 +172,7 @@ export default function LibraryScreen() {
   }
 
   return (
-    <Screen back title={t('library:title')}>
+    <Screen back title={t('library:title')} state={view ? 'idle' : 'think'}>
       {content}
     </Screen>
   );

@@ -64,11 +64,6 @@ const CHECK: Record<string, string> = {
   'DrillRound.tsx': 'Kopfrechnen’s pad (#243)',
 };
 
-/** Who draws with the shadow: never an answer form (its tiles are `Option`). */
-const SHADOWED: Record<string, string> = {
-  'SessionSummary.tsx': 'a card on the summary, not an answer',
-};
-
 /** What fills the shell's `keys` slot: each is the one key row with its own keys (step 4). */
 const KEY_ROWS = ['MathKeys.tsx', 'StaffKeys.tsx', 'GridAnswer.tsx'];
 
@@ -126,8 +121,8 @@ describe('the answer shell is the only place for an answer and its action (#310)
     expect(holders((s) => imports(s.text).has('KeyboardSafe'))).toEqual(['[id].tsx']);
   });
 
-  it('draws no tile by hand: the shadow has its listed owners only', () => {
-    expect(holders((s) => /\bSHADOW\b/.test(s.text))).toEqual(Object.keys(SHADOWED).sort());
+  it('draws no tile by hand: nothing in practice draws with the shadow (its tiles are `Option`)', () => {
+    expect(holders((s) => /\bSHADOW\b/.test(s.text))).toEqual([]);
   });
 
   it('keeps a form in the shell free of the shell’s parts', () => {

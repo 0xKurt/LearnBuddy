@@ -302,10 +302,8 @@ export default function Profile() {
 
   return (
     <SetupStep
-      variant="onboarding"
       keyboardSafe
       scrollTestID="scroll-form"
-      compact={compact}
       title={parentStep ? t('profile.parent_title') : t('profile.title')}
       top={
         parentStep ? (
@@ -556,7 +554,6 @@ function Handover({
   }));
   return (
     <SetupStep
-      variant="onboarding"
       orbState="happy"
       title={t('profile.handover_title')}
       footer={
@@ -586,7 +583,6 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
   const settings = useSettings();
   return (
     <SetupStep
-      variant="onboarding"
       title={t('profile.voice_title')}
       lead={t('profile.voice_body')}
       footer={

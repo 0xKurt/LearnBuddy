@@ -22,7 +22,14 @@ import { LOADING_STATE } from '../../lib/theme/states.js';
 import { BuddyOrb } from './BuddyOrb.js';
 import { Appear } from './Motion.js';
 
-export function LoadingState({ label }: { label?: string }) {
+export function LoadingState({
+  label,
+  orb: withOrb = true,
+}: {
+  label?: string;
+  /** False under a head whose orb already shows Buddy thinking: one Buddy per screen (#599). */
+  orb?: boolean;
+}) {
   const reduced = useReducedMotion();
   const breath = useSharedValue(0);
   useEffect(() => {
@@ -53,9 +60,11 @@ export function LoadingState({ label }: { label?: string }) {
         gap: SPACE.lg,
       }}
     >
-      <Animated.View style={orb}>
-        <BuddyOrb size={LOADING_STATE.orb} />
-      </Animated.View>
+      {withOrb ? (
+        <Animated.View style={orb}>
+          <BuddyOrb size={LOADING_STATE.orb} />
+        </Animated.View>
+      ) : null}
       {label ? <Text style={[TYPE.small, { textAlign: 'center' }]}>{label}</Text> : null}
     </Appear>
   );
