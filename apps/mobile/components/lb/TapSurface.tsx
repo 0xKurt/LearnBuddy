@@ -5,7 +5,7 @@
 //
 // Two ways to touch it, one component (#416, Engineering-Regel 3):
 //   · tapped (`onTap`): one target over the whole drawing, so no part is too small to hit; a
-//     mistap costs one tap on a key that moves what she set. A Pressable — a raw one belongs in
+//     mistap costs "Zurück" and one more tap. A Pressable — a raw one belongs in
 //     components/lb (CLAUDE.md rule 13) — whose role the caller gives (`button` for the note line
 //     and the grid). Without a finger — a screen reader's double tap, a keyboard — there is no
 //     position: `onTap` gets null and the caller puts the thing in a sensible place.
@@ -41,7 +41,8 @@ type Common = {
   accessibilityHint?: string;
   /**
    * What a screen reader can do here besides the tap, without a finger position ("increment" and
-   * "decrement": the note line's pitch) — a path that is never drawn.
+   * "decrement": the note line's pitch, a bar's height; named steps: a point on the grid) — a
+   * path that is never drawn.
    */
   accessibilityActions?: ViewProps['accessibilityActions'];
   onAccessibilityAction?: ViewProps['onAccessibilityAction'];

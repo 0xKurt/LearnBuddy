@@ -14,7 +14,8 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { renderInApp } from '../../../testing/render.js';
+import { paletteOf } from '../../../lib/theme/palettes.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { ClozeAnswer, filledFrom, nextEmpty, unitsOf } from '../ClozeAnswer.js';
 
 const TYPED = {
@@ -141,5 +142,67 @@ describe('a cloze with a word bank', () => {
       'Wasser · Sauerstoff · Zucker',
       'tapped',
     );
+  });
+});
+
+const rgb = (hex: string) => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`;
+};
+
+describe('the look of a word bank (design components/practice/Tasks.jsx `WordBank`, `Cloze`, #599)', () => {
+  const p = paletteOf('pastell');
+  const HOW =
+    'Tippe ein Wort an – es landet in der markierten Lücke. Tippe eine Lücke an, um sie zu leeren.';
+
+  it('leaves a used word as an empty dashed outline in its place', () => {
+    renderInApp(
+      <ClozeAnswer view={BANKED} draftKey="look-c1" disabled={false} onSubmit={() => undefined} />,
+    );
+    const free = styleOf(screen.getByRole('button', { name: 'Wasser' }).firstElementChild!);
+    expect([free.height, free.backgroundColor]).toEqual(['40px', rgb(p.paper)]);
+    fireEvent.click(screen.getByRole('button', { name: 'Wasser' }));
+    const used = screen.getByRole('button', { name: 'Wasser, schon eingesetzt' });
+    const face = styleOf(used.firstElementChild!);
+    expect(face.borderTopStyle).toBe('dashed');
+    expect(face.backgroundColor).toBe(rgb(p.canvas));
+    // Its place is kept, its word is not shown.
+    expect(used.textContent).toBe('Wasser');
+    expect(styleOf(used.firstElementChild!.firstElementChild!).opacity).toBe('0');
+  });
+
+  it('draws a gap with the board’s states: dashed while empty, light primary once filled', () => {
+    renderInApp(
+      <ClozeAnswer view={BANKED} draftKey="look-c2" disabled={false} onSubmit={() => undefined} />,
+    );
+    const second = styleOf(
+      screen.getByRole('button', { name: 'Lücke 2 von 3' }).firstElementChild!,
+    );
+    expect([second.height, second.borderTopStyle]).toEqual(['36px', 'dashed']);
+    expect(second.backgroundColor).toBe(rgb(p.canvas));
+    // The gap the next word fills carries the selected frame.
+    const first = styleOf(screen.getByRole('button', { name: 'Lücke 1 von 3' }).firstElementChild!);
+    expect([first.borderTopStyle, first.borderTopColor]).toEqual(['solid', rgb(p.primary)]);
+    fireEvent.click(screen.getByRole('button', { name: 'Wasser' }));
+    const filled = screen.getByRole('button', { name: 'Lücke 1 von 3: Wasser' });
+    expect(styleOf(filled.firstElementChild!).backgroundColor).toBe(rgb(p.primaryLt));
+    // Its target is still a full touch target.
+    expect(styleOf(filled).minHeight).toBe('44px');
+  });
+
+  it('says how under the bank until the first word is placed, and never without a bank', () => {
+    const banked = renderInApp(
+      <ClozeAnswer view={BANKED} draftKey="look-c3" disabled={false} onSubmit={() => undefined} />,
+    );
+    const how = screen.getByText(HOW);
+    const bank = screen.getByTestId('cloze-bank');
+    expect(bank.compareDocumentPosition(how) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Wasser' }));
+    expect(screen.queryByText(HOW)).toBeNull();
+    banked.unmount();
+    renderInApp(
+      <ClozeAnswer view={TYPED} draftKey="look-c4" disabled={false} onSubmit={() => undefined} />,
+    );
+    expect(screen.queryByText(HOW)).toBeNull();
   });
 });

@@ -1002,6 +1002,12 @@ test('zuordnen at its largest: pairs as rows, things into groups (issues #229, #
   };
   const group = (name: string) =>
     page.getByRole('button', { name: new RegExp(`^Gruppe ${name},`) });
+  /**
+   * A tap on a group's card where its name stands. The whole card takes what she holds, and the
+   * things already in it lie over it as buttons of their own (#599) — a tap in the card's middle
+   * would land on one of them.
+   */
+  const put = (name: string) => group(name).click({ position: { x: 24, y: 24 } });
   /** A group's row: its name, and what she has put in it (the box is the state). */
   const row = (name: string) =>
     page.locator('[data-testid^="match-group-"]').filter({ has: group(name) });
@@ -1015,7 +1021,7 @@ test('zuordnen at its largest: pairs as rows, things into groups (issues #229, #
   await page
     .getByRole('button', { name: 'Friedhof pflegen, noch in keiner Gruppe', exact: true })
     .click();
-  await group('Stadtverwaltung').click();
+  await put('Stadtverwaltung');
   await expect(sorted('Friedhof pflegen', 'Stadtverwaltung')).toBeVisible();
   await sorted('Friedhof pflegen', 'Stadtverwaltung').click();
   await expect(
@@ -1026,7 +1032,7 @@ test('zuordnen at its largest: pairs as rows, things into groups (issues #229, #
       await page
         .getByRole('button', { name: `${thing}, noch in keiner Gruppe`, exact: true })
         .click();
-      await group(name).click();
+      await put(name);
       await expect(sorted(thing, name)).toBeVisible();
     }
   }

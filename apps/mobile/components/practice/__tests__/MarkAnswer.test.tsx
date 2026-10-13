@@ -14,10 +14,10 @@
 // Ob 24 Wörter samt Buddys Antwort auf 360×740 passen, misst tests/web/mark.spec.ts.
 
 import type { MarkTaskView } from '@learnbuddy/shared-types/contracts';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { renderInApp } from '../../../testing/render.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { MarkAnswer, marksFrom, toggleMark } from '../MarkAnswer.js';
 
 const word = (id: string, text: string, tail = '') => ({ id, text, lead: '', tail });
@@ -250,5 +250,56 @@ describe('a Belegstelle: lines of a reading text (#368)', () => {
       },
       'Z. 3–4',
     );
+  });
+});
+
+describe('the look of marking (design components/practice/Answers.jsx `MarkText`, #599)', () => {
+  const declared = (el: Element) => (el as HTMLElement).style;
+
+  it('offers the categories as pills that wrap, each a radio — never one track that breaks a word', () => {
+    show({
+      ...PARTS,
+      categories: [
+        { id: 'k1', name: 'Dativobjekt' },
+        { id: 'k2', name: 'Präpositionalobjekt' },
+        { id: 'k3', name: 'Subjekt' },
+      ],
+    });
+    const group = screen.getByRole('radiogroup');
+    expect(declared(group).flexWrap).toBe('wrap');
+    const radios = within(group).getAllByRole('radio');
+    expect(radios.map((r) => r.getAttribute('aria-label'))).toEqual([
+      '① Dativobjekt',
+      '② Präpositionalobjekt',
+      '③ Subjekt',
+    ]);
+    expect(radios.map((r) => r.getAttribute('aria-checked'))).toEqual(['true', 'false', 'false']);
+    // A pill holds its term on one line.
+    const term = within(radios[1]!).getByText('② Präpositionalobjekt');
+    expect(styleOf(term).whiteSpace).toBe('nowrap');
+    fireEvent.click(radios[1]!);
+    expect(
+      within(screen.getByRole('radiogroup'))
+        .getAllByRole('radio')
+        .map((r) => r.getAttribute('aria-checked')),
+    ).toEqual(['false', 'true', 'false']);
+  });
+
+  it('sets the words as text on a panel: no frame around a word, a fill when it is marked', () => {
+    show(NOUNS);
+    const hund = () => declared(screen.getByRole('checkbox', { name: 'hund' }).firstElementChild!);
+    expect(hund().borderTopWidth).toBe('');
+    expect(hund().backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'hund' }));
+    expect(hund().borderTopWidth).toBe('');
+    expect(hund().backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+    expect(hund().borderTopLeftRadius).toBe('6px');
+  });
+
+  it('puts its one line of how-to under the text', () => {
+    show(NOUNS);
+    const text = screen.getByTestId('mark-text');
+    const how = screen.getByTestId('mark-how');
+    expect(text.compareDocumentPosition(how) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

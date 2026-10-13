@@ -9,7 +9,7 @@ import { circle, RADIUS } from '../../lib/theme/radius.js';
 import { CONTROL, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { boardSkin, type BoardState } from '../../lib/theme/practice.js';
+import { tileSkin } from '../../lib/theme/board.js';
 import { Icon, type IconName } from './Icon.js';
 
 type Variant =
@@ -20,7 +20,11 @@ type Variant =
   | 'outline'
   | 'ghost'
   | 'danger'
-  | BoardState;
+  // Not a button's variants: the answer board's states live in `Tile` (MIGRATION.md §5). These
+  // two stay until their last two callers have moved (`BOARD_LEFT` in
+  // lib/__tests__/boardTiles.test.ts names them); nothing new may use them.
+  | 'tile'
+  | 'picked';
 type Size = 'sm' | 'md' | 'lg';
 
 type Common = {
@@ -169,12 +173,8 @@ type VariantSkin = {
 // cards (issue #84, the one capture the first scanner missed because the type annotation
 // spans lines).
 const variantStyle = (p: Palette): Record<Variant, VariantSkin> => ({
-  tile: boardSkin(p, 'tile'),
-  picked: boardSkin(p, 'picked'),
-  placed: boardSkin(p, 'placed'),
-  slot: boardSkin(p, 'slot'),
-  correct: boardSkin(p, 'correct'),
-  wrong: boardSkin(p, 'wrong'),
+  tile: tileSkin(p, 'tile'),
+  picked: tileSkin(p, 'picked'),
   primary: { bg: p.primary, color: p.onPrimary, borderColor: 'transparent', borderWidth: 0 },
   quiet: { bg: p.canvas, color: p.ink, borderColor: 'transparent', borderWidth: 0 },
   secondary: { bg: p.paper, color: p.ink, borderColor: p.hairlineStrong, borderWidth: UI.border },
@@ -229,7 +229,7 @@ export function Btn(props: Props) {
   const base = variantStyle(palette)[variant];
   const active = tone ? { ...base, bg: tones.bg[tone], color: palette.ink, borderWidth: 0 } : base;
   const v = active;
-  const board = ['tile', 'picked', 'placed', 'slot', 'correct', 'wrong'].includes(variant);
+  const board = variant === 'tile' || variant === 'picked';
   const radius = board ? RADIUS.md : pill || !wrap ? RADIUS.round : RADIUS.md;
   // A tap on the waiting button answers ("what is missing?") instead of being swallowed.
   // The button itself STAYS truly disabled — un-disabling it made the web lose its

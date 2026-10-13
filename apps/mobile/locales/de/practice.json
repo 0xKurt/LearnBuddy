@@ -111,7 +111,8 @@
     "hint_linked": "Löst die Zuordnung wieder.",
     "hint_put": "Legt {{text}} hierhin.",
     "hint_group_waits": "Erst oben etwas antippen.",
-    "check_waits": "Erst wenn alles zugeordnet ist."
+    "check_waits": "Erst wenn alles zugeordnet ist.",
+    "empty": "leer"
   },
   "next": "Weiter",
   "cloze": {
@@ -119,7 +120,8 @@
     "gap_filled": "Lücke {{n}} von {{total}}: {{word}}",
     "gap_clear": "Leert die Lücke wieder.",
     "word_used": "{{word}}, schon eingesetzt",
-    "check_waits": "Erst wenn jede Lücke etwas hat."
+    "check_waits": "Erst wenn jede Lücke etwas hat.",
+    "how_bank": "Tippe ein Wort an – es landet in der markierten Lücke. Tippe eine Lücke an, um sie zu leeren."
   },
   "order": {
     "how": "Tippe sie der Reihe nach an.",
@@ -263,7 +265,8 @@
     "cell_at": "Zeile {{row}}, Spalte {{column}}",
     "brick": "Reihe {{row}}, Stein {{n}}",
     "check_waits": "Erst wenn jedes Feld ausgefüllt ist.",
-    "scroll": "Tabelle, seitlich verschiebbar"
+    "scroll": "Tabelle, seitlich verschiebbar",
+    "how": "Tippe ein leeres Feld an und schreib hinein, was fehlt."
   },
   "drill": {
     "progress": "Aufgabe {{current}} von {{total}}",
@@ -334,8 +337,8 @@
     "paper_graph": "Koordinatensystem",
     "paper_mirror": "Karopapier mit Spiegelachse",
     "paper_bars": "Säulendiagramm",
-    "tap_hint": "Setzt den nächsten Punkt auf die Kreuzung. Ein Tipp auf einen Punkt nimmt ihn weg.",
-    "tap_hint_bars": "Zieht die Säule in dieser Spalte bis hierher.",
+    "tap_hint": "Setzt den nächsten Punkt auf die Kreuzung. Ein Tipp auf einen Punkt nimmt ihn weg. Ohne Tippen landet er in der Mitte; danach schiebst du ihn mit den Aktionen oder mit den Pfeiltasten.",
+    "tap_hint_bars": "Zieht die Säule in dieser Spalte bis hierher. Ohne Tippen wächst die gewählte Säule um eine Reihe; mit den Aktionen oder mit den Pfeiltasten wählst du eine Säule und ziehst sie.",
     "left": "Nach links",
     "up": "Nach oben",
     "down": "Nach unten",

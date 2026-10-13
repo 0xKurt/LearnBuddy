@@ -4,8 +4,13 @@
 // jedes Feld etwas enthält — geprüft wird auf dem Server, Feld für Feld und ohne Modell
 // (apps/api/src/modules/practice/table.ts).
 //
-// Mehr gibt es nicht: keine Anleitung (die leeren Felder sagen es), keine Schalter, keine
-// Legende (Minimalismus, Owner 02.10.: „Möglichst einfach bedienbar"). Was sie eingetippt
+// Aussehen (#599, Design components/practice/Tasks.jsx `FillTable`): eine Papierkarte, der Kopf
+// auf Canvas, zwischen zwei Zeilen eine Haarlinie und KEINE Linie zwischen zwei Spalten; die erste
+// Spalte benennt die Zeile (600 15). Darunter eine Zeile Anleitung, bis sie das erste Feld antippt
+// oder füllt (ui_kits/app/Tasks.jsx `Hint`). Die Zahlenmauer zeichnet das Design nicht: sie bleibt.
+//
+// Mehr gibt es nicht: keine Schalter, keine Legende (Minimalismus, Owner 02.10.: „Möglichst
+// einfach bedienbar"). Was sie eingetippt
 // hat, bleibt im Entwurf — nach „2 von 3 Feldern stimmen" ändert sie nur das eine Feld, und
 // ein Themenwechsel (Remount) oder ein beendeter Prozess nimmt ihr nichts weg.
 //
@@ -29,7 +34,8 @@ import { Platform, ScrollView, View, type KeyboardTypeOptions } from 'react-nati
 
 import { useDraft } from '../../lib/drafts.js';
 import { speakMathText } from '../../lib/math/speak.js';
-import { around, RADIUS } from '../../lib/theme/radius.js';
+import { BOARD } from '../../lib/theme/board.js';
+import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -37,6 +43,8 @@ import { cellKeys } from '../../lib/math/keys.js';
 import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../math/MathKeys.js';
 import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
+import { BoardHint } from '../lb/BoardHint.js';
+import { Card } from '../lb/Card.js';
 import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 import { AnswerShell } from './AnswerShell.js';
 import { PartsArea } from './PartsArea.js';
@@ -73,6 +81,8 @@ export function cellsFrom(kept: string, ids: ReadonlySet<string>): Record<string
 const MIN_COL = TOUCH + SPACE.sm;
 /** … and a column with a word to type in has room for a word. */
 const MIN_WORD_COL = PRACTICE.tableWordColumn;
+/** What stands around a field in its cell, so a row of fields is as tall as a row of text. */
+const GAP_PAD = (BOARD.table.row - TOUCH) / 2;
 /** A brick of a number wall: wide enough for a three-digit number, never wider. */
 const BRICK = PRACTICE.tableBrickWidth;
 
@@ -192,10 +202,23 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
     );
   };
 
-  // What she reads: as large as what she types, and read out like any math text — a screen
-  // reader walks the table cell by cell, the gaps named by their row and column.
-  const shownText = (text: string, header: boolean) => (
-    <MathText text={text} style={[header ? TYPE.board : TYPE.tableCell, { textAlign: 'center' }]} />
+  // What she reads, read out like any math text — a screen reader walks the table cell by cell,
+  // the gaps named by their row and column. `head`: a column's head; `lead`: the first column,
+  // which names the row; `brick`: a given stone of a number wall (as before the redesign).
+  const shownText = (text: string, role: 'head' | 'lead' | 'cell' | 'brick') => (
+    <MathText
+      text={text}
+      style={[
+        role === 'head'
+          ? TYPE.boardLabel
+          : role === 'lead'
+            ? TYPE.boardCompact
+            : role === 'brick'
+              ? TYPE.reviewTitle
+              : TYPE.body,
+        { textAlign: 'center' },
+      ]}
+    />
   );
 
   const cols = Math.max(view.header?.length ?? 0, ...view.rows.map((r) => r.length));
@@ -206,69 +229,67 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
     });
   const needed = Array.from({ length: cols }, (_, c) => (wordColumn(c) ? MIN_WORD_COL : MIN_COL));
   const tooWide = width > 0 && needed.reduce((a, b) => a + b, 0) > width;
+  const column = (c: number) => ({
+    flex: tooWide ? undefined : 1,
+    width: tooWide ? needed[c] : undefined,
+    minWidth: 0,
+    justifyContent: 'center' as const,
+  });
 
+  // The table as the design draws it (components/practice/Tasks.jsx `FillTable`): one paper card
+  // (the app's `Card`, which carries the shadow), the head on canvas, a hairline between two rows — and no line between two columns.
   const grid = (
-    <View
-      style={{
-        borderWidth: PRACTICE.border,
-        borderColor: ink.gridStrong,
-        // Concentric with the cells it holds (their corners plus the padding around them).
-        borderRadius: around(RADIUS.sm, SPACE.xs),
-        overflow: 'hidden',
-        // Wider than the screen only when the columns need it; then the table scrolls.
-        width: tooWide ? needed.reduce((a, b) => a + b, 0) : '100%',
-      }}
+    <Card
+      padding={0}
+      joined
+      // Wider than the screen only when the columns need it; then the table scrolls.
+      style={{ width: tooWide ? needed.reduce((a, b) => a + b, 0) : '100%' }}
     >
-      {view.header ? (
-        <View style={{ flexDirection: 'row', backgroundColor: palette.lavender }}>
-          {view.header.map((h, c) => (
-            <View
-              key={`h${c}`}
-              style={{
-                flex: tooWide ? undefined : 1,
-                width: tooWide ? needed[c] : undefined,
-                minWidth: 0,
-                padding: SPACE.xs,
-                justifyContent: 'center',
-                borderRightWidth: c === cols - 1 ? 0 : PRACTICE.border,
-                borderColor: ink.gridStrong,
-              }}
-            >
-              {shownText(h, true)}
-            </View>
-          ))}
-        </View>
-      ) : null}
-      {view.rows.map((cellsInRow, r) => (
-        <View
-          key={`r${r}`}
-          style={{
-            flexDirection: 'row',
-            backgroundColor: ink.paper,
-            borderTopWidth: view.header || r > 0 ? 1 : 0,
-            borderColor: ink.gridStrong,
-          }}
-        >
-          {cellsInRow.map((cell, c) => (
-            <View
-              key={`c${c}`}
-              style={{
-                flex: tooWide ? undefined : 1,
-                width: tooWide ? needed[c] : undefined,
-                minWidth: 0,
-                minHeight: TOUCH + SPACE.sm,
-                padding: SPACE.xs,
-                justifyContent: 'center',
-                borderRightWidth: c === cols - 1 ? 0 : PRACTICE.border,
-                borderColor: ink.gridStrong,
-              }}
-            >
-              {isGap(cell) ? gap(cell, r, c) : shownText(cell.text, false)}
-            </View>
-          ))}
-        </View>
-      ))}
-    </View>
+      {/* The clip is a box of its own: a clipped box would cut its own shadow off on iOS. */}
+      <View style={{ borderRadius: RADIUS.lg, overflow: 'hidden' }}>
+        {view.header ? (
+          <View style={{ flexDirection: 'row', backgroundColor: palette.canvas }}>
+            {view.header.map((h, c) => (
+              <View
+                key={`h${c}`}
+                style={{
+                  ...column(c),
+                  paddingVertical: BOARD.table.headPadY,
+                  paddingHorizontal: BOARD.table.headPadX,
+                }}
+              >
+                {shownText(h, 'head')}
+              </View>
+            ))}
+          </View>
+        ) : null}
+        {view.rows.map((cellsInRow, r) => (
+          <View
+            key={`r${r}`}
+            style={{
+              flexDirection: 'row',
+              borderTopWidth: view.header || r > 0 ? PRACTICE.border : 0,
+              borderColor: palette.hairline,
+            }}
+          >
+            {cellsInRow.map((cell, c) => (
+              <View
+                key={`c${c}`}
+                style={{
+                  ...column(c),
+                  minHeight: BOARD.table.row,
+                  // A field keeps its 44 pt (the design's is 40): with less around it the row
+                  // is still the design's 52.
+                  padding: isGap(cell) ? GAP_PAD : BOARD.table.cellPad,
+                }}
+              >
+                {isGap(cell) ? gap(cell, r, c) : shownText(cell.text, c === 0 ? 'lead' : 'cell')}
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    </Card>
   );
 
   const brickWidth = Math.min(BRICK, width > 0 ? Math.floor(width / Math.max(1, cols)) : BRICK);
@@ -289,7 +310,7 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
                 backgroundColor: isGap(cell) ? 'transparent' : palette.lavender,
               }}
             >
-              {isGap(cell) ? gap(cell, r, c) : shownText(cell.text, true)}
+              {isGap(cell) ? gap(cell, r, c) : shownText(cell.text, 'brick')}
             </View>
           ))}
         </View>
@@ -304,7 +325,10 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
         <PartsArea
           keyboardEditing={focused !== null && formDensity(seen.window, seen.overlap) === 'tight'}
         >
-          <View onLayout={(e) => setWidth(Math.floor(e.nativeEvent.layout.width))}>
+          <View
+            style={{ gap: BOARD.gap }}
+            onLayout={(e) => setWidth(Math.floor(e.nativeEvent.layout.width))}
+          >
             {wall ? (
               wallView
             ) : tooWide ? (
@@ -318,6 +342,11 @@ export function TableAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ta
             ) : (
               grid
             )}
+            {/* The one line of instruction — gone with the first cell she taps or fills, so the
+                keyboard's tight room never has to hold it. */}
+            {focused === null && Object.keys(cells).length === 0 ? (
+              <BoardHint>{t('table.how')}</BoardHint>
+            ) : null}
           </View>
         </PartsArea>
       }

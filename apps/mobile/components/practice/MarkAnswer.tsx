@@ -8,13 +8,20 @@
 // Farbe ist nie das einzige Signal: ein markiertes Wort ist unterstrichen und trägt mit
 // Kategorien deren Ziffer (①②③, dieselbe wie auf ihrer Schaltfläche); darunter steht in Worten,
 // was markiert ist („Subjekt: die alte Oma"). Ein gesetztes Komma ist ein Komma hinter dem Wort,
-// eine Silbengrenze ein Bindestrich hinter dem Buchstaben. Jede Stelle ist ein `<Btn>` mit
+// eine Silbengrenze ein Bindestrich hinter dem Buchstaben. Jede Stelle ist ein Ziel mit
 // `checked` — ein Screenreader hört „Hund, markiert" bzw. „Komma nach „ankamen"", angekreuzt.
 //
-// Platz (Regel 16, 360×740): jedes Ziel ist ein Btn der kleinen Größe, also 44 pt hoch, und nie
-// schmaler als 44 pt. Wörter stehen wie Text auf einer ruhigen Fläche — dieselbe wie ein Wort zum
-// Trennen —, ihre Kacheln berühren sich ohne Rahmen und Lücke, so liest sich der Satz als Satz und
-// jeder Punkt der Zeile ist ein Ziel. Die Ziffer einer Kategorie steht UNTER dem Wort, nicht
+// Aussehen (#599, Design components/practice/Answers.jsx `MarkText`, ui_kits/app/Extra.jsx
+// `mark`): die Wörter stehen als Text auf einer Papierfläche, ohne Rahmen um jedes Wort; ein
+// markiertes Wort ist hell-violett hinterlegt und unterstrichen. Wörter und Zeilen sind die eine
+// Brett-Kachel in ihrer Textform (`components/lb/Tile.tsx`), die Kategorien ihre Wort-Pillen, die
+// umbrechen. Die eine Zeile Anleitung steht UNTER dem Text. Das Design zeichnet weder Kategorien
+// noch Kommas noch Silben: die bleiben, wie sie vor dem Redesign waren (Owner-Regel 2). Schrift
+// (17) und Seitenabstand (8) der Wörter bleiben, weil der Vertrag damit die Zeilen zählt
+// (`markRows`); das Design hätte 19 und 16.
+//
+// Platz (Regel 16, 360×740): jedes Ziel ist 44 pt hoch und nie schmaler als 44 pt. Die Ziele
+// berühren sich ohne Lücke, so liest sich der Satz als Satz und jeder Punkt der Zeile ist ein Ziel. Die Ziffer einer Kategorie steht UNTER dem Wort, nicht
 // daneben: eine Markierung macht eine Kachel nie breiter, die Zeilen stehen, bevor sie tippt, und
 // ein Satzglieder-Satz von 12 Wörtern passt in zwei Zeilen (#368; vorher sieben Wörter). Die Grenzen
 // im Vertrag (MARK_*, `markRows`) sind so gewählt, dass das Größte ohne Scrollen passt — gemessen in
@@ -24,7 +31,7 @@
 // Belegstelle (Zeilen, #368): sie tippt die Zeilen eines langen Lesetexts an, in denen eine Aussage
 // steht — irgendwo im Text. Der Text ist hier die Antwortfläche: er steht in seinem eigenen
 // Kasten, der als einziges scrollt („nur ein Text scrollt", `scroll-text`), mit denselben Zeilen
-// wie über einer Lesefrage (`LineText` aus PassagePanel), jede Zeile ein Btn. Über der Frage
+// wie über einer Lesefrage (`LineText` aus PassagePanel), jede Zeile ein Ziel. Über der Frage
 // steht er dann nicht noch einmal (der Server schickt ihn dort erst, wenn die Frage zu ist).
 
 import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
@@ -45,12 +52,15 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
+import { BOARD } from '../../lib/theme/board.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { BoardHint } from '../lb/BoardHint.js';
 import { Btn } from '../lb/Btn.js';
-import { Segmented } from '../lb/Segmented.js';
+import { Tile } from '../lb/Tile.js';
+import { TileChoice } from '../lb/TileChoice.js';
 import { AnswerShell } from './AnswerShell.js';
 import { LineText } from './PassagePanel.js';
 import type { FormProps } from './formProps.js';
@@ -61,16 +71,23 @@ import type { FormProps } from './formProps.js';
  * narrower than a touch target.
  */
 const WORD_PAD = SPACE.xs;
-/** The calm surface the words of a text, or the letters of a word, stand on. */
+/**
+ * The surface the letters of a word stand on, and the paper panel of a text's words (Extra.jsx
+ * `mark`: paper, the card's corners). Both keep the side padding the contract's width model counts
+ * with (`markRows`: 328 − 2 × 8).
+ */
 const SURFACE = { paddingHorizontal: SPACE.sm, borderRadius: RADIUS.md } as const;
+const PANEL = { paddingHorizontal: SPACE.sm, borderRadius: RADIUS.lg } as const;
 /**
  * One letter of a word to split: the longest word (MARK_SYLLABLE_LETTERS_MAX) fills a 360-pt
  * phone in one row with these cells — narrower than 44 pt, but the cells touch, so every point of
  * the row is a target (issue #234: a word is never wrapped, it must read as one word).
  */
 const LETTER_CELL = PRACTICE.markLetterCell;
-/** The underline under a marked word: a bar, so it reads the same on every platform. */
+/** The bar that ends a syllable. */
 const UNDERLINE = PRACTICE.markUnderline;
+/** The line under a marked word (Answers.jsx MarkText): a bar, the same on every platform. */
+const WORD_LINE = BOARD.mark.underline;
 /**
  * A Belegstelle's text never shrinks below four lines' targets: it scrolls in its box, and the
  * conversation above gives way first (the answer shell's `keeps`).
@@ -146,17 +163,10 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Mar
       keeps={lines ? LINES_KEEP : 'whole'}
       answer={
         <View style={{ gap: SPACE.sm, flexShrink: 1, minHeight: 0 }}>
-          {/* What a tap does, one line in the same place for every kind of marking — until the
-              first "Prüfen": then Buddy's reply says how it went, and on 360×740 it needs the
-              room (the same as the one line of a select-all task, #240). */}
-          {checkedOnce ? null : (
-            <Text testID="mark-how" style={[TYPE.meta, { color: palette.ink2 }]}>
-              {t(categories.length > 0 ? 'mark.how_sorted' : `mark.how_${view.mode}`)}
-            </Text>
-          )}
           {categories.length > 0 ? (
-            // One chosen at a time, each with the digit its words carry (the shared choice row).
-            <Segmented
+            // One chosen at a time, each with the digit its words carry: word pills that wrap,
+            // so a long term ("Präpositionalobjekt") stays whole on a row of its own.
+            <TileChoice
               options={categories.map((c, i) => ({ value: c.id, label: categoryLabel(c, i) }))}
               value={chosen}
               onChange={choose}
@@ -168,6 +178,14 @@ export function MarkAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Mar
             <Lines lines={view.lines} {...own} />
           ) : (
             <Words view={view} {...own} />
+          )}
+          {/* What a tap does, one line under the board for every kind of marking — until the
+              first "Prüfen": then Buddy's reply says how it went, and on 360×740 it needs the
+              room (the same as the one line of a select-all task, #240). */}
+          {checkedOnce ? null : (
+            <BoardHint testID="mark-how">
+              {t(categories.length > 0 ? 'mark.how_sorted' : `mark.how_${view.mode}`)}
+            </BoardHint>
           )}
           {/* What is marked, in words (never colour alone). Commas stand in the sentence. With
               categories the names lead the line ("Subjekt: die Oma"), so it needs no prefix —
@@ -205,7 +223,11 @@ type Own = {
   tap: (at: string) => void;
 };
 
-/** Words and commas: every word a tile, the tiles touching, flowing like text. */
+/**
+ * Words and commas: the sentence on a paper panel, every word a target, the targets touching and
+ * flowing like text. A marked word takes the light primary and a line under it (Answers.jsx
+ * MarkText) — no frame around a word.
+ */
 function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTaskView }) {
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
@@ -214,7 +236,7 @@ function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTas
   return (
     <View
       testID="mark-text"
-      style={[SURFACE, { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: palette.canvas }]}
+      style={[PANEL, { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: palette.paper }]}
     >
       {view.words.map((w, i) => {
         if (gaps && i === view.words.length - 1) {
@@ -228,11 +250,10 @@ function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTas
           : null;
         const name = categories.find((c) => c.id === mark?.category)?.name;
         return (
-          <Btn
+          <Tile
             key={w.id}
-            size="sm"
-            bare
-            variant={mark ? 'picked' : 'tile'}
+            shape="text"
+            state={mark ? 'picked' : 'tile'}
             checked={mark !== undefined}
             disabled={disabled}
             onPress={() => tap(at)}
@@ -253,7 +274,7 @@ function Words({ view, marks, categories, disabled, tap }: Own & { view: MarkTas
             }
           >
             {w.text}
-          </Btn>
+          </Tile>
         );
       })}
     </View>
@@ -278,18 +299,17 @@ function WordLabel({
   digit: string | null;
 }) {
   const { palette } = useTheme();
-  const ink = marked || comma ? palette.primaryDk : palette.ink;
   return (
     <View style={{ minWidth: TOUCH, paddingHorizontal: WORD_PAD, alignItems: 'center' }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
         {word.lead ? <Text style={[TYPE.body, { color: palette.ink }]}>{word.lead}</Text> : null}
         <View>
           {/* Never bold when marked: a bolder word is a wider tile, and the rows would move. */}
-          <Text style={[TYPE.body, { color: ink }]}>{word.text}</Text>
+          <Text style={[TYPE.body, { color: palette.ink }]}>{word.text}</Text>
           <View
             style={{
-              height: UNDERLINE,
-              borderRadius: UNDERLINE,
+              height: WORD_LINE,
+              borderRadius: WORD_LINE,
               backgroundColor: marked ? palette.primary : 'transparent',
             }}
           />
@@ -345,12 +365,11 @@ function Lines({ lines, marks, disabled, tap }: Own & { lines: readonly string[]
         const at = lineId(n);
         const marked = marks.some((m) => m.at === at);
         return (
-          <Btn
+          <Tile
             key={i}
-            size="sm"
-            bare
+            shape="text"
             full
-            variant={marked ? 'picked' : 'tile'}
+            state={marked ? 'picked' : 'tile'}
             checked={marked}
             disabled={disabled}
             onPress={() => tap(at)}
@@ -358,7 +377,7 @@ function Lines({ lines, marks, disabled, tap }: Own & { lines: readonly string[]
             label={<LineText n={n} line={line} lit={marked} numberShown={marked} />}
           >
             {line}
-          </Btn>
+          </Tile>
         );
       })}
     </ScrollView>

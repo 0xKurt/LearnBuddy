@@ -134,6 +134,8 @@ export const SOURCE_LISTS = {
   // with a thin one unseen.
   'apps/mobile/lib/__tests__/minimalism.test.ts#ROUTES(WEAK)': (s) =>
     sourceList(s, 'ROUTES', isWeak),
+  // Callers that still hand a state of the answer board to a button (#599).
+  'apps/mobile/lib/__tests__/boardTiles.test.ts#BOARD_LEFT': (s) => sourceList(s, 'BOARD_LEFT'),
   // Lines of text in a sheet that stand off its title's edge on purpose (#599).
   'apps/mobile/lib/__tests__/sheetText.test.ts#PLACED': (s) => sourceList(s, 'PLACED'),
   // Routes drawn without the shared head, and heads whose right end is still their own (#599).

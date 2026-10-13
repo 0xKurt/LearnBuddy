@@ -15,7 +15,8 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { renderInApp } from '../../../testing/render.js';
+import { paletteOf } from '../../../lib/theme/palettes.js';
+import { renderInApp, styleOf } from '../../../testing/render.js';
 import { linksText, MatchAnswer, stateFrom, tapMatch } from '../MatchAnswer.js';
 
 const PAIRS = {
@@ -234,5 +235,67 @@ describe('groups she sorts into', () => {
       },
       'Nomen: Haus, Baum; Verb: laufen; Adjektiv: schnell',
     );
+  });
+});
+
+const rgb = (hex: string) => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`;
+};
+
+describe('the look of a matching (design components/practice/Tasks.jsx, #599)', () => {
+  const p = paletteOf('pastell');
+
+  it('writes a pairing’s tiles in ink, held or not — the state is the frame, not the words', () => {
+    renderInApp(
+      <MatchAnswer view={PAIRS} draftKey="look-m1" disabled={false} onSubmit={() => undefined} />,
+    );
+    expect(styleOf(screen.getByText('Hund')).color).toBe(rgb(p.ink));
+    fireEvent.click(screen.getByRole('button', { name: 'Hund, noch ohne Partner' }));
+    const held = screen.getByRole('button', { name: 'Hund, ausgewählt' });
+    expect(styleOf(screen.getByText('Hund')).color).toBe(rgb(p.ink));
+    const face = styleOf(held.firstElementChild!);
+    expect(face.backgroundColor).toBe(rgb(p.primaryLt));
+    expect([face.borderTopWidth, face.borderTopColor]).toEqual(['2px', rgb(p.primary)]);
+  });
+
+  it('shows an empty group its dashed place "leer", which is drawn and not read', () => {
+    renderInApp(
+      <MatchAnswer view={GROUPS} draftKey="look-m2" disabled={false} onSubmit={() => undefined} />,
+    );
+    const row = () => screen.getByTestId('match-group-r1');
+    const empty = within(row()).getByText('leer');
+    expect(empty.closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: 'leer' })).toBeNull();
+    // The group's name is words on its card; the card itself is the one target.
+    expect(within(row()).getAllByRole('button')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Haus, noch in keiner Gruppe' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Gruppe Nomen,/ }));
+    expect(within(row()).queryByText('leer')).toBeNull();
+    // The other groups are still empty.
+    expect(within(screen.getByTestId('match-group-r2')).getByText('leer')).toBeTruthy();
+  });
+
+  it('sets the things of a grouping as word pills: free on paper, sorted light primary', () => {
+    renderInApp(
+      <MatchAnswer view={GROUPS} draftKey="look-m3" disabled={false} onSubmit={() => undefined} />,
+    );
+    const free = screen.getByRole('button', { name: 'Haus, noch in keiner Gruppe' });
+    expect(styleOf(free.firstElementChild!).height).toBe('40px');
+    expect(styleOf(free.firstElementChild!).backgroundColor).toBe(rgb(p.paper));
+    fireEvent.click(free);
+    fireEvent.click(screen.getByRole('button', { name: /^Gruppe Nomen,/ }));
+    const sorted = screen.getByRole('button', { name: 'Haus, in Nomen' });
+    expect(styleOf(sorted.firstElementChild!).backgroundColor).toBe(rgb(p.primaryLt));
+    expect(styleOf(sorted.firstElementChild!).borderTopWidth).toBe('1px');
+  });
+
+  it('puts its one line of how-to under the board', () => {
+    renderInApp(
+      <MatchAnswer view={GROUPS} draftKey="look-m4" disabled={false} onSubmit={() => undefined} />,
+    );
+    const how = screen.getByText('Tippe oben eins an, dann seine Gruppe.');
+    const lastGroup = screen.getByTestId('match-group-r3');
+    expect(lastGroup.compareDocumentPosition(how) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
