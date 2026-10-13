@@ -8,10 +8,10 @@ import { useState, type ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
-import { HeaderMenu } from '../buddy/HeaderMenu.js';
-import type { StartItem } from '../buddy/MenuSheet.js';
 import { BuddyHeader, type BuddyHeaderProps } from './BuddyHeader.js';
 import { Glow } from './Glow.js';
+import { HeaderMenu } from './HeaderMenu.js';
+import type { MenuAction } from './MenuSheet.js';
 
 type Props = {
   title?: string;
@@ -29,11 +29,9 @@ type Props = {
    * draws itself, with its own sheet. `null`: no ⋯ at all — only where the menu would mislead.
    * The last two are exceptions on a list (lib/__tests__/headerShell.test.ts).
    */
-  menu?: { actions: readonly StartItem[]; canAct?: boolean } | { own: ReactNode } | null;
+  menu?: { actions: readonly MenuAction[]; canAct?: boolean } | { own: ReactNode } | null;
   /** The card pass's own right end, in place of the switch and ⋯ (`BuddyHeader.trailing`). */
   right?: ReactNode;
-  /** No longer read: the head carries the Vorlesen switch itself. Callers drop it (#599). */
-  sound?: ReactNode;
   children: ReactNode;
 };
 

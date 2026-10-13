@@ -1,5 +1,7 @@
 # Mobile redesign migration
 
+> Superseded by #599 (redesign correction, October 2026): component and route names below describe the state before it.
+
 Tracking: [#548](https://github.com/0xKurt/LearnBuddy/issues/548). Target: `apps/mobile`.
 
 ## Authority and decisions

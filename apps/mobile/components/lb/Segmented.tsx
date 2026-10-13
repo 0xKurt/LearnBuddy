@@ -1,7 +1,8 @@
 // An exclusive choice of two to four on one canvas track (components/core/Segmented.jsx): the
 // segments share one line, each with its own accessible target (#548).
 import { Pressable, Text, View } from 'react-native';
-import { UI } from '../../lib/theme/components.js';
+import { pressedStyle, UI } from '../../lib/theme/components.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SHADOW } from '../../lib/theme/shadow.js';
 import { SPACE, CONTROL } from '../../lib/theme/space.js';
@@ -17,6 +18,7 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   const { palette } = useTheme();
+  const reduced = useMotionReduced();
   return (
     <View
       accessibilityRole="radiogroup"
@@ -55,7 +57,7 @@ export function Segmented<T extends string>({
                   borderRadius: RADIUS.round,
                   backgroundColor: selected ? palette.paper : 'transparent',
                   ...(selected ? SHADOW.soft : {}),
-                  opacity: pressed ? UI.pressedOpacity : 1,
+                  ...pressedStyle(pressed, reduced),
                 }}
               >
                 <Text

@@ -10,9 +10,9 @@ import { useTranslation } from 'react-i18next';
 import { ListGroup, Row } from '../lb/ListGroup.js';
 import { afterModalCloses } from './adultGate.js';
 import { ChoiceRow } from './ChoiceRow.js';
-import { DayChoice } from './DayChoice.js';
+import { DayChoice } from '../lb/DayChoice.js';
 import { Hint } from './SettingsPage.js';
-import { Toggle } from './Toggle.js';
+import { Toggle } from '../lb/Toggle.js';
 import { useContact, type ContactChange, type ContactProps } from './useContact.js';
 
 const QUIET_START = ['19:00', '20:00', '21:00'] as const;

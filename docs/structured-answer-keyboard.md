@@ -1,5 +1,7 @@
 # Structured answer keyboard clearance — #576 / #548
 
+> Superseded by #599 (redesign correction, October 2026): component and route names below describe the state before it.
+
 Prepared on published main `227b53210bf748fe0e11ec2d5fff07d737c68f85`; rendered review accepted. Native keyboard runtime remains open.
 
 ## Exact scope

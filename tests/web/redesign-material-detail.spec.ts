@@ -64,7 +64,7 @@ for (const look of SCREEN_LOOKS)
     await screenShots(page, `material-${key}`);
     // Renaming is the sheet's own action in the head's ⋯ (#599).
     await page.getByRole('button', { name: 'Mehr', exact: true }).click();
-    await page.getByRole('button', { name: 'Umbenennen', exact: true }).click();
+    await page.getByRole('button', { name: /umbenennen$/i }).click();
     await page.getByLabel('Name des Blatts').fill('Brüche – Test Freitag');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(

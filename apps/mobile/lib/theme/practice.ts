@@ -24,9 +24,6 @@ export const PRACTICE = {
   drill: {
     shortPromptMax: 7,
     mediumPromptMax: 11,
-    receiptHeight: 36,
-    receiptRadius: 18,
-    receiptPadExtra: 2,
   },
   badgeSize: 32,
   figureBadgeSize: 28,

@@ -72,17 +72,3 @@ export function talkStatus(now: {
       : 'buddy:talk.thinking';
   return talkHeadline(now.phase, now.mic);
 }
-
-/**
- * Whether a home that a turn brought back may be written over the one the app holds. Two
- * requests can be on their way at once here — her spoken turn and "Gespräch beenden" — and the
- * turn's answer, built before the scene ended, can arrive after the answer that ended it. Every
- * change a decision depends on raises `context_version` (CLAUDE.md rule 4), ending a scene
- * included, so the older home is the one with the lower version.
- */
-export function newerHome(
-  incoming: { context_version: number },
-  held: { context_version: number } | undefined,
-): boolean {
-  return held === undefined || incoming.context_version >= held.context_version;
-}

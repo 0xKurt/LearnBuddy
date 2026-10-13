@@ -55,7 +55,7 @@ export function DictationCard({
    * "Anhören" and the quiet "Langsam" beside or under it — the one listen control
    * (`ListenButton`) in both shapes of the card; only the main button's size and weight differ.
    */
-  const pair = (size: 'md' | 'lg', variant: 'outline' | 'primary') => (
+  const pair = (size: 'md' | 'lg', variant: 'secondary' | 'primary') => (
     <ListenButton
       source={{ item: { sessionId, itemId, onHeard } }}
       slow
@@ -78,7 +78,7 @@ export function DictationCard({
             gap: SPACE.sm,
           }}
         >
-          {pair('md', 'outline')}
+          {pair('md', 'secondary')}
         </View>
       </QuestionCard>
     );
@@ -107,7 +107,7 @@ export function DictationCard({
             The first thing she does is hear it: the one filled button on the screen until she
             has. After that it steps back to an outline, so "Prüfen" is the strong one. */}
         <View style={{ alignItems: 'center', gap: SPACE.xs }}>
-          {pair('lg', heard ? 'outline' : 'primary')}
+          {pair('lg', heard ? 'secondary' : 'primary')}
         </View>
       </View>
     </QuestionCard>

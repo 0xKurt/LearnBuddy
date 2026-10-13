@@ -194,7 +194,7 @@ export function FailedLine({
       {message.failure_code === 'budget' || !onResend ? null : (
         <Btn
           size="sm"
-          variant="outline"
+          variant="secondary"
           onPress={() => {
             haptic.tap();
             onResend(message);

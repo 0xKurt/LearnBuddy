@@ -37,7 +37,7 @@ import { Composer } from '../components/buddy/Composer.js';
 import { Conversation } from '../components/buddy/Conversation.js';
 import { DecisionCard } from '../components/buddy/DecisionCard.js';
 import { Header } from '../components/buddy/Header.js';
-import { HeaderMenu } from '../components/buddy/HeaderMenu.js';
+import { HeaderMenu } from '../components/lb/HeaderMenu.js';
 import { HomeIntro } from '../components/buddy/HomeIntro.js';
 import { homeNotices, ResultViewBtn } from '../components/buddy/HomeNotices.js';
 import { HomeThread } from '../components/buddy/HomeThread.js';

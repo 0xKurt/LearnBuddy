@@ -12,7 +12,7 @@
 import { UI } from './components.js';
 import type { Palette } from './palettes.js';
 import { optionLook, PRACTICE, type OptionState } from './practice.js';
-import { SPACE, TOUCH } from './space.js';
+import { CONTROL, SPACE, TOUCH } from './space.js';
 
 export const TILE_STATES = ['tile', 'picked', 'placed', 'slot', 'correct', 'wrong'] as const;
 export type TileState = (typeof TILE_STATES)[number];
@@ -46,6 +46,11 @@ export const BOARD = {
   word: { height: WORD, pad: 14, gap: 6, reach: (TOUCH - WORD) / 2 },
   /** A short thing in a grid place (an order of numbers): one touch target tall, centred. */
   cell: { minHeight: TOUCH, pad: SPACE.sm },
+  /**
+   * A row of a list she picks one from (a line of a Fehlerdetektiv, the chosen row of a choice in
+   * a sheet): one touch target tall, or the regular control's height beside regular buttons.
+   */
+  row: { minHeight: TOUCH, tall: CONTROL.md, pad: SPACE.md },
   /** A gap of a cloze. */
   slot: { height: GAP, minWidth: 72, pad: 10 },
   /** A marked word in running text (components/practice/Answers.jsx MarkText). */

@@ -224,7 +224,7 @@ describe('the switch and ⋯ are the head’s own (Header.jsx:23–25)', () => {
   });
 
   it('⋯ opens one sheet, wired once', () => {
-    expect(holders(/<MenuSheet\b/)).toEqual(['components/buddy/HeaderMenu.tsx']);
+    expect(holders(/<MenuSheet\b/)).toEqual(['components/lb/HeaderMenu.tsx']);
     expect(holders(/<HeaderMenu\b/)).toEqual([
       // The home before it has loaded: only the places.
       'app/buddy.tsx',

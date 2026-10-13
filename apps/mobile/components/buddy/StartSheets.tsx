@@ -11,9 +11,9 @@ import { useTranslation } from 'react-i18next';
 
 import { ChoiceSheet } from './ChoiceSheet.js';
 import { startMenu } from './extensions.js';
-import { HeaderMenu, SHEET_SWAP_MS } from './HeaderMenu.js';
+import { HeaderMenu, SHEET_SWAP_MS } from '../lb/HeaderMenu.js';
 
-export { SHEET_SWAP_MS } from './HeaderMenu.js';
+export { SHEET_SWAP_MS } from '../lb/HeaderMenu.js';
 
 /** The core's own sheet: the ways to start. Every other name is one of the domain's sheets. */
 const START = 'start';
@@ -43,7 +43,15 @@ export function StartSheets({ menuOpen, onCloseMenu, next, send, canStart }: Pro
         visible={menuOpen}
         actions={
           ways.length > 0
-            ? [{ key: START, icon: 'practice', label: title, onPress: () => setSheet(START) }]
+            ? [
+                {
+                  key: START,
+                  icon: 'practice',
+                  label: title,
+                  leads: true,
+                  onPress: () => setSheet(START),
+                },
+              ]
             : undefined
         }
         canAct={canStart}

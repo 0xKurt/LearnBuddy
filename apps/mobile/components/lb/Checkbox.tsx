@@ -5,7 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { UI } from '../../lib/theme/components.js';
+import { pressedStyle, UI } from '../../lib/theme/components.js';
 import { ONBOARDING } from '../../lib/theme/onboarding.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
 import { Icon } from './Icon.js';
@@ -36,7 +36,8 @@ export function Checkbox({
     >
       {/* The row answers the finger (audit 30.09., #133 position 6): a consent row that
           looks the same whether it was hit or missed leaves her tapping again. The box
-          takes the press, the way every other control here does. */}
+          takes the press, the way every other control here does (readme.md "States": the dip
+          alone); with Reduce Motion the row dims instead. */}
       {({ pressed }) => (
         <View
           style={{
@@ -45,7 +46,9 @@ export function Checkbox({
             alignItems: 'flex-start',
             paddingVertical: ONBOARDING.check.pad,
             minHeight: TOUCH,
-            opacity: disabled ? UI.disabledOpacity : pressed ? UI.pressedOpacity : 1,
+            ...(disabled
+              ? { opacity: UI.disabledOpacity }
+              : pressedStyle(pressed && reduced, reduced)),
           }}
         >
           <View
@@ -59,7 +62,7 @@ export function Checkbox({
               alignItems: 'center',
               justifyContent: 'center',
               marginTop: ONBOARDING.check.opticalTop,
-              transform: [{ scale: pressed && !reduced ? UI.pressScale : 1 }],
+              ...pressedStyle(pressed && !reduced, reduced),
             }}
           >
             {checked ? (

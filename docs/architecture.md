@@ -3110,8 +3110,8 @@ Nothing tells her how many are right before she checks. A wrong set is `incorrec
 `partially_correct`: the count is the feedback, and the question stays open for her to change it.
 
 App: `SelectAllAnswer.tsx` in the answer shell (`AnswerShell`, "Prüfen" from `CheckBar`). The
-options are the tiles of a single choice (`ChoiceList` with `ticked`, `AnswerTile`): each one a
-`checkbox` (`Btn checked`, `aria-checked`), a square box in the letter's column instead of the
+options are the rows of a single choice (`ChoiceList` with `ticked`, `components/lb/Option.tsx`): each one a
+`checkbox` (`Option checked`, `aria-checked`), a square box in the letter's column instead of the
 letter, the tile in the accent's light tint while ticked and the box filled with a check mark
 (colour is never the only signal). A tap ticks, a second tap unticks (undo over confirmation);
 the ticks live in the draft, so a theme switch keeps them. One quiet line above the tiles says
@@ -5216,7 +5216,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   | | Vorlesen (`readAloud`) | Gespräch (`conversation`) |
   |---|---|---|
   | What happens | Buddy reads aloud, does not listen | hands-free: Buddy reads and listens |
-  | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — part of the one head of every screen (`components/lb/BuddyHeader.tsx`, #599), beside ⋯, which opens the same menu everywhere (`components/buddy/HeaderMenu.tsx`) | the waveform at the end of the input bar (`TalkButton`) |
+  | Control | the speaker switch in the header (`components/lb/ReadAloudSwitch.tsx`) — part of the one head of every screen (`components/lb/BuddyHeader.tsx`, #599), beside ⋯, which opens the same menu everywhere (`components/lb/HeaderMenu.tsx`) | the waveform at the end of the input bar (`TalkButton`) |
   | In the chat | replies are read aloud | opens the conversation screen (`app/talk.tsx`) |
   | In practice | the question when it appears, the feedback, "Anders erklären"; also a Kopfrechnen task (as math in words) and a card's front, never its back (#434). The switch stands in every practice head (the shared `BuddyHeader`, the card pass and the Kopfrechnen round included), and a tap on the question itself reads it again (`components/lb/ReadAgain.tsx`, "Nochmal vorlesen" for a screen reader) | the bar becomes the conversation row in place: "Tastatur" · mic · "Nochmal vorlesen" (`VoiceRow`, the talk screen's row, with the 56 pt mic) |
   | Kept | on the device (`lb.voiceMode`, the old single flag's key) | not kept: she starts it |
@@ -5369,7 +5369,7 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   `heardHim`): before it his voice is on its way and the line says he is thinking, as the moon
   shows (rule 5); between two sentences neither flips back, so a live region announces it once.
   A home a turn brings back is written only if it is not older than the one held
-  (`newerHome`, by `context_version`): her turn and "Gespräch beenden" can both be on their way. Two quiet synthesised tones
+  (`newerHome`, by `context_version`; `writeHome` in `lib/api/homeCache.ts` holds every caller to it): her turn and "Gespräch beenden" can both be on their way. Two quiet synthesised tones
   (`scripts/make-talk-tones.mjs`, `lib/speech/cues.ts`) mark listening starting and ending; on
   iOS they play in a session that obeys the silent switch, then talk mode's session is restored
   (needs live verification on a phone); the web plays none. The camera next to the mic pill
@@ -5514,7 +5514,8 @@ own (CLAUDE.md rule 16).
   passage, the length she was given, one button that starts and ends the recording; while it
   runs the card shows the running time large and the given length beside "ich höre zu" (design
   `Modes.jsx:40–50`; the chat's head listens while the recorder runs (`lib/buddy/headState.ts`
-  `useThreadRecording`); the large orb of that state is not drawn in the chat, where Buddy stands in
+  `useThreadRecording`, kept per card: a second rehearsal card in the thread never ends what the
+  recording one says); the large orb of that state is not drawn in the chat, where Buddy stands in
   the head), 24 kbit/s mono (`useRecording({ long })`). It is the thread's one `ChatCard`.
 - **Measured by code** (`POST /buddy/rehearsals`, `buddy/rehearse.ts`, `talkMeasure.ts`): one
   model call (`transcribe` budget) writes down what was said — hesitation sounds in curly braces, a
@@ -5574,8 +5575,11 @@ card next to "nothing working" — the app polls closely only while something is
 together from parts with one job each (issue #311): what is drawn in `components/buddy/HomeTop`
 (the layer on top), `HomeThread` (the conversation, its fade and "↓ Neue Antwort"), `HomeIntro`
 (before there is a conversation), `HomeNotices` and `StartSheets` (the ⋯ menu — one list of six
-places on every screen, `HeaderMenu`/`MenuSheet`, design `ui_kits/app/App.jsx:125–134` — and,
-from the chat, its row into the start sheet "Was willst du üben?" with the ways to start, #599);
+places on every screen, `components/lb/HeaderMenu`/`MenuSheet`, design
+`ui_kits/app/App.jsx:125–134` — and, from the chat, its row into the start sheet "Was willst du
+üben?" with the ways to start, #599; a screen's own action stands before the places as a row like
+theirs: a short label, the whole sentence as its accessible name, and no chevron unless it leads
+on to a list — "Umbenennen" on a sheet);
 the state in `lib/buddy/useHomeSend` (sending, Stopp, Vorlesen), `useThreadFollow`,
 `useSessionStart`, `homeThread.ts` (pure: what the thread shows), `useHomePhotos`, `useHomeAct`
 and `useContactOptIn`. Top to bottom:
@@ -5731,8 +5735,8 @@ a conversation the conversation row takes the bar's place (`action: { talk }`, #
 typed answer. The pronunciation recorder and "Weiter" take the action's place at the bottom
 (`action: { bar }`), so the free room has one owner, the shell. Whatever fills the keys slot
 is the one key row (`components/lb/KeyRow.tsx`: the math keys and the note line's two rows, #310
-step 4). A tile that answers by a tap is
-`components/lb/AnswerTile.tsx`; corners come from `lib/theme/radius.ts`. Guarded twice: a source
+step 4). An option that answers by a tap is
+`components/lb/Option.tsx`, a piece of an answer board `components/lb/Tile.tsx`; corners come from `lib/theme/radius.ts`. Guarded twice: a source
 test (`apps/mobile/lib/__tests__/answerShell.test.ts`) fails when a form brings its own bar,
 spacer, "Prüfen", keyboard handling or shadowed tile (the forms not moved yet are listed with the
 step that moves them, and the list only shrinks), and the walkthrough measures at every shot with

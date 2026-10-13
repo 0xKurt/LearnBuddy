@@ -2,7 +2,8 @@
 // ThemeProvider retains the existing persisted values and system-follow behavior.
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
-import { UI } from '../../lib/theme/components.js';
+import { pressedStyle } from '../../lib/theme/components.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
 import { LOOK } from '../../lib/theme/look.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { FAMILIES, paletteOf, themeNameOf, type Mode } from '../../lib/theme/palettes.js';
@@ -15,6 +16,7 @@ export function FamilyChoice({ variant = 'settings' }: { variant?: 'settings' | 
   const { t } = useTranslation('settings');
   const { palette, family, choose } = useTheme();
   const geometry = LOOK[variant];
+  const reduced = useMotionReduced();
   return (
     <View
       accessibilityRole="radiogroup"
@@ -48,7 +50,7 @@ export function FamilyChoice({ variant = 'settings' }: { variant?: 'settings' | 
                   borderWidth: selected ? LOOK.selectedBorder : LOOK.border,
                   borderColor: selected ? palette.primary : palette.hairlineStrong,
                   backgroundColor: selected ? palette.primaryLt : palette.paper,
-                  opacity: pressed ? UI.pressedOpacity : 1,
+                  ...pressedStyle(pressed, reduced),
                 }}
               >
                 <View

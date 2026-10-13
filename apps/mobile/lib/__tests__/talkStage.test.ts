@@ -62,11 +62,17 @@ describe('the stage (Talk.jsx:22–45)', () => {
   });
 
   it('never writes an older home over a newer one when a turn comes back late', () => {
-    // Her turn and "Gespräch beenden" can both be on their way (lib/speech/talkState.ts).
+    // Her turn and "Gespräch beenden" can both be on their way. The fence is not Talk's own any
+    // more: every home goes through `setHome` → `writeHome`, which drops the older one
+    // (lib/api/__tests__/homeCache.test.ts), and Talk writes the cache in no other way.
     const talk = code('app/talk.tsx');
     expect(talk.match(/\bsetHome\(/g)).toHaveLength(1);
-    expect(talk).toMatch(
-      /if \(newerHome\(res\.home, queryClient\.getQueryData<BuddyHome>\(keys\.home\)\)\) setHome\(res\.home\);/,
+    expect(talk).not.toMatch(/setQueryData|writeHome/);
+    expect(code('lib/api/queries.ts')).toMatch(
+      /export function setHome\(home: BuddyHome\): void \{[^}]*writeHome\(queryClient, home\);\s*\}/,
+    );
+    expect(code('lib/api/homeCache.ts')).toMatch(
+      /export function writeHome\([^)]*\): boolean \{\s*if \(!newerHome\(home, client\.getQueryData<BuddyHome>\(keys\.home\)\)\) return false;/,
     );
   });
 

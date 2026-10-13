@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { chipSkin, UI, type ChipTone } from '../../lib/theme/components.js';
+import { chipSkin, pressedStyle, UI, type ChipTone } from '../../lib/theme/components.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
 import { useA11ySettings } from '../../lib/a11ySettings.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
@@ -39,6 +40,7 @@ export function Chip({
 }) {
   const { palette } = useTheme();
   const { reduceTransparency } = useA11ySettings();
+  const reduced = useMotionReduced();
   const t = chipSkin(palette, tone, selected, reduceTransparency);
   const content = (
     <View
@@ -96,7 +98,7 @@ export function Chip({
     >
       {({ pressed }) => (
         <View
-          style={{ opacity: disabled ? UI.disabledOpacity : pressed ? UI.pressedOpacity : 1 }}
+          style={disabled ? { opacity: UI.disabledOpacity } : pressedStyle(pressed, reduced)}
           accessible={false}
         >
           {content}

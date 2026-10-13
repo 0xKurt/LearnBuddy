@@ -20,7 +20,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { circle } from '../../lib/theme/radius.js';
 import { fontFace, TYPE } from '../../lib/theme/type.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
-import { Btn } from '../lb/Btn.js';
+import { Tile } from '../lb/Tile.js';
 import { Option, type OptionState } from '../lb/Option.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { Icon } from '../lb/Icon.js';
@@ -166,12 +166,10 @@ function TextChoices({
         const mark = marks?.[index];
         if (lines) {
           return (
-            <Btn
+            <Tile
               key={`${index}:${choice}`}
-              variant={on || mine ? 'picked' : 'tile'}
-              size="sm"
-              full
-              compact
+              shape="row"
+              state={on || mine ? 'picked' : 'tile'}
               grow
               selected={on || mine}
               disabled={disabled || settled !== null || state === 'tried'}
@@ -215,7 +213,7 @@ function TextChoices({
               }
             >
               {choice}
-            </Btn>
+            </Tile>
           );
         }
         return (
@@ -346,7 +344,7 @@ function FigureChoices({
         const note = said(state);
         const figure = figures[index]!;
         return (
-          // A tried picture keeps its white ground and steps back by its hairline (AnswerTile)
+          // A tried picture keeps its white ground and steps back by its hairline (`Option`)
           // and by fading the drawing.
           <Option
             key={`${index}:${choice}`}

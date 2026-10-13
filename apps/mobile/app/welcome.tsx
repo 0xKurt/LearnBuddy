@@ -277,7 +277,7 @@ export default function Welcome() {
               <Text style={TYPE.small}>{t('welcome.confirm_spam')}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
                 <Btn
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   pill
                   busy={resendBusy}

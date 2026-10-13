@@ -73,6 +73,14 @@ export const UI = {
     reach: (TOUCH - CHIP_HEIGHT) / 2,
   },
   segmented: { visible: 36 },
+  /** The switch at a row's end (ui_kits/app/Flows.jsx `Toggle`): a 52×32 track, a 26 knob. */
+  toggle: { width: 52, height: 32, pad: 3, knob: 26 },
+  /**
+   * The seven day tiles (Flows.jsx `Times`): 44 high, 6 apart. Each target stays 44 wide on a
+   * 360 pt phone by reaching `bleed` into the row's side padding; the tile drawn inside it keeps
+   * `inset` on either side, so two tiles stand 6 apart.
+   */
+  day: { height: TOUCH, inset: 3, bleed: 6 },
   progress: { height: 4, legacyHeight: 6, currentPart: 0.5 },
   sheet: {
     maxFraction: 0.92,

@@ -1,5 +1,7 @@
 # Chat redesign (#548)
 
+> Superseded by #599 (redesign correction, October 2026): component and route names below describe the state before it.
+
 Integrated on published Home main `df537c91145e60aad3e75b0149a0260663bed81c`. Reference: HANDOFF §6, Chat.jsx and Message.jsx; repository layout rules in docs/UX-PRINCIPLES.md. Dispatch, failure/resend/stop, receipts/undo, outreach, reading stages, material navigation, markdown, refresh and overlay callbacks retain their real controllers/contracts. One header Orb remains; Orb/moon internals are unchanged.
 
 ## Source and shared roles

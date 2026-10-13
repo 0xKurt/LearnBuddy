@@ -18,12 +18,27 @@ import { moonForReply, type MoonState } from './moon.js';
  * A recording of hers runs on a card in the thread (the rehearsal card, issue #264): the fact
  * lives in that card's recorder, deep in the thread, and the head is drawn by the screen — so
  * the card says it here and the chat reads it, as the Composer tells the screen that she types.
- * True only while the recorder really runs (the card sets it from its phase and clears it when
- * it goes).
+ * True only while a recorder really runs (each card says it from its phase, under its own name,
+ * and takes it back when it goes). Kept per card: two rehearsal cards can stand in the thread,
+ * and the second one mounting, stopping or leaving must not end what the first one says.
  */
-export const useThreadRecording = create<{ on: boolean; set: (on: boolean) => void }>((set) => ({
+export const useThreadRecording = create<{
+  /** The cards whose recorder runs. */
+  cards: ReadonlySet<string>;
+  /** Whether any of them records. */
+  on: boolean;
+  set: (card: string, on: boolean) => void;
+}>((set) => ({
+  cards: new Set(),
   on: false,
-  set: (on) => set({ on }),
+  set: (card, on) =>
+    set((state) => {
+      if (state.cards.has(card) === on) return state;
+      const cards = new Set(state.cards);
+      if (on) cards.add(card);
+      else cards.delete(card);
+      return { cards, on: cards.size > 0 };
+    }),
 }));
 
 export type HeadFacts = {

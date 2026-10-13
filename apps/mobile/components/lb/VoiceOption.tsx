@@ -1,6 +1,7 @@
 // Pure choice tile. Listening remains a separate target and caller-owned action.
 import { Pressable, Text, View } from 'react-native';
-import { UI } from '../../lib/theme/components.js';
+import { pressedStyle, UI } from '../../lib/theme/components.js';
+import { useMotionReduced } from '../../lib/theme/motion.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { VOICE_PICKER } from '../../lib/theme/voicePicker.js';
@@ -29,6 +30,7 @@ export function VoiceOption({
   onPreview: () => void;
 }) {
   const { palette } = useTheme();
+  const reduced = useMotionReduced();
   return (
     <View style={{ gap: VOICE_PICKER.descriptionGap }}>
       <View
@@ -62,7 +64,7 @@ export function VoiceOption({
             <View
               style={{
                 paddingHorizontal: VOICE_PICKER.labelPadding,
-                opacity: disabled ? UI.disabledOpacity : pressed ? UI.pressedOpacity : 1,
+                ...(disabled ? { opacity: UI.disabledOpacity } : pressedStyle(pressed, reduced)),
               }}
             >
               <Text style={[TYPE.voiceChoice, { color: palette.ink, textAlign: 'center' }]}>

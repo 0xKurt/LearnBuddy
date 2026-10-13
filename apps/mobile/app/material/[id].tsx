@@ -309,7 +309,15 @@ export default function MaterialScreen() {
       menu={{
         actions: material
           ? [
-              { key: 'rename', icon: 'pencil', label: t('library:rename'), onPress: openRename },
+              {
+                key: 'rename',
+                icon: 'pencil',
+                // The row reads "Umbenennen" like the places beside it; a screen reader hears
+                // what is renamed.
+                label: t('library:rename'),
+                accessibilityLabel: t('library:rename_label', { title }),
+                onPress: openRename,
+              },
               ...(material.status === 'ready'
                 ? [
                     {

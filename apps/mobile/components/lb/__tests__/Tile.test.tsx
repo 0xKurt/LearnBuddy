@@ -150,6 +150,39 @@ describe('the shapes', () => {
     expect(face(screen.getByRole('button', { name: 'Bundespräsident' })).minHeight).toBe('64px');
   });
 
+  it('makes a row of a list one target tall across its width, its content the caller’s', () => {
+    // A line of a Fehlerdetektiv, the chosen row of a choice in a sheet: what they were as a
+    // button of the board (44 pt, 12 pt at the sides, the tile's corners), so moving them out of
+    // `<Btn>` changed no measure.
+    renderInApp(
+      <>
+        <Tile
+          shape="row"
+          grow
+          selected={false}
+          onPress={() => undefined}
+          label={<span>x = 3</span>}
+        >
+          Zeile A
+        </Tile>
+        <Tile shape="row" state="picked" tall selected onPress={() => undefined}>
+          Deutsch
+        </Tile>
+      </>,
+    );
+    const line = screen.getByRole('radio', { name: 'Zeile A' });
+    expect(styleOf(line).alignSelf).toBe('stretch');
+    expect(styleOf(line).flexGrow).toBe('1');
+    expect(face(line).minHeight).toBe('44px');
+    expect(face(line).paddingLeft).toBe('12px');
+    expect(face(line).borderTopLeftRadius).toBe('16px');
+    expect(line.textContent).toBe('x = 3');
+    // Beside regular buttons it is as tall as they are; its thicker frame comes off the padding.
+    const chosen = screen.getByRole('radio', { name: 'Deutsch' });
+    expect(face(chosen).minHeight).toBe('48px');
+    expect(face(chosen).paddingLeft).toBe('11px');
+  });
+
   it('makes a word a 40 pt pill on one line whose target is still 44 pt', () => {
     renderInApp(
       <Tile shape="word" onPress={() => undefined}>

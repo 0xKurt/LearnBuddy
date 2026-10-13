@@ -17,7 +17,7 @@ import {
   REHEARSAL_MAX_MS,
   type ActionSummary,
 } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 
@@ -76,11 +76,13 @@ export function RehearseCard({ actionId, offer }: { actionId: string; offer: Off
     },
   });
   const recording = rec.phase === 'recording';
-  // The chat's head shows Buddy listening while the recorder runs (lib/buddy/headState.ts).
+  // The chat's head shows Buddy listening while the recorder runs (lib/buddy/headState.ts) —
+  // said under this card's own name: another rehearsal card in the thread says its own.
+  const card = useId();
   useEffect(() => {
-    useThreadRecording.getState().set(recording);
-    return () => useThreadRecording.getState().set(false);
-  }, [recording]);
+    useThreadRecording.getState().set(card, recording);
+    return () => useThreadRecording.getState().set(card, false);
+  }, [card, recording]);
   const label = t(offer.kind === 'talk' ? 'buddy:rehearse.talk' : 'buddy:rehearse.read_aloud');
 
   function toggle(): void {

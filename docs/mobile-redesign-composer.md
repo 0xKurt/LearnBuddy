@@ -1,5 +1,7 @@
 # Header and Composer migration — step 3
 
+> Superseded by #599 (redesign correction, October 2026): component and route names below describe the state before it.
+
 Tracking: #548. This step is built from main in its own worktree and integrates after the theme and base component steps.
 
 ## Authorized scope and replacements

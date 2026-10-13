@@ -26,7 +26,7 @@ export function EndButton({ onPress, label, hint, disabled = false, busy = false
   const { palette } = useTheme();
   return (
     <Btn
-      variant="outline"
+      variant="secondary"
       size="sm"
       pill
       // compact (12 each side) + the 20 pt icon = 44: a circle, like the speaker switch.

@@ -70,7 +70,7 @@ export function ComposerPages({
         <View accessibilityLiveRegion="polite" style={{ gap: SPACE.xs }}>
           {note(t('permission.camera'))}
           <View style={{ flexDirection: 'row' }}>
-            <Btn size="sm" variant="outline" pill onPress={() => void Linking.openSettings()}>
+            <Btn size="sm" variant="secondary" pill onPress={() => void Linking.openSettings()}>
               {t('permission.open_settings')}
             </Btn>
           </View>

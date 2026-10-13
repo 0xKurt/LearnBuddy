@@ -2,14 +2,13 @@
 // components/practice/Tasks.jsx `Tile`, implementation/MIGRATION.md §5: the board's states belong
 // to Tasks, not to Btn). Read from the source, like `oneBar.test.ts`:
 //
-//   · `<Btn>` has the design's four variants and the three it kept from before the redesign —
+//   · `<Btn>` has the design's four variants and the two it kept from before the redesign —
 //     and no state of the answer board. A board state as a button variant is how thirteen
 //     variants came to stand where the design has four;
 //   · the board's skin (`tileSkin`) is read by the one piece (`Tile`), by the gap of a cloze
 //     (`Slot`) and by nothing else: a form never paints a state itself;
-//   · the two callers that still hand a board state to `<Btn>` are listed below. The list only
-//     shrinks: an entry whose file no longer needs it fails too, and when the list is empty,
-//     `tile` and `picked` must be gone from Btn.
+//   · nothing hands a board state on as a button's variant. The list of the last callers that
+//     did (`BOARD_LEFT`) is empty and gone with `tile` and `picked` in Btn.
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -48,51 +47,71 @@ function btnVariants(): string[] {
   return [...code.matchAll(/'([a-z]+)'/g)].map((m) => m[1]!);
 }
 
-/** Lines that hand a board state on as a button's variant (`variant=…`, `selectedVariant…`). */
-function boardVariantLines(text: string): number {
-  return text
-    .split('\n')
-    .filter((line) => !/^\s*(\/\/|\*)/.test(line))
-    .filter((line) => new RegExp(`[vV]ariant[^\\n]*'(?:${TILE_STATES.join('|')})'`).test(line))
-    .length;
+const STATE = new RegExp(`['"](?:${TILE_STATES.join('|')})['"]`);
+
+/** What stands after `variant=` or `variant:` at `from`: a string, a `{ … }`, or up to its end. */
+function valueAt(code: string, from: number): string {
+  const first = code[from];
+  if (first === "'" || first === '"') {
+    const end = code.indexOf(first, from + 1);
+    return code.slice(from, end < 0 ? code.length : end + 1);
+  }
+  let depth = 0;
+  for (let i = from; i < code.length; i += 1) {
+    const c = code[i]!;
+    if ('([{'.includes(c)) depth += 1;
+    else if (')]}'.includes(c)) {
+      depth -= 1;
+      // A value in braces ends with them; anything else ends where what holds it closes.
+      if (depth < 0 || (depth === 0 && first === '{')) return code.slice(from, i + 1);
+    } else if (depth === 0 && (c === ';' || c === ',')) return code.slice(from, i);
+  }
+  return code.slice(from);
 }
 
-/** The design's four (components/core/Btn.jsx) and the three kept from before the redesign. */
-const BUTTON_VARIANTS = ['primary', 'secondary', 'quiet', 'soft', 'outline', 'ghost', 'danger'];
-
 /**
- * Callers that still pass a board state to `<Btn>`: how many lines each has, and why. Only
- * shrinks — both belong to other changes of #599 that were open while the piece was extracted.
+ * How often a board state is handed on as a button's variant (`variant=…`, `selectedVariant…`,
+ * a type or a default of that name). Read over the whole text, not line by line: the value may
+ * stand on the line after `variant={`.
  */
-const BOARD_LEFT: Record<string, { count: number; why: string }> = {
-  'components/practice/ChoiceList.tsx': {
-    count: 1,
-    why: 'the lines of a Fehlerdetektiv (`tile` | `picked`): the file was with the practice-cards change of #599',
-  },
-  'components/lb/ChoiceOptions.tsx': {
-    count: 2,
-    why: 'the chosen row of a choice in a sheet (`picked`): outside the answer forms, its design form is undecided',
-  },
-};
+function boardVariants(text: string): number {
+  const code = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  let count = 0;
+  for (const match of code.matchAll(/[vV]ariant\w*\s*\??\s*[=:]\s*/g))
+    if (STATE.test(valueAt(code, match.index + match[0].length))) count += 1;
+  return count;
+}
+
+/** The design's four (components/core/Btn.jsx) and the two kept from before the redesign. */
+const BUTTON_VARIANTS = ['primary', 'secondary', 'quiet', 'soft', 'ghost', 'danger'];
 
 describe('one board piece (#599)', () => {
-  it('keeps the board states out of Btn', () => {
-    const left = Object.keys(BOARD_LEFT).length > 0 ? ['tile', 'picked'] : [];
-    expect(btnVariants().sort()).toEqual([...BUTTON_VARIANTS, ...left].sort());
-    for (const state of ['placed', 'slot', 'correct', 'wrong'])
-      expect(btnVariants(), state).not.toContain(state);
+  it('reads a variant whose value stands on the next line', () => {
+    expect(boardVariants("<Btn\n  variant={\n    on ? 'picked' : 'tile'\n  }\n/>")).toBe(1);
+    expect(boardVariants("<Btn\n  variant=\n    'picked'\n/>")).toBe(1);
+    expect(boardVariants("<Btn variant={on ? 'picked' : 'tile'} />")).toBe(1);
+    expect(boardVariants("selectedVariant = 'picked',\nselectedVariant?: 'picked' | 'x';")).toBe(2);
+    expect(boardVariants("const pair = (variant: 'tile' | 'primary') => null;")).toBe(1);
+    // A board state that is not a button's variant, and a variant that is no board state.
+    expect(boardVariants('<Btn variant="quiet" />\n<Tile state="picked" />')).toBe(0);
+    expect(boardVariants("<Btn\n  variant={quiet}\n  icon={'slot'}\n/>")).toBe(0);
+    expect(boardVariants("// variant={'picked'}\n<Btn variant='quiet' />")).toBe(0);
+    expect(boardVariants("<Btn variant={v} />\n<Tile state='picked' />")).toBe(0);
   });
 
-  it('lets only the listed callers hand a board state to a button', () => {
+  it('keeps the board states out of Btn', () => {
+    expect(btnVariants().sort()).toEqual([...BUTTON_VARIANTS].sort());
+    for (const state of TILE_STATES) expect(btnVariants(), state).not.toContain(state);
+  });
+
+  it('lets no caller hand a board state to a button', () => {
     const found: Record<string, number> = {};
     for (const { file, text } of app) {
-      if (file === BTN || file === TILE) continue;
-      const lines = boardVariantLines(text);
-      if (lines > 0) found[file] = lines;
+      if (file === TILE) continue;
+      const count = boardVariants(text);
+      if (count > 0) found[file] = count;
     }
-    expect(found).toEqual(
-      Object.fromEntries(Object.entries(BOARD_LEFT).map(([file, { count }]) => [file, count])),
-    );
+    expect(found).toEqual({});
   });
 
   it('paints a board state in one place', () => {
@@ -101,7 +120,7 @@ describe('one board piece (#599)', () => {
         .filter((s) => /\btileSkin\b/.test(s.text))
         .map((s) => s.file)
         .sort(),
-    ).toEqual([BTN, 'components/lb/Slot.tsx', TILE].sort());
+    ).toEqual(['components/lb/Slot.tsx', TILE].sort());
   });
 
   it('draws every piece of the answer forms with the tile', () => {

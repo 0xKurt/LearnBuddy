@@ -8,7 +8,7 @@ import { router, usePathname, type Href } from 'expo-router';
 import { Platform } from 'react-native';
 
 import { askAttach, attachInChat } from '../../lib/capture/attachRequest.js';
-import { MenuSheet, type Place, type StartItem } from './MenuSheet.js';
+import { MenuSheet, type MenuAction, type Place } from './MenuSheet.js';
 
 /** iOS can't present a sheet while another one is still sliding away. */
 export const SHEET_SWAP_MS = Platform.OS === 'ios' ? 450 : 0;
@@ -28,7 +28,7 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   /** What this screen adds before the places, in her own words. */
-  actions?: readonly StartItem[];
+  actions?: readonly MenuAction[];
   /** False while one of them would race something in flight. */
   canAct?: boolean;
 };

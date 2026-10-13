@@ -35,7 +35,7 @@ type Props = {
    * question itself (the Diktat card).
    */
   size?: 'md' | 'lg';
-  variant?: 'outline' | 'primary';
+  variant?: 'secondary' | 'primary';
   /** The speaker alone, a quiet round button (beside a note line, issue #275). */
   speakerOnly?: boolean;
   /** What the screen reader hears it does, where the source alone does not say it. */
