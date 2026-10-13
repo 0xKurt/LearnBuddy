@@ -439,8 +439,10 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   await page.goto(material);
   await page.waitForTimeout(1800);
   await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  // The entry reads "Umbenennen", alone or after the sheet's name: either way it ends in it.
   await page
-    .getByRole('button', { name: '„Brüche kürzen und vergleichen“ umbenennen', exact: true })
+    .locator('[aria-modal="true"]:visible')
+    .getByRole('button', { name: /umbenennen$/i })
     .click();
   await expect(page.getByLabel('Name des Blatts')).toBeVisible();
   await settle(page);
