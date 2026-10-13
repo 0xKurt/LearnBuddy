@@ -17,12 +17,6 @@ export const SCHEMATIC_WORLD_NAMES = {
     ]),
     parts: [
       part(
-        'stand',
-        ['Stativ', 'stand', 'support', 'soporte', 'sostegno'],
-        ['Stativstange', 'Stativ mit Klemme', 'Klemme', 'Muffe'],
-      ),
-      LAB.burner,
-      part(
         'receiver',
         [
           'Vorlage',

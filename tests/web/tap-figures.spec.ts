@@ -32,10 +32,12 @@ import {
   type MapLayer,
   type MapView,
 } from '../../packages/shared-math/src/maps';
-import { REGION_FRAME } from '../../packages/shared-math/src/regions';
+import { SCHEMATIC_ANCHORS } from '../../packages/shared-math/src/schematicAnchors.data';
 import { SCHEMATIC_SHAPES } from '../../packages/shared-math/src/schematicShapes.data';
 import {
+  isImageSchematic,
   schematic,
+  schematicFrame,
   schematicPart,
   type SchematicId,
 } from '../../packages/shared-math/src/schematics';
@@ -303,13 +305,17 @@ test('the Gradnetz: crossings tapped on Germany and Europe, coordinates typed (#
   await expect(page.getByText('Geschafft!')).toBeVisible();
 });
 
-/** Tap the part `name` of drawing `d` at its own point, in the pad's coordinates. */
+/**
+ * Tap the part `id` of picture `d` at its own point, in the pad's coordinates: an image's part at
+ * its anchor (#599), the circuit's — the one picture still drawn — at its outline's point.
+ */
 async function tapPart(page: Page, d: SchematicId, id: string): Promise<void> {
   const box = await page.getByTestId('tap-pad').boundingBox();
   if (!box) throw new Error('no tap pad');
-  const part = SCHEMATIC_SHAPES[d].parts.find((p) => p.id === id);
+  const parts = isImageSchematic(d) ? SCHEMATIC_ANCHORS[d] : SCHEMATIC_SHAPES[d].parts;
+  const part = parts.find((p) => p.id === id);
   if (!part) throw new Error(`no part ${id}`);
-  const k = box.width / REGION_FRAME;
+  const k = box.width / schematicFrame(d).width;
   await page.getByTestId('tap-pad').click({ position: { x: part.at[0] * k, y: part.at[1] * k } });
 }
 

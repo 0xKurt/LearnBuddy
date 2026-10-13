@@ -73,11 +73,6 @@ export const SCHEMATIC_LIFE_NAMES = {
     parts: [
       INSECT.head,
       INSECT.eye,
-      part(
-        'ocelli',
-        ['Punktaugen', 'ocelli', 'ocelles', 'ocelos', 'ocelli'],
-        ['Punktauge', 'Stirnaugen', 'Nebenaugen', 'Ocellen'],
-      ),
       INSECT.antenna,
       part(
         'mandible',
@@ -274,17 +269,6 @@ export const SCHEMATIC_LIFE_NAMES = {
           'tessuto spugnoso',
         ],
         ['Schwammschicht', 'Schwammzellen'],
-      ),
-      part(
-        'vascular_bundle',
-        [
-          'Leitbündel',
-          'vascular bundle',
-          'faisceau conducteur',
-          'haz vascular',
-          'fascio vascolare',
-        ],
-        ['Blattader', 'Leitgewebe'],
       ),
       part(
         'lower_epidermis',

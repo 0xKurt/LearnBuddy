@@ -175,7 +175,6 @@ export const LAB = {
 };
 
 export const ORGANS = {
-  kidneys: part('kidneys', ['Nieren', 'kidneys', 'reins', 'riñones', 'reni'], ['Niere']),
   large_intestine: part(
     'large_intestine',
     ['Dickdarm', 'large intestine', 'gros intestin', 'intestino grueso', 'intestino crasso'],
@@ -204,7 +203,6 @@ export const ORGANS = {
 };
 
 export const PLANT = {
-  root: part('root', ['Wurzel', 'root', 'racine', 'raíz', 'radice'], ['Wurzeln']),
   stem: part(
     'stem',
     ['Sprossachse', 'stem', 'tige', 'tallo', 'fusto'],

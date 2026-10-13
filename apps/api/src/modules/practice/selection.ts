@@ -25,11 +25,17 @@
 // buddy/review.ts, issue #446) — a set that offers "what is due" holds nothing else.
 //
 // And one shape: a task in parts (#297) stays together and whole (`wholeTasksFirst`).
+//
+// A question about a labelled picture that no longer holds is never chosen (#599,
+// `stalePicture`): the library changes — an image does not show every part the drawing before it
+// did — and a stored question that names a part its picture no longer has stays in the database,
+// unasked.
 
 import type { DifficultyWish, VocabDirection } from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
 import { FREE_TEXT_KINDS } from './itemFields.js';
+import { stalePicture } from './schematicCheck.js';
 
 export type PracticeScope = {
   goalId?: string | null;
@@ -103,6 +109,8 @@ type Candidate = {
   /** The task in parts it is a part of (`items.task_part`, #297), and its letter; else null. */
   task: string | null;
   part: string | null;
+  /** A question about a labelled picture as stored — its picture, kind, key and tap; else null. */
+  picture: { figure: unknown; kind: string; answer: string; tap: boolean | null } | null;
 };
 
 /**
@@ -195,7 +203,11 @@ export async function selectPracticeItems(
     // 200 rows of something else; the difficulty is measured on what is left (its median).
     `with pool as (
        select i.id, i.topic, i.difficulty, i.created_at, i.seq, st.due, st.item_id as reviewed,
-              i.task_part->>'group' as task, i.task_part->>'part' as part
+              i.task_part->>'group' as task, i.task_part->>'part' as part,
+              -- A labelled picture's question, to be read back through its check (#599).
+              case when i.figure->>'type' = 'schematic'
+                   then jsonb_build_object('figure', i.figure, 'kind', i.kind,
+                                           'answer', i.answer, 'tap', i.tap) end as picture
          from items i
          left join materials m on m.id = i.material_id
          left join item_states st on st.item_id = i.id
@@ -242,7 +254,7 @@ export async function selectPracticeItems(
        select percentile_cont(0.5) within group (order by difficulty::double precision) as mid
          from pool
      )
-     select p.id, p.topic, p.due, p.task, p.part
+     select p.id, p.topic, p.due, p.task, p.part, p.picture
        from pool p, middle
       where $9::text is null
          or ($9 = 'easier' and p.difficulty < middle.mid)
@@ -279,18 +291,20 @@ export async function selectPracticeItems(
       wish.dueOnly === true,
     ],
   );
-  if (candidates.length === 0) return [];
+  // A picture question that no longer holds is not asked (`stalePicture`); the rest keep their order.
+  const askable = candidates.filter((c) => c.picture === null || !stalePicture(c.picture));
+  if (askable.length === 0) return [];
 
   const wanted = focusTopics.map((t) => t.toLowerCase().trim()).filter(Boolean);
-  let pool = candidates;
+  let pool = askable;
   if (wanted.length > 0) {
-    const focused = candidates.filter((c) => {
+    const focused = askable.filter((c) => {
       const topic = (c.topic ?? '').toLowerCase();
       return topic !== '' && wanted.some((w) => topic.includes(w) || w.includes(topic));
     });
     // Only narrow when the focus actually matches a meaningful set.
     if (focused.length >= (count === 'all' ? 3 : Math.min(3, count))) {
-      const rest = candidates.filter((c) => !focused.includes(c));
+      const rest = askable.filter((c) => !focused.includes(c));
       pool = [...focused, ...rest];
     }
   }

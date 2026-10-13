@@ -8,11 +8,13 @@
 // nearest of the twelve marks of the clock), so the whole figure is one big target and the
 // precision comes from the snap and the place written out under it, not from aiming.
 //
-// A map (#251) and a labelled picture (#252) share one `case`: the region under the finger (`regionAt` in
+// A map (#251) and the one labelled picture we draw (#252, the circuit) share one `case`: the region under the finger (`regionAt` in
 // shared-math `maps.ts`, a point-in-polygon test on the Natural Earth shapes), or the small one
 // whose label it is near. Its shapes and names are loaded with the first map (`useMapShapes`,
 // `useFigureNames`, #440) and handed in.
-// Labelled pictures (#252) add their figure here too: one `case`, the same contract. On a map's
+// A labelled picture that is an image (#599) is tapped by its anchors (`pictureTaps`): the part
+// whose tap area holds the finger — the nearest anchor where two overlap, and where none does
+// (`anchorAt`, shared-math, the rule the server decides what can be tapped with). On a map's
 // Gradnetz (#429) the places are its crossings: the nearest one, marked with a dot like a point of
 // a coordinate system.
 
@@ -28,7 +30,12 @@ import {
   type MapViewShape,
 } from '../../../../packages/shared-math/src/maps.js';
 import {
+  anchorAt,
+  anchorFinger,
+  isImageSchematic,
   schematicRegions,
+  type SchematicAnchors,
+  type SchematicFig,
   type SchematicShapes,
 } from '../../../../packages/shared-math/src/schematics.js';
 import {
@@ -45,14 +52,16 @@ import {
 } from '../../../../packages/shared-math/src/tap.js';
 import { barChartGeometry, clockGeometry, numberLineGeometry, type Box } from './figureGeometry.js';
 import { functionPlotGeometry } from './plotLayout.js';
-import { schematicLayout } from './schematicLayout.js';
+import { pictureLayout, schematicLayout } from './schematicLayout.js';
 
 /**
  * How the chosen place is shown: a dot on it, a frame around its column, a region filled with a dot
- * on its label (so a region as small as Bremen still shows), or the clock's hands.
+ * on its label (so a region as small as Bremen still shows), a ring around the part of an image
+ * (`spot`, `k` its scale), or the clock's hands.
  */
 export type TapMark =
   | { kind: 'dot'; x: number; y: number }
+  | { kind: 'spot'; x: number; y: number; k: number }
   | { kind: 'box'; box: Box }
   /** `outline`: the region's border is drawn (a Land); a continent of many countries has none. */
   | { kind: 'region'; d: string; x: number; y: number; outline: boolean }
@@ -120,8 +129,37 @@ function gridLayout(
   };
 }
 
-/** The shapes of the figures that load them (`useMapShapes`, `useSchematicShapes`). */
-export type TapShapes = { maps?: MapShapes | null; pictures?: SchematicShapes | null };
+/**
+ * The shapes of the figures that load them (`useMapShapes`, `useSchematicShapes`) and the anchors
+ * of the pictures that are images (`useSchematicPictures`).
+ */
+export type TapShapes = {
+  maps?: MapShapes | null;
+  pictures?: SchematicShapes | null;
+  anchors?: SchematicAnchors | null;
+};
+
+/** The parts of an image (#599): the part a finger means by its anchors, marked with a ring. */
+function pictureTaps(
+  fig: SchematicFig,
+  axes: TapAxis[],
+  width: number,
+  shapes: TapShapes,
+): TapLayout | null {
+  const anchors = isImageSchematic(fig.d) ? shapes.anchors?.[fig.d] : undefined;
+  if (!anchors) return null;
+  const { k } = pictureLayout(fig, width, null);
+  const least = anchorFinger(width);
+  return {
+    axes,
+    pickAt: (x, y) => [anchorAt(anchors, x / k, y / k, least)],
+    markOf: ([i = 0]) => {
+      const a = anchors[i];
+      return a ? { kind: 'spot', x: a.at[0] * k, y: a.at[1] * k, k } : null;
+    },
+    guides: [],
+  };
+}
 
 /**
  * The places of `fig` on a drawing `width` wide, or null when the figure offers none. `format`
@@ -207,13 +245,15 @@ export function tapLayout(
       // Drawn only with its names (MapBody, SchematicBody): nothing to tap before.
       if (!names) return null;
       if (fig.type === 'map' && isGridMap(fig)) return gridLayout(fig, axes, width, shapes);
-      // A map's regions or places (#429) and a picture's parts come with their shapes (each loaded
-      // with the first of its kind). A picture's parts and a map's places are marked with their
+      if (fig.type === 'schematic' && isImageSchematic(fig.d))
+        return pictureTaps(fig, axes, width, shapes);
+      // A map's regions or places (#429) and a drawing's parts come with their shapes (each loaded
+      // with the first of its kind). A drawing's parts and a map's places are marked with their
       // outline — a river IS its line.
       const view =
         fig.type === 'map'
           ? mapView(shapes.maps?.[fig.v], fig)
-          : shapes.pictures
+          : shapes.pictures && !isImageSchematic(fig.d)
             ? { ...schematicRegions(shapes.pictures, fig.d), borders: true }
             : undefined;
       if (!view) return null;

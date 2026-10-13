@@ -53,7 +53,13 @@ import { checkedTree } from './treeCheck.js';
 import { checkedSpace } from './solidCheck.js';
 import { checkedDiagram } from './diagramCheck.js';
 import { checkedMap, mapViewed, viewOf, withHome } from './mapCheck.js';
-import { checkedSchematic, labelQuestions, SCHEMATIC_PARTS } from './schematicCheck.js';
+import {
+  checkedSchematic,
+  labelQuestions,
+  pictureHolds,
+  SCHEMATIC_PARTS,
+  stalePicture,
+} from './schematicCheck.js';
 import { checkedTap } from './tapCheck.js';
 import { checkedCircuit } from './circuitCheck.js';
 import { checkedColor } from './colorCheck.js';
@@ -314,12 +320,28 @@ function solutionText(it: ItemDraft): string {
  * A figure as it is READ back from a stored question. Rows written before a figure grew a field
  * (the angles, sides, arrows, rays and lines of issue #257) get it filled in by the contract's
  * defaults, so the app never sees half a figure; a row that no longer reads at all shows the
- * question without its figure rather than failing the session.
+ * question without its figure rather than failing the session. The same for a labelled picture
+ * that numbers a part its picture no longer has (#599, `pictureHolds`): the numbers of the other
+ * parts would shift, so none is shown — a question's, an explanation's or a past turn's.
  */
 export function storedFigure(raw: unknown): Figure | null {
   if (raw === null || raw === undefined) return null;
   const parsed = FigureSchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
+  return parsed.success && pictureHolds(parsed.data) ? parsed.data : null;
+}
+
+/**
+ * A question's own figure as the screen gets it: `storedFigure`, and for a labelled picture only
+ * while the question about it still holds (`stalePicture`, #599) — "Tippe auf die Klingel" beside
+ * a bicycle without a bell would be a picture that answers nothing.
+ */
+export function storedQuestionFigure(row: {
+  kind: string;
+  answer: string;
+  figure?: unknown;
+  tap?: boolean | null;
+}): Figure | null {
+  return stalePicture({ ...row, figure: row.figure ?? null }) ? null : storedFigure(row.figure);
 }
 
 /** A figure the app can really draw, or null (a broken figure never costs the question). */

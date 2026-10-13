@@ -18,8 +18,10 @@ describe('the figure table (issue #310, step 5)', () => {
     expect(visualReach(null)).toBe(0.5);
     expect(visualReach(picture('bicycle'))).toBe(0.5);
     expect(visualReach(picture('skeleton'))).toBe(1);
-    expect(visualReach(picture('lab'))).toBe(1);
-    expect(visualReach(picture('anlaut'))).toBe(1);
+    expect(visualReach(picture('digestion'))).toBe(1);
+    // Since the pictures are images (#599) the lab and the Anlaut chart are wider than high.
+    expect(visualReach(picture('lab'))).toBe(0.5);
+    expect(visualReach(picture('anlaut'))).toBe(0.5);
   });
 
   it('caps a drawing at 14 % and a photo at 20 % (≤ 180 pt) of what she sees', () => {

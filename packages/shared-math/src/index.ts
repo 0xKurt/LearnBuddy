@@ -26,8 +26,10 @@ export * from './figureNames.js';
 // The names of the maps and pictures: the server hands them to every function that resolves a
 // name. The app loads them with the first map or picture (`useFigureNames`, #440).
 export { FIGURE_NAMES } from './figureNames.data.js';
-// The drawings' shapes: the server decides with them what can be tapped; the app loads them with
-// the first picture (`useSchematicShapes`).
+// Where the pictures' parts stand — the images' anchors (#599) and the one drawing's shapes: the
+// server decides with them what can be tapped; the app loads them with the first picture
+// (`useSchematicPictures`, `useSchematicShapes`).
+export { SCHEMATIC_ANCHORS } from './schematicAnchors.data.js';
 export { SCHEMATIC_SHAPES } from './schematicShapes.data.js';
 // The shapes of the maps: the server decides with them what can be tapped. The app never imports
 // this index; it loads them when a map is on the screen (`useMapShapes`).

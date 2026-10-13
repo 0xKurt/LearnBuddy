@@ -1,6 +1,8 @@
 // Labelled pictures end to end (issue #252): a labelling task code turns into one question per
 // number, a part to name, a part to tap — what the model writes, what code drops, what is stored,
-// what the app gets back and how an answer is graded, on a real Postgres.
+// what the app gets back and how an answer is graded, on a real Postgres. Since #599 the pictures
+// are images: what can be tapped is decided by their anchors, and a part an image does not show is
+// no part any more — in a new question (dropped) and in a stored one (`schematic-stale.int.test.ts`).
 //
 // Model calls are scripted; every answer graded below is graded by code, so the harness's failure
 // on an unscripted call proves no tutor was asked.
@@ -83,7 +85,7 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
     });
   });
 
-  it('stores only questions about parts the drawing has, a tap only on a part a finger can hit', async () => {
+  it('stores only questions about parts the picture shows, a tap only on a part a finger can hit', async () => {
     const s = await start(env, l, [...SCHEMATIC_ITEMS, ...BROKEN_SCHEMATIC_ITEMS]);
     expect(s.items.map((i) => i.item.prompt)).toEqual(SCHEMATIC_PROMPTS);
     expect(s.items.map((i) => i.item.tap)).toEqual([false, false, false, true, true, true]);
@@ -101,7 +103,7 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
-  it('every drawing of the second part, numbered and tapped: stored as written, graded by code', async () => {
+  it('every picture of the second part, numbered and tapped: stored as written, graded by code', async () => {
     const s = await start(env, l, LIBRARY_ITEMS);
     expect(s.items.map((i) => i.item.prompt)).toEqual(LIBRARY_ITEMS.map((i) => i.prompt));
     expect(s.items.map((i) => i.item.tap)).toEqual(LIBRARY_ITEMS.map((i) => 'tap' in i));
@@ -112,21 +114,22 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
   });
 
-  it('the lens, the pupil, the stigma and the stamen drawn large are tapped again (#462)', async () => {
-    // The same parts in the whole drawing: a finger is too wide there, the question is dropped.
-    const whole = (d: string, prompt: string, answer: string) => ({
+  it('the lens, the iris, the stigma and the stamen are tapped by their anchors; the pupil is not (#599)', async () => {
+    // The pupil's anchor stands right behind the cornea's, in the whole eye and in its front: a
+    // finger cannot tell them apart there, the question is dropped.
+    const pupil = (d: string, prompt: string) => ({
       ...SCHEMATIC_ITEMS[2]!,
       prompt,
-      answer,
+      answer: 'Pupille',
       figure: { type: 'schematic', d, n: [], ask: 0 },
     });
     const large = LIBRARY_MORE_ITEMS.filter(
-      (i) => ['Linse', 'Pupille', 'Narbe', 'Staubblatt'].includes(i.answer) && 'tap' in i,
+      (i) => ['Linse', 'Regenbogenhaut', 'Narbe', 'Staubblatt'].includes(i.answer) && 'tap' in i,
     );
     expect(large).toHaveLength(4);
     const s = await start(env, l, [
-      whole('eye', 'Tippe auf die Pupille im Auge.', 'Pupille'),
-      whole('flower', 'Tippe auf die Narbe der Blüte.', 'Narbe'),
+      pupil('eye', 'Tippe auf die Pupille im Auge.'),
+      pupil('eye_front', 'Tippe auf die Pupille vorn im Auge.'),
       ...large,
     ]);
     expect(s.items.map((i) => i.item.prompt)).toEqual(large.map((i) => i.prompt));
@@ -134,20 +137,20 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
       `select id, answer, figure, tap from items where learner_id = $1`,
       [l.learnerId],
     );
-    // The two taps on the whole drawing were never stored.
+    // The two taps on the pupil were never stored.
     expect(rows).toHaveLength(4);
     // In the order of the run.
     const stored = s.items.map(({ item }) => rows.find((r) => r.id === item.id)!);
     expect(stored.map((r) => [r.answer, r.tap, (r.figure as { d: string }).d])).toEqual([
       ['Linse', true, 'eye_front'],
-      ['Pupille', true, 'eye_front'],
+      ['Regenbogenhaut', true, 'eye_front'],
       ['Narbe', true, 'flower_section'],
       ['Staubblatt', true, 'flower_section'],
     ]);
     // Graded by code, by the part's id: any of its names counts, another part does not.
-    const [lens, pupil, stigma, stamen] = s.items.map((i) => i.item.id) as string[];
+    const [lens, iris, stigma, stamen] = s.items.map((i) => i.item.id) as string[];
     expect((await answer(l, s, lens!, 'Linse')).body.verdict).toBe('correct');
-    expect((await answer(l, s, pupil!, 'Regenbogenhaut')).body.verdict).toBe('incorrect');
+    expect((await answer(l, s, iris!, 'Pupille')).body.verdict).toBe('incorrect');
     expect((await answer(l, s, stigma!, 'stigma')).body.verdict).toBe('correct');
     expect((await answer(l, s, stamen!, 'Staubbeutel')).body.verdict).toBe('correct');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
@@ -157,7 +160,7 @@ describe.skipIf(!dbReady)('a labelled picture', () => {
     ['the first run', LIBRARY_MORE_ITEMS],
     ['the second run', LIBRARY_REST_ITEMS],
   ])(
-    'every drawing of #462, %s numbered and tapped: stored as written, graded by code',
+    'every picture of #462, %s numbered and tapped: stored as written, graded by code',
     async (_, items) => {
       const s = await start(env, l, items);
       expect(s.items.map((i) => i.item.prompt)).toEqual(items.map((i) => i.prompt));

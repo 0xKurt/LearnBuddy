@@ -24,6 +24,9 @@ const LATER: Record<string, string> = {
   'apps/mobile/components/math/staff/engrave.ts': 'useEngraver',
   [`${MATH}/mapShapes.data.ts`]: 'useMapShapes',
   [`${MATH}/schematicShapes.data.ts`]: 'useSchematicShapes',
+  // The pictures' images and anchors (#599): 33 assets and their data, with the first picture.
+  'apps/mobile/lib/math/schematicPictures.ts': 'useSchematicPictures',
+  [`${MATH}/schematicAnchors.data.ts`]: 'useSchematicPictures',
   [`${MATH}/figureNames.data.ts`]: 'useFigureNames',
   [`${MATH}/mapNames.data.ts`]: 'useFigureNames',
   [`${MATH}/schematics.data.ts`]: 'useFigureNames',

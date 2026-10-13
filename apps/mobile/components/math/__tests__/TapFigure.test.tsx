@@ -17,7 +17,7 @@ import type { Figure } from '@learnbuddy/shared-types/contracts';
 import type { Tappable } from '../../../../../packages/shared-math/src/tap.js';
 import { useFigureNames } from '../../../lib/math/useFigureNames.js';
 import { useMapShapes } from '../../../lib/math/useMapShapes.js';
-import { useSchematicShapes } from '../../../lib/math/useSchematicShapes.js';
+import { useSchematicPictures } from '../../../lib/math/useSchematicPictures.js';
 import { renderInApp, whenLoaded } from '../../../testing/render.js';
 import { TapFigure } from '../TapFigure.js';
 
@@ -92,7 +92,7 @@ describe('her place in words', () => {
       'Tippe auf das Teil in der Abbildung.',
     );
     render(cell, 'Zellkern');
-    await whenLoaded(useFigureNames, useSchematicShapes);
+    await whenLoaded(useFigureNames, useSchematicPictures);
     expect(screen.getAllByTestId('tap-words')[1]?.textContent).toBe('Teil gewählt');
     const sliders = screen.getAllByRole('slider', { name: 'Deine Stelle in der Abbildung' });
     expect(sliders[1]?.getAttribute('aria-valuetext')).toBe('Teil: Zellkern');

@@ -1,8 +1,9 @@
 // Scripted model answers for labelled pictures (issue #252): a plant cell to label (code writes
 // one question per number), the plant cell's nucleus, a bicycle's frame and a traffic sign to tap;
-// the drawings of the second part, each with six numbers and one part to tap (`LIBRARY_ITEMS`); and
-// those of #462 (`LIBRARY_MORE_ITEMS`): the small parts drawn large — lens, pupil, stigma, stamen —
-// tapped, and every further drawing numbered and tapped.
+// the pictures of the second part, each with six numbers and one part to tap (`LIBRARY_ITEMS`); and
+// those of #462 (`LIBRARY_MORE_ITEMS`): the eye's front and the flower in section with two parts
+// tapped each, and every further picture numbered and tapped. Since #599 the pictures are images:
+// every part named here is one its image shows, every part tapped one whose anchor stands clear.
 // Shared by the integration test (`__tests__/schematic-figures.int.test.ts`) and the browser
 // walkthrough (tests/web/tap-figures.spec.ts). Every name is a part of its drawing and passes the server's own
 // check (`modules/practice/schematicCheck.ts`). Test tooling only; answers are keyed by the
@@ -72,9 +73,8 @@ export const SCHEMATIC_PROMPTS = [
 ];
 
 /**
- * The drawings of the second part (and the bicycle with its safety check): six parts numbered and
- * the first asked for by name, then one part to tap — the numbers a schoolbook prints, the parts
- * school asks to tap.
+ * The pictures of the second part (and the bicycle): six parts numbered and the first asked for by
+ * name, then one part to tap — the numbers a schoolbook prints, the parts school asks to tap.
  */
 const LIBRARY = [
   {
@@ -112,13 +112,13 @@ const LIBRARY = [
     d: 'skeleton',
     name: 'Skelett',
     n: ['Schädel', 'Schlüsselbein', 'Brustkorb', 'Wirbelsäule', 'Becken', 'Oberschenkelknochen'],
-    taps: [['Tippe auf das Becken.', 'Becken']],
+    taps: [['Tippe auf den Schädel.', 'Schädel']],
   },
   {
     d: 'organs',
     name: 'Organe',
     n: ['Gehirn', 'Lunge', 'Herz', 'Leber', 'Magen', 'Dünndarm'],
-    taps: [['Tippe auf den Magen.', 'Magen']],
+    taps: [['Tippe auf die Leber.', 'Leber']],
   },
   {
     d: 'signs',
@@ -148,7 +148,7 @@ const LIBRARY = [
   {
     d: 'bicycle',
     name: 'Fahrrad',
-    n: ['Klingel', 'Scheinwerfer', 'Bremse', 'Rücklicht', 'Speichenreflektor', 'Gepäckträger'],
+    n: ['Sattel', 'Lenker', 'Bremse', 'Pedal', 'Vorderrad', 'Hinterrad'],
     taps: [['Tippe auf die Kette.', 'Kette']],
   },
 ] as const;
@@ -184,10 +184,9 @@ const libraryItems = (entries: readonly LibraryEntry[]) =>
 export const LIBRARY_ITEMS = libraryItems(LIBRARY);
 
 /**
- * The drawings of #462, in two runs (a run holds 25 questions, `setProfiles.ts`): the small parts
- * of the flower, the eye and the insect drawn large — the
- * lens, the pupil, the stigma and the stamen, too small to tap in the whole drawing, tapped here —
- * and every further drawing with six numbers and one part to tap.
+ * The pictures of #462, in two runs (a run holds 25 questions, `setProfiles.ts`): the flower in
+ * section, the eye's front and the insect's head — the lens, the iris, the stigma and the stamen
+ * tapped — and every further picture with six numbers and one part to tap.
  */
 const LIBRARY_MORE: readonly LibraryEntry[] = [
   {
@@ -196,7 +195,7 @@ const LIBRARY_MORE: readonly LibraryEntry[] = [
     n: ['Hornhaut', 'Linse', 'Regenbogenhaut', 'Ziliarmuskel', 'Linsenbänder', 'Glaskörper'],
     taps: [
       ['Tippe auf die Linse.', 'Linse'],
-      ['Tippe auf die Pupille.', 'Pupille'],
+      ['Tippe auf die Regenbogenhaut.', 'Regenbogenhaut'],
     ],
   },
   {
@@ -211,7 +210,7 @@ const LIBRARY_MORE: readonly LibraryEntry[] = [
   {
     d: 'insect_head',
     name: 'Insektenkopf',
-    n: ['Facettenauge', 'Punktaugen', 'Fühler', 'Oberkiefer', 'Kopf'],
+    n: ['Facettenauge', 'Fühler', 'Oberkiefer', 'Kopf'],
     taps: [['Tippe auf ein Facettenauge.', 'Facettenauge']],
   },
   {
@@ -230,7 +229,7 @@ const LIBRARY_MORE: readonly LibraryEntry[] = [
     d: 'joint',
     name: 'Gelenk',
     n: ['Gelenkkopf', 'Gelenkpfanne', 'Gelenkknorpel', 'Gelenkspalt', 'Gelenkkapsel', 'Knochen'],
-    taps: [['Tippe auf die Gelenkpfanne.', 'Gelenkpfanne']],
+    taps: [['Tippe auf den Gelenkkopf.', 'Gelenkkopf']],
   },
   {
     d: 'breathing',
@@ -242,7 +241,7 @@ const LIBRARY_MORE: readonly LibraryEntry[] = [
     d: 'digestion',
     name: 'Verdauungsorgane',
     n: ['Speiseröhre', 'Magen', 'Leber', 'Bauchspeicheldrüse', 'Dünndarm', 'Dickdarm'],
-    taps: [['Tippe auf die Gallenblase.', 'Gallenblase']],
+    taps: [['Tippe auf den Magen.', 'Magen']],
   },
   {
     d: 'leaf',
@@ -252,7 +251,7 @@ const LIBRARY_MORE: readonly LibraryEntry[] = [
       'obere Epidermis',
       'Palisadengewebe',
       'Schwammgewebe',
-      'Leitbündel',
+      'untere Epidermis',
       'Spaltöffnung',
     ],
     taps: [['Tippe auf eine Spaltöffnung.', 'Spaltöffnung']],
@@ -332,22 +331,46 @@ export const BROKEN_SCHEMATIC_ITEMS = [
     prompt: 'Tippe auf den Zellkern, Teil 1.',
     figure: cell(['Zellkern', 'Vakuole']),
   },
-  // A part too small for a finger on a phone: the bell is named, never tapped.
+  // A part the image does not show (#599): the bicycle in the picture has no bell — not to tap,
   {
     ...SCHEMATIC_ITEMS[2]!,
     prompt: 'Tippe auf die Klingel.',
     answer: 'Klingel',
     figure: { type: 'schematic', d: 'bicycle', n: [], ask: 0 },
   },
-  // A tap asks for a whole finger (44 pt): the lens is 24 pt wide on the narrowest phone — enough
-  // for a country on a map, not for a part of a picture.
+  // not to name with a number,
+  {
+    ...base,
+    topic: 'Fahrrad',
+    prompt: 'Fahrrad: Wie heißt Teil 1?',
+    answer: 'Klingel',
+    figure: { type: 'schematic', d: 'bicycle', n: ['Klingel', 'Sattel'], ask: 1 },
+  },
+  // not among the numbers of another part's question (the saddle's number would shift),
+  {
+    ...base,
+    topic: 'Fahrrad',
+    prompt: 'Fahrrad: Wie heißt Teil 2?',
+    answer: 'Sattel',
+    figure: { type: 'schematic', d: 'bicycle', n: ['Klingel', 'Sattel'], ask: 2 },
+  },
+  // and not in a labelling task: none of its questions is written.
+  {
+    ...base,
+    topic: 'Pflanze',
+    prompt: 'Beschrifte die Pflanze.',
+    answer: 'Wurzel',
+    figure: { type: 'schematic', d: 'plant', n: ['Wurzel', 'Blatt', 'Blüte'], ask: 0 },
+  },
+  // A tap needs its part's anchor 24 pt clear of the next on the narrowest phone: the pupil's
+  // stands right behind the cornea's.
   {
     ...SCHEMATIC_ITEMS[2]!,
-    prompt: 'Tippe auf die Linse.',
-    answer: 'Linse',
+    prompt: 'Tippe auf die Pupille.',
+    answer: 'Pupille',
     figure: { type: 'schematic', d: 'eye', n: [], ask: 0 },
   },
-  // The second part's drawings have small parts too: the fibula beside the shin is named, never
+  // The second part's pictures have close parts too: the fibula beside the shin is named, never
   // tapped.
   {
     ...SCHEMATIC_ITEMS[2]!,

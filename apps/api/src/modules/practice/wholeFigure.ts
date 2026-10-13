@@ -8,11 +8,14 @@
 // a fraction picture or a number line, which is dropped alone (audit H-15). Each family keeps its
 // own rules in @learnbuddy/shared-math; this file is the one place that asks them — except a
 // map's and a picture's, which need the question they are asked with: `mapCheck.ts` and
-// `schematicCheck.ts` ask them, here only whether they parse at all.
+// `schematicCheck.ts` ask them. Here a map is only held to its shape, and a picture to its own
+// parts (`schematicProblem`): one that numbers a part it does not have is no picture, as a
+// question's figure, as an option or read back from a row (#599).
 
 import {
   chartProblem,
   circuitProblem,
+  FIGURE_NAMES,
   colorWheelProblem,
   diagramProblem,
   isChart,
@@ -29,6 +32,7 @@ import {
   isTreeFigure,
   periodicProblem,
   primaryProblem,
+  schematicProblem,
   spaceProblem,
   treeProblem,
 } from '@learnbuddy/shared-math';
@@ -59,6 +63,7 @@ export function wholeFigureProblem(f: ModelFigure): string | null {
   if (isCircuit(f)) return circuitProblem(f);
   if (isLogic(f)) return logicProblem(f);
   if (isColorWheel(f)) return colorWheelProblem(f);
+  if (isSchematic(f)) return schematicProblem(FIGURE_NAMES, f);
   return null;
 }
 

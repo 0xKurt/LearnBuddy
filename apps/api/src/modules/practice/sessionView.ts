@@ -11,7 +11,7 @@ import { codeTaskOf } from './code.js';
 import { DRILL_PASS } from './drill.js';
 import { drillViewOf } from './drillView.js';
 import { noSingleSolution } from './evaluate.js';
-import { storedChoiceFigures, storedFigure } from './items.js';
+import { storedChoiceFigures, storedFigure, storedQuestionFigure } from './items.js';
 import { listenRefs, listenTaskOf } from './listen.js';
 import { hintOffered } from './ladder.js';
 import { givesHints, offersHintButton, revealReady } from './modeRules.js';
@@ -198,7 +198,9 @@ export async function sessionView(
         prompt_lang: i.prompt_lang,
         // Which keys the answer field offers is the app's choice, made from this (issue #239).
         subject_kind: subjectKindOf(i.subject_kind),
-        figure: storedFigure(i.figure),
+        // Read back through what it was written under: a labelled picture whose question names
+        // a part the picture no longer has is not shown (#599).
+        figure: storedQuestionFigure(i),
         image: imageOf(i, imageUrls),
         // A test asks her to produce, so nothing is offered to tap there — and a card has
         // nothing to tap at all: it turns over (issue #147).

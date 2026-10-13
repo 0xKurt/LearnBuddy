@@ -9,6 +9,7 @@
 import { LearnerView, MeResponse } from '@learnbuddy/shared-types/contracts';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { router } from 'expo-router';
+import { Linking } from 'react-native';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import * as admin from '../../../lib/admin.js';
@@ -376,4 +377,36 @@ it('lists the shipped packages as rows; a tap opens one licence text under its r
   expect(screen.getByText('The second licence text')).toBeTruthy();
   fireEvent.click(second);
   expect(screen.queryByText('The second licence text')).toBeNull();
+});
+
+// Issue #599, owner rule 3: every licence of both sources.json files stands on this page.
+it('lists every picture of the tasks with its licence; a tap shows its attribution and its links', async () => {
+  const { FIGURE_LICENCES } = await import('../../../lib/figureLicences.js');
+  const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
+  renderInApp(<LicencesPage />);
+  expect(await screen.findByText('Abbildungen in den Aufgaben')).toBeTruthy();
+  // One row per entry of both files — none is left out, none merged away.
+  const rows = screen.getAllByRole('button').filter((b) => b.hasAttribute('aria-expanded'));
+  expect(rows).toHaveLength(2 + FIGURE_LICENCES.length);
+  expect(FIGURE_LICENCES).toHaveLength(53 + 24);
+
+  const heart = FIGURE_LICENCES.find((f) => f.files.includes('heart.png'))!;
+  const row = screen.getByRole('button', { name: /^Diagram of the human heart.*CC BY-SA 3\.0$/ });
+  expect(screen.queryByText(heart.attribution, { exact: false })).toBeNull();
+  fireEvent.click(row);
+  // The finished sentence as the source asks for it, and what was changed.
+  expect(screen.getByText(heart.attribution, { exact: false })).toBeTruthy();
+  expect(screen.getByText(`Bearbeitet: ${heart.edited}`, { exact: false })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Lizenz ansehen' }));
+  expect(open).toHaveBeenLastCalledWith(heart.licenceUrl);
+  fireEvent.click(screen.getByRole('button', { name: 'Quelle öffnen' }));
+  expect(open).toHaveBeenLastCalledWith(heart.source);
+
+  // A work in the public domain has no deed to link to: its source only.
+  const plantCell = FIGURE_LICENCES.find((f) => f.files.includes('plant_cell.png'))!;
+  expect(plantCell.licenceUrl).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /^Plant cell structure.*gemeinfrei$/ }));
+  expect(screen.queryByRole('button', { name: 'Lizenz ansehen' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Quelle öffnen' })).toBeTruthy();
+  open.mockRestore();
 });
