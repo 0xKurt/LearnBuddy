@@ -14,13 +14,11 @@ import { useCheckOverride } from './CheckOverride.js';
 import { ASK_TEXT_MAX } from '@learnbuddy/shared-types/contracts';
 import { createContext, useContext, useEffect, useRef, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { mergeTranscript } from '../../lib/speech/spoken.js';
-import { useBuddyVoice } from '../../lib/speech/useBuddyVoice.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TALK } from '../../lib/theme/talk.js';
-import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { ActionPill, Composer, type ComposerAction, type ComposerProps } from '../lb/Composer.js';
@@ -267,10 +265,11 @@ function AskComposer({
  * on /talk the mic listens by itself once the question has been read (the hands-free loop,
  * `useHandsFreeMic`; the screen arms it); listening ends by itself when she pauses (on the phone).
  *
- * One small line above the row says what is happening — "Ich höre zu." only while the recorder
- * really runs, "Buddy spricht …" only while his voice is heard (CLAUDE.md rule 5) — and the pill
- * says what a tap does: "Fertig" while it records. A Check appears only when there is something
- * to check: beside the running microphone, or in the middle once she has chosen and it rests.
+ * No status line above the row (#386, again after the #599 correction): it made the bar jump by
+ * a line and hid Buddy's reply at 360×740. The pill's word carries the state — "Sprechen", and
+ * "Fertig" only while the recorder really runs (CLAUDE.md rule 5) — together with the header's
+ * orb. A Check appears only when there is something to check: beside the running microphone, or
+ * in the middle once she has chosen and it rests.
  */
 function TalkRow({
   prompt,
@@ -301,13 +300,7 @@ function TalkRow({
     untilPause: true,
   });
   useHandsFreeMic(voice, disabled, prompt);
-  const buddy = useBuddyVoice();
   const recording = voice.state === 'recording';
-  const status = recording
-    ? t('buddy:talk.listening')
-    : buddy.phase === 'speaking'
-      ? t('buddy:talk.speaking')
-      : null;
   const selectedCheck = check ? (
     <View testID="answer-action">
       <ActionPill
@@ -327,18 +320,8 @@ function TalkRow({
   ) : null;
   return (
     <>
-      {/* What went wrong (no mic, nothing understood) while the mic rests; otherwise the one line
-          of the design (Gaps.jsx:135). */}
+      {/* Only what went wrong (no mic, nothing understood), while the mic rests. */}
       {voice.state === 'idle' ? <MicStatus voice={voice} /> : null}
-      {status ? (
-        <Text
-          testID="talk-row-status"
-          accessibilityLiveRegion="polite"
-          style={[TYPE.label, { textAlign: 'center', paddingBottom: SPACE.sm }]}
-        >
-          {status}
-        </Text>
-      ) : null}
       <View style={{ paddingHorizontal: TALK.rowInset - SPACE.lg }}>
         <VoiceRow
           left={{

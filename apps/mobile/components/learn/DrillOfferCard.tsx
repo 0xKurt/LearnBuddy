@@ -15,10 +15,20 @@ import { startDrill } from '../../lib/api/endpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { PracticeReady } from '../buddy/ChatCard.js';
+import { quietVariant, type Quiet } from '../buddy/extensions.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_drill' }>;
 
-export function DrillOfferCard({ actionId, offer }: { actionId: string; offer: Offer }) {
+export function DrillOfferCard({
+  actionId,
+  offer,
+  quiet = 'primary',
+}: {
+  actionId: string;
+  offer: Offer;
+  /** Whether "Los geht's" may be the screen's one filled button (extensions.ts `loudCard`). */
+  quiet?: Quiet;
+}) {
   const { t } = useTranslation(['learn', 'common']);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
@@ -56,6 +66,7 @@ export function DrillOfferCard({ actionId, offer }: { actionId: string; offer: O
       start={{
         label: failed ? t('common:actions.retry') : t('learn:topic.submit'),
         busy,
+        variant: quietVariant(quiet),
         accessibilityHint: `${label}: ${offer.title}`,
         onPress: () => void go(),
       }}

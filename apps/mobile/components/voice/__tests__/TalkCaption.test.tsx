@@ -100,6 +100,17 @@ describe('the one line', () => {
     expect(screen.queryByText('Das klingt schwer.')).toBeNull();
   });
 
+  it('gives the words the room it is handed, not a count of lines (talkRoom.ts)', () => {
+    renderInApp(
+      <TalkCaption
+        status="Buddy spricht …"
+        line={{ who: 'buddy', id: 't2', text: 'Ruf an: 116 111.', whole: true, speaking: true }}
+        lineRoom={400}
+      />,
+    );
+    expect(own(screen.getByTestId('scroll-talk')).maxHeight).toBe('400px');
+  });
+
   it('keeps that answer in full ink once he is silent', () => {
     const HELP = 'Ruf an: 116 111.';
     renderInApp(

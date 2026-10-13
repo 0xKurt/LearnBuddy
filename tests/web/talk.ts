@@ -90,7 +90,7 @@ export async function voiceAsSilence(page: Page, ms: number): Promise<void> {
   );
 }
 
-export async function onboardTalker(page: Page, tag: string): Promise<void> {
+export async function onboardTalker(page: Page, tag: string, name = 'Lena'): Promise<void> {
   await page.goto('/');
   await page.getByLabel('E-Mail').fill(`${tag}-${Date.now()}@example.test`);
   await page.getByLabel('Passwort', { exact: true }).fill('geheim-1234');
@@ -99,7 +99,7 @@ export async function onboardTalker(page: Page, tag: string): Promise<void> {
   await page.getByRole('checkbox').click();
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('radio', { name: 'Mein Kind' }).click();
-  await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill('Lena');
+  await page.getByLabel('Wie heißt dein Kind? (Spitzname genügt)').fill(name);
   await page.getByRole('button', { name: 'Bundesland wählen' }).click();
   await page.getByRole('radio', { name: 'Niedersachsen' }).click();
   await page.getByLabel('Tag', { exact: true }).fill('10');
@@ -112,7 +112,7 @@ export async function onboardTalker(page: Page, tag: string): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   // Notifications are asked of the adults right after their PIN (issue #518).
   await page.getByRole('button', { name: 'Nein, danke' }).click();
-  await page.getByRole('button', { name: "Los geht's, Lena!" }).click();
+  await page.getByRole('button', { name: `Los geht's, ${name}!` }).click();
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }

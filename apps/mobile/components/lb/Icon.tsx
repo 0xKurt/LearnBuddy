@@ -100,8 +100,9 @@ const ICONS = {
     { d: 'M12 5.25v13.5', bold: true },
     { d: 'M16.5 9v6', bold: true },
   ],
-  // A round arrow turning back (issue #295): the receipt's quiet way back in the chat.
-  undo: [{ d: 'M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9' }, { d: 'M4.5 4.5V9H9' }],
+  // The hooked arrow turning back (design components/core/Icon.jsx:16; issue #295): the
+  // receipt's quiet way back in the chat, and "Nochmal senden" under a message.
+  undo: [{ d: 'M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3' }],
   stop: [{ x: 6.5, y: 6.5, width: 11, height: 11, rx: 2.5, solid: true }],
 } satisfies Record<string, readonly Shape[]>;
 

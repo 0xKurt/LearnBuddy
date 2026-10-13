@@ -32,7 +32,15 @@ import { CHAT } from '../../lib/theme/chat.js';
 import { AreaCard } from './AreaCard.js';
 import { ConfirmCard } from './ConfirmCard.js';
 import { deliveryText, describeAction, onlyInApp } from './describe.js';
-import { actionCard, addActionCard, hasCard, messageCard, readAlong } from './extensions.js';
+import {
+  actionCard,
+  addActionCard,
+  hasCard,
+  loudCard,
+  messageCard,
+  readAlong,
+  type Quiet,
+} from './extensions.js';
 import { dayBreaks, formatDay, localDateOf } from '../../lib/time.js';
 import { closedStream, markdownPlain } from '../../lib/buddy/markdown.js';
 import { haptic } from '../../lib/haptics.js';
@@ -135,6 +143,8 @@ type Props = {
    * the bar brings the factual line back; the action remains in the turn chooser.
    */
   carriedOnTop?: ReadonlySet<string>;
+  /** Something else on the screen holds the one primary: no card's start is filled (`loudCard`). */
+  quiet?: Quiet;
   /**
    * The conversation is being spoken (app/talk.tsx, issue #18): Buddy's newest bubble
    * follows his voice — the sentence being read stands out (`readAlong`, a domain's) — and a
@@ -167,6 +177,7 @@ export function Conversation({
   undoError = null,
   receipts = 'step',
   carriedOnTop = EMPTY_IDS,
+  quiet = 'primary',
   // The screen labels of each message use `spoken` inside the map: bind the prop apart.
   spoken: spokenMode = false,
   showTyping = true,
@@ -262,6 +273,7 @@ export function Conversation({
       ?.id ?? null;
   const inAppDelivery = messages.filter(saysOnlyInApp).at(-1)?.id ?? null;
 
+  const loud = loudCard(messages, quiet);
   const canTakeBack = (m: MessageView): boolean =>
     showActions && onUndo !== undefined && m.actions.some(takeableBack);
   const view = (
@@ -391,7 +403,7 @@ export function Conversation({
               ) : null}
             </View>
             {m.actions.map((a) => {
-              const card = actionCard(a, spokenMode);
+              const card = actionCard(a, spokenMode, a.id === loud ? 'primary' : 'soft');
               return card ? (
                 <Entrance
                   key={a.id}
@@ -571,8 +583,8 @@ function toolsOf(actions: MessageView['actions']): Tool[] {
  * `room`: the height the block takes so the greeting stands at the top of the view and the
  * rest of it is free (the screen passes it while nothing follows the greeting). Everything
  * older is then one swipe above — hidden from neither eye nor screen reader.
- * `action`: a button the greeting itself carries — "Ansehen" for the practice it just named
- * (issue #195). Flush with the bubble's left edge, the same place a notice puts its answers.
+ * `action`: what the greeting itself carries — the card of the practice it just named, with
+ * "Ansehen" (issue #195) — as wide as every card of the thread, a turn's gap under the line.
  */
 function SessionGreeting({
   text,
@@ -592,20 +604,14 @@ function SessionGreeting({
     <View
       // Stretch: the block above aligns to her side when she spoke last; the greeting is
       // Buddy's and starts at the left whatever came before it.
-      // sm between the line and its button: they are one piece.
-      style={{ alignSelf: 'stretch', minHeight: room, gap: SPACE.sm }}
+      style={{ alignSelf: 'stretch', minHeight: room, gap: SPACE.lg }}
     >
       <BuddyLine orb={orb}>
         <View accessibilityRole="text" accessibilityLabel={`${t('thread.buddy')}: ${text}`}>
           <Text style={[TYPE.body, { color: palette.ink }]}>{text}</Text>
         </View>
       </BuddyLine>
-      {action ? (
-        // Under the line's text — like the chips under a message.
-        <View style={[UNDER_LINE, { flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }]}>
-          {action}
-        </View>
-      ) : null}
+      {action ? <View style={{ width: CHAT.cardWidth }}>{action}</View> : null}
     </View>
   );
 }

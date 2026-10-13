@@ -1,6 +1,11 @@
 // First-visit Home: Buddy stays in the shared header; the real learner greeting and
 // three ways to start stand directly above the shared Composer (#548), 24 in from the sides and
 // from the bar (design ui_kits/app/Home.jsx:12).
+//
+// While pages are attached, the greeting and the ways to start are not drawn (#599 correction,
+// CLAUDE.md rule 16: whole or not drawn): the strip of pages took their room, the list was cut
+// after its first row at 360×740 and the headline under the strip in a short window. They are
+// back when the pages are gone; what she is doing now is sending her sheet.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
@@ -21,13 +26,16 @@ type Props = {
   onRefresh: () => void;
   onSend: (text: string) => void;
   onPhoto: () => void;
+  /** Pages stand above the Composer. */
+  pages?: boolean;
 };
 
-export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto }: Props) {
+export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto, pages = false }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
   // The next test or talk (#264) in one line; everything else Buddy says in the conversation.
   const nextExam = h.next.find((i) => i.kind === 'exam' || i.kind === 'talk') ?? null;
+  if (pages) return <View style={{ flex: 1 }} />;
   return (
     <ScrollView
       testID="scroll-home"

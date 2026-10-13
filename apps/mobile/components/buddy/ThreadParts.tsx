@@ -24,7 +24,6 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { haptic } from '../../lib/haptics.js';
 import { i18n } from '../../lib/i18n/index.js';
-import { Btn } from '../lb/Btn.js';
 import { Chip } from '../lb/Chip.js';
 import { Icon, type IconName } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
@@ -169,7 +168,11 @@ function failedLabel(code: string | null): string {
   return i18n.exists(key) ? i18n.t(key) : i18n.t('buddy:thread.failed');
 }
 
-/** Under her message that was not answered: why, and the way to send it again. */
+/**
+ * Under her message that was not answered: ONE line (components/buddy/Message.jsx:12, 700 13 in
+ * the danger ink) — why, and after a dot the way to send it again with its sign. The line said
+ * why on two lines beside a paper button before (#599 correction).
+ */
 export function FailedLine({
   message,
   busy,
@@ -182,28 +185,57 @@ export function FailedLine({
 }) {
   const { palette } = useTheme();
   const { t } = useTranslation('buddy');
-  const stopped = message.failure_code === 'stopped';
+  // It arrived: say why it was not answered (CLAUDE.md rule 5). Stopped by her is no failure:
+  // said calmly, not in red.
+  const ink = { color: message.failure_code === 'stopped' ? palette.ink2 : palette.danger };
+  // Resending cannot help once today's allowance is used up.
+  const resend = message.failure_code === 'budget' ? undefined : onResend;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}>
-      {/* It arrived: say why it was not answered (CLAUDE.md rule 5). Stopped by her is no
-          failure: said calmly, not in red. */}
-      <Text style={[TYPE.small, { color: stopped ? palette.ink2 : palette.danger }]}>
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        columnGap: CHAT.takeBack.gap,
+      }}
+    >
+      <Text style={[TYPE.label, ink]}>
         {failedLabel(message.failure_code)}
+        {resend ? ' ·' : ''}
       </Text>
-      {/* Resending cannot help once today's allowance is used up. */}
-      {message.failure_code === 'budget' || !onResend ? null : (
-        <Btn
-          size="sm"
-          variant="secondary"
+      {resend ? (
+        <PressArea
+          accessibilityRole="button"
+          accessibilityLabel={t('thread.resend')}
+          accessibilityState={{ disabled: busy }}
+          disabled={busy}
           onPress={() => {
             haptic.tap();
-            onResend(message);
+            resend(message);
           }}
-          disabled={busy}
+          // The line is 18 tall and its target 44: what it reaches beyond is handed back.
+          style={{
+            minHeight: TOUCH,
+            marginVertical: -CHAT.takeBack.reach,
+            justifyContent: 'center',
+          }}
         >
-          {t('thread.resend')}
-        </Btn>
-      )}
+          {(pressed) => (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: CHAT.takeBack.gap,
+                opacity: busy ? UI.disabledOpacity : pressed ? UI.pressed.link : 1,
+              }}
+            >
+              <Icon name="undo" size={CHAT.takeBack.icon} color={ink.color} />
+              <Text style={[TYPE.label, ink]}>{t('thread.resend')}</Text>
+            </View>
+          )}
+        </PressArea>
+      ) : null}
     </View>
   );
 }

@@ -33,10 +33,20 @@ import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { ChatCard } from './ChatCard.js';
+import { quietVariant, type Quiet } from './extensions.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_rehearsal' }>;
 
-export function RehearseCard({ actionId, offer }: { actionId: string; offer: Offer }) {
+export function RehearseCard({
+  actionId,
+  offer,
+  quiet = 'primary',
+}: {
+  actionId: string;
+  offer: Offer;
+  /** Whether the start may be the screen's one filled button (extensions.ts `loudCard`). */
+  quiet?: Quiet;
+}) {
   const { t } = useTranslation(['buddy', 'practice']);
   const mounted = useMounted();
   const [sending, setSending] = useState(false);
@@ -122,7 +132,7 @@ export function RehearseCard({ actionId, offer }: { actionId: string; offer: Off
             ? t('practice:speak.listening')
             : t('buddy:rehearse.start'),
         // "Fertig" is the paper button of the live state (Modes.jsx:47).
-        variant: recording ? 'secondary' : 'primary',
+        variant: recording ? 'secondary' : quietVariant(quiet),
         busy: sending || rec.phase === 'starting' || rec.phase === 'stopping',
         // As wide as its words, with the microphone before them (Modes.jsx:37).
         fit: true,

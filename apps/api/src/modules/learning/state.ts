@@ -141,6 +141,12 @@ type SessionBrief = {
   total: number;
   answered: number;
   first_try: number;
+  /**
+   * Written by the background preparation of an offer (practice/prepare.ts, issue #48) and never
+   * worked in: nothing she started, so nothing to "go on with" (`loadStandingOffers` reads
+   * "taken up" the same way; CLAUDE.md rule 5).
+   */
+  untouched_offer: boolean;
   secure_topics: string[];
   shaky_topics: string[];
 };
@@ -381,6 +387,12 @@ async function loadSessions(db: Db, learnerId: string): Promise<SessionBrief[]> 
             count(si.item_id)::int as total,
             count(*) filter (where si.status <> 'open')::int as answered,
             count(*) filter (where si.status = 'correct' and si.first_try_correct)::int as first_try,
+            (exists (select 1 from buddy_actions a
+                      where a.learner_id = ps.learner_id and a.id = ps.client_request_id
+                        and a.tool = 'offer_learning')
+             and not exists (select 1 from session_items x
+                              where x.session_id = ps.id
+                                and (x.status <> 'open' or x.attempts > 0))) as untouched_offer,
             coalesce(json_agg(json_build_object('topic', i.topic, 'status', si.status,
                                                 'first_try_correct', si.first_try_correct,
                                                 -- Recognition and production are different

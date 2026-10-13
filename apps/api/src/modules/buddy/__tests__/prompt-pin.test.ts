@@ -329,6 +329,7 @@ const state: BuddyState = {
       total: 10,
       answered: 9,
       first_try: 6,
+      untouched_offer: false,
       secure_topics: ['Dezimalzahlen'],
       shaky_topics: ['Brüche kürzen'],
     },

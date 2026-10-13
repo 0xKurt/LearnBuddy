@@ -20,14 +20,9 @@ import { useSvgId } from '../../lib/theme/svgId.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { BuddyOrb } from '../lb/BuddyOrb.js';
 import { PressArea } from '../lb/PressArea.js';
+import { talkOrbBox } from './talkRoom.js';
 
 export type OrbMode = TalkMode;
-
-/** The box the orb stands in: room around it for the halo and the moon's orbit. */
-const boxOf = (size: number): number => Math.round(size * 1.5);
-
-/** That room on one side — what a neighbour takes off its own gap to the orb itself. */
-export const talkOrbRoom = (size: number): number => (boxOf(size) - size) / 2;
 
 export function TalkOrb({
   mode,
@@ -44,7 +39,7 @@ export function TalkOrb({
   onPress?: () => void;
   pressLabel?: string;
 }) {
-  const box = boxOf(size);
+  const box = talkOrbBox(size);
   const orb = (
     <View style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}>
       <Stage size={size * 2} box={box} />

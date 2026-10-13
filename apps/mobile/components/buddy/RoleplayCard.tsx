@@ -24,6 +24,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { EndButton } from '../lb/EndButton.js';
 import { Icon } from '../lb/Icon.js';
 import { ChatCard } from './ChatCard.js';
+import { quietVariant, type Quiet } from './extensions.js';
 import { roleplayLabel, useEndRoleplay } from './RoleplayLive.js';
 
 type Roleplay = Extract<ActionSummary, { tool: 'start_roleplay' }>;
@@ -61,7 +62,14 @@ export function RoleplayStrip({ roleplay }: { roleplay: RoleplayNow }) {
   );
 }
 
-export function RoleplayCard({ roleplay }: { roleplay: Roleplay }) {
+export function RoleplayCard({
+  roleplay,
+  quiet = 'primary',
+}: {
+  roleplay: Roleplay;
+  /** Whether the start may be the screen's one filled button (extensions.ts `loudCard`). */
+  quiet?: Quiet;
+}) {
   const { palette } = useTheme();
   const { t } = useTranslation(['buddy']);
   // On the conversation screen the scene is already being spoken: no second way in there.
@@ -96,6 +104,7 @@ export function RoleplayCard({ roleplay }: { roleplay: Roleplay }) {
           ? null
           : {
               label: t('buddy:roleplay.start'),
+              variant: quietVariant(quiet),
               icon: 'voice',
               fit: true,
               onPress: () => router.push('/talk'),

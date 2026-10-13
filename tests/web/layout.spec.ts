@@ -80,6 +80,9 @@ for (const viewport of [
     // "Erklär mir was" is gone (owner decision 28.09.): explaining happens in the chat.
     await page.getByRole('button', { name: 'Mehr', exact: true }).click();
     await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
+    // The start sheet is up before anything in it is measured or tapped
+    // (as redesign-chat-states.spec.ts does).
+    await expect(page.getByRole('heading', { name: 'Was willst du üben?' })).toBeVisible();
     await page.screenshot({ path: join(SHOTS, `30b-menu-${viewport.width}.png`) });
     for (const name of ['Arbeit', 'Hausaufgabe', 'Aussprache', 'Vokabeln']) {
       const b = await page.getByRole('button', { name, exact: true }).boundingBox();
