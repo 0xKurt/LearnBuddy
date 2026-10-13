@@ -96,6 +96,25 @@ it.each(['field', 'cell'] as const)(
   },
 );
 
+// Sign-up at 360×440: "Die beiden Passwörter sind noch nicht gleich." ended 9.5 pt under the
+// pinned CTA, because only the box was kept in view and the note stands under it (#599).
+it('keeps a form field whole with the note under it; a cell stays its own frame', () => {
+  const focus = vi.fn();
+  const controller = { focus, blur: vi.fn(), refresh: vi.fn(), dispose: vi.fn() };
+  renderInApp(
+    <FormFrameContext.Provider value={controller}>
+      <LbTextInput label="Passwort wiederholen" error errorMessage="Noch nicht gleich." />
+      <LbTextInput variant="cell" accessibilityLabel="Zelle" />
+    </FormFrameContext.Provider>,
+  );
+  fireEvent.focus(screen.getByRole('textbox', { name: 'Passwort wiederholen' }));
+  const field = focus.mock.calls[0]![0] as HTMLElement;
+  expect(field.contains(screen.getByText('Noch nicht gleich.'))).toBe(true);
+  fireEvent.focus(screen.getByRole('textbox', { name: 'Zelle' }));
+  const cell = focus.mock.calls[1]![0] as HTMLElement;
+  expect(cell.getAttribute('data-testid')).toBe('answer-cell-frame');
+});
+
 it('does not enroll the pinned bar in form scrolling', () => {
   const focus = vi.fn();
   const controller = { focus, blur: vi.fn(), refresh: vi.fn(), dispose: vi.fn() };

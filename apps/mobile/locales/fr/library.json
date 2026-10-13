@@ -46,6 +46,10 @@
     "notebook_entry": "Tiré de ton cahier : quelques questions courtes sur le dernier cours – parfait pour demain matin."
   },
   "incomplete_hint": "Les photos ne sont pas arrivées en entier. Supprime la fiche et reprends-la en photo.",
+  "incomplete_page": {
+    "title": "Les photos ne sont pas arrivées en entier.",
+    "body": "Dans tes documents, tu peux supprimer la fiche et la reprendre en photo."
+  },
   "not_practicable_one": "J'ai laissé un exercice de côté : « {{tasks}} ». Celui-là, je ne peux pas m'entraîner avec toi – mais je t'explique volontiers comment t'y prendre.",
   "not_practicable_other": "J'ai laissé ces exercices de côté : {{tasks}}. Ceux-là, je ne peux pas m'entraîner avec toi – mais je t'explique volontiers comment t'y prendre.",
   "photos_deleted": "Les photos ne sont plus enregistrées. Supprime la feuille et reprends-la en photo.",

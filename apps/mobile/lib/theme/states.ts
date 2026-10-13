@@ -42,6 +42,8 @@ export const SKELETON = {
   /** The rows of a list while it loads (States.jsx:24) and a settings page's two groups (:29). */
   rows: 4,
   settingsGroups: [3, 2],
+  /** The lines of the paragraph "Lernzeiten" opens with, as it sets on a phone (#599). */
+  leadLines: 3,
   /** The answers under a practice question (States.jsx:27), and the cards of a sheet's questions. */
   options: 4,
   cards: 3,

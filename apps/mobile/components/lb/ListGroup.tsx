@@ -128,7 +128,16 @@ export function Row({
           color={iconTone === 'accent' ? palette.primaryDk : palette.ink2}
         />
       ) : null}
-      <View style={{ flex: 1, minWidth: 0, gap: UI.list.lineGap }}>
+      <View
+        style={[
+          { gap: UI.list.lineGap },
+          // Beside a value the title is never squeezed: it keeps its own width up to its share,
+          // and a long value wraps in what is left (#599). Alone it takes the row.
+          value
+            ? { flexGrow: 1, flexShrink: 0, flexBasis: 'auto', maxWidth: UI.list.titleShare }
+            : { flex: 1, minWidth: 0 },
+        ]}
+      >
         <Text
           style={[
             TYPE.option,
@@ -140,7 +149,9 @@ export function Row({
         </Text>
         {sub ? <Text style={TYPE.meta}>{sub}</Text> : null}
       </View>
-      {value ? <Text style={TYPE.listValue}>{value}</Text> : null}
+      {value ? (
+        <Text style={[TYPE.listValue, { flexShrink: 1, textAlign: 'right' }]}>{value}</Text>
+      ) : null}
       {onPress && chevron && end == null ? (
         <Icon
           name={indicator}

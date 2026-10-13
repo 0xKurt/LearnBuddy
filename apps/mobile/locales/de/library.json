@@ -46,6 +46,10 @@
     "notebook_entry": "Aus deinem Hefteintrag: ein paar kurze Fragen zur letzten Stunde – gut für morgen früh."
   },
   "incomplete_hint": "Die Fotos sind nicht ganz angekommen. Lösch das Blatt und fotografier es neu.",
+  "incomplete_page": {
+    "title": "Die Fotos sind nicht ganz angekommen.",
+    "body": "In deinem Material kannst du das Blatt löschen und neu fotografieren."
+  },
   "not_practicable_one": "Eine Aufgabe habe ich weggelassen: „{{tasks}}“. Die kann ich nicht mit dir üben – aber ich erkläre dir gern, wie man sie angeht.",
   "not_practicable_other": "Diese Aufgaben habe ich weggelassen: {{tasks}}. Die kann ich nicht mit dir üben – aber ich erkläre dir gern, wie man sie angeht.",
   "photos_deleted": "Die Fotos sind nicht mehr gespeichert. Lösch das Blatt und fotografier es neu.",

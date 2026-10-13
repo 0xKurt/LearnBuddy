@@ -37,7 +37,6 @@ export function VoiceOption({
         style={{
           minHeight: VOICE_PICKER.optionHeight,
           padding: VOICE_PICKER.optionPadding,
-          gap: VOICE_PICKER.optionGap,
           alignItems: 'center',
           borderRadius: RADIUS.md,
           borderWidth: selected ? UI.selectedBorder : UI.border,

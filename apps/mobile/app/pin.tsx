@@ -114,6 +114,8 @@ export default function Pin() {
         <View style={{ alignItems: 'center', gap: SPACE.lg }}>
           <PinPad
             onComplete={(pin) => void submit(pin)}
+            // Her next PIN begins: the line about the last one goes with the red dots (#599).
+            onStart={() => setError(null)}
             resetKey={attempt}
             disabled={busy}
             // The dots turn to the danger colour (components/core/PinPad.jsx); the words stand

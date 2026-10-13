@@ -16,7 +16,7 @@ import { MATERIAL_DETAIL } from '../../lib/theme/materialDetail.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { SETTINGS } from '../../lib/theme/settings.js';
-import { bottomRoom, CARD_PAD, GUTTER_APP, RHYTHM, SPACE } from '../../lib/theme/space.js';
+import { bottomRoom, CARD_PAD, CONTROL, GUTTER_APP, RHYTHM, SPACE } from '../../lib/theme/space.js';
 import { SKELETON } from '../../lib/theme/states.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Bone, BoneCard, BoneRule, BoneText, SkeletonGroup } from './Skeleton.js';
@@ -35,16 +35,21 @@ function Rows({
   rows,
   tile = false,
   sub = false,
+  label = true,
 }: {
   rows: number;
   tile?: boolean;
   sub?: boolean;
+  /** False for a group that has none (her card in the settings, the one choice of a page). */
+  label?: boolean;
 }) {
   return (
     <View style={{ gap: SPACE.sm }}>
-      <View style={{ paddingHorizontal: SPACE.xs }}>
-        <BoneText type={TYPE.label} width={width.label} height={line.meta} />
-      </View>
+      {label ? (
+        <View style={{ paddingHorizontal: SPACE.xs }}>
+          <BoneText type={TYPE.label} width={width.label} height={line.meta} />
+        </View>
+      ) : null}
       <BoneCard padding={0} gap={0}>
         {times(rows, (i) => (
           <View key={i}>
@@ -149,13 +154,48 @@ export function PracticeSkeleton({ label }: { label: string }) {
   );
 }
 
-/** "Dein Material", a subject, the subjects of a profile: one list of rows with their tiles. */
-export function LibrarySkeleton({ label }: { label: string }) {
+/**
+ * The quiet words a page opens with (`Hint`, components/settings/SettingsPage.tsx: 14/20, 4 in
+ * from the groups): as many lines as the page has, the last one shorter.
+ */
+function Lead({ lines }: { lines: number }) {
+  return (
+    <View style={{ paddingHorizontal: SPACE.xs }}>
+      {times(lines, (i) => (
+        <BoneText
+          key={i}
+          type={TYPE.meta}
+          width={i === lines - 1 ? width.short : width.long}
+          height={line.meta}
+        />
+      ))}
+    </View>
+  );
+}
+
+/**
+ * "Dein Material" and a subject: one list of rows with their tiles. `capture` where the page
+ * opens with the button for a new sheet (app/library.tsx) — its box, round like the button.
+ */
+export function LibrarySkeleton({ label, capture = false }: { label: string; capture?: boolean }) {
   return (
     <SkeletonGroup
       label={label}
       style={{ paddingHorizontal: GUTTER_APP, paddingTop: LIBRARY.pageTop, gap: SPACE.xl }}
     >
+      {capture ? <Bone tone="paper" height={CONTROL.md} radius={RADIUS.round} /> : null}
+      <Rows rows={SKELETON.rows} tile sub />
+    </SkeletonGroup>
+  );
+}
+
+/**
+ * One group of rows with their tiles inside a page that is already there (the subjects of a
+ * profile): the group's own box, with no page around it.
+ */
+export function GroupSkeleton({ label }: { label: string }) {
+  return (
+    <SkeletonGroup label={label}>
       <Rows rows={SKELETON.rows} tile sub />
     </SkeletonGroup>
   );
@@ -189,42 +229,67 @@ export function ChatSkeleton({ label, rows = 4 }: { label: string; rows?: number
   );
 }
 
-/** A page of settings: two groups of rows (States.jsx:29). */
-export function SettingsSkeleton({ label }: { label: string }) {
+/**
+ * What a settings page opens with before its groups: her card (the settings themselves), one
+ * line of what holds over a group without a label ("Aufs Handy"), or its opening paragraph
+ * ("Lernzeiten").
+ */
+export type SettingsStart = 'profile' | 'answer' | 'lead';
+
+/** A page of settings: two groups of rows (States.jsx:29), after what the page opens with. */
+export function SettingsSkeleton({ label, start }: { label: string; start?: SettingsStart }) {
   return (
     <SkeletonGroup
       label={label}
       style={{ paddingHorizontal: GUTTER_APP, paddingTop: SETTINGS.page.top, gap: SPACE.xl }}
     >
+      {start === 'profile' ? <Rows rows={1} tile sub label={false} /> : null}
+      {start === 'answer' || start === 'lead' ? (
+        <Lead lines={start === 'lead' ? SKELETON.leadLines : 1} />
+      ) : null}
       {SKELETON.settingsGroups.map((rows, i) => (
-        <Rows key={i} rows={rows} />
+        <Rows key={i} rows={rows} label={!(start === 'answer' && i === 0)} />
       ))}
     </SkeletonGroup>
   );
 }
 
-/** The questions of one sheet: a card each — which question it is, then its two lines. */
+const PAGES = MATERIAL_DETAIL.pages;
+
+/**
+ * The questions of one sheet: the sheet's page pinned under the head, in the strip's own box
+ * (components/library/SheetPages.tsx), then a card each — which question it is, its two lines.
+ */
 export function QuestionsSkeleton({ label }: { label: string }) {
   return (
-    <SkeletonGroup
-      label={label}
-      style={{ paddingHorizontal: GUTTER_APP, paddingTop: GUTTER_APP, gap: RHYTHM.stack }}
-    >
-      {times(SKELETON.cards, (i) => (
-        <BoneCard key={i} gap={RHYTHM.stack}>
-          <View style={{ minHeight: MATERIAL_DETAIL.menu.row, justifyContent: 'center' }}>
-            <Bone width={width.label} height={line.meta} />
-          </View>
-          <View>
-            <BoneText type={TYPE.body} width={width.long} height={line.text} />
-            <BoneText
-              type={TYPE.body}
-              width={i % 2 ? width.name : width.short}
-              height={line.text}
-            />
-          </View>
-        </BoneCard>
-      ))}
+    <SkeletonGroup label={label}>
+      <View
+        style={{
+          flexDirection: 'row',
+          marginTop: PAGES.top,
+          marginHorizontal: PAGES.side,
+          minHeight: PAGES.height,
+        }}
+      >
+        <Bone tone="paper" width={PAGES.width} height={PAGES.height} radius={PAGES.radius} />
+      </View>
+      <View style={{ paddingHorizontal: GUTTER_APP, paddingTop: GUTTER_APP, gap: RHYTHM.stack }}>
+        {times(SKELETON.cards, (i) => (
+          <BoneCard key={i} gap={RHYTHM.stack}>
+            <View style={{ minHeight: MATERIAL_DETAIL.menu.row, justifyContent: 'center' }}>
+              <Bone width={width.label} height={line.meta} />
+            </View>
+            <View>
+              <BoneText type={TYPE.body} width={width.long} height={line.text} />
+              <BoneText
+                type={TYPE.body}
+                width={i % 2 ? width.name : width.short}
+                height={line.text}
+              />
+            </View>
+          </BoneCard>
+        ))}
+      </View>
     </SkeletonGroup>
   );
 }

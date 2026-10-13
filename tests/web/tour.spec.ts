@@ -186,7 +186,8 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await page.getByRole('button', { name: 'Ältere Nachrichten' }).click();
   await expect(page.getByText('Ich spiele Handball')).toBeVisible();
   await shot(page, '42-history');
-  await page.getByRole('button', { name: 'Zurück' }).click();
+  // Exact: a loose "Zurück" matches "Zurücknehmen" too, and the walk stopped here (#599).
+  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
 
   // ── What Buddy knows: change it, then remove it ──
   await openMenu(page, 'Was Buddy über dich weiß');
@@ -201,7 +202,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // Removed at once; the toast offers "Rückgängig" (#599, ui_kits/app/More.jsx:42).
   await expect(page.getByText('Entfernt. Buddy vergisst das.')).toBeVisible();
   await expect(page.getByText('Mag Katzen und Hunde', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Zurück' }).click();
+  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
 
   // ── Settings: messages to the phone (parents' PIN), times, language ──
   // Rows that lead to pages (#589): "Aufs Handy", "Lernzeiten", the parents' page.
@@ -475,7 +476,9 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   await expect(page.getByText('Welches Wort ist ein Nomen?')).toBeVisible();
   await page.getByRole('radio', { name: 'Hund', exact: true }).click();
   await page.getByRole('button', { name: 'Prüfen' }).click();
-  await expect(page.getByText('Stimmt – gut gemacht!')).toBeVisible();
+  // `.last()` as in cards.spec and gallery.spec: the verdict's words can stand in the card and in
+  // what Buddy says under it.
+  await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Übung beenden' }).click();
 
   await pronunciation(page);

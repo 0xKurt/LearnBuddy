@@ -27,6 +27,7 @@ import {
   HomeSkeleton,
   LibrarySkeleton,
   PracticeSkeleton,
+  QuestionsSkeleton,
   SettingsSkeleton,
 } from '../Skeletons.js';
 import { ToastHost } from '../Toast.js';
@@ -311,6 +312,75 @@ describe('SkeletonScreen (States.jsx:13–31) in the shape of the loaded screen'
     expect(Array.from(card.children).map((el) => own(el).width)).toEqual(['30%', '70%', '120px']);
     // No bones for the head or for ways to start: the head is the real one, the ways are in ⋯.
     expect(withStyle(container, 'width', '44px')).toHaveLength(0);
+  });
+});
+
+// Measured in the final walkthrough (#599): the first paper box moved when the content arrived —
+// "Dein Material" −26, the settings −26, "Aufs Handy" +18, "Lernzeiten" +84, a sheet's questions
+// +72, a profile's subjects 230 down and 16 sideways. Each skeleton starts as its screen does.
+describe('a skeleton starts with what the loaded screen starts with', () => {
+  const page = () => screen.getByRole('progressbar').firstElementChild as HTMLElement;
+  const cards = (root: Element) => withStyle(root, 'borderTopLeftRadius', '20px');
+  const rowsOf = (card: Element) => withStyle(card, 'minHeight', '56px').length;
+  /** The boxes of the lines of quiet text (14/20) an element holds. */
+  const lines = (el: Element) => Array.from(el.children).map((l) => own(l).height);
+
+  it('"Dein Material": the photo button — 48 high, round — and 24 under it the list', () => {
+    renderInApp(<LibrarySkeleton label="Einen Moment …" capture />);
+    const button = page().children[0] as Element;
+    expect([own(button).height, own(button).borderTopLeftRadius]).toEqual(['48px', '999px']);
+    expect(own(button).backgroundColor).toBe(PAPER);
+    expect(styleOf(page()).gap).toBe('24px');
+    expect(rowsOf(page().children[1] as Element)).toBe(4);
+  });
+
+  it('a subject has no such button: its list comes first', () => {
+    renderInApp(<LibrarySkeleton label="Einen Moment …" />);
+    expect(page().children).toHaveLength(1);
+  });
+
+  it('the subjects of a profile: the group alone, in the page that is already there', () => {
+    renderInApp(<ProfileSubjects cards={[]} loading error={null} onRetry={() => undefined} />);
+    expect([own(page()).paddingLeft, own(page()).paddingTop]).toEqual(['', '']);
+    expect(cards(page()).map(rowsOf)).toEqual([4]);
+  });
+
+  it('the settings: her card — one row with its tile, no label — before the groups', () => {
+    renderInApp(<SettingsSkeleton label="Einen Moment …" start="profile" />);
+    expect(cards(page()).map(rowsOf)).toEqual([1, 3, 2]);
+    const first = page().children[0] as Element;
+    // Nothing above the card: the group's label is what stood 26 too high.
+    expect(first.children).toHaveLength(1);
+    expect(withStyle(first, 'width', '36px')).toHaveLength(1);
+  });
+
+  it('"Aufs Handy": one line of what holds, then a group without a label', () => {
+    renderInApp(<SettingsSkeleton label="Einen Moment …" start="answer" />);
+    expect(lines(page().children[0] as Element)).toEqual(['20px']);
+    expect(own(page().children[0] as Element).paddingLeft).toBe('4px');
+    expect((page().children[1] as Element).children).toHaveLength(1);
+    expect(cards(page()).map(rowsOf)).toEqual([3, 2]);
+  });
+
+  it('"Lernzeiten": the three lines of its opening paragraph, then the labelled groups', () => {
+    renderInApp(<SettingsSkeleton label="Einen Moment …" start="lead" />);
+    expect(lines(page().children[0] as Element)).toEqual(['20px', '20px', '20px']);
+    expect((page().children[1] as Element).children).toHaveLength(2);
+  });
+
+  it('a sheet’s questions: the sheet’s page pinned under the head — 52 × 68, 4 down, 12 in', () => {
+    const { container } = renderInApp(<QuestionsSkeleton label="Einen Moment …" />);
+    const sheet = withStyle(container, 'width', '52px');
+    expect(sheet).toHaveLength(1);
+    expect([own(sheet[0] as Element).height, own(sheet[0] as Element).borderTopLeftRadius]).toEqual(
+      ['68px', '10px'],
+    );
+    const strip = own(sheet[0]?.parentElement as Element);
+    expect([strip.marginTop, strip.marginLeft, strip.minHeight]).toEqual(['4px', '12px', '68px']);
+    // The cards keep the page's own room under it.
+    const body = sheet[0]?.parentElement?.nextElementSibling as Element;
+    expect([own(body).paddingTop, own(body).paddingLeft]).toEqual(['16px', '16px']);
+    expect(cards(body)).toHaveLength(3);
   });
 });
 

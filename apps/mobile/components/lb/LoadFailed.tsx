@@ -23,7 +23,7 @@ type Props = {
   onRetry: () => void;
   /** The retry is in flight: the button shows it and takes no second tap. */
   busy?: boolean;
-  /** A second way on below the retry (back to the list). */
+  /** A second way on below the retry (back to the list); the only one when the thing is gone. */
   children?: ReactNode;
   /**
    * One part of a page that goes on around it (a profile's subjects), not the screen's whole
@@ -32,11 +32,19 @@ type Props = {
   inline?: boolean;
 };
 
+/**
+ * The thing is not there any more (404): trying again cannot bring it back. The screen's head
+ * rests with it, and its way on is the one thing to offer (#599).
+ */
+export const isGone = (error: unknown): boolean =>
+  error instanceof ApiError && error.code === 'not_found';
+
 export function LoadFailed({ error, onRetry, busy, children, inline = false }: Props) {
   const { t } = useTranslation('common');
   const online = useOnline();
+  const gone = isGone(error);
   // Offline, or the thing is gone: nothing to think about (States.jsx "offline", "notfound").
-  const resting = !online || (error instanceof ApiError && error.code === 'not_found');
+  const resting = !online || gone;
   const retry = (
     <Btn pill center busy={busy} onPress={onRetry}>
       {t('common:actions.retry')}
@@ -49,7 +57,10 @@ export function LoadFailed({ error, onRetry, busy, children, inline = false }: P
         state={resting ? 'idle' : 'think'}
         title={messageFor(error)}
         action={
-          children ? (
+          children && gone ? (
+            // Gone: the way on alone — the screen draws it as its main action.
+            children
+          ) : children ? (
             <View style={{ gap: RHYTHM.parts, alignItems: 'center' }}>
               {retry}
               {children}

@@ -48,7 +48,7 @@ export default function SettingsScreen() {
 
   const title = t('title');
   if (!settings.data || !me.data)
-    return <SettingsPending title={title} root queries={[settings, me]} />;
+    return <SettingsPending title={title} root start="profile" queries={[settings, me]} />;
 
   const { account, learner } = me.data;
   // Without an account or profile there is nothing to set here; the start screen routes on.

@@ -71,3 +71,16 @@ const licenceOf = (s: Source): FigureLicence => ({
 
 /** Every entry of both files: the pictures' sources first, then those of the single elements. */
 export const FIGURE_LICENCES: readonly FigureLicence[] = [...figures, ...parts].map(licenceOf);
+
+/**
+ * The ways out a picture's row offers under its text: to its licence wherever it has a deed, and
+ * always to its source. Decided here, so it is held against the files and not only drawn.
+ */
+export function figureLinks(
+  f: FigureLicence,
+): ReadonlyArray<{ kind: 'licence' | 'source'; url: string }> {
+  return [
+    ...(f.licenceUrl ? [{ kind: 'licence' as const, url: f.licenceUrl }] : []),
+    { kind: 'source' as const, url: f.source },
+  ];
+}

@@ -14,6 +14,7 @@ import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { SetupGuard } from '../components/auth/SetupGuard.js';
 import { DevHostNote } from '../components/lb/DevHostNote.js';
 import { ErrorBoundary } from '../components/lb/ErrorBoundary.js';
 import { LoadingState } from '../components/lb/LoadingState.js';
@@ -313,6 +314,10 @@ export default function RootLayout() {
                 {ready ? (
                   <>
                     <Stack
+                      // No in-app screen is mounted before consent and profile exist (#599).
+                      screenLayout={({ route, children }) => (
+                        <SetupGuard route={route.name}>{children}</SetupGuard>
+                      )}
                       screenOptions={{
                         headerShown: false,
                         animation: reduced ? 'none' : undefined,

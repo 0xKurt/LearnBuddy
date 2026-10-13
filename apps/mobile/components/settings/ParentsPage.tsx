@@ -115,6 +115,8 @@ export function ParentsPage({ account, learner, view, active, pinActive }: Props
           sub={
             busy === 'export' ? t('settings:adult.export.working') : t('settings:adult.export.body')
           }
+          // These rows act here and lead nowhere: no navigation chevron (List.jsx, #599).
+          chevron={false}
           disabled={busy !== null}
           onPress={() => void exportData()}
         />
@@ -127,6 +129,7 @@ export function ParentsPage({ account, learner, view, active, pinActive }: Props
               date: formatDate(due, lang),
               time: formatTime(due, lang),
             })}
+            chevron={false}
             disabled={busy !== null}
             onPress={() => void cancelScheduledDeletion()}
           />
@@ -135,6 +138,7 @@ export function ParentsPage({ account, learner, view, active, pinActive }: Props
             title={t('settings:adult.delete.title')}
             sub={t('settings:adult.delete.body')}
             destructive
+            chevron={false}
             disabled={busy !== null}
             onPress={() => void askDeletion()}
           />

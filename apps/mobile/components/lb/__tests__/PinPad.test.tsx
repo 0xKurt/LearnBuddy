@@ -134,6 +134,22 @@ describe('a PIN that was not taken (`error`)', () => {
     expect(dots('refused')).toHaveLength(4);
   });
 
+  // The screen's line "Die PIN stimmt nicht" stayed while the next PIN was typed (#599): the pad
+  // says when she starts again, so the words go with the red dots.
+  it('tells the screen when she starts again: once, with her first key after each clearing', () => {
+    const start = vi.fn();
+    const view = renderInApp(
+      <PinPad onComplete={() => undefined} error resetKey={1} onStart={start} />,
+    );
+    expect(start).not.toHaveBeenCalled();
+    type('12');
+    expect(start).toHaveBeenCalledOnce();
+    view.rerender(<PinPad onComplete={() => undefined} error resetKey={2} onStart={start} />);
+    expect(start).toHaveBeenCalledOnce();
+    fireEvent.click(key('Letzte Ziffer löschen'));
+    expect(start).toHaveBeenCalledTimes(2);
+  });
+
   it('claims no digits for the refused entry: the words stay the screen’s', () => {
     renderInApp(<PinPad onComplete={() => undefined} error />);
     expect(screen.getByRole('progressbar', { name: '0 von 4 Ziffern eingegeben' })).toBeTruthy();

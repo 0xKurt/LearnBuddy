@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { SCHEMATIC_IMAGE_IDS } from '../../../../packages/shared-math/src/schematics.js';
-import { FIGURE_LICENCES } from '../figureLicences.js';
+import { FIGURE_LICENCES, figureLinks } from '../figureLicences.js';
 
 const FIGURES = join(__dirname, '../../assets/figures');
 const read = (file: string): unknown => JSON.parse(readFileSync(join(FIGURES, file), 'utf8'));
@@ -94,5 +94,31 @@ describe('the licences of the pictures', () => {
       'CC BY-SA 3.0': 7,
       'CC BY-SA 4.0': 1,
     });
+  });
+
+  // What a row of the Lizenzen page offers under its text (#599): held against the files, entry
+  // by entry — a licence with a deed must never stand there without the way to it.
+  it('every entry with a `lizenzUrl` offers its licence, and every entry its source', () => {
+    const Raw = z.array(z.object({ lizenzUrl: z.string(), quelle: z.string() }));
+    const raw = [...Raw.parse(read('sources.json')), ...Raw.parse(read('parts/sources.json'))];
+    expect(raw).toHaveLength(FIGURE_LICENCES.length);
+    let withDeed = 0;
+    raw.forEach((s, i) => {
+      const links = figureLinks(FIGURE_LICENCES[i]!);
+      const where = `${i}: ${s.quelle}`;
+      expect(links.at(-1), where).toEqual({ kind: 'source', url: s.quelle });
+      if (s.lizenzUrl === '') {
+        // In the public domain: there is no deed to lead to.
+        expect(links, where).toHaveLength(1);
+        return;
+      }
+      withDeed += 1;
+      expect(links, where).toEqual([
+        { kind: 'licence', url: s.lizenzUrl },
+        { kind: 'source', url: s.quelle },
+      ]);
+    });
+    // Everything but the 20 works in the public domain.
+    expect(withDeed).toBe(57);
   });
 });

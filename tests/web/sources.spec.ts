@@ -74,6 +74,9 @@ test('a notebook entry: five short questions for the next morning', async ({ pag
   await sendPhoto(page);
   await openSheet(page, 'Biologie', 'Die Photosynthese');
   await expect(page.getByText('Aus deinem Hefteintrag:', { exact: false })).toBeVisible();
-  await expect(page.getByText(/^Biologie · 5 Aufgaben$/)).toBeVisible();
+  // The head names the sheet's subject and pages since #607 ("Biologie · 1 Seite"); how many
+  // questions it became is counted where they stand: one ⋯ per question card.
+  await expect(page.getByText(/^Biologie · 1 Seite$/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Mehr zu Frage [0-9]+$/ })).toHaveCount(5);
   await bothSchemes(page, '121-sources-notebook-entry');
 });

@@ -53,7 +53,16 @@ function LicenceGroup({ hint, entries, open, onToggle, onLink }: GroupProps) {
         {entries.map(({ id, title, licence, text, links = [] }) => {
           const shown = open === id;
           return (
-            <Row key={id} title={title} sub={licence} expanded={shown} onPress={() => onToggle(id)}>
+            <Row
+              key={id}
+              title={title}
+              sub={licence}
+              expanded={shown}
+              // The row unfolds in place and leads nowhere: no navigation chevron (#599). The
+              // line above the group says what a tap does.
+              chevron={false}
+              onPress={() => onToggle(id)}
+            >
               {shown ? (
                 <View style={{ gap: SPACE.sm }}>
                   <Text selectable style={[TYPE.small, { color: palette.ink2 }]}>
@@ -77,7 +86,7 @@ function LicenceGroup({ hint, entries, open, onToggle, onLink }: GroupProps) {
 export function LicencesPage() {
   const { t } = useTranslation('settings');
   const licences = useLicences()?.LICENCES ?? null;
-  const figures = useFigureLicences()?.FIGURE_LICENCES ?? null;
+  const figures = useFigureLicences();
   const [open, setOpen] = useState<string | null>(null);
   const toggle = (id: string) => setOpen((now) => (now === id ? null : id));
   const openLink = (url: string) => {
@@ -108,7 +117,7 @@ export function LicencesPage() {
       {/* The pictures in the tasks (#599): every entry of both sources.json files, none left out. */}
       <LicenceGroup
         hint={t('about.figures_intro')}
-        entries={figures.map((f, i) => ({
+        entries={figures.FIGURE_LICENCES.map((f, i) => ({
           // Its place in the list: the entries of a row picture share file and title.
           id: `figure:${i}`,
           // The work's title without its file ending, as the source names it.
@@ -116,10 +125,10 @@ export function LicencesPage() {
           licence: f.licence === 'Public domain' ? t('about.figures_public_domain') : f.licence,
           // The finished sentence the source asks for, then what we changed.
           text: `${f.attribution}\n${t('about.figures_edited', { what: f.edited })}`,
-          links: [
-            ...(f.licenceUrl ? [{ label: t('about.figures_licence'), url: f.licenceUrl }] : []),
-            { label: t('about.figures_source'), url: f.source },
-          ],
+          links: figures.figureLinks(f).map(({ kind, url }) => ({
+            label: t(kind === 'licence' ? 'about.figures_licence' : 'about.figures_source'),
+            url,
+          })),
         }))}
         open={open}
         onToggle={toggle}

@@ -11,7 +11,7 @@
 import type { UseQueryResult } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, Text, type ScrollViewProps } from 'react-native';
+import { RefreshControl, ScrollView, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -24,7 +24,7 @@ import { FormFrameContext, useFormViewport } from '../lb/FormFrameClearance.js';
 import { KeyboardSafe } from '../lb/KeyboardSafe.js';
 import { LoadFailed } from '../lb/LoadFailed.js';
 import { Screen } from '../lb/Screen.js';
-import { SettingsSkeleton } from '../lb/Skeletons.js';
+import { SettingsSkeleton, type SettingsStart } from '../lb/Skeletons.js';
 
 /** A page's way back: to where she came from; opened by a link, to the settings. */
 export const SETTINGS_BACK = {
@@ -46,18 +46,11 @@ export function SettingsBody({ list = false, refresh, children }: BodyProps) {
   const form = useFormViewport();
   // Leaving the page (also for the PIN pad, which sets a fresh one) ends the parents' PIN.
   useFocusEffect(useCallback(() => () => clearAdminToken(), []));
-  // A focused field (the parents' PIN) is kept whole above the keyboard.
-  const follow: Pick<ScrollViewProps, 'onLayout' | 'onContentSizeChange' | 'onScroll'> = {
-    onLayout: form.controller.refresh,
-    onContentSizeChange: form.controller.refresh,
-    onScroll: ({ nativeEvent }) => {
-      form.offset.current = nativeEvent.contentOffset.y;
-    },
-  };
   return (
     <KeyboardSafe style={{ flex: 1 }}>
       <ScrollView
-        {...follow}
+        // A focused field (the parents' PIN) is kept whole above the keyboard.
+        {...form.follow}
         ref={form.scroll}
         testID={list ? 'scroll-list' : undefined}
         keyboardShouldPersistTaps="handled"
@@ -80,6 +73,8 @@ type PendingProps = {
   subtitle?: string;
   /** The settings themselves leave with the head's own back. */
   root?: boolean;
+  /** What the page opens with, so its bones start where its content will (#599). */
+  start?: SettingsStart;
   queries: ReadonlyArray<Pick<UseQueryResult, 'data' | 'error' | 'refetch'>>;
 };
 
@@ -87,7 +82,7 @@ type PendingProps = {
  * A page while what it needs has not arrived: the failure with "Nochmal versuchen", or the
  * bones — under the same head, with Buddy thinking.
  */
-export function SettingsPending({ title, subtitle, root = false, queries }: PendingProps) {
+export function SettingsPending({ title, subtitle, root = false, start, queries }: PendingProps) {
   const { t } = useTranslation('common');
   const failed = queries.find((q) => q.data === undefined && q.error);
   return (
@@ -104,7 +99,7 @@ export function SettingsPending({ title, subtitle, root = false, queries }: Pend
           onRetry={() => void Promise.all(queries.map((q) => q.refetch()))}
         />
       ) : (
-        <SettingsSkeleton label={t('loading')} />
+        <SettingsSkeleton label={t('loading')} start={start} />
       )}
     </Screen>
   );
