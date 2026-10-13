@@ -48,17 +48,19 @@ const SEND: UploadDeps = { createMaterial, submitMaterial, putPhoto, newId };
 export function registerLearning(): void {
   // ── The chat: Buddy's offers to start something, always shown, one tap starts it …
   addActionCard('offer_learning', (offer, on) => (
-    <OfferCard actionId={on.actionId} offer={offer} spoken={on.spoken} />
+    <OfferCard actionId={on.actionId} offer={offer} spoken={on.spoken} quiet={on.quiet} />
   ));
   // … a Kopfrechnen round (issue #243): the same card, code writes the tasks …
   addActionCard('offer_drill', (offer, on) => (
-    <DrillOfferCard actionId={on.actionId} offer={offer} />
+    <DrillOfferCard actionId={on.actionId} offer={offer} quiet={on.quiet} />
   ));
   // … the role card: the scene, her tasks and the way out (issue #244) …
-  addActionCard('start_roleplay', (roleplay) => <RoleplayCard roleplay={roleplay} />);
+  addActionCard('start_roleplay', (roleplay, on) => (
+    <RoleplayCard roleplay={roleplay} quiet={on.quiet} />
+  ));
   // … and a rehearsal talk or reading aloud, recorded on the card itself (issue #264).
   addActionCard('offer_rehearsal', (offer, on) => (
-    <RehearseCard actionId={on.actionId} offer={offer} />
+    <RehearseCard actionId={on.actionId} offer={offer} quiet={on.quiet} />
   ));
   // In place of a bubble: the feedback after a roleplay (issue #384), then what a rehearsal
   // measured (issue #264) — the "So lief's" list the Probetest ends with.

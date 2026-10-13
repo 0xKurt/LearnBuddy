@@ -25,10 +25,16 @@ type Action = MessageView['actions'][number];
 export type Tool = ActionSummary['tool'];
 type SummaryOf<K extends Tool> = Extract<ActionSummary, { tool: K }>;
 
-/** The card one of Buddy's actions brings into the chat; it stands where a receipt would. */
+/** How loud a card's button is: the violet one belongs to the bar on top when there is one. */
+export type Quiet = 'soft' | 'primary';
+
+/**
+ * The card one of Buddy's actions brings into the chat; it stands where a receipt would.
+ * `quiet`: whether its start may be the screen's one filled button (`loudCard`).
+ */
 export type ActionCard<K extends Tool> = (
   summary: SummaryOf<K>,
-  on: { actionId: string; spoken: boolean },
+  on: { actionId: string; spoken: boolean; quiet: Quiet },
 ) => ReactNode;
 
 const actionCards = registry<Tool, ActionCard<Tool>>('Karten im Gespräch');
@@ -53,8 +59,33 @@ export function cardTools(): Tool[] {
 }
 
 /** The card one of Buddy's actions brings into the chat; null where a receipt says it. */
-export function actionCard(a: Action, spoken: boolean): ReactNode {
-  return actionCards.get(a.summary.tool)?.(a.summary, { actionId: a.id, spoken }) ?? null;
+export function actionCard(a: Action, spoken: boolean, quiet: Quiet = 'primary'): ReactNode {
+  return actionCards.get(a.summary.tool)?.(a.summary, { actionId: a.id, spoken, quiet }) ?? null;
+}
+
+/**
+ * The one card in the thread whose start is filled (HANDOFF §4: exactly one primary per screen):
+ * the newest that can still be started — and none while something else on the screen holds the
+ * primary (`quiet` soft: the bar on top, the microphone of the conversation screen). Older
+ * offers keep their button, on paper.
+ */
+export function loudCard(messages: readonly MessageView[], quiet: Quiet): string | null {
+  if (quiet === 'soft') return null;
+  for (let m = messages.length - 1; m >= 0; m -= 1) {
+    const actions = messages[m]?.actions ?? [];
+    for (let a = actions.length - 1; a >= 0; a -= 1) {
+      const action = actions[a];
+      if (action && startable(action)) return action.id;
+    }
+  }
+  return null;
+}
+
+/** A card with a start she can still tap: not taken back, refused by the server, or over. */
+function startable(a: Action): boolean {
+  if (a.status === 'undone' || !hasCard(a.summary.tool)) return false;
+  if (a.summary.tool === 'offer_learning') return a.summary.startable !== false;
+  return a.summary.tool !== 'start_roleplay' || a.summary.status === 'active';
 }
 
 /** A message a domain draws itself, in place of its bubble (the text stays for reading aloud). */
@@ -80,9 +111,6 @@ export const readAlong =
 export const workingOn = slot<(h: BuddyHome) => ReactNode>('Zeile über dem Gespräch');
 
 // ─────────────── the home ───────────────
-
-/** How loud a notice's button is: the violet one belongs to the bar on top when there is one. */
-export type Quiet = 'soft' | 'primary';
 
 /**
  * The button that says it (components/core/Btn.jsx): the paper one while the bar on top holds

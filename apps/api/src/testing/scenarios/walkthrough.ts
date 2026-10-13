@@ -44,6 +44,7 @@ import {
   transcribeRules,
   tutorRules,
 } from './rules.js';
+import { scriptSafeguarding } from './safeguarding.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
 import { scriptTaskParts } from './taskParts.js';
@@ -122,6 +123,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptCloze();
   scriptDrill();
   scriptRoleplay();
+  scriptSafeguarding();
   // Every answer is matched by what the request says — what the learner wrote, what was asked
   // for, why Buddy checks, which question, which photo — so one spec cannot shift the answers
   // of the next (issues #81, #350). Installed after every scenario added its rules.

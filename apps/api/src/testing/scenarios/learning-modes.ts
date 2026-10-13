@@ -8,6 +8,7 @@
 import type { LlmRequest } from '../../llm/gateway.js';
 import { scriptGenerations } from './generations.js';
 import { hintRules, reexplainRules, tutorRules } from './rules.js';
+import { concern, fromDistressLearner } from './safeguarding.js';
 import { says, scriptTurns } from './turns.js';
 
 /** The fields of a generated question that most scripted questions leave at their default. */
@@ -812,8 +813,12 @@ export function scriptLearningModes(): void {
     },
     {
       // Conversation mode: what she said (the fake microphone's tone, "heard" by the script).
+      // One learner's turn is a concern instead (safeguarding.ts): the help answer, spoken.
       when: /was steht diese woche an/i,
-      answer: says('Diese Woche steht noch nichts an – magst du etwas üben?'),
+      answer: (req) =>
+        fromDistressLearner(req)
+          ? concern()
+          : says('Diese Woche steht noch nichts an – magst du etwas üben?')(req),
     },
   );
   // Tutor: hints for homework (never the solution).

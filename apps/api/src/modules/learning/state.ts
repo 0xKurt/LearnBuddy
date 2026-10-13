@@ -141,6 +141,12 @@ type SessionBrief = {
   total: number;
   answered: number;
   first_try: number;
+  /**
+   * Written by the background preparation of an offer (practice/prepare.ts, issue #48) and never
+   * worked in: nothing she started, so nothing to "go on with" (`loadStandingOffers` reads
+   * "taken up" the same way; CLAUDE.md rule 5).
+   */
+  untouched_offer: boolean;
   secure_topics: string[];
   shaky_topics: string[];
 };
@@ -230,6 +236,18 @@ const LIMITS = {
 const STANDING_WINDOW_MS = 24 * 3_600_000;
 
 /**
+ * She worked in the session `ps` (SQL): a question answered, tried, revealed, helped with a hint,
+ * put off or flagged — or a word of hers to the tutor. One reading for "taken up" and for what
+ * the home may offer to go on with (#599 correction, CLAUDE.md rule 5).
+ */
+const WORKED_IN = `(exists (select 1 from session_items w
+                              where w.session_id = ps.id
+                                and (w.status <> 'open' or w.attempts > 0 or w.hints_used > 0
+                                     or w.deferred_at is not null or w.flagged_at is not null))
+                    or exists (select 1 from practice_turns w
+                                where w.session_id = ps.id and w.role = 'learner'))`;
+
+/**
  * Offers of Buddy's she has not taken up (issue #184), oldest first.
  *
  * Taken up means worked in, not prepared: the row `practice_sessions` gets under the offer's
@@ -268,10 +286,7 @@ export async function loadStandingOffers(
         and not exists (
           select 1 from practice_sessions ps
            where ps.learner_id = a.learner_id and ps.client_request_id = a.id
-             and (ps.status <> 'active'
-                  or exists (select 1 from session_items si
-                              where si.session_id = ps.id
-                                and (si.status <> 'open' or si.attempts > 0))))
+             and (ps.status <> 'active' or ${WORKED_IN}))
       order by a.seq desc
       limit $3`,
     [learnerId, new Date(now.getTime() - STANDING_WINDOW_MS), LIMITS.standing],
@@ -381,6 +396,10 @@ async function loadSessions(db: Db, learnerId: string): Promise<SessionBrief[]> 
             count(si.item_id)::int as total,
             count(*) filter (where si.status <> 'open')::int as answered,
             count(*) filter (where si.status = 'correct' and si.first_try_correct)::int as first_try,
+            (exists (select 1 from buddy_actions a
+                      where a.learner_id = ps.learner_id and a.id = ps.client_request_id
+                        and a.tool = 'offer_learning')
+             and not ${WORKED_IN}) as untouched_offer,
             coalesce(json_agg(json_build_object('topic', i.topic, 'status', si.status,
                                                 'first_try_correct', si.first_try_correct,
                                                 -- Recognition and production are different

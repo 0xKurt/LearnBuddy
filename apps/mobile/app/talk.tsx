@@ -30,18 +30,18 @@ import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Platform, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Linking, Platform, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Conversation } from '../components/buddy/Conversation.js';
-import { hasCard, messageCard } from '../components/buddy/extensions.js';
 import { roleplayLabel, useEndRoleplay } from '../components/buddy/RoleplayLive.js';
 import { Btn } from '../components/lb/Btn.js';
 import { IconBtn } from '../components/lb/IconBtn.js';
 import { Glow } from '../components/lb/Glow.js';
-import { TalkCaption } from '../components/voice/TalkCaption.js';
 import { talkLine, type TalkReply } from '../components/voice/talkLine.js';
-import { TalkOrb, talkOrbRoom, type OrbMode } from '../components/voice/TalkOrb.js';
+import type { OrbMode } from '../components/voice/TalkOrb.js';
+import { carriesCard, roleIn, talkTail } from '../components/voice/talkScene.js';
+import { TalkStage } from '../components/voice/TalkStage.js';
+import { TalkTail } from '../components/voice/TalkTail.js';
 import { VoiceRow } from '../components/voice/VoiceRow.js';
 import { talkMode } from '../lib/buddy/moon.js';
 import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
@@ -71,33 +71,12 @@ import { useSay } from '../lib/speech/say.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TALK } from '../lib/theme/talk.js';
-import { useEndScroll } from '../lib/useEndScroll.js';
-import { CHAT } from '../lib/theme/chat.js';
 import { TYPE } from '../lib/theme/type.js';
-import { RADIUS } from '../lib/theme/radius.js';
 import { SPACE, TOUCH, bottomRoom } from '../lib/theme/space.js';
 import { attachInChat } from '../lib/capture/attachRequest.js';
 import { pageHandler } from '../lib/capture/pages.js';
 
 type Phase = TalkPhase;
-
-/** How many of the newest messages the talk screen shows (a tail, not the history). */
-const TAIL = 3;
-
-/** Who Buddy plays in the running roleplay, from its role card in the thread (if still there). */
-function roleIn(thread: readonly MessageView[], roleplayId: string): string | null {
-  for (const m of thread)
-    for (const a of m.actions)
-      if (a.summary.tool === 'start_roleplay' && a.summary.roleplay_id === roleplayId)
-        return a.summary.role;
-  return null;
-}
-
-/** Something to tap or to look at: a card of one of Buddy's actions, or a message drawn as one. */
-function carriesCard(m: MessageView | undefined): boolean {
-  if (!m || m.role !== 'buddy') return false;
-  return m.actions.some((a) => hasCard(a.summary.tool)) || messageCard(m) !== null;
-}
 
 export default function TalkScreen() {
   const { palette } = useTheme();
@@ -105,8 +84,6 @@ export default function TalkScreen() {
   const insets = useSafeAreaInsets();
   const window = useWindowDimensions();
   const say = useSay();
-  const scroll = useRef<ScrollView>(null);
-  const endScroll = useEndScroll(scroll);
   const [phase, setPhase] = useState<Phase>('paused');
   /** Her turn on its way: her bubble until the server's thread carries the message. */
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
@@ -121,6 +98,8 @@ export default function TalkScreen() {
   /** His voice has been heard for the reply he is on (lib/speech/talkState.ts `heardHim`). */
   const [heard, setHeard] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  /** The measured room between the header and the controls (components/voice/talkRoom.ts). */
+  const [middle, setMiddle] = useState<number | null>(null);
   const open = useRef(true);
 
   // While a roleplay runs (issue #244) she speaks its language, and the mic listens in it.
@@ -421,8 +400,8 @@ export default function TalkScreen() {
   // The same thread as the chat, seen from here: its newest messages as the chat's
   // own bubbles (issue #18) — where there is something to tap or to look at, or a scene runs.
   const thread = home.data?.thread ?? [];
-  const tail = thread.slice(-TAIL);
   const roleplay = home.data?.roleplay ?? null;
+  const tail = talkTail(thread, roleplay?.id ?? null);
   const role = roleplay ? roleIn(thread, roleplay.id) : null;
   const threaded = roleplay !== null || carriesCard(thread[thread.length - 1]);
   // Her words as her own bubble: the live transcript while she speaks, then what she
@@ -483,9 +462,6 @@ export default function TalkScreen() {
     if (await scene.end()) leave();
   }
 
-  const compact = window.height < TALK.compactBelow;
-  const stage = compact ? TALK.compactStageSize : roleplay ? TALK.liveStageSize : TALK.stageSize;
-
   return (
     <SafeAreaView
       // The bottom inset belongs to the button row below, not to the frame as well: both
@@ -526,81 +502,42 @@ export default function TalkScreen() {
         </View>
       </View>
 
-      <View style={{ flex: 1, justifyContent: 'center', gap: SPACE.xl }}>
+      <View
+        onLayout={(e) => setMiddle(e.nativeEvent.layout.height)}
+        style={{
+          flex: 1,
+          // A scene's stage is pinned and only its lines move under it (Extra.jsx:186–195);
+          // otherwise the stage stands in the middle (Talk.jsx:24).
+          justifyContent: roleplay ? 'flex-start' : 'center',
+          // The tail brings its own room for the fade at its top edge (TalkTail).
+          gap: threaded ? TALK.tailGap : SPACE.xl,
+        }}
+      >
         {/* Conversation mode is the explicit large-Orb exception (HANDOFF §4). */}
-        <View style={{ alignItems: 'center', flexShrink: 0, paddingHorizontal: SPACE.xxl }}>
-          <TalkOrb
-            mode={orbMode}
-            size={stage}
-            level={voice.level}
-            {...(phase === 'speaking'
-              ? // Same action as the mic while Buddy speaks, so the same words name it.
-                { onPress: interrupt, pressLabel: t('buddy:talk.interrupt') }
-              : {})}
-          />
-          {role ? (
-            // Who Buddy plays, as the scene's pill (Extra.jsx:191).
-            <View
-              style={{
-                backgroundColor: palette.paper,
-                borderRadius: RADIUS.round,
-                paddingVertical: SPACE.sm,
-                paddingHorizontal: SPACE.md,
-                marginBottom: SPACE.md,
-              }}
-            >
-              <Text numberOfLines={1} style={TYPE.headerMeta}>
-                {t('buddy:roleplay.plays', { role })}
-              </Text>
-            </View>
-          ) : null}
-          {/* The orb's box already holds the halo's room: the caption stands `groupGap` under
-              the orb itself (Talk.jsx:25). Under a scene's pill it simply follows. */}
-          <View
-            style={{
-              alignSelf: 'stretch',
-              marginTop: role ? 0 : TALK.groupGap - talkOrbRoom(stage),
-            }}
-          >
-            <TalkCaption
-              status={status}
-              line={line}
-              lines={compact ? TALK.lineMaxCompact : TALK.lineMax}
-              room={!threaded}
-            />
-          </View>
-        </View>
+        <TalkStage
+          mode={orbMode}
+          level={voice.level}
+          interrupt={
+            phase === 'speaking' ? { onPress: interrupt, label: t('buddy:talk.interrupt') } : null
+          }
+          role={role}
+          live={roleplay !== null}
+          status={status}
+          line={line}
+          keepRoom={!threaded}
+          height={window.height}
+          middle={middle}
+        />
 
-        {/* The conversation's natural-height tail follows its end: the same bubbles,
-          cards and streaming as the chat (issue #18), grouped with the stage. */}
-        {/* Own name, not "scroll-thread": the home stays mounted under this modal, and two
-          identical testIDs make every thread locator ambiguous (Playwright strict mode). */}
         {threaded ? (
-          <ScrollView
-            ref={scroll}
-            testID="scroll-talk"
-            style={{ flexGrow: 0, flexShrink: 1 }}
-            contentContainerStyle={{
-              paddingHorizontal: SPACE.lg,
-              paddingTop: SPACE.md,
-              paddingBottom: SPACE.sm,
-            }}
-            onLayout={() => endScroll.toEnd(false)}
-            onContentSizeChange={() => endScroll.toEnd(true)}
-            onScroll={endScroll.onScroll}
-            {...endScroll.inputProps}
-            scrollEventThrottle={CHAT.scrollThrottle}
-          >
-            <Conversation
-              messages={tail}
-              pending={bubble}
-              live={live}
-              busy={phase === 'thinking'}
-              spoken
-              // While she is still speaking, her forming words are no writing of Buddy's.
-              showTyping={phase !== 'listening'}
-            />
-          </ScrollView>
+          <TalkTail
+            messages={tail}
+            pending={bubble}
+            live={live}
+            busy={phase === 'thinking'}
+            // While she is still speaking, her forming words are no writing of Buddy's.
+            showTyping={phase !== 'listening'}
+          />
         ) : null}
       </View>
 

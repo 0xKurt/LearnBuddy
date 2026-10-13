@@ -44,6 +44,7 @@ export function Composer({
   onSend,
   onTalk,
   onTyping,
+  onAttached,
 }: {
   disabled: boolean;
   /** Buddy is answering what she sent: the send button becomes "Stopp". */
@@ -59,6 +60,8 @@ export function Composer({
    * (`headState` `typing`, design ui_kits/app/App.jsx:46; decision on #599).
    */
   onTyping?: (typing: boolean) => void;
+  /** Pages stand above the field: the first-visit Home gives them its room (HomeIntro). */
+  onAttached?: (attached: boolean) => void;
 }) {
   const { t } = useTranslation(['buddy', 'common']);
   // Kept on the device: a half-typed question survives Android killing the app.
@@ -89,6 +92,11 @@ export function Composer({
     },
   });
   const attached = pages.photos.length > 0;
+  const tellAttached = useRef(onAttached);
+  tellAttached.current = onAttached;
+  useEffect(() => {
+    tellAttached.current?.(attached);
+  }, [attached]);
 
   const send = () => {
     if (disabled || pages.busy) return;

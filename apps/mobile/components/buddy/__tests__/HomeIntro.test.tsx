@@ -67,4 +67,27 @@ describe('first-visit Home', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Einfach mal üben' }));
     expect(send).toHaveBeenLastCalledWith('Einfach mal üben');
   });
+
+  // #599 correction: with the strip of pages above the Composer the list was cut after its
+  // first row (360×740) and the headline under the strip (390×544). Whole or not drawn.
+  it('draws neither the greeting nor the ways to start while pages are attached', () => {
+    const intro = (pages: boolean) => (
+      <HomeIntro
+        h={home}
+        refreshing={false}
+        onRefresh={() => undefined}
+        onSend={() => undefined}
+        onPhoto={() => undefined}
+        pages={pages}
+      />
+    );
+    const view = renderInApp(intro(true));
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(screen.queryAllByRole('button')).toEqual([]);
+    expect(screen.queryByTestId('scroll-home')).toBeNull();
+    // The pages are gone: everything is back.
+    view.rerender(intro(false));
+    expect(screen.getByRole('heading').textContent).toContain('Hallo Lena.');
+    expect(screen.getAllByRole('button')).toHaveLength(3);
+  });
 });

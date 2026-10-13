@@ -16,8 +16,8 @@
 // (lib/buddy/sessionAnchor.ts, lib/buddy/appStart.ts, issue #104) — ends the conversation with
 // a greeting of Buddy's and opens on it: the greeting stands on top, everything earlier one
 // swipe above. Client-side only; no model is asked and nothing is stored for it. That greeting
-// names the practice she just finished when there is one, and then carries its "Ansehen"
-// itself instead of a card under it repeating the same thing (issue #195).
+// names the practice she just finished when there is one, and then carries the way into it
+// itself — the thread's one card in the greeting's own block, which says nothing twice (#195).
 //
 // This file puts the screen together (issue #311); each part has one job:
 //   · lib/buddy/useHomeSend — what she writes and Buddy's reply (Stopp, Vorlesen);
@@ -39,7 +39,7 @@ import { DecisionCard } from '../components/buddy/DecisionCard.js';
 import { Header } from '../components/buddy/Header.js';
 import { HeaderMenu } from '../components/lb/HeaderMenu.js';
 import { HomeIntro } from '../components/buddy/HomeIntro.js';
-import { homeNotices, ResultViewBtn } from '../components/buddy/HomeNotices.js';
+import { homeNotices, ResultView } from '../components/buddy/HomeNotices.js';
 import { HomeThread } from '../components/buddy/HomeThread.js';
 import { HomeTop } from '../components/buddy/HomeTop.js';
 import { StartSheets } from '../components/buddy/StartSheets.js';
@@ -90,6 +90,7 @@ export default function BuddyScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   /** She is writing or dictating a message (the Composer says so): the head's orb listens. */
   const [typing, setTyping] = useState(false);
+  const [attached, setAttached] = useState(false);
   const recording = useThreadRecording((s) => s.on);
   const thread = home.data?.thread;
   const newestReply = thread ? newestBuddyId(thread) : null;
@@ -115,6 +116,7 @@ export default function BuddyScreen() {
   if (home.isPending || (home.isError && !home.data)) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
+        <Glow />
         {/* The head is there before the home is (design ui_kits/app/Extra.jsx `SystemState`):
             Buddy thinks, and ⋯ already leads to the places — the ways to start need the home. */}
         <Header state="think" onMenu={() => setMenuOpen(true)} />
@@ -266,7 +268,7 @@ export default function BuddyScreen() {
                     text: sessionStart.text,
                     // What the greeting itself offers: the practice it just named, in full.
                     action: greeting.result ? (
-                      <ResultViewBtn
+                      <ResultView
                         sessionId={greeting.result.session_id}
                         busy={busy}
                         quiet={quiet}
@@ -279,6 +281,7 @@ export default function BuddyScreen() {
                 // One action chooser per turn; factual receipt words remain plain text.
                 receipts="turn"
                 carriedOnTop={carriedOnTop}
+                quiet={quiet}
                 undoError={undoError}
                 onUndo={(id) => {
                   setUndoError(null);
@@ -300,6 +303,7 @@ export default function BuddyScreen() {
               onRefresh={refetch}
               onSend={(text) => void send(text)}
               onPhoto={() => askAttach({ open: 'camera' })}
+              pages={attached}
             />
           )}
         </View>
@@ -310,6 +314,7 @@ export default function BuddyScreen() {
           onSend={(text) => send(text)}
           onTalk={() => router.push('/talk')}
           onTyping={setTyping}
+          onAttached={setAttached}
         />
       </KeyboardSafe>
 

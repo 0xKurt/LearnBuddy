@@ -31,6 +31,7 @@ import {
 } from './voice.js';
 import { useMounted } from '../useMounted.js';
 import { levelFromDb } from './level.js';
+import { micRefusal, useOwnsRefusal } from './micRefusal.js';
 import { START_DEADLINE_MS, startTimedOut } from './startDeadline.js';
 
 /** Speech, not music: mono, 22.05 kHz AAC in an .m4a on phones; the browser's own format on the web. */
@@ -181,6 +182,9 @@ export function useRecording({
   const [phase, setPhaseState] = useState<RecordPhase>('idle');
   /** Microphone access was refused; canAskAgain = false means only the settings can change it. */
   const [denied, setDenied] = useState<{ canAskAgain: boolean } | null>(null);
+  /** Only the place refused last says so (lib/speech/micRefusal.ts): the note stands once. */
+  const me = useRef({}).current;
+  const saysRefused = useOwnsRefusal(me);
   const phaseRef = useRef<RecordPhase>('idle');
   const startedAt = useRef(0);
   /** The file being recorded, known from the start: removed even when stopping fails. */
@@ -454,6 +458,7 @@ export function useRecording({
       if (!perm.granted && perm.canAskAgain) perm = await requestRecordingPermissionsAsync();
       if (!perm.granted) {
         if (mounted.current) setDenied({ canAskAgain: perm.canAskAgain });
+        micRefusal.claim(me);
         handlers.current.onFailed('denied');
         setPhase('idle');
         return;
@@ -526,7 +531,7 @@ export function useRecording({
     maxMs: onChunk ? null : maxMs,
     /** How loud she is right now (0…1; 0 when not recording or not measured). */
     level: phase === 'recording' ? levelFromDb(state.metering) : 0,
-    denied,
+    denied: saysRefused ? denied : null,
     start,
     stop,
     cancel,

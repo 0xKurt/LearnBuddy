@@ -161,6 +161,10 @@ for (const look of SCREEN_LOOKS.filter((l) => l.family === 'pastell'))
     await page.getByRole('button', { name: 'Dein Material', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Dein Material', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+    // The sheet comes in: its first row is there before the rows are read.
+    await expect(
+      page.locator('[aria-modal="true"]:visible').getByRole('button', { name: PLACES[0]! }),
+    ).toBeVisible();
     expect(await menuRows(page)).toEqual(PLACES);
     await screenShots(page, name('menu-library'), true);
     await page.getByRole('button', { name: 'Verlauf', exact: true }).click();

@@ -8,10 +8,11 @@
 // An answer that arrived whole — how the fixed help answer arrives (rule 18, `talkLine.ts`) —
 // stands in full and in full ink from the first moment, also while it is read.
 //
-// The line is never cut: what does not fit its room scrolls inside it — her newest words stay in
-// sight, his finished answer starts at its beginning.
+// The line is never cut silently: what does not fit its room (`lineRoom`, decided in
+// `talkRoom.ts`) scrolls inside it — her newest words stay in sight, his finished answer starts at
+// its beginning — and the edge where more follows fades out (components/lb/EdgeFade.tsx).
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
@@ -19,24 +20,30 @@ import { markdownPlain } from '../../lib/buddy/markdown.js';
 import { useSay } from '../../lib/speech/say.js';
 import { useBuddyVoice } from '../../lib/speech/useBuddyVoice.js';
 import { highlightedSentence } from '../../lib/speech/voiceState.js';
+import { CHAT } from '../../lib/theme/chat.js';
 import { TALK } from '../../lib/theme/talk.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { TopEdgeFade, bottomEdgeMask, topEdgeMask } from '../lb/EdgeFade.js';
 import { InlineText } from '../lb/InlineText.js';
 import { Rise } from '../lb/Motion.js';
 import { lineKey, sentenceAt, type TalkLineOf } from './talkLine.js';
+import { lineCut } from './talkRoom.js';
 
 export function TalkCaption({
   status,
   line,
-  lines = TALK.lineMax,
+  lineRoom = TALK.lineMax * TYPE.question.lineHeight,
+  onText,
   room = true,
 }: {
   /** What Buddy is doing, decided by lib/speech/talkState.ts — a claim, not a label. */
   status: string;
   line: TalkLineOf;
-  /** How many lines of words stand before the rest scrolls. */
-  lines?: number;
+  /** How high the words may stand before the rest scrolls (components/voice/talkRoom.ts). */
+  lineRoom?: number;
+  /** The words' real height once laid out: what `talkRoom` decides the stage by. */
+  onText?: (height: number) => void;
   /** Keep the line's room while it is empty, so the orb does not move when words come. */
   room?: boolean;
 }) {
@@ -50,6 +57,10 @@ export function TalkCaption({
   const sentence = his && his.speaking && !his.whole ? highlightedSentence(voice, his.text) : null;
   const words = his ? sentenceAt(his.text, sentence) : line?.text;
   const strong = his !== null && (his.speaking || his.whole);
+  const [content, setContent] = useState<number | null>(null);
+  // Her words are followed to their end; his answer is read from its beginning.
+  const [atEnd, setAtEnd] = useState(false);
+  const cut = lineCut({ content, room: lineRoom, atEnd });
   return (
     <View
       style={{
@@ -67,40 +78,48 @@ export function TalkCaption({
         {status}
       </Text>
       {line && words ? (
-        <ScrollView
-          ref={scroll}
-          testID="scroll-talk"
-          style={{
-            alignSelf: 'stretch',
-            flexGrow: 0,
-            maxHeight: lines * TYPE.question.lineHeight,
-          }}
-          onContentSizeChange={() =>
-            line.who === 'her'
-              ? scroll.current?.scrollToEnd({ animated: false })
-              : scroll.current?.scrollTo({ y: 0, animated: false })
-          }
-        >
-          <Rise
-            // His next sentence is a new line; growing words stay in the one that is there.
-            key={lineKey(line, sentence)}
-            testID="talk-line"
-            accessible
-            accessibilityRole="text"
-            accessibilityLabel={`${t(line.who === 'buddy' ? 'thread.buddy' : 'thread.you')}: ${say(
-              markdownPlain(words, { spoken: true }),
-            )}`}
+        <View style={{ alignSelf: 'stretch' }}>
+          <ScrollView
+            ref={scroll}
+            testID="scroll-talk"
+            style={[
+              { alignSelf: 'stretch', flexGrow: 0, maxHeight: lineRoom },
+              cut === 'bottom' ? bottomEdgeMask() : cut === 'top' ? topEdgeMask : null,
+            ]}
+            scrollEventThrottle={CHAT.scrollThrottle}
+            onScroll={({ nativeEvent: e }) =>
+              setAtEnd(e.contentOffset.y + e.layoutMeasurement.height >= e.contentSize.height - 1)
+            }
+            onContentSizeChange={(_, height) => {
+              setContent(height);
+              onText?.(height);
+              setAtEnd(line.who === 'her');
+              if (line.who === 'her') scroll.current?.scrollToEnd({ animated: false });
+              else scroll.current?.scrollTo({ y: 0, animated: false });
+            }}
           >
-            <InlineText
-              text={words}
-              accessible={false}
-              style={[
-                TYPE.question,
-                { textAlign: 'center', color: strong ? palette.ink : palette.ink2 },
-              ]}
-            />
-          </Rise>
-        </ScrollView>
+            <Rise
+              // His next sentence is a new line; growing words stay in the one that is there.
+              key={lineKey(line, sentence)}
+              testID="talk-line"
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={`${t(line.who === 'buddy' ? 'thread.buddy' : 'thread.you')}: ${say(
+                markdownPlain(words, { spoken: true }),
+              )}`}
+            >
+              <InlineText
+                text={words}
+                accessible={false}
+                style={[
+                  TYPE.question,
+                  { textAlign: 'center', color: strong ? palette.ink : palette.ink2 },
+                ]}
+              />
+            </Rise>
+          </ScrollView>
+          {cut ? <TopEdgeFade bottom={cut === 'bottom'} /> : null}
+        </View>
       ) : null}
     </View>
   );

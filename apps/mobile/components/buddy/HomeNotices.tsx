@@ -308,8 +308,12 @@ function FailedNotice({
   );
 }
 
-/** "Ansehen": the full view of a finished practice, with Buddy's greeting that names it. */
-export function ResultViewBtn({
+/**
+ * The finished practice with Buddy's greeting that names it: the thread's one card
+ * (ui_kits/app/Flows.jsx `after`), with "Ansehen" into the full view. No detail — the greeting
+ * above it has said how it went, and the card does not say it again (issue #195).
+ */
+export function ResultView({
   sessionId,
   busy,
   quiet,
@@ -320,13 +324,16 @@ export function ResultViewBtn({
 }) {
   const { t } = useTranslation('buddy');
   return (
-    <Btn
-      size="sm"
-      variant={quietVariant(quiet)}
-      disabled={busy}
-      onPress={() => router.push(`/practice/${sessionId}`)}
-    >
-      {t('buddy:now.result_view')}
-    </Btn>
+    <ChatCard
+      tone="accent"
+      icon="check"
+      title={t('buddy:now.result_title')}
+      primary={{
+        label: t('buddy:now.result_view'),
+        variant: quietVariant(quiet),
+        disabled: busy,
+        onPress: () => router.push(`/practice/${sessionId}`),
+      }}
+    />
   );
 }

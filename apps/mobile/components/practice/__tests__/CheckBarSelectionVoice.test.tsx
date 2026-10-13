@@ -26,11 +26,12 @@ vi.mock('../../voice/VoiceRow.js', () => ({
     action: React.ReactNode;
     centerAction: React.ReactNode;
     left: { onPress: () => void };
-    mic: { filled: boolean };
+    mic: { filled: boolean; visibleLabel: string };
   }) => (
     <div
       data-testid="voice"
       data-filled={String(input.filled)}
+      data-pill={input.visibleLabel}
       data-center-check={String(Boolean(centerAction))}
     >
       <button aria-label="Keyboard" onClick={left.onPress} />
@@ -95,27 +96,29 @@ it('keeps recording central, then puts ready Check in the same central slot and 
   expect(spoken).not.toHaveBeenCalled();
 });
 
-// Practice in conversation as the design has it (ui_kits/app/Gaps.jsx:133–144, #599).
-it('says "Ich höre zu." only while the recorder runs, and "Buddy spricht …" only while he is heard', () => {
+// The status line stays out of the row (#386, #599 correction): it made the bar jump by a line
+// and hid Buddy's reply at 360×740. The pill's word carries the state.
+it('draws no status line above the row — the pill says "Fertig" only while the recorder runs', () => {
   // A new element each time: the same one would not render again.
   const bar = () => (
     <CheckBar talk={{ prompt: 'Frage', lang: null, disabled: false, onText: () => undefined }} />
   );
+  const pill = () => screen.getByTestId('voice').getAttribute('data-pill');
   mic.state = 'idle';
   const view = renderInApp(bar());
-  expect(screen.queryByTestId('talk-row-status')).toBeNull();
+  expect(pill()).toBe('Sprechen');
   mic.state = 'starting';
   view.rerender(bar());
-  expect(screen.queryByText('Ich höre zu.')).toBeNull();
+  expect(pill()).toBe('Sprechen');
   mic.state = 'recording';
   view.rerender(bar());
-  expect(screen.getByTestId('talk-row-status').textContent).toBe('Ich höre zu.');
+  expect(pill()).toBe('Fertig');
+  expect(screen.queryByText('Ich höre zu.')).toBeNull();
   mic.state = 'idle';
   view.rerender(bar());
-  act(() => voiceStore.set({ phase: 'loading' }));
-  expect(screen.queryByTestId('talk-row-status')).toBeNull();
   act(() => voiceStore.set({ phase: 'speaking' }));
-  expect(screen.getByTestId('talk-row-status').textContent).toBe('Buddy spricht …');
+  expect(screen.queryByText('Buddy spricht …')).toBeNull();
+  expect(pill()).toBe('Sprechen');
   act(() => voiceStore.reset());
 });
 

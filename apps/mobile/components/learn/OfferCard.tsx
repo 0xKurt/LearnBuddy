@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
 import { PracticeReady } from '../buddy/ChatCard.js';
+import { quietVariant, type Quiet } from '../buddy/extensions.js';
 import { KIND_LABEL } from './kinds.js';
 import { useStartTopic } from './useStartTopic.js';
 import { reacted, tapped } from '../../lib/perf.js';
@@ -21,6 +22,7 @@ export function OfferCard({
   actionId,
   offer,
   spoken = false,
+  quiet = 'primary',
 }: {
   actionId: string;
   offer: Offer;
@@ -30,6 +32,8 @@ export function OfferCard({
    * question is read to her and the mic is the main control.
    */
   spoken?: boolean;
+  /** Whether "Los geht's" may be the screen's one filled button (extensions.ts `loudCard`). */
+  quiet?: Quiet;
 }) {
   const { t } = useTranslation(['learn', 'common']);
   const { state, start } = useStartTopic();
@@ -97,6 +101,7 @@ export function OfferCard({
                   ? t('common:actions.retry')
                   : t('learn:topic.submit'),
               busy: preparing,
+              variant: quietVariant(quiet),
               accessibilityHint: `${label}: ${offer.text}`,
               onPress: () => void go(),
             }

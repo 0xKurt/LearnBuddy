@@ -77,7 +77,9 @@ for (const phone of PHONES) {
 
       // What she said next is a normal turn.
       await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
-      await expect(page.getByText('Was steht diese Woche an?').last()).toBeVisible();
+      // The one line under the orb (#599): her words stand there only while Buddy thinks, then
+      // his answer takes it — that is what stays to be seen.
+      await expect(page.getByTestId('talk-line').filter({ visible: true })).toContainText(REPLY);
       await page.getByRole('button', { name: 'Beenden' }).last().click();
       await expect(page.getByText('LearnBuddy')).toBeVisible();
     });

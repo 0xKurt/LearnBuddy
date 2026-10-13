@@ -557,10 +557,11 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   // itself — no first tap (#386).
   const listening = page.getByRole('button', { name: 'Aufnahme stoppen' });
   await expect(listening).toBeVisible();
-  // The design's practice in conversation (#599, ui_kits/app/Gaps.jsx:133–144): one line says
-  // that the recorder runs, and the pill says what a tap does.
-  await expect(page.getByTestId('talk-row-status')).toHaveText(buddyDe.talk.listening);
+  // Practice in conversation (ui_kits/app/Gaps.jsx:133–144): the pill says what a tap does and
+  // so that the recorder runs. No status line above the row (#386, #599 correction): it made
+  // the bar jump and hid Buddy's reply at 360×740.
   await expect(listening).toContainText(buddyDe.talk.finish);
+  await expect(page.getByTestId('talk-row-status')).toHaveCount(0);
   // The mic stands in the middle of the screen, like on the conversation screen.
   const mic = await listening.boundingBox();
   const width = page.viewportSize()!.width;

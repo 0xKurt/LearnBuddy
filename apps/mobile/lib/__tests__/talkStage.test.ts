@@ -40,10 +40,14 @@ describe('the stage (Talk.jsx:22–45)', () => {
 
   it('says one status and one line; bubbles only where the thread has something to show', () => {
     const talk = code('app/talk.tsx');
-    expect(talk.match(/<TalkCaption\b/g)).toHaveLength(1);
-    expect(talk.match(/<Conversation\b/g)).toHaveLength(1);
+    // The stage holds the one caption, the tail the thread's bubbles (#599 correction).
+    expect(talk.match(/<TalkStage\b/g)).toHaveLength(1);
+    expect(code('components/voice/TalkStage.tsx').match(/<TalkCaption\b/g)).toHaveLength(1);
+    expect(talk.match(/<TalkTail\b/g)).toHaveLength(1);
+    expect(code('components/voice/TalkTail.tsx').match(/<Conversation\b/g)).toHaveLength(1);
+    expect(talk).not.toMatch(/<(TalkCaption|Conversation)\b/);
     expect(talk.indexOf('{threaded ? (')).toBeGreaterThan(-1);
-    expect(talk.indexOf('<Conversation')).toBeGreaterThan(talk.indexOf('{threaded ? ('));
+    expect(talk.indexOf('<TalkTail')).toBeGreaterThan(talk.indexOf('{threaded ? ('));
     // The second line of hints under the status is gone, with its texts.
     expect(talk).not.toMatch(/talk\.(tap_orb|barge_sub|paused_sub)/);
     const de = JSON.parse(source('locales/de/buddy.json')) as { talk: Record<string, string> };
@@ -79,7 +83,10 @@ describe('the stage (Talk.jsx:22–45)', () => {
   it('gives the orb the state of what really happens, never a constant', () => {
     const talk = code('app/talk.tsx');
     expect(talk).toMatch(/const orbMode: OrbMode = talkMode\(\{/);
-    expect(talk.match(/<TalkOrb\b[\s\S]*?\/>/)?.[0]).toMatch(/mode=\{orbMode\}/);
+    expect(talk.match(/<TalkStage\b[\s\S]*?\/>/)?.[0]).toMatch(/mode=\{orbMode\}/);
+    expect(code('components/voice/TalkStage.tsx').match(/<TalkOrb\b[\s\S]*?\/>/)?.[0]).toMatch(
+      /mode=\{mode\}/,
+    );
     const orb = code('components/voice/TalkOrb.tsx');
     expect(orb).toMatch(/<BuddyOrb size=\{size\} state=\{moonForTalk\(mode\)\}/);
   });

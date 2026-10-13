@@ -286,7 +286,10 @@ async function nowCardOf(
     ? state.materials.find((m) => m.id === justFailed.id)
     : undefined;
   if (justFailedMaterial) return failedCard(deps, learnerId, justFailedMaterial);
-  const open = state.sessions.filter((s) => resumable(s, now));
+  // A session the preparation of an offer wrote, in which she has done nothing, is not hers to
+  // "go on with": the bar said "Weiterüben … noch 1 Aufgabe" for an offer she never started
+  // (#599 correction, CLAUDE.md rule 5). Its card in the conversation still starts it.
+  const open = state.sessions.filter((s) => resumable(s, now) && !s.untouched_offer);
   const resumeCard = (active: (typeof open)[number]): NowCard => {
     const goal = active.goal_id ? state.goals.find((g) => g.id === active.goal_id) : undefined;
     const step = active.step_id ? state.steps.find((s) => s.id === active.step_id) : undefined;
