@@ -1182,6 +1182,12 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   level. The pronunciation judgement uses none (heard_ipa is its close listening; twice as fast,
   no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- **On the phone, nothing moves by itself where it cannot be seen** (issue #637). Every animated
+  style Reanimated updates on Android is a shadow-tree commit on the UI thread, every frame. One
+  small orb idle cost ≈ 1 core on the POCO X3 (dev client, frame p50 32 ms); two kept every frame
+  late (p50 61 ms). Buddy's moon therefore steps only while its screen is on top and the app is in
+  front (`lib/screenFocus.ts` `useOnScreen`, `lib/buddy/useMoon.ts`); under another screen it holds
+  where it is and goes on from there. Practice idle over the chat: frame p50 105 → 57 ms.
 - **Output tokens ARE the wait, and thinking tokens count as output** (issues #219/#220, measured
   02.10., `docs/speed-audit.md` §Ausgabe-Tokens): roughly a 1 s floor plus 250–300 written tokens a
   second. So the only way to shorten a wait is to need fewer tokens before the learner can start —
