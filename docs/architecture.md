@@ -933,9 +933,26 @@ the main call goes out with the minimal set (plain questions, no figures, no oth
 run still starts. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
 costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
-`llm_calls`) and no limit of its own: `callAhead` meters it with its run. It reserves nothing, so
-`explain` (60) and `extraction` (12) count runs and readings exactly as before, and it runs only
-while that limit still has room. A choice never comes without the call it belongs to.
+`llm_calls`) and no limit of its own: `callAhead` meters it with its run. **The run's allowance is
+held before the choice** (#665, `reserveCall`): one atomic reservation for the chain, used up by the
+main call (`callModel(…, reservation)`) and given back when the run fails before its call writes
+anything (`releaseCall`). So `explain` (60) and `extraction` (12) count runs and readings, a day
+with one run left starts one chain however many starts arrive at once (measured in
+`form-choice.int.test.ts`: 20 parallel starts, 1 choice, 1 run — on the old code 19 choices), no
+choice is paid for a run the limit refuses, and the choice's cost is booked into the day's
+`usage_daily.cost_micros` of its run. Which set went out (`whole` · `chosen` · `minimal` ·
+`fallback`) is in the function log (`[forms] …`).
+**What the filter cost is said** (#664): `keptAndLost` returns every element it took out (where,
+figure or form, which). A sheet reading that lost a task to it, or that went out on the fallback
+set because no choice could be made, is marked `items_incomplete` — the card and Buddy say "the
+sheet has more", the honest state for a sheet read in part. A continued reading that brings
+nothing new no longer sets `more_items` false: "no progress" is no proof the sheet is covered.
+What stays unknown: tasks the model never wrote because their form was not offered; finding those
+needs an annotated corpus of sheets (audit M11).
+**The waiting window starts with the main call** (#665): a practice run that starts on its first
+questions says "more is coming" for `REST_WINDOW_MS` from the main call's own start
+(`onMainStart`, `deps.now()`), not from the request — a 15 s choice used to close a 25 s window at
+27 s while the call could still write for 13 s.
 
 **One error classification at every external seam** (`lib/outcome.ts`, audit S-7): `ok`,
 `refused` (a definitive no: a 4xx other than 429, a safety block, unusable output — never

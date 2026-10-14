@@ -19,7 +19,7 @@ import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
-import { callAhead } from '../../llm/call.js';
+import { callAhead, reserveCall, type Reservation } from '../../llm/call.js';
 import type { JsonSchema, LlmMessage, LlmPurpose } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { promptVersion } from '../../llm/promptVersion.js';
@@ -40,8 +40,19 @@ export type Keep = { forms: ReadonlySet<string>; figures: ReadonlySet<string> };
 export type Narrowed = {
   schema: JsonSchema;
   keep: Keep | null;
-  how: 'whole' | 'chosen' | 'minimal';
+  /**
+   * whole: the schema fits as it is · chosen: narrowed to the choice · minimal: the choice was
+   * plain questions only · fallback: no choice could be made, so plain questions only — a
+   * reading done so may lack what its sheet needed and never counts as complete (#664).
+   */
+  how: 'whole' | 'chosen' | 'minimal' | 'fallback';
 };
+
+/**
+ * Something the answer held that the schema did not offer, taken out by `keepChosen` (#664):
+ * where it stood, and the figure type or form that was not chosen.
+ */
+export type Loss = { at: string; kind: 'figure' | 'form'; name: string };
 
 type Node = JsonSchema[string];
 const isSchema = (n: Node | undefined): n is JsonSchema =>
@@ -178,17 +189,20 @@ const figureType = (f: unknown): string | null =>
  * Whether a question or task leans on a figure that was not chosen: its own figure, or one of its
  * option pictures. Without it the question cannot be answered, so it goes.
  */
-function outside(el: unknown, keep: Keep): boolean {
-  if (!isRaw(el)) return false;
+function outside(el: unknown, keep: Keep): string | null {
+  if (!isRaw(el)) return null;
   const fig = figureType(el.figure);
-  if (fig !== null && !keep.figures.has(fig)) return true;
-  if (
-    Array.isArray(el.choice_figures) &&
-    el.choice_figures.some((f) => !keep.figures.has(figureType(f) ?? ''))
-  )
-    return true;
-  return false;
+  if (fig !== null && !keep.figures.has(fig)) return fig;
+  if (Array.isArray(el.choice_figures))
+    for (const f of el.choice_figures) {
+      const type = figureType(f) ?? '';
+      if (!keep.figures.has(type)) return type || 'unknown';
+    }
+  return null;
 }
+
+/** How many elements a block or the structured list held. */
+const countOf = (v: unknown): number => (Array.isArray(v) ? v.length : v ? 1 : 0);
 
 /**
  * The raw answer with nothing outside `keep`, at any depth. A question or task with a figure or
@@ -198,20 +212,44 @@ function outside(el: unknown, keep: Keep): boolean {
  * the code that holds to it (CLAUDE.md rule 1).
  */
 export function keepChosen(raw: unknown, keep: Keep | null): unknown {
-  if (keep === null || !isRaw(raw)) return raw;
-  const clean = (v: unknown): unknown => {
-    if (Array.isArray(v)) return v.filter((el) => !outside(el, keep)).map(clean);
+  return keptAndLost(raw, keep).kept;
+}
+
+/**
+ * `keepChosen`, with every element it took out (#664): the filter protects what can be shown,
+ * and says what it cost — a sheet whose tasks were dropped is not read completely (rule 5).
+ */
+export function keptAndLost(raw: unknown, keep: Keep | null): { kept: unknown; lost: Loss[] } {
+  const lost: Loss[] = [];
+  if (keep === null || !isRaw(raw)) return { kept: raw, lost };
+  const clean = (v: unknown, at: string): unknown => {
+    if (Array.isArray(v))
+      return v.flatMap((el, i) => {
+        const fig = outside(el, keep);
+        if (fig === null) return [clean(el, `${at}[${i}]`)];
+        lost.push({ at: `${at}[${i}]`, kind: 'figure', name: fig });
+        return [];
+      });
     if (!isRaw(v)) return v;
-    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, clean(x)]));
-  };
-  const out = clean(raw) as Raw;
-  for (const b of BLOCKS)
-    if (b in out && !keep.forms.has(b)) out[b] = Array.isArray(out[b]) ? [] : null;
-  if (Array.isArray(out.structured))
-    out.structured = out.structured.filter(
-      (s) => isRaw(s) && typeof s.type === 'string' && keep.forms.has(s.type),
+    return Object.fromEntries(
+      Object.entries(v).map(([k, x]) => [k, clean(x, at ? `${at}.${k}` : k)]),
     );
-  return out;
+  };
+  const out = clean(raw, '') as Raw;
+  for (const b of BLOCKS)
+    if (b in out && !keep.forms.has(b)) {
+      for (let i = 0; i < countOf(out[b]); i++)
+        lost.push({ at: `${b}[${i}]`, kind: 'form', name: b });
+      out[b] = Array.isArray(out[b]) ? [] : null;
+    }
+  if (Array.isArray(out.structured))
+    out.structured = out.structured.filter((s, i) => {
+      const type = isRaw(s) && typeof s.type === 'string' ? s.type : null;
+      const kept = type !== null && keep.forms.has(type);
+      if (!kept) lost.push({ at: `structured[${i}]`, kind: 'form', name: type ?? 'unknown' });
+      return kept;
+    });
+  return { kept: out, lost };
 }
 
 /** Whether a request is the choosing call. */
@@ -293,7 +331,9 @@ const CHOOSER = `NOW ONLY CHOOSE, DO NOT WRITE THE TASK. Before the answer above
 
 /**
  * The schema the main call goes out with: `full` when it fits; otherwise narrowed to what a first,
- * small call chose, or to the minimal set when that call fails.
+ * small call chose, or to the minimal set when that call fails (`fallback`). When a choice is
+ * needed, her allowance for the main call is held first (#665): the main call uses
+ * `reservation`, and a caller that never gets there gives it back (`releaseCall`).
  */
 export async function chooseForms(
   deps: Deps,
@@ -306,12 +346,31 @@ export async function chooseForms(
     contents: LlmMessage[];
     full: JsonSchema;
   },
+): Promise<Narrowed & { reservation: Reservation | null }> {
+  if (withinBudget(call.full))
+    return { schema: call.full, keep: null, how: 'whole', reservation: null };
+  // Before the choosing call, never after it: a run her limit refuses costs no choice (#665).
+  const reservation = await reserveCall(deps, learnerId, localDay, call.purpose);
+  const narrowed = await narrow(deps, reservation, call);
+  // Which set the main call goes out with, for the function log (#665): no prompt, no answer.
+  console.info(
+    `[forms] ${call.purpose}: ${narrowed.how}` +
+      (narrowed.keep
+        ? ` forms=${[...narrowed.keep.forms].join(',') || '-'} figures=${[...narrowed.keep.figures].join(',') || '-'}`
+        : ''),
+  );
+  return { ...narrowed, reservation };
+}
+
+async function narrow(
+  deps: Deps,
+  reservation: Reservation,
+  call: Parameters<typeof chooseForms>[3],
 ): Promise<Narrowed> {
-  if (withinBudget(call.full)) return { schema: call.full, keep: null, how: 'whole' };
   const Choice = choiceFor(call.full);
   try {
     // Metered with the call it belongs to (`callAhead`): her daily limit counts runs, not calls.
-    const res = await callAhead(deps, learnerId, localDay, call.purpose, {
+    const res = await callAhead(deps, reservation, {
       purpose: 'forms',
       tier: 'fast',
       promptVersion: promptVersion(`forms-${call.purpose}`, CHOOSER, call.promptVersion),
@@ -326,15 +385,18 @@ export async function chooseForms(
     const parsed = ChoiceRead.safeParse(res.json);
     if (parsed.success) {
       const can = offered(call.full);
-      return fitted(call.full, {
+      const wanted = {
         forms: parsed.data.forms.filter((f) => can.forms.includes(f)),
         figures: parsed.data.figures.filter((f) => can.figures.includes(f)),
-      });
+      };
+      const named = parsed.data.forms.length + parsed.data.figures.length;
+      // Only names it was not offered: no choice was made, whatever the answer's shape.
+      if (named === 0 || wanted.forms.length + wanted.figures.length > 0)
+        return fitted(call.full, wanted);
     }
   } catch (err) {
-    // Her daily limit is hers to keep: that is no reason to start without figures.
     if (isAppError(err)) throw err;
   }
   console.warn(`[forms] ${call.purpose}: no choice, the minimal set goes out (#627)`);
-  return { ...fitted(call.full, { forms: [], figures: [] }), how: 'minimal' };
+  return { ...fitted(call.full, { forms: [], figures: [] }), how: 'fallback' };
 }

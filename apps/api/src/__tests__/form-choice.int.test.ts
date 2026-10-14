@@ -20,6 +20,8 @@ import { DAILY_LIMITS } from '../config.js';
 import { LlmError, type JsonSchema } from '../llm/gateway.js';
 import { schemaProperties, MAX_SCHEMA_PROPERTIES } from '../llm/schemaBudget.js';
 import { chosenFor, offered } from '../modules/practice/formChoice.js';
+import { FIRST_BATCH, REST_WINDOW_MS } from '../modules/practice/generate.js';
+import { explainSchemaFor } from '../modules/practice/setProfiles.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -282,5 +284,181 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     expect(rows.find((r) => r.prompt.startsWith('Wie viel ist drei'))?.figure?.type).toBe(
       'fraction',
     );
+  });
+
+  // ---------------------------------------------------------------- #664, #665 (audit F10, F11)
+
+  const READING = {
+    is_learning_material: true,
+    readable: true,
+    pages: [],
+    title: 'Brüche',
+    subject: { name: 'Mathe', kind: 'math' },
+    extracted_text: 'Brüche — Aufgaben 1 bis 3',
+    items: SET.items,
+    structured: [],
+    more_items: false,
+  };
+
+  /** Her sheet, photographed and read; returns the sheet as the app shows it. */
+  async function readSheet(): Promise<MaterialView> {
+    env.llm.byDefault('buddy_check', {
+      json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
+    });
+    const created = await l.api.post<{ material: MaterialView; uploads: Array<{ path: string }> }>(
+      '/materials',
+      { client_request_id: randomUUID(), photo_mimes: ['image/jpeg'], purpose: 'study' },
+    );
+    for (const u of created.body.uploads) env.storage.put(u.path);
+    expect((await l.api.post(`/materials/${created.body.material.id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+    const view = await l.api.get<{ material: MaterialView }>(
+      `/materials/${created.body.material.id}/items`,
+    );
+    return view.body.material;
+  }
+
+  it('says a sheet is not read completely when a task was dropped for a figure not chosen (#664)', async () => {
+    // The Zweitaudit probe: a schema-valid figure of a form that was not chosen. Two plain
+    // tasks and the fraction one stay, the clock task goes — and the sheet must say so.
+    env.llm.scriptChoice({ json: { forms: [], figures: ['fraction'] } });
+    env.llm.script('extraction', { json: READING });
+    const sheet = await readSheet();
+    expect(sheet.status).toBe('ready');
+    expect((await stored()).some((r) => r.prompt.startsWith('Wie spät'))).toBe(false);
+    expect(sheet.items_incomplete).toBe(true);
+  });
+
+  it('a sheet read without any choice is never complete, though nothing was dropped (#664)', async () => {
+    env.llm.scriptChoice({ error: new LlmError('unavailable', 'provider down') });
+    env.llm.script('extraction', {
+      json: { ...READING, items: [item('Wie viel ist ein Viertel von 8?', '2')] },
+    });
+    const sheet = await readSheet();
+    expect(sheet.status).toBe('ready');
+    expect(sheet.items_incomplete).toBe(true);
+  });
+
+  it('a sheet whose every task fits the choice stays complete (#664)', async () => {
+    env.llm.scriptChoice({ json: { forms: [], figures: ['fraction', 'clock'] } });
+    env.llm.script('extraction', { json: READING });
+    const sheet = await readSheet();
+    expect(sheet.items_incomplete).toBe(false);
+  });
+
+  it('a continuation that brings nothing new does not make the sheet complete (#664)', async () => {
+    env.llm.scriptChoice({ json: { forms: [], figures: ['fraction', 'clock'] } });
+    // The first reading says there is more; the next one repeats itself and still says more.
+    env.llm.script('extraction', { json: { ...READING, more_items: true } });
+    env.llm.script('extraction', { json: { ...READING, more_items: false } });
+    const sheet = await readSheet();
+    expect(env.llm.callsFor('extraction')).toHaveLength(2);
+    expect(sheet.items_incomplete).toBe(true);
+  });
+
+  it('keeps "more is coming" for the whole budget of the call, counted from its start (#665)', async () => {
+    // The Zweitaudit probe: the choice takes 15 s, the first questions stand 12 s into the main
+    // call. At 27 s the main call may still write for 13 s, so the run is still preparing.
+    let release = () => undefined as void;
+    const until = new Promise<void>((resolve) => {
+      release = () => resolve();
+    });
+    try {
+      env.llm.scriptChoice(async () => {
+        env.clock.advance(15_000);
+        return { forms: [], figures: ['fraction', 'clock'] };
+      });
+      const many = Array.from({ length: 6 }, (_, i) => item(`Frage ${i + 1}`, `${i + 1}`));
+      env.llm.script('explain', {
+        json: { ...SET, items: many, structured: [] },
+        pauseAfter: { key: 'items', n: FIRST_BATCH, until },
+      });
+      const started = await start();
+      expect(started.status, JSON.stringify(started.body)).toBe(201);
+      expect(started.body.preparing).toBe(true);
+      env.clock.advance(12_000); // 27 s after the start
+      const at27 = await l.api.get<SessionView>(`/practice/sessions/${started.body.id}`);
+      expect(at27.body.preparing).toBe(true);
+      // Past the main call's own budget it stops waiting, as before.
+      env.clock.advance(REST_WINDOW_MS - 12_000 + 1_000);
+      const after = await l.api.get<SessionView>(`/practice/sessions/${started.body.id}`);
+      expect(after.body.preparing).toBe(false);
+    } finally {
+      release();
+      await env.flushBackground();
+    }
+  });
+
+  it('with one run left, twenty starts at once make at most one choice and one run (#665)', async () => {
+    const day = '2026-10-14';
+    await env.db.query(
+      `insert into usage_daily (learner_id, day, kind, calls) values ($1, $2, 'explain', $3)`,
+      [l.learnerId, day, DAILY_LIMITS.explain - 1],
+    );
+    env.llm.byDefault('explain', { json: SET });
+    const results = await Promise.all(Array.from({ length: 20 }, () => start()));
+    await env.flushBackground();
+    expect(results.filter((r) => r.status === 201)).toHaveLength(1);
+    expect(results.filter((r) => r.status === 429)).toHaveLength(19);
+    expect(env.llm.choices).toHaveLength(1);
+    expect(env.llm.callsFor('explain')).toHaveLength(1);
+    // The choice is paid for with the run it belongs to: its cost is in the day's cost.
+    const costs = await env.db.query<{ purpose: string; cost: number }>(
+      `select purpose, sum(cost_micros)::int as cost from llm_calls
+        where learner_id = $1 group by purpose`,
+      [l.learnerId],
+    );
+    // The run's own calls; what is prepared for it afterwards (its hints) is booked as its own.
+    const total = costs
+      .filter((c) => c.purpose === 'forms' || c.purpose === 'explain')
+      .reduce((n, c) => n + c.cost, 0);
+    const booked = await env.db.one<{ cost_micros: number }>(
+      `select cost_micros::int from usage_daily where learner_id = $1 and day = $2 and kind = 'explain'`,
+      [l.learnerId, day],
+    );
+    expect(costs.find((c) => c.purpose === 'forms')!.cost).toBeGreaterThan(0);
+    expect(booked.cost_micros).toBe(total);
+  });
+
+  it('gives her allowance back when the run fails before its call writes anything (#665)', async () => {
+    env.llm.scriptChoice({ json: { forms: [], figures: [] } });
+    env.llm.script('explain', { error: new LlmError('unavailable', 'provider down') });
+    expect((await start()).status).toBe(503);
+    const used = await env.db.maybeOne<{ calls: number }>(
+      `select calls from usage_daily where learner_id = $1 and kind = 'explain'`,
+      [l.learnerId],
+    );
+    expect(used?.calls ?? 0).toBe(0);
+  });
+
+  it.each([
+    ['an answer that is no object', { json: 'fraction' }],
+    ['only names it was not offered', { json: { forms: ['poster'], figures: ['hologram'] } }],
+    ['a refusal', { error: new LlmError('refused', 'provider rejected the request (400)') }],
+  ] as const)('falls back to plain questions on %s, and the main call says so', async (_n, a) => {
+    env.llm.scriptChoice(a);
+    env.llm.script('explain', { json: SET });
+    expect((await start()).status).toBe(201);
+    await env.flushBackground();
+    const [main] = env.llm.callsFor('explain');
+    expect(shown(main!.schema)).toEqual({ forms: [], figures: [] });
+    expect(main?.system).toContain('NO FIGURE CAN BE DRAWN');
+  });
+
+  it('a choice of everything is cut to what fits, in the order it was ranked (#665)', async () => {
+    const full = offered(explainSchemaFor('practice', null));
+    env.llm.scriptChoice({ json: full });
+    env.llm.script('explain', { json: SET });
+    expect((await start()).status).toBe(201);
+    await env.flushBackground();
+    const [main] = env.llm.callsFor('explain');
+    expect(schemaProperties(main!.schema)).toBeLessThanOrEqual(MAX_SCHEMA_PROPERTIES);
+    const sent = shown(main!.schema);
+    expect(sent.figures.length + sent.forms.length).toBeGreaterThan(0);
+    expect(sent.figures.length + sent.forms.length).toBeLessThan(
+      full.figures.length + full.forms.length,
+    );
+    // The first ranked of each list always fits.
+    expect(sent.figures[0]).toBe(full.figures[0]);
   });
 });

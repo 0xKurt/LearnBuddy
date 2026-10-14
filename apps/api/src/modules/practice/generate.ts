@@ -21,7 +21,7 @@ import { isUniqueViolation } from '../../lib/db.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
-import { callModel } from '../../llm/call.js';
+import { callModel, releaseCall, type Reservation } from '../../llm/call.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import { answerUpTo } from '../../llm/partial.js';
 import { bumpContext } from '../buddy/plan.js';
@@ -35,7 +35,7 @@ import { ESSAY_RULES, essayItems } from './essayTask.js';
 import { prepareHints } from './hints.js';
 import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
-import { availableLine, chooseForms, keepChosen, type Keep } from './formChoice.js';
+import { availableLine, chooseForms, keepChosen, keptAndLost, type Keep } from './formChoice.js';
 import { homeLandLine } from './mapCheck.js';
 import {
   CHOICE_RULES,
@@ -394,7 +394,11 @@ async function generateSet(
   input: StartTopicRequest,
   ground: Ground,
   now: Date,
-  opts: { onFirstItems?: (set: GeneratedSet) => void } = {},
+  opts: {
+    onFirstItems?: (set: GeneratedSet) => void;
+    /** The instant the call that writes the set starts, after any choice of forms (#665). */
+    onMainStart?: (at: Date) => void;
+  } = {},
 ): Promise<GeneratedSet> {
   const { level, timezone, sheets, pattern, dictation } = ground;
   // The forms switched off in this environment are neither shown nor kept (#296).
@@ -403,6 +407,8 @@ async function generateSet(
   let handedOver = false;
   // What the answer may hold, once the forms are chosen (#627); null: anything.
   let keep: Keep | null = null;
+  // Her allowance for this run, held before the choice of forms (#665).
+  let reservation: Reservation | null = null;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {
         if (handedOver) return;
@@ -460,31 +466,50 @@ async function generateSet(
       contents,
       full: explainSchemaFor(input.kind, sheets?.topics ?? null, off),
     });
+    reservation = narrowed.reservation;
     keep = narrowed.keep;
     const line = availableLine(narrowed);
-    const res = await callModel(deps, learner.id, day, {
-      purpose: 'explain',
-      tier: 'smart',
-      promptVersion: GENERATE_PROMPT_VERSION,
-      system: line ? `${GENERATE_SYSTEM}\n\n${line}` : GENERATE_SYSTEM,
-      contents,
-      schema: narrowed.schema,
-      maxOutputTokens: 10_000,
-      temperature: 0.4,
-      // A streamed run must be finished inside the window the run waits for it, or it would
-      // still be writing after the run stopped saying "more is coming" (issue #220).
-      timeoutMs: onPartial ? REST_WINDOW_MS : 60_000,
-      // Prepared once, and everything later builds on it (keys, hints, worked
-      // solutions): time to think. Measured on 3.6 Flash: about the same time and
-      // cost, more careful content (docs/architecture.md §Speed).
-      thinkingBudget: 2048,
-      onPartial,
-    });
-    const parsed = parseSet.safeParse(keepChosen(res.json, keep));
+    // The run's waiting window is this call's own budget, so it starts now, not before the
+    // choice (#665): a slow choice must not close the window while this call may still write.
+    opts.onMainStart?.(deps.now());
+    const res = await callModel(
+      deps,
+      learner.id,
+      day,
+      {
+        purpose: 'explain',
+        tier: 'smart',
+        promptVersion: GENERATE_PROMPT_VERSION,
+        system: line ? `${GENERATE_SYSTEM}\n\n${line}` : GENERATE_SYSTEM,
+        contents,
+        schema: narrowed.schema,
+        maxOutputTokens: 10_000,
+        temperature: 0.4,
+        // A streamed run must be finished inside the window the run waits for it, or it would
+        // still be writing after the run stopped saying "more is coming" (issue #220).
+        timeoutMs: onPartial ? REST_WINDOW_MS : 60_000,
+        // Prepared once, and everything later builds on it (keys, hints, worked
+        // solutions): time to think. Measured on 3.6 Flash: about the same time and
+        // cost, more careful content (docs/architecture.md §Speed).
+        thinkingBudget: 2048,
+        onPartial,
+      },
+      reservation,
+    );
+    const { kept, lost } = keptAndLost(res.json, keep);
+    // A generated run is no sheet: what was written outside the choice is not shown, and the
+    // function log says how much (#664) — numbers and form names only.
+    if (lost.length > 0)
+      console.warn(
+        `[forms] explain: ${lost.length} written outside the choice (${[...new Set(lost.map((l) => l.name))].join(',')})`,
+      );
+    const parsed = parseSet.safeParse(kept);
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
     return parsed.data;
   } catch (err) {
+    // Started neither the run nor its call: her allowance for it goes back (#665).
+    await releaseCall(deps, reservation);
     if (isAppError(err)) throw err;
     throw new AppError('model_unavailable', 'Could not prepare this right now');
   }
@@ -727,8 +752,15 @@ async function prepareTopic(
   });
   // Settled, never rejected: the whole answer is awaited either here or in the background, and a
   // promise nobody is waiting on yet must not become an unhandled rejection in between.
+  // When the call writing the set started: the window "more is coming" is that call's budget, and
+  // a choice of forms may come before it (#665, audit F11: 15 s of choice closed a 25 s window at
+  // 27 s while the call had 13 s left).
+  let mainStartedAt = now;
   const whole = generateSet(deps, learner, input, ground, now, {
     onFirstItems: early ? (set) => handOver(set) : undefined,
+    onMainStart: (at) => {
+      mainStartedAt = at;
+    },
   }).then(
     (set) => {
       handOver(null);
@@ -799,7 +831,7 @@ async function prepareTopic(
     {
       now,
       goalId: sheets?.goalId ?? null,
-      pendingUntil: new Date(now.getTime() + REST_WINDOW_MS),
+      pendingUntil: new Date(mainStartedAt.getTime() + REST_WINDOW_MS),
       origin: null,
     },
   );
