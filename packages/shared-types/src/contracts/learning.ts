@@ -700,6 +700,12 @@ export const PracticeSummary = z.object({
   /** Closed questions (solved, revealed, skipped, missed); never shown as a score. */
   answered: z.number().int(),
   first_try: z.number().int(),
+  /**
+   * Closed questions she got right in the end — at once or after a hint or a second try (issue
+   * #630). When it equals `answered` the result screen shows the all-right state, not "Schauen
+   * wir nochmal an". Absent from an older server.
+   */
+  right: z.number().int().optional(),
   /** Topics where every closed question was right at once. Never also in shaky_topics. */
   secure_topics: z.array(z.string()),
   /** Topics with at least one question that needed help, was shown or missed. */

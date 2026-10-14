@@ -291,4 +291,13 @@ describe('the prompt names the exercise forms Buddy has no exercise for', () => 
     expect(TURN_SYSTEM).toContain('explain it in the chat, go through the approach or the steps');
     expect(TURN_SYSTEM).toContain('never decline something you can do');
   });
+
+  it('does not call the labelled pictures a drawing, and leaves the form to the build (#630)', () => {
+    // The device: "für das direkte Beschriften einer Skizze habe ich keine passende Übung", and
+    // the practice of the same answer served a labelled flower picture.
+    expect(TURN_SYSTEM).toContain('numbered parts of a picture the app shows her is not drawing');
+    expect(TURN_SYSTEM).toContain(
+      'Never say that a practice you prepare or offer will or will not',
+    );
+  });
 });

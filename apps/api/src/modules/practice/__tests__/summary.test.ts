@@ -29,6 +29,17 @@ describe('what one practice may claim', () => {
     expect(s.first_try).toBe(4);
   });
 
+  it('counts what ended right, however she got there (issue #630)', () => {
+    const s = summarize([
+      row({}),
+      row({ first_try_correct: false }),
+      row({ status: 'revealed', first_try_correct: false }),
+    ]);
+    // Two right in the end — one at once, one after a second try; the shown one is not.
+    expect(s.right).toBe(2);
+    expect(s.first_try).toBe(1);
+  });
+
   it('names a topic once enough of it went well at once', () => {
     const s = summarize(Array.from({ length: ENOUGH_FOR_A_TOPIC }, () => row({})));
     expect(s.secure_topics).toEqual(['Brüche']);

@@ -79,6 +79,23 @@ describe('fallsBackToServer', () => {
 });
 
 describe('hearResult', () => {
+  it('drops a final result the recogniser itself scores as a guess (issue #630)', () => {
+    // A first sentence nobody said was answered by Buddy: noise read as words.
+    expect(hearResult(NOTHING_HEARD, 'Ich weiß nicht wo ich bin.', true, 0.08)).toEqual(
+      NOTHING_HEARD,
+    );
+    // A score it does not report (-1, or none at all) never loses a word.
+    expect(hearResult(NOTHING_HEARD, 'Mir geht es nicht gut', true, -1).committed).toBe(
+      'Mir geht es nicht gut',
+    );
+    expect(hearResult(NOTHING_HEARD, 'Mir geht es nicht gut', true).committed).toBe(
+      'Mir geht es nicht gut',
+    );
+    expect(hearResult(NOTHING_HEARD, 'Mir geht es nicht gut', true, 0.9).committed).toBe(
+      'Mir geht es nicht gut',
+    );
+  });
+
   it('shows the running part and keeps finished parts', () => {
     let h = hearResult(NOTHING_HEARD, 'ich hab', false);
     expect(heardText(h)).toBe('ich hab');

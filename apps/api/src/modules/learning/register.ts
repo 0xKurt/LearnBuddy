@@ -17,7 +17,8 @@ import {
   runRequestMaterial,
 } from '../buddy/materialTools.js';
 import { registerOccasions, registerPracticeFiller } from '../buddy/occasions.js';
-import { runPreparePractice } from '../buddy/practiceTool.js';
+import { registerWaitingStart } from '../buddy/offers.js';
+import { runPreparePractice, runShowReady } from '../buddy/practiceTool.js';
 import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../buddy/review.js';
 import { registerContextProvider, type ContextProvider } from '../buddy/provider.js';
 import { endForConcern, runStartRoleplay } from '../buddy/roleplay.js';
@@ -86,6 +87,8 @@ export function registerLearning(): void {
   // every state are built from it.
   registerContextProvider(LEARNING);
 
+  // The practice that waits, when Buddy points to it (open_area practice, issue #630).
+  registerWaitingStart(runShowReady);
   // What Buddy can do in the conversation: practice, sheets, talks, roleplays.
   registerActHandlers({
     prepare_practice: runPreparePractice,

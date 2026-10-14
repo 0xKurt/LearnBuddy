@@ -253,8 +253,14 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
 
   useSpeechRecognitionEvent('result', (e) => {
     if (!mine.current) return;
-    const best = e.results[0]?.transcript ?? '';
-    heardRef.current = hearResult(heardRef.current, best, e.isFinal);
+    const best = e.results[0];
+    // The recogniser's own score decides whether a final result counts as her words (#630).
+    heardRef.current = hearResult(
+      heardRef.current,
+      best?.transcript ?? '',
+      e.isFinal,
+      best?.confidence,
+    );
     if (mounted.current) setHeard(heardRef.current);
   });
 

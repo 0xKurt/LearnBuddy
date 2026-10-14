@@ -195,7 +195,7 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     touches: ['nothing'],
     needsQuote: false,
     undoable: false,
-    does: 'show a button that opens a part of the app she asks for (her sheets, what you know, settings, earlier messages, the camera)',
+    does: 'show a button that opens a part of the app she asks for (her sheets, what you know, settings, earlier messages, the camera), or with practice the start of the practice you prepared that waits for her — the way to point her to it',
   },
   start_roleplay: {
     surfaces: TURN,

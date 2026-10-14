@@ -84,7 +84,8 @@ export function loudCard(messages: readonly MessageView[], quiet: Quiet): string
 /** A card with a start she can still tap: not taken back, refused by the server, or over. */
 function startable(a: Action): boolean {
   if (a.status === 'undone' || !hasCard(a.summary.tool)) return false;
-  if (a.summary.tool === 'offer_learning') return a.summary.startable !== false;
+  if (a.summary.tool === 'offer_learning')
+    return a.summary.startable !== false && a.summary.finished_session_id === null;
   return a.summary.tool !== 'start_roleplay' || a.summary.status === 'active';
 }
 

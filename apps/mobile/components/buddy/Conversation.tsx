@@ -71,6 +71,10 @@ addActionCard('confirm_delete', (s) => <ConfirmCard confirm={s} />);
 
 /** One empty set for "nothing is carried on top": a fresh one each render is a new prop. */
 const EMPTY_IDS: ReadonlySet<string> = new Set();
+const NOTHING_PLACED: { before: ReactNode[]; after: ReadonlyMap<string, ReactNode[]> } = {
+  before: [],
+  after: new Map(),
+};
 
 /**
  * What Buddy DID in this turn (the ✓ receipt). Offers are not done yet, and a proposed
@@ -101,6 +105,12 @@ type Props = {
   pending: { text: string } | null;
   /** What Buddy tells now, with buttons (`ChatCard`), after the messages. */
   notices?: ReactNode[];
+  /**
+   * What Buddy tells at its own moment inside the conversation (issue #630, `placeByTime`):
+   * `after` by the message it follows, `before` above the first message. Never under what was
+   * said later — the finished practice at the end read as his answer to her next message.
+   */
+  placed?: { before: ReactNode[]; after: ReadonlyMap<string, ReactNode[]> };
   /**
    * Buddy's reply while it is still being written (only for an answer that changes
    * nothing — docs/architecture.md §Speed); the stored message replaces it.
@@ -165,6 +175,7 @@ export function Conversation({
   contactOn,
   pending,
   notices = [],
+  placed = NOTHING_PLACED,
   live = null,
   busy,
   showActions = false,
@@ -259,6 +270,16 @@ export function Conversation({
   };
   const enters = committed.current;
   const enterOf = (m: MessageView) => enters && !arrivedInPlace(m);
+  /** One of Buddy's notices, wherever in the thread it stands (issue #630). */
+  const noticeEntrance = (n: ReactNode, fallback: string) => (
+    <Entrance
+      key={isValidElement(n) && n.key !== null ? n.key : fallback}
+      animate={enters}
+      index={1}
+    >
+      {n}
+    </Entrance>
+  );
 
   /** What a step that was taken back reads like now. */
   const undoneText = (a: MessageView['actions'][number]): string =>
@@ -281,6 +302,7 @@ export function Conversation({
     // chips stand lg apart. Only what belongs to one piece sits closer: a line's own status (xs),
     // and the way back, whose 44 pt target reaches into the gap above it.
     <View style={{ gap: SPACE.lg }}>
+      {placed.before.map((n, i) => noticeEntrance(n, `before-${i}`))}
       {messages.map((m, index) => {
         const mine = m.role === 'learner';
         const day = breaks[index] ?? null;
@@ -486,6 +508,7 @@ export function Conversation({
                 )}
               />
             ) : null}
+            {(placed.after.get(m.id) ?? []).map((n, i) => noticeEntrance(n, `${m.id}-${i}`))}
             {opensHere ? (
               <SessionGreeting
                 orb={greets && !thinking}
@@ -497,15 +520,7 @@ export function Conversation({
           </View>
         );
       })}
-      {notices.map((n, i) => (
-        <Entrance
-          key={isValidElement(n) && n.key !== null ? n.key : `notice-${i}`}
-          animate={enters}
-          index={1}
-        >
-          {n}
-        </Entrance>
-      ))}
+      {notices.map((n, i) => noticeEntrance(n, `notice-${i}`))}
       {pending ? (
         <Entrance key="pending" animate={enters} index={0} style={{ alignItems: 'flex-end' }}>
           <View

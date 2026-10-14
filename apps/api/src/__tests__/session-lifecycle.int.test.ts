@@ -862,7 +862,7 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
     );
     expect(disputed.status).toBe(200);
     // Nothing is called shaky any more: the only question that was is the one in dispute.
-    expect(disputed.body.summary).toEqual({
+    expect(disputed.body.summary).toMatchObject({
       answered: 1,
       first_try: 1,
       secure_topics: [],

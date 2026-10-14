@@ -493,6 +493,7 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     expect(view.summary).toEqual({
       answered: 4,
       first_try: 4,
+      right: 4,
       secure_topics: [],
       shaky_topics: [],
     });

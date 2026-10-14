@@ -62,15 +62,23 @@ export class ChunkCutter {
  * piece is often just the silence between the cut and her tap on stop —
  * uploading it would cost a model call and make the finished text wait behind
  * it. A piece counts as provably silent only when the metering delivered real
- * values for it, none of them reached above room tone, and an earlier piece of
- * the same take demonstrably heard her — so a microphone whose metering cannot
- * hear her (a browser without metering, a meter stuck at one value) can never
- * throw her words away.
+ * values for it, none of them reached above room tone, and the meter is
+ * proven to work in this take: an earlier piece demonstrably heard her, or its
+ * readings moved — so a microphone whose metering cannot hear her (a browser
+ * without metering, a meter stuck at one value) can never throw her words away.
+ *
+ * The moving meter is issue #630: a conversation answered a first sentence
+ * nobody said ("Ich weiß nicht wo ich bin.") — a take of a quiet room, sent to
+ * be written down because a FIRST piece never counted as silent, and written
+ * down as words. A live meter that never rose above room tone heard no one.
  */
 export class SpeechMark {
   private metered = false;
   private heardInPiece = false;
   private heardBefore = false;
+  /** The first reading of this take, and whether a later one differed from it. */
+  private firstDb: number | null = null;
+  private moved = false;
 
   constructor(private readonly quietLevel: number = DICTATION_CHUNK.quietLevel) {}
 
@@ -79,12 +87,16 @@ export class SpeechMark {
     this.metered = false;
     this.heardInPiece = false;
     this.heardBefore = false;
+    this.firstDb = null;
+    this.moved = false;
   }
 
   /** One metering sample of the running piece (dBFS; null/undefined = not measured). */
   observe(meteringDb: number | null | undefined): void {
     if (meteringDb === null || meteringDb === undefined || !Number.isFinite(meteringDb)) return;
     this.metered = true;
+    if (this.firstDb === null) this.firstDb = meteringDb;
+    else if (meteringDb !== this.firstDb) this.moved = true;
     if (levelFromDb(meteringDb) > this.quietLevel) this.heardInPiece = true;
   }
 
@@ -93,7 +105,7 @@ export class SpeechMark {
    * held no speech. The next piece starts fresh within the same take.
    */
   endPiece(): boolean {
-    const silent = this.metered && !this.heardInPiece && this.heardBefore;
+    const silent = this.metered && !this.heardInPiece && (this.heardBefore || this.moved);
     this.heardBefore = this.heardBefore || this.heardInPiece;
     this.metered = false;
     this.heardInPiece = false;

@@ -26,7 +26,11 @@ import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
  */
 const NOT_PRACTICABLE_PRODUCT: { [F in NotPracticableForm]: string } = {
   drawing:
-    'she would have to produce something drawn — a construction with compasses, a graph, a diagram, a circuit, arrows on a sketch, a structural formula, notation',
+    // Naming the parts of a picture left this list with the labelled pictures (#610): the app
+    // shows the picture with numbered parts and she names or taps them. Said here because the
+    // device showed the gap (issue #630): Buddy told her he had no exercise for labelling a
+    // sketch, and the practice he prepared in the same answer served exactly that.
+    'she would have to produce something drawn — a construction with compasses, a graph, a diagram, a circuit, arrows on a sketch, a structural formula, notation. Naming or tapping the numbered parts of a picture the app shows her is not drawing: it is an exercise like any other',
   spoken_dialogue:
     'she would have to speak freely with a partner who answers back. Reading out a text that is given, and pronouncing words, stay practicable',
   experiment:

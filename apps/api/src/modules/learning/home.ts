@@ -326,6 +326,8 @@ async function nowCardOf(
         secure_topics: justFinished.secure_topics,
         shaky_topics: justFinished.shaky_topics,
       },
+      // Its place in the conversation (issue #630): the moment it ended, not "the end of it".
+      ...(justFinished.finished_at ? { finished_at: justFinished.finished_at.toISOString() } : {}),
       // The result never hides what is ready next (user feedback #2): the one card says both.
       next: prepared ? preparedBrief(state, prepared, today) : null,
     };
@@ -468,6 +470,19 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
     learnerId,
     page.messages.flatMap((m) => (m.roleplay_id ? [m.roleplay_id] : [])),
   );
+  // The offers she already worked through (issue #630): the run an offer started carries the
+  // offer's action id as its request id, so the card can say it is done instead of "Los geht's".
+  const finished = await finishedRuns(
+    db,
+    learnerId,
+    page.actions.filter((a) => a.result.tool === 'offer_learning').map((a) => a.id),
+  );
+  // The practice Buddy showed again (issue #630): its start only while it still waits.
+  const stillReady = await stepsStillPrepared(
+    db,
+    learnerId,
+    page.actions.flatMap((a) => (a.result.tool === 'show_ready' ? [a.result.step_id] : [])),
+  );
   // What a rehearsal measured, for the result card under Buddy's message (issue #264).
   const rehearsals = await rehearsalsOf(
     db,
@@ -492,6 +507,10 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       // of tapping and waiting for it (issue #196).
       if (s.tool === 'offer_learning' && cannotStart.has(actionId))
         return { ...s, startable: false };
+      // Done: the card reads as done and opens what came of it (issue #630).
+      if (s.tool === 'offer_learning' && finished.has(actionId))
+        return { ...s, finished_session_id: finished.get(actionId) ?? null };
+      if (s.tool === 'show_ready') return { ...s, ready: stillReady.has(s.step_id) };
       return s;
     },
     message: (m: ThreadPage['messages'][number]) => ({
@@ -499,4 +518,40 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       ...(m.rehearsal_id ? { rehearsal: rehearsals.get(m.rehearsal_id) ?? null } : {}),
     }),
   };
+}
+
+/**
+ * The finished run each of these offers started, by the offer's action id (issue #630). Only a
+ * run she finished counts — one she left open still resumes from its card. The newest wins when
+ * an offer was started twice.
+ */
+async function finishedRuns(
+  db: Db,
+  learnerId: string,
+  offerIds: readonly string[],
+): Promise<Map<string, string>> {
+  if (offerIds.length === 0) return new Map();
+  const rows = await db.query<{ request: string; id: string }>(
+    `select distinct on (client_request_id) client_request_id::text as request, id
+       from practice_sessions
+      where learner_id = $1 and client_request_id = any($2::uuid[]) and status = 'finished'
+      order by client_request_id, finished_at desc nulls last`,
+    [learnerId, offerIds],
+  );
+  return new Map(rows.map((r) => [r.request, r.id]));
+}
+
+/** Which of these steps are prepared practice that still waits for her (issue #630). */
+async function stepsStillPrepared(
+  db: Db,
+  learnerId: string,
+  stepIds: readonly string[],
+): Promise<Set<string>> {
+  if (stepIds.length === 0) return new Set();
+  const rows = await db.query<{ id: string }>(
+    `select id from buddy_steps
+      where learner_id = $1 and id = any($2::uuid[]) and kind = 'practice' and state = 'prepared'`,
+    [learnerId, stepIds],
+  );
+  return new Set(rows.map((r) => r.id));
 }

@@ -6,6 +6,7 @@
 import { ProfileLibrarySubjects } from '../../components/library/ProfileLibrarySubjects.js';
 import { DrillOfferCard } from '../../components/learn/DrillOfferCard.js';
 import { OfferCard } from '../../components/learn/OfferCard.js';
+import { ReadyCard } from '../../components/learn/ReadyCard.js';
 import { ResultNotice } from '../../components/learn/ResultNotice.js';
 import { LearnStartSheets } from '../../components/learn/StartSheets.js';
 import { startItems } from '../../components/learn/startItems.js';
@@ -50,6 +51,8 @@ export function registerLearning(): void {
   addActionCard('offer_learning', (offer, on) => (
     <OfferCard actionId={on.actionId} offer={offer} spoken={on.spoken} quiet={on.quiet} />
   ));
+  // … practice he prepared that waits for her, when his words point to it (issue #630) …
+  addActionCard('show_ready', (ready, on) => <ReadyCard ready={ready} quiet={on.quiet} />);
   // … a Kopfrechnen round (issue #243): the same card, code writes the tasks …
   addActionCard('offer_drill', (offer, on) => (
     <DrillOfferCard actionId={on.actionId} offer={offer} quiet={on.quiet} />

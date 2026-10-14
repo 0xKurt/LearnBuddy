@@ -210,6 +210,13 @@ export const ActionSummary = z.discriminatedUnion('tool', [
      * record written before this existed.
      */
     startable: z.boolean().default(true),
+    /**
+     * The run this offer started, once she finished it (issue #630): the card then reads as
+     * finished and opens its result instead of "Los geht's". Decorated when the thread is
+     * served, from the session itself (CLAUDE.md rule 5); null while nothing was finished, and
+     * from an older server.
+     */
+    finished_session_id: Uuid.nullable().default(null),
   }),
   /**
    * Buddy offers a Kopfrechnen round (issue #243): one range from a closed list, and for the
@@ -272,6 +279,20 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     /** A talk: the length she was asked for, in minutes, when known. */
     minutes: z.number().int().nullable(),
     goal_id: Uuid.nullable(),
+  }),
+  /**
+   * Practice Buddy prepared that already waits for her, shown again under his answer (issue
+   * #630): his words point to it, and this card is the button they mean. `ready` is where the
+   * step stands NOW (decorated when the thread is served): false once it was started, done or
+   * replaced — then the card no longer offers a start that is not there.
+   */
+  z.object({
+    tool: z.literal('show_ready'),
+    step_id: Uuid,
+    title: z.string(),
+    question_count: z.number().int(),
+    est_minutes: z.number().int(),
+    ready: z.boolean().default(true),
   }),
   /** Buddy points to a part of the app (said, not searched for); the app shows a button to open it. */
   z.object({
@@ -441,6 +462,12 @@ export const NowCard = z.discriminatedUnion('type', [
     mode: z.enum(['practice', 'test', 'help']).default('practice'),
     result: PracticeSummary,
     /**
+     * When she finished it (issue #630): the result stands in the conversation at that moment,
+     * never under what was said after it, and a greeting names it only when nothing was said
+     * since. Absent from an older server: then no greeting claims it as just done.
+     */
+    finished_at: IsoDateTime.optional(),
+    /**
      * What is ready next, so the result never hides prepared practice (user feedback #2).
      * An unreadable one reads as none.
      */
@@ -498,7 +525,16 @@ export const Decision = z.discriminatedUnion('type', [
      */
     rules: z.object({ quiet_start: LocalTime }).nullable().catch(null),
   }),
-  z.object({ type: z.literal('how_did_it_go'), goal: GoalBrief }),
+  z.object({
+    type: z.literal('how_did_it_go'),
+    goal: GoalBrief,
+    /**
+     * When the question arose — the start of the day after the test, in her zone (issue #630).
+     * The card stands in the conversation at that moment instead of under everything said since;
+     * the server stops asking a week after the test. Absent from an older server.
+     */
+    asked_at: IsoDateTime.optional(),
+  }),
 ]);
 export type Decision = z.infer<typeof Decision>;
 

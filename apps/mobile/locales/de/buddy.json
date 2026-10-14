@@ -40,6 +40,7 @@
     "rename_material": "Das Blatt heißt jetzt „{{title}}“",
     "delete_item": "Die Frage ist weg: „{{question}}“",
     "open_area": "Gezeigt: {{what}}",
+    "show_ready": "Bereit zum Starten: {{title}}",
     "set_contact_quiet": "Benachrichtigungen nur zwischen {{from}} und {{to}} Uhr, nie nach {{quiet}} Uhr",
     "set_contact_days": "nie an diesen Tagen: {{days}}",
     "request_material_undone": "Kein Foto nötig: {{title}}",

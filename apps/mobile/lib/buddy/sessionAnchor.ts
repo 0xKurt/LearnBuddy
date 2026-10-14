@@ -125,10 +125,20 @@ export type Greeting = {
  * Never a count of due or missed work (CLAUDE.md rule 6): the only number here is her own
  * finished work.
  */
-export function sessionGreeting(part: DayPart, variant: number, now: NowCard | null): Greeting {
+export function sessionGreeting(
+  part: DayPart,
+  variant: number,
+  now: NowCard | null,
+  /** When the last message before this greeting was written; null = there is none. */
+  lastMessageAt: string | null = null,
+): Greeting {
   // Nothing just happened (or a session she left without answering): the plain hello, with
   // its wording for the part of the day.
-  if (now?.type !== 'practice_result' || now.result.answered <= 0)
+  if (
+    now?.type !== 'practice_result' ||
+    now.result.answered <= 0 ||
+    !justBefore(now, lastMessageAt)
+  )
     return { key: `session.${part}.${variant}`, tells: null };
   const { answered, first_try: firstTry } = now.result;
   const shape =
@@ -144,11 +154,29 @@ export function sessionGreeting(part: DayPart, variant: number, now: NowCard | n
   return { key: `session.after.${shape}`, count: answered, tells: now.session_id };
 }
 
+/**
+ * Whether the finished practice is what she did last, so "gerade" is true (issue #630). The
+ * greeting stands under the last message; a practice finished BEFORE that message is older than
+ * what was said since — the owner's device: „Hey Testkind – 7 Fragen hast du gerade beantwortet"
+ * under her own later „Lass uns das Arbeitsblatt üben", read as Buddy's answer to it. That result
+ * keeps its own card at its own moment in the thread (`placeByTime`). A home without the moment
+ * (an older server) claims nothing (CLAUDE.md rule 5).
+ */
+function justBefore(
+  now: Extract<NowCard, { type: 'practice_result' }>,
+  lastMessageAt: string | null,
+): boolean {
+  if (!now.finished_at) return false;
+  return lastMessageAt === null || Date.parse(now.finished_at) >= Date.parse(lastMessageAt);
+}
+
 /** A greeting as this opening holds it, with what it still needs to know. */
 export type GreetingState = Greeting & {
   /** Kept so the refinement below reads no clock a second time. */
   part: DayPart;
   variant: number;
+  /** When the message it stands under was written (`justBefore`). */
+  since: string | null;
   /**
    * The sentence was composed from the copy of the home kept on the device, which carries no
    * `now` at all (`lib/api/deviceCache.ts` `settledHome`, CLAUDE.md rule 5) — so what she just
@@ -167,8 +195,15 @@ export function openGreeting(
   variant: number,
   now: NowCard | null,
   confirmed: boolean,
+  since: string | null = null,
 ): GreetingState {
-  return { ...sessionGreeting(part, variant, now), part, variant, pending: !confirmed };
+  return {
+    ...sessionGreeting(part, variant, now, since),
+    part,
+    variant,
+    since,
+    pending: !confirmed,
+  };
 }
 
 /**
@@ -187,7 +222,13 @@ export function refineGreeting(
   stillLast: boolean,
 ): GreetingState {
   if (!current.pending) return current;
-  const next = sessionGreeting(current.part, current.variant, now);
+  const next = sessionGreeting(current.part, current.variant, now, current.since);
   if (next.tells === null || !stillLast) return { ...current, pending: false };
-  return { ...next, part: current.part, variant: current.variant, pending: false };
+  return {
+    ...next,
+    part: current.part,
+    variant: current.variant,
+    since: current.since,
+    pending: false,
+  };
 }

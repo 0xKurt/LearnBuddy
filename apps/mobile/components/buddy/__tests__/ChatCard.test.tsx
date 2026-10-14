@@ -16,6 +16,7 @@ function cssOf(hex: string): string {
 }
 import { DrillOfferCard } from '../../learn/DrillOfferCard.js';
 import { OfferCard } from '../../learn/OfferCard.js';
+import { ReadyCard } from '../../learn/ReadyCard.js';
 import { AreaCard } from '../AreaCard.js';
 import { ChatCard, PracticeReady } from '../ChatCard.js';
 import { DecisionCard } from '../DecisionCard.js';
@@ -31,6 +32,7 @@ const OFFER: Extract<ActionSummary, { tool: 'offer_learning' }> = {
   direction: null,
   minutes: 10,
   startable: true,
+  finished_session_id: null,
 };
 
 /** What a text declares for itself: jsdom's cascade lets react-native-web's reset win over it. */
@@ -196,6 +198,38 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
     expect(
       screen.getByText('Damit kann ich leider nichts vorbereiten – probier ein Schulthema.'),
     ).toBeTruthy();
+  });
+
+  it('an offer she already worked through reads as done and opens its result (issue #630)', () => {
+    // The device: "Brüche addieren – Los geht's" stood above "Geschafft! 7 Fragen" of that run.
+    renderInApp(
+      <OfferCard
+        actionId="a1"
+        offer={{ ...OFFER, finished_session_id: '00000000-0000-4000-8000-0000000000aa' }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: "Los geht's" })).toBeNull();
+    expect(screen.getByText('Geschafft!')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
+  });
+
+  it('practice that waits, shown when Buddy points to it: one start (issue #630)', () => {
+    const ready: Extract<ActionSummary, { tool: 'show_ready' }> = {
+      tool: 'show_ready',
+      step_id: '00000000-0000-4000-8000-0000000000bb',
+      title: 'Arbeitsblatt Brüche',
+      question_count: 7,
+      est_minutes: 6,
+      ready: true,
+    };
+    const { unmount } = renderInApp(<ReadyCard ready={ready} />);
+    expect(screen.getByText('Arbeitsblatt Brüche')).toBeTruthy();
+    expect(screen.getByRole('button', { name: "Los geht's" })).toBeTruthy();
+    unmount();
+    // Started or replaced since: no start that is not there.
+    renderInApp(<ReadyCard ready={{ ...ready, ready: false }} />);
+    expect(screen.queryByText('Arbeitsblatt Brüche')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('a Kopfrechnen round (Flows.jsx:169)', () => {

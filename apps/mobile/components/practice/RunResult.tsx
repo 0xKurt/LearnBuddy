@@ -6,6 +6,7 @@ import type { SessionView } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { Platform, ScrollView, View } from 'react-native';
 
+import { topicsToReview } from '../../lib/practice/summaryLine.js';
 import { RESULT } from '../../lib/theme/results.js';
 import { GUTTER_OUTER, SPACE } from '../../lib/theme/space.js';
 import { Btn } from '../lb/Btn.js';
@@ -30,9 +31,11 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
   const { t } = useTranslation(['practice', 'common']);
   // What more practice would be about: what did not sit, else what did, else the
   // topics of the questions she just worked on.
+  // What did not end right; nothing when every answer did (issue #630).
+  const shaky = topicsToReview(summary, session.mode);
   const againTopics =
-    summary.shaky_topics.length > 0
-      ? summary.shaky_topics
+    shaky.length > 0
+      ? shaky
       : summary.secure_topics.length > 0
         ? summary.secure_topics
         : [
@@ -99,7 +102,7 @@ export function RunResult({ session, summary, title, celebrate, busy, onCards, o
             </Btn>
           ) : session.mode !== 'help' && againTopics.length > 0 ? (
             <AgainButton
-              {...(summary.shaky_topics.length > 0 ? {} : { kind: 'harder' as const })}
+              {...(shaky.length > 0 ? {} : { kind: 'harder' as const })}
               title={session.title}
               topics={againTopics}
               sessionId={session.id}

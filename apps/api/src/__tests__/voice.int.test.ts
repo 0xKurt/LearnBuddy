@@ -30,6 +30,8 @@ describe.skipIf(!dbReady)('voice', () => {
   it('writes down a spoken answer, tells the model the mode and language, stores nothing', async () => {
     env.llm.script('transcribe', (req) => {
       expect(ScriptedGateway.textOf(req)).toContain('MODE: ANSWER\nEXPECTED LANGUAGE: fr');
+      // Noise is no speech (issue #630: a first sentence nobody said was answered).
+      expect(req.system).toContain('never write down words you only guess');
       expect(
         req.contents[0]!.parts.some(
           (p) => 'inlineData' in p && p.inlineData.mimeType === 'audio/webm',

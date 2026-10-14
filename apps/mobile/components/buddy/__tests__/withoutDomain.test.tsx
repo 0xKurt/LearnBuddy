@@ -35,6 +35,7 @@ const OFFER: MessageView = {
         direction: null,
         minutes: null,
         startable: true,
+        finished_session_id: null,
       },
       created_at: '2026-10-01T18:00:00.000Z',
     },

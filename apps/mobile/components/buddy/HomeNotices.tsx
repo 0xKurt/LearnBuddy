@@ -15,6 +15,7 @@ import { failedTitleKey } from '../../lib/buddy/failedTitle.js';
 import { refreshHome, type HomeAct } from '../../lib/buddy/useHomeAct.js';
 import type { HomeThumbs, LeftBehind } from '../../lib/buddy/useHomePhotos.js';
 import type { CaptureDraft } from '../../lib/capture/draft.js';
+import type { Timed } from '../../lib/buddy/homeThread.js';
 import type { HomeLayout } from '../../lib/homeLayout.js';
 import { Btn } from '../lb/Btn.js';
 import { CardChoices, ChatCard, type CardAction } from './ChatCard.js';
@@ -39,8 +40,25 @@ type Props = {
   decision: ReactElement | null;
 };
 
-/** The notices at the end of the conversation, in their order; empty when Buddy has nothing. */
-export function homeNotices({ h, layout, left, thumbs, busy, quiet, act, decision }: Props) {
+/**
+ * The notices of the conversation, in their order, each with the moment it belongs to (issue
+ * #630): the finished practice when it ended, the check-in after a test when the test day was
+ * over — they stand there in the thread (`placeByTime`), not under what was said since. What is
+ * about now (photos not sent, a sheet Buddy could not read, "Buddy is working") has no moment and
+ * stands at the end. Empty when Buddy has nothing.
+ */
+export function homeNotices(props: Props): Timed<ReactElement>[] {
+  const { h } = props;
+  const at = (node: ReactElement): string | null =>
+    node.key === 'result' && h.now?.type === 'practice_result'
+      ? (h.now.finished_at ?? null)
+      : node.key === 'decision' && h.decision?.type === 'how_did_it_go'
+        ? (h.decision.asked_at ?? null)
+        : null;
+  return noticeNodes(props).map((node) => ({ item: node, at: at(node) }));
+}
+
+function noticeNodes({ h, layout, left, thumbs, busy, quiet, act, decision }: Props) {
   const andReload: AndReload = (fn) =>
     void act(async () => {
       await fn();
@@ -92,7 +110,7 @@ export function homeNotices({ h, layout, left, thumbs, busy, quiet, act, decisio
     layout.working === 'thread' && h.working ? (
       <WorkingNote key="working" what={h.working} />
     ) : null,
-  ].filter((node) => node !== null);
+  ].filter((node): node is ReactElement => node !== null);
 }
 
 /** Photos left from before, not sent yet — or just let go, with "Rückgängig" (issue #82). */

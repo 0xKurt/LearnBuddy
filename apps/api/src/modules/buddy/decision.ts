@@ -758,9 +758,9 @@ const openArea = z.object({
   tool: z.literal('open_area'),
   args: z.object({
     area: z
-      .enum(['library', 'memory', 'settings', 'history', 'capture'])
+      .enum(['library', 'memory', 'settings', 'history', 'capture', 'practice'])
       .describe(
-        "library = her sheets and their questions · memory = what you know about her · settings = contact, language, parents' area · history = all earlier messages · capture = take a photo of a sheet",
+        "library = her sheets and their questions · memory = what you know about her · settings = contact, language, parents' area · history = all earlier messages · capture = take a photo of a sheet · practice = the start of the practice you prepared that waits for her (the newest one), under your reply",
       ),
   }),
 });

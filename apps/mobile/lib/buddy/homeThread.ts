@@ -30,6 +30,45 @@ export function greetingOnScreen(
   return { shown, result };
 }
 
+/** Something told in the conversation, with the moment it belongs to (null: it is about now). */
+export type Timed<T> = { item: T; at: string | null };
+
+/**
+ * Where each thing Buddy tells stands among the messages on screen (issue #630): at its own
+ * moment, after the last message written before it — never under what was said later. The
+ * finished practice stood at the end of the thread for half an hour, so "Geschafft! 7 Fragen"
+ * sat under her next message and read as Buddy's answer to it; the check-in after a test stood
+ * under every message for days.
+ *
+ * `end`: what is about now (no moment) or newer than every message on screen. `after`: by the
+ * message it follows. `before`: older than every message on screen — drawn above them only when
+ * the screen shows the conversation from its start (`fromStart`); otherwise it lies in the part
+ * scrolled away into the history and is not repeated at the top.
+ */
+export function placeByTime<T>(
+  messages: readonly Pick<MessageView, 'id' | 'created_at'>[],
+  items: readonly Timed<T>[],
+  fromStart: boolean,
+): { before: T[]; after: Map<string, T[]>; end: T[] } {
+  const before: T[] = [];
+  const after = new Map<string, T[]>();
+  const end: T[] = [];
+  const last = messages.length - 1;
+  for (const { item, at } of items) {
+    const when = at === null ? Number.NaN : Date.parse(at);
+    if (Number.isNaN(when)) {
+      end.push(item);
+      continue;
+    }
+    let i = last;
+    while (i >= 0 && Date.parse(messages[i]!.created_at) > when) i -= 1;
+    if (i === last) end.push(item);
+    else if (i >= 0) after.set(messages[i]!.id, [...(after.get(messages[i]!.id) ?? []), item]);
+    else if (fromStart) before.push(item);
+  }
+  return { before, after, end };
+}
+
 /**
  * The messages on screen and what the bar on top carries instead of them.
  *

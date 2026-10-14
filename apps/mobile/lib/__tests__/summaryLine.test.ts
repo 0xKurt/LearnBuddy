@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { summaryLines } from '../practice/summaryLine.js';
+import { summaryLines, topicsToReview } from '../practice/summaryLine.js';
 
 describe('summaryLines (user feedback #1)', () => {
   it('homework says what she solved herself, never a hit rate', () => {
@@ -35,5 +35,28 @@ describe('summaryLines (user feedback #1)', () => {
     expect(summaryLines({ answered: 3, first_try: 3 }, 'test')).toEqual([
       { key: 'summary_line.answered', count: 3 },
     ]);
+  });
+});
+
+describe('topicsToReview (issue #630)', () => {
+  const shaky = ['Brüche kürzen'];
+
+  it('names nothing to look at again when every answer ended right', () => {
+    // The device: "Schauen wir nochmal an" and "Die wackligen nochmal üben" after an all-right
+    // round (one answer had needed a second try).
+    expect(topicsToReview({ answered: 7, right: 7, shaky_topics: shaky }, 'practice')).toEqual([]);
+  });
+
+  it('names what did not end right', () => {
+    expect(topicsToReview({ answered: 7, right: 6, shaky_topics: shaky }, 'practice')).toEqual(
+      shaky,
+    );
+    // A test with one missed answer, too.
+    expect(topicsToReview({ answered: 4, right: 3, shaky_topics: shaky }, 'test')).toEqual(shaky);
+  });
+
+  it('keeps what an older server said, and names no topic for homework', () => {
+    expect(topicsToReview({ answered: 7, shaky_topics: shaky }, 'practice')).toEqual(shaky);
+    expect(topicsToReview({ answered: 2, right: 1, shaky_topics: shaky }, 'help')).toEqual([]);
   });
 });

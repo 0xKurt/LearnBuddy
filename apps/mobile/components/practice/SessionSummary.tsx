@@ -26,7 +26,7 @@ import { RHYTHM } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
-import { summaryLines } from '../../lib/practice/summaryLine.js';
+import { summaryLines, topicsToReview } from '../../lib/practice/summaryLine.js';
 import { timeUpLines } from '../../lib/practice/testClock.js';
 import { ResultList, type ResultRow } from '../lb/ResultList.js';
 
@@ -70,7 +70,8 @@ export function SessionSummary({
   const rest = timeUp.filter((l) => l.count === undefined).map((l) => t(l.key));
   // Homework is about solving it herself, not about topics that "sit".
   const secure = homework ? [] : summary.secure_topics;
-  const shaky = homework ? [] : summary.shaky_topics;
+  // Only what did not end right deserves another look (issue #630): an all-right round says so.
+  const shaky = topicsToReview(summary, mode);
   // One calm paragraph under the heading (design ui_kits/app/Done.jsx:26): what she did, what
   // stayed open, what sits and what deserves another look — sentences, never a stack of lines.
   const lead = [

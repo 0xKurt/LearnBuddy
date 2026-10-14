@@ -69,19 +69,18 @@ test('core loop · practice: short practice, feedback remembered, the greeting a
   await expect(page.getByText('Gemerkt: Möchte kurze Übungen')).toBeVisible();
   await expect(card).toHaveCount(0);
 
-  // ── Opening the app again right after a practice: the greeting knows about it (#195) ──
-  // A reload IS the app's own start, so this is the owner's screenshot from the promo
-  // footage: „Das ist auch doof — Hi Lienne! / Done. — Was für ne tolle conversation". Buddy
-  // said hello as if nothing had happened, and a flat „Geschafft! Du hast 4 Fragen
-  // beantwortet." card stood under it. One sentence now, composed on the phone from the
-  // home's own payload — no model call, no second request.
-  await expect(page.getByText('Hey Mia – 4 Fragen, alles gleich beim ersten Mal.')).toBeVisible();
-  // And said ONCE: nothing repeats it as a card below — the one "Geschafft!" is the result
-  // card's own head (#599 practice cards), and the greeting does not use the word (#625).
+  // ── Opening the app again after a practice and a chat about it (#195, #630) ──
+  // A reload IS the app's own start, so Buddy greets. The practice is no longer what she did
+  // last — she told Buddy to make the rounds shorter after it — so the greeting does not call it
+  // "gerade" (#630: „Hey Testkind – 7 Fragen hast du gerade beantwortet" stood under her later
+  // message and read as Buddy's answer to it). The result keeps its own card at its own moment:
+  // above her message, not under it, and said once.
+  await expect(page.getByText('Hey Mia – 4 Fragen', { exact: false })).toHaveCount(0);
   await expect(page.getByText(/geschafft/i)).toHaveCount(1);
-  await expect(page.getByText('Du hast 4 Fragen beantwortet.')).toHaveCount(0);
-  // The full view stays one tap away — now from the greeting itself.
   await expect(page.getByRole('button', { name: 'Ansehen' })).toHaveCount(1);
+  const resultAt = await page.getByText('Geschafft!').boundingBox();
+  const laterAt = await page.getByText('Mach die Übungen bitte kürzer.').boundingBox();
+  expect(resultAt!.y).toBeLessThan(laterAt!.y);
   await shot(page, '12c-buddy-greeting-after-practice');
 
   test.info().annotations.push({ type: 'email', description: email });

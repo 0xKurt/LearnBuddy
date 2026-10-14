@@ -334,6 +334,7 @@ describe.skipIf(!dbReady)('the questions of a material', () => {
     expect(finished.body.summary).toEqual({
       answered: 2,
       first_try: 2,
+      right: 2,
       secure_topics: ['Hauptstädte'],
       shaky_topics: [],
     });

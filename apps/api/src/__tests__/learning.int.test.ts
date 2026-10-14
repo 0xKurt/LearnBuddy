@@ -514,6 +514,7 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     expect(finished.body.summary).toEqual({
       answered: 2,
       first_try: 0,
+      right: 1,
       secure_topics: [],
       shaky_topics: expect.arrayContaining(['Flüsse', 'Hauptstädte']),
     });
