@@ -5,6 +5,9 @@
 
 import type { StartTopicRequest } from '@learnbuddy/shared-types/contracts';
 
+import { toJsonSchema } from '../../llm/json-schema.js';
+import { promptVersion } from '../../llm/promptVersion.js';
+import { withinBudget } from '../../llm/schemaBudget.js';
 import type { SentSchema } from '../buddy/schemas.js';
 import * as rehearse from '../buddy/rehearse.js';
 import * as roleplay from '../buddy/roleplay.js';
@@ -39,25 +42,51 @@ const RUN_KINDS: StartTopicRequest['kind'][] = [
 
 const leanOf = (system: string) => `${system}\n\n${extract.LEAN_RULES}`;
 
+/**
+ * The choosing call before a main call whose whole schema is past the budget (#627, #665): the
+ * same system prompt with the chooser's rule on top, and two closed lists as its answer.
+ */
+function choosingFor(main: SentSchema, full: SentSchema['schema']): SentSchema[] {
+  if (withinBudget(full)) return [];
+  const purpose = main.purpose === 'extraction' ? 'extraction' : 'explain';
+  return [
+    {
+      purpose: 'forms',
+      profile: `before ${main.purpose} ${main.profile}`,
+      tier: 'fast',
+      promptVersion: promptVersion(`forms-${purpose}`, formChoice.CHOOSER, main.promptVersion),
+      system: `${main.system}\n\n${formChoice.CHOOSER}`,
+      schema: toJsonSchema(formChoice.choiceFor(full)),
+      where: 'practice/formChoice.ts — chooseForms',
+    },
+  ];
+}
+
 export function learningSchemas(): SentSchema[] {
-  const explain = (profile: string, schema: SentSchema['schema'], where: string): SentSchema => ({
+  const explain = (profile: string, full: SentSchema['schema'], where: string): SentSchema => ({
     purpose: 'explain',
     profile,
     tier: 'smart',
     promptVersion: generate.GENERATE_PROMPT_VERSION,
     system: generate.GENERATE_SYSTEM,
-    schema: formChoice.widest(schema),
+    schema: formChoice.widest(full),
     where,
   });
-  const reading = (profile: string, system: string, schema: SentSchema['schema']): SentSchema => ({
+  const reading = (profile: string, system: string, full: SentSchema['schema']): SentSchema => ({
     purpose: 'extraction',
     profile,
     tier: 'smart',
     promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
     system,
-    schema: formChoice.widest(schema),
+    schema: formChoice.widest(full),
     where: 'materials/reader.ts — homework ? HOMEWORK_* : EXTRACT_*, lean after a cut-off answer',
   });
+  // A main call and the choosing call before it, when it needs one. A lean reading reuses the
+  // choice of the sheet's first reading, so it has none of its own.
+  const chosen = (main: SentSchema, full: SentSchema['schema']) => [
+    main,
+    ...choosingFor(main, full),
+  ];
   return [
     {
       purpose: 'buddy_turn',
@@ -82,20 +111,30 @@ export function learningSchemas(): SentSchema[] {
       setProfiles.GENERATED_SCHEMA,
       'practice/setProfiles.ts — GENERATED_SCHEMA',
     ),
-    ...RUN_KINDS.map((kind) =>
-      explain(
-        `kind=${kind}`,
-        setProfiles.explainSchemaFor(kind, null),
-        `practice/setProfiles.ts — explainSchemaFor('${kind}', null)`,
-      ),
+    ...RUN_KINDS.flatMap((kind) => {
+      const full = setProfiles.explainSchemaFor(kind, null);
+      return chosen(
+        explain(
+          `kind=${kind}`,
+          full,
+          `practice/setProfiles.ts — explainSchemaFor('${kind}', null)`,
+        ),
+        full,
+      );
+    }),
+    ...chosen(
+      reading('study', extract.EXTRACT_SYSTEM, sheetSources.EXTRACTION_SCHEMA),
+      sheetSources.EXTRACTION_SCHEMA,
     ),
-    reading('study', extract.EXTRACT_SYSTEM, sheetSources.EXTRACTION_SCHEMA),
     reading(
       'study + LEAN_RULES (after a cut-off answer)',
       leanOf(extract.EXTRACT_SYSTEM),
       sheetSources.EXTRACTION_SCHEMA,
     ),
-    reading('homework', extract.HOMEWORK_SYSTEM, sheetSources.HOMEWORK_SCHEMA),
+    ...chosen(
+      reading('homework', extract.HOMEWORK_SYSTEM, sheetSources.HOMEWORK_SCHEMA),
+      sheetSources.HOMEWORK_SCHEMA,
+    ),
     reading('homework + LEAN_RULES', leanOf(extract.HOMEWORK_SYSTEM), sheetSources.HOMEWORK_SCHEMA),
     {
       purpose: 'tutor',
