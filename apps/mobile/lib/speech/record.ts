@@ -30,7 +30,7 @@ import {
   speakMimeForFile,
 } from './voice.js';
 import { useMounted } from '../useMounted.js';
-import { levelFromDb } from './level.js';
+import { levelFromDb, meterShown, type Meter } from './level.js';
 import { micRefusal, useOwnsRefusal } from './micRefusal.js';
 import { START_DEADLINE_MS, startTimedOut } from './startDeadline.js';
 
@@ -99,6 +99,12 @@ type Handlers = {
    * recording and `maxMs` is ignored.
    */
   onChunk?: (recording: Recording | null, chunk: DictationChunk) => void;
+  /**
+   * Every reading of her level (0…1) while recording, outside React (issue #637): what has to
+   * follow each reading (the end of her turn at a pause) follows it here, on time, instead of
+   * waiting for the screen to draw.
+   */
+  onLevel?: (level: number, now: number) => void;
 };
 
 type Options = Handlers & {
@@ -172,6 +178,7 @@ export function useRecording({
   onRecorded,
   onFailed,
   onChunk,
+  onLevel,
   maxMs = MAX_RECORDING_MS,
   long,
 }: Options) {
@@ -193,8 +200,8 @@ export function useRecording({
   const cancelled = useRef(false);
   const limit = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useMounted();
-  const handlers = useRef<Handlers>({ onRecorded, onFailed, onChunk });
-  handlers.current = { onRecorded, onFailed, onChunk };
+  const handlers = useRef<Handlers>({ onRecorded, onFailed, onChunk, onLevel });
+  handlers.current = { onRecorded, onFailed, onChunk, onLevel };
   const maxRef = useRef(maxMs);
   maxRef.current = maxMs;
   /** Which piece of a dictation is being recorded, and how long the finished ones were. */
@@ -317,15 +324,14 @@ export function useRecording({
   // Timer and sound level, asked from the recorder only while it records — an idle mic on
   // screen polls nothing (p2-idle-recorders-polled-every-120ms). The same poll
   // watches a dictation for the pause at which the next piece begins.
-  const [state, setState] = useState<{ durationMillis: number; metering?: number }>({
-    durationMillis: 0,
-  });
+  const [meter, setMeter] = useState<Meter>({ elapsedMs: 0, level: 0 });
   useEffect(() => {
     if (phase !== 'recording') return;
     const poll = setInterval(() => {
       try {
         const s = recorder.getStatus();
-        setState({ durationMillis: s.durationMillis, metering: s.metering });
+        setMeter((prev) => meterShown(prev, s.durationMillis, s.metering));
+        handlers.current.onLevel?.(levelFromDb(s.metering), Date.now());
         mark.current.observe(s.metering);
         if (
           handlers.current.onChunk &&
@@ -524,13 +530,13 @@ export function useRecording({
     elapsedMs:
       phase === 'recording'
         ? onChunk
-          ? chunkBaseMs.current + state.durationMillis
-          : Math.min(state.durationMillis, maxMs)
+          ? chunkBaseMs.current + meter.elapsedMs
+          : Math.min(meter.elapsedMs, maxMs)
         : 0,
     /** The longest this recording can get (for "0:07 / 1:00"); a dictation has no bound. */
     maxMs: onChunk ? null : maxMs,
     /** How loud she is right now (0…1; 0 when not recording or not measured). */
-    level: phase === 'recording' ? levelFromDb(state.metering) : 0,
+    level: phase === 'recording' ? meter.level : 0,
     denied: saysRefused ? denied : null,
     start,
     stop,

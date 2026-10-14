@@ -4,9 +4,11 @@
 // loud to ever fall quiet never ends it, and the tap keeps working. Pure, so the rule is
 // unit-tested; useVoiceInput holds one per recording.
 
+import { ROOM_TONE } from './level.js';
+
 /** levelFromDb: ~0.28 is clear speech, ~0.12 is room tone (lib/speech/level.ts). */
 const SPEECH = 0.28;
-const ROOM = 0.12;
+const ROOM = ROOM_TONE;
 /** She must have spoken this long before a pause can end her turn. */
 const HEARD_MS = 500;
 /** A pause this long ends it. */
