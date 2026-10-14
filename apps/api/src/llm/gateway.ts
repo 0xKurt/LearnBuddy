@@ -50,7 +50,12 @@ export type LlmPurpose =
    * The forms and figures an explain or extraction call needs, chosen before it (#627,
    * `practice/formChoice.ts`). Metered as part of that call (`callAhead`), not on its own.
    */
-  | 'forms';
+  | 'forms'
+  /**
+   * The scheduler's hourly check that the model answers at all (#650, `scheduler/canary.ts`): one
+   * tiny call on no learner's behalf, so it reserves nothing and is recorded without a learner.
+   */
+  | 'canary';
 
 /** Gemini 3 thinking levels (the Vertex `ThinkingConfig.thinkingLevel` values, lower case). */
 export type ThinkingLevelName = 'minimal' | 'low' | 'medium' | 'high';

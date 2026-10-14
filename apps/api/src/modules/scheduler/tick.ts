@@ -22,7 +22,23 @@ import { planConsolidations, runConsolidation } from '../buddy/consolidate.js';
 import { purgeSpeechCache } from '../voice/speech.js';
 import { jobKinds, tickWork, type JobHandler } from './registry.js';
 import { handleParkedJobs } from './terminal.js';
-import { modelThrottle, throttleAlarm, type ModelThrottle } from './throttle.js';
+import {
+  CANARY_TIMEOUT_MS,
+  lastCanary,
+  overBudgetAlarm,
+  runCanary,
+  schemasOverBudget,
+  type CanaryRun,
+  type OverBudget,
+} from './canary.js';
+import {
+  failureAlarm,
+  modelFailures,
+  modelThrottle,
+  throttleAlarm,
+  type ModelThrottle,
+  type PurposeFailures,
+} from './throttle.js';
 import {
   claimJobs,
   finishJob,
@@ -70,6 +86,12 @@ export type TickStats = {
   retention: RetentionStats | null;
   /** The provider's 429 share over the last hour (issue #206); alarms into `errors`. */
   throttle: ModelThrottle | null;
+  /** Refused and unusable calls per purpose over the last hour (issue #650). */
+  failures: PurposeFailures[] | null;
+  /** Schemas this build sends past what Vertex serves (issue #650); alarms into `errors`. */
+  overBudget: OverBudget[];
+  /** The hourly real model call (canary.ts); its failure alarms into `errors` until one passes. */
+  canary: CanaryRun | null;
   errors: string[];
 };
 
@@ -88,6 +110,9 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     receipts: null,
     retention: null,
     throttle: null,
+    failures: null,
+    overBudget: [],
+    canary: null,
     errors: [],
   };
   await deps.db.query(
@@ -115,6 +140,17 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     stats.errors.push(alarm);
     // And in the function log, where an operator looks first.
     console.warn('[scheduler] model throttle', { alarm });
+  });
+
+  // Then what the code itself gets wrong (issue #650): a purpose whose calls are refused or come
+  // back unusable, and a schema this build sends past what Vertex serves. Neither costs a call.
+  await guard('model', async () => {
+    stats.failures = await modelFailures(deps.db, deps.now());
+    stats.overBudget = schemasOverBudget();
+    const alarms = stats.failures.filter((f) => f.alarming).map(failureAlarm);
+    if (stats.overBudget.length > 0) alarms.push(overBudgetAlarm(stats.overBudget));
+    stats.errors.push(...alarms);
+    if (alarms.length > 0) console.warn('[scheduler] model alarm', { alarms });
   });
 
   await guard('recover', async () => {
@@ -265,6 +301,18 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
          set last_started_at = $1, last_finished_at = $2, stats = $3`,
       [startedAt, deps.now(), JSON.stringify(stats.retention)],
     );
+  });
+
+  // Last, once an hour: one tiny real call (canary.ts, issue #650) — after the learners' work, and
+  // only with time left for its whole budget. A failure stays on the canary's heartbeat until the
+  // next call passes, so every run in between reports it, not only the one that saw it.
+  await guard('canary', async () => {
+    stats.canary =
+      left() > CANARY_TIMEOUT_MS + 5_000 ? await runCanary(deps) : await lastCanary(deps);
+    if (stats.canary.last_error) {
+      stats.errors.push(stats.canary.last_error);
+      console.warn('[scheduler] model canary', { alarm: stats.canary.last_error });
+    }
   });
 
   await deps.db.query(

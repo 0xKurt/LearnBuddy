@@ -51,13 +51,16 @@ const readable = (
   },
 });
 
-async function tick(env: TestEnv): Promise<void> {
+/** One scheduler run; it reports no error, or exactly the one alarm the test expects. */
+async function tick(env: TestEnv, alarm?: string): Promise<void> {
   const res = await env.app.request('/v1/internal/tick', {
     method: 'POST',
     headers: { 'x-tick-secret': TEST_TICK_SECRET },
   });
   expect(res.status).toBe(200);
-  expect(((await res.json()) as { errors: string[] }).errors).toEqual([]);
+  const errors = ((await res.json()) as { errors: string[] }).errors;
+  if (alarm === undefined) expect(errors).toEqual([]);
+  else expect(errors).toEqual([expect.stringContaining(alarm)]);
 }
 
 const WAIT = { json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null } };
@@ -183,11 +186,12 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     expect((await l.api.get<{ status: string }>(`/materials/${id}`)).body.status).toBe('queued');
     expect((await l.api.get<BuddyHome>('/buddy')).body.working).toBe('material');
 
-    // The later runs start brief at once, and are cut off too.
+    // The later runs start brief at once, and are cut off too. Readings that keep coming back
+    // unusable are an alarm for the operator as well (#650): the scheduler says so.
     for (const minutes of [2, 3]) {
       env.llm.script('extraction', cutOff);
       env.clock.advance(minutes * 60_000);
-      await tick(env);
+      await tick(env, 'model calls failing: extraction — 0 refused and');
       await env.flushBackground();
     }
     const calls = env.llm.callsFor('extraction');
