@@ -42,7 +42,7 @@ import {
   type Quiet,
 } from './extensions.js';
 import { dayBreaks, formatDay, localDateOf } from '../../lib/time.js';
-import { closedStream, markdownPlain } from '../../lib/buddy/markdown.js';
+import { markdownPlain } from '../../lib/buddy/markdown.js';
 import { haptic } from '../../lib/haptics.js';
 
 import { MessageMenu, type MenuMessage } from './MessageMenu.js';
@@ -57,8 +57,7 @@ import {
   TakeBack,
   UNDER_LINE,
 } from './ThreadParts.js';
-import { TypingBubble } from './TypingBubble.js';
-import { useReveal } from './useReveal.js';
+import { LiveReply } from './LiveReply.js';
 
 import { SPACE } from '../../lib/theme/space.js';
 import { useSay } from '../../lib/speech/say.js';
@@ -248,7 +247,6 @@ export function Conversation({
   const breaks = dayBreaks(messages.map((m) => m.created_at));
   const thinking =
     pending !== null || messages.some((m) => m.role === 'learner' && m.status === 'processing');
-  const shownLive = useReveal(thinking && live ? closedStream(live) : null);
   // Buddy's orb stands beside the newest thing he says, once (ui_kits/app/Chat.jsx:12, :21): the
   // reply being written and the typing dots bring their own. The greeting of this visit stays
   // where it was said (lib/buddy/useSessionStart.ts) and is his newest line only until he says
@@ -539,17 +537,15 @@ export function Conversation({
           </View>
         </Entrance>
       ) : null}
-      {thinking && shownLive ? (
-        <Entrance key="live" animate={enters} index={0}>
-          <BuddyLine orb>
-            <View accessibilityLiveRegion="polite">
-              <RichText text={shownLive} style={[TYPE.body, { color: palette.ink }]} />
-            </View>
-          </BuddyLine>
-        </Entrance>
-      ) : thinking && showTyping ? (
-        // Buddy is thinking: his mini orb and the dots (the text is for screen readers).
-        <TypingBubble key="typing" label={t('thread.typing')} />
+      {thinking ? (
+        // His reply as it is written, revealed in its own component: the reveal's frames
+        // redraw that line only, not the whole thread (issue #715).
+        <LiveReply
+          live={live}
+          enters={enters}
+          showTyping={showTyping}
+          typingLabel={t('thread.typing')}
+        />
       ) : null}
       <UndoSheet
         error={
