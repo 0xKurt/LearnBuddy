@@ -80,40 +80,48 @@ function stateSkin(
   }
 }
 
+/** The state's line, as drawn: the meta type at the title's line height (read at render, #84). */
+const stateText = () => [TYPE.meta, { lineHeight: TYPE.option.lineHeight }];
+
 /**
- * The widest single word among the states, measured as drawn (#599): the state column never
- * stands narrower, so "Übersprungen" ends inside the card and "Noch nicht richtig" takes two
- * lines, not three. Each word is laid out on its own, out of sight and out of the reading order.
+ * The widest single word among the states, measured in the state's own type (#599): the state
+ * column never stands narrower, so "Übersprungen" ends inside the card and "Noch nicht richtig"
+ * takes two lines, not three. A layout reports whole points (the web rounds a box's width): one
+ * more keeps a word that measured 89.4 from breaking in a box of 89. Each word is laid out on its
+ * own, out of sight and out of the reading order — and only until it is measured: then it goes,
+ * so nothing reads or finds a state twice.
  */
 function useWidestWord(labels: readonly string[]): { least: number; measure: ReactNode } {
   const [widths, setWidths] = useState<Readonly<Record<string, number>>>({});
   const words = [...new Set(labels.flatMap((label) => label.split(/\s+/).filter(Boolean)))];
-  const least = Math.ceil(Math.max(0, ...words.map((w) => widths[w] ?? 0)));
-  const measure = (
-    <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      aria-hidden
-      pointerEvents="none"
-      style={{ position: 'absolute', top: 0, left: 0, height: 0, overflow: 'hidden' }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-        {words.map((word) => (
-          <Text
-            key={word}
-            numberOfLines={1}
-            style={[TYPE.meta, { flexShrink: 0 }]}
-            onLayout={(e) => {
-              const w = e.nativeEvent.layout.width;
-              setWidths((now) => (now[word] === w ? now : { ...now, [word]: w }));
-            }}
-          >
-            {word}
-          </Text>
-        ))}
+  const least = Math.ceil(Math.max(0, ...words.map((w) => widths[w] ?? 0))) + RESULT.stateSlack;
+  const unmeasured = words.filter((w) => widths[w] === undefined);
+  const measure =
+    unmeasured.length === 0 ? null : (
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        aria-hidden
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 0, left: 0, height: 0, overflow: 'hidden' }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+          {unmeasured.map((word) => (
+            <Text
+              key={word}
+              numberOfLines={1}
+              style={[stateText(), { flexShrink: 0 }]}
+              onLayout={(e) => {
+                const w = e.nativeEvent.layout.width;
+                setWidths((now) => (now[word] === w ? now : { ...now, [word]: w }));
+              }}
+            >
+              {word}
+            </Text>
+          ))}
+        </View>
       </View>
-    </View>
-  );
+    );
   return { least, measure };
 }
 
@@ -170,14 +178,7 @@ function ResultRows({ rows }: { rows: readonly ResultRow[] }) {
                 <InlineText text={row.note} style={[TYPE.meta, { color: palette.ink2 }]} />
               ) : null}
             </View>
-            <Text
-              style={[
-                TYPE.meta,
-                { lineHeight: TYPE.option.lineHeight },
-                ROW_SPLIT.value,
-                { minWidth: state.least },
-              ]}
-            >
+            <Text style={[stateText(), ROW_SPLIT.value, { minWidth: state.least }]}>
               {row.label}
             </Text>
           </View>

@@ -108,6 +108,29 @@ describe('SpaceBody', () => {
     expect(prism.container.textContent).not.toContain('cm');
   });
 
+  it("shrinks a cube building as a whole with FigureView's scale (#599)", () => {
+    // Its edges have a size of their own: narrower alone, it stood as tall as before, and a
+    // building over four views ran the bar 30 pt past 360×740.
+    const building = {
+      type: 'cubes',
+      g: [
+        [1, 2, 0],
+        [3, 0, 2],
+      ],
+      v: 'oblique',
+      ask: 'front',
+    } as unknown as SpaceFig;
+    const height = (scale: number) => {
+      const { container, unmount } = renderInApp(
+        <SpaceBody figure={building} width={Math.floor(266 * scale)} scale={scale} />,
+      );
+      const h = Number(container.querySelector('svg')!.getAttribute('height'));
+      unmount();
+      return h;
+    };
+    expect(height(0.5)).toBeLessThanOrEqual(Math.ceil(height(1) / 2) + 1);
+  });
+
   it('numbers the squares of a net only when the question names them', () => {
     const fold = renderInApp(<SpaceBody figure={FIGURES[7]!} width={266} />);
     expect(fold.container.textContent).toBe('');

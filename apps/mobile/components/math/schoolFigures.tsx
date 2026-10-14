@@ -74,8 +74,9 @@ export function SchoolFigureBody({
   figure: SchoolFigure;
   width: number;
   /**
-   * How far FigureView shrinks the drawing. A tree, a circuit, a logic net and a labelled picture
-   * need it (their height does not follow their width, #419, #462); the rest follow the width.
+   * How far FigureView shrinks the drawing. A tree, a circuit, a logic net, a labelled picture and
+   * a cube building need it (their height does not follow their width, #419, #462, #599); the
+   * rest follow the width.
    */
   scale: number;
 }) {
@@ -88,7 +89,7 @@ export function SchoolFigureBody({
     return <SwitchingBody figure={figure} width={width} scale={scale} />;
   if (isColorWheel(figure)) return <ColorWheelBody figure={figure} width={width} />;
   if (isMap(figure)) return <MapBody figure={figure} width={width} />;
-  return <SpaceBody figure={figure} width={width} />;
+  return <SpaceBody figure={figure} width={width} scale={scale} />;
 }
 
 /**

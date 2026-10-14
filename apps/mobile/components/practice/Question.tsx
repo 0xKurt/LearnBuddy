@@ -244,10 +244,6 @@ export function QuestionCard({
   const filled = fillableAnswer(prompt, answer);
   // A labelled picture that is an image stands under the card, a card of its own (`standsAlone`).
   const picture = figure && standsAlone(figure) ? figure : null;
-  // As tall as the room left after the card and the bar allows (#599): a skeleton under a
-  // two-line question ran 13 pt past 360×740 at a fixed share of the window. Held while she types:
-  // folded, it measures the room of its row.
-  const pictureMax = usePictureCap(`${prompt}:${seen.window}`, boardCap(viewHeight), 1, typing);
   const inCard = picture ? null : figure;
   const hasVisual = inCard !== null || (image !== null && imageKey !== undefined);
   // Only a card that USES the room takes it (issue #143). #96 gave the card whatever the
@@ -380,10 +376,40 @@ export function QuestionCard({
       {card}
       {/* As far under the question as her answer stands under both; folded while she types, like
           every drawing (#379). */}
-      <View testID="question-picture" style={{ marginTop: PRACTICE.ordinaryBody.gap }}>
-        <QuestionFigure figure={picture} maxHeight={pictureMax} folded={typing} />
-      </View>
+      <QuestionPicture
+        figure={picture}
+        sizeKey={`${prompt}:${seen.window}`}
+        most={boardCap(viewHeight)}
+        typing={typing}
+      />
     </>
+  );
+}
+
+/**
+ * A labelled picture under its question, as tall as the room left after the card and the bar
+ * allows (#599): a skeleton under a two-line question ran 13 pt past 360×740 at a fixed share of
+ * the window. Held while she types: folded, it measures the room of its row. Its own component,
+ * so only a question WITH such a picture follows the measured room (`PictureRoom`): every other
+ * card re-rendered with each measurement, and the code task's feedback at 360×440 stood half
+ * drawn where it had not been drawn at all (gallery 262e).
+ */
+function QuestionPicture({
+  figure,
+  sizeKey,
+  most,
+  typing,
+}: {
+  figure: NonNullable<QuestionProps['figure']>;
+  sizeKey: string;
+  most: number;
+  typing: boolean;
+}) {
+  const maxHeight = usePictureCap(sizeKey, most, 1, typing);
+  return (
+    <View testID="question-picture" style={{ marginTop: PRACTICE.ordinaryBody.gap }}>
+      <QuestionFigure figure={figure} maxHeight={maxHeight} folded={typing} />
+    </View>
   );
 }
 

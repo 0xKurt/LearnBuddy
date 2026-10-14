@@ -94,13 +94,21 @@ export function formatDate(iso: string, locale: string): string {
   );
 }
 
-/** Ends are exclusive midnights; people think in the last day that still counts. */
-export function formatLastDay(endIso: string, locale: string): string {
+/**
+ * Ends are exclusive midnights; people think in the last day that still counts. `sentenceEnd`:
+ * the date ends a sentence the template closes with its own full stop — the month is written
+ * out, so no abbreviation's dot stands before it ("15. Okt.." in de and fr, #599).
+ */
+export function formatLastDay(
+  endIso: string,
+  locale: string,
+  at: 'inline' | 'sentenceEnd' = 'inline',
+): string {
   const last = new Date(new Date(endIso).getTime() - 1);
   return new Intl.DateTimeFormat(localeTag(locale), {
     weekday: 'short',
     day: 'numeric',
-    month: 'short',
+    month: at === 'sentenceEnd' ? 'long' : 'short',
   }).format(last);
 }
 

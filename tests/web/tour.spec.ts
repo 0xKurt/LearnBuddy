@@ -235,7 +235,7 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // A pause needs no PIN (less contact is always allowed).
   await page.getByRole('button', { name: /^Aufs Handy, Ja/ }).click();
   await page.getByRole('button', { name: /^Bis morgen/ }).click();
-  await expect(page.getByText(/Pause bis einschließlich/).first()).toBeVisible();
+  await expect(page.getByText(/Pause – bis einschließlich/).first()).toBeVisible();
   await page.getByRole('button', { name: 'Nicht mehr erlauben' }).click();
   await expect(page.getByText('Nein. Buddy schreibt dir nur hier in der App.')).toBeVisible();
   await back();

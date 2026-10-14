@@ -12,5 +12,7 @@ export const RESULT = {
   glyph: 14,
   textGap: 2,
   border: UI.border,
+  /** A measured word's width comes in whole points: one more, so it never breaks (`ResultList`). */
+  stateSlack: 1,
   top: 28,
 } as const;

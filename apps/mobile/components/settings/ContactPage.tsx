@@ -22,7 +22,9 @@ export function ContactPage({ settings, isMinor, pinSet, push }: ContactProps) {
     contact.state === 'off'
       ? t('settings:contact.answer_off')
       : contact.state === 'paused'
-        ? t('settings:contact.answer_paused', { date: formatLastDay(pausedUntil!, i18n.language) })
+        ? t('settings:contact.answer_paused', {
+            date: formatLastDay(pausedUntil!, i18n.language, 'sentenceEnd'),
+          })
         : t('settings:contact.state_on', { quiet: settings.quiet_start });
 
   return (

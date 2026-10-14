@@ -84,7 +84,7 @@ export function MemoryItem({
 
   const until =
     temporary && memory.valid_until
-      ? t('until', { date: formatLastDay(memory.valid_until, i18n.language) })
+      ? t('until', { date: formatLastDay(memory.valid_until, i18n.language, 'sentenceEnd') })
       : '';
   const choose = (action: 'edit' | 'remove') => {
     if (current.current.locked || pending.current !== null) return;

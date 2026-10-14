@@ -15,6 +15,7 @@ import { Platform, Text, View, type TextStyle } from 'react-native';
 import { speakMathText } from '../../lib/math/speak.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import type { ChoiceMark } from '../../lib/practice/choiceMarks.js';
+import { FigureSizingReport, useFigureSizing } from '../../lib/math/figureSizing.js';
 import { usePictureCap } from '../../lib/practice/screenRoom.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -326,10 +327,15 @@ function FigureChoices({
   const { visible: screenHeight } = useVisibleHeight();
   // At most the share above; less where the screen measures less room (#599): a drawing in the
   // card over four pictures ran the bar 30 pt past 360×740. Two pictures to a row share it.
+  // The pictures report their full height (`FigureSizingReport`): the room is taken from the
+  // height they stand at, not from a cap they stand under.
+  const sizing = useFigureSizing();
   const pictureMax = usePictureCap(
     `${choices.join('|')}:${screenHeight}`,
     Math.min(FIGURE_CHOICE_MAX_HEIGHT, Math.round(screenHeight * FIGURE_CHOICE_SCREEN_SHARE)),
     Math.ceil(choices.length / 2),
+    false,
+    sizing.natural,
   );
   // What each option shows, in words (the letter first, as voice mode names them).
   const spoken = useMemo(
@@ -343,53 +349,55 @@ function FigureChoices({
   const open = zoomed !== null ? figures[zoomed] : undefined;
   return (
     <View testID="figure-choices" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP }}>
-      {choices.map((choice, index) => {
-        const state = markOf(choice, index, tried, settled);
-        const { back, mine } = standing(state);
-        const note = said(state);
-        const figure = figures[index]!;
-        return (
-          // A tried picture keeps its white ground and steps back by its hairline (`Option`)
-          // and by fading the drawing.
-          <Option
-            key={`${index}:${choice}`}
-            state={optionState(state, selected === index)}
-            checked={selected === index || mine}
-            readOnly={settled !== null || state === 'tried'}
-            disabled={disabled}
-            style={{ flexBasis: PRACTICE.gridBasis, flexGrow: 1 }}
-            onPress={() => onChoose?.(index, choice)}
-            onLongPress={() => setZoomed(index)}
-            accessibilityHint={note?.hint ?? t('choice_zoom_hint')}
-            accessibilityLabel={spoken[index]!}
-          >
-            <View style={{ gap: SPACE.xs }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: SPACE.xs,
-                  minHeight: TYPE.option.lineHeight,
-                }}
-              >
-                {note ? (
-                  <MarkWords state={state} text={note.text} />
-                ) : settled ? null : (
-                  <LetterMark
-                    letter={letterFor(index)}
-                    tried={false}
-                    selected={selected === index}
-                    size={PRACTICE.figureBadgeSize}
-                  />
-                )}
+      <FigureSizingReport.Provider value={sizing.value}>
+        {choices.map((choice, index) => {
+          const state = markOf(choice, index, tried, settled);
+          const { back, mine } = standing(state);
+          const note = said(state);
+          const figure = figures[index]!;
+          return (
+            // A tried picture keeps its white ground and steps back by its hairline (`Option`)
+            // and by fading the drawing.
+            <Option
+              key={`${index}:${choice}`}
+              state={optionState(state, selected === index)}
+              checked={selected === index || mine}
+              readOnly={settled !== null || state === 'tried'}
+              disabled={disabled}
+              style={{ flexBasis: PRACTICE.gridBasis, flexGrow: 1 }}
+              onPress={() => onChoose?.(index, choice)}
+              onLongPress={() => setZoomed(index)}
+              accessibilityHint={note?.hint ?? t('choice_zoom_hint')}
+              accessibilityLabel={spoken[index]!}
+            >
+              <View style={{ gap: SPACE.xs }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: SPACE.xs,
+                    minHeight: TYPE.option.lineHeight,
+                  }}
+                >
+                  {note ? (
+                    <MarkWords state={state} text={note.text} />
+                  ) : settled ? null : (
+                    <LetterMark
+                      letter={letterFor(index)}
+                      tried={false}
+                      selected={selected === index}
+                      size={PRACTICE.figureBadgeSize}
+                    />
+                  )}
+                </View>
+                <View style={{ opacity: back ? PRACTICE.disabledOpacity : 1 }}>
+                  <FigureView figure={figure} bare maxHeight={pictureMax} />
+                </View>
               </View>
-              <View style={{ opacity: back ? PRACTICE.disabledOpacity : 1 }}>
-                <FigureView figure={figure} bare maxHeight={pictureMax} />
-              </View>
-            </View>
-          </Option>
-        );
-      })}
+            </Option>
+          );
+        })}
+      </FigureSizingReport.Provider>
       <ZoomViewer
         visible={open !== undefined}
         onClose={() => setZoomed(null)}

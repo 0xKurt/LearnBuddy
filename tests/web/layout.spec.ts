@@ -99,7 +99,8 @@ for (const viewport of [
     // The start sheet is closed again: its title and its ways are gone.
     await expect(page.getByRole('heading', { name: 'Was willst du üben?' })).toBeHidden();
     await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeHidden();
-    // The composer bar: camera, field and mic inside the screen, the field centred on the mic.
+    // The composer bar: camera, field and mic inside the screen. Two rows by design (Composer.jsx:
+    // her line, then the tools): camera and mic share the tools row, the field stands above it.
     const camera = await page
       .getByRole('button', { name: 'Was möchtest du anhängen?' })
       .boundingBox();
@@ -116,8 +117,10 @@ for (const viewport of [
       expect(box!.y + box!.height, what).toBeLessThanOrEqual(viewport.height);
     }
     const centre = (b: Box) => b.y + b.height / 2;
-    expect(Math.abs(centre(field!) - centre(mic!))).toBeLessThanOrEqual(3);
     expect(Math.abs(centre(camera!) - centre(mic!))).toBeLessThanOrEqual(3);
+    // Above it, not in it: each control reaches past its face to its 44 pt target, so the
+    // field's box may touch the row's — its middle stands above the row's top.
+    expect(centre(field!)).toBeLessThan(Math.min(camera!.y, mic!.y));
     // One compact row while empty (not a two-line box).
     expect(field!.height).toBeLessThanOrEqual(48);
     // No sideways scrolling anywhere.
@@ -350,8 +353,9 @@ async function answerChoices(page: Page, labels: readonly string[]): Promise<Cho
         current += whole[i];
       }
       lines.push(current);
-      const button = el.closest('[role="button"]');
-      if (!(button instanceof HTMLElement)) throw new Error(`"${label}" is not inside a button`);
+      // An option is a radio that drafts (#599 answer forms).
+      const button = el.closest('[role="radio"]');
+      if (!(button instanceof HTMLElement)) throw new Error(`"${label}" is not inside a radio`);
       const card = button.parentElement;
       if (!card) throw new Error(`the button of "${label}" has no card around it`);
       const cb = card.getBoundingClientRect();
@@ -438,12 +442,11 @@ test('answer choices break only between words, and a row of them is one row', as
         }
       }
 
-      // 2. The set is laid out the way the arithmetic in ChoiceList.tsx decided: short words
-      //    two by two, a word too long for half a line full width, one under the other.
+      // 2. One under the other, short words too: ordinary choices are full-width rows (#599,
+      //    ChoiceList.tsx; only ticks of a select-all stand two by two).
       const rows = rowsOf(boxes);
       const perRow = rows.map((row) => row.length);
-      if (what === 'grid') expect(perRow, `${where}: two by two`).toEqual([2, 2]);
-      else expect(perRow, `${where}: one per row`).toEqual([1, 1, 1, 1]);
+      expect(perRow, `${where}: one per row`).toEqual([1, 1, 1, 1]);
 
       // 3. Cards of a row are equally tall (the uneven row of the screenshot), and so are
       //    their buttons: the whole white card is tappable, not only its top.
