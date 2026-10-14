@@ -216,12 +216,15 @@ export async function withSubjectNames<G extends Omit<GoalRow, 'subject_name'>>(
 
 export async function loadBuddyState(db: Db, learnerId: string, now: Date): Promise<BuddyState> {
   const provider = contextProvider();
-  // The reads do not depend on one another: on the pool they go out side by side (#637: the
+  // The fence first (CLAUDE.md rule 4): the version is read before the data it guards, so it can
+  // only be older than what follows — a write in between makes the fence refuse, never pass, a
+  // decision on old data. On the pool every read is its own snapshot.
+  const settings = await loadSettings(db, learnerId);
+  // The data reads do not depend on one another: on the pool they go out side by side (#637: the
   // chat turn waited for ~17 round trips here, one after the other). Inside a transaction the
   // one client still takes them in order, so a snapshot stays a snapshot.
-  const [settings, goals, steps, memories, messages, summaries, domainState, outreach, totals] =
+  const [goals, steps, memories, messages, summaries, domainState, outreach, totals] =
     await Promise.all([
-      loadSettings(db, learnerId),
       db
         .query<Omit<GoalRow, 'subject_name'>>(
           `select g.id, g.kind, g.title, g.subject_id, g.due_date, g.topics,

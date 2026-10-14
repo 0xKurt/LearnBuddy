@@ -6,6 +6,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Db, Row } from '../lib/db.js';
+import { bumpContext } from '../modules/buddy/plan.js';
 import { loadBuddyState } from '../modules/buddy/state.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -55,5 +56,55 @@ describe.skipIf(!dbReady)("Buddy's state reads", () => {
     expect(peak()).toBeGreaterThanOrEqual(8);
     // And the same state either way.
     expect(parallel).toEqual(sequential);
+  });
+
+  // The fence (CLAUDE.md rule 4): the version a decision is checked against must never be newer
+  // than the data it was made on. Here a goal and its bump commit after the goals were read: a
+  // state that carries the new version but not the new goal would let the fence pass a decision
+  // made on old data. Read first, the version can only be older — and the fence then stops it.
+  it('never carries a version newer than the data it read', async () => {
+    let goalsRead: () => void = () => undefined;
+    const goalsDone = new Promise<void>((r) => (goalsRead = r));
+    let wrote: Promise<number> | null = null;
+    const write = () =>
+      env.db.tx(async (tx) => {
+        await tx.query(
+          `insert into buddy_goals (learner_id, kind, title, due_date)
+           values ($1, 'exam', 'Neue Arbeit', '2026-11-01')`,
+          [l.learnerId],
+        );
+        return bumpContext(tx, l.learnerId);
+      });
+    const held: Db = {
+      query: async <R extends Row = Row>(text: string, params?: readonly unknown[]) => {
+        if (/from buddy_goals g/.test(text)) {
+          const rows = await env.db.query<R>(text, params);
+          wrote = write();
+          goalsRead();
+          return rows;
+        }
+        return env.db.query<R>(text, params);
+      },
+      one: <R extends Row = Row>(text: string, params?: readonly unknown[]) =>
+        env.db.one<R>(text, params),
+      maybeOne: async <R extends Row = Row>(text: string, params?: readonly unknown[]) => {
+        // The version read waits until the goals were read and the write committed — or, when
+        // it goes first (as it must), a moment, and then reads before anything changed.
+        if (/from buddy_settings/.test(text)) {
+          const first = await Promise.race([
+            goalsDone.then(() => true),
+            new Promise<boolean>((r) => setTimeout(() => r(false), 300)),
+          ]);
+          if (first && wrote) await wrote;
+        }
+        return env.db.maybeOne<R>(text, params);
+      },
+      tx: (fn) => env.db.tx(fn),
+    };
+    const state = await loadBuddyState(held, l.learnerId, env.deps.now());
+    const bumped = wrote ? await wrote : null;
+    const hasNewGoal = state.goals.some((g) => g.title === 'Neue Arbeit');
+    if (state.settings.context_version === bumped) expect(hasNewGoal).toBe(true);
+    else expect(state.settings.context_version).toBeLessThan(bumped ?? Infinity);
   });
 });
