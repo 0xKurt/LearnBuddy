@@ -652,7 +652,11 @@ review moments `review_next_day`, `review_due`). Gates, cheapest first:
    within 14 days;
 5. no model configured → fixed fallbacks immediately;
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
-7. apply with the context fence; the contact policy decides whether and when a message is sent;
+7. apply with the context fence; the contact policy decides whether and when a message is sent.
+   A message about a step she already started is refused (`waitingStep` in `apply.ts`, K2 #663:
+   it would be cancelled as obsolete before sending) and goes back to the model as a repair
+   round. A fallback bumps `context_version` only when it wrote a step or a message (K1 #663);
+   one that waits leaves running chat turns valid;
 8. provider outage → retry in 10 minutes (bounded), then fallbacks keep time-critical help
    working (prepared practice before a test, "how did it go", and Buddy's own promise to look
    again as an honest in-app line). A check that answers her own action falls back also after
@@ -797,7 +801,11 @@ finishing and retrying are compare-and-set on the token, so a worker whose lease
 overwrite its successor. A Buddy check heartbeats its leases (the learner's check lease and
 its claimed jobs) before every model call, so a check that runs longer than one lease is never
 taken over while alive; it applies a decision (and its fallbacks) only while it still holds the
-learner's lease — a check is never applied twice (repro-17). At most `max_attempts` (default 3), then parked as `failed` — except the
+learner's lease — a check is never applied twice (repro-17). A sheet's reading does the same
+before each of its up to `MOST_READINGS` calls (`extendJobLease`, K6 #663) and stops without a
+call once its lease went to another run. A job whose handler throws is queued again after its
+backoff with the error as `last_error` (`retryJob`, K4 #663 — before, the lease ran out and
+`lease_expired` replaced the reason). At most `max_attempts` (default 3), then parked as `failed` — except the
 erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KINDS` in
 `scheduler/jobs.ts`): a privacy promise does not expire after three tries, so they are queued
 again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
