@@ -40,6 +40,7 @@ import {
   CHOICE_FIGURE_KINDS,
   FIGURE_KINDS,
   kindIn,
+  REASON_KINDS,
   SPELLING_KINDS,
   TOLERANCE_KINDS,
 } from './itemFields.js';
@@ -108,7 +109,7 @@ export const LANGUAGE_RULES = `Language: everything you write yourself (question
  * questions and for extraction, which copies a printed stem whole. No sample sentence in a
  * language: those get copied verbatim (issues #200/#201).
  */
-export const CHOICE_RULES = `multiple_choice: when the options are what the question compares or picks among (which number, fraction, word or object is larger, right, the odd one out), the question names them itself, so it reads as a question without its options; a printed stem is copied whole. A number, fraction or term as an option is math between dollar signs ($\\frac{2}{3}$, never 2/3).`;
+export const CHOICE_RULES = `multiple_choice: when the options are what the question compares or picks among (which number, fraction, word or object is larger, right, the odd one out), the question names them itself, so it reads as a question without its options; a printed stem is copied whole. A task that also asks her to justify or explain her answer is never multiple_choice, short or numeric: it is kind long with asks_reason true, its answer the result with its reason, so the tutor reads her reason. A number, fraction or term as an option is math between dollar signs ($\\frac{2}{3}$, never 2/3).`;
 
 /** The most other accepted answers per item — the number the prompts name (audit H-14). */
 export const MAX_ACCEPTED = 8;
@@ -222,6 +223,19 @@ export const ItemDraft = z.object({
     .describe(
       'numeric/short/formula/multiple_choice: when the answer IS the value of one calculation written in the question, that calculation copied exactly as it stands there ("6 + 4" for "Berechne $6 + 4$."); null for anything else — a word problem, an equation, a fraction to expand or reduce',
     ),
+  /**
+   * The task asks her for a reason (#642, item 9): she answers in her own words and the tutor reads
+   * them. A choice is graded by its index alone and a number or a word against its key, so the
+   * reason would never be read. Code keeps such a task a free text (`reasonKept`). Optional like
+   * `tap`: no draft code builds itself asks for one.
+   */
+  asks_reason: z
+    .boolean()
+    .optional()
+    .catch(undefined)
+    .describe(
+      'true when the task, as printed or as you write it, asks her to justify or explain her answer (why it holds), also beside a choice or a result: then kind long, and answer gives the result with its reason in a few words; else omit',
+    ),
   tolerance: z
     .number()
     .positive()
@@ -314,6 +328,65 @@ function solutionText(it: ItemDraft): string {
   return it.kind === 'multiple_choice' && it.choices && it.correct_choice !== null
     ? (it.choices[it.correct_choice] ?? it.answer)
     : it.answer;
+}
+
+/** The longest key a question is stored with (`ItemDraft.answer`). */
+const ANSWER_MAX = 600;
+
+/** Whether a task asks her for a reason but was written in a form that cannot hold one (#642). */
+function reasonOutsideForm(it: Pick<ItemDraft, 'asks_reason' | 'kind'>): boolean {
+  // Already a free text; and a word to translate or a sentence to say has no reason to give.
+  return (
+    it.asks_reason === true &&
+    !kindIn(REASON_KINDS, it.kind) &&
+    it.kind !== 'vocab' &&
+    it.kind !== 'speak'
+  );
+}
+
+/** The worked solution as the key of her reason, or null when there is none that fits. */
+function reasonKey(it: Pick<ItemDraft, 'worked_solution'>): string | null {
+  const w = it.worked_solution;
+  return w !== null && w.length <= ANSWER_MAX ? w : null;
+}
+
+/**
+ * Whether `usableItems` drops this task for its reason (#642): asked for one, written in a form
+ * that cannot hold it, and without a worked solution to read hers against. A sheet reading counts
+ * these, so a sheet that lost one never passes for whole (rule 5, `firstReading.ts`).
+ */
+export function reasonLost(
+  it: Pick<ItemDraft, 'asks_reason' | 'kind' | 'worked_solution'>,
+): boolean {
+  return reasonOutsideForm(it) && reasonKey(it) === null;
+}
+
+/**
+ * A task that asks her for a reason, as a free text (#642, item 9). Written as a choice, a number
+ * or a word, its key holds no reason, and code would grade her by the index or the key alone: the
+ * reason she was asked for would never be read. It becomes a long answer whose key is the worked
+ * solution, which gives the reason; without one there is nothing to read her reason against, and
+ * the question goes (`reasonLost`). Decided by the model's `asks_reason`, never by the words of
+ * the task (rule 3).
+ */
+function reasonKept(it: ItemDraft): ItemDraft | null {
+  if (!reasonOutsideForm(it)) return it;
+  const reason = reasonKey(it);
+  if (reason === null) return null;
+  return {
+    ...it,
+    kind: 'long',
+    answer: reason,
+    accepted_answers: [],
+    unit: null,
+    choices: null,
+    correct_choice: null,
+    choice_figures: null,
+    computes: null,
+    tolerance: null,
+    tap: undefined,
+    read: null,
+  };
 }
 
 /**
@@ -550,7 +623,9 @@ export function usableItems(
   // A worksheet's labelling task becomes one question per numbered part, written by code (#252).
   for (const written of items.flatMap((it) => labelQuestions(it, opts.locale ?? null))) {
     // A map without a view is the map of Germany where she has a Land, else no question (#429).
-    const raw = mapViewed(written, land);
+    // A task that asks for a reason is a free text the tutor reads, or none (#642).
+    const viewed = mapViewed(written, land);
+    const raw = viewed && reasonKept(viewed);
     if (!raw) continue;
     // A word to translate or a sentence to say carries no drawing (#375): its figure is dropped
     // before anything reads it, the card stays — like a spelling mode on a number.

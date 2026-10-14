@@ -11,7 +11,7 @@ import { StorageError } from '../../storage/gateway.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { findOrCreateSubject } from '../learning/state.js';
-import { formsOn, insertItems, samePrompt } from '../practice/items.js';
+import { formsOn, insertItems, reasonLost, samePrompt } from '../practice/items.js';
 import { finishJob, type JobRow } from '../scheduler/jobs.js';
 import { MOST_READINGS, MOST_UNCLEAR_SPOTS, moreRules, type PageReport } from './extract.js';
 import { intoHelpSession } from './helpSession.js';
@@ -178,9 +178,10 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // What kind of page it is decides what is kept of the reading (issue #259, sources.ts).
   const sourced = applySource(result.data, m.photo_count);
   const x = sourced.reading;
-  // Still more on the sheet after every reading it was given (#150), or tasks lost to the
-  // choice of forms (#664): said out loud instead of letting a half-read sheet pass for whole.
-  const incomplete = x.more_items || partial;
+  // Still more on the sheet after every reading it was given (#150), tasks lost to the choice of
+  // forms (#664), or a task that asks for a reason and goes without one to read hers against
+  // (#642, `reasonLost`): said out loud instead of letting a half-read sheet pass for whole.
+  const incomplete = x.more_items || partial || x.items.some(reasonLost);
   // Every form held to its own rules by code before anything is stored (`sheetQuestions.ts`).
   const checked = sheetQuestions(x, {
     locale: learner.locale,
