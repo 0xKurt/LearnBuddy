@@ -891,7 +891,17 @@ An event never bypasses the contact rules.
 ## Model calls
 
 `llm/`. One seam (`LlmGateway`): structured JSON for a zod-derived schema, validated again with
-zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) with explicit output-token cap, thinking budget and
+zod. The contract is provider-neutral (#646, `llm/profile.ts`): a call names a **thinking level**
+(`off`/`minimal`/`low`/`medium`/`high`), never a provider's budget, and every gateway carries a
+`GatewayProfile` — the media it reads (`image`, `pdf`, `audio`; a part it cannot read is refused
+in `call.ts` before it is sent), the schema keywords it serves, whether it keeps property order
+and streams partial JSON, and its schema property bound (the practice and reading schemas are
+narrowed to the bound of the gateway they go to, `formChoice.ts`); its prices are its own table
+(`pricing.ts`). A second provider is a new gateway with its profile and its wire test
+(`__tests__/vertex-request.test.ts` for Vertex), with no call site changed.
+`VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) maps the
+levels onto Vertex: `minimal` as Gemini 3's own level, the others as the budgets the call sites
+sent before (off 0, low 512, medium 1024, high 2048), with explicit output-token cap, thinking and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
 tokens (input, output, thinking, and what the provider served from its prefix cache —
@@ -1220,7 +1230,7 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   and gave more careful content. The tutor gets none: on 3.6 Flash more thinking was slower and not
   better (0: 26/27 at 1.1 s; 1024: 16/18 at 1.4–1.7 s; 4096: 17/18 at 2.5 s, evals/tutor).
 - A model call is only as slow as it must be: thinking budget only where it measurably helps.
-  Buddy's turns think at the **minimal level** (`thinkingLevel`, issue #626), not with a
+  Buddy's turns think at the **minimal level** (`thinking: 'minimal'`, issue #626), not with a
   budget: Gemini 3 treats a numeric budget as a hint. At 512 the turn was measured spending up to
   885 thought tokens, and the first byte waits for all of them. On 30.09. the same budget was
   free (0 thought tokens on six turns, first byte 1.0–2.6 s). By 07.10., with the system prompt

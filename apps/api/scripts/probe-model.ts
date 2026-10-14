@@ -35,7 +35,7 @@ try {
     maxOutputTokens: 256,
     temperature: 0,
     timeoutMs: 20_000,
-    thinkingBudget: 0,
+    thinking: 'off',
   });
   const parsed = Answer.safeParse(res.json);
   console.info({ ok: parsed.success && parsed.data.ok, answer: res.json, usage: res.usage });

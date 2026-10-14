@@ -200,7 +200,7 @@ async function tutorDecision(
       maxOutputTokens: 1024,
       temperature: 0.3,
       timeoutMs: 20_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     // A writing task with required elements answers in a wider schema — the same decision
     // plus one line per element (issue #211); everything else answers as before.

@@ -93,7 +93,7 @@ async function roleplayRound(
       maxOutputTokens: 1024,
       temperature: 0.6,
       timeoutMs: 30_000,
-      thinkingBudget: 256,
+      thinking: 'low',
     });
     meta.model = result.usage.model;
     raw = result.json;

@@ -131,7 +131,7 @@ export async function prepareHints(
     temperature: 0.3,
     timeoutMs: 60_000,
     // Prepared once, in the background: time to think (see generate.ts).
-    thinkingBudget: 2048,
+    thinking: 'high',
   });
   const parsed = HintSet.safeParse(res.json);
   if (!parsed.success) return 0;

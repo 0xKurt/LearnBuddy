@@ -106,7 +106,7 @@ export async function transcribe(
       maxOutputTokens: 1024,
       temperature: 0,
       timeoutMs: 20_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = Transcript.safeParse(res.json);
     if (!parsed.success) throw new AppError('model_unavailable', 'Could not listen right now');

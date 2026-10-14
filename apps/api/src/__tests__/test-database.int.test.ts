@@ -189,6 +189,7 @@ describe.skipIf(!dbReady)('test databases', () => {
       maxOutputTokens: 1,
       temperature: 0,
       timeoutMs: 1_000,
+      thinking: 'off',
     };
     // One late, one held: the report waits for both, and their failures do not throw it.
     env.deps.background(async () => {

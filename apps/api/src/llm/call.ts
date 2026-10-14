@@ -10,6 +10,7 @@ import { AppError } from '../lib/errors.js';
 import { timedModel } from '../lib/requestCost.js';
 import type { EmbeddingGateway, EmbedRequest, EmbedResult } from './embeddings.js';
 import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
+import { unsupportedMedia } from './profile.js';
 
 export type ModelDeps = {
   db: Db;
@@ -22,6 +23,19 @@ export type ModelDeps = {
    */
   now: () => Date;
 };
+
+/**
+ * The gateway's answer, once its profile accepts the request (#646): a recording sent to a model
+ * that cannot hear is refused here, recorded like any refusal, and never sent.
+ */
+function generate(llm: LlmGateway, req: LlmRequest): Promise<LlmResult> {
+  const refused = unsupportedMedia(llm.profile, req);
+  if (refused.length > 0)
+    return Promise.reject(
+      new LlmError('refused', `${llm.profile.name} does not read ${refused.join(', ')}`),
+    );
+  return llm.generate(req);
+}
 
 async function reserveModelCall(
   db: Db,
@@ -146,7 +160,7 @@ export async function callAhead(
       );
   };
   try {
-    const result = await timedModel(() => deps.llm.generate(req));
+    const result = await timedModel(() => generate(deps.llm, req));
     await record(deps, learnerId, req, 'ok', result.usage, null);
     await book(result.usage);
     return result;
@@ -175,7 +189,7 @@ async function recorded(
   req: LlmRequest,
 ): Promise<LlmResult> {
   try {
-    const result = await timedModel(() => deps.llm.generate(req));
+    const result = await timedModel(() => generate(deps.llm, req));
     await record(deps, learnerId, req, 'ok', result.usage, null);
     return result;
   } catch (err) {
@@ -223,7 +237,7 @@ export async function callModel(
     throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
   }
   try {
-    const result = await timedModel(() => deps.llm.generate(req));
+    const result = await timedModel(() => generate(deps.llm, req));
     await record(deps, learnerId, req, 'ok', result.usage, null);
     await deps.db.query(
       `update usage_daily set cost_micros = cost_micros + $4
