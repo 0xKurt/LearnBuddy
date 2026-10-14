@@ -221,7 +221,12 @@ test('learning modes: explain, homework help without the solution, practice with
   await expect(pinned.getByText('Tipp', { exact: true })).toHaveCount(1);
   // The bar's padding (8 + 12), the chips (34) and their gap (10), then the box: frame and
   // padding (18), her line (37), the key row (42), the tools (40) and two gaps of 4: 209 pt.
-  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(212);
+  // While she types with a unit, the unit and the preview of her answer take the tools a second
+  // line (one more 40 and its gap of 4: 253 pt) — accepted by the owner (14.10., „Zwei Zeilen
+  // erlauben", #623): camera, „Rechnen", unit, preview, mic and „Prüfen" do not fit one line at
+  // 360 or 390. The same 3 pt of rounding as before.
+  const typedTools = 40 + 4;
+  expect(stack, `pinned bar ${stack}pt`).toBeLessThanOrEqual(209 + typedTools + 3);
   await expect(page.getByText('Welche zwei Längen kennst du vom Rechteck?')).toBeVisible();
 
   // ── Ein Rechenweg mit einem Rechenfehler: Code nennt die Zeile (issues #209, #274) ──
@@ -309,7 +314,14 @@ test('learning modes: explain, homework help without the solution, practice with
   await offerStart(page, 'Brüche vergleichen').click();
   // One meta line on the card: its topic where the title does not name it, then "von Buddy".
   await expect(page.getByTestId('question-meta')).toContainText('von Buddy');
-  await expect(page.getByRole('button', { name: 'Frage passt nicht' })).toBeVisible();
+  // "Frage passt nicht" stands in the question's "Mehr" sheet (#599, QuestionProgress).
+  await page.getByRole('button', { name: 'Mehr', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Frage passt nicht', exact: true })).toBeVisible();
+  await page
+    .locator('[aria-modal="true"]:visible')
+    .last()
+    .getByRole('button', { name: 'Schließen', exact: true })
+    .click();
   // "Tipp": the next prepared hint at once — no model involved. The hints are written
   // in the background right after the start; give that a moment in the dev stack.
   await page.waitForTimeout(500);
