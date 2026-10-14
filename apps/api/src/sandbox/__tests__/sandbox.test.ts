@@ -53,9 +53,13 @@ describe('python: what a program prints and where it stops', () => {
     expect(Date.now() - t0).toBeLessThan(3_000);
   });
 
-  it('ends a program that eats memory at its limit', async () => {
+  // The deadline is wall-clock (`quickjs.ts`) and proven by the endless loop above; here it must
+  // not race the memory limit. The run takes about 0.6 s of CPU, but on a starved machine the
+  // worker waits for it, and at 5 s the deadline won (#707: `limit: 'time'` at load 60–200;
+  // reproduced by stopping the worker for 6 s mid-run). Production limits are not touched.
+  it('ends a program that eats memory at its limit', { timeout: 150_000 }, async () => {
     const r = await runProgram('s = "ab"\nwhile True:\n    s = s + s', {
-      ms: 5_000,
+      ms: 120_000,
       memory: 24 << 20,
     });
     expect(r).toEqual({ kind: 'limit', limit: 'memory' });
