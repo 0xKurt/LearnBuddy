@@ -31,15 +31,20 @@ export async function signImageUrls(
   storage: StorageGateway,
   rows: ItemImageRow[],
 ): Promise<Map<string, string>> {
-  const urls = new Map<string, string>();
-  for (const path of new Set(rows.map((r) => r.image_path).filter((p): p is string => !!p))) {
-    try {
-      urls.set(path, await storage.createDownloadUrl(path, IMAGE_URL_TTL_SECONDS));
-    } catch {
-      // Left out; the next fetch tries again.
-    }
-  }
-  return urls;
+  // Side by side (#637): one after another, a session with eight pictures waited for eight
+  // Storage round trips on every answer. A session holds a bounded handful of crops.
+  const paths = [...new Set(rows.map((r) => r.image_path).filter((p): p is string => !!p))];
+  const signed = await Promise.all(
+    paths.map(async (path) => {
+      try {
+        return [path, await storage.createDownloadUrl(path, IMAGE_URL_TTL_SECONDS)] as const;
+      } catch {
+        // Left out; the next fetch tries again.
+        return null;
+      }
+    }),
+  );
+  return new Map(signed.filter((s): s is readonly [string, string] => s !== null));
 }
 
 /**

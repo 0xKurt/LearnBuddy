@@ -432,7 +432,7 @@ async function loadSessions(db: Db, learnerId: string): Promise<SessionBrief[]> 
 export async function loadLearningState(db: Db, learnerId: string, now: Date) {
   // What she is working on (issue #160). Joined to its own rows, so a sheet she deleted or
   // a goal she closed does not leave a line that points at nothing.
-  const focus = await db.maybeOne<FocusRow>(
+  const focus = db.maybeOne<FocusRow>(
     `select f.material_id, m.title as material_title,
             f.subject_id, s.name as subject_name,
             f.goal_id, g.title as goal_title,
@@ -445,7 +445,7 @@ export async function loadLearningState(db: Db, learnerId: string, now: Date) {
     [learnerId],
   );
 
-  const subjects = await db.query<SubjectRow>(
+  const subjects = db.query<SubjectRow>(
     `select s.id, s.name, s.kind,
             (select count(*) from items i where i.subject_id = s.id and i.archived_at is null
                 and i.origin <> 'homework')::int as item_count,
@@ -460,7 +460,7 @@ export async function loadLearningState(db: Db, learnerId: string, now: Date) {
 
   // Topic progress from how the last practice of each question went, and
   // whether spaced repetition considers it due again.
-  const topics = await db.query<TopicProgress>(
+  const topics = db.query<TopicProgress>(
     `select i.subject_id, coalesce(i.topic, '') as topic,
             count(*)::int as total,
             count(st.item_id)::int as seen,
@@ -475,14 +475,14 @@ export async function loadLearningState(db: Db, learnerId: string, now: Date) {
     [learnerId, LIMITS.topics, now],
   );
 
-  const materials = await loadMaterials(db, learnerId, now);
-  const sessions = await loadSessions(db, learnerId);
+  const materials = loadMaterials(db, learnerId, now);
+  const sessions = loadSessions(db, learnerId);
   // What he already put in front of her and she has not taken up (issue #184).
-  const standing = await loadStandingOffers(db, learnerId, now);
+  const standing = loadStandingOffers(db, learnerId, now);
   // What she kept for after a practice that is over (issue #391).
-  const later = await loadLaterNotes(db, learnerId, now);
+  const later = loadLaterNotes(db, learnerId, now);
 
-  const totals = await db.one<{ items: number; materials: number }>(
+  const totals = db.one<{ items: number; materials: number }>(
     `select
        (select count(*) from items where learner_id = $1 and archived_at is null
                                            and origin <> 'homework')::int as items,
@@ -492,7 +492,28 @@ export async function loadLearningState(db: Db, learnerId: string, now: Date) {
     [learnerId],
   );
 
-  return { subjects, topics, materials, focus, sessions, standing, later, totals };
+  // Started together above, awaited together here: on the pool the reads go out side by side
+  // (#637); inside a transaction the one client takes them in order.
+  const [f, sub, top, mat, ses, sta, lat, tot] = await Promise.all([
+    focus,
+    subjects,
+    topics,
+    materials,
+    sessions,
+    standing,
+    later,
+    totals,
+  ]);
+  return {
+    subjects: sub,
+    topics: top,
+    materials: mat,
+    focus: f,
+    sessions: ses,
+    standing: sta,
+    later: lat,
+    totals: tot,
+  };
 }
 
 /** The names of her subjects by id, archived ones too (a goal keeps its subject's name). */
