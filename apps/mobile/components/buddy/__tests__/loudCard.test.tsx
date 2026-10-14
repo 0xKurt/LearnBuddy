@@ -102,6 +102,21 @@ describe('which card’s start is the filled one', () => {
     expect(text.indexOf('Vorschlag 2')).toBeLessThan(text.indexOf('Buddy arbeitet'));
   });
 
+  it('skips practice shown again that no longer waits (issue #630)', () => {
+    const gone: ActionView = {
+      ...offer(6, 'unused'),
+      summary: {
+        tool: 'show_ready',
+        step_id: '00000000-0000-4000-8000-0000000000bb',
+        title: 'Arbeitsblatt Brüche',
+        question_count: 7,
+        est_minutes: 6,
+        ready: false,
+      },
+    };
+    expect(loudCard([...thread, said(6, [gone])], 'primary')).toBe(newest.id);
+  });
+
   it('skips an offer whose run she finished (issue #630)', () => {
     const done = offer(5, 'Brüche addieren', {});
     if (done.summary.tool === 'offer_learning')

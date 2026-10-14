@@ -5220,15 +5220,14 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   stop is the wait she feels, so the running piece is kept small and everything before it is
   already uploaded; a final piece that provably held no speech (the metering measured it and an
   earlier piece of the same take heard her — `SpeechMark`, so a meter that cannot hear her can
-  never drop her words) is the pause before her tap and is not uploaded at all. Since issue #630
-  a meter whose readings MOVED in this take counts as working too, so a whole take a live meter
-  heard as room tone only — a quiet room, nobody speaking — is not sent either (a conversation
-  had answered a first sentence nobody said); one stuck reading still proves nothing. On the
-  device path a final result the recogniser itself scores below `MIN_FINAL_CONFIDENCE` (0.25,
-  `lib/speech/engine.ts`) is not taken as her words; a phone that reports no score loses
-  nothing. The transcription prompt says noise is no speech (`heard_speech` false). Anything
-  above room tone and anything scored as speech still reaches Buddy — and with it the
-  safeguarding path (CLAUDE.md rule 18).
+  never drop her words) is the pause before her tap and is not uploaded at all. A first piece
+  is always sent, and the device recogniser's own score drops nothing: room tone is a fixed
+  level, not this phone in this room, so a whisper, a child far from the phone or a low-gain
+  microphone would read as silence — and her words must reach the safeguarding path (CLAUDE.md
+  rule 18; review of #630). What decides "nobody spoke" is the transcriber: its prompt says
+  room noise, a sound or a far-off voice is no speech (`heard_speech` false, issue #630, after a
+  conversation answered a first sentence nobody said). A per-take noise floor or a confidence
+  floor needs measurements on the POCO X3 and on iOS first.
   Each finished piece goes to `/voice/transcribe` while she keeps talking, with `prev_tail`
   (the tail of what was already understood) as a structured context field, so a piece starting
   mid-sentence is heard as its continuation; the prompt forbids repeating it. The endpoint
@@ -5673,7 +5672,7 @@ that moment, not at the end (issue #630, `lib/buddy/homeThread.ts` `placeByTime`
 practice at `finished_at`, the check-in after a test at `asked_at` (midnight after the test day in
 her zone) — after the last message written before it, so "Geschafft! 7 Fragen" never stands under
 her next message and reads as Buddy's answer to it. Older than every message on screen, it is drawn
-above them only when the screen shows the conversation from its start. The check-in is asked for a
+at the top of what the screen shows — never nowhere, since History draws no notices. The check-in is asked for a
 week after the test (`OUTCOME_ASK_DAYS`, `modules/buddy/home.ts`); after that she can still tell
 Buddy in the chat. The visit's greeting names the finished practice ("… gerade beantwortet") only
 when it ended after the last message (`sessionAnchor.ts` `justBefore`). An offer whose run she

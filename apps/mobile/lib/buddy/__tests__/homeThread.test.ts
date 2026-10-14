@@ -152,30 +152,26 @@ describe('placeByTime (issue #630)', () => {
 
   it('puts a finished practice at its moment, not under what she said later', () => {
     // The device: „Geschafft! 7 Fragen" stood under „Lass uns das Arbeitsblatt üben".
-    const placed = placeByTime(thread, [{ item: 'result', at: '2026-10-14T12:12:00.000Z' }], true);
+    const placed = placeByTime(thread, [{ item: 'result', at: '2026-10-14T12:12:00.000Z' }]);
     expect(placed.after.get('sheet')).toEqual(['result']);
     expect(placed.end).toEqual([]);
   });
 
   it('keeps what is about now, and what is newer than every message, at the end', () => {
-    const placed = placeByTime(
-      thread,
-      [
-        { item: 'working', at: null },
-        { item: 'fresh', at: '2026-10-14T12:20:00.000Z' },
-      ],
-      true,
-    );
+    const placed = placeByTime(thread, [
+      { item: 'working', at: null },
+      { item: 'fresh', at: '2026-10-14T12:20:00.000Z' },
+    ]);
     expect(placed.end).toEqual(['working', 'fresh']);
     expect(placed.after.size).toBe(0);
   });
 
-  it('draws what is older than the screen only when the screen shows the start', () => {
-    const old = [{ item: 'checkin', at: '2026-10-10T00:00:00.000Z' }];
-    expect(placeByTime(thread, old, true).before).toEqual(['checkin']);
-    // The check-in after a test stood under every message for days; scrolled away, it stays away.
-    const away = placeByTime(thread, old, false);
-    expect(away.before).toEqual([]);
-    expect(away.end).toEqual([]);
+  it('draws what is older than the screen at its top, never nowhere (#630 review)', () => {
+    // The check-in after a test stood under every message for days. Its moment scrolled out of
+    // the window: it stands above what is shown — History draws no notices, so dropping it would
+    // leave her no way to answer it.
+    const placed = placeByTime(thread, [{ item: 'checkin', at: '2026-10-10T00:00:00.000Z' }]);
+    expect(placed.before).toEqual(['checkin']);
+    expect(placed.end).toEqual([]);
   });
 });

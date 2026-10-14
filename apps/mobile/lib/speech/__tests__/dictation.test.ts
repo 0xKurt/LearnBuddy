@@ -115,27 +115,19 @@ describe('SpeechMark', () => {
     expect(mark.endPiece()).toBe(false);
   });
 
-  it('a first piece is not silent-skipped on one reading alone', () => {
+  it('the first piece of a take is never silent-skipped', () => {
     const mark = new SpeechMark();
     mark.observe(quietDb);
     expect(mark.endPiece()).toBe(false);
   });
 
-  it('a take a live meter heard as room tone only holds no speech (issue #630)', () => {
-    // The device: a conversation answered "Ich weiß nicht wo ich bin." — nobody had said it.
-    // The meter moved (it works) and never rose above room tone: nothing to write down.
+  it('a first piece is sent even when a live meter read it as room tone (#630 review, rule 18)', () => {
+    // Room tone is a fixed level, not this phone in this room: a whisper, a child far from the
+    // phone or a low-gain microphone reads the same. Only the transcriber may say "no speech".
     const mark = new SpeechMark();
     mark.observe(quietDb);
     mark.observe(quietDb - 3);
     mark.observe(quietDb + 1);
-    expect(mark.endPiece()).toBe(true);
-  });
-
-  it('a soft voice above room tone in the first piece is kept', () => {
-    // Safeguarding must still hear a quiet child: anything above room tone is sent.
-    const mark = new SpeechMark();
-    mark.observe(quietDb);
-    mark.observe(-42); // ≈ 0.18, a soft voice close to the phone
     expect(mark.endPiece()).toBe(false);
   });
 

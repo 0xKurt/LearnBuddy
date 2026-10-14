@@ -121,8 +121,7 @@ type FsrsState = {
 };
 
 const STATE_SQL = `select due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses,
-                          state, last_review, last_outcome
-                     from item_states where item_id = $1`;
+                          state, last_review, last_outcome from item_states where item_id = $1`;
 
 /** The context fence (rule 4): anything a Buddy decision depends on bumps it. */
 async function contextVersion(env: TestEnv, l: Learner): Promise<number> {
@@ -862,9 +861,10 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
     );
     expect(disputed.status).toBe(200);
     // Nothing is called shaky any more: the only question that was is the one in dispute.
-    expect(disputed.body.summary).toMatchObject({
+    expect(disputed.body.summary).toEqual({
       answered: 1,
       first_try: 1,
+      right: 1,
       secure_topics: [],
       shaky_topics: [],
     });

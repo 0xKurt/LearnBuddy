@@ -86,6 +86,8 @@ function startable(a: Action): boolean {
   if (a.status === 'undone' || !hasCard(a.summary.tool)) return false;
   if (a.summary.tool === 'offer_learning')
     return a.summary.startable !== false && a.summary.finished_session_id === null;
+  // Practice shown again that was started or replaced since draws no card (#630).
+  if (a.summary.tool === 'show_ready') return a.summary.ready;
   return a.summary.tool !== 'start_roleplay' || a.summary.status === 'active';
 }
 

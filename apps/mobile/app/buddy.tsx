@@ -169,11 +169,7 @@ export default function BuddyScreen() {
   });
   const { messages, captureUndo, carriedOnTop } = threadOnScreen(h, layout);
   // Each notice at its own moment among the messages (issue #630); what is about now ends it.
-  const placed = placeByTime(
-    messages,
-    timed,
-    !(h.thread.length > VISIBLE_MESSAGES || h.thread_has_more),
-  );
+  const placed = placeByTime(messages, timed);
   const notices = placed.end;
   // Hide the optimistic bubble once the server has the message.
   const shownPending =

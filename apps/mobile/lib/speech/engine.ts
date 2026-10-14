@@ -110,26 +110,9 @@ export const NOTHING_HEARD: Heard = { committed: '', interim: '' };
 
 const join = (a: string, b: string) => [a.trim(), b.trim()].filter(Boolean).join(' ');
 
-/**
- * Below this, a final result the recogniser itself scores is not taken as her words (issue
- * #630). The recogniser reports 0…1 for a final result where it can, and -1 (or 0 on iOS
- * partials) where it cannot: only a real, low score drops anything, so a phone that reports
- * none never loses a word. Clear speech scores far above this; what scores under it is the
- * recogniser guessing words into a noise — a first sentence nobody said, answered by Buddy.
- */
-const MIN_FINAL_CONFIDENCE = 0.25;
-
-export function hearResult(
-  prev: Heard,
-  transcript: string,
-  isFinal: boolean,
-  /** The recogniser's own score for this result (0…1; -1 or absent: none reported). */
-  confidence?: number,
-): Heard {
+export function hearResult(prev: Heard, transcript: string, isFinal: boolean): Heard {
   const t = transcript.trim();
   if (!isFinal) return { committed: prev.committed, interim: t };
-  if (confidence !== undefined && confidence > 0 && confidence < MIN_FINAL_CONFIDENCE)
-    return { committed: prev.committed, interim: '' };
   // Some recognisers repeat everything said so far in each final result.
   if (prev.committed && t.startsWith(prev.committed)) return { committed: t, interim: '' };
   return { committed: join(prev.committed, t), interim: '' };

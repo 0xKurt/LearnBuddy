@@ -41,14 +41,13 @@ export type Timed<T> = { item: T; at: string | null };
  * under every message for days.
  *
  * `end`: what is about now (no moment) or newer than every message on screen. `after`: by the
- * message it follows. `before`: older than every message on screen — drawn above them only when
- * the screen shows the conversation from its start (`fromStart`); otherwise it lies in the part
- * scrolled away into the history and is not repeated at the top.
+ * message it follows. `before`: older than every message on screen — drawn above them, at the top
+ * of what the screen shows. Never nowhere: History draws no notices, so a check-in or a result
+ * whose moment has scrolled out of the window still stands where she can answer or open it.
  */
 export function placeByTime<T>(
   messages: readonly Pick<MessageView, 'id' | 'created_at'>[],
   items: readonly Timed<T>[],
-  fromStart: boolean,
 ): { before: T[]; after: Map<string, T[]>; end: T[] } {
   const before: T[] = [];
   const after = new Map<string, T[]>();
@@ -64,7 +63,7 @@ export function placeByTime<T>(
     while (i >= 0 && Date.parse(messages[i]!.created_at) > when) i -= 1;
     if (i === last) end.push(item);
     else if (i >= 0) after.set(messages[i]!.id, [...(after.get(messages[i]!.id) ?? []), item]);
-    else if (fromStart) before.push(item);
+    else before.push(item);
   }
   return { before, after, end };
 }
