@@ -89,31 +89,68 @@ async function record(
 }
 
 /**
+ * One of the learner's daily allowance, held before the calls that make up one run or reading
+ * (#665): the choosing call and the main call it chooses for. Taken atomically before the first
+ * of them, so a day with one run left starts one chain, however many start at once, and no
+ * choosing call is paid for a run her limit would refuse. The main call uses it up (`callModel`);
+ * whoever took it and did not get that far gives it back (`releaseCall`).
+ */
+export type Reservation = {
+  learnerId: string;
+  day: string;
+  kind: keyof typeof DAILY_LIMITS;
+  /** Still held: no main call has used it yet, and it was not given back. */
+  held: boolean;
+};
+
+/** Throws AppError('budget_exhausted') when today's limit for `kind` is used up. */
+export async function reserveCall(
+  deps: ModelDeps,
+  learnerId: string,
+  day: string,
+  kind: keyof typeof DAILY_LIMITS,
+): Promise<Reservation> {
+  if (!(await reserveModelCall(deps.db, learnerId, day, kind)))
+    throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
+  return { learnerId, day, kind, held: true };
+}
+
+/** Gives back a reservation no main call used; a used or returned one is left alone. */
+export async function releaseCall(deps: ModelDeps, r: Reservation | null): Promise<void> {
+  if (!r?.held) return;
+  r.held = false;
+  await releaseReservation(deps.db, r.learnerId, r.day, r.kind);
+}
+
+/**
  * A call that is part of a metered one: the forms chosen before an explain or extraction call
- * (#627). It reserves nothing of its own, so the daily limit of `meteredAs` counts runs and
- * readings exactly as before. It runs only while that limit still has room, so it can never come
- * without the call it belongs to. It is recorded under its own purpose (`llm_calls`).
+ * (#627). It runs on the reservation of the call it belongs to, so the daily limit counts runs
+ * and readings, never choices, and it cannot run without that call's room (#665). Its cost is
+ * booked to that call's day and kind; it is recorded under its own purpose (`llm_calls`).
  */
 export async function callAhead(
   deps: ModelDeps,
-  learnerId: string,
-  localDay: string,
-  meteredAs: keyof typeof DAILY_LIMITS,
+  reservation: Reservation,
   req: LlmRequest,
 ): Promise<LlmResult> {
   if (!deps.llm.available) throw new LlmError('unavailable', 'no model configured');
-  const used = await deps.db.maybeOne<{ calls: number }>(
-    `select calls from usage_daily where learner_id = $1 and day = $2 and kind = $3`,
-    [learnerId, localDay, meteredAs],
-  );
-  if ((used?.calls ?? 0) >= DAILY_LIMITS[meteredAs])
-    throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
+  if (!reservation.held) throw new Error('a choosing call runs on a held reservation');
+  const { learnerId, day, kind } = reservation;
+  const book = async (usage: LlmResult['usage'] | null) => {
+    if (usage)
+      await deps.db.query(
+        `update usage_daily set cost_micros = cost_micros + $4
+          where learner_id = $1 and day = $2 and kind = $3`,
+        [learnerId, day, kind, usage.costMicros],
+      );
+  };
   try {
     const result = await timedModel(() => deps.llm.generate(req));
     await record(deps, learnerId, req, 'ok', result.usage, null);
+    await book(result.usage);
     return result;
   } catch (err) {
-    if (err instanceof LlmError)
+    if (err instanceof LlmError) {
       await record(
         deps,
         learnerId,
@@ -122,25 +159,36 @@ export async function callAhead(
         err.usage,
         err.kind,
       );
+      await book(err.usage);
+    }
     throw err;
   }
 }
 
 /**
  * Call the model on behalf of a learner. Throws AppError('budget_exhausted')
- * when today's limit is used up, LlmError on provider/output problems.
+ * when today's limit is used up, LlmError on provider/output problems. A `reservation` still held
+ * for this learner, day and purpose is used up instead of taking a new one (#665).
  */
 export async function callModel(
   deps: ModelDeps,
   learnerId: string,
   localDay: string,
   req: LlmRequest,
+  reservation: Reservation | null = null,
 ): Promise<LlmResult> {
   if (!deps.llm.available) throw new LlmError('unavailable', 'no model configured');
   const kind = req.purpose;
   // A choosing call has no limit of its own: it is metered with its call (`callAhead`).
   if (kind === 'forms') throw new Error('a forms call goes through callAhead');
-  if (!(await reserveModelCall(deps.db, learnerId, localDay, kind))) {
+  const own =
+    reservation !== null &&
+    reservation.held &&
+    reservation.learnerId === learnerId &&
+    reservation.day === localDay &&
+    reservation.kind === kind;
+  if (own) reservation.held = false;
+  else if (!(await reserveModelCall(deps.db, learnerId, localDay, kind))) {
     throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
   }
   try {

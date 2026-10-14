@@ -79,19 +79,14 @@ const Config = z
     /**
      * Conversation, planning, tutoring, reading worksheets, speech.
      *
-     * Still Gemini 3.6 Flash, although the owner asked on 01.10. to move to 3.8. The switch
-     * was prepared and measured, and the measurement stopped it: across three serial runs of
-     * the Buddy suite, 3.8 answered 47/49, 34/49 and 39/49 — and **every** failure was
-     * `model_unavailable`, the provider not answering at all. 3.6 has 48/48, 48/48 and 49/49
-     * in the same suite, with no such failure in hundreds of calls. Roughly one conversation
-     * in five simply breaking is not an upgrade for a child waiting mid-question.
-     *
-     * 3.8 also got almost nothing from the provider's prefix cache in those runs (32k–114k of
-     * ~900k input tokens, where 3.6 gets ~560k), which costs money and latency on every turn.
-     *
-     * Switching is one environment variable: VERTEX_MODEL_SMART=eu/gemini-3.8-flash, then
-     * `npx tsx evals/buddy/run.ts`. The day it answers reliably, it is a one-line change.
-     * docs/decisions/model-choice-2026-10-01.md has the numbers.
+     * Still Gemini 3.6 Flash, although the owner asked on 01.10. to move to 3.8. The 3.8 runs of
+     * 01.10. (47/49, 34/49, 39/49, every failure `model_unavailable`, almost no prefix cache)
+     * are NOT a measurement of 3.8: the same evening showed the project has no quota for 3.8 in
+     * `eu` — 429 RESOURCE_EXHAUSTED on the first call (docs/decisions/model-choice-2026-10-01.md,
+     * "Nachtrag 2"). So nothing is known about 3.8's quality or speed yet (#665, audit F11).
+     * What keeps 3.6 is only that it is measured and answers; the switch waits for the quota
+     * (a Cloud Console action) and a fresh run of `npx tsx evals/buddy/run.ts` with
+     * VERTEX_MODEL_SMART=eu/gemini-3.8-flash.
      */
     VERTEX_MODEL_SMART: ModelSpec.default('eu/gemini-3.6-flash'),
     /** Cheaper model for short low-stakes tasks (no feature uses it: the Lite models failed the tutor eval). */

@@ -81,8 +81,14 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
         and exists (select 1 from jobs where id = $2 and lease_token = $3 and status = 'running')`,
     [materialId, job.id, job.lease_token, deps.now()],
   );
-  const read = (lean: boolean, alreadyRead: readonly string[] = []) =>
-    readOnce(lean, alreadyRead.length > 0 ? moreRules(alreadyRead) : '');
+  // A reading that lost tasks to the choice of forms, or had no choice at all, is not complete,
+  // whatever the model said about the rest (#664): the sheet says so, like one with more left.
+  let partial = false;
+  const read = async (lean: boolean, alreadyRead: readonly string[] = []) => {
+    const res = await readOnce(lean, alreadyRead.length > 0 ? moreRules(alreadyRead) : '');
+    if (res.lost > 0 || res.fallback) partial = true;
+    return res;
+  };
   let result;
   try {
     // A run after one that was cut off starts lean at once.
@@ -125,11 +131,10 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           (it) => !known.has(samePrompt(it.prompt)),
         );
         const freshTasks = unseenTasks(parsed.data.part_tasks, known);
-        // No progress: stop rather than ask a fourth time for the same nothing.
-        if (fresh.length === 0 && freshStructured.length === 0 && freshTasks.length === 0) {
-          result = { success: true, data: { ...result.data, more_items: false } } as typeof result;
-          break;
-        }
+        // No progress: stop rather than ask a fourth time for the same nothing. The model said
+        // there is more and then wrote nothing new: that is no proof the sheet is covered, so it
+        // stays marked as not read completely (#664) instead of passing for whole.
+        if (fresh.length === 0 && freshStructured.length === 0 && freshTasks.length === 0) break;
         // A continued reading sees the same photos, so it names the same refused tasks and the
         // same unsettled spots: only ones it has not named yet are added (issues #198, #164).
         const named = new Set(result.data.not_practicable.map((n) => samePrompt(n.task)));
@@ -173,6 +178,9 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // What kind of page it is decides what is kept of the reading (issue #259, sources.ts).
   const sourced = applySource(result.data, m.photo_count);
   const x = sourced.reading;
+  // Still more on the sheet after every reading it was given (#150), or tasks lost to the
+  // choice of forms (#664): said out loud instead of letting a half-read sheet pass for whole.
+  const incomplete = x.more_items || partial;
   // Every form held to its own rules by code before anything is stored (`sheetQuestions.ts`).
   const checked = sheetQuestions(x, {
     locale: learner.locale,
@@ -320,7 +328,7 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           now,
           JSON.stringify(pageProblems),
           target.id,
-          x.more_items,
+          incomplete,
           notPracticable,
           x.source,
         ],
@@ -335,7 +343,7 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           target.id,
           x.extracted_text,
           subjectId,
-          x.more_items,
+          incomplete,
           // The contract shows at most twenty; the sheet keeps the first twenty of them
           // rather than silently dropping the ones it already named.
           JSON.stringify([...target.not_practicable, ...x.not_practicable].slice(0, 20)),
@@ -356,7 +364,7 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
           JSON.stringify(pageProblems),
           // Still more on the sheet after every reading it was given (#150): said out loud
           // instead of letting a half-read sheet pass for a whole one.
-          x.more_items,
+          incomplete,
           notPracticable,
           x.source,
         ],

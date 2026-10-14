@@ -8,7 +8,7 @@ import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import type { LlmMessage, LlmPart, LlmResult } from '../../llm/gateway.js';
 import { curriculumBlock } from '../curriculum/state.js';
-import { availableLine, chooseForms, keepChosen, type Narrowed } from '../practice/formChoice.js';
+import { availableLine, chooseForms, keptAndLost } from '../practice/formChoice.js';
 import { ageOn } from '../identity/model.js';
 import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM, LEAN_RULES } from './extract.js';
 import {
@@ -32,8 +32,16 @@ type ReadingLearner = {
   curriculum_region: CurriculumRegion | null;
 };
 
-/** One reading of the photos already loaded. `extra` is what THIS reading is told on top. */
-type Reader = (lean: boolean, extra: string) => Promise<LlmResult>;
+/**
+ * One reading of the photos already loaded. `extra` is what THIS reading is told on top.
+ * `lost` counts the tasks it wrote that were taken out because their figure or form was not
+ * chosen; `fallback` says the forms could not be chosen at all, so the reading had plain
+ * questions only (#664). Either way the reading may lack what the sheet holds.
+ */
+type Reader = (
+  lean: boolean,
+  extra: string,
+) => Promise<LlmResult & { lost: number; fallback: boolean }>;
 
 /**
  * Everything a reading of a sheet needs besides its photos: the learner it is pitched at, her
@@ -80,7 +88,7 @@ export async function sheetReader(
   ];
   // The forms and figures this sheet needs, chosen once for every reading of it: the whole
   // schema is past what Vertex serves (#627, `practice/formChoice.ts`).
-  let narrowed: Promise<Narrowed> | null = null;
+  let narrowed: ReturnType<typeof chooseForms> | null = null;
   const read: Reader = async (lean, extra) => {
     narrowed ??= chooseForms(deps, learner.id, day, {
       purpose: 'extraction',
@@ -92,23 +100,36 @@ export async function sheetReader(
     const chosen = await narrowed;
     const { schema, keep } = chosen;
     const line = availableLine(chosen);
-    const res = await callModel(deps, learner.id, day, {
-      purpose: 'extraction',
-      tier: 'smart',
-      promptVersion: version,
-      // A study reading also says what kind of page it is (issue #259); homework never does.
-      system: `${system}${line ? `\n\n${line}` : ''}${lean ? `\n\n${LEAN_RULES}` : ''}${extra ? `\n\n${extra}` : ''}`,
-      contents,
-      schema,
-      // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
-      // reading that runs on is cut off after seconds, not after 40 (live finding 2).
-      maxOutputTokens: opts.homework ? 8_000 : 12_000,
-      temperature: 0.3,
-      timeoutMs: 120_000,
-      // Read once in the background: time to think (see generate.ts).
-      thinkingBudget: 2048,
-    });
-    return { ...res, json: keepChosen(res.json, keep) };
+    // The first reading uses the allowance held before the choice (#665); the readings after it
+    // (the rest of a long sheet, a lean retry) take their own, as before.
+    const res = await callModel(
+      deps,
+      learner.id,
+      day,
+      {
+        purpose: 'extraction',
+        tier: 'smart',
+        promptVersion: version,
+        // A study reading also says what kind of page it is (issue #259); homework never does.
+        system: `${system}${line ? `\n\n${line}` : ''}${lean ? `\n\n${LEAN_RULES}` : ''}${extra ? `\n\n${extra}` : ''}`,
+        contents,
+        schema,
+        // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
+        // reading that runs on is cut off after seconds, not after 40 (live finding 2).
+        maxOutputTokens: opts.homework ? 8_000 : 12_000,
+        temperature: 0.3,
+        timeoutMs: 120_000,
+        // Read once in the background: time to think (see generate.ts).
+        thinkingBudget: 2048,
+      },
+      chosen.reservation,
+    );
+    const { kept, lost } = keptAndLost(res.json, keep);
+    if (lost.length > 0)
+      console.warn(
+        `[forms] extraction: ${lost.length} written outside the choice (${[...new Set(lost.map((l) => l.name))].join(',')})`,
+      );
+    return { ...res, json: kept, lost: lost.length, fallback: chosen.how === 'fallback' };
   };
   return { learner, timezone: tz, read };
 }
