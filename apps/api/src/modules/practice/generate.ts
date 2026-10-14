@@ -22,6 +22,7 @@ import { AppError, isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
+import type { LlmMessage } from '../../llm/gateway.js';
 import { answerUpTo } from '../../llm/partial.js';
 import { bumpContext } from '../buddy/plan.js';
 import { findOrCreateSubject } from '../learning/state.js';
@@ -34,6 +35,7 @@ import { ESSAY_RULES, essayItems } from './essayTask.js';
 import { prepareHints } from './hints.js';
 import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
+import { availableLine, chooseForms, keepChosen, type Keep } from './formChoice.js';
 import { homeLandLine } from './mapCheck.js';
 import {
   CHOICE_RULES,
@@ -399,12 +401,14 @@ async function generateSet(
   const off = deps.config.FORMS_OFF;
   const parseSet = parseSetFor(input.kind, sheets?.topics ?? null, off);
   let handedOver = false;
+  // What the answer may hold, once the forms are chosen (#627); null: anything.
+  let keep: Keep | null = null;
   const onPartial = opts.onFirstItems
     ? (rawSoFar: string) => {
         if (handedOver) return;
         const prefix = answerUpTo(rawSoFar, 'items', FIRST_BATCH);
         if (prefix === null) return;
-        const parsed = parseSet.safeParse(prefix);
+        const parsed = parseSet.safeParse(keepChosen(prefix, keep));
         // Fewer than asked for means a question was dropped as unusable: wait rather than start
         // a run on two questions when three were written.
         if (!parsed.success || !parsed.data.usable || parsed.data.items.length < FIRST_BATCH)
@@ -414,45 +418,57 @@ async function generateSet(
       }
     : undefined;
   try {
-    const res = await callModel(deps, learner.id, localParts(now, timezone).date, {
+    const day = localParts(now, timezone).date;
+    const contents: LlmMessage[] = [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: [
+              `LEARNER: ${learner.display_name}, ${ageOn(learner.birth_date, now)} years, level ${level}, app language ${learner.locale}`,
+              // Which curriculum decides what a complete answer is (issue #214). Only for a
+              // school year: the curricula are written per year, and without one there is
+              // nothing to say that would not be a guess.
+              curriculumBlock({ region: learner.curriculum_region, grade: learner.grade }),
+              // Her Land as the map's default (#429): only a permission; code decides (`mapViewed`).
+              homeLandLine(mapHomeLand(FIGURE_NAMES, learner.curriculum_region)),
+              input.subject ? `SUBJECT (as the learner said): ${input.subject}` : null,
+              `TASK: ${TASK[input.kind]}`,
+              input.difficulty ? LEVEL[input.difficulty] : null,
+              sheets
+                ? `SHEETS (she photographed them for this test; stay strictly within them — only their topics, tasks like theirs with other numbers or words, nothing the sheets do not cover):\nTOPICS: ${sheets.topics.join(' | ')}\nTEXT:\n${sheets.text}`
+                : null,
+              pattern
+                ? `SHE JUST WORKED ON THESE (write more of exactly this kind — same topics, same level, other numbers or words; never something her class has not had):${pattern.topics.length > 0 ? `\nTOPICS: ${pattern.topics.join(' | ')}` : ''}\nQUESTIONS:\n${pattern.prompts.map((p) => `- ${p}`).join('\n')}`
+                : null,
+              dictation?.fromSheet
+                ? `SHEET TEXT (${SHEET_USE[input.kind]}):\n${dictation.text}`
+                : null,
+              `LEARNER'S TEXT:\n${input.text}`,
+            ]
+              .filter(Boolean)
+              .join('\n'),
+          },
+        ],
+      },
+    ];
+    // Only the forms and figures this run needs: the whole schema is past what Vertex serves (#627).
+    const narrowed = await chooseForms(deps, learner.id, day, {
+      purpose: 'explain',
+      promptVersion: GENERATE_PROMPT_VERSION,
+      system: GENERATE_SYSTEM,
+      contents,
+      full: explainSchemaFor(input.kind, sheets?.topics ?? null, off),
+    });
+    keep = narrowed.keep;
+    const line = availableLine(narrowed);
+    const res = await callModel(deps, learner.id, day, {
       purpose: 'explain',
       tier: 'smart',
       promptVersion: GENERATE_PROMPT_VERSION,
-      system: GENERATE_SYSTEM,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: [
-                `LEARNER: ${learner.display_name}, ${ageOn(learner.birth_date, now)} years, level ${level}, app language ${learner.locale}`,
-                // Which curriculum decides what a complete answer is (issue #214). Only for a
-                // school year: the curricula are written per year, and without one there is
-                // nothing to say that would not be a guess.
-                curriculumBlock({ region: learner.curriculum_region, grade: learner.grade }),
-                // Her Land as the map's default (#429): only a permission; code decides (`mapViewed`).
-                homeLandLine(mapHomeLand(FIGURE_NAMES, learner.curriculum_region)),
-                input.subject ? `SUBJECT (as the learner said): ${input.subject}` : null,
-                `TASK: ${TASK[input.kind]}`,
-                input.difficulty ? LEVEL[input.difficulty] : null,
-                sheets
-                  ? `SHEETS (she photographed them for this test; stay strictly within them — only their topics, tasks like theirs with other numbers or words, nothing the sheets do not cover):\nTOPICS: ${sheets.topics.join(' | ')}\nTEXT:\n${sheets.text}`
-                  : null,
-                pattern
-                  ? `SHE JUST WORKED ON THESE (write more of exactly this kind — same topics, same level, other numbers or words; never something her class has not had):${pattern.topics.length > 0 ? `\nTOPICS: ${pattern.topics.join(' | ')}` : ''}\nQUESTIONS:\n${pattern.prompts.map((p) => `- ${p}`).join('\n')}`
-                  : null,
-                dictation?.fromSheet
-                  ? `SHEET TEXT (${SHEET_USE[input.kind]}):\n${dictation.text}`
-                  : null,
-                `LEARNER'S TEXT:\n${input.text}`,
-              ]
-                .filter(Boolean)
-                .join('\n'),
-            },
-          ],
-        },
-      ],
-      schema: explainSchemaFor(input.kind, sheets?.topics ?? null, off),
+      system: line ? `${GENERATE_SYSTEM}\n\n${line}` : GENERATE_SYSTEM,
+      contents,
+      schema: narrowed.schema,
       maxOutputTokens: 10_000,
       temperature: 0.4,
       // A streamed run must be finished inside the window the run waits for it, or it would
@@ -464,7 +480,7 @@ async function generateSet(
       thinkingBudget: 2048,
       onPartial,
     });
-    const parsed = parseSet.safeParse(res.json);
+    const parsed = parseSet.safeParse(keepChosen(res.json, keep));
     if (!parsed.success)
       throw new AppError('model_unavailable', 'Could not prepare this right now');
     return parsed.data;

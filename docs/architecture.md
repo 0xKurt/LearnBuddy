@@ -888,6 +888,43 @@ block keeps the provider's finish reason (`blocked:SAFETY`). A call that the pro
 down, request refused, safety block — gives its reservation back; a timeout or unusable output
 keeps it (the provider may have done and billed the work).
 
+### Schema budget (#627)
+
+Vertex serves a `responseJsonSchema` only up to a size it does not publish. A schema past that size
+gets a bare `400 INVALID_ARGUMENT` ("Request contains an invalid argument."); Gemini 2.5 called it
+"too many states for serving" (#279). The model never reads the request. Measured on
+`eu/gemini-3.6-flash` on 14.10.2026 (`llm/schemaBudget.ts` has every pair): what decides it is the
+**count of properties over all objects**. Descriptions, enum values, depth and union width do not.
+A flat object with 269 properties is served, with 270 it is refused. Every refused schema had at
+least 270. So **`MAX_SCHEMA_PROPERTIES = 269`**, and every schema we send stays at or under it (the
+guard `llm/__tests__/schemaBudget.test.ts` over the schema inventory, docs/engineering-guards.md).
+The Buddy turn sits at 268: a new action field needs room made elsewhere first.
+
+**Choosing the forms first** (`practice/formChoice.ts`, the step #281 put off as D3). A practice,
+test or help run and a sheet reading have schemas of 518–774 properties: every task form and
+every figure type at once. They were refused from 03.10. on, when #231's option pictures copied the
+figure union a second time; bisected in #627. When the whole schema does not fit, a small first call
+(the fast model, `gemini-3.1-flash-lite`; no thinking; the same system prompt and message as the
+main call, plus `CHOOSER`) answers two closed lists taken from the schema itself: the forms
+(structured kinds and the blocks `bars`, `staffs`, `codes`, `part_tasks`, `reading`) and the
+figure types it needs, the most needed first. Code then builds the main schema (`pruned`: the other
+branches of every figure and form union go, and so do the other blocks). It adds what was chosen in
+the model's order, only while the schema stays within the budget (`fitted`). It also takes from the
+answer whatever lies outside the choice (`keepChosen`). A question or task whose figure or option
+pictures were not chosen goes, because it was written to be read off a drawing she would not see.
+A block or a structured form that was not chosen goes too. The main call's system prompt teaches
+every form, so a narrowed call also gets one more line, a rule with no example in it
+(`availableLine`). It names the figures and forms this answer can use; in the minimal set it says
+that no figure can be drawn and that every question must be answerable from its text alone. A sheet is chosen for once, and every reading of it (lean,
+continued) uses that choice. When the choosing call is refused, fails or answers nothing usable,
+the main call goes out with the minimal set (plain questions, no figures, no other forms), and the
+run still starts. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
+as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
+costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
+`llm_calls`) and no limit of its own: `callAhead` meters it with its run. It reserves nothing, so
+`explain` (60) and `extraction` (12) count runs and readings exactly as before, and it runs only
+while that limit still has room. A choice never comes without the call it belongs to.
+
 **One error classification at every external seam** (`lib/outcome.ts`, audit S-7): `ok`,
 `refused` (a definitive no: a 4xx other than 429, a safety block, unusable output — never
 retried automatically), `transient` (5xx, 429, network — retry later is fine), `unknown` (no
@@ -1291,7 +1328,7 @@ reasons (#159 keeps that promise separate from the internal pilot).
 
 | What                            | Limit                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12, pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                                                                                             |
+| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12 (the forms chosen before a run or reading count with it, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                              |
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                                                                |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                                                         |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                                                        |
@@ -4597,7 +4634,7 @@ narrowed, because code cannot prove a form unusable there: `ModelFigure` in the 
 help schemas (all figure types, twice in every item schema with a multiple choice, as `figure` and
 `choice_figures[]` — narrowed only for vocab, speak and listen, see "Figure mask" above), the
 extraction schemas (a sheet is read before anyone knows what is on it) and the Buddy turn's
-`actions` (tool growth, D3 deferred by the #279 consensus). Proven by
+`actions` (tool growth). D3 for the explain and extraction schemas is done since #627: their forms and figures are chosen first, see §Model calls "Schema budget". Proven by
 `practice/__tests__/profiles.test.ts` (every valid form passes `testing/schemaCheck.ts`, a stand-in
 for the decoder with exactly the emitted keywords, and code's parse; every form outside is
 rejected by both; the `answerUpTo` prefix validates under every profile) and

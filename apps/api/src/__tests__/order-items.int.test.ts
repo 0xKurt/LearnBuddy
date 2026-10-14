@@ -18,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { explainSchemaFor } from '../modules/practice/setProfiles.js';
 import { ORDER_JOIN } from '../modules/practice/structured.js';
 import { testDatabaseAvailable } from '../testing/database.js';
+import { sentFor } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
 const dbReady = await testDatabaseAvailable();
@@ -381,7 +382,10 @@ describe.skipIf(!dbReady)('order items', () => {
       text: 'Keimung',
     });
     expect(run.status, JSON.stringify(run.body)).toBe(201);
-    expect(env.llm.callsFor('explain').at(-1)?.schema).toEqual(explainSchemaFor('test', null, off));
+    // Narrowed to what was chosen (#627), from a profile without the order form.
+    expect(env.llm.callsFor('explain').at(-1)?.schema).toEqual(
+      sentFor(explainSchemaFor('test', null, off), { structured: [order(KEIMUNG)] }),
+    );
     expect(run.body.items.map((i) => i.item.kind)).toEqual(['short']);
 
     // A sheet whose only task is an order: read fine, nothing to practise now — never "unreadable".

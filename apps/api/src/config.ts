@@ -34,6 +34,7 @@ const VertexRoutes = z
     reexplain: ModelSpec,
     summary: ModelSpec,
     consolidate: ModelSpec,
+    forms: ModelSpec,
   })
   .partial()
   .strict();
@@ -283,6 +284,7 @@ export const DAILY_LIMITS = {
   buddy_turn: 80,
   buddy_check: 8,
   tutor: 300,
+  // The forms chosen before a run or a reading (#627) count with it, not on their own (callAhead).
   explain: 60,
   extraction: 12,
   /** Concept images (issue #50): one vision pass per reading, bounded like extraction. */

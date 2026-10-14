@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { explainSchemaFor } from '../modules/practice/setProfiles.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import { pageJpeg } from '../testing/pagePhoto.js';
@@ -139,14 +140,21 @@ describe.skipIf(!dbReady)('tasks in parts across subjects (#297, Schnitt 4)', ()
       expect(i.item.task_part?.stem).toBe(CART_STEM);
       expect(i.item.figure).toEqual(CART_TABLE);
     }
-    // The model was offered the material's drawings, and only those.
+    // The model was offered the material's drawings, and only those — of them, only the one this
+    // run was chosen to need (#627: the chooser picked the table its answer draws).
     type Node = { properties: Record<string, Node>; items: Node; anyOf?: Node[]; enum?: string[] };
     const sent = env.llm.callsFor('explain')[0]!.schema as unknown as Node;
     const material = sent.properties.part_tasks!.items.properties.figure!;
     const kinds = (material.anyOf ?? [])
       .flatMap((o) => o.anyOf ?? [o])
       .flatMap((o) => o.properties?.type?.enum ?? []);
-    expect(kinds).toEqual([
+    expect(kinds).toEqual(['table']);
+    // … out of the profile's seven material drawings, which the unnarrowed profile still offers.
+    const profile = explainSchemaFor('practice', null) as unknown as Node;
+    const all = (profile.properties.part_tasks!.items.properties.figure!.anyOf ?? [])
+      .flatMap((o) => o.anyOf ?? [o])
+      .flatMap((o) => o.properties?.type?.enum ?? []);
+    expect(all).toEqual([
       'table',
       'function_plot',
       'bar_chart',
