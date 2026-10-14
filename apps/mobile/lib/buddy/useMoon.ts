@@ -11,6 +11,7 @@ import {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import { useOnScreen } from '../screenFocus.js';
 import { ORB_DURATION as DURATION, ORB_EASE as EASE } from '../theme/motion.js';
 import {
   HAPPY_SETTLE,
@@ -78,11 +79,18 @@ export function useMoon(
     [sim, pose, order, target, voice, ghosts],
   );
   const frame = useFrameCallback(onFrame, false);
+  // Stepped only while it can be seen (#637): under another screen or with the app in the
+  // background the moon holds where it is — no pose change, nothing to see — and goes on from
+  // there when she comes back. A hidden orb stepping every frame kept the phone's UI thread busy.
+  const seen = useOnScreen();
+  const stepping = live && seen;
   useEffect(() => {
-    frame.setActive(live);
-    if (live) fade.value = withTiming(1, { duration: DURATION.quick });
+    frame.setActive(stepping);
     return () => frame.setActive(false);
-  }, [live, frame, fade]);
+  }, [stepping, frame]);
+  useEffect(() => {
+    if (live) fade.value = withTiming(1, { duration: DURATION.quick });
+  }, [live, fade]);
 
   // Standing still: the state's still pose; a change cross-fades (a happy settles to idle).
   const shown = useRef<MoonState | null>(null);
