@@ -63,13 +63,21 @@ export async function runOfRequest(
   );
   if (!existing) return null;
   if (existing.status === 'abandoned') {
-    await db.query(
-      `update practice_sessions set status = 'active', last_activity_at = $2
-        where id = $1 and status = 'abandoned'`,
-      [existing.id, now],
-    );
-    // Buddy's STATE lists open runs: what he knows changed (rule 4).
-    await bumpContext(db, learnerId);
+    // Behind the session lock, like every writer (and the sweep), and in one transaction with the
+    // context bump: Buddy never sees the run open without the fence moving (rule 4).
+    await db.tx(async (tx) => {
+      const row = await tx.one<{ status: string }>(
+        `select status from practice_sessions where id = $1 for update`,
+        [existing.id],
+      );
+      if (row.status !== 'abandoned') return;
+      await tx.query(
+        `update practice_sessions set status = 'active', last_activity_at = $2 where id = $1`,
+        [existing.id, now],
+      );
+      // Buddy's STATE lists open runs: what he knows changed.
+      await bumpContext(tx, learnerId);
+    });
   }
   return existing.id;
 }

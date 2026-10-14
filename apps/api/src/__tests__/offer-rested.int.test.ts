@@ -123,6 +123,39 @@ describe.skipIf(!dbReady)('an offer never opens a run that rested past its limit
     expect(still.status).toBe('abandoned');
   });
 
+  it('reopens the run and moves the context fence together, or neither (rule 4)', async () => {
+    const offerId = randomUUID();
+    const rested = await env.db.one<{ id: string }>(
+      `insert into practice_sessions (learner_id, mode, status, title, client_request_id,
+                                      started_at, last_activity_at)
+       values ($1, 'practice', 'abandoned', 'Brüche', $2, $3, $3) returning id`,
+      [l.learnerId, offerId, env.clock.now()],
+    );
+    // The fence cannot move (a real Postgres trigger refuses the bump): the run must not open
+    // either — it did, with the update and the bump as two separate statements.
+    await env.db.query(`
+      create or replace function lb_test_refuse_bump() returns trigger language plpgsql as
+        $$ begin raise exception 'fence refused'; end $$`);
+    await env.db.query(
+      `create trigger lb_test_refuse_bump before update on buddy_settings for each row
+         when (new.learner_id = '${l.learnerId}' and new.context_version <> old.context_version)
+         execute function lb_test_refuse_bump()`,
+    );
+    try {
+      expect((await topic(offerId)).status).toBe(500);
+    } finally {
+      await env.db.query(`drop trigger lb_test_refuse_bump on buddy_settings`);
+      await env.db.query(`drop function lb_test_refuse_bump()`);
+    }
+    const after = await env.db.one<{ status: string }>(
+      `select status from practice_sessions where id = $1`,
+      [rested.id],
+    );
+    expect(after.status).toBe('abandoned');
+    // With the fence free again, the same tap opens it.
+    expect((await topic(offerId)).body).toMatchObject({ id: rested.id, status: 'active' });
+  });
+
   it('a Kopfrechnen round closed for resting goes on from its card too', async () => {
     const offerId = randomUUID();
     const spec = { range: 'times', rows: [6, 7] };
