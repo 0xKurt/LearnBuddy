@@ -2,6 +2,7 @@
 // Split from check.ts (#311); docs/architecture.md §Proactivity.
 
 import type { Deps } from '../../deps.js';
+import type { Db } from '../../lib/db.js';
 import { dayLabel, t } from '../../i18n/index.js';
 import { daysBetween, localParts, weekdayOf } from '../../lib/time.js';
 import type { LearnerRow } from '../identity/model.js';
@@ -50,45 +51,9 @@ export async function fallback(
       // else, and bumping for it made every chat turn running meanwhile stale for nothing.
       let changed = false;
       const prepared = async (goalId: string | null, subjectId: string | null, title: string) => {
-        const existing = await tx.maybeOne<{
-          id: string;
-          payload: { item_ids?: string[]; est_minutes?: number };
-        }>(
-          `select id, payload from buddy_steps
-            where learner_id = $1 and kind = 'practice' and state = 'prepared'
-              and goal_id is not distinct from $2
-            order by created_at desc, seq desc limit 1`,
-          [learner.id, goalId],
-        );
-        if (existing?.payload.item_ids?.length) {
-          return {
-            stepId: existing.id,
-            count: existing.payload.item_ids.length,
-            minutes: existing.payload.est_minutes ?? 10,
-          };
-        }
-        const { itemIds: items, minutes } = await fillPractice(
-          tx,
-          learner.id,
-          { goalId, subjectId },
-          [],
-          now,
-        );
-        if (items.length === 0) return null;
-        const step = await tx.one<{ id: string }>(
-          `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, payload, prepared_at)
-           values ($1, $2, 'practice', $3, 'prepared', $4, $5, $6) returning id`,
-          [
-            learner.id,
-            goalId,
-            title,
-            today,
-            { item_ids: items, est_minutes: minutes, focus_topics: [], subject_id: subjectId },
-            now,
-          ],
-        );
-        changed = true;
-        return { stepId: step.id, count: items.length, minutes };
+        const p = await preparedPractice(tx, learner.id, { goalId, subjectId, title }, today, now);
+        if (p?.created) changed = true;
+        return p;
       };
 
       let proposal: {
@@ -241,4 +206,56 @@ export async function fallback(
     });
     await finishJob(deps.db, trig.job, deps.now(), { status: 'done', result: result });
   }
+}
+
+/**
+ * Practice waiting for her on this goal (null: none), or made now from her questions — the start a
+ * fixed line or her sheet's answer points at (issue #721). Null when there is nothing to practise.
+ */
+export async function preparedPractice(
+  tx: Db,
+  learnerId: string,
+  scope: { goalId: string | null; subjectId: string | null; title: string },
+  today: string,
+  now: Date,
+): Promise<{ stepId: string; count: number; minutes: number; created: boolean } | null> {
+  const existing = await tx.maybeOne<{
+    id: string;
+    payload: { item_ids?: string[]; est_minutes?: number };
+  }>(
+    `select id, payload from buddy_steps
+      where learner_id = $1 and kind = 'practice' and state = 'prepared'
+        and goal_id is not distinct from $2
+      order by created_at desc, seq desc limit 1`,
+    [learnerId, scope.goalId],
+  );
+  if (existing?.payload.item_ids?.length) {
+    return {
+      stepId: existing.id,
+      count: existing.payload.item_ids.length,
+      minutes: existing.payload.est_minutes ?? 10,
+      created: false,
+    };
+  }
+  const { itemIds: items, minutes } = await fillPractice(
+    tx,
+    learnerId,
+    { goalId: scope.goalId, subjectId: scope.subjectId },
+    [],
+    now,
+  );
+  if (items.length === 0) return null;
+  const step = await tx.one<{ id: string }>(
+    `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, payload, prepared_at)
+     values ($1, $2, 'practice', $3, 'prepared', $4, $5, $6) returning id`,
+    [
+      learnerId,
+      scope.goalId,
+      scope.title,
+      today,
+      { item_ids: items, est_minutes: minutes, focus_topics: [], subject_id: scope.subjectId },
+      now,
+    ],
+  );
+  return { stepId: step.id, count: items.length, minutes, created: true };
 }

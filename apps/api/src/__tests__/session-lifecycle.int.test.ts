@@ -323,14 +323,13 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
         item({ prompt: 'Kürze 4/8.', answer: '1/2', topic: 'Kürzen' }),
       ],
     });
-    const items = await env.db.query<{ id: string }>(
-      `select id from items where material_id = $1 order by seq`,
-      [study.id],
-    );
+    // The practice her sheet's answer prepared (issue #721).
     const step = await env.db.one<{ id: string }>(
-      `insert into buddy_steps (learner_id, kind, title, state, payload, created_at)
-       values ($1, 'practice', 'Brüche üben', 'prepared', $2, $3) returning id`,
-      [l.learnerId, { item_ids: items.map((i) => i.id), est_minutes: 5 }, env.clock.now()],
+      `select s.id from buddy_steps s
+        where s.learner_id = $1 and s.kind = 'practice' and s.state = 'prepared'
+          and exists (select 1 from items i where i.material_id = $2
+                        and i.id::text = any(array(select jsonb_array_elements_text(s.payload -> 'item_ids'))))`,
+      [l.learnerId, study.id],
     );
     const started = await l.api.post<{ session_id: string }>(`/buddy/steps/${step.id}/start`);
     const s = (await l.api.get<SessionView>(`/practice/sessions/${started.body.session_id}`)).body;
@@ -363,14 +362,13 @@ describe.skipIf(!dbReady)('session lifecycle', () => {
         item({ prompt: 'Kürze 4/8.', answer: '1/2' }),
       ],
     });
-    const items = await env.db.query<{ id: string }>(
-      `select id from items where material_id = $1 order by seq`,
-      [study.id],
-    );
+    // The practice her sheet's answer prepared (issue #721).
     const step = await env.db.one<{ id: string }>(
-      `insert into buddy_steps (learner_id, kind, title, state, payload, created_at)
-       values ($1, 'practice', 'Brüche üben', 'prepared', $2, $3) returning id`,
-      [l.learnerId, { item_ids: items.map((i) => i.id), est_minutes: 5 }, env.clock.now()],
+      `select s.id from buddy_steps s
+        where s.learner_id = $1 and s.kind = 'practice' and s.state = 'prepared'
+          and exists (select 1 from items i where i.material_id = $2
+                        and i.id::text = any(array(select jsonb_array_elements_text(s.payload -> 'item_ids'))))`,
+      [l.learnerId, study.id],
     );
     const started = await l.api.post<{ session_id: string }>(`/buddy/steps/${step.id}/start`);
     const s = (await l.api.get<SessionView>(`/practice/sessions/${started.body.session_id}`)).body;

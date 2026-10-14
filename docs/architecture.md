@@ -1614,6 +1614,18 @@ start: code attaches the step the message is linked to, or the practice the same
 prepared, while it still waits (`MessageView.announces`) — the start no longer lies only in the bar
 on top, if anywhere.
 
+**Her sheet is always answered** (issue #721, `modules/buddy/checkAnswer.ts`). The check her
+sheet's reading wakes is the model's to decide, and on the phone it chose to wait: "Ich mache aus
+deinem Blatt gerade Übungen …" for half a minute, then nothing, with seven tasks in her library.
+Whether she hears back about her own photo is not the model's choice (rules 1 and 5): after every
+check woken by `material_ready`, code reads what the check said in answer to her (an outreach of
+origin `learner` since the check began, not held back). Nothing — it waited, prepared practice
+without a word, or what it said was suppressed — and the fixed answer for her sheet runs
+(`fallback`, the ready line with the practice it prepares); something without a start, and the
+practice waiting for her (or made now, `preparedPractice`) becomes that line's step, so the line
+carries the card it announces (`MessageView.announces`). A check that already said it with its
+start gets nothing added.
+
 **A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
 whether the sheet has more (`more_items`), and the sheet is read again for the rest with the
