@@ -7,6 +7,8 @@
 
 import { join } from 'node:path';
 
+import { FIGURE_CHROME } from '../../apps/mobile/lib/math/figureScale';
+import { PRACTICE } from '../../apps/mobile/lib/theme/practice';
 import buddyDe from '../../apps/mobile/locales/de/buddy.json';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -372,10 +374,14 @@ test('learning modes: explain, homework help without the solution, practice with
   }
   // The fraction tiles at night too (issue #288): large digits, the letter column, the shadow.
   await bothSchemes(page, '25-practice-fractions');
-  // The drawing takes the measured room of the grown question card (issue #96) — more
-  // than the old fixed 14 % of the window (118 pt inside a ~144 pt frame) ever allowed.
+  // The question card stands at its natural height (design; no growing card since #608/#621):
+  // the drawing at its cap — its share of the window (`PRACTICE.figureShare`) inside its frame
+  // (`FIGURE_CHROME`) — whole and in view.
   const fig = await partHeight(page, 'question-figure', '25-practice-fractions');
-  expect(fig, `figure ${fig}pt`).toBeGreaterThan(150);
+  const window = page.viewportSize()!;
+  const capped = Math.round(window.height * PRACTICE.figureShare) + FIGURE_CHROME;
+  expect(Math.abs(fig - capped), `figure ${fig}pt, its cap ${capped}pt`).toBeLessThanOrEqual(1);
+  await expect(page.getByTestId('question-figure')).toBeInViewport({ ratio: 1 });
 
   await page.getByRole('button', { name: 'Übung beenden' }).click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
@@ -423,14 +429,16 @@ test('learning modes: explain, homework help without the solution, practice with
   await page.getByRole('button', { name: 'Weiter' }).click();
 
   // Two bars of the same length: comparing is seeing, and the answer is one tap.
-  await expect(page.getByRole('button', { name: 'ein Halb wählen' })).toBeVisible();
+  // Each bar is a radio that drafts; "Prüfen" submits it (#599 answer forms).
+  await expect(page.getByRole('radio', { name: 'ein Halb wählen' })).toBeVisible();
   await shot(page, '36-fraction-bar-compare');
-  await page.getByRole('button', { name: '3 Fünftel wählen' }).click();
+  await page.getByRole('radio', { name: '3 Fünftel wählen' }).click();
+  await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Richtig', { exact: true })).toBeVisible();
   // That was the last question: the server finished the session, so "Weiter" leads to the
-  // summary rather than to another bar.
+  // summary rather than to another bar — its heading (the greeting says it as well).
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Geschafft!' })).toBeVisible();
   await page
     .getByTestId('bottom-bar')
     .getByRole('button', { name: 'Zurück zu Buddy', exact: true })
