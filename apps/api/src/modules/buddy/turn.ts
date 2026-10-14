@@ -327,7 +327,9 @@ async function decideTurn(
             maxOutputTokens: 2048,
             temperature: 0.4,
             timeoutMs: 30_000,
-            thinkingBudget: 512,
+            // Minimal, not a budget: at 512 the model was measured thinking up to 885 tokens, and the
+            // first byte waits for all of them (issue #626, docs/architecture.md §Speed).
+            thinkingLevel: 'minimal',
             ...(onReply
               ? {
                   onPartial: (raw: string) => {

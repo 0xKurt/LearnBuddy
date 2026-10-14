@@ -16,6 +16,7 @@ import {
   GoogleGenAI,
   HarmBlockThreshold,
   HarmCategory,
+  ThinkingLevel,
   type GenerateContentResponse,
   type SafetySetting,
 } from '@google/genai';
@@ -28,6 +29,7 @@ import {
   type LlmRequest,
   type LlmResult,
   type LlmUsage,
+  type ThinkingLevelName,
   TRUNCATED,
 } from './gateway.js';
 import { repairJsonStrings } from './latex.js';
@@ -116,6 +118,22 @@ export function modelFor(config: Config, req: Pick<LlmRequest, 'purpose' | 'tier
   );
 }
 
+const THINKING_LEVEL: Record<ThinkingLevelName, ThinkingLevel> = {
+  minimal: ThinkingLevel.MINIMAL,
+  low: ThinkingLevel.LOW,
+  medium: ThinkingLevel.MEDIUM,
+  high: ThinkingLevel.HIGH,
+};
+
+/** A level wins over a budget: the two are alternatives, a request carries one. */
+function thinkingConfigOf(req: LlmRequest) {
+  if (req.thinkingLevel)
+    return { thinkingConfig: { thinkingLevel: THINKING_LEVEL[req.thinkingLevel] } };
+  if (req.thinkingBudget !== undefined)
+    return { thinkingConfig: { thinkingBudget: req.thinkingBudget } };
+  return {};
+}
+
 /**
  * The one request the provider SDK is handed for a call (exported for the wire test,
  * `__tests__/vertex-request.test.ts`). Structured output goes out as `responseMimeType` +
@@ -135,9 +153,7 @@ export function paramsFor(req: LlmRequest, model: string, timeoutMs: number) {
       responseMimeType: 'application/json',
       responseJsonSchema: req.schema,
       safetySettings: SAFETY,
-      ...(req.thinkingBudget !== undefined
-        ? { thinkingConfig: { thinkingBudget: req.thinkingBudget } }
-        : {}),
+      ...thinkingConfigOf(req),
       // Not req.timeoutMs: that is the budget for the whole call including retries, and
       // this attempt only gets what is left of it (retry.ts).
       abortSignal: AbortSignal.timeout(timeoutMs),

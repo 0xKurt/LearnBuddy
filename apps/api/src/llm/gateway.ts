@@ -52,6 +52,9 @@ export type LlmPurpose =
    */
   | 'forms';
 
+/** Gemini 3 thinking levels (the Vertex `ThinkingConfig.thinkingLevel` values, lower case). */
+export type ThinkingLevelName = 'minimal' | 'low' | 'medium' | 'high';
+
 export type LlmRequest = {
   purpose: LlmPurpose;
   /** 'smart' for everything today; 'fast' is the cheaper model for low-stakes tasks. */
@@ -65,6 +68,12 @@ export type LlmRequest = {
   timeoutMs: number;
   /** Tokens the model may spend thinking (0 = off where the model allows). */
   thinkingBudget?: number;
+  /**
+   * Gemini 3's own thinking control, sent instead of `thinkingBudget` when set. A numeric
+   * budget is only a hint there: Buddy's turn at 512 was measured spending up to 885 thought
+   * tokens, and the first byte waits for every one of them (issue #626).
+   */
+  thinkingLevel?: ThinkingLevelName;
   /**
    * Streaming: called with the JSON written so far, as it arrives. Only for showing
    * progress — decisions are still made on the whole, validated result.

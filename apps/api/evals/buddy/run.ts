@@ -45,6 +45,8 @@ const transcript: Array<{
   costMicros: number;
   inputTokens: number;
   cachedTokens: number;
+  thoughtTokens: number;
+  latenciesMs: number[];
 }> = [];
 
 async function main(): Promise<void> {
@@ -82,7 +84,14 @@ async function main(): Promise<void> {
     const perRun: string[][] = [];
     // The run that is printed and written down: the first that failed, else the last.
     let shown: { outcome: Outcome; problems: string[] } | null = null;
-    const caseCost = { micros: 0, calls: 0, input: 0, cached: 0 };
+    const caseCost = {
+      micros: 0,
+      calls: 0,
+      input: 0,
+      cached: 0,
+      thought: 0,
+      latencies: [] as number[],
+    };
     for (let run = 1; run <= total; run++) {
       const env = await createTestEnv({ start: c.at ?? '2026-09-28T08:00:00Z', gateway });
       try {
@@ -239,11 +248,15 @@ async function main(): Promise<void> {
           calls: number;
           input: number;
           cached: number;
+          thought: number;
+          latencies: number[];
           models: string[];
         }>(
           `select coalesce(sum(cost_micros), 0)::bigint as micros, count(*)::int as calls,
                 coalesce(sum(input_tokens), 0)::int as input,
                 coalesce(sum(cached_tokens), 0)::int as cached,
+                coalesce(sum(thought_tokens), 0)::int as thought,
+                coalesce(array_agg(latency_ms order by created_at), '{}') as latencies,
                 coalesce(array_agg(distinct model), '{}') as models
            from llm_calls`,
         );
@@ -256,6 +269,8 @@ async function main(): Promise<void> {
         caseCost.calls += cost.calls;
         caseCost.input += cost.input;
         caseCost.cached += cost.cached;
+        caseCost.thought += cost.thought;
+        caseCost.latencies.push(...cost.latencies);
         // Replaced on every run until one fails; that one is kept.
         if (!shown || shown.problems.length === 0) shown = { outcome, problems };
         if (total > 1)
@@ -315,6 +330,9 @@ async function main(): Promise<void> {
       costMicros: caseCost.micros,
       inputTokens: caseCost.input,
       cachedTokens: caseCost.cached,
+      // How long each model call took and how much it thought (issue #626): the wait, per case.
+      thoughtTokens: caseCost.thought,
+      latenciesMs: caseCost.latencies,
     });
   }
   console.info(

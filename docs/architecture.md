@@ -1158,9 +1158,17 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   and gave more careful content. The tutor gets none: on 3.6 Flash more thinking was slower and not
   better (0: 26/27 at 1.1 s; 1024: 16/18 at 1.4–1.7 s; 4096: 17/18 at 2.5 s, evals/tutor).
 - A model call is only as slow as it must be: thinking budget only where it measurably helps.
-  Buddy's turns keep 512 (without: 18/22 instead of 20/22 eval cases, among them solving
-  homework in chat); the pronunciation judgement uses none (heard_ipa is its close listening;
-  twice as fast, no worse).
+  Buddy's turns think at the **minimal level** (`thinkingLevel`, issue #626), not with a
+  budget: Gemini 3 treats a numeric budget as a hint. At 512 the turn was measured spending up to
+  885 thought tokens, and the first byte waits for all of them. On 30.09. the same budget was
+  free (0 thought tokens on six turns, first byte 1.0–2.6 s). By 07.10., with the system prompt
+  21.9k → 30.1k characters and the schema 33.4k → 38.0k, the model spent 0–467, and the first byte
+  was 1.8–3.9 s (same six messages, same model, in process). Minimal: 0 thought tokens, model call
+  p50 1.74 s / p90 2.26 s over 65 calls of `evals/buddy`, 52/54 passed. The two failures fail
+  3/3 on the 512 budget as well, so they are not caused by the level (14.10., issue #626). The
+  26.09. measurement that kept 512 (18/22 without thinking) predates both prompt growth and the
+  level. The pronunciation judgement uses none (heard_ipa is its close listening; twice as fast,
+  no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
 - **Output tokens ARE the wait, and thinking tokens count as output** (issues #219/#220, measured
   02.10., `docs/speed-audit.md` §Ausgabe-Tokens): roughly a 1 s floor plus 250–300 written tokens a
