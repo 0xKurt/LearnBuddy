@@ -27,14 +27,17 @@ export type MenuAction = StartItem & { accessibilityLabel?: string; leads?: bool
 /** Where a row leads. `capture` is no screen: the chat's bar takes the photo (owner 12.10.). */
 export type Place = 'capture' | 'library' | 'memory' | 'history' | 'settings' | 'profile';
 
-/** App.jsx:127–132, in its order, with its signs. */
+/**
+ * App.jsx:127–132, in its order, with its signs — except "Profil": the prototype gives it the
+ * memory row's sparkle, so two rows looked alike (#642); it wears the set's own person sign.
+ */
 const PLACES: ReadonlyArray<{ place: Place; icon: IconName; label: string }> = [
   { place: 'capture', icon: 'camera', label: 'buddy:area.capture' },
   { place: 'library', icon: 'file', label: 'buddy:menu.library' },
   { place: 'memory', icon: 'sparkle', label: 'buddy:menu.memory' },
   { place: 'history', icon: 'undo', label: 'buddy:menu.history' },
   { place: 'settings', icon: 'pencil', label: 'buddy:menu.settings' },
-  { place: 'profile', icon: 'sparkle', label: 'settings:profile.page_title' },
+  { place: 'profile', icon: 'profile', label: 'settings:profile.page_title' },
 ];
 
 type Props = {

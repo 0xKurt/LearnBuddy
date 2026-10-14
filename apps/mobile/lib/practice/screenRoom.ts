@@ -273,21 +273,14 @@ export const PictureRoom = createContext<number | null>(null);
  * The tallest a picture that gives way may stand (#599): `most` until the screen measures less
  * room, then as large as that room allows (`roomCap`), `rows` pictures above each other sharing
  * it. Each measurement is taken once: a render with the same measurement changes nothing, so a
- * room it already answered is never given twice. `hold` keeps the cap (a picture folded while
- * she types gives the room of a row, not its own). Per `key`: a question and a window.
+ * room it already answered is never given twice. Per `key`: a question and a window.
  *
  * `natural`: the tallest of the pictures at full size (`useFigureSizing`, 0 while unknown). A
  * picture drawn below its cap does not shrink with it: the room is taken from the height it
  * stands at, the smaller of the two (#599: the views of a cube building stood 60 pt under a cap
  * of 89; lowering the cap by 15 moved nothing, and the bar stayed 30 pt past 360×740).
  */
-export function usePictureCap(
-  key: string,
-  most: number,
-  rows: number,
-  hold = false,
-  natural = 0,
-): number {
+export function usePictureCap(key: string, most: number, rows: number, natural = 0): number {
   const spare = useContext(PictureRoom);
   // A new question starts at `most`; the measurement it finds is the last question's.
   const held = useRef<{
@@ -298,7 +291,7 @@ export function usePictureCap(
   } | null>(null);
   if (held.current?.key !== key) held.current = { key, cap: most, spare, natural };
   const now = held.current;
-  if (!hold && spare !== null && (spare !== now.spare || natural !== now.natural)) {
+  if (spare !== null && (spare !== now.spare || natural !== now.natural)) {
     const stands = natural > 0 ? Math.min(natural, now.cap) : now.cap;
     now.cap = roomCap(stands, spare, rows, most, Math.round(most * MIN_FIGURE_SCALE));
     now.spare = spare;

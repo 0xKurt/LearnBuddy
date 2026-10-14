@@ -87,6 +87,41 @@ it('pins either mode explicitly and can return to system without a hidden gestur
   }
 });
 
+// The theme takes 2–4.5 s to repaint the whole app on the phone (#640). The tapped choice moves
+// in the tap's own commit; the theme follows in a transition that cannot hold it back (#642).
+it('moves the selection at once and lets the theme follow behind it', async () => {
+  renderInApp(
+    <>
+      <FamilyChoice />
+      <ModeChoice />
+      <State />
+    </>,
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('radio', { name: 'System' }).getAttribute('aria-checked')).toBe('true'),
+  );
+  const actEnvironment = Reflect.get(globalThis, 'IS_REACT_ACT_ENVIRONMENT');
+  // Outside act, React schedules as on the phone.
+  Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', false);
+  try {
+    for (const [label, state] of [
+      ['Dunkel', 'pastell:dark'],
+      ['Meer', 'ocean:dark'],
+    ] as const) {
+      const before = screen.getByTestId('look-state').textContent;
+      screen.getByRole('radio', { name: label }).click();
+      // React flushes the tap's own update in a microtask; a transition only after it yields.
+      await Promise.resolve();
+      expect(screen.getByRole('radio', { name: label }).getAttribute('aria-checked')).toBe('true');
+      expect(screen.getByTestId('look-state').textContent).toBe(before);
+      await waitFor(() => expect(screen.getByTestId('look-state').textContent).toBe(state));
+      expect(screen.getByRole('radio', { name: label }).getAttribute('aria-checked')).toBe('true');
+    }
+  } finally {
+    Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', actEnvironment);
+  }
+});
+
 it('selects the actual family with the onboarding tile and retains it through a mode change', async () => {
   renderInApp(
     <>
