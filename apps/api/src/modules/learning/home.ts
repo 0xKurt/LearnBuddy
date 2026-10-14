@@ -470,12 +470,15 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
     learnerId,
     page.messages.flatMap((m) => (m.roleplay_id ? [m.roleplay_id] : [])),
   );
-  // The offers she already worked through (issue #630): the run an offer started carries the
-  // offer's action id as its request id, so the card can say it is done instead of "Los geht's".
+  // The offers she already worked through (issue #630; a Kopfrechnen round too, #643): the run an
+  // offer started carries the offer's action id as its request id, so the card can say it is done
+  // instead of "Los geht's".
   const finished = await finishedRuns(
     db,
     learnerId,
-    page.actions.filter((a) => a.result.tool === 'offer_learning').map((a) => a.id),
+    page.actions
+      .filter((a) => a.result.tool === 'offer_learning' || a.result.tool === 'offer_drill')
+      .map((a) => a.id),
   );
   // The practice Buddy showed again (issue #630): its start only while it still waits.
   const stillReady = await stepsStillPrepared(
@@ -507,8 +510,8 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       // of tapping and waiting for it (issue #196).
       if (s.tool === 'offer_learning' && cannotStart.has(actionId))
         return { ...s, startable: false };
-      // Done: the card reads as done and opens what came of it (issue #630).
-      if (s.tool === 'offer_learning' && finished.has(actionId))
+      // Done: the card reads as done and opens what came of it (issues #630, #643).
+      if ((s.tool === 'offer_learning' || s.tool === 'offer_drill') && finished.has(actionId))
         return { ...s, finished_session_id: finished.get(actionId) ?? null };
       if (s.tool === 'show_ready') return { ...s, ready: stillReady.has(s.step_id) };
       return s;

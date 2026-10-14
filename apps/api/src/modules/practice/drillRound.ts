@@ -37,6 +37,7 @@ import {
   type FactState,
 } from './drill.js';
 import { reviewItem } from './fsrs.js';
+import { runOfRequest } from './lifecycle.js';
 import { createSession, nextSeq, type PracticeLearner } from './service.js';
 import { passTurn } from './passTurn.js';
 
@@ -58,11 +59,8 @@ export async function startDrill(
   input: StartDrillRequest,
 ): Promise<string> {
   const now = deps.now();
-  const existing = await deps.db.maybeOne<{ id: string }>(
-    `select id from practice_sessions where learner_id = $1 and client_request_id = $2`,
-    [learner.id, input.client_request_id],
-  );
-  if (existing) return existing.id;
+  const existing = await runOfRequest(deps.db, learner.id, input.client_request_id, now);
+  if (existing) return existing;
 
   const spec = input.spec;
   const facts = factsOf(spec);

@@ -123,4 +123,22 @@ describe('which card’s start is the filled one', () => {
       done.summary.finished_session_id = '00000000-0000-4000-8000-0000000000aa';
     expect(loudCard([...thread, said(5, [done])], 'primary')).toBe(newest.id);
   });
+
+  it('skips a Kopfrechnen round that ended (issue #643)', () => {
+    const round: ActionView = {
+      ...offer(7, 'unused'),
+      summary: {
+        tool: 'offer_drill',
+        range: 'times',
+        rows: [6, 7],
+        carry: null,
+        title: 'Einmaleins mit 6 und 7',
+        finished_session_id: '00000000-0000-4000-8000-0000000000cc',
+      },
+    };
+    expect(loudCard([...thread, said(7, [round])], 'primary')).toBe(newest.id);
+    // While it can still start, it is the newest start.
+    if (round.summary.tool === 'offer_drill') round.summary.finished_session_id = null;
+    expect(loudCard([...thread, said(7, [round])], 'primary')).toBe(round.id);
+  });
 });

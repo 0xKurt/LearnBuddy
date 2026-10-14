@@ -10,6 +10,7 @@
 // - a test she sat with time ends once its time is up (issue #241, service.ts settleTestClock).
 
 import type { Deps } from '../../deps.js';
+import type { Db } from '../../lib/db.js';
 import { bumpContext } from '../buddy/plan.js';
 import { finishIfComplete } from './finish.js';
 import { settleTestClock, TIME_UP_GRACE_MS } from './testClock.js';
@@ -38,6 +39,39 @@ export function resumable(
     s.answered < s.total &&
     now.getTime() - s.last_activity_at.getTime() < idleLimitMs(s.mode)
   );
+}
+
+/**
+ * The run a start request already made, by its request id — null when there is none yet.
+ *
+ * An offer's card sends the offer's id as the request id, so the same card always opens the same
+ * run (issue #48). A run the sweep below closed after three days of rest ('abandoned') answered
+ * her "Los geht's" with "Diese Übung ist schon beendet": a practice that read as finished at the
+ * moment she started it (issue #643). Her tap is new activity, so that run goes on where she left
+ * it — its questions are still hers and nothing of it was finished. A finished run stays finished:
+ * its card already says so (`finished_session_id`).
+ */
+export async function runOfRequest(
+  db: Db,
+  learnerId: string,
+  requestId: string,
+  now: Date,
+): Promise<string | null> {
+  const existing = await db.maybeOne<{ id: string; status: string }>(
+    `select id, status from practice_sessions where learner_id = $1 and client_request_id = $2`,
+    [learnerId, requestId],
+  );
+  if (!existing) return null;
+  if (existing.status === 'abandoned') {
+    await db.query(
+      `update practice_sessions set status = 'active', last_activity_at = $2
+        where id = $1 and status = 'abandoned'`,
+      [existing.id, now],
+    );
+    // Buddy's STATE lists open runs: what he knows changed (rule 4).
+    await bumpContext(db, learnerId);
+  }
+  return existing.id;
 }
 
 /**

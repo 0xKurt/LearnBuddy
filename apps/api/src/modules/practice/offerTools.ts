@@ -188,6 +188,7 @@ export async function runOfferDrill(
       rows: spec.rows ? [...spec.rows].sort((a, b) => a - b) : null,
       carry: spec.carry,
       title: titleOf(spec, ctx.locale),
+      finished_session_id: null,
     },
     undo: null,
   };

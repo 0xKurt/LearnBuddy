@@ -232,22 +232,32 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
+  const DRILL: Extract<ActionSummary, { tool: 'offer_drill' }> = {
+    tool: 'offer_drill',
+    title: 'Einmaleins mit 6 und 7',
+    range: 'times',
+    rows: [6, 7],
+    carry: null,
+    finished_session_id: null,
+  };
+
   it('a Kopfrechnen round (Flows.jsx:169)', () => {
-    renderInApp(
-      <DrillOfferCard
-        actionId="a2"
-        offer={{
-          tool: 'offer_drill',
-          title: 'Einmaleins mit 6 und 7',
-          range: 'times',
-          rows: [6, 7],
-          carry: null,
-        }}
-      />,
-    );
+    renderInApp(<DrillOfferCard actionId="a2" offer={DRILL} />);
     expect(screen.getByText('Kopfrechnen')).toBeTruthy();
     expect(styleOf(frameOf('Einmaleins mit 6 und 7')).paddingTop).toBe('16px');
     expect(screen.getByRole('button', { name: "Los geht's" })).toBeTruthy();
+  });
+
+  it('a round that ended reads as done, not as a start that opens its end (issue #643)', () => {
+    renderInApp(
+      <DrillOfferCard
+        actionId="a2"
+        offer={{ ...DRILL, finished_session_id: '00000000-0000-4000-8000-0000000000cc' }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: "Los geht's" })).toBeNull();
+    expect(screen.getByText('Geschafft!')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
   });
 
   it('a place Buddy points to', () => {

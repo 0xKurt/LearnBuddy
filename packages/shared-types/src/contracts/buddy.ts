@@ -230,6 +230,12 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     rows: z.array(DrillRow).nullable().default(null),
     carry: DrillCarry.nullable().default(null),
     title: z.string(),
+    /**
+     * The round this offer started, once it ended (issue #643, as `offer_learning` since #630):
+     * the card reads as done and opens it, instead of a "Los geht's" that opened an ended round.
+     * Decorated when the thread is served; null while none ended, and from an older server.
+     */
+    finished_session_id: Uuid.nullable().default(null),
   }),
   /**
    * A roleplay started in the conversation (issue #244): the role card she plays to. Scene,

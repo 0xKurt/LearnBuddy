@@ -3,7 +3,7 @@
 // ui_kits/app/Flows.jsx:169, `PracticeReady label="Kopfrechnen"`). Starting it
 // asks no model: the server writes the twenty tasks from the range in a few milliseconds, so
 // there is no "wird vorbereitet" to wait through. The offer's action id is the request id, so
-// tapping the same card again opens the same round.
+// tapping the same card again opens the same round — once it ended, the card says so instead.
 
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
@@ -16,6 +16,7 @@ import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { PracticeReady } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';
+import { FinishedOffer } from './FinishedOffer.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_drill' }>;
 
@@ -56,6 +57,14 @@ export function DrillOfferCard({
       running.current = false;
       setBusy(false);
     }
+  }
+
+  // The round ended (issue #643): the card says so and opens it, never a start that opens an
+  // ended round.
+  if (offer.finished_session_id !== null) {
+    return (
+      <FinishedOffer label={label} title={offer.title} sessionId={offer.finished_session_id} />
+    );
   }
 
   return (
