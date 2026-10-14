@@ -29,15 +29,15 @@ const feedback: PronunciationFeedback = {
 const item = { id: 'spoken-target', prompt: feedback.heard, lang: 'en', topic: null } as ItemView;
 const turns = [{ pronunciation: feedback }] as PracticeTurnView[];
 describe('pronunciation word action targets', () => {
-  it('declares full targets and a wrapping row without changing the selected word object', () => {
+  it('declares a target per word and a wrapping row without changing the selected word object', () => {
     renderInApp(<SpeakCard item={item} turns={turns} sessionId="spoken-session" />);
     const actions = screen.getAllByRole('button');
     expect(actions).toHaveLength(feedback.words.length);
     expect(styleOf(screen.getByTestId('spoken-word-actions')).flexWrap).toBe('wrap');
     for (const [index, action] of actions.entries()) {
-      expect(styleOf(action).minWidth).toBe(`${TOUCH}px`);
-      expect(styleOf(action).minHeight).toBe(`${TOUCH}px`);
-      expect(styleOf(action).maxWidth).toBe('100%');
+      // The target lies over its word, reaching out past it (#625), and takes no room itself.
+      expect(styleOf(action).position).toBe('absolute');
+      expect(styleOf(action.parentElement!.parentElement!).maxWidth).toBe('100%');
       expect(action.getAttribute('aria-label')).toContain(feedback.words[index]!.text);
       fireEvent.click(action);
       expect(JSON.parse(screen.getByTestId('chosen-word').textContent!)).toEqual(
@@ -85,15 +85,28 @@ describe('pronunciation word action targets', () => {
     expect(screen.getByText('today').textContent).toBe('today');
     view.unmount();
     renderInApp(<SpeakCard item={sentence} turns={spoken} sessionId="spoken-session" />);
-    expect(screen.getByTestId('spoken-word-actions').textContent).toBe('Theweatherisnicetoday.');
-    expect(screen.getByRole('button', { name: 'Wort üben: today' }).textContent).toBe('today.');
+    expect(screen.getByTestId('spoken-word-actions').textContent).toBe(
+      'The weather is nice today.',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Wort üben: today' }).parentElement!.parentElement!
+        .textContent,
+    ).toBe('today.');
   });
 
-  // "is" stood at the start of its 44 pt target and left a hole before "nice".
-  it('a short word stands in the middle of its target, the room around it even', () => {
+  // The walkthrough (#625): every word in a 44 pt box read "The  weather  is  nice", and
+  // "today." wrapped at 360. The words stand at the sentence's own spacing; the target is not
+  // layout width.
+  it('sets the words at normal spacing: no box, gap or minimum width between them', () => {
     renderInApp(<SpeakCard item={item} turns={turns} sessionId="spoken-session" />);
-    for (const action of screen.getAllByRole('button'))
-      expect(styleOf(action).alignItems).toBe('center');
+    const row = screen.getByTestId('spoken-word-actions');
+    expect(styleOf(row).gap ?? '').toBe('');
+    expect(styleOf(row).columnGap ?? '').toBe('');
+    for (const action of screen.getAllByRole('button')) {
+      const word = action.parentElement!.parentElement!;
+      expect(styleOf(word).minWidth ?? '').not.toBe(`${TOUCH}px`);
+      expect(styleOf(action).minWidth ?? '').not.toBe(`${TOUCH}px`);
+    }
   });
 
   it('puts what the underline means under the card, not into it', () => {

@@ -259,8 +259,8 @@
       "2": "Tu veilles, {{name}} ?"
     },
     "after": {
-      "practice_one": "Salut {{name}} – tu viens de faire {{count}} question.",
-      "practice_other": "Salut {{name}} – tu viens de faire {{count}} questions.",
+      "practice_one": "Salut {{name}} – tu viens de répondre à {{count}} question.",
+      "practice_other": "Salut {{name}} – tu viens de répondre à {{count}} questions.",
       "all_first_one": "Salut {{name}} – {{count}} question, juste du premier coup.",
       "all_first_other": "Salut {{name}} – {{count}} questions, tout juste du premier coup.",
       "help_one": "Salut {{name}} – tu viens de résoudre {{count}} exercice toi-même.",

@@ -51,6 +51,9 @@ async function checkRight(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByRole('heading', { name: 'Geschafft!' })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
+  // Back in the thread the result card heads with it, and nothing above says it again (#625).
+  await expect(page.getByRole('button', { name: 'Ansehen' })).toBeVisible();
+  await expect(page.getByText(/geschafft/i)).toHaveCount(1);
 }
 
 const ADD = {

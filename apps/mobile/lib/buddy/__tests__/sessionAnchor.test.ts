@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import type { NowCard } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
@@ -204,6 +207,29 @@ describe('sessionGreeting (issue #195)', () => {
       tells: null,
     });
   });
+
+  it.each(['de', 'en', 'fr', 'es', 'it'])(
+    '%s: says what she did, and leaves the result card its own word (#625)',
+    (lang) => {
+      // The greeting stands directly above the thread's result card ("Geschafft!"). Saying
+      // „… hast du gerade geschafft." over it read as the same word twice.
+      type Buddy = { now: { result_title: string }; session: { after: Record<string, string> } };
+      const copy = JSON.parse(
+        readFileSync(join(__dirname, `../../../locales/${lang}/buddy.json`), 'utf8'),
+      ) as Buddy;
+      const words = (s: string) =>
+        s
+          .toLocaleLowerCase(lang)
+          .split(/[^\p{L}]+/u)
+          .filter((w) => w.length > 3);
+      const card = words(copy.now.result_title);
+      for (const [key, line] of Object.entries(copy.session.after))
+        expect(
+          words(line).filter((w) => card.includes(w)),
+          `${lang} session.after.${key}`,
+        ).toEqual([]);
+    },
+  );
 });
 
 describe('the greeting and the copy kept on the device (issue #195)', () => {

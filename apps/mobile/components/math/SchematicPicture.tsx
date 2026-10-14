@@ -14,7 +14,7 @@ import { View } from 'react-native';
 import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 
 import type { SchematicImageId } from '../../../../packages/shared-math/src/schematics.js';
-import { badgeRadii, pictureLayout } from '../../lib/math/schematicLayout.js';
+import { badgeDigit, badgeRadii, pictureLayout } from '../../lib/math/schematicLayout.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useSchematicPictures } from '../../lib/math/useSchematicPictures.js';
 import { FIGURE_PICTURE } from '../../lib/theme/figurePicture.js';
@@ -55,9 +55,10 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
           <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }}>
             {badges.map(({ from, at }, i) => {
               const asked = i + 1 === figure.ask;
-              // The ring's size against the design's: the number and its baseline go with it.
+              // The ring's size against the design's: the number and its baseline go with it,
+              // never below a size she can read (`badgeDigit`).
               const r = radii[i] ?? badge.radius * k;
-              const size = r / badge.radius;
+              const digit = badgeDigit(r, badge);
               const line = asked ? figureAccent : ink;
               // A number that stands on its part (a row picture's cell) needs no line to it.
               const apart =
@@ -85,9 +86,9 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
                   />
                   <SvgText
                     x={at[0]}
-                    y={at[1] + badge.baseline * size}
+                    y={at[1] + digit.baseline}
                     fontFamily={FAMILY}
-                    fontSize={badge.fontSize * size}
+                    fontSize={digit.fontSize}
                     fontWeight={badge.fontWeight}
                     fill={asked ? onFigureAccent : ink}
                     textAnchor="middle"
