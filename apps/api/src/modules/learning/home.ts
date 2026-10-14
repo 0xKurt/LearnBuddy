@@ -73,26 +73,25 @@ async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<Budd
   // prepared practice) — the app follows the home closely while anything is working.
   // Only while a reading job is really alive (a material left behind is set to failed by
   // the scheduler), not archived, and like the card for at most two hours.
-  const reading = await deps.db.maybeOne(
-    `select 1 from materials m
-      where m.learner_id = $1 and m.status in ('queued', 'processing') and m.archived_at is null
-        and m.created_at > $2::timestamptz - interval '2 hours'
-        and exists (select 1 from jobs j where j.kind = 'extract_material'
-                      and j.payload ->> 'material_id' = m.id::text
-                      and j.status in ('queued', 'running'))
-      limit 1`,
-    [learnerId, now],
+  // One statement for both (#712): the home is read on one connection, a round trip each.
+  const row = await deps.db.one<{ reading: boolean; reason: string | null }>(
+    `select
+       exists (select 1 from materials m
+                where m.learner_id = $1 and m.status in ('queued', 'processing')
+                  and m.archived_at is null
+                  and m.created_at > $2::timestamptz - interval '2 hours'
+                  and exists (select 1 from jobs j where j.kind = 'extract_material'
+                                and j.payload ->> 'material_id' = m.id::text
+                                and j.status in ('queued', 'running'))) as reading,
+       (select payload->>'reason' from jobs
+         where learner_id = $1 and kind = 'buddy_check' and status in ('queued', 'running')
+           and payload->>'reason' in ('material_ready', 'session_finished')
+           and run_at <= $3::timestamptz
+         order by run_at, seq limit 1) as reason`,
+    [learnerId, now, new Date(now.getTime() + 60_000)],
   );
-  if (reading) return 'material';
-  const row = await deps.db.maybeOne<{ reason: string }>(
-    `select payload->>'reason' as reason from jobs
-      where learner_id = $1 and kind = 'buddy_check' and status in ('queued', 'running')
-        and payload->>'reason' in ('material_ready', 'session_finished')
-        and run_at <= $2::timestamptz
-      order by run_at, seq limit 1`,
-    [learnerId, new Date(now.getTime() + 60_000)],
-  );
-  if (!row) return null;
+  if (row.reading) return 'material';
+  if (!row.reason) return null;
   return row.reason === 'material_ready' ? 'material' : 'session';
 }
 
