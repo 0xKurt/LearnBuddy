@@ -77,8 +77,8 @@ test('core loop · practice: short practice, feedback remembered, the greeting a
   // home's own payload — no model call, no second request.
   await expect(page.getByText('Hey Mia – 4 Fragen, alles gleich beim ersten Mal.')).toBeVisible();
   // And said ONCE: nothing repeats it as a card below — the one "Geschafft!" is the result
-  // card's own head (#599 practice cards).
-  await expect(page.getByText('Geschafft!')).toHaveCount(1);
+  // card's own head (#599 practice cards), and the greeting does not use the word (#625).
+  await expect(page.getByText(/geschafft/i)).toHaveCount(1);
   await expect(page.getByText('Du hast 4 Fragen beantwortet.')).toHaveCount(0);
   // The full view stays one tap away — now from the greeting itself.
   await expect(page.getByRole('button', { name: 'Ansehen' })).toHaveCount(1);

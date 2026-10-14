@@ -98,6 +98,22 @@ export function badgeRadii(
   });
 }
 
+/**
+ * The number in a ring of radius `r` (#625): the design's size for the ring (11 in a ring of 10),
+ * but never below `digitLeast` while the digit fits inside the ring — a ring its neighbours keep
+ * small still gets a number she can read, and no ring grows for it. `baseline`: how far below the
+ * ring's middle the number stands, in the design's proportion to its size.
+ */
+export function badgeDigit(
+  r: number,
+  ring: { radius: number; fontSize: number; baseline: number; stroke: number; digitLeast: number },
+): { fontSize: number; baseline: number } {
+  const own = (ring.fontSize * r) / ring.radius;
+  const inside = 2 * r - 2 * ring.stroke;
+  const fontSize = Math.max(own, Math.min(ring.digitLeast, inside));
+  return { fontSize, baseline: (ring.baseline * fontSize) / ring.fontSize };
+}
+
 /** The drawing and the names, once both are loaded (`useSchematicShapes`, `useFigureNames`). */
 type SchematicLoaded = { drawing: SchematicShape; names: FigureNames };
 

@@ -25,9 +25,14 @@ export const FIGURE_PICTURE = {
     baseline: 4,
     /**
      * The least radius in pt, not scaled (#599): a tall picture drawn narrow had its digits at
-     * 8.7 px on 360. At 10 the number is the design's 11 pt (`badgeRadii`).
+     * 8.7 px on 360. At 10 the ring is the design's (`badgeRadii`).
      */
     least: 10,
+    /**
+     * The least number in pt, in every ring it fits (`badgeDigit`, #625): the design's 11 read at
+     * 10 px where neighbours keep a ring small. No ring grows for it.
+     */
+    digitLeast: 12,
   },
   /** The part she chose on a picture to tap (design `Answers.jsx › FigureTap`): a ring, tinted. */
   pick: { radius: 14, stroke: 3, fillOpacity: 0.18 },

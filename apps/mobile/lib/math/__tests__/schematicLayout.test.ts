@@ -26,7 +26,13 @@ import {
   type SchematicFig,
   type SchematicImageId,
 } from '../../../../../packages/shared-math/src/schematics.js';
-import { BADGE_R, badgeRadii, pictureLayout, schematicLayout } from '../schematicLayout.js';
+import {
+  BADGE_R,
+  badgeDigit,
+  badgeRadii,
+  pictureLayout,
+  schematicLayout,
+} from '../schematicLayout.js';
 import { FIGURE_PICTURE } from '../../theme/figurePicture.js';
 
 /** The cards' widths on a 360 and a 390 pt phone. */
@@ -222,11 +228,25 @@ describe('a number on a tall picture drawn narrow (#599)', () => {
     at: [x, y] as [number, number],
   });
 
-  it('keeps its least size in pt where the picture leaves room: the digit 11 pt, not 8.7', () => {
+  it('keeps its least size in pt where the picture leaves room: the digit 12 pt, not 8.7', () => {
     // The skeleton, 300 × 420, drawn 333 pt high on 360: k = 0.79.
     const [r] = badgeRadii([badge(40, 60), badge(40, 120)], 0.79, frame, ring);
     expect(r).toBe(ring.least);
-    expect((ring.fontSize * r!) / ring.radius).toBe(11);
+    expect(badgeDigit(r!, ring).fontSize).toBeGreaterThanOrEqual(12);
+  });
+
+  // The walkthrough (#625): the skeleton's numbers 3 and 4 stand 18 pt apart on 360, their rings
+  // could grow only to 9 and their digits stood at 9.9 px.
+  it('writes the digit at least 12 pt inside a ring its neighbours keep small', () => {
+    const [r] = badgeRadii([badge(40, 60), badge(40, 78)], 0.79, frame, ring);
+    expect(r).toBe(9);
+    expect(badgeDigit(r!, ring)).toEqual({ fontSize: 12, baseline: (4 * 12) / 11 });
+    // Rings that already overlap keep their size; the digit still fits inside the ring.
+    expect(badgeDigit(7.9, ring).fontSize).toBe(12);
+    // A ring too small for it: the digit as large as the ring's inside, never past it.
+    expect(badgeDigit(6, ring).fontSize).toBe(6 * 2 - ring.stroke * 2);
+    // Drawn larger than the least: the design's proportion.
+    expect(badgeDigit(11 * 1.1, ring).fontSize).toBeCloseTo(11 * 1.21);
   });
 
   it('grows into no neighbour it does not touch today, and stays inside the picture', () => {

@@ -36,7 +36,7 @@ import { signsAround } from '../../lib/practice/spokenWords.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
 import { MAX_RECORDING_MS } from '../../lib/speech/voice.js';
-import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
@@ -44,7 +44,6 @@ import { QUESTION } from '../../lib/theme/question.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { RecordingStatus } from '../voice/RecordingStatus.js';
-import { PressArea } from '../lb/PressArea.js';
 import { Btn } from '../lb/Btn.js';
 import { Chip } from '../lb/Chip.js';
 import { QuestionCard } from '../lb/QuestionCard.js';
@@ -53,6 +52,7 @@ import { dropped, reacted, tapped } from '../../lib/perf.js';
 import { BottomBar } from '../lb/BottomBar.js';
 import { ListenButton } from './ListenButton.js';
 import { Hint } from './Question.js';
+import { SpokenWordTargets } from './SpokenWordTargets.js';
 import { WordSheet, type SpokenWord } from './WordSheet.js';
 
 /** The newest pronunciation feedback among this question's turns, if any. */
@@ -111,31 +111,12 @@ function MarkedWords({
     .join(' ');
   if (onWord)
     return (
-      <View
-        testID="spoken-word-actions"
-        style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.xs, alignItems: 'baseline' }}
-      >
-        {feedback.words.map((w, i) => (
-          <PressArea
-            key={`${i}-${w.text}`}
-            accessibilityRole="button"
-            accessibilityLabel={t('speak.word_open', { word: w.text })}
-            onPress={() => onWord(w)}
-            style={{
-              minWidth: TOUCH,
-              minHeight: TOUCH,
-              maxWidth: '100%',
-              flexShrink: 1,
-              justifyContent: 'center',
-              // A word shorter than its target stands in its middle: at its start, "is" left a
-              // hole before the next word.
-              alignItems: 'center',
-            }}
-          >
-            <Text style={TYPE.question}>{written(w, i)}</Text>
-          </PressArea>
-        ))}
-      </View>
+      <SpokenWordTargets
+        words={feedback.words}
+        written={written}
+        label={(w) => t('speak.word_open', { word: w.text })}
+        onWord={onWord}
+      />
     );
   return (
     <Text accessible accessibilityLabel={summary} style={TYPE.question}>
