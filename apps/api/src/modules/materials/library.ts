@@ -10,7 +10,8 @@ import { bumpContext } from '../buddy/plan.js';
 import { materialView, toView, VIEW_SELECT, type MaterialViewRow } from './view.js';
 
 export async function libraryView(db: Db, learnerId: string): Promise<LibraryView> {
-  const materials = await db.query<MaterialViewRow>(
+  // Four independent reads, side by side on the pool (#717, #637): one round trip instead of four.
+  const materialRows = db.query<MaterialViewRow>(
     `${VIEW_SELECT}
       where m.learner_id = $1 and m.archived_at is null and m.merged_into is null
         -- Pages she is still attaching are not in her library yet (issue #56).
@@ -19,7 +20,7 @@ export async function libraryView(db: Db, learnerId: string): Promise<LibraryVie
       limit 200`,
     [learnerId],
   );
-  const subjects = await db.query<{
+  const subjectRows = db.query<{
     id: string;
     name: string;
     kind: LibraryView['subjects'][number]['kind'];
@@ -32,7 +33,7 @@ export async function libraryView(db: Db, learnerId: string): Promise<LibraryVie
   // is reached from the sheet, so one from a sheet is left out instead of standing twice.
   // The subject is the one her questions carry — a session has no subject column.
   // Abandoned sessions are left out: their screen has nothing to show.
-  const exercises = await db.query<{
+  const exerciseRows = db.query<{
     id: string;
     subject_id: string | null;
     title: string | null;
@@ -53,7 +54,7 @@ export async function libraryView(db: Db, learnerId: string): Promise<LibraryVie
   );
   // What came up in this subject, newest first. Distinct topics, not questions: this says
   // what is in there, never how many of anything (rule 6).
-  const topics = await db.query<{ subject_id: string; topic: string }>(
+  const topicRows = db.query<{ subject_id: string; topic: string }>(
     `select t.subject_id, t.topic
        from (select i.subject_id, btrim(i.topic) as topic, max(i.created_at) as last_seen
                from items i
@@ -64,6 +65,12 @@ export async function libraryView(db: Db, learnerId: string): Promise<LibraryVie
       limit 400`,
     [learnerId],
   );
+  const [materials, subjects, exercises, topics] = await Promise.all([
+    materialRows,
+    subjectRows,
+    exerciseRows,
+    topicRows,
+  ]);
   const take = <T>(rows: T[], subjectId: string, of: (row: T) => string | null, most: number) =>
     rows.filter((r) => of(r) === subjectId).slice(0, most);
   return {
