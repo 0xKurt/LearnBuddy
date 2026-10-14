@@ -30,6 +30,9 @@ export async function runOfferLearning(
   ctx: ToolContext,
 ): Promise<ToolOutcome> {
   const a = action.args;
+  // One field carries either wish (#724, `decision.ts`): the level or the vocabulary's direction.
+  const difficulty = a.wish === 'harder' || a.wish === 'easier' ? a.wish : null;
+  const direction = a.wish === 'recognise' || a.wish === 'produce' ? a.wish : null;
   // Practice or a test for a planned test stays within its sheets (live finding 6): the goal
   // the model named — from STATE, or "new" for the test plan_exam planned in this same answer
   // (#636) — or the one active goal whose title the offer names exactly.
@@ -142,8 +145,8 @@ export async function runOfferLearning(
         o.kind === a.kind &&
         normalizeForMatch(o.text) === wanted &&
         o.goal_id === (goal?.id ?? null) &&
-        o.difficulty === (a.difficulty ?? null) &&
-        o.direction === (a.direction ?? null) &&
+        o.difficulty === difficulty &&
+        o.direction === direction &&
         (o.material_id ?? null) === (sheet?.id ?? null) &&
         o.minutes === minutes &&
         o.figures.join() === figures.join(),
@@ -163,8 +166,8 @@ export async function runOfferLearning(
       material_id: sheet?.id ?? null,
       // What she asked for beyond the topic; the tap hands it to the generator (issue #113).
       // A direction only ever reaches vocabulary pairs — other questions have none.
-      difficulty: a.difficulty ?? null,
-      direction: a.direction ?? null,
+      difficulty,
+      direction,
       // Only a test, and only on her wish (above); the tap hands it to the run (issue #241).
       minutes,
       // Only on her wish (above); the tap hands it to the run (#724).

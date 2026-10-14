@@ -935,7 +935,11 @@ structured output — Buddy's `offer_learning` `pictures` (figure types from the
 practice and test only, refused on any other kind), the offer's `figures`, `POST /practice/topic`
 `figures` — and `chooseForms` puts those types before anything the choice ranks, also in the
 minimal set. The run is told so in one line (`PICTURES`, a principle, no sample question). Before,
-"mit Kreisbildern" lived only in the offer's free text and the run came without a picture. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
+"mit Kreisbildern" lived only in the offer's free text and the run came without a picture. The
+turn's step schema stood at the budget (269) with #725, so `pictures` came with a fold:
+`offer_learning`'s `difficulty` and `direction` are one field `wish` (harder, easier, recognise,
+produce) — a level is a wish for questions on a topic, a direction one for vocabulary pairs, never
+both in one offer. The step schema stays at 269, with no room left: the next field needs another fold. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
 costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
 `llm_calls`) and no limit of its own: `callAhead` meters it with its run. **The run's allowance is

@@ -698,16 +698,17 @@ const offerLearning = z.object({
       .describe(
         'spelling_dictation: the sheet whose words she wants dictated — a word list she photographed; the words are then taken from that sheet, and "text" names it. teach_back: the sheet she wants to be questioned on. essay: the sheet with the writing task she wants to practise. null for every other kind, and when she typed or named the words or the topic.',
       ),
-    // Optional in parsing (older scripted answers have neither); the model sees both. Issue #113.
-    difficulty: DifficultyWishSchema.nullable()
+    // What she asked for beyond the topic (issue #113), one field (#724): the level is a wish for
+    // questions written on a topic, the direction one for vocabulary pairs — never both in one
+    // offer, so one field holds either. It freed the property `pictures` needs: the turn's step
+    // schema sits at what Vertex serves (#627, 269). Optional in parsing (older scripted answers
+    // have none).
+    wish: z
+      .enum([...DifficultyWishSchema.options, ...VocabDirectionSchema.options])
+      .nullable()
       .optional()
       .describe(
-        'Only when she asks for something harder or something easier than she is getting: the new questions are written above or below her grade. null when she said nothing about it.',
-      ),
-    direction: VocabDirectionSchema.nullable()
-      .optional()
-      .describe(
-        'vocab only, and only what she asked for: "recognise" asks what the foreign word means, "produce" shows it in her own language and asks for the foreign word. null asks both directions, as usual.',
+        'Only what she asked for: "harder" / "easier" when she wants something harder or easier than she is getting (the new questions are written above or below her grade); for vocab only, "recognise" asks what the foreign word means, "produce" shows it in her own language and asks for the foreign word. null when she said nothing about it.',
       ),
     // Issue #388: a practice test is offered once practice on it goes well (code decides,
     // `practice/readiness.ts`) — or when she asks for one, in her words, checked by code.

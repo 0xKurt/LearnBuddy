@@ -188,7 +188,7 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
         actions: [
           {
             tool: 'offer_learning',
-            args: { kind: 'vocab', text: pairs, goal: null, direction: 'produce' },
+            args: { kind: 'vocab', text: pairs, goal: null, wish: 'produce' },
           },
         ],
         reply: 'Dann so herum.',

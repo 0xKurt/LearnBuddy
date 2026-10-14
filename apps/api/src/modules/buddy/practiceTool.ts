@@ -31,7 +31,7 @@ function noneFit(wish: PracticeWish): string {
     return 'none of her questions for this went wrong the last time — say so plainly (it is good news) and offer ordinary practice instead (prepare_practice without only_wrong)';
   }
   if (wish.difficulty) {
-    return `her own questions for this have no ${wish.difficulty} half — say so and offer to write new ones at that level (offer_learning with difficulty)`;
+    return `her own questions for this have no ${wish.difficulty} half — say so and offer to write new ones at that level (offer_learning with that wish)`;
   }
   if (wish.direction) {
     return 'she has no vocabulary for this in that direction — say so and offer to write it (offer_learning) or ask for a photo of the list (request_material)';
