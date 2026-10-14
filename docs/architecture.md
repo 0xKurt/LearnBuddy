@@ -5651,7 +5651,7 @@ own (CLAUDE.md rule 16).
   and once rehearsed what was measured; the home's list shows the day as `UpcomingItem.kind 'talk'`.
 - **The card that records** (tool `offer_rehearsal`, `components/buddy/RehearseCard.tsx`): kind
   `talk` (up to 10 min, for a planned talk or none) or `read_aloud` (up to 2 min, the passage itself
-  in the offer, 15–220 words, checked by code). The card shows the talk's title or the whole
+  in the offer, 15–220 words, checked by code; a passage given as from one of her sheets (`sheet: sh1`) must stand on that sheet word for word, or the action is refused, #636). The card shows the talk's title or the whole
   passage, the length she was given, one button that starts and ends the recording; while it
   runs the card shows the running time large and the given length beside "ich höre zu" (design
   `Modes.jsx:40–50`; the chat's head listens while the recorder runs (`lib/buddy/headState.ts`

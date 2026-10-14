@@ -5,6 +5,12 @@
 import type { TestEnv, Learner } from '../../src/testing/harness.js';
 import type { Repeat } from './repeat.js';
 
+/** A recording card whose passage carries these words of her sheet (#636), not one made up. */
+export const onSheet =
+  (words: string) =>
+  (card: { text: string | null }): boolean =>
+    card.text?.includes(words) ?? false;
+
 export type Outcome = {
   status: 'done' | 'processing' | 'failed';
   errorCode: string | null;
@@ -38,6 +44,11 @@ export type Outcome = {
     /** A test with time (issue #241): its minutes; null — no clock — unless she asked. */
     minutes: number | null;
   }>;
+  /**
+   * Every recording card Buddy put in the chat (issue #264, #636): a talk rehearsal, or a text
+   * to read aloud with the passage itself.
+   */
+  rehearsals: Array<{ kind: string; text: string | null }>;
   /** What Buddy PROPOSED to delete and is waiting for her tap on (issue #151). */
   pending: Array<{
     operation: string;
