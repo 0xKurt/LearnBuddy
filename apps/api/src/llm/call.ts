@@ -7,6 +7,7 @@
 import { DAILY_LIMITS } from '../config.js';
 import type { Db } from '../lib/db.js';
 import { AppError } from '../lib/errors.js';
+import { timedModel } from '../lib/requestCost.js';
 import type { EmbeddingGateway, EmbedRequest, EmbedResult } from './embeddings.js';
 import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
 
@@ -108,7 +109,7 @@ export async function callAhead(
   if ((used?.calls ?? 0) >= DAILY_LIMITS[meteredAs])
     throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
   try {
-    const result = await deps.llm.generate(req);
+    const result = await timedModel(() => deps.llm.generate(req));
     await record(deps, learnerId, req, 'ok', result.usage, null);
     return result;
   } catch (err) {
@@ -143,7 +144,7 @@ export async function callModel(
     throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
   }
   try {
-    const result = await deps.llm.generate(req);
+    const result = await timedModel(() => deps.llm.generate(req));
     await record(deps, learnerId, req, 'ok', result.usage, null);
     await deps.db.query(
       `update usage_daily set cost_micros = cost_micros + $4
@@ -221,7 +222,7 @@ export async function callEmbedding(
       ],
     );
   try {
-    const result = await deps.embeddings.embed(req);
+    const result = await timedModel(() => deps.embeddings.embed(req));
     await recordEmbed('ok', result.usage, null);
     await deps.db.query(
       `update usage_daily set cost_micros = cost_micros + $4

@@ -1239,6 +1239,17 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   Next to the phone's `lb-perf` line of the same minute it splits the device's wait into the way
   there and back, the sign-in check, the server and the model; `llm_calls` adds when the model
   call started (`created_at − latency_ms`).
+- **Every answer says where its time went** (issue #626, `lib/requestCost.ts`): each request
+  carries one meter (AsyncLocalStorage) that the database seam (`lib/db.ts`, every round trip,
+  connect, begin and commit included) and the model seam (`llm/call.ts`, generate and embed,
+  retries included) add to. A response that is not streamed carries a `Server-Timing` header
+  (`auth;dur=… , done;dur=… , db;dur=…;desc="N queries", model;dur=…;desc="N calls"`). A
+  request that called a model, or took 1 s or more, writes its `[timing]` line too, and the
+  streamed line gains the same `db=N/…ms model=N/…ms`. All of it is counts and milliseconds
+  only. Measured in process with a 3.2 ms database round trip (the fra1 → Supabase distance of
+  #447), 14.10.: `GET /v1/materials` 7 queries, 28 ms; a rule-graded answer 28 queries, 135 ms;
+  `GET /v1/buddy` 39 queries, 137 ms; a chat turn **82 queries, 424 ms** of database before
+  and after its model call (3.5 s).
 - **Her sheets are looked up while her state loads** (issue #447, `turn.ts` `passagesAhead`, through the context provider's `lookAhead`):
   the passages her message points at (issue #26) need an embedding call, 174–396 ms in
   production (p50 270 ms), and it used to start only after the ~20 reads of her state. Now both

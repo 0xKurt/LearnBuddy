@@ -9,14 +9,16 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { HTTPException } from 'hono/http-exception';
+import { routePath } from 'hono/route';
 
 import type { Deps } from './deps.js';
 import type { AppEnv } from './http/context.js';
 import { appCors } from './http/cors.js';
 import { accountBudgets } from './http/limits.js';
-import { Timeline } from './http/timing.js';
+import { SLOW_REQUEST_MS, Timeline } from './http/timing.js';
 import { isCheckViolation } from './lib/db.js';
 import { AppError, isAppError, type ErrorCode } from './lib/errors.js';
+import { withRequestCost } from './lib/requestCost.js';
 import { olderThan } from './lib/version.js';
 import { routePlugins } from './http/plugins.js';
 import { pushDeviceRoutes } from './modules/devices/routes.js';
@@ -61,9 +63,21 @@ export function createApp(deps: Deps): Hono<AppEnv> {
 
   const app = new Hono<AppEnv>();
   // First of all: the request's stopwatch starts the moment it reaches the API (issue #447).
+  // It also carries the request's meter (lib/requestCost.ts, issue #626): database round trips
+  // and model calls are added as they happen. A streamed answer writes its own line when the
+  // stream ends (http/stream.ts); every other answer gets the `Server-Timing` header, and a line
+  // in the log when it called a model or took a second or more — the waits worth splitting.
   app.use('*', async (c, next) => {
-    c.set('timeline', new Timeline());
-    await next();
+    const timeline = new Timeline();
+    c.set('timeline', timeline);
+    const { cost, done } = withRequestCost(next);
+    timeline.attach(cost);
+    await done;
+    if (c.res.headers.get('content-type')?.startsWith('text/event-stream')) return;
+    timeline.mark('done');
+    c.res.headers.set('Server-Timing', timeline.serverTiming());
+    if (cost.modelCalls > 0 || (timeline.at('done') ?? 0) >= SLOW_REQUEST_MS)
+      console.info(timeline.line(`${c.req.method} ${routePath(c, -1)}`));
   });
 
   const origins = (deps.config.CORS_ORIGINS ?? '')
