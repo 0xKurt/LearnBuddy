@@ -12,7 +12,7 @@
 
 import { repairLatexEscapes } from '../../llm/latex.js';
 import { partialString } from '../../llm/partial.js';
-import { ACT_TOOLS, REPLY_MAX } from './registry.js';
+import { ACT_TOOLS, REPLY_MAX, TurnActionSchema } from './registry.js';
 
 export type ReplyProgress = {
   /** The reply as far as it is written. */
@@ -25,8 +25,12 @@ export type ReplyProgress = {
 
 const REPLY_KEY = /"reply"\s*:/;
 
-/** What can be said about the reply in `raw`, the answer written so far; null before it starts. */
-export function replyProgress(raw: string): ReplyProgress | null {
+/**
+ * What can be said about the reply in `raw`, the answer written so far; null before it starts.
+ * `aliases` are the aliases of the STATE this answer was written against (`g1`, `sh2` …): an
+ * action naming any other is rejected later, so its reply is not spoken early (#666).
+ */
+export function replyProgress(raw: string, aliases: ReadonlySet<string>): ReplyProgress | null {
   const reply = partialString(raw, 'reply');
   if (!reply) return null;
   // Only text that can pass validation is shown early: a reply over the schema's limit is
@@ -36,12 +40,42 @@ export function replyProgress(raw: string): ReplyProgress | null {
   // while it is written (p2-streamed-reply-unrepaired-latex-escapes).
   return {
     text: repairLatexEscapes(reply.text),
-    speakable: fits && changesNothing(raw),
+    speakable: fits && changesNothing(raw, aliases),
     done: reply.done,
   };
 }
 
-function changesNothing(raw: string): boolean {
+/** An alias as STATE writes them: one or two letters and a number. */
+const ALIAS = /^[a-z]{1,2}\d{1,3}$/;
+
+/** Every string in an action's arguments that has the shape of an alias. */
+function aliasesIn(v: unknown): string[] {
+  if (typeof v === 'string') return ALIAS.test(v) ? [v] : [];
+  if (Array.isArray(v)) return v.flatMap(aliasesIn);
+  if (v && typeof v === 'object') return Object.values(v).flatMap(aliasesIn);
+  return [];
+}
+
+/**
+ * The aliases of a STATE, all kinds together: the core's goals, steps and memories and whatever
+ * a domain adds (subjects, sheets).
+ */
+export function aliasSet(aliases: object): Set<string> {
+  const keys = new Set<string>();
+  for (const map of Object.values(aliases))
+    if (map instanceof Map) for (const k of map.keys()) if (typeof k === 'string') keys.add(k);
+  return keys;
+}
+
+/**
+ * Whether an answer whose reply is being written changes nothing AND will pass the checks its
+ * actions face after it is finished (#666, audit F12): "touches nothing" alone let an
+ * `offer_learning` with an invalid kind be spoken — "Deine Übung ist bereit" — and then be
+ * rejected, so the learner heard a promise with no button and, after the repair, a second answer.
+ * So each action must also parse as the turn's action schema and name only aliases of this
+ * STATE. Anything else waits for the validated answer; replies without actions are unchanged.
+ */
+function changesNothing(raw: string, aliases: ReadonlySet<string>): boolean {
   const at = raw.search(REPLY_KEY);
   if (at < 0) return false;
   // Everything before the reply is complete: close the object there and read it.
@@ -66,6 +100,9 @@ function changesNothing(raw: string): boolean {
     const tool = (a as { tool?: unknown } | null)?.tool;
     if (typeof tool !== 'string' || !(tool in ACT_TOOLS)) return false;
     const spec = ACT_TOOLS[tool as keyof typeof ACT_TOOLS];
-    return spec.touches.every((t) => t === 'nothing');
+    if (!spec.touches.every((t) => t === 'nothing')) return false;
+    const parsed = TurnActionSchema.safeParse(a);
+    if (!parsed.success) return false;
+    return aliasesIn((a as { args?: unknown }).args).every((x) => aliases.has(x));
   });
 }

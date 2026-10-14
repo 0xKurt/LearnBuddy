@@ -1249,8 +1249,10 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
   what the answer does. Only an answer that changes nothing — no lookups, only actions that touch
-  nothing (an offer button), no safeguarding `concern`, and no longer than validation allows
-  (700 characters) — is shown while it is written; everything else appears once it is
+  nothing (an offer button), each of them valid against the turn's action schema and naming only
+  aliases of this turn's STATE (#666: an offer with an invalid kind was spoken as "ready" and then
+  rejected), no safeguarding `concern`, and no longer than validation allows (700 characters) — is
+  shown while it is written; everything else appears once it is
   validated and applied, as before (rules 1 and 5: nothing is claimed before it is true). A
   rejected or repaired answer starts a new `round` whose text replaces the last. **Spoken as it is
   written, where it is safe** (issue #65, owner decision 2026-09-28): a reply the server marked

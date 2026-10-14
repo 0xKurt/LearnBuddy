@@ -206,6 +206,27 @@ describe.skipIf(!dbReady)('streamed replies', () => {
     expect(s.done?.home.thread.at(-1)?.text).toBe('Klar, frag mich!');
   });
 
+  it('speaks nothing of an offer that is rejected, and the repaired one exactly once (#666)', async () => {
+    // The Zweitaudit probe: "Deine Übung ist bereit" with an offer of a kind that does not exist
+    // touches nothing, and was spoken before TurnDecision rejected it. The same for a goal alias
+    // that STATE does not have.
+    const invalid = answer('Deine Übung ist bereit.', [
+      { tool: 'offer_learning', args: { kind: 'quiz', text: 'Brüche' } },
+    ]);
+    const foreign = answer('Dein Test ist bereit.', [
+      { tool: 'offer_learning', args: { kind: 'test', text: 'Brüche', goal: 'g9' } },
+    ]);
+    for (const wrong of [invalid, foreign]) {
+      env.llm.script('buddy_turn', wrong, answer('Klar, los geht es.'));
+      const s = await stream(env, l, 'Üben wir Brüche');
+      const spoken = s.replies.filter((r) => r.speakable);
+      // Nothing of the first round may be spoken; the repaired answer is.
+      expect(spoken.every((r) => r.round === 2)).toBe(true);
+      expect(spoken.at(-1)).toMatchObject({ round: 2, text: 'Klar, los geht es.', done: true });
+      expect(s.done?.status).toBe('done');
+    }
+  });
+
   it('ends with the failure when the model is down, and replays a finished turn without a reply stream', async () => {
     env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'provider down') });
     const down = await stream(env, l, 'Hallo?');
