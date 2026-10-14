@@ -390,4 +390,46 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
       { title: 'Übung', state: 'prepared' },
     ]);
   });
+
+  it('offers practice for the test it planned in the same answer, under that test (#636)', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Ella', birthDate: '2012-03-20' });
+    const quote = 'Ich muss die Befruchtung für die Arbeit am Freitag können.';
+    env.llm.script(
+      'buddy_turn',
+      turn({
+        actions: [
+          {
+            tool: 'plan_exam',
+            args: {
+              title: 'Bio-Arbeit Befruchtung',
+              subject: 'Biologie',
+              subject_kind: 'biology',
+              day: { kind: 'weekday', weekday: 5, weeks_ahead: 0 },
+              topics: ['Befruchtung'],
+              quote,
+            },
+          },
+          {
+            tool: 'offer_learning',
+            args: { kind: 'practice', text: 'Befruchtung', goal: 'new' },
+          },
+        ],
+        reply: 'Ich habe die Arbeit notiert, hier ist eine Übung dazu.',
+      }),
+    );
+    env.llm.script('explain', generated());
+    const sent = await say(l, 'Wir machen in Bio gerade Sexualkunde. ' + quote);
+    expect(sent.status).toBe('done');
+    const [goal] = await env.db.query<{ id: string }>(
+      `select id from buddy_goals where learner_id = $1`,
+      [l.learnerId],
+    );
+    const offer = await env.db.one<{ goal_id: string | null }>(
+      `select result ->> 'goal_id' as goal_id from buddy_actions
+        where learner_id = $1 and tool = 'offer_learning'`,
+      [l.learnerId],
+    );
+    expect(offer.goal_id).toBe(goal!.id);
+    await env.flushBackground();
+  });
 });

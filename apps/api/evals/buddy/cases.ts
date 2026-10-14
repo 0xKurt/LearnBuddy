@@ -6,7 +6,7 @@
 
 import { holdsWordPairs } from '../../src/modules/buddy/text.js';
 
-import { exam, foreignDayWord, germanLeak, must, type Case } from './caseChecks.js';
+import { exam, foreignDayWord, germanLeak, must, onSheet, type Case } from './caseChecks.js';
 
 export type { Case, Outcome } from './caseChecks.js';
 
@@ -1275,8 +1275,8 @@ export const CASES: Case[] = [
       return [
         ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
         ...must(
-          taps >= 1,
-          `declined something he can do (${o.tools.join(', ') || 'none'}): ${JSON.stringify(o.reply)}`,
+          taps + o.rehearsals.length >= 1 && o.rehearsals.every(onSheet('to the market')),
+          `declined, or a passage not from her sheet (${o.tools.join(', ') || 'none'}): ${JSON.stringify([o.reply, o.rehearsals])}`,
         ),
       ];
     },

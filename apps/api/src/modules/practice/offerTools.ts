@@ -9,7 +9,7 @@ import { type ActionOf } from '../buddy/decision.js';
 import { loadStandingOffers } from '../learning/state.js';
 import { holdsWordPairs, normalizeForMatch } from '../buddy/text.js';
 import {
-  goalOf,
+  activeGoalOf,
   materialOf,
   ToolRejection,
   type ToolContext,
@@ -26,9 +26,10 @@ export async function runOfferLearning(
 ): Promise<ToolOutcome> {
   const a = action.args;
   // Practice or a test for a planned test stays within its sheets (live finding 6): the goal
-  // the model named, or the one active goal whose title the offer names exactly.
+  // the model named — from STATE, or "new" for the test plan_exam planned in this same answer
+  // (#636) — or the one active goal whose title the offer names exactly.
   const forGoal = a.kind === 'test' || a.kind === 'practice';
-  let goal = forGoal && a.goal ? goalOf(ctx, a.goal) : null;
+  let goal: { id: string } | null = forGoal && a.goal ? await activeGoalOf(ctx, a.goal) : null;
   if (forGoal && !goal) {
     const named = [...ctx.aliases.goals.values()].filter(
       (g) => g.status === 'active' && normalizeForMatch(g.title) === normalizeForMatch(a.text),
