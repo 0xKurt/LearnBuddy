@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { IsoDateTime, LocalDate, LocalTime, tolerantArray, Uuid } from './common.js';
 import { DrillCarry, DrillRange, DrillRow } from './drill.js';
+import { ModelFigureType } from './figure.js';
 import {
   DifficultyWish,
   PageProblem,
@@ -202,6 +203,12 @@ export const ActionSummary = z.discriminatedUnion('tool', [
      * absent in older records — means no clock: a timer is never there without her wish.
      */
     minutes: TestMinutes.nullable().default(null),
+    /**
+     * practice / test: the kinds of picture she asked it to show (#724), in her words, checked by
+     * code; the button hands them to `POST /practice/topic`. Absent or empty means none asked
+     * for: the run's own choice decides.
+     */
+    figures: z.array(ModelFigureType).max(3).optional(),
     /**
      * Whether its button can still start anything (issue #196). False once preparing this
      * offer was refused as unusable — the app then shows the quiet line instead of a button

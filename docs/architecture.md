@@ -930,7 +930,12 @@ every form, so a narrowed call also gets one more line, a rule with no example i
 that no figure can be drawn and that every question must be answerable from its text alone. A sheet is chosen for once, and every reading of it (lean,
 continued) uses that choice. When the choosing call is refused, fails or answers nothing usable,
 the main call goes out with the minimal set (plain questions, no figures, no other forms), and the
-run still starts. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
+run still starts. **Her wish comes first** (#724): a kind of picture she asks for travels as
+structured output — Buddy's `offer_learning` `pictures` (figure types from the closed list,
+practice and test only, refused on any other kind), the offer's `figures`, `POST /practice/topic`
+`figures` — and `chooseForms` puts those types before anything the choice ranks, also in the
+minimal set. The run is told so in one line (`PICTURES`, a principle, no sample question). Before,
+"mit Kreisbildern" lived only in the offer's free text and the run came without a picture. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
 costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
 `llm_calls`) and no limit of its own: `callAhead` meters it with its run. **The run's allowance is
@@ -3925,7 +3930,11 @@ item's ordinary columns before it is stored.
   tolerance (`niceAxis`, `climateAxes`, imported by path). Colour is never the
   only signal: series have markers and dash patterns, columns are columns, pie slices are numbered
   and listed with their shares, the halves of a pyramid are named. Theme tokens `figure.warm`,
-  `wet`, `wetDeep`, `slices` (light and dark). The screen-reader text (`describeChart`) says every
+  `wet`, `wetDeep`, `slices` (light and dark). A slice whose label is one of the app's own colour
+  names — Itten's twelve (`figure.hue_*`) or white, grey, black (`figure.color_*`), in any of the
+  five languages, matched exactly — is drawn in that colour (`figure.hues`, `figure.plain`), so a
+  question about "den blau gefärbten Anteil" finds a blue slice (#724, `lib/math/pieColors.ts`;
+  every word against every look in `pieColors.test.ts`). The screen-reader text (`describeChart`) says every
   value and nothing derived — no sum, no warmest month, no type — because that is what a question
   asks her to read off. Walkthrough: `tests/web/charts.spec.ts`, every chart at 390 × 844 and
   360 × 740, light and dark.

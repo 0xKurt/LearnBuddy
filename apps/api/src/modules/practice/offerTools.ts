@@ -3,7 +3,12 @@
 // #243). They change nothing; what code enforces is that the button can really start what it
 // promises. Registered into Buddy's tools by modules/learning/register.ts (issue #107).
 
-import { DrillSpec, TEST_MINUTES, TestMinutes } from '@learnbuddy/shared-types/contracts';
+import {
+  DrillSpec,
+  TEST_MINUTES,
+  TestMinutes,
+  type PictureWish,
+} from '@learnbuddy/shared-types/contracts';
 
 import { type ActionOf } from '../buddy/decision.js';
 import { loadStandingOffers } from '../learning/state.js';
@@ -114,6 +119,17 @@ export async function runOfferLearning(
     requireQuote(ctx, a.time_limit.quote);
     minutes = parsed.data;
   }
+  // A kind of picture only where questions are written for a topic (#724). The run's form choice
+  // takes it first (`formChoice.ts`).
+  let figures: PictureWish | [] = [];
+  if (a.pictures) {
+    if (a.kind !== 'practice' && a.kind !== 'test') {
+      throw new ToolRejection(
+        'pictures only go with practice or a practice test (kind "practice" or "test") — leave pictures null here',
+      );
+    }
+    figures = [...new Set(a.pictures)];
+  }
   // The same offer twice is not a second thing she can tap — the first button is still there,
   // unstarted (issue #184). STATE says what stands, so this is the floor under the prompt, not
   // the rule itself: only an offer identical in every field it carries is refused, with the
@@ -129,7 +145,8 @@ export async function runOfferLearning(
         o.difficulty === (a.difficulty ?? null) &&
         o.direction === (a.direction ?? null) &&
         (o.material_id ?? null) === (sheet?.id ?? null) &&
-        o.minutes === minutes,
+        o.minutes === minutes &&
+        o.figures.join() === figures.join(),
     )
   ) {
     throw new ToolRejection(
@@ -150,6 +167,8 @@ export async function runOfferLearning(
       direction: a.direction ?? null,
       // Only a test, and only on her wish (above); the tap hands it to the run (issue #241).
       minutes,
+      // Only on her wish (above); the tap hands it to the run (#724).
+      figures,
       // Nothing proves otherwise yet. The preparation that runs right after this (issue #48)
       // is what can take it back, by stamping `cannot_start_at` (issue #196).
       startable: true,

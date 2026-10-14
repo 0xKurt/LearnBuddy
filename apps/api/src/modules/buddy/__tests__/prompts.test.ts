@@ -300,4 +300,11 @@ describe('the prompt names the exercise forms Buddy has no exercise for', () => 
       'Never say that a practice you prepare or offer will or will not',
     );
   });
+
+  it('takes a picture she asks to see as a wish for the questions, never as drawing (#724)', () => {
+    // The device: "Für das Zeichnen von Kreisbildern habe ich kein eigenes Aufgabenformat", and
+    // the practice of the same answer served pie charts.
+    expect(TURN_SYSTEM).toContain('Nor is answering from a picture the app draws in the question');
+    expect(TURN_SYSTEM).toContain('(offer_learning pictures), never something to decline');
+  });
 });

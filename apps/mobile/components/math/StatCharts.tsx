@@ -20,7 +20,9 @@ import {
 } from '../../../../packages/shared-math/src/charts.js';
 import { clamp } from '../../lib/gestures.js';
 import { chartFrame, every, TOP } from '../../lib/math/chartLayout.js';
+import { sliceColors } from '../../lib/math/pieColors.js';
 import { plotX } from '../../lib/math/plotLayout.js';
+import { isDarkBackground } from '../../lib/theme/luminance.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -59,12 +61,17 @@ export function PieChartView({ fig, width }: { fig: PieFig; width: number }) {
   const total = fig.half ? Math.PI : 2 * Math.PI;
   // Full circle from 12 o'clock, half circle from 9 o'clock over the top — clockwise both.
   let a = fig.half ? Math.PI : -Math.PI / 2;
+  // A slice named after a colour is drawn in it (#724, `pieColors.ts`); the rest take the slots.
+  const colors = sliceColors(fig.l, ink);
   const slices = fig.v.map((v, k) => {
     const a0 = a;
     const a1 = a + (v / 100) * total;
     a = a1;
     const mid = (a0 + a1) / 2;
-    return { k, v, a0, a1, mid, color: ink.slices[k % ink.slices.length] ?? ink.fill };
+    const color = colors[k] ?? ink.fill;
+    // Its number on it, dark or light — whichever reads on the slice.
+    const onColor = isDarkBackground(color) ? ink.plain.white : ink.plain.black;
+    return { k, v, a0, a1, mid, color, onColor };
   });
   const at = (ang: number, rr: number) =>
     [cx + rr * Math.cos(ang), cy + rr * Math.sin(ang)] as const;
@@ -81,7 +88,8 @@ export function PieChartView({ fig, width }: { fig: PieFig; width: number }) {
               key={s.k}
               d={`M ${cx} ${cy} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`}
               fill={s.color}
-              stroke={ink.paper}
+              // A white slice on white paper keeps its edge.
+              stroke={s.color === ink.plain.white ? ink.gridStrong : ink.paper}
               strokeWidth={2}
               strokeLinejoin="round"
             />
@@ -114,6 +122,8 @@ export function PieChartView({ fig, width }: { fig: PieFig; width: number }) {
                 height: 20,
                 borderRadius: 6, // token-exempt: the slice number's badge, 20 pt with a soft corner
                 backgroundColor: s.color,
+                borderWidth: s.color === ink.plain.white ? 1 : 0,
+                borderColor: ink.gridStrong,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -122,7 +132,7 @@ export function PieChartView({ fig, width }: { fig: PieFig; width: number }) {
                 style={[
                   TYPE.small,
                   // token-exempt: the slice's number at 11/14, the size of the number in its slice
-                  { color: palette.ink, fontSize: 11, lineHeight: 14, fontWeight: '700' },
+                  { color: s.onColor, fontSize: 11, lineHeight: 14, fontWeight: '700' },
                 ]}
               >
                 {s.k + 1}

@@ -74,6 +74,8 @@ export function OfferCard({
       materialId: offer.material_id,
       // A test she asked to sit with time (issue #241): the minutes travel with the offer.
       minutes: offer.minutes,
+      // The kinds of picture she asked for (#724) travel with it the same way.
+      figures: offer.figures,
     });
     if (session) {
       if (spoken) useVoiceMode.getState().setConversation(true);

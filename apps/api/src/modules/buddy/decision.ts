@@ -17,6 +17,7 @@ import {
   DrillCarry,
   DrillRange,
   DrillRow,
+  PictureWish,
   READ_ALOUD_WORDS,
   RoleplayLanguage,
   TalkFormat,
@@ -728,6 +729,14 @@ const offerLearning = z.object({
       .optional()
       .describe(
         'test only, and only when she herself asks to sit it with a time limit, as in a class test, or names a length. null otherwise — never a clock she did not ask for.',
+      ),
+    // Issue #724: a kind of picture only on her wish, from a closed list; the run's form choice
+    // takes it first. One property: the turn's schema sits at Vertex's budget (#627), so her
+    // words are not quoted beside it.
+    pictures: PictureWish.nullable()
+      .optional()
+      .describe(
+        'practice or test only, and only when she herself asks to see a kind of picture in the questions: the figure types that show it. null otherwise.',
       ),
   }),
 });

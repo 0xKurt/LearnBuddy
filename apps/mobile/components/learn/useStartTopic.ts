@@ -11,6 +11,8 @@
 
 import type {
   DifficultyWish,
+  ModelFigureType,
+  PictureWish,
   SessionView,
   StartTopicRequest,
   TestMinutes,
@@ -48,6 +50,8 @@ export type StartOptions = {
   materialId?: string | null;
   /** test: the time limit she asked Buddy for (issue #241); the server keeps the clock. */
   minutes?: TestMinutes | null;
+  /** practice / test: the kinds of picture she asked Buddy for (#724); the run picks them first. */
+  figures?: readonly ModelFigureType[];
 };
 
 export function useStartTopic() {
@@ -81,6 +85,7 @@ export function useStartTopic() {
         ...(opts.direction ? { direction: opts.direction } : {}),
         ...(opts.materialId ? { material_id: opts.materialId } : {}),
         ...(opts.minutes ? { minutes: opts.minutes } : {}),
+        ...(opts.figures?.length ? { figures: [...opts.figures] as PictureWish } : {}),
       });
       last.current = null;
       // The home shows the new session (to resume it) from now on.

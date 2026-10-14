@@ -582,6 +582,8 @@ export type Figure = {
   coins: readonly [string, string, string];
   /** Itten's colour wheel, clockwise from yellow (issue #261). */
   hues: readonly string[];
+  /** White, grey and black, the same in every look (`PLAIN_COLORS`, #724). */
+  plain: typeof PLAIN_COLORS;
 };
 
 export function toneBgOf(p: Palette): Record<SubjectTone, string> {
@@ -608,6 +610,16 @@ export function toneDeepOf(p: Palette): Record<SubjectTone, string> {
   };
 }
 
+/**
+ * The three plain colours a pie's slice can be named after (#724, `lib/math/pieColors.ts`), the
+ * same in every look: like Itten's hues, the subject here IS the colour.
+ */
+export const PLAIN_COLORS = {
+  white: '#ffffff',
+  grey: '#9a9aa2',
+  black: '#26262b',
+} as const;
+
 export function figureOf(p: Palette): Figure {
   return {
     paper: p.paper,
@@ -628,5 +640,6 @@ export function figureOf(p: Palette): Figure {
     slices: [...p.figure.slices],
     coins: p.figure.coins,
     hues: p.figure.hues,
+    plain: PLAIN_COLORS,
   };
 }

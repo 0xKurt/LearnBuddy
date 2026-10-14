@@ -172,6 +172,7 @@ const state: BuddyState = {
       difficulty: null,
       direction: null,
       minutes: null,
+      figures: [],
       created_at: new Date('2026-09-28T07:30:00Z'),
     },
   ],

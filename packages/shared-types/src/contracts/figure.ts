@@ -469,6 +469,22 @@ const MODEL_FIGURES = [...DRAWN_FIGURES, MapFigure] as const;
 export const ModelFigure = z.discriminatedUnion('type', [...MODEL_FIGURES]);
 export type ModelFigure = z.infer<typeof ModelFigure>;
 
+/** The figure types the model can draw, by their tags. */
+export const ModelFigureType = z.enum(
+  MODEL_FIGURES.map((f) => f.shape.type.value) as [
+    (typeof MODEL_FIGURES)[number]['shape']['type']['value'],
+    ...(typeof MODEL_FIGURES)[number]['shape']['type']['value'][],
+  ],
+);
+export type ModelFigureType = z.infer<typeof ModelFigureType>;
+
+/**
+ * The kinds of picture she asked a practice to show (#724): carried by Buddy's offer to the run,
+ * where the form choice takes them first. At most three, each once.
+ */
+export const PictureWish = z.array(ModelFigureType).min(1).max(3);
+export type PictureWish = z.infer<typeof PictureWish>;
+
 /**
  * A model figure as code keeps it once a map's view is chosen (#429, `ShownMapFigure`): what a
  * question carries from its parse on, and what a stored option's picture is read back as.
