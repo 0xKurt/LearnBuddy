@@ -3,13 +3,17 @@
 // a state and nothing else (owner rule 1). It stands beside the newest of Buddy's lines and beside
 // his typing dots; the head keeps the large one.
 
+import { memo } from 'react';
 import { View } from 'react-native';
 
 import { CHAT } from '../../lib/theme/chat.js';
 import { BuddyOrb, type MoonState } from '../lb/BuddyOrb.js';
 
-/** Buddy beside his line. Decorative: the line itself is what a screen reader hears. */
-export function ThreadOrb({
+/**
+ * Buddy beside his line. Decorative: the line itself is what a screen reader hears. Drawn again
+ * only for a new size or state (#637): the conversation around it renders for every reply.
+ */
+export const ThreadOrb = memo(function ThreadOrb({
   size = CHAT.orb.size,
   state = 'idle',
 }: {
@@ -26,4 +30,4 @@ export function ThreadOrb({
       <BuddyOrb size={size} state={state} />
     </View>
   );
-}
+});

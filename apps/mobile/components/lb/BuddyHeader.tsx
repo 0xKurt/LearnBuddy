@@ -3,7 +3,7 @@
 // Presentation only: where a button leads and what the orb shows is its caller's (`Screen`, the
 // chat's `Header`), which is why ⋯ has no default here — a head cannot be drawn without saying
 // what its menu opens (CLAUDE.md rule 12).
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { tapped } from '../../lib/perf.js';
@@ -23,6 +23,14 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
  * with — it stood "Frage 1 von 3· noch 10 Min." —, so the first one is a no-break space.
  */
 const SUBTITLE_JOIN = '\u00A0· ';
+
+/**
+ * The orb draws again only for a new size or state (#637): one render costs ~40 ms on the POCO
+ * X3, and the screen around the head renders for its own reasons — every key of a practice answer.
+ */
+const HeadOrb = memo(function HeadOrb({ size, state }: { size: number; state: MoonState }) {
+  return <BuddyOrb size={size} state={state} />;
+});
 
 export type BuddyHeaderProps = {
   title: string;
@@ -112,7 +120,7 @@ export function BuddyHeader({
             justifyContent: 'center',
           }}
         >
-          <BuddyOrb size={size} state={state} />
+          <HeadOrb size={size} state={state} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text
