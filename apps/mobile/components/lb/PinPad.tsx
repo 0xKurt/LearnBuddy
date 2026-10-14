@@ -149,6 +149,7 @@ export function PinPad({ onComplete, onStart, resetKey, disabled = false, error 
             >
               {({ pressed }) => (
                 <View
+                  collapsable={false}
                   style={{
                     ...PIN.key,
                     borderRadius: RADIUS.md,

@@ -11,8 +11,10 @@ import { TYPE } from '../../lib/theme/type.js';
 import { CAPTURE } from '../../lib/theme/capture.js';
 import { Btn } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function PhotoCheckCard({ index, problems, disabled, onRetake, onKeep }: PhotoReviewProps) {
+  useTheme();
   const { t } = useTranslation('capture');
   const main = problems[0] ?? 'blurry';
   useAnnounce(t(`quality.${main}`, { index }));

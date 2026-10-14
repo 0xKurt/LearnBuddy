@@ -19,6 +19,7 @@ import type { CornerAction } from '../../lib/practice/useCornerConfirm.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Props = {
   flaggable: boolean;
@@ -61,6 +62,7 @@ export function CornerSheet({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  useTheme();
   const { t } = useTranslation(['practice', 'common']);
   return (
     <Sheet

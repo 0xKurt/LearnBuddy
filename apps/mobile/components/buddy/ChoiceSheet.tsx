@@ -33,6 +33,7 @@ type Props = {
 };
 
 export function ChoiceSheet({ visible, title, body, choices, onClose }: Props) {
+  useTheme();
   const { t } = useTranslation('common');
   return (
     <Sheet visible={visible} title={title} closeLabel={t('actions.close')} onClose={onClose}>

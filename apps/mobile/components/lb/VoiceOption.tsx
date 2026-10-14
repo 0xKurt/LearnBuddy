@@ -61,6 +61,7 @@ export function VoiceOption({
         >
           {({ pressed }) => (
             <View
+              collapsable={false}
               style={{
                 paddingHorizontal: VOICE_PICKER.labelPadding,
                 ...(disabled ? { opacity: UI.disabledOpacity } : pressedStyle(pressed, reduced)),

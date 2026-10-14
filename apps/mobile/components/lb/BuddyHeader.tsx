@@ -14,6 +14,7 @@ import { BuddyOrb, type MoonState } from './BuddyOrb.js';
 import { IconBtn } from './IconBtn.js';
 import { Progress } from './Progress.js';
 import { ReadAloudSwitch } from './ReadAloudSwitch.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 /**
  * Between the subtitle and its tail ("Frage 1 von 3 · noch 10 Min."): written here, once. The tail
@@ -68,6 +69,7 @@ export function BuddyHeader({
   trailing,
   testID,
 }: BuddyHeaderProps) {
+  useTheme();
   const brand = headerIsBrand({ subtitle, leading });
   const size = brand ? HEADER.orb.brand : HEADER.orb.page;
   return (

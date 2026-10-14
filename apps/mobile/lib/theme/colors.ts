@@ -79,9 +79,10 @@ export function onPaletteApplied(watch: () => void): () => void {
 }
 
 /**
- * Switches the palette in place: every token object above is refilled, so a component that
- * holds `TYPE.body` sees the new colour on its next render. Then the watchers hear of it and
- * the provider re-renders the tree.
+ * Switches the palette: the colour maps are refilled and the TYPE and SHADOW styles replaced, so
+ * a component reading `TYPE.body` at render gets a new object on its next render (#631). Then
+ * the watchers hear of it and the provider renews its value — every `useTheme()` reader renders
+ * again; nothing remounts.
  */
 export function applyPalette(name: ThemeName): void {
   const palette = paletteOf(name);

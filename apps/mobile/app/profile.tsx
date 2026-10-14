@@ -553,6 +553,7 @@ function Handover({
   busy: boolean;
   onDone: () => void;
 }) {
+  useTheme();
   const { t } = useTranslation('auth');
   const points = [
     'profile.handover_consent',
@@ -624,6 +625,7 @@ function VoiceStep({ busy, onDone }: { busy: boolean; onDone: () => void }) {
  * the three date fields together): the label a `Field` draws, at the same distance.
  */
 function Labelled({ label, children }: { label: string; children: ReactNode }) {
+  useTheme();
   return (
     <View style={{ gap: UI.field.labelGap }}>
       <Text style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>{label}</Text>

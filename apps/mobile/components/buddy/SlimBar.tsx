@@ -59,6 +59,7 @@ const TEXT_BOX = {
 
 /** What an opened bar says in a sentence. */
 function Detail({ children }: { children: string }) {
+  useTheme();
   return <Text style={TYPE.meta}>{children}</Text>;
 }
 

@@ -12,6 +12,7 @@ import { ChoiceOptions } from '../lb/ChoiceOptions.js';
 import type { IconName } from '../lb/Icon.js';
 import { Row } from '../lb/ListGroup.js';
 import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Props<T extends string> = {
   title: string;
@@ -42,6 +43,7 @@ export function ChoiceRow<T extends string>({
   disabled = false,
   active = true,
 }: Props<T>) {
+  useTheme();
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
   return (

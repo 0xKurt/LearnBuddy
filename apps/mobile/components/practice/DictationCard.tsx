@@ -18,6 +18,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { QuestionCard } from '../lb/QuestionCard.js';
 import { ListenButton } from './ListenButton.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Props = {
   sessionId: string;
@@ -48,6 +49,7 @@ export function DictationCard({
   minHeight,
   compact = false,
 }: Props) {
+  useTheme();
   const { t } = useTranslation('practice');
   const grown = !compact && minHeight !== undefined && minHeight > 0;
 

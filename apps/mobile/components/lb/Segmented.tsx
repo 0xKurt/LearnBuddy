@@ -49,6 +49,7 @@ export function Segmented<T extends string>({
           >
             {({ pressed }) => (
               <View
+                collapsable={false}
                 style={{
                   minHeight: UI.segmented.visible,
                   justifyContent: 'center',

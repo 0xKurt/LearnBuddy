@@ -119,6 +119,7 @@ export function TakeBack({
     >
       {(pressed) => (
         <View
+          collapsable={false}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -223,6 +224,7 @@ export function FailedLine({
         >
           {(pressed) => (
             <View
+              collapsable={false}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',

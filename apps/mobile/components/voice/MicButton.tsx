@@ -124,6 +124,7 @@ export function MicButton({
       >
         {(pressed) => (
           <View
+            collapsable={false}
             style={{
               width: pill ? undefined : d,
               paddingHorizontal: pill ? TALK.micPadding : undefined,

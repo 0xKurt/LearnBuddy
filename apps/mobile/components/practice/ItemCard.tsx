@@ -15,6 +15,7 @@ import type { QuestionView } from '../../lib/practice/questionView.js';
 import { DictationCard } from './DictationCard.js';
 import { QuestionCard } from './Question.js';
 import { SpeakCard } from './SpeakPanel.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Props = {
   extra?: ReactNode;
@@ -56,6 +57,7 @@ export function ItemCard({
   filling,
   readAgain,
 }: Props) {
+  useTheme();
   const { item } = shown;
   if (form.speaking)
     return (

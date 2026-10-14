@@ -140,13 +140,20 @@ function typeOf(p: Palette) {
 
 export const TYPE = typeOf(paletteOf(DEFAULT_THEME));
 
+/**
+ * Each style is REPLACED, not refilled (issue #631): the tree no longer remounts on a palette
+ * change, so a component that renders again must hand React Native a new object — the same
+ * object, refilled, has nothing to diff and the pixels stay old. Read `TYPE.x` at render time;
+ * never hold one in a module (frozen-colors.test.ts).
+ */
 export function applyType(p: Palette): void {
-  const next = typeOf(p);
-  for (const key of Object.keys(next) as (keyof typeof TYPE)[]) Object.assign(TYPE[key], next[key]);
+  Object.assign(TYPE, typeOf(p));
 }
 
-export function applyBoldText(on: boolean, palette: Palette): void {
-  if (bold === on) return;
+/** True when the type scale changed (the provider then renders its readers again). */
+export function applyBoldText(on: boolean, palette: Palette): boolean {
+  if (bold === on) return false;
   bold = on;
   applyType(palette);
+  return true;
 }

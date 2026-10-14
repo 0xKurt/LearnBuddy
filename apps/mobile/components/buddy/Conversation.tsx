@@ -346,6 +346,7 @@ export function Conversation({
                     >
                       {(pressed) => (
                         <View
+                          collapsable={false}
                           style={[
                             mine ? CHAT.mine : null,
                             {

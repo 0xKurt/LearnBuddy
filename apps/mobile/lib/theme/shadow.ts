@@ -30,10 +30,9 @@ function shadows(p: Palette): Record<'soft' | 'float', ViewStyle> {
 // init); colors.ts refills it whenever the palette changes.
 export const SHADOW: Record<'soft' | 'float', ViewStyle> = shadows(paletteOf(DEFAULT_THEME));
 
-/** Called by applyPalette only (lib/theme/colors.ts keeps the order). Patches the nested
- * objects in place, so a held `SHADOW.soft` reference sees the new palette (issue #84). */
+/** Called by applyPalette only (lib/theme/colors.ts keeps the order). Replaces the nested
+ * objects, so a component rendering again hands React Native a new style to diff (#631, like
+ * `applyType`); read `SHADOW.x` at render time, never in a module (issue #84). */
 export function applyShadows(p: Palette): void {
-  const next = shadows(p);
-  Object.assign(SHADOW.soft, next.soft);
-  Object.assign(SHADOW.float, next.float);
+  Object.assign(SHADOW, shadows(p));
 }

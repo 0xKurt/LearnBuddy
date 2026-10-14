@@ -50,6 +50,7 @@ const ROW_BOX = {
 
 /** A group's one line of text where it has no rows yet ("Noch keine Fächer …"), in a row's box. */
 export function RowNote({ text }: { text: string }) {
+  useTheme();
   return (
     <View style={[ROW_BOX, { justifyContent: 'center' }]}>
       <Text style={TYPE.meta}>{text}</Text>
@@ -201,6 +202,7 @@ export function Row({
           >
             {({ pressed }) => (
               <View
+                collapsable={false}
                 style={[
                   style,
                   {
@@ -258,6 +260,7 @@ function ActionPill({
     >
       {({ pressed }) => (
         <View
+          collapsable={false}
           style={{
             flexDirection: 'row',
             alignItems: 'center',

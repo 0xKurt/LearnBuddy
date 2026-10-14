@@ -279,6 +279,7 @@ function ResetPage({
   keyboardShouldPersistTaps?: 'handled';
   children: ReactNode;
 }) {
+  useTheme();
   return (
     <ScrollView
       contentContainerStyle={{

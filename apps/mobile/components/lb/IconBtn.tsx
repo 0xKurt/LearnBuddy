@@ -87,6 +87,7 @@ export function IconBtn({
   // #133 position 6). The same dip Btn uses, so a press feels the same wherever it lands.
   const inner = (pressed: boolean) => (
     <View
+      collapsable={false}
       style={{
         width: size,
         height: size,

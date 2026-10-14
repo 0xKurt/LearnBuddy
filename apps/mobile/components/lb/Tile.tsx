@@ -183,6 +183,7 @@ export function Tile({
 
   const face = (pressed: boolean) => (
     <View
+      collapsable={false}
       style={{
         flexDirection: 'row',
         alignItems: 'center',

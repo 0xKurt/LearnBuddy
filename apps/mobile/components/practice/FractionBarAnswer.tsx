@@ -96,6 +96,7 @@ function Segments({
   // this inner View, which is also what carries the pressed tint and the muted state.
   const part = (i: number, pressed: boolean) => (
     <View
+      collapsable={false}
       style={{
         flex: 1,
         backgroundColor: i < filled ? ink.fill : pressed ? palette.lavender : 'transparent',

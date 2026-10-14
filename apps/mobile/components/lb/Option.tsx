@@ -34,7 +34,12 @@ function OptionSurface({
   style,
 }: Pick<Props, 'children' | 'state' | 'style'>) {
   const { palette } = useTheme();
-  return <View style={[optionLook(palette, state), style]}>{children}</View>;
+  // Its style changes with a press (Option below): keep its native view (#631, pressFace.test.ts).
+  return (
+    <View collapsable={false} style={[optionLook(palette, state), style]}>
+      {children}
+    </View>
+  );
 }
 
 export function Option({

@@ -39,6 +39,7 @@ import { LIBRARY } from '../../lib/theme/library.js';
 import { GUTTER_APP, SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { attachInChat } from '../../lib/capture/attachRequest.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 /** What this screen shows, whichever of the two kinds of id brought her here. */
 type Shown = {
@@ -64,6 +65,7 @@ function refreshAll(): void {
 }
 
 export default function SubjectScreen() {
+  useTheme();
   const { t } = useTranslation(['library', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const library = useLibrary();

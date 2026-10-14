@@ -224,6 +224,7 @@ export function AttachStrip({ uris, pdfs, flagged, disabled, onRemove, onMore = 
           >
             {(pressed) => (
               <View
+                collapsable={false}
                 style={{
                   width: THUMB,
                   height: THUMB,

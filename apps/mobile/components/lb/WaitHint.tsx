@@ -7,8 +7,10 @@
 import { Text } from 'react-native';
 
 import { TYPE } from '../../lib/theme/type.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function WaitHint({ children }: { children: string | null }) {
+  useTheme();
   if (!children) return null;
   return (
     <Text accessibilityLiveRegion="polite" style={[TYPE.small, { textAlign: 'center' }]}>

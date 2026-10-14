@@ -35,6 +35,7 @@ import { Tile } from '../lb/Tile.js';
 import { MathText } from '../math/MathText.js';
 import { AnswerShell } from './AnswerShell.js';
 import type { FormProps } from './formProps.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 /** A piece of the flowing text: words, or the gap with this index. */
 export type Piece = { kind: 'text'; text: string } | { kind: 'gap'; index: number };
@@ -101,6 +102,7 @@ export function nextEmpty(
 
 /** "Prüfen": every gap filled; `shown` is her words for the thread. */
 export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: FormProps<ClozeTaskView>) {
+  useTheme();
   const { t } = useTranslation('practice');
   const { text: kept, setText: keep } = useDraft(draftKey);
   const ids = view.gaps;

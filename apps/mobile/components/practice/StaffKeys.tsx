@@ -33,6 +33,7 @@ import { KeyRow, type Key } from '../lb/KeyRow.js';
 import { ValueGlyph } from '../math/StaffLine.js';
 import { activeBar, usePut, type StaffAnswerState } from './StaffAnswer.js';
 import { useListen } from './useListen.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Props = {
   surface: StaffWriteSurface;
@@ -45,6 +46,7 @@ type Props = {
 const GLYPH = PRACTICE.staffGlyphSize;
 
 export function StaffKeys({ surface, answer, disabled, onChange }: Props) {
+  useTheme();
   const { t } = useTranslation('practice');
   const { t: tm } = useTranslation('math');
   const written = answer.bars.filter((bar) => bar.length > 0);

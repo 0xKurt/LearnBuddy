@@ -32,13 +32,13 @@ describe('bold text', () => {
     expect(n(TYPE.title.fontWeight)).toBeGreaterThan(n(TYPE.body.fontWeight));
   });
 
-  it('refills the style objects in place, so a held reference follows', () => {
-    // The same guard frozen-colors.test.ts keeps for colours (issue #84): a component that
-    // read TYPE.body once must see the change.
-    const held = TYPE.body;
+  it('replaces the style objects, so a component rendering again repaints (#631)', () => {
+    // The same rule frozen-colors.test.ts keeps for colours: nothing remounts any more, and React
+    // Native only repaints a style it gets as a new object.
+    const before = TYPE.body;
     applyBoldText(true, palette);
-    expect(held).toBe(TYPE.body);
-    expect(held.fontWeight).toBeTruthy();
+    expect(TYPE.body).not.toBe(before);
+    expect(TYPE.body.fontFamily).toBe('Figtree_600SemiBold');
   });
 
   it('goes back when the setting goes back', () => {
@@ -49,7 +49,7 @@ describe('bold text', () => {
   });
 });
 
-it('uses the supplied Figtree scale and keeps aliases live across palettes', () => {
+it('uses the supplied Figtree scale and keeps aliases current across palettes', () => {
   expect(TYPE.body.fontFamily).toBe('Figtree_400Regular');
   expect(TYPE.display.fontSize).toBe(32);
   expect(TYPE.question.fontSize).toBe(22);
@@ -57,10 +57,9 @@ it('uses the supplied Figtree scale and keeps aliases live across palettes', () 
   expect(TYPE.prompt).toEqual(TYPE.question);
   expect(TYPE.small).toEqual(TYPE.meta);
   expect(TYPE.caption).toEqual(TYPE.meta);
-  const held = TYPE.body;
   applyBoldText(true, paletteOf('pastellDark'));
-  expect(held.color).toBe(paletteOf('pastellDark').ink);
-  expect(held.fontFamily).toBe('Figtree_600SemiBold');
+  expect(TYPE.body.color).toBe(paletteOf('pastellDark').ink);
+  expect(TYPE.body.fontFamily).toBe('Figtree_600SemiBold');
 });
 
 it('keeps a live Bold Text face through palette changes, including monospace code', () => {
@@ -73,13 +72,7 @@ it('keeps a live Bold Text face through palette changes, including monospace cod
   expect(TYPE.body.color).toBe(paletteOf('oceanDark').ink);
 });
 
-it('keeps semantic control roles live through Bold Text and palette updates', () => {
-  const held = {
-    action: TYPE.action,
-    cell: TYPE.cell,
-    metaStrong: TYPE.metaStrong,
-    chip: TYPE.chip,
-  };
+it('keeps semantic control roles current through Bold Text and palette updates', () => {
   expect(TYPE.action).toMatchObject({
     fontSize: 16,
     lineHeight: 23,
@@ -91,7 +84,6 @@ it('keeps semantic control roles live through Bold Text and palette updates', ()
   applyBoldText(true, palette);
   applyType(paletteOf('oceanDark'));
   for (const key of ['action', 'cell', 'metaStrong', 'chip'] as const) {
-    expect(TYPE[key]).toBe(held[key]);
     expect(TYPE[key].fontWeight).toBe('800');
     expect(TYPE[key].fontFamily).toBe('Figtree_800ExtraBold');
   }
@@ -102,37 +94,31 @@ it('keeps semantic control roles live through Bold Text and palette updates', ()
   expect(TYPE.cell.fontWeight).toBe('600');
 });
 
-it('keeps header and recording roles live through Bold Text and palette changes', () => {
-  const held = { brand: TYPE.brand, headerMeta: TYPE.headerMeta, voiceStatus: TYPE.voiceStatus };
-  expect(held.brand).toMatchObject({
+it('keeps header and recording roles current through Bold Text and palette changes', () => {
+  expect(TYPE.brand).toMatchObject({
     fontSize: 20,
     lineHeight: 26,
     fontWeight: '800',
     letterSpacing: -0.4,
   });
-  expect(held.headerMeta).toMatchObject({ fontSize: 13, lineHeight: 18, fontWeight: '600' });
-  expect(held.voiceStatus).toMatchObject({
+  expect(TYPE.headerMeta).toMatchObject({ fontSize: 13, lineHeight: 18, fontWeight: '600' });
+  expect(TYPE.voiceStatus).toMatchObject({
     fontSize: TYPE.body.fontSize,
     lineHeight: TYPE.body.lineHeight,
     fontWeight: '600',
   });
   applyBoldText(true, paletteOf('pastellDark'));
-  expect(TYPE.brand).toBe(held.brand);
-  expect(TYPE.headerMeta).toBe(held.headerMeta);
-  expect(TYPE.voiceStatus).toBe(held.voiceStatus);
-  expect(held.headerMeta.fontFamily).toBe('Figtree_800ExtraBold');
-  expect(held.voiceStatus.fontFamily).toBe('Figtree_800ExtraBold');
-  expect(held.voiceStatus.color).toBe(paletteOf('pastellDark').ink);
+  expect(TYPE.headerMeta.fontFamily).toBe('Figtree_800ExtraBold');
+  expect(TYPE.voiceStatus.fontFamily).toBe('Figtree_800ExtraBold');
+  expect(TYPE.voiceStatus.color).toBe(paletteOf('pastellDark').ink);
   applyType(paletteOf('oceanDark'));
-  expect(held.headerMeta.color).toBe(paletteOf('oceanDark').ink2);
-  expect(held.voiceStatus.fontFamily).toBe('Figtree_800ExtraBold');
+  expect(TYPE.headerMeta.color).toBe(paletteOf('oceanDark').ink2);
+  expect(TYPE.voiceStatus.fontFamily).toBe('Figtree_800ExtraBold');
 });
 
-it('keeps semibold metadata face live under Bold Text', () => {
+it('keeps semibold metadata face current under Bold Text', () => {
   applyBoldText(false, palette);
-  const held = TYPE.metaSemibold;
-  expect(held.fontFamily).toBe('Figtree_600SemiBold');
+  expect(TYPE.metaSemibold.fontFamily).toBe('Figtree_600SemiBold');
   applyBoldText(true, palette);
-  expect(TYPE.metaSemibold).toBe(held);
-  expect(held.fontFamily).toBe('Figtree_800ExtraBold');
+  expect(TYPE.metaSemibold.fontFamily).toBe('Figtree_800ExtraBold');
 });

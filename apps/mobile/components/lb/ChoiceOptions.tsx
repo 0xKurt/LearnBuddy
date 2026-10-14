@@ -6,6 +6,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from './Btn.js';
 import { Icon } from './Icon.js';
 import { Tile } from './Tile.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function ChoiceOptions<T extends string>({
   options,
@@ -32,6 +33,7 @@ export function ChoiceOptions<T extends string>({
   unselectedVariant?: 'quiet' | 'secondary';
   showCheck?: boolean;
 }) {
+  useTheme();
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: SPACE.sm }}>
       {options.map((option) => {
