@@ -79,5 +79,17 @@
     "nothing": "Schick mir ein Foto oder PDF von deinem Blatt – Text und Links kann ich hier nicht lesen.",
     "signed_out": "Melde dich zuerst an – dann teil das Blatt nochmal mit LearnBuddy."
   },
-  "preview_failed": "Vorschau nicht möglich"
+  "preview_failed": "Vorschau nicht möglich",
+  "sent": {
+    "photos_one": "1 Foto",
+    "photos_other": "{{count}} Fotos",
+    "label_one": "Du hast ein Foto geschickt",
+    "label_other": "Du hast {{count}} Fotos geschickt",
+    "waiting": "Angekommen · gleich liest Buddy es",
+    "reading": "Buddy liest es gerade …",
+    "building": "Gelesen · Buddy macht Übungen daraus …",
+    "ready": "Gelesen",
+    "failed": "Nicht gelesen",
+    "deleted": "Gelöscht"
+  }
 }

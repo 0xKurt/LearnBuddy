@@ -92,8 +92,23 @@ export type CoreHomeKey =
 
 /** One page of the conversation, as the core read it, for the domain to dress. */
 export type ThreadPage = {
-  messages: ReadonlyArray<{ id: string; roleplay_id: string | null; rehearsal_id: string | null }>;
-  actions: ReadonlyArray<{ id: string; result: ActionSummary; cannot_start_at: Date | null }>;
+  messages: ReadonlyArray<{
+    id: string;
+    roleplay_id: string | null;
+    rehearsal_id: string | null;
+    /** Her message for a sheet she sent (issue #632). */
+    material_id: string | null;
+    /** A message Buddy sent from the background, and the decision that made it. */
+    outreach_id: string | null;
+    decision_id: string | null;
+  }>;
+  actions: ReadonlyArray<{
+    id: string;
+    decision_id: string;
+    status: 'applied' | 'undone';
+    result: ActionSummary;
+    cannot_start_at: Date | null;
+  }>;
 };
 
 /** The fields of a message in the conversation the core fills itself; the rest is the domain's. */

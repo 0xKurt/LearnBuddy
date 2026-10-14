@@ -79,5 +79,17 @@
     "nothing": "Envíame una foto o un PDF de tu ficha – aquí no puedo leer texto ni enlaces.",
     "signed_out": "Inicia sesión primero – luego vuelve a compartir la ficha con LearnBuddy."
   },
-  "preview_failed": "Sin vista previa"
+  "preview_failed": "Sin vista previa",
+  "sent": {
+    "photos_one": "1 foto",
+    "photos_other": "{{count}} fotos",
+    "label_one": "Has enviado una foto",
+    "label_other": "Has enviado {{count}} fotos",
+    "waiting": "Recibido · Buddy lo leerá enseguida",
+    "reading": "Buddy lo está leyendo …",
+    "building": "Leído · Buddy está haciendo ejercicios …",
+    "ready": "Leído",
+    "failed": "No leído",
+    "deleted": "Borrado"
+  }
 }

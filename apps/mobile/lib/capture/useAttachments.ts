@@ -43,6 +43,7 @@ import { ownCopy, sizeOf } from './fileCopy.js';
 import { openCamera } from './camera.js';
 import { MAX_PDF_MB, sortIncoming, type IncomingFile } from './files.js';
 import { useLiveAttachments } from './live.js';
+import { useSendingSheet } from './sending.js';
 import { takeIncoming } from './incoming.js';
 import { clearCameraOpen, markCameraOpen, takePendingPhotos } from './pendingCamera.js';
 import {
@@ -438,6 +439,14 @@ export function useAttachments({ droppable, onSent }: Options) {
     const current = upload.current;
     setFailure(null);
     setProgress({ step: 'reserving' });
+    // From this tap the sheet stands in the conversation as hers (issue #632, lib/capture/sending.ts).
+    const shown = current.requestId;
+    const sheet = useSendingSheet.getState();
+    sheet.start({ requestId: shown, uris: hasPdf(pages) ? [] : photos, pages: photos.length });
+    const progressed = (p: SendProgress) => {
+      setProgress(p);
+      sheet.update(shown, { progress: p, materialId: current.material });
+    };
     drafts.startSending(current.requestId);
     let delivered = false;
     let failedAway = false;
@@ -447,12 +456,15 @@ export function useAttachments({ droppable, onSent }: Options) {
     await drafts.save({ requestId: current.requestId, photos: draftPhotos(), link: sentFor });
     try {
       // Keeps going if the learner leaves meanwhile: they asked for it to be sent.
-      await current.send(setProgress);
+      await current.send(progressed);
       delivered = true;
+      sheet.update(shown, { progress: null, materialId: current.material });
       // With a PDF among them, page numbers are not photo positions (no page thumbnail).
       if (current.material)
         await drafts.sent(current.material, photos, current.requestId, !hasPdf(pages));
-      void queryClient.invalidateQueries({ queryKey: keys.home });
+      // Her stored message takes its place with the home that has it; a server without one
+      // (older than issue #632) simply ends it there — it never stands on as "sending".
+      void queryClient.invalidateQueries({ queryKey: keys.home }).finally(() => sheet.end(shown));
       void queryClient.invalidateQueries({ queryKey: keys.library });
       if (mounted.current) {
         setPages(NO_PAGES);
@@ -462,6 +474,8 @@ export function useAttachments({ droppable, onSent }: Options) {
         sent.current?.(current.material, sentFor);
       }
     } catch (err) {
+      // Not sent: it leaves the conversation, and the pages stand above the field again.
+      sheet.end(shown);
       // The files were refused (too many pages, not a PDF, too large): that material is
       // gone; with other files she starts a new one.
       const refusedFiles = classifySend(err).refused;

@@ -5,6 +5,7 @@
 import { FINAL_FAILURES } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
+import type { Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { StorageError } from '../../storage/gateway.js';
 import { bumpContext } from '../buddy/plan.js';
@@ -79,9 +80,30 @@ export async function submitMaterial(
       payload: { material_id: materialId },
       maxAttempts: MAX_EXTRACTION_ATTEMPTS,
     });
+    await postSheetMessage(tx, learnerId, materialId, now);
     await bumpContext(tx, learnerId);
     return { jobId };
   });
+}
+
+/**
+ * Her message for the sheet (issue #632): in the conversation at the moment it went off, with
+ * the photos — so "Buddy liest" and "Blatt bereit" follow it in time. No text and no image: the
+ * row only points at the material (migration 0105, docs/privacy.md). One per sheet, also when
+ * the submit is repeated.
+ */
+async function postSheetMessage(
+  tx: Db,
+  learnerId: string,
+  materialId: string,
+  now: Date,
+): Promise<void> {
+  await tx.query(
+    `insert into buddy_messages (learner_id, role, text, material_id, created_at)
+     values ($1, 'learner', '', $2, $3)
+     on conflict (material_id) where material_id is not null do nothing`,
+    [learnerId, materialId, now],
+  );
 }
 
 /** Storage could not say: never tell her the photos did not arrive (rule 5). */
