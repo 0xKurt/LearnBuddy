@@ -71,8 +71,8 @@ const sheet = {
 
 const WAIT = { json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null } };
 
-async function upload(env: TestEnv, l: Learner): Promise<string> {
-  env.llm.script('extraction', { json: sheet });
+async function upload(env: TestEnv, l: Learner, read: typeof sheet = sheet): Promise<string> {
+  env.llm.script('extraction', { json: read });
   env.llm.script('buddy_check', WAIT);
   const created = await l.api.post<{ material: MaterialView; uploads: Array<{ path: string }> }>(
     '/materials',
@@ -122,5 +122,21 @@ describe.skipIf(!dbReady)('a sheet task that asks for a reason', () => {
         correct_choice: 0,
       },
     ]);
+  });
+
+  // Rule 5: the task that went for want of a key must not leave the sheet looking whole.
+  it('says the sheet is not whole when a task asking for a reason had to go', async () => {
+    const incomplete = async (id: string) =>
+      (
+        await env.db.one<{ items_incomplete: boolean }>(
+          `select items_incomplete from materials where id = $1`,
+          [id],
+        )
+      ).items_incomplete;
+    expect(await incomplete(await upload(env, lena))).toBe(true);
+    // Every task kept, the converted one included: the sheet is whole (without the second item,
+    // the one with no worked solution).
+    const kept = { ...sheet, items: sheet.items.filter((_, i) => i !== 1) };
+    expect(await incomplete(await upload(env, lena, kept))).toBe(false);
   });
 });

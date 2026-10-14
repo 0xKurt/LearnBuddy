@@ -2643,7 +2643,8 @@ focus topics; one sheet or vocabulary only when she asked for that, issue #144).
 her for a reason ("Begründe", "Erkläre warum" — marked by the model's `asks_reason`, never by its
 words) is a free text the tutor reads, never a choice graded by its index or a number graded by its
 key alone: written as either, code makes it a long answer whose key is the worked solution, or drops
-it when there is none (`reasonKept` in `practice/items.ts`, #642 item 9). Answers are checked by rules where exactness is decidable (multiple choice,
+it when there is none (`reasonKept` in `practice/items.ts`, #642 item 9). A sheet that lost one
+that way is marked `items_incomplete` (`reasonLost`, `firstReading.ts`), so it never passes for whole. Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing
 accents, a missing first word such as the article, a slip within a length-scaled edit distance: a
 fixed kind reply at once, a slip shows the spelling and stays open so she types it herself; never in

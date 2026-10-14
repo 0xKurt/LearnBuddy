@@ -333,24 +333,46 @@ function solutionText(it: ItemDraft): string {
 /** The longest key a question is stored with (`ItemDraft.answer`). */
 const ANSWER_MAX = 600;
 
+/** Whether a task asks her for a reason but was written in a form that cannot hold one (#642). */
+function reasonOutsideForm(it: Pick<ItemDraft, 'asks_reason' | 'kind'>): boolean {
+  // Already a free text; and a word to translate or a sentence to say has no reason to give.
+  return (
+    it.asks_reason === true &&
+    !kindIn(REASON_KINDS, it.kind) &&
+    it.kind !== 'vocab' &&
+    it.kind !== 'speak'
+  );
+}
+
+/** The worked solution as the key of her reason, or null when there is none that fits. */
+function reasonKey(it: Pick<ItemDraft, 'worked_solution'>): string | null {
+  const w = it.worked_solution;
+  return w !== null && w.length <= ANSWER_MAX ? w : null;
+}
+
+/**
+ * Whether `usableItems` drops this task for its reason (#642): asked for one, written in a form
+ * that cannot hold it, and without a worked solution to read hers against. A sheet reading counts
+ * these, so a sheet that lost one never passes for whole (rule 5, `firstReading.ts`).
+ */
+export function reasonLost(
+  it: Pick<ItemDraft, 'asks_reason' | 'kind' | 'worked_solution'>,
+): boolean {
+  return reasonOutsideForm(it) && reasonKey(it) === null;
+}
+
 /**
  * A task that asks her for a reason, as a free text (#642, item 9). Written as a choice, a number
  * or a word, its key holds no reason, and code would grade her by the index or the key alone: the
  * reason she was asked for would never be read. It becomes a long answer whose key is the worked
  * solution, which gives the reason; without one there is nothing to read her reason against, and
- * the question goes. Decided by the model's `asks_reason`, never by the words of the task (rule 3).
+ * the question goes (`reasonLost`). Decided by the model's `asks_reason`, never by the words of
+ * the task (rule 3).
  */
 function reasonKept(it: ItemDraft): ItemDraft | null {
-  // Already a free text; and a word to translate or a sentence to say has no reason to give.
-  if (
-    !it.asks_reason ||
-    kindIn(REASON_KINDS, it.kind) ||
-    it.kind === 'vocab' ||
-    it.kind === 'speak'
-  )
-    return it;
-  const reason = it.worked_solution;
-  if (reason === null || reason.length > ANSWER_MAX) return null;
+  if (!reasonOutsideForm(it)) return it;
+  const reason = reasonKey(it);
+  if (reason === null) return null;
   return {
     ...it,
     kind: 'long',
