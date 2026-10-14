@@ -1,7 +1,7 @@
 // Buddy's reply streamed while it is written (docs/architecture.md §Speed):
 // a reply that changes nothing may be shown and spoken at once; one whose
-// answer changes something is only marked speakable never, and shows once it
-// is applied. Failures end the stream honestly.
+// answer changes something is marked speakable only once it is stored (#644),
+// and the fixed help answer never. Failures end the stream honestly.
 // requires live verification in Claude Code session (needs a running Postgres)
 
 import type { ReplyStreamEvent, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
@@ -173,7 +173,7 @@ describe.skipIf(!dbReady)('streamed replies', () => {
     }
   });
 
-  it('never marks a reply speakable whose answer changes something', async () => {
+  it('marks a reply whose answer changes something speakable only once it is stored', async () => {
     env.llm.script(
       'buddy_turn',
       answer('Notiert – Handball!', [
@@ -190,10 +190,33 @@ describe.skipIf(!dbReady)('streamed replies', () => {
       ]),
     );
     const s = await stream(env, l, 'Ich spiele Handball');
-    expect(s.replies.length).toBeGreaterThan(0);
-    expect(s.replies.some((r) => r.speakable)).toBe(false);
+    expect(s.replies.length).toBeGreaterThan(1);
+    // While it is written: never speakable. Once stored (#644): one speakable event with the
+    // stored text, before the home is built and sent, so the voice need not wait for it.
+    expect(s.replies.slice(0, -1).some((r) => r.speakable)).toBe(false);
+    expect(s.replies.at(-1)).toEqual({
+      round: 1,
+      text: 'Notiert – Handball!',
+      speakable: true,
+      done: true,
+    });
     expect(s.done?.status).toBe('done');
     expect(s.done?.home.thread.at(-1)?.actions[0]?.summary.tool).toBe('remember');
+  });
+
+  it('sends a reply that changes nothing speakable once, not again when it is stored', async () => {
+    env.llm.script('buddy_turn', answer('Gern geschehen!'));
+    const s = await stream(env, l, 'danke');
+    expect(s.replies.filter((r) => r.speakable && r.done)).toHaveLength(1);
+  });
+
+  it('never streams the fixed help answer: it arrives whole with the result (rule 18)', async () => {
+    env.llm.script('buddy_turn', {
+      json: { concern: true, also_asked: false, ...answer('').json },
+    });
+    const s = await stream(env, l, 'mir geht es gar nicht gut');
+    expect(s.replies.some((r) => r.speakable)).toBe(false);
+    expect(s.done?.home.thread.at(-1)?.role).toBe('buddy');
   });
 
   it('starts a new round when an answer is rejected and repaired', async () => {

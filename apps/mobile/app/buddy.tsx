@@ -72,6 +72,9 @@ import { useClosedCard } from '../lib/homeCard.js';
 import { homeLayout, topKey } from '../lib/homeLayout.js';
 import { askAttach } from '../lib/capture/attachRequest.js';
 import { SPACE } from '../lib/theme/space.js';
+import { warmRecognition } from '../lib/speech/recognize.js';
+import { voiceLocale } from '../lib/speech/voice.js';
+import { currentLocale } from '../lib/i18n/index.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 
 export default function BuddyScreen() {
@@ -321,7 +324,11 @@ export default function BuddyScreen() {
           writing={pending !== null}
           onStop={() => void stopReply()}
           onSend={(text) => send(text)}
-          onTalk={() => router.push('/talk')}
+          onTalk={() => {
+            // The recogniser binds its service while Talk opens, not after (#644).
+            warmRecognition(voiceLocale(currentLocale()));
+            router.push('/talk');
+          }}
           onTyping={setTyping}
           onAttached={setAttached}
         />
