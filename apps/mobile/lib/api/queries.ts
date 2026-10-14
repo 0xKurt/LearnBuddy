@@ -14,6 +14,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { currentSession } from '../auth/session.js';
+import { useOnScreen } from '../screenFocus.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
 import { writeHome } from './homeCache.js';
@@ -97,11 +98,16 @@ export function prefetchHome(): void {
   void queryClient.prefetchQuery({ queryKey: keys.home, queryFn: loadHome });
 }
 
-/** Polls faster while something is in progress (a turn, reading photos, Buddy acting on them). */
+/**
+ * Polls faster while something is in progress (a turn, reading photos, Buddy acting on them).
+ * Only the screen she sees asks (#637): the chat under a practice neither polls nor redraws; it
+ * catches up when she comes back (a stale home is fetched again on return).
+ */
 export const useHome = () =>
   useQuery({
     queryKey: keys.home,
     queryFn: loadHome,
+    subscribed: useOnScreen(),
     refetchInterval: (q) => {
       const h = q.state.data;
       if (!h) return false;
