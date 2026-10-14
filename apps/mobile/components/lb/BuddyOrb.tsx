@@ -59,6 +59,21 @@ import {
   type Sparkle,
 } from '../../lib/buddy/moon.js';
 import { orbMoves } from '../../lib/buddy/orbRoom.js';
+import {
+  ghostOpacity,
+  ghostPlace,
+  glowOpacity,
+  glowScale,
+  haloOpacity,
+  haloScale,
+  moonOpacity,
+  moonPlace,
+  pingBox,
+  pingOpacity,
+  reflOpacity,
+  reflPlace,
+  stack,
+} from '../../lib/buddy/orbStyles.js';
 import { useBurst, useMoon } from '../../lib/buddy/useMoon.js';
 import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -115,16 +130,19 @@ export function BuddyOrb({
   const bodyStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pose.value.orb * bob.value }],
   }));
-  const haloStyle = useAnimatedStyle(() => {
-    const h = pose.value.halo;
-    return { opacity: Math.min(1, h), transform: [{ scale: 0.92 + h * 0.1 }] };
-  });
+  // Each moving part writes only what changed and nothing while it cannot be seen
+  // (lib/buddy/orbStyles.ts, issue #637); what she sees is the same.
+  const haloShown = useAnimatedStyle(() => ({ opacity: haloOpacity(pose.value) }));
+  const haloScaled = useAnimatedStyle(() => haloScale(pose.value));
 
   const haloSize = ORB_R * 1.36 * 2 * u;
   const orb = (
     <View style={{ width: size, height: size }}>
       {(halo ?? detail.halo) ? (
-        <Animated.View pointerEvents="none" style={[centered(size, haloSize), haloStyle]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[centered(size, haloSize), haloShown, haloScaled]}
+        >
           <Halo size={haloSize} />
         </Animated.View>
       ) : null}
@@ -364,25 +382,14 @@ function Moon({ side, pose, fade, order, u, size }: LayerProps) {
   const id = useSvgId('moon');
   const m = 44 * u;
   const front = side === 'front';
-  const style = useAnimatedStyle(() => {
-    const p = pose.value;
-    const here = front ? p.z >= 0 : p.z < 0;
-    return {
-      opacity: here ? fade.value : 0,
-      zIndex: order.value.seq[0] ?? 0,
-      transform: [{ translateX: p.x * u }, { translateY: p.y * u }, { scale: p.scale }],
-    };
-  });
-  const glowStyle = useAnimatedStyle(() => {
-    const g = pose.value.glow;
-    return {
-      opacity: Math.min(1, Math.max(0, g)),
-      transform: [{ scale: 0.8 + Math.min(1.3, Math.max(0, g)) * 0.4 }],
-    };
-  });
+  const shown = useAnimatedStyle(() => ({ opacity: moonOpacity(pose.value, fade.value, front) }));
+  const stacked = useAnimatedStyle(() => stack(order.value, 0));
+  const placed = useAnimatedStyle(() => moonPlace(pose.value, fade.value, front, u));
+  const glowShown = useAnimatedStyle(() => ({ opacity: glowOpacity(pose.value) }));
+  const glowScaled = useAnimatedStyle(() => glowScale(pose.value, fade.value, front));
   return (
-    <Animated.View style={[centered(size, m), style]}>
-      <Animated.View style={[LAYER, { width: m, height: m }, glowStyle]}>
+    <Animated.View style={[centered(size, m), shown, stacked, placed]}>
+      <Animated.View style={[LAYER, { width: m, height: m }, glowShown, glowScaled]}>
         <Svg width={m} height={m} viewBox="-22 -22 44 44">
           <Defs>
             <RadialGradient id={`${id}glow`} cx="0.5" cy="0.5" r="0.5">
@@ -429,24 +436,20 @@ function Moon({ side, pose, fade, order, u, size }: LayerProps) {
 function Ghost({ index, side, pose, fade, order, u, size }: LayerProps & { index: number }) {
   const d = 8.4 * u;
   const front = side === 'front';
-  const style = useAnimatedStyle(() => {
-    const g = pose.value.ghosts;
-    const o = index * 5;
-    const z = g[o + 2] ?? 0;
-    const here = front ? z >= 0 : z < 0;
-    return {
-      opacity: here ? (g[o + 4] ?? 0) * fade.value : 0,
-      zIndex: order.value.seq[index + 2] ?? 0,
-      transform: [
-        { translateX: (g[o] ?? 0) * u },
-        { translateY: (g[o + 1] ?? 0) * u },
-        { scale: (g[o + 3] ?? 0) / 4.2 },
-      ],
-    };
-  });
+  const shown = useAnimatedStyle(() => ({
+    opacity: ghostOpacity(pose.value, index, fade.value, front),
+  }));
+  const stacked = useAnimatedStyle(() => stack(order.value, index + 2));
+  const placed = useAnimatedStyle(() => ghostPlace(pose.value, index, fade.value, front, u));
   return (
     <Animated.View
-      style={[centered(size, d), { borderRadius: circle(d), backgroundColor: TRAIL }, style]}
+      style={[
+        centered(size, d),
+        { borderRadius: circle(d), backgroundColor: TRAIL },
+        shown,
+        stacked,
+        placed,
+      ]}
     />
   );
 }
@@ -455,24 +458,18 @@ function Ghost({ index, side, pose, fade, order, u, size }: LayerProps & { index
 function Ping({ side, pose, order, u, size }: LayerProps) {
   const line = 1.6;
   const front = side === 'front';
-  const style = useAnimatedStyle(() => {
-    const p = pose.value;
-    const here = front ? p.z >= 0 : p.z < 0;
-    // The ring grows; its line stays thin (the box grows, not a scale).
-    const r = (p.pingR + line / 2) * u;
-    return {
-      opacity: here ? p.pingOp : 0,
-      zIndex: order.value.seq[1] ?? 0,
-      left: size / 2 + p.x * u - r,
-      top: size / 2 + p.y * u - r,
-      width: r * 2,
-      height: r * 2,
-      borderRadius: r,
-    };
-  });
+  const shown = useAnimatedStyle(() => ({ opacity: pingOpacity(pose.value, front) }));
+  const stacked = useAnimatedStyle(() => stack(order.value, 1));
+  // The ring grows; its line stays thin (the box grows, not a scale) — only while it is seen.
+  const boxed = useAnimatedStyle(() => pingBox(pose.value, front, u, size, line));
   return (
     <Animated.View
-      style={[{ position: 'absolute', borderWidth: line * u, borderColor: PING }, style]}
+      style={[
+        { position: 'absolute', borderWidth: line * u, borderColor: PING },
+        shown,
+        stacked,
+        boxed,
+      ]}
     />
   );
 }
@@ -483,17 +480,8 @@ function Reflection({ pose, fade, u, size }: Omit<LayerProps, 'side' | 'order'>)
   const r = ORB_R * u;
   const E = 14;
   const box = E * 2 * u;
-  const style = useAnimatedStyle(() => {
-    const p = pose.value;
-    return {
-      opacity: Math.min(1, p.reflOp) * fade.value,
-      transform: [
-        { translateX: p.reflX * u },
-        { translateY: p.reflY * u },
-        { rotate: `${p.reflRot}deg` },
-      ],
-    };
-  });
+  const shown = useAnimatedStyle(() => ({ opacity: reflOpacity(pose.value, fade.value) }));
+  const placed = useAnimatedStyle(() => reflPlace(pose.value, fade.value, u));
   return (
     <View
       pointerEvents="none"
@@ -507,7 +495,7 @@ function Reflection({ pose, fade, u, size }: Omit<LayerProps, 'side' | 'order'>)
         overflow: 'hidden',
       }}
     >
-      <Animated.View style={[centered(r * 2, box), style]}>
+      <Animated.View style={[centered(r * 2, box), shown, placed]}>
         <Svg width={box} height={box} viewBox={`${-E} ${-E} ${E * 2} ${E * 2}`}>
           <Defs>
             <Blur id={id} sd={2.2} />
