@@ -62,7 +62,9 @@ describe('the stage (Talk.jsx:22–45)', () => {
     );
     // What the status says is decided in lib/speech/talkState.ts (`talkStatus`, tested there).
     expect(talk).toMatch(/const status = t\(\s*talkStatus\(\{/);
-    expect(talk).toMatch(/talkHeadline\(listening \? 'listening' : phase, voice\.state\)/);
+    // The recogniser's own state, shown as getting ready while Talk opens (#644, `shownMic`).
+    expect(talk).toMatch(/const mic = shownMic\(\s*voice\.state,/);
+    expect(talk).toMatch(/talkHeadline\(listening \? 'listening' : phase, mic\)/);
   });
 
   it('never writes an older home over a newer one when a turn comes back late', () => {

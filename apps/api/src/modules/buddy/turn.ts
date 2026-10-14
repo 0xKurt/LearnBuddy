@@ -211,6 +211,8 @@ async function decideTurn(
   /** Whether the last attempt was an in-mode turn: a repair note never crosses into the other kind. */
   let lastInRole: boolean | null = null;
   let round = 0;
+  /** The round whose reply was already streamed whole as speakable. */
+  let streamedWhole = 0;
   // Computed once per turn (one embedding call), reused across repair/stale rounds.
   let preInjected: string | null | undefined;
   for (let attempt = 1; attempt <= MAX_ROUNDS; attempt++) {
@@ -338,6 +340,7 @@ async function decideTurn(
                     const key = `${p.text}|${p.speakable}|${p.done}`;
                     if (key === last) return;
                     last = key;
+                    if (p.speakable && p.done) streamedWhole = thisRound;
                     onReply(thisRound, p);
                   },
                 }
@@ -403,6 +406,11 @@ async function decideTurn(
       meta,
     });
     if (result.status === 'applied') {
+      // Stored now, so it may be read aloud now (#644, rule 5): an answer that changed
+      // something no longer waits for the home to be built, sent and read by the phone before
+      // its first sound. The fixed help answer is not streamed (rule 18): it arrives whole.
+      if (result.replyMessageId && !parsed.data.concern && streamedWhole !== round)
+        onReply?.(round, { text: reply.text, speakable: true, done: true });
       // What Buddy just offered is prepared while she reads his reply (issue #48).
       hooks.applied(deps, learner.id, result.actions);
       return { status: 'done', errorCode: null };

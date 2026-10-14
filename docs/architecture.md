@@ -1240,7 +1240,7 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   `speakable` is read along from its first finished sentence (`lib/speech/streamSpeaker.ts`) — in
   conversation mode and with Vorlesen on. Everything else waits for the stored answer as before
   (audit M-52, repro-28): a safeguarding answer never streams speakable (`concern` is written
-  first), an answer that changes something is spoken once applied, and a repair round, a failure
+  first), an answer that changes something is spoken once applied — the moment it is stored the server sends its reply as one `speakable` event, before it builds and sends the home (#644), so the voice no longer waits for the result to be built, sent and read by the phone — and a repair round, a failure
   or a provider block stops the voice mid-sentence so the stored text takes over. What was read
   along is not read again from the thread. The residual risk — the provider's final verdict
   arrives with the last chunk — was weighed against seconds of silence and accepted for

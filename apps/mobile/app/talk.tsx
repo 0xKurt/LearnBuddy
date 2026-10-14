@@ -64,7 +64,13 @@ import { warmRecognition } from '../lib/speech/recognize.js';
 import { BargeGate } from '../lib/speech/bargeIn.js';
 import { bargeSupported, useBargeMonitor } from '../lib/speech/bargeMonitor.js';
 import { voiceStore } from '../lib/speech/voiceState.js';
-import { heardHim, talkHeadline, talkStatus, type TalkPhase } from '../lib/speech/talkState.js';
+import {
+  heardHim,
+  shownMic,
+  talkHeadline,
+  talkStatus,
+  type TalkPhase,
+} from '../lib/speech/talkState.js';
 import { afterReply } from '../lib/speech/talkTurn.js';
 import { voiceLocale } from '../lib/speech/voice.js';
 import { useSay } from '../lib/speech/say.js';
@@ -151,10 +157,10 @@ export default function TalkScreen() {
     const me = ++turnSeq.current;
     // She spoke again (or left): this answer no longer drives the screen or the voice.
     const stale = () => turnSeq.current !== me || !open.current;
-    // Buddy's reply is shown while it is written when the answer changes nothing (the
-    // server says `speakable`), but read aloud only once it is stored: after the provider's
-    // final safety verdict and validation, so she never hears words that are withdrawn
-    // (docs/architecture.md §Speed, audit M-52 / repro-28).
+    // Buddy's reply is shown and read while it is written when the answer changes nothing
+    // (the server says `speakable`); one that changes something becomes `speakable` the moment
+    // it is stored, before the home follows (#644) — so she never hears words that are
+    // withdrawn (docs/architecture.md §Speed, audit M-52 / repro-28).
     let round = 0;
     let spokenEnd: ListenEnd | null = null;
     let final: MessageView | null = null;
@@ -231,8 +237,8 @@ export default function TalkScreen() {
       final = r;
       // The stored reply stands in the thread now; the live bubble made room for it.
       setLive(null);
-      // Nothing of it was said while it was written: it arrived whole (an answer that changes
-      // something, or the fixed help answer — the server streams neither).
+      // Nothing of it was said before the result: it arrived whole (the fixed help answer,
+      // which the server never streams, rule 18).
       setReply({ id, text: r.text, whole: along.speaker === null });
       setPhase('speaking');
       if (along.speaker) {
@@ -243,7 +249,7 @@ export default function TalkScreen() {
         along.speaker.feed(r.text, true);
         goOn();
       } else {
-        // Nothing was said yet (the answer changed something, or a safeguarding reply):
+        // Nothing was said yet (a safeguarding reply, or a stream that lost its events):
         // read the stored text, sentence by sentence, so it reads along in his bubble.
         tapped('first_audio');
         // A line in a roleplay is read in the roleplay's language; once it has ended, the
@@ -397,6 +403,11 @@ export default function TalkScreen() {
   const reading = home.data?.now?.type === 'material_processing';
 
   const listening = phase === 'listening' && voice.state === 'recording';
+  // Opened to talk, before the first listen has started: getting ready, not paused (#644).
+  const mic = shownMic(
+    voice.state,
+    phase === 'paused' && !started.current && screenReaderOn !== true,
+  );
   // The same thread as the chat, seen from here: its newest messages as the chat's
   // own bubbles (issue #18) — where there is something to tap or to look at, or a scene runs.
   const thread = home.data?.thread ?? [];
@@ -426,11 +437,11 @@ export default function TalkScreen() {
 
   // Not "Ich höre zu" until the recorder really runs (issue #158): the decision is pure
   // and tested in lib/speech/talkState.ts, because it is a claim, not a label.
-  const headline = t(talkHeadline(listening ? 'listening' : phase, voice.state));
+  const headline = t(talkHeadline(listening ? 'listening' : phase, mic));
   // Paused without trouble is her turn: the moon waits (lib/buddy/moon.ts).
   const orbMode: OrbMode = talkMode({
     phase,
-    hearing: listening || voice.state === 'starting',
+    hearing: listening || mic === 'starting',
     transcribing: voice.state === 'transcribing',
     // "Speaking" is from his first audio on: until then his voice is on its way.
     voiceLoading: !heardNow,
@@ -440,7 +451,7 @@ export default function TalkScreen() {
   const status = t(
     talkStatus({
       phase,
-      mic: voice.state,
+      mic,
       endsByItself: voice.endsByItself,
       voice: buddyVoice.phase,
       heard: heardNow,
