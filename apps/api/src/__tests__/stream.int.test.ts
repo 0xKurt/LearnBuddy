@@ -152,7 +152,7 @@ describe.skipIf(!dbReady)('streamed replies', () => {
       expect(lines).toHaveLength(1);
       const line = lines[0]!;
       const m =
-        /^\[timing\] POST \/v1\/buddy\/messages auth=(\d+) start=(\d+) first=(\d+) done=(\d+)$/.exec(
+        /^\[timing\] POST \/v1\/buddy\/messages auth=(\d+) start=(\d+) first=(\d+) done=(\d+) db=\d+\/\d+ms model=1\/\d+ms$/.exec(
           line,
         );
       expect(m, line).not.toBeNull();

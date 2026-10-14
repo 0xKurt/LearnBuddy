@@ -7,6 +7,8 @@
 
 import pg from 'pg';
 
+import { timedQuery } from './requestCost.js';
+
 // Keep calendar dates and wall times as strings ("2026-10-02", "17:30");
 // JS Date would silently shift them into the server's zone.
 pg.types.setTypeParser(1082, (v: string) => v); // date
@@ -37,7 +39,8 @@ class QueryDb implements Db {
   ) {}
 
   async query<R extends Row = Row>(text: string, params: readonly unknown[] = []): Promise<R[]> {
-    const res = await this.runner.query(text, [...params]);
+    // Every round trip is counted for the request's [timing] line (lib/requestCost.ts, #626).
+    const res = await timedQuery(() => this.runner.query(text, [...params]));
     return res.rows as R[];
   }
 
@@ -57,15 +60,16 @@ class QueryDb implements Db {
   }
 
   async tx<T>(fn: (db: Db) => Promise<T>): Promise<T> {
-    if (this.inTx || !this.txPool) return fn(this);
-    const client = await this.txPool.connect();
+    const pool = this.txPool;
+    if (this.inTx || !pool) return fn(this);
+    const client = await timedQuery(() => pool.connect());
     try {
-      await client.query('begin');
+      await timedQuery(() => client.query('begin'));
       const result = await fn(new QueryDb(client, true, null));
-      await client.query('commit');
+      await timedQuery(() => client.query('commit'));
       return result;
     } catch (err) {
-      await client.query('rollback').catch(() => undefined);
+      await timedQuery(() => client.query('rollback')).catch(() => undefined);
       throw err;
     } finally {
       client.release();
