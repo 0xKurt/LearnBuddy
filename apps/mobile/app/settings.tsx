@@ -28,11 +28,14 @@ import { ProfileSection } from '../components/settings/ProfileSection.js';
 import { SettingsBody, SettingsPending } from '../components/settings/SettingsPage.js';
 import { useContact } from '../components/settings/useContact.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
+import { useShown } from '../lib/perfShown.js';
 import { useRouteFocused } from '../lib/useRouteFocused.js';
 
 export default function SettingsScreen() {
   const { t } = useTranslation('settings');
   const settings = useSettings();
+  useShown('settings', true);
+  useShown('settings_data', settings.data !== undefined);
   const me = useMe();
   const home = useHome();
   const [refreshing, setRefreshing] = useState(false);

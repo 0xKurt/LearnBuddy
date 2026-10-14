@@ -24,6 +24,7 @@ import { SHADOW } from '../../lib/theme/shadow.js';
 import { CARD_PAD, RHYTHM, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { CHAT } from '../../lib/theme/chat.js';
 import { TYPE } from '../../lib/theme/type.js';
+import { tapped } from '../../lib/perf.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { Card } from '../lb/Card.js';
 import { Icon } from '../lb/Icon.js';
@@ -355,7 +356,16 @@ export function ResumeBar({
       }
       action={
         <View>
-          <Btn size="sm" pill onPress={() => onResume(card.session_id)} disabled={busy}>
+          <Btn
+            size="sm"
+            pill
+            onPress={() => {
+              tapped('practice_open');
+              tapped('practice_question');
+              onResume(card.session_id);
+            }}
+            disabled={busy}
+          >
             {t('now.resume_cta')}
           </Btn>
         </View>

@@ -13,9 +13,11 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from '../../components/lb/Toast.js';
 import { keys, queryClient } from '../api/queries.js';
 import { messageFor } from '../errors.js';
+import { tapped } from '../perf.js';
 import { handInRun, useFinishWhenDone } from './finishWhenDone.js';
 
 export function backToBuddy(): void {
+  tapped('practice_close');
   // Pops back to Buddy when it is below in the stack, otherwise replaces this
   // screen with it (router.replace would leave a second Buddy on the stack).
   router.dismissTo('/buddy');

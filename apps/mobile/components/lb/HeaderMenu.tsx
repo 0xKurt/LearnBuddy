@@ -8,6 +8,8 @@ import { router, usePathname, type Href } from 'expo-router';
 import { Platform } from 'react-native';
 
 import { askAttach, attachInChat } from '../../lib/capture/attachRequest.js';
+import { tapped } from '../../lib/perf.js';
+import { useShown } from '../../lib/perfShown.js';
 import { MenuSheet, type MenuAction, type Place } from './MenuSheet.js';
 
 /** iOS can't present a sheet while another one is still sliding away. */
@@ -35,6 +37,7 @@ type Props = {
 
 export function HeaderMenu({ visible, onClose, actions = [], canAct = true }: Props) {
   const here = usePathname();
+  useShown('menu', visible);
   const leave = (go: () => void): void => {
     onClose();
     setTimeout(go, SHEET_SWAP_MS);
@@ -48,7 +51,11 @@ export function HeaderMenu({ visible, onClose, actions = [], canAct = true }: Pr
       return;
     }
     // The place she is already in: the sheet closes and she is there, not there twice.
-    if (ROUTE[place] !== here) router.push(ROUTE[place]);
+    if (ROUTE[place] === here) return;
+    // How long until the place shows, and until its content is there (issue #711).
+    tapped(place);
+    tapped(`${place}_data`);
+    router.push(ROUTE[place]);
   };
   return (
     <MenuSheet

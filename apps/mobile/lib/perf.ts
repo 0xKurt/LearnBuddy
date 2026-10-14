@@ -6,6 +6,8 @@
 // The span between them is what she calls "hängt". Kept in memory only, never sent anywhere;
 // on the web it is also exposed for the walkthrough to read (tests/web/perf.ts).
 
+import { ENV } from './env.js';
+
 const MAX_SPANS = 100;
 
 export type PerfSpan = { action: string; ms: number };
@@ -43,6 +45,15 @@ export function measured(): readonly PerfSpan[] {
 }
 
 /**
+ * Whether spans go to the phone's log: a development build, or a release-mode JS run for a
+ * device measurement (`EXPO_PUBLIC_PERF_LOG=1` on Metro, issue #711). Babel inlines the
+ * variable in a release build, where it is unset: the branch is dead code there.
+ */
+function logsSpans(): boolean {
+  return (typeof __DEV__ !== 'undefined' && __DEV__) || ENV.PERF_LOG;
+}
+
+/**
  * The browser walkthrough reads the global; on a phone there is no DOM, so a development
  * build writes the span to the log instead — otherwise the numbers exist and nobody can
  * read them (issue #41: the device measurement was blocked on exactly this).
@@ -55,7 +66,7 @@ function publish(): void {
   if (typeof document === 'undefined') {
     // `typeof` and not a bare __DEV__: the unit tests run under vitest, where the bundler's
     // global does not exist at all.
-    if (span && typeof __DEV__ !== 'undefined' && __DEV__) {
+    if (span && logsSpans()) {
       console.log(`[lb-perf] ${span.action} ${span.ms}ms`);
     }
     return;

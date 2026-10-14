@@ -28,6 +28,7 @@
 
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
+import { useShown } from '../lib/perfShown.js';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -95,6 +96,8 @@ export default function BuddyScreen() {
       return () => setFocusedScreen(false);
     }, []),
   );
+  // Back from a practice: the chat on screen again (issue #711).
+  useShown('practice_close', focusedScreen);
   const [menuOpen, setMenuOpen] = useState(false);
   /** She is writing or dictating a message (the Composer says so): the head's orb listens. */
   const [typing, setTyping] = useState(false);
