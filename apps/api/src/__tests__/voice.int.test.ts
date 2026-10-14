@@ -1,9 +1,16 @@
 // Speech to text: talking instead of typing. docs/architecture.md §Voice.
 // requires live verification in Claude Code session (needs a running Postgres)
 
-import type { TranscribeResponse } from '@learnbuddy/shared-types/contracts';
+import { randomUUID } from 'node:crypto';
+
+import type {
+  BuddyHome,
+  SendMessageResponse,
+  TranscribeResponse,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { safeguardingText } from '../i18n/safeguarding.js';
 import { POLICIES } from '../lib/limits.js';
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
@@ -30,8 +37,8 @@ describe.skipIf(!dbReady)('voice', () => {
   it('writes down a spoken answer, tells the model the mode and language, stores nothing', async () => {
     env.llm.script('transcribe', (req) => {
       expect(ScriptedGateway.textOf(req)).toContain('MODE: ANSWER\nEXPECTED LANGUAGE: fr');
-      // Noise is no speech (issue #630: a first sentence nobody said was answered).
-      expect(req.system).toContain('never write down words you only guess');
+      // Only clear non-speech is "no speech"; unsure words are written down (#630 review).
+      expect(req.system).toContain('heard_speech = false only for a recording that clearly holds');
       expect(
         req.contents[0]!.parts.some(
           (p) => 'inlineData' in p && p.inlineData.mimeType === 'audio/webm',
@@ -71,6 +78,49 @@ describe.skipIf(!dbReady)('voice', () => {
       purpose: 'message',
     });
     expect(down.status).toBe(503);
+  });
+
+  it('never drops words of distress, even when the transcriber was not sure (rule 18)', async () => {
+    // Not sure it was speech, but the words tell of danger: they are hers, and Buddy's turn
+    // answers them with the fixed help text — never a model's words, never silence.
+    env.llm.script('transcribe', {
+      json: { heard_speech: false, text: ' Ich will nicht mehr leben ', distress: true },
+    });
+    const heard = await l.api.post<TranscribeResponse>('/voice/transcribe', {
+      mime: 'audio/mp4',
+      audio_base64: audio,
+      purpose: 'message',
+    });
+    expect(heard.body).toEqual({ text: 'Ich will nicht mehr leben' });
+    env.llm.script('buddy_turn', {
+      json: {
+        lookups: [],
+        concern: true,
+        also_asked: false,
+        actions: [],
+        reply: '',
+        options: null,
+        asks_permission: false,
+      },
+    });
+    const sent = await l.api.post<SendMessageResponse>('/buddy/messages', {
+      client_message_id: randomUUID(),
+      text: heard.body.text,
+    });
+    expect(sent.status).toBe(200);
+    const home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home.thread.at(-1)?.text).toBe(safeguardingText('de', true, 'concern'));
+
+    // Not sure, and nothing of danger: a room's noise is no message (#630).
+    env.llm.script('transcribe', {
+      json: { heard_speech: false, text: 'Ich weiß nicht wo ich bin.', distress: false },
+    });
+    const noise = await l.api.post<TranscribeResponse>('/voice/transcribe', {
+      mime: 'audio/mp4',
+      audio_base64: audio,
+      purpose: 'message',
+    });
+    expect(noise.body).toEqual({ text: '' });
   });
 
   // A dictation has no time limit any more (issue #19): the app cuts a long

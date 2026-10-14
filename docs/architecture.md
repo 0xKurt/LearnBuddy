@@ -5224,9 +5224,11 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   is always sent, and the device recogniser's own score drops nothing: room tone is a fixed
   level, not this phone in this room, so a whisper, a child far from the phone or a low-gain
   microphone would read as silence — and her words must reach the safeguarding path (CLAUDE.md
-  rule 18; review of #630). What decides "nobody spoke" is the transcriber: its prompt says
-  room noise, a sound or a far-off voice is no speech (`heard_speech` false, issue #630, after a
-  conversation answered a first sentence nobody said). A per-take noise floor or a confidence
+  rule 18; review of #630). What decides "nobody spoke" is the transcriber: `heard_speech` false
+  only for a recording that clearly holds no speech (silence, noise, a sound, music); unsure
+  words count as speech (issue #630, after a conversation answered a first sentence nobody
+  said). Words it was unsure of but that tell of danger (`distress`) are never dropped: they go
+  on to Buddy, whose turn answers with the fixed help text. A per-take noise floor or a confidence
   floor needs measurements on the POCO X3 and on iOS first.
   Each finished piece goes to `/voice/transcribe` while she keeps talking, with `prev_tail`
   (the tail of what was already understood) as a structured context field, so a piece starting
