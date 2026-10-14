@@ -143,18 +143,45 @@ describe.skipIf(!dbReady)('the bar on top after an offer', () => {
     });
   });
 
-  it('still offers to go on with a practice she started herself and left untouched', async () => {
-    const other = await onboard(env, { relation: 'child', name: 'Mia', birthDate: '2014-03-11' });
-    env.llm.script('explain', generated('Dreisatz'));
-    // From the start sheet: her own request id, no offer of Buddy's behind it.
-    const started = await other.api.post<SessionView>('/practice/topic', {
-      client_request_id: randomUUID(),
-      kind: 'practice',
-      text: 'Dreisatz üben',
+  it('offers no session she only opened, however it began — and another learner works in his', async () => {
+    // A practice she opened herself (the sheet, a photo of hers: no offer of Buddy's behind it)
+    // and left before answering is nothing to go on with either (#599): the home said
+    // "Weitermachen" for a practice from her photo she had only opened.
+    const mia = await onboard(env, { relation: 'child', name: 'Mia', birthDate: '2014-03-11' });
+    const ben = await onboard(env, { relation: 'child', name: 'Ben', birthDate: '2014-05-02' });
+    const start = async (who: Learner, title: string) => {
+      env.llm.script('explain', generated(title));
+      const started = await who.api.post<SessionView>('/practice/topic', {
+        client_request_id: randomUUID(),
+        kind: 'practice',
+        text: `${title} üben`,
+      });
+      expect(started.status === 200 || started.status === 201).toBe(true);
+      await env.flushBackground();
+      return started.body;
+    };
+    const nowOf = async (who: Learner) => (await who.api.get<BuddyHome>('/buddy')).body.now;
+    const hers = await start(mia, 'Dreisatz');
+    const his = await start(ben, 'Zinsen');
+    expect((await nowOf(mia))?.type).not.toBe('resume_practice');
+    expect((await nowOf(ben))?.type).not.toBe('resume_practice');
+
+    // He answers in his: his is to go on with, hers stays untouched.
+    const answered = await ben.api.post<AnswerResponse>(`/practice/sessions/${his.id}/answer`, {
+      client_turn_id: randomUUID(),
+      item_id: his.items[0]!.item.id,
+      text: '15',
     });
-    expect(started.status === 200 || started.status === 201).toBe(true);
-    await env.flushBackground();
-    const home = (await other.api.get<BuddyHome>('/buddy')).body;
-    expect(home.now).toMatchObject({ type: 'resume_practice', session_id: started.body.id });
+    expect(answered.status).toBe(200);
+    expect(await nowOf(ben)).toMatchObject({ type: 'resume_practice', session_id: his.id });
+    expect((await nowOf(mia))?.type).not.toBe('resume_practice');
+
+    // Once she answers in hers, it is hers to go on with.
+    await mia.api.post<AnswerResponse>(`/practice/sessions/${hers.id}/answer`, {
+      client_turn_id: randomUUID(),
+      item_id: hers.items[0]!.item.id,
+      text: '15',
+    });
+    expect(await nowOf(mia)).toMatchObject({ type: 'resume_practice', session_id: hers.id });
   });
 });

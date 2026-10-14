@@ -382,6 +382,7 @@
     "end_hint": "Buddy stops and tells you how each task went.",
     "end_talk": "End the conversation",
     "ended": "Over. The feedback is in the conversation.",
+    "ended_quiet": "Over.",
     "lang": {
       "de": "German",
       "en": "English",

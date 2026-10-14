@@ -41,7 +41,6 @@ import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import type { VoiceInput } from '../voice/useVoiceInput.js';
 import { MAX_FONT_SCALE } from './Btn.js';
-import { Chip } from './Chip.js';
 import { CircleBtn } from './CircleBtn.js';
 import { FieldCount } from './FieldCount.js';
 import { Icon } from './Icon.js';
@@ -87,7 +86,7 @@ export type ComposerProps = Omit<
   tool?: Tool | null;
   mode?: Mode | null;
   keys?: ReactNode;
-  /** The answer's unit ("cm²"): a chip among the tools, never a suffix inside her lines. */
+  /** The answer's unit ("cm²"): a note among the tools, never a suffix inside her lines. */
   unit?: string | null;
   /** How her typed math will be read, among the tools. */
   preview?: ReactNode;
@@ -148,7 +147,6 @@ export const Composer = forwardRef<LbTextInputRef, ComposerProps>(function Compo
   },
   ref,
 ) {
-  const { t } = useTranslation('practice');
   const seen = useVisibleHeight();
   const typing = formDensity(seen.window, seen.overlap) === 'tight';
   // While the mic listens or writes down, nothing is sent or checked: the slot is the
@@ -195,8 +193,9 @@ export const Composer = forwardRef<LbTextInputRef, ComposerProps>(function Compo
                 minHeight: COMPOSER.slot,
               }}
             >
-              {/* The left tools give way before anything is cut: beside the camera and the mode
-                  chip a unit takes a line of its own on a narrow phone. */}
+              {/* One line of tools (design Composer.jsx). The unit is a note in the count's
+                  type, not a chip: as a chip beside the camera and "Rechnen" it took a second line
+                  on 360 (#599). Wrapping stays the last resort before anything is cut. */}
               <View
                 style={{
                   flex: 1,
@@ -220,7 +219,7 @@ export const Composer = forwardRef<LbTextInputRef, ComposerProps>(function Compo
                   </Slot>
                 ) : null}
                 {mode ? <ModeChip {...mode} /> : null}
-                {unit ? <Chip>{t('answer.unit_chip', { unit })}</Chip> : null}
+                {unit ? <UnitNote unit={unit} /> : null}
                 {preview}
                 {count ? (
                   <View style={{ paddingLeft: COMPOSER.count.padStart }}>
@@ -369,6 +368,21 @@ export function ActionPill({
         </View>
       )}
     </Pressable>
+  );
+}
+
+/** The answer's unit, in the type of the design's count (`FieldCount`): it says, it is not tapped. */
+function UnitNote({ unit }: { unit: string }) {
+  const { t } = useTranslation('practice');
+  const { palette } = useTheme();
+  return (
+    <Text
+      maxFontSizeMultiplier={MAX_FONT_SCALE}
+      numberOfLines={1}
+      style={[TYPE.label, { color: palette.ink2, paddingLeft: COMPOSER.count.padStart }]}
+    >
+      {t('answer.unit_chip', { unit })}
+    </Text>
   );
 }
 

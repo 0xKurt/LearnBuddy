@@ -15,6 +15,7 @@ import { Platform, Text, View, type TextStyle } from 'react-native';
 import { speakMathText } from '../../lib/math/speak.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import type { ChoiceMark } from '../../lib/practice/choiceMarks.js';
+import { usePictureCap } from '../../lib/practice/screenRoom.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { circle } from '../../lib/theme/radius.js';
@@ -298,7 +299,8 @@ function TextChoices({
 // The height, on the short phone: once she has tried one, Buddy's reply and "Lösung zeigen"
 // stand between question and tiles (#286: the board directly under them), and at 360×740 the
 // second row ran 24 pt past the screen. So a drawing is never taller than 12 % of the window:
-// 89 pt at 740 (the two rows give back ≈ 40 pt), 101 pt at 844.
+// 89 pt at 740 (the two rows give back ≈ 40 pt), 101 pt at 844 — and no taller than the room
+// the screen measures left (`usePictureCap`, #599).
 
 /** No option picture taller than this — an odd figure (a long table) is scaled down to it. */
 const FIGURE_CHOICE_MAX_HEIGHT = PRACTICE.figureChoiceHeight;
@@ -322,9 +324,12 @@ function FigureChoices({
   const [zoomed, setZoomed] = useState<number | null>(null);
   // What is on screen (issue #289): a tapped question has no keyboard up, so this is the window.
   const { visible: screenHeight } = useVisibleHeight();
-  const pictureMax = Math.min(
-    FIGURE_CHOICE_MAX_HEIGHT,
-    Math.round(screenHeight * FIGURE_CHOICE_SCREEN_SHARE),
+  // At most the share above; less where the screen measures less room (#599): a drawing in the
+  // card over four pictures ran the bar 30 pt past 360×740. Two pictures to a row share it.
+  const pictureMax = usePictureCap(
+    `${choices.join('|')}:${screenHeight}`,
+    Math.min(FIGURE_CHOICE_MAX_HEIGHT, Math.round(screenHeight * FIGURE_CHOICE_SCREEN_SHARE)),
+    Math.ceil(choices.length / 2),
   );
   // What each option shows, in words (the letter first, as voice mode names them).
   const spoken = useMemo(

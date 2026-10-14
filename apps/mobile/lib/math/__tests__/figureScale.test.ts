@@ -5,8 +5,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { CHART_WIDTH } from '../../../../../packages/shared-math/src/charts.js';
+import { QUESTION } from '../../theme/question.js';
+import { SPACE } from '../../theme/space.js';
 import {
   BARE_FIGURE_CHROME,
+  figureChrome,
   drawnAtWidth,
   figureBodyWidth,
   figureScale,
@@ -120,5 +123,22 @@ describe('the least a chart is shrunk to (issue #501)', () => {
     expect(leastFigureScale({ type: 'pie_chart' }, 322)).toBe(MIN_FIGURE_SCALE);
     expect(leastFigureScale({ type: 'function_plot' }, 322)).toBe(MIN_FIGURE_SCALE);
     expect(leastFigureScale({ type: 'geometry' }, 322, BARE_FIGURE_CHROME)).toBe(MIN_FIGURE_SCALE);
+  });
+});
+
+describe('a chart in the question card on 360 (#599)', () => {
+  // The column's padding and the card's design padding (`--card-pad` 20) leave the frame 288.
+  const frame = 360 - 2 * SPACE.lg - 2 * QUESTION.pad;
+
+  it('gets the width its labels are checked at: its frame pads less than any other', () => {
+    const chart = { type: 'climate_chart' };
+    const chrome = figureChrome(chart);
+    expect(frame - FIGURE_CHROME).toBeLessThan(CHART_WIDTH);
+    expect(frame - chrome).toBeGreaterThanOrEqual(CHART_WIDTH);
+    expect(
+      figureBodyWidth(frame, leastFigureScale(chart, frame, chrome), chrome),
+    ).toBeGreaterThanOrEqual(CHART_WIDTH);
+    // Every other drawing keeps its frame.
+    expect(figureChrome({ type: 'geometry' })).toBe(FIGURE_CHROME);
   });
 });

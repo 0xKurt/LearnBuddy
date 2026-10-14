@@ -283,6 +283,8 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     expect(reread.find((m) => m.id === tail[1]!.id)?.roleplay_feedback).toEqual(checked);
     expect(twelfth.body.home.roleplay).toBeNull();
     expect(roleplayCard(twelfth.body.home)?.status).toBe('ended');
+    // Played to its end: the card may point to the feedback below it (#599).
+    expect(roleplayCard(twelfth.body.home)?.ended_reason).toBe('turns');
 
     // Stored for her export, as checked — not as the model wrote it.
     const stored = await env.db.one<{ feedback: { points: Array<{ met: boolean }> } }>(
@@ -352,6 +354,8 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     expect(res.body.status).toBe('done');
     expect(await turnsOf(id)).toMatchObject({ status: 'ended', ended_reason: 'concern' });
     expect(res.body.home.thread.at(-1)!.text).toContain('116 111');
+    // The card says why it ended only as far as it needs: no feedback to point to (#599).
+    expect(roleplayCard(res.body.home)).toMatchObject({ status: 'ended', ended_reason: 'concern' });
     // The fixed caring text stays as it is: no result card, no feedback stored (issue #384).
     expect(res.body.home.thread.every((m) => m.roleplay_feedback === null)).toBe(true);
     const stored = await env.db.one<{ feedback: unknown }>(

@@ -382,6 +382,7 @@
     "end_hint": "Buddy hört auf und sagt dir zu jeder Aufgabe, wie es lief.",
     "end_talk": "Gespräch beenden",
     "ended": "Vorbei. Die Rückmeldung steht im Gespräch.",
+    "ended_quiet": "Vorbei.",
     "lang": {
       "de": "Deutsch",
       "en": "Englisch",

@@ -26,7 +26,8 @@ import {
   type SchematicFig,
   type SchematicImageId,
 } from '../../../../../packages/shared-math/src/schematics.js';
-import { BADGE_R, pictureLayout, schematicLayout } from '../schematicLayout.js';
+import { BADGE_R, badgeRadii, pictureLayout, schematicLayout } from '../schematicLayout.js';
+import { FIGURE_PICTURE } from '../../theme/figurePicture.js';
 
 /** The cards' widths on a 360 and a 390 pt phone. */
 const WIDTHS = [312, 342];
@@ -210,5 +211,32 @@ describe('columnLabels', () => {
       { ...room, bottom: 40 },
     );
     expect(slots.map((s) => s.x)).toEqual([0, 0, 0, 100]);
+  });
+});
+
+describe('a number on a tall picture drawn narrow (#599)', () => {
+  const ring = FIGURE_PICTURE.badge;
+  const frame = { width: 238, height: 333 };
+  const badge = (x: number, y: number) => ({
+    from: [x, y] as [number, number],
+    at: [x, y] as [number, number],
+  });
+
+  it('keeps its least size in pt where the picture leaves room: the digit 11 pt, not 8.7', () => {
+    // The skeleton, 300 × 420, drawn 333 pt high on 360: k = 0.79.
+    const [r] = badgeRadii([badge(40, 60), badge(40, 120)], 0.79, frame, ring);
+    expect(r).toBe(ring.least);
+    expect((ring.fontSize * r!) / ring.radius).toBe(11);
+  });
+
+  it('grows into no neighbour it does not touch today, and stays inside the picture', () => {
+    // Two numbers 18 pt apart: each grows to 9, where the two rings just touch.
+    expect(badgeRadii([badge(40, 60), badge(40, 78)], 0.79, frame, ring)).toEqual([9, 9]);
+    // Already overlapping at their scaled size: they keep it.
+    expect(badgeRadii([badge(40, 60), badge(40, 70)], 0.79, frame, ring)).toEqual([7.9, 7.9]);
+    // Near the edge: no further than the edge.
+    expect(badgeRadii([badge(9, 60)], 0.79, frame, ring)).toEqual([9]);
+    // Drawn at its size or larger, the design's radius scaled with it.
+    expect(badgeRadii([badge(40, 60)], 1.1, frame, ring)).toEqual([11]);
   });
 });

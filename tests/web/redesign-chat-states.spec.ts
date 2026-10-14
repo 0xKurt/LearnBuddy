@@ -62,7 +62,8 @@ for (const look of SCREEN_LOOKS.filter((l) => l.family === 'pastell'))
 
     // ── ⋯ on the first visit: one list, six places, then the way into the start sheet ──
     await page.getByRole('button', { name: 'Mehr', exact: true }).click();
-    expect(await menuRows(page)).toEqual(['Was willst du üben?', ...PLACES]);
+    // The sheet's rows as they come in: read once it has opened, not in its first frame.
+    await expect.poll(() => menuRows(page)).toEqual(['Was willst du üben?', ...PLACES]);
     await screenShots(page, name('menu'), true);
     await page.getByRole('button', { name: 'Was willst du üben?', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Was willst du üben?' })).toBeVisible();

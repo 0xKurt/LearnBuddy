@@ -382,6 +382,7 @@
     "end_hint": "Buddy para y te dice cómo te ha ido en cada tarea.",
     "end_talk": "Terminar la conversación",
     "ended": "Terminado. Mis comentarios están en la conversación.",
+    "ended_quiet": "Terminado.",
     "lang": {
       "de": "alemán",
       "en": "inglés",

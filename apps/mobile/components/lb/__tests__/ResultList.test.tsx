@@ -80,8 +80,16 @@ describe('factual grouped result rows', () => {
     // (`ROW_SPLIT`, as a list row's value): unshrinkable, it left the title a word per line.
     expect(styleOf(state!).flexShrink).toBe('1');
     expect(styleOf(state!).flexGrow).toBe('1');
-    expect(styleOf(column!).flexShrink).toBe('0');
     expect(column!.style.maxWidth).toBe(UI.list.titleShare);
+    // But the state never stands narrower than the states' widest word, measured as drawn: there
+    // the title gives way (#599: "Übersprungen" ran past the card at 360). Each word is measured
+    // out of sight and out of the reading order.
+    expect(styleOf(column!).flexShrink).toBe('1');
+    expect(state!.style.minWidth).not.toBe('');
+    for (const word of ['Noch', 'nicht', 'beantwortet'])
+      expect(
+        screen.getAllByText(word, { exact: true }).some((el) => el.closest('[aria-hidden="true"]')),
+      ).toBe(true);
     expect(column!.contains(screen.getByText(label))).toBe(false);
     expect(Array.from(column!.children).map((line) => line.textContent)).toEqual([
       title,

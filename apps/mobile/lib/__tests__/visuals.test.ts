@@ -1,7 +1,7 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { boardCap, standsAlone, visualCaps, visualGrows } from '../practice/visuals.js';
+import { boardCap, roomCap, standsAlone, visualCaps, visualGrows } from '../practice/visuals.js';
 
 describe('the figure table (issue #310, step 5)', () => {
   it('lets every drawing grow but a note line, which only gives (#275)', () => {
@@ -39,5 +39,22 @@ describe('a figure she answers in (#251)', () => {
   it('stands at most 45 % of what she sees: 333 pt on 360 × 740, the room maps are checked in', () => {
     expect(boardCap(740)).toBe(333);
     expect(boardCap(844)).toBe(380);
+  });
+});
+
+describe('a picture that gives way to the measured room (#599)', () => {
+  it('gives what runs past, shared by the rows above each other', () => {
+    // Four pictures as options, two rows at 89 pt: the bar ran 30 pt past 360 × 740.
+    expect(roomCap(89, -30, 2, 89, 36)).toBe(74);
+    // A skeleton under a two-line question, one picture: the body ran 13 pt past.
+    expect(roomCap(333, -13, 1, 333, 133)).toBe(320);
+  });
+
+  it('takes free room back up to its share, and never shrinks below its least', () => {
+    expect(roomCap(74, 40, 2, 89, 36)).toBe(89);
+    expect(roomCap(74, 9, 2, 89, 36)).toBe(78);
+    expect(roomCap(40, -200, 2, 89, 36)).toBe(36);
+    // A rounding pixel to spare over two rows moves nothing.
+    expect(roomCap(74, 1, 2, 89, 36)).toBe(74);
   });
 });

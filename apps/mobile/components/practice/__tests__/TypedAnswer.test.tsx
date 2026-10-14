@@ -274,7 +274,7 @@ describe('one box, nothing mirrored (issue #522)', () => {
     expect(preview()).toBeNull();
   });
 
-  it('shows the unit as a chip among the tools, not inside her line', () => {
+  it('shows the unit as a note among the tools, not inside her line', () => {
     renderInApp(
       <TypedAnswer
         kind="numeric"
@@ -291,6 +291,10 @@ describe('one box, nothing mirrored (issue #522)', () => {
     const chip = screen.getByText('in cm²');
     expect(box().contains(chip)).toBe(true);
     expect(field().parentElement!.contains(chip)).toBe(false);
+    // In the type of the design's count, not a chip (#599): as a chip beside the camera and the
+    // mode chip it took the tools a second line on 360 (Composer.jsx has one).
+    expect(chip.style.fontSize).toBe('13px');
+    expect(chip.style.paddingLeft).toBe('4px');
   });
 
   it('says only "Antwort …" beside a unit chip, so the narrow field keeps one line (#387)', () => {

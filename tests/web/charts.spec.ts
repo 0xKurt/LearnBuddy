@@ -148,6 +148,7 @@ test('charts: every chart type drawn, read and judged by code', async ({ page })
           ...Array.from(el.querySelectorAll('svg'), (s) => s.getBoundingClientRect().width),
         ),
       );
+      // On 360 its frame pads less for that (`figurePad`, #599): 360 − 32 − 40 − 18 = 270.
       expect(drawn, `${q.name} @${phone.width}: the chart's width`).toBeGreaterThanOrEqual(
         CHART_WIDTH,
       );

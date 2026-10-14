@@ -382,6 +382,7 @@
     "end_hint": "Buddy si ferma e ti dice com'è andato ogni compito.",
     "end_talk": "Termina la conversazione",
     "ended": "Finito. Il commento è nella conversazione.",
+    "ended_quiet": "Finito.",
     "lang": {
       "de": "tedesco",
       "en": "inglese",

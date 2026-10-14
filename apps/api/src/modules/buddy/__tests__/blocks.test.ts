@@ -158,7 +158,7 @@ const state: BuddyState = {
       total: 10,
       answered: 10,
       first_try: 6,
-      untouched_offer: false,
+      untouched: false,
       secure_topics: ['Begriffe'],
       shaky_topics: ['Brüche erweitern'],
     },

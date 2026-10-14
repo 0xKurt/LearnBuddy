@@ -90,10 +90,13 @@ for (const family of ['pastell', 'ocean'] as const) {
           .poll(() =>
             checkbox.evaluate((element) => {
               const box = element.querySelector<HTMLElement>('[style*="transform"]');
-              return box ? getComputedStyle(box).transform : null;
+              // No transform at all is no scale either (`null`, below).
+              return box ? getComputedStyle(box).transform : 'null';
             }),
           )
-          .toBe('matrix(1, 0, 0, 1, 0, 0)');
+          // Under reduced motion the press dims and does not scale: no transform at all, or the
+          // identity (components.ts `pressedStyle`).
+          .toMatch(/^(null|none|matrix\(1, 0, 0, 1, 0, 0\))$/);
       } finally {
         await page.mouse.up();
       }

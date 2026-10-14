@@ -70,6 +70,34 @@ export function pictureLayout(
   };
 }
 
+/**
+ * Each number's ring radius in pt on an image `width` × `height` drawn at `k` (#599): the design's
+ * `radius` scaled with the image, but never below `least` — as far as the picture's edge and the
+ * numbers around leave room. It grows at most to half the way to the next number, so a ring
+ * touches no neighbour it did not touch before; where they already overlap it keeps its size.
+ */
+export function badgeRadii(
+  badges: readonly SchematicBadge[],
+  k: number,
+  frame: { width: number; height: number },
+  ring: { radius: number; least: number },
+): number[] {
+  const own = ring.radius * k;
+  return badges.map(({ at }, i) => {
+    if (own >= ring.least) return own;
+    const room = Math.min(
+      at[0],
+      frame.width - at[0],
+      at[1],
+      frame.height - at[1],
+      ...badges.flatMap((b, j) =>
+        j === i ? [] : [Math.hypot(b.at[0] - at[0], b.at[1] - at[1]) / 2],
+      ),
+    );
+    return Math.max(own, Math.min(ring.least, room));
+  });
+}
+
 /** The drawing and the names, once both are loaded (`useSchematicShapes`, `useFigureNames`). */
 type SchematicLoaded = { drawing: SchematicShape; names: FigureNames };
 

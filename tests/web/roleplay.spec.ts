@@ -4,6 +4,7 @@
 // the conversation mode, her tap on "end" and the feedback per key point — no new screen.
 // Shots at both phone sizes, light and dark (tests/web/fit.ts).
 
+import apiDe from '../../apps/api/src/i18n/de.json';
 import buddyDe from '../../apps/mobile/locales/de/buddy.json';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -133,4 +134,32 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
   await shot(page, '44-roleplay-feedback-dark');
   await setDark(page, false);
   await shot(page, '45-roleplay-feedback');
+});
+
+test('roleplay: distress inside the scene gets the fixed help answer, shown whole', async ({
+  page,
+}) => {
+  await onboardChild(page);
+  await send(page, 'Lass uns ein Rollenspiel auf Englisch machen, ich bin im Café');
+  await expect(page.getByTestId('roleplay-strip')).toBeVisible();
+
+  // Her words inside the running scene are a concern (CLAUDE.md rule 18): the scene ends, and
+  // the answer is the server's fixed one with the number — never the model's words, no feedback.
+  // `DISTRESS_TEXT` of apps/api/src/testing/scenarios/safeguarding.ts, scripted as a concern there.
+  await send(page, 'In der Schule werde ich jeden Tag gehauen');
+  const help = page.getByText(apiDe.safeguarding.concern, { exact: true }).last();
+  for (const phone of [
+    { width: 390, height: 844 },
+    { width: 360, height: 740 },
+  ]) {
+    await page.setViewportSize(phone);
+    await expect(help, `the help answer at ${phone.width}`).toBeInViewport({ ratio: 1 });
+    await expect(help).toContainText('116 111');
+  }
+  await expect(page.getByTestId('roleplay-strip')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: "So lief's" })).toHaveCount(0);
+  // The role card says it is over, and points to no feedback (#599); never why.
+  await expect(page.getByText(buddyDe.roleplay.ended_quiet, { exact: true })).toBeVisible();
+  await expect(page.getByText(buddyDe.roleplay.ended, { exact: true })).toHaveCount(0);
+  await shot(page, '46-roleplay-concern');
 });

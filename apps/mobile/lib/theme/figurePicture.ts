@@ -23,6 +23,11 @@ export const FIGURE_PICTURE = {
     fontWeight: '700',
     /** The number's baseline below the ring's middle. */
     baseline: 4,
+    /**
+     * The least radius in pt, not scaled (#599): a tall picture drawn narrow had its digits at
+     * 8.7 px on 360. At 10 the number is the design's 11 pt (`badgeRadii`).
+     */
+    least: 10,
   },
   /** The part she chose on a picture to tap (design `Answers.jsx › FigureTap`): a ring, tinted. */
   pick: { radius: 14, stroke: 3, fillOpacity: 0.18 },

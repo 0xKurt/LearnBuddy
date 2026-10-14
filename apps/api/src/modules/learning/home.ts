@@ -286,10 +286,11 @@ async function nowCardOf(
     ? state.materials.find((m) => m.id === justFailed.id)
     : undefined;
   if (justFailedMaterial) return failedCard(deps, learnerId, justFailedMaterial);
-  // A session the preparation of an offer wrote, in which she has done nothing, is not hers to
-  // "go on with": the bar said "Weiterüben … noch 1 Aufgabe" for an offer she never started
-  // (#599 correction, CLAUDE.md rule 5). Its card in the conversation still starts it.
-  const open = state.sessions.filter((s) => resumable(s, now) && !s.untouched_offer);
+  // A session in which she has done nothing is not hers to "go on with": the bar said
+  // "Weiterüben … noch 1 Aufgabe" for an offer she never started, and "Weitermachen" for a
+  // practice from her photo she only opened (#599 correction, CLAUDE.md rule 5). Its card in the
+  // conversation, or the sheet's, still starts it.
+  const open = state.sessions.filter((s) => resumable(s, now) && !s.untouched);
   const resumeCard = (active: (typeof open)[number]): NowCard => {
     const goal = active.goal_id ? state.goals.find((g) => g.id === active.goal_id) : undefined;
     const step = active.step_id ? state.steps.find((s) => s.id === active.step_id) : undefined;
@@ -477,7 +478,10 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
     summary: (actionId: string, s: ActionSummary): ActionSummary => {
       // Where the roleplay stands now (issue #244): the card offers "end" only while it runs.
       if (s.tool === 'start_roleplay')
-        return { ...s, status: roleplays.get(s.roleplay_id) ?? 'ended' };
+        return {
+          ...s,
+          ...(roleplays.get(s.roleplay_id) ?? { status: 'ended', ended_reason: 'lapsed' }),
+        };
       // Stored offers of the removed explain mode (issue #70) are shown — and started — as
       // practice on the same topic: the check questions always were practice, and the
       // explanation itself lives in the chat now.

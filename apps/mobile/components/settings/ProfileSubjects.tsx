@@ -1,9 +1,7 @@
 // Pure subject-list presentation; the registered domain supplies actual cards and query state.
 import type { ReactNode } from 'react';
-import { Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { TYPE } from '../../lib/theme/type.js';
-import { ListGroup } from '../lb/ListGroup.js';
+import { ListGroup, RowNote } from '../lb/ListGroup.js';
 import { LoadFailed } from '../lb/LoadFailed.js';
 import { GroupSkeleton } from '../lb/Skeletons.js';
 
@@ -29,7 +27,8 @@ export function ProfileSubjects({
     );
   return (
     <ListGroup label={t('settings:profile.subjects')}>
-      {cards.length ? cards : <Text style={TYPE.meta}>{t('settings:profile.subjects_empty')}</Text>}
+      {/* Empty, the group's note stands in a row's box: not a strip with its text at the edge. */}
+      {cards.length ? cards : <RowNote text={t('settings:profile.subjects_empty')} />}
     </ListGroup>
   );
 }

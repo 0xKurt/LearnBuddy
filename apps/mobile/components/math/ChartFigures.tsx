@@ -6,8 +6,9 @@
 // (packages/shared-math/src/charts.ts), so the grid she reads from is the grid the tolerance was
 // derived from.
 //
-// Every chart fits the 266 px a 360 px phone leaves it (`CHART_WIDTH`; label lengths are checked
-// before a chart is ever shown) and is told apart by more than colour: series carry markers and
+// Every chart fits the 266 px it is checked at (`CHART_WIDTH`; label lengths are checked before a
+// chart is ever shown); on a 360 px phone its frame pads less to leave it 270 (`figurePad`, #599).
+// Each is told apart by more than colour: series carry markers and
 // dash patterns, columns are columns, slices are numbered, the halves of a pyramid are named.
 // Each also has a description in words for screen readers (`describeChart`, here).
 

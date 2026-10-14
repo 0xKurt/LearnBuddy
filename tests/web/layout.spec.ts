@@ -90,7 +90,12 @@ for (const viewport of [
       expect(b!.x, name).toBeGreaterThanOrEqual(0);
       expect(b!.x + b!.width, name).toBeLessThanOrEqual(viewport.width);
     }
-    await page.getByRole('button', { name: 'Schließen', exact: true }).click();
+    // The sheet's own "Schließen" (rule 14): the open dialog's, the topmost one.
+    await page
+      .locator('[aria-modal="true"]:visible')
+      .last()
+      .getByRole('button', { name: 'Schließen', exact: true })
+      .click();
     // The start sheet is closed again: its title and its ways are gone.
     await expect(page.getByRole('heading', { name: 'Was willst du üben?' })).toBeHidden();
     await expect(page.getByRole('button', { name: 'Vokabeln', exact: true })).toBeHidden();
@@ -410,7 +415,8 @@ test('answer choices break only between words, and a row of them is one row', as
   ] as const) {
     choices = set;
     await page.reload();
-    await expect(page.getByRole('button', { name: set[0], exact: true })).toBeVisible({
+    // An option is a radio now (#599 answer forms), not a button.
+    await expect(page.getByRole('radio', { name: set[0], exact: true })).toBeVisible({
       timeout: 30_000,
     });
     for (const phone of PHONES) {
