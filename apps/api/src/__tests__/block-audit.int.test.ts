@@ -76,6 +76,7 @@ function sent(req: LlmRequest): string {
     maxOutputTokens: req.maxOutputTokens,
     temperature: req.temperature,
     thinkingBudget: req.thinkingBudget,
+    thinkingLevel: req.thinkingLevel,
   });
 }
 

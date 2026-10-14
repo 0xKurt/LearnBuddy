@@ -86,6 +86,19 @@ describe('the request Vertex receives (issue #283)', () => {
     expect(config.thinkingConfig).toEqual({ thinkingBudget: 0 });
   });
 
+  it('sends a thinking level instead of a budget when the call names one (issue #626)', async () => {
+    const { body } = await wireBody(
+      paramsFor(
+        { ...request(TURN_STEP_SCHEMA), thinkingBudget: 512, thinkingLevel: 'minimal' },
+        'gemini-3.6-flash',
+        5_000,
+      ),
+    );
+    const config = body.generationConfig as Record<string, unknown>;
+    // The level only: a numeric budget is a hint Gemini 3 overruns (512 asked, 885 spent).
+    expect(config.thinkingConfig).toEqual({ thinkingLevel: 'MINIMAL' });
+  });
+
   it('canary: the SDK still drops responseFormat — re-check #283 when this fails', async () => {
     const params = paramsFor(request(TURN_STEP_SCHEMA), 'gemini-3.6-flash', 5_000);
     const { body } = await wireBody({
