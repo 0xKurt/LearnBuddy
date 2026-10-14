@@ -10,7 +10,8 @@ import { RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { Conversation, DayLine } from '../components/buddy/Conversation.js';
+import { Conversation } from '../components/buddy/Conversation.js';
+import { DayLine } from '../components/buddy/MessageRow.js';
 import { Btn } from '../components/lb/Btn.js';
 import { EmptyState } from '../components/lb/EmptyState.js';
 import { LoadFailed } from '../components/lb/LoadFailed.js';
