@@ -377,8 +377,9 @@ function waitingSection(state: BuddyState, aliases: Aliases, tz: string): string
   }
   lines.push(
     '  She needs nothing from you to start any of this. Making a second one of the same thing' +
-      ' adds nothing she can see: say where the next step is instead. Something she asks for' +
-      ' that is genuinely different gets its own.',
+      ' adds nothing she can see. To point her to practice you prepared, show it with open_area' +
+      ' practice: that puts its start under your reply, and never say it is ready to start' +
+      ' without it. Something she asks for that is genuinely different gets its own.',
   );
   return lines;
 }

@@ -29,18 +29,18 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
   it('is byte for byte what it was before the domain registered its part', () => {
     const p = buddyPrompt();
     expect([p.turnSystem.length, sha(p.turnSystem)]).toEqual([
-      31331,
-      '6e3f9660bcb30d9776045894d68d957e772d46d1c6f9c07c0c1b218e241f3646',
+      31947,
+      '59d6d3dc70f860ab7cd9835070eef74d7ab17b3ef5de8c14348773727833bc38',
     ]);
     expect([p.checkSystem.length, sha(p.checkSystem)]).toEqual([
       11292,
       '632adcd93bdfe3bb2217bc77ce669989aa1d435a7769c19a4c25a1f25df8df34',
     ]);
     expect(sha(p.turnSchema)).toBe(
-      '43b426b45c7b6ed851c9b8cc899b694c8f5a6ce4f74c18f83d0b6b131fa03d5b',
+      '948b2231265eb04993a1388270d910194b14ad34932fce9e3b6d7e8c5e8ef4a5',
     );
     expect(sha(p.turnStepSchema)).toBe(
-      'dd2f46559f2a1c4e3a772d1b10b4deae0c5853a1ebfd1051199f358e7d76a33a',
+      '2d27d24301b6f4c3f9eee19fdbef7cd224740ae0ac4554e3ba23fc72000b04e2',
     );
     expect(sha(p.checkSchema)).toBe(
       '0a7874ec5fc394d76afc190ac95080cb3dbc432372653fbd815ab3006d80a914',
@@ -48,7 +48,7 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
     expect(sha(p.checkStepSchema)).toBe(
       '18acc60f409edb3fd3a4f1ef1d3c3bbe29de390890b4e0b3ab011031f8ecb182',
     );
-    expect(p.version).toBe('buddy.8c2de358');
+    expect(p.version).toBe('buddy.1f2853b7');
   });
 
   it('is built once: every call hands out the same prompt', () => {
@@ -399,10 +399,10 @@ describe('the STATE block Buddy sends (pinned, issue #107)', () => {
     });
     setStateAudit(null);
     expect([text.length, sha(text)]).toEqual([
-      6838,
-      'a9bb3804c7380075277f5ebe13d9b07c7ccd3af53e79d7608f1756671e5280f2',
+      6959,
+      '182c973015016737517586b33b4af8e634e43767fec7c8a8c4b142daa4668624',
     ]);
-    expect(sha(samples)).toBe('54e484b76d2ededcc8327b654efe715a2f14e1b06bb2b55e408ab7fa1e0f8fe9');
+    expect(sha(samples)).toBe('0f2db35301b8b36cd096ec55e9e2ab807d8379fee040dee6b2928be6dfd39b3b');
     expect(Object.fromEntries(Object.entries(aliases).map(([k, m]) => [k, [...m.keys()]]))).toEqual(
       {
         goals: ['g1', 'g2', 'g3'],

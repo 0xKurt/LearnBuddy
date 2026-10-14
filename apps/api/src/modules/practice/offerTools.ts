@@ -152,6 +152,8 @@ export async function runOfferLearning(
       // Nothing proves otherwise yet. The preparation that runs right after this (issue #48)
       // is what can take it back, by stamping `cannot_start_at` (issue #196).
       startable: true,
+      // Nothing started yet; the thread says so once its run is finished (issue #630).
+      finished_session_id: null,
     },
     undo: null,
   };

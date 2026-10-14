@@ -18,6 +18,7 @@ import {
 
 const at = (iso: string) => new Date(iso);
 const SESSION = '00000000-0000-4000-8000-000000000001';
+const FINISHED = '2026-10-14T12:00:00.000Z';
 
 describe('startsNewSession', () => {
   it('is a new page after a long break', () => {
@@ -124,6 +125,7 @@ describe('sessionGreeting (issue #195)', () => {
       secure_topics: [],
       shaky_topics: [],
     },
+    finished_at: FINISHED,
     next: null,
   });
 
@@ -194,6 +196,25 @@ describe('sessionGreeting (issue #195)', () => {
     );
   });
 
+  it('names a practice only when nothing was said after it (issue #630)', () => {
+    // The owner's device: „Hey Testkind – 7 Fragen hast du gerade beantwortet" stood under her
+    // own later „Lass uns das Arbeitsblatt üben" and read as Buddy's answer to it.
+    const done = result({ answered: 7, first_try: 3 });
+    expect(sessionGreeting('day', 0, done, '2026-10-14T12:05:00.000Z')).toEqual({
+      key: 'session.day.0',
+      tells: null,
+    });
+    // Finished after the last message: it IS what she just did.
+    expect(sessionGreeting('day', 0, done, '2026-10-14T11:55:00.000Z')).toMatchObject({
+      key: 'session.after.practice',
+      tells: SESSION,
+    });
+    // A home without the moment claims nothing (an older server, rule 5).
+    const undated = { ...done };
+    delete undated.finished_at;
+    expect(sessionGreeting('day', 0, undated, null)).toEqual({ key: 'session.day.0', tells: null });
+  });
+
   it('says of homework what she solved herself', () => {
     expect(
       sessionGreeting('evening', 2, result({ answered: 3, first_try: 0, mode: 'help' })),
@@ -238,6 +259,7 @@ describe('the greeting and the copy kept on the device (issue #195)', () => {
     session_id: SESSION,
     mode: 'practice',
     result: { answered: 4, first_try: 4, secure_topics: [], shaky_topics: [] },
+    finished_at: FINISHED,
     next: null,
   };
 

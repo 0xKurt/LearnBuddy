@@ -16,7 +16,7 @@ import type {
 
 import { DAILY_LIMITS } from '../../config.js';
 import type { Deps } from '../../deps.js';
-import { daysBetween, localParts } from '../../lib/time.js';
+import { addDays, daysBetween, localParts, zonedToInstant } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import type { UndoSpec } from './toolKit.js';
 import { undoApplies, undoLoosensContact } from './undo.js';
@@ -27,6 +27,13 @@ const THREAD_LIMIT = 30;
 const DONE_WINDOW_MS = 72 * 3_600_000;
 const UNDO_WINDOW_MS = 7 * 86_400_000;
 const HEARTBEAT_STALE_MS = 10 * 60_000;
+/**
+ * How long after a test "Wie lief …?" is still asked (issue #630). A week: the next lessons in
+ * that subject fall inside it, and the test usually comes back within it; past it the question
+ * is stale and she can still tell Buddy in the chat (close_goal keeps its outcome). It used to be
+ * asked without end, at the bottom of every screen, until she tapped an answer.
+ */
+const OUTCOME_ASK_DAYS = 7;
 
 type LearnerLite = { id: string; display_name: string; isMinor: boolean };
 
@@ -103,9 +110,19 @@ function decisionOf(
       g.kind === 'exam' &&
       g.status === 'active' &&
       g.due_date &&
-      daysBetween(today, g.due_date) < 0,
+      daysBetween(today, g.due_date) < 0 &&
+      daysBetween(g.due_date, today) <= OUTCOME_ASK_DAYS,
   );
-  if (past) return { type: 'how_did_it_go', goal: goalBrief(past, today) };
+  if (past?.due_date) {
+    // The question arose when the test day was over, in her zone: the card stands in the
+    // conversation at that moment, not under everything said since (issue #630).
+    const askedAt = zonedToInstant(addDays(past.due_date, 1), '00:00', state.settings.timezone);
+    return {
+      type: 'how_did_it_go',
+      goal: goalBrief(past, today),
+      asked_at: askedAt.toISOString(),
+    };
+  }
   const s = state.settings;
   const hidden = s.opt_in_prompt_hidden_until && s.opt_in_prompt_hidden_until > now;
   // Decided already — a no in the setup is final (owner 10.10., issue #518), and so is a change

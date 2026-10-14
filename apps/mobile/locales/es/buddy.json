@@ -40,6 +40,7 @@
     "rename_material": "La hoja ahora se llama «{{title}}»",
     "delete_item": "La pregunta ya no está: «{{question}}»",
     "open_area": "Mostrado: {{what}}",
+    "show_ready": "Lista para empezar: {{title}}",
     "set_contact_quiet": "Notificaciones solo de {{from}} a {{to}}, nunca después de las {{quiet}}",
     "set_contact_days": "nunca estos días: {{days}}",
     "request_material_undone": "No hace falta foto: {{title}}",

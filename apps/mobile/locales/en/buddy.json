@@ -40,6 +40,7 @@
     "rename_material": "The sheet is called “{{title}}” now",
     "delete_item": "The question is gone: “{{question}}”",
     "open_area": "Shown: {{what}}",
+    "show_ready": "Ready to start: {{title}}",
     "set_contact_quiet": "Notifications only between {{from}} and {{to}}, never after {{quiet}}",
     "set_contact_days": "never on these days: {{days}}",
     "request_material_undone": "No photo needed: {{title}}",

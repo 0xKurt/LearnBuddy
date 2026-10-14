@@ -121,6 +121,16 @@ describe('SpeechMark', () => {
     expect(mark.endPiece()).toBe(false);
   });
 
+  it('a first piece is sent even when a live meter read it as room tone (#630 review, rule 18)', () => {
+    // Room tone is a fixed level, not this phone in this room: a whisper, a child far from the
+    // phone or a low-gain microphone reads the same. Only the transcriber may say "no speech".
+    const mark = new SpeechMark();
+    mark.observe(quietDb);
+    mark.observe(quietDb - 3);
+    mark.observe(quietDb + 1);
+    expect(mark.endPiece()).toBe(false);
+  });
+
   it('metering must cover the piece itself, not only earlier ones', () => {
     const mark = new SpeechMark();
     mark.observe(speechDb);

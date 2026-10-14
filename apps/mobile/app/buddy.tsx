@@ -54,7 +54,12 @@ import { newId } from '../lib/api/client.js';
 import { answerContactOptIn, reportOutcome, undoAction } from '../lib/api/endpoints.js';
 import { useHome, usePrefetchSession } from '../lib/api/queries.js';
 import { headState, useThreadRecording } from '../lib/buddy/headState.js';
-import { greetingOnScreen, threadOnScreen, VISIBLE_MESSAGES } from '../lib/buddy/homeThread.js';
+import {
+  greetingOnScreen,
+  placeByTime,
+  threadOnScreen,
+  VISIBLE_MESSAGES,
+} from '../lib/buddy/homeThread.js';
 import { newestBuddyId, showNewReply } from '../lib/buddy/newReply.js';
 import { greetingRoom } from '../lib/buddy/sessionAnchor.js';
 import { useContactOptIn } from '../lib/buddy/useContactOptIn.js';
@@ -140,7 +145,7 @@ export default function BuddyScreen() {
   // What Buddy tells at the end of the conversation, with its buttons: nothing on top moves.
   // The violet button belongs to the bar on top when there is one.
   const quiet = layout.bar ? 'soft' : 'primary';
-  const notices = homeNotices({
+  const timed = homeNotices({
     h,
     layout,
     left,
@@ -163,6 +168,9 @@ export default function BuddyScreen() {
     ) : null,
   });
   const { messages, captureUndo, carriedOnTop } = threadOnScreen(h, layout);
+  // Each notice at its own moment among the messages (issue #630); what is about now ends it.
+  const placed = placeByTime(messages, timed);
+  const notices = placed.end;
   // Hide the optimistic bubble once the server has the message.
   const shownPending =
     pending && !h.thread.some((m) => m.client_message_id === pending.id)
@@ -260,6 +268,7 @@ export default function BuddyScreen() {
                 messages={messages}
                 pending={shownPending}
                 notices={notices}
+                placed={placed}
                 live={live}
                 busy={busy || pending !== null}
                 sessionStart={

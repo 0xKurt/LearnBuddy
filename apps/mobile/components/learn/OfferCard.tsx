@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { PracticeReady } from '../buddy/ChatCard.js';
+import { ChatCard, PracticeReady } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';
 import { KIND_LABEL } from './kinds.js';
 import { useStartTopic } from './useStartTopic.js';
@@ -35,7 +35,7 @@ export function OfferCard({
   /** Whether "Los geht's" may be the screen's one filled button (extensions.ts `loudCard`). */
   quiet?: Quiet;
 }) {
-  const { t } = useTranslation(['learn', 'common']);
+  const { t } = useTranslation(['learn', 'common', 'buddy']);
   const { state, start } = useStartTopic();
   const preparing = state.status === 'preparing';
   // The server already knows this one cannot start: writing its questions was refused while
@@ -79,6 +79,29 @@ export function OfferCard({
       router.push(`/practice/${session.id}`);
     }
     reacted('start_offer');
+  }
+
+  // She already worked through it (issue #630): the card says so and opens what came of it —
+  // "Los geht's" on a run she finished promised a start that was over. Drawn like the finished
+  // practice's own card (HomeNotices `ResultView`): the tick, "Geschafft!", "Ansehen".
+  if (offer.finished_session_id !== null) {
+    const sessionId = offer.finished_session_id;
+    return (
+      <ChatCard
+        tone="accent"
+        icon="check"
+        label={label}
+        title={offer.text}
+        titleLines={2}
+        detail={t('buddy:now.result_title')}
+        primary={{
+          label: t('buddy:now.result_view'),
+          variant: 'secondary',
+          accessibilityHint: `${label}: ${offer.text}`,
+          onPress: () => router.push(`/practice/${sessionId}`),
+        }}
+      />
+    );
   }
 
   return (

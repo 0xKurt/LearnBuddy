@@ -89,6 +89,8 @@ export function summarize(items: readonly SummaryRow[]): PracticeSummary {
   return {
     answered: closed.length,
     first_try: closed.filter((i) => i.status === 'correct' && i.first_try_correct).length,
+    // Right in the end, however she got there (issue #630): the result screen's all-right state.
+    right: closed.filter((i) => i.status === 'correct').length,
     secure_topics: topics
       .filter((v) => !v.shaky && v.shown >= ENOUGH_FOR_A_TOPIC)
       .map((v) => v.name),

@@ -407,6 +407,15 @@ surface again before running (a check can never run a turn-only tool — also un
 
 Every part of the app is reachable by asking: `open_area` (library, memory, settings, history,
 capture) changes nothing and shows a button in the conversation, like `offer_learning`.
+Practice he prepared that already waits is pointed to with `open_area` `practice` (issue #630): code
+picks the practice prepared last that still waits, and its `show_ready` card is the start under his
+reply — "liegt schon bereit … mit einem Tippen" with nothing to tap was the defect. When nothing
+waits the call is refused and the words are repaired; once the practice is started or replaced the
+card shows no start (`ready`, decorated when the thread is served). A tool of its own did not fit:
+the turn step schema stands one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
+"say where it is". He never says which task forms or pictures a practice will have: those are
+chosen when the run is built, after his answer; naming the parts of a picture the app shows is not
+a drawing (`learning/prompt.ts`).
 A reply that asks for permission (`asks_permission`, required in the model's answer) may not
 remove anything in the same answer (dropping a goal, forgetting, cancelling a step): the code
 rejects it and asks for a repair (`askedButActed`). Removing on her clear wish is allowed — it is
@@ -5233,7 +5242,16 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   stop is the wait she feels, so the running piece is kept small and everything before it is
   already uploaded; a final piece that provably held no speech (the metering measured it and an
   earlier piece of the same take heard her — `SpeechMark`, so a meter that cannot hear her can
-  never drop her words) is the pause before her tap and is not uploaded at all.
+  never drop her words) is the pause before her tap and is not uploaded at all. A first piece
+  is always sent, and the device recogniser's own score drops nothing: room tone is a fixed
+  level, not this phone in this room, so a whisper, a child far from the phone or a low-gain
+  microphone would read as silence — and her words must reach the safeguarding path (CLAUDE.md
+  rule 18; review of #630). What decides "nobody spoke" is the transcriber: `heard_speech` false
+  only for a recording that clearly holds no speech (silence, noise, a sound, music); unsure
+  words count as speech (issue #630, after a conversation answered a first sentence nobody
+  said). Words it was unsure of but that tell of danger (`distress`) are never dropped: they go
+  on to Buddy, whose turn answers with the fixed help text. A per-take noise floor or a confidence
+  floor needs measurements on the POCO X3 and on iOS first.
   Each finished piece goes to `/voice/transcribe` while she keeps talking, with `prev_tail`
   (the tail of what was already understood) as a structured context field, so a piece starting
   mid-sentence is heard as its continuation; the prompt forbids repeating it. The endpoint
@@ -5673,7 +5691,17 @@ kind words as the summary — never a hit rate; the full summary one tap away), 
 **decision** (messages to the phone, how the test went — its answers as pills in the card),
 photos not sent yet, and "Buddy is working" (while a bar is on top, a card's main action is the
 paper button, so there is one violet button, the bar's)
-(`lib/homeLayout.ts` keeps these rules pure and tested). The system notes (no model, background
+(`lib/homeLayout.ts` keeps these rules pure and tested). What belongs to a **moment** stands at
+that moment, not at the end (issue #630, `lib/buddy/homeThread.ts` `placeByTime`): the finished
+practice at `finished_at`, the check-in after a test at `asked_at` (midnight after the test day in
+her zone) — after the last message written before it, so "Geschafft! 7 Fragen" never stands under
+her next message and reads as Buddy's answer to it. Older than every message on screen, it is drawn
+at the top of what the screen shows — never nowhere, since History draws no notices. The check-in is asked for a
+week after the test (`OUTCOME_ASK_DAYS`, `modules/buddy/home.ts`); after that she can still tell
+Buddy in the chat. The visit's greeting names the finished practice ("… gerade beantwortet") only
+when it ended after the last message (`sessionAnchor.ts` `justBefore`). An offer whose run she
+finished reads as finished and opens its result (`finished_session_id`, decorated from the run with
+the offer's request id) instead of "Los geht's". The system notes (no model, background
 work stale) join the layer on top. The bar **lies over** the greeting and the row of ways to
 start, directly under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the
 header, the greeting, the row and the conversation stand in exactly the same place with or

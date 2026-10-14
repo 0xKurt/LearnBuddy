@@ -142,6 +142,8 @@ export function describeAction(a: ActionSummary): string {
     }
     case 'open_area':
       return t('action.open_area', { what: t(`area.${a.area}`) });
+    case 'show_ready':
+      return t('action.show_ready', { title: a.title });
     case 'set_voice':
       return t('action.set_voice', {
         voice: t(`voice.name.${a.voice}`),

@@ -23,3 +23,21 @@ export function summaryLines(
   }
   return lines;
 }
+
+/**
+ * The topics the result screen names as worth another look (issue #630). None when every
+ * question she answered ended right: "Schauen wir nochmal an" and "Die wackligen nochmal üben"
+ * after a round she got all right read as if something had gone wrong. A topic that needed a hint
+ * on the way is still not called settled (`secure_topics` asks for right at once), and Buddy still
+ * knows it needed help — the screen just does not tell her she got something wrong. Homework
+ * names no topics at all. An older server without `right` keeps its shaky topics.
+ */
+export function topicsToReview(
+  summary: Pick<PracticeSummary, 'answered' | 'right' | 'shaky_topics'>,
+  mode: SessionMode,
+): string[] {
+  if (mode === 'help') return [];
+  const allRight =
+    summary.right !== undefined && summary.answered > 0 && summary.right >= summary.answered;
+  return allRight ? [] : summary.shaky_topics;
+}

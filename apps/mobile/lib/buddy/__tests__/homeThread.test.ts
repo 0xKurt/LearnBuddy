@@ -2,7 +2,7 @@ import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts'
 import { describe, expect, it } from 'vitest';
 
 import type { HomeLayout } from '../../homeLayout.js';
-import { greetingOnScreen, threadOnScreen, VISIBLE_MESSAGES } from '../homeThread.js';
+import { greetingOnScreen, placeByTime, threadOnScreen, VISIBLE_MESSAGES } from '../homeThread.js';
 import type { SessionStart } from '../useSessionStart.js';
 
 const STEP = '00000000-0000-4000-8000-000000000001';
@@ -113,6 +113,7 @@ describe("Buddy's greeting on screen (issue #195)", () => {
     count: 4,
     tells: SESSION,
     part: 'morning',
+    since: null,
     variant: 0,
     pending: false,
     afterMessageId: 'm1',
@@ -138,5 +139,39 @@ describe("Buddy's greeting on screen (issue #195)", () => {
       shown: false,
       result: null,
     });
+  });
+});
+
+describe('placeByTime (issue #630)', () => {
+  const at = (id: string, created_at: string) => ({ id, created_at });
+  const thread = [
+    at('sheet', '2026-10-14T12:10:00.000Z'),
+    at('hers', '2026-10-14T12:18:00.000Z'),
+    at('buddy', '2026-10-14T12:18:30.000Z'),
+  ];
+
+  it('puts a finished practice at its moment, not under what she said later', () => {
+    // The device: „Geschafft! 7 Fragen" stood under „Lass uns das Arbeitsblatt üben".
+    const placed = placeByTime(thread, [{ item: 'result', at: '2026-10-14T12:12:00.000Z' }]);
+    expect(placed.after.get('sheet')).toEqual(['result']);
+    expect(placed.end).toEqual([]);
+  });
+
+  it('keeps what is about now, and what is newer than every message, at the end', () => {
+    const placed = placeByTime(thread, [
+      { item: 'working', at: null },
+      { item: 'fresh', at: '2026-10-14T12:20:00.000Z' },
+    ]);
+    expect(placed.end).toEqual(['working', 'fresh']);
+    expect(placed.after.size).toBe(0);
+  });
+
+  it('draws what is older than the screen at its top, never nowhere (#630 review)', () => {
+    // The check-in after a test stood under every message for days. Its moment scrolled out of
+    // the window: it stands above what is shown — History draws no notices, so dropping it would
+    // leave her no way to answer it.
+    const placed = placeByTime(thread, [{ item: 'checkin', at: '2026-10-10T00:00:00.000Z' }]);
+    expect(placed.before).toEqual(['checkin']);
+    expect(placed.end).toEqual([]);
   });
 });

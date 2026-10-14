@@ -75,6 +75,8 @@ export function useSessionStart(home: {
         greetingVariant(now.getHours() * 60 + now.getMinutes()),
         h.now,
         homeConfirmed,
+        // "gerade" only for a practice finished after the last message (issue #630).
+        lastMessage.created_at,
       );
       sessionStart.current = { ...g, afterMessageId: lastMessage.id, text: greetingText(g) };
     } else sessionStart.current = null;

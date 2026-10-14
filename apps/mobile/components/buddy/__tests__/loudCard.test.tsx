@@ -31,6 +31,7 @@ function offer(n: number, text: string, part: Partial<ActionView> = {}): ActionV
       direction: null,
       minutes: null,
       startable: true,
+      finished_session_id: null,
     },
     ...part,
   };
@@ -81,5 +82,45 @@ describe('which card’s start is the filled one', () => {
     if (refused.summary.tool === 'offer_learning') refused.summary.startable = false;
     expect(loudCard([...thread, said(3, [undone]), said(4, [refused])], 'primary')).toBe(newest.id);
     expect(loudCard([said(3, [undone])], 'primary')).toBeNull();
+  });
+
+  it('draws a notice at its moment, above what was said after it (issue #630)', () => {
+    // The device: "Geschafft! 7 Fragen" stood under her later message and read as the answer.
+    renderInApp(
+      <Conversation
+        messages={thread}
+        pending={null}
+        busy={false}
+        placed={{ before: [], after: new Map([[thread[0]!.id, [<p key="r">Geschafft!</p>]]]) }}
+        notices={[<p key="w">Buddy arbeitet</p>]}
+      />,
+    );
+    const text = document.body.textContent ?? '';
+    expect(text.indexOf('Vorschlag 1')).toBeLessThan(text.indexOf('Geschafft!'));
+    expect(text.indexOf('Geschafft!')).toBeLessThan(text.indexOf('Vorschlag 2'));
+    // What is about now still ends the conversation.
+    expect(text.indexOf('Vorschlag 2')).toBeLessThan(text.indexOf('Buddy arbeitet'));
+  });
+
+  it('skips practice shown again that no longer waits (issue #630)', () => {
+    const gone: ActionView = {
+      ...offer(6, 'unused'),
+      summary: {
+        tool: 'show_ready',
+        step_id: '00000000-0000-4000-8000-0000000000bb',
+        title: 'Arbeitsblatt Brüche',
+        question_count: 7,
+        est_minutes: 6,
+        ready: false,
+      },
+    };
+    expect(loudCard([...thread, said(6, [gone])], 'primary')).toBe(newest.id);
+  });
+
+  it('skips an offer whose run she finished (issue #630)', () => {
+    const done = offer(5, 'Brüche addieren', {});
+    if (done.summary.tool === 'offer_learning')
+      done.summary.finished_session_id = '00000000-0000-4000-8000-0000000000aa';
+    expect(loudCard([...thread, said(5, [done])], 'primary')).toBe(newest.id);
   });
 });

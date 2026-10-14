@@ -10,6 +10,7 @@ import {
   selectPracticeItems,
 } from '../practice/selection.js';
 import type { ActionOf } from './decision.js';
+import type { StepRow } from './state.js';
 import {
   activeGoalOf,
   materialOf,
@@ -257,5 +258,39 @@ export async function runPreparePractice(
       est_minutes: minutes,
     },
     undo: { type: 'cancel_step', step_id: step.id },
+  };
+}
+
+/**
+ * The start button of practice that already waits for her, under Buddy's answer (issue #630):
+ * `open_area` with `practice`. He told her it "liegt schon bereit … mit einem Tippen starten" with
+ * nothing to tap: the prepared practice he meant stood nowhere on her screen (the bar on top shows
+ * one practice — the earliest test's — and a step has no card of its own in the thread). Code
+ * picks what is shown: the practice prepared last that still waits, which is what a "deine Übung
+ * liegt bereit" points at. Nothing waits: refused with the reason, so the words are repaired
+ * instead of pointing at nothing (CLAUDE.md rules 1 and 5). A tool of its own did not fit: the
+ * turn schema stands one property under Vertex's bound (`llm/schemaBudget.ts`, #627).
+ */
+export async function runShowReady(ctx: ToolContext): Promise<ToolOutcome> {
+  const step = await ctx.db.maybeOne<StepRow>(
+    `select * from buddy_steps
+      where learner_id = $1 and kind = 'practice' and state = 'prepared'
+      order by prepared_at desc nulls last, created_at desc limit 1 for update`,
+    [ctx.learnerId],
+  );
+  if (!step)
+    throw new ToolRejection(
+      'no practice you prepared is waiting for her — say so plainly, or prepare one (prepare_practice)',
+    );
+  return {
+    summary: {
+      tool: 'show_ready',
+      step_id: step.id,
+      title: step.title,
+      question_count: step.payload.item_ids?.length ?? 0,
+      est_minutes: step.payload.est_minutes ?? minutesFor(step.payload.item_ids?.length ?? 0),
+      ready: true,
+    },
+    undo: null,
   };
 }
