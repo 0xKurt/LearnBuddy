@@ -15,8 +15,28 @@ import { SPACE } from '../theme/space.js';
 
 /** Never smaller than this: below it the drawing stops being readable. */
 export const MIN_FIGURE_SCALE = 0.4;
-/** The card's padding and border, taken off the width before the drawing gets it. */
-export const FIGURE_CHROME = 26;
+/** The frame's padding on each side (`FigureView`), and its border. */
+const FIGURE_PAD = SPACE.md;
+const FIGURE_BORDER = 1;
+/** The frame's padding and border, taken off the width before the drawing gets it. */
+export const FIGURE_CHROME = 2 * (FIGURE_PAD + FIGURE_BORDER);
+/**
+ * A chart's frame pads less (#599): its labels are checked at `CHART_WIDTH` (266, the server's
+ * `categoriesFit`), and on 360 the question card — 20 a side, the design's `--card-pad` — left
+ * the ordinary frame 360 − 32 − 40 − 26 = 262: the month initials ran together ("JMMJASOND",
+ * #501). With 8 a side the chart gets 270.
+ */
+const CHART_PAD = SPACE.sm;
+
+/** The frame's padding on each side for this figure: a chart's is narrower (`CHART_PAD`). */
+export function figurePad(figure: { type: string }): number {
+  return isChart(figure) ? CHART_PAD : FIGURE_PAD;
+}
+
+/** Both sides of the frame — padding and border — for this figure (`FIGURE_CHROME` but a chart). */
+export function figureChrome(figure: { type: string }): number {
+  return 2 * (figurePad(figure) + FIGURE_BORDER);
+}
 /** A drawing this much over the room is left alone (a rounding pixel is not an overflow). */
 const SLACK = 2;
 

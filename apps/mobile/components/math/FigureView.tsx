@@ -10,7 +10,12 @@ import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { BARE_FIGURE_CHROME, BARE_FIGURE_PAD } from '../../lib/math/figureScale.js';
+import {
+  BARE_FIGURE_CHROME,
+  BARE_FIGURE_PAD,
+  figureChrome,
+  figurePad,
+} from '../../lib/math/figureScale.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { useFigureFit } from '../../lib/math/useFigureFit.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
@@ -58,7 +63,7 @@ export function FigureView({
   const { palette, figure: ink } = useTheme();
   const { t } = useTranslation('math');
   // Measure, then scale (`useFigureFit`, figureScale.ts): the size it shows, and how it gets there.
-  const fit = useFigureFit(figure, maxHeight, bare ? BARE_FIGURE_CHROME : undefined);
+  const fit = useFigureFit(figure, maxHeight, bare ? BARE_FIGURE_CHROME : figureChrome(figure));
   const { scale, bodyWidth } = fit;
   const words = useSpokenWords();
   const names = useFigureNames(figure);
@@ -83,8 +88,9 @@ export function FigureView({
         borderRadius: bare ? SPACE.md : RADIUS.frame,
         borderWidth: bare ? 0 : 1,
         borderColor: palette.hairline,
-        // Half the chrome on each side (BARE_FIGURE_CHROME / FIGURE_CHROME minus the border).
-        padding: bare ? BARE_FIGURE_PAD : SPACE.md,
+        // Half the chrome on each side (BARE_FIGURE_CHROME / `figureChrome` minus the border):
+        // a chart's frame pads less, so it keeps the width its labels are checked at (#599).
+        padding: bare ? BARE_FIGURE_PAD : figurePad(figure),
         minHeight: bare ? 0 : 60,
       }}
     >

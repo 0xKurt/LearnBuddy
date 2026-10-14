@@ -9,7 +9,7 @@ import { useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { FIGURE_CHROME } from '../../lib/math/figureScale.js';
+import { FIGURE_CHROME, figureChrome } from '../../lib/math/figureScale.js';
 import { useDrawingNatural } from '../../lib/math/figureSizing.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
@@ -265,13 +265,15 @@ export function QuestionCard({
   // natural size, so a card grown past it stood with an empty band above and below — the
   // Hunderterfeld, about 27 pt each. That height comes with the drawing's sizing report.
   const drawingNatural = useDrawingNatural();
+  // The frame's own padding and border: a chart's frame pads less (`figureChrome`, #599).
+  const frameChrome = inCard ? figureChrome(inCard) : FIGURE_CHROME;
   const fullCard =
     inCard && drawingNatural > 0 && headHeight > 0
-      ? 2 * pad + headHeight + FIGURE_GAP + FIGURE_CHROME + drawingNatural
+      ? 2 * pad + headHeight + FIGURE_GAP + frameChrome + drawingNatural
       : Infinity;
   const cardMin = grown ? Math.min(minHeight, fullCard) : 0;
   const figureRoom =
-    grown && headHeight > 0 ? cardMin - 2 * pad - headHeight - FIGURE_GAP - FIGURE_CHROME : 0;
+    grown && headHeight > 0 ? cardMin - 2 * pad - headHeight - FIGURE_GAP - frameChrome : 0;
   const figureMax = figureRoom > (figureMaxHeight ?? 0) ? figureRoom : figureMaxHeight;
   const card = (
     <PresentationCard

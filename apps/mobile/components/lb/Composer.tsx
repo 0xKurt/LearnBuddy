@@ -371,7 +371,6 @@ export function ActionPill({
   );
 }
 
-/** The mode chip (Composer.jsx:54–59): lit while its keys show; a tap shows or hides them. */
 /** The answer's unit, in the type of the design's count (`FieldCount`): it says, it is not tapped. */
 function UnitNote({ unit }: { unit: string }) {
   const { t } = useTranslation('practice');
@@ -387,6 +386,7 @@ function UnitNote({ unit }: { unit: string }) {
   );
 }
 
+/** The mode chip (Composer.jsx:54–59): lit while its keys show; a tap shows or hides them. */
 function ModeChip({ label, on, onPress }: Mode) {
   const { palette } = useTheme();
   const ink = on ? palette.primaryDk : palette.ink2;
