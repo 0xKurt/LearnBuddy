@@ -346,11 +346,15 @@ test('learning modes: explain, homework help without the solution, practice with
   // there exactly when the box holds more than it shows; a conversation that fits whole has
   // no edge to fade. On the web the scroll view itself is masked (EdgeFade.tsx); on phones
   // the same edge is covered by <TopEdgeFade>, which a screenshot has to show.
-  // .last(): the home under this screen keeps its own thread mounted (expo-router).
-  const edge = await page
-    .getByTestId('scroll-thread')
-    .last()
-    .evaluate((el) => {
+  // Only a VISIBLE conversation box is read: the home under this screen keeps its own thread
+  // mounted (expo-router), hidden — 0 × 0 and faded. `.last()` found that one (#599: masked,
+  // "nothing above"), because a question with options in words has no box of its own since #608:
+  // its conversation stands in the one scrolling practice body, which has no edge to fade.
+  const threads = page.locator('[data-testid="scroll-thread"]:visible');
+  if ((await threads.count()) === 0) {
+    await expect(page.getByTestId('scroll-practice-body')).toBeVisible();
+  } else {
+    const edge = await threads.last().evaluate((el) => {
       let node: Element | null = el;
       let masked = false;
       while (node) {
@@ -361,9 +365,11 @@ test('learning modes: explain, homework help without the solution, practice with
       }
       return { masked, holdsMore: el.scrollHeight > el.clientHeight + 1 };
     });
-  expect(edge.masked, 'the conversation fades out at its top edge exactly when it holds more').toBe(
-    edge.holdsMore,
-  );
+    expect(
+      edge.masked,
+      'the conversation fades out at its top edge exactly when it holds more',
+    ).toBe(edge.holdsMore);
+  }
   // The fraction tiles at night too (issue #288): large digits, the letter column, the shadow.
   await bothSchemes(page, '25-practice-fractions');
   // The drawing takes the measured room of the grown question card (issue #96) — more
