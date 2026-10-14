@@ -230,6 +230,12 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     rows: z.array(DrillRow).nullable().default(null),
     carry: DrillCarry.nullable().default(null),
     title: z.string(),
+    /**
+     * The round this offer started, once it ended (issue #643, as `offer_learning` since #630):
+     * the card reads as done and opens it, instead of a "Los geht's" that opened an ended round.
+     * Decorated when the thread is served; null while none ended, and from an older server.
+     */
+    finished_session_id: Uuid.nullable().default(null),
   }),
   /**
    * A roleplay started in the conversation (issue #244): the role card she plays to. Scene,
@@ -636,8 +642,8 @@ export type SendMessageResponse = z.infer<typeof SendMessageResponse>;
  * POST /buddy/messages with `Accept: text/event-stream` (docs/architecture.md §Speed):
  * `reply` events while Buddy writes, then one `done` event carrying the
  * SendMessageResponse (or `error` with { code }). A higher `round` replaces the
- * text of a lower one. `speakable`: the answer changes nothing, so the text may
- * be shown and read aloud now; otherwise wait for `done`.
+ * text of a lower one. `speakable`: the text may be shown and read aloud now —
+ * the answer changes nothing, or it has just been stored (#644); otherwise wait.
  */
 export const ReplyStreamEvent = z.object({
   round: z.number().int().min(1),

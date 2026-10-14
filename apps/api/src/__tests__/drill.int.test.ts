@@ -7,7 +7,11 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { SendMessageResponse, SessionView } from '@learnbuddy/shared-types/contracts';
+import type {
+  BuddyHome,
+  SendMessageResponse,
+  SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { factOf, valueOf } from '../modules/practice/drill.js';
@@ -83,6 +87,7 @@ describe.skipIf(!dbReady)('Kopfrechnen: a round code writes and checks', () => {
       rows: [6, 7],
       carry: null,
       title: 'Einmaleins mit 6 und 7',
+      finished_session_id: null,
     });
     await env.flushBackground();
     // Everything from here on is code. The chat turn's call is the baseline.
@@ -141,6 +146,12 @@ describe.skipIf(!dbReady)('Kopfrechnen: a round code writes and checks', () => {
     );
     expect(closed.filter((c) => c.status === 'missed')).toHaveLength(wrong.size);
     expect(closed.filter((c) => c.status === 'correct')).toHaveLength(20 - wrong.size);
+    // The card that started it now says the round is done and opens it (issue #643): its
+    // "Los geht's" opened the ended round, a practice finished at the moment she started it.
+    const card = (await l.api.get<BuddyHome>('/buddy')).body.thread
+      .flatMap((m) => m.actions)
+      .find((a) => a.id === offer!.id);
+    expect(card?.summary).toMatchObject({ tool: 'offer_drill', finished_session_id: view.id });
 
     // ZERO model calls for the whole round — not to start it, not for any answer.
     expect(await llmCalls(env)).toBe(before);

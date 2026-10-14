@@ -1296,7 +1296,7 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   `speakable` is read along from its first finished sentence (`lib/speech/streamSpeaker.ts`) — in
   conversation mode and with Vorlesen on. Everything else waits for the stored answer as before
   (audit M-52, repro-28): a safeguarding answer never streams speakable (`concern` is written
-  first), an answer that changes something is spoken once applied, and a repair round, a failure
+  first), an answer that changes something is spoken once applied — the moment it is stored the server sends its reply as one `speakable` event, before it builds and sends the home (#644), so the voice no longer waits for the result to be built, sent and read by the phone — and a repair round, a failure
   or a provider block stops the voice mid-sentence so the stored text takes over. What was read
   along is not read again from the thread. The residual risk — the provider's final verdict
   arrives with the last chunk — was weighed against seconds of silence and accepted for
@@ -3481,14 +3481,18 @@ nothing stays open forever:
   "Übung beenden" and where it leads): the header title is one line (#287), and a worded pill
   left the topic ~125 pt at 360 wide, cut to "Flächeninhalt Rec…" (#286).
 - _Resuming_ is keyed on `last_activity_at`: a session used in the last 12 h is the first now
-  card; an older open one (homework help up to 14 days, any other session up to 3 days) comes
+  card — unless a run she finished after its last activity is still in its half hour: what she
+  did last comes first, so the result (and the greeting's "gerade") reaches the home (#643); an older open one (homework help up to 14 days, any other session up to 3 days) comes
   after Buddy's prepared practice. Every open session is loaded into Buddy's state, however old.
   A homework sheet leads to its help session (`POST /practice/sessions {material_id}` returns
   it; after an abandoned one, a new session with the tasks not solved yet; `MaterialView.
 session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
 - _Idle sessions_ are closed by the scheduler (`closeIdleSessions`): help after 14 days, other
   sessions after 3 days without activity are `abandoned` and their step goes back to `prepared`
-  (Buddy can offer it again); a session with nothing open left is finished instead.
+  (Buddy can offer it again); a session with nothing open left is finished instead. Her tap on
+  the offer card that started an abandoned run (same request id, `POST /practice/topic` or
+  `/practice/drills`) reopens it where she left it (`runOfRequest`, #643) — it answered
+  "Los geht's" with "Diese Übung ist schon beendet."; a finished run stays finished.
 - _Summary_ (`practice/summary.ts`): one computation for the result screen, the home card and
   Buddy's context — a topic is named as having gone well only when every closed question of it
   was right at once **and** at least `ENOUGH_FOR_A_TOPIC` (2) of them were answered in a way
@@ -5654,7 +5658,7 @@ own (CLAUDE.md rule 16).
   and once rehearsed what was measured; the home's list shows the day as `UpcomingItem.kind 'talk'`.
 - **The card that records** (tool `offer_rehearsal`, `components/buddy/RehearseCard.tsx`): kind
   `talk` (up to 10 min, for a planned talk or none) or `read_aloud` (up to 2 min, the passage itself
-  in the offer, 15–220 words, checked by code). The card shows the talk's title or the whole
+  in the offer, 15–220 words, checked by code; a passage given as from one of her sheets (`sheet: sh1`) must stand on that sheet word for word, or the action is refused, #636). The card shows the talk's title or the whole
   passage, the length she was given, one button that starts and ends the recording; while it
   runs the card shows the running time large and the given length beside "ich höre zu" (design
   `Modes.jsx:40–50`; the chat's head listens while the recorder runs (`lib/buddy/headState.ts`
@@ -5765,8 +5769,9 @@ at the top of what the screen shows — never nowhere, since History draws no no
 week after the test (`OUTCOME_ASK_DAYS`, `modules/buddy/home.ts`); after that she can still tell
 Buddy in the chat. The visit's greeting names the finished practice ("… gerade beantwortet") only
 when it ended after the last message (`sessionAnchor.ts` `justBefore`). An offer whose run she
-finished reads as finished and opens its result (`finished_session_id`, decorated from the run with
-the offer's request id) instead of "Los geht's". The system notes (no model, background
+finished — practice (`offer_learning`) or a Kopfrechnen round (`offer_drill`, #643) — reads as
+finished and opens its result (`finished_session_id`, decorated from the run with the offer's
+request id; one card, `components/learn/FinishedOffer.tsx`) instead of "Los geht's". The system notes (no model, background
 work stale) join the layer on top. The bar **lies over** the greeting and the row of ways to
 start, directly under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the
 header, the greeting, the row and the conversation stand in exactly the same place with or

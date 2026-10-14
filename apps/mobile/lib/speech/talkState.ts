@@ -29,6 +29,15 @@ export function talkHeadline(phase: TalkPhase, mic: MicState): TalkHeadline {
   return 'buddy:talk.paused';
 }
 
+/**
+ * The microphone as the screen shows it (#644). From the first frame of a Talk that will listen
+ * by itself until the recogniser runs, the screen says it is getting ready — never "paused",
+ * which read as "nothing happens" for the seconds the microphone needs on a phone.
+ */
+export function shownMic(mic: MicState, opening: boolean): MicState {
+  return opening && mic === 'idle' ? 'starting' : mic;
+}
+
 /** Buddy's voice as far as this decision needs it (lib/speech/voiceState.ts). */
 export type VoiceNow = 'idle' | 'loading' | 'speaking';
 

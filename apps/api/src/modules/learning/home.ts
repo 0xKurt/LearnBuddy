@@ -73,26 +73,25 @@ async function workingOf(deps: Deps, learnerId: string, now: Date): Promise<Budd
   // prepared practice) — the app follows the home closely while anything is working.
   // Only while a reading job is really alive (a material left behind is set to failed by
   // the scheduler), not archived, and like the card for at most two hours.
-  const reading = await deps.db.maybeOne(
-    `select 1 from materials m
-      where m.learner_id = $1 and m.status in ('queued', 'processing') and m.archived_at is null
-        and m.created_at > $2::timestamptz - interval '2 hours'
-        and exists (select 1 from jobs j where j.kind = 'extract_material'
-                      and j.payload ->> 'material_id' = m.id::text
-                      and j.status in ('queued', 'running'))
-      limit 1`,
-    [learnerId, now],
+  // One statement for both (#712): the home is read on one connection, a round trip each.
+  const row = await deps.db.one<{ reading: boolean; reason: string | null }>(
+    `select
+       exists (select 1 from materials m
+                where m.learner_id = $1 and m.status in ('queued', 'processing')
+                  and m.archived_at is null
+                  and m.created_at > $2::timestamptz - interval '2 hours'
+                  and exists (select 1 from jobs j where j.kind = 'extract_material'
+                                and j.payload ->> 'material_id' = m.id::text
+                                and j.status in ('queued', 'running'))) as reading,
+       (select payload->>'reason' from jobs
+         where learner_id = $1 and kind = 'buddy_check' and status in ('queued', 'running')
+           and payload->>'reason' in ('material_ready', 'session_finished')
+           and run_at <= $3::timestamptz
+         order by run_at, seq limit 1) as reason`,
+    [learnerId, now, new Date(now.getTime() + 60_000)],
   );
-  if (reading) return 'material';
-  const row = await deps.db.maybeOne<{ reason: string }>(
-    `select payload->>'reason' as reason from jobs
-      where learner_id = $1 and kind = 'buddy_check' and status in ('queued', 'running')
-        and payload->>'reason' in ('material_ready', 'session_finished')
-        and run_at <= $2::timestamptz
-      order by run_at, seq limit 1`,
-    [learnerId, new Date(now.getTime() + 60_000)],
-  );
-  if (!row) return null;
+  if (row.reading) return 'material';
+  if (!row.reason) return null;
   return row.reason === 'material_ready' ? 'material' : 'session';
 }
 
@@ -303,7 +302,6 @@ async function nowCardOf(
     };
   };
   const recent = open.find((s) => now.getTime() - s.last_activity_at.getTime() < 12 * 3_600_000);
-  if (recent) return resumeCard(recent);
   const justFinished = state.sessions.find(
     (s) =>
       s.status === 'finished' &&
@@ -312,6 +310,14 @@ async function nowCardOf(
       s.finished_at &&
       now.getTime() - s.finished_at.getTime() < 30 * 60_000,
   );
+  // What she did last comes first (issue #643): a run she paused this morning outranked the one
+  // she finished a minute ago, so the result never reached the home — Buddy greeted her with a
+  // bare "Abend, Testkind!" right after eight questions. The paused one is the bar again once
+  // the result's half hour is over, and its card in the conversation resumes it all along.
+  const finishedLast =
+    justFinished?.finished_at != null &&
+    (!recent || justFinished.finished_at.getTime() > recent.last_activity_at.getTime());
+  if (recent && !finishedLast) return resumeCard(recent);
   // Today's prepared practice (the earliest test first). What was just finished is not it
   // (its step is no longer 'prepared').
   const prepared = preparedOf(state, today, await askedForSteps(deps, learnerId));
@@ -470,12 +476,15 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
     learnerId,
     page.messages.flatMap((m) => (m.roleplay_id ? [m.roleplay_id] : [])),
   );
-  // The offers she already worked through (issue #630): the run an offer started carries the
-  // offer's action id as its request id, so the card can say it is done instead of "Los geht's".
+  // The offers she already worked through (issue #630; a Kopfrechnen round too, #643): the run an
+  // offer started carries the offer's action id as its request id, so the card can say it is done
+  // instead of "Los geht's".
   const finished = await finishedRuns(
     db,
     learnerId,
-    page.actions.filter((a) => a.result.tool === 'offer_learning').map((a) => a.id),
+    page.actions
+      .filter((a) => a.result.tool === 'offer_learning' || a.result.tool === 'offer_drill')
+      .map((a) => a.id),
   );
   // The practice Buddy showed again (issue #630): its start only while it still waits.
   const stillReady = await stepsStillPrepared(
@@ -507,8 +516,8 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       // of tapping and waiting for it (issue #196).
       if (s.tool === 'offer_learning' && cannotStart.has(actionId))
         return { ...s, startable: false };
-      // Done: the card reads as done and opens what came of it (issue #630).
-      if (s.tool === 'offer_learning' && finished.has(actionId))
+      // Done: the card reads as done and opens what came of it (issues #630, #643).
+      if ((s.tool === 'offer_learning' || s.tool === 'offer_drill') && finished.has(actionId))
         return { ...s, finished_session_id: finished.get(actionId) ?? null };
       if (s.tool === 'show_ready') return { ...s, ready: stillReady.has(s.step_id) };
       return s;

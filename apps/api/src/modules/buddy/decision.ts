@@ -684,10 +684,11 @@ const offerLearning = z.object({
       .describe(
         "What to learn, in the learner's words (topic, the vocabulary they typed, or the homework task)",
       ),
-    goal: GoalRef.nullable()
+    // Planned and offered in one answer, the test had no alias yet and the turn failed (#636).
+    goal: GoalTarget.nullable()
       .default(null)
       .describe(
-        'practice or test for a planned test: the questions then stay within the sheets she photographed for it; otherwise null',
+        'practice or test for a planned test — g1 from STATE, or "new" for the test planned with plan_exam earlier in this answer: the questions then stay within the sheets she photographed for it; otherwise null',
       ),
     // A Diktat of the words on one of her sheets (issue #242). Optional in parsing like the two
     // below: older scripted answers have none.
@@ -859,6 +860,12 @@ const offerRehearsal = z.object({
       .nullable()
       .describe(
         `read_aloud: the text she reads, exactly as she should read it — from her sheet, or one you write at her level (${READ_ALOUD_WORDS.min}–${READ_ALOUD_WORDS.max} words, no headings or lists). null for a talk`,
+      ),
+    // Asked for the text on her sheet, he once wrote a different one (#636): code checks it.
+    sheet: MaterialRef.nullable()
+      .optional()
+      .describe(
+        'read_aloud from one of her sheets: its alias (sh1) — text is then a passage of that sheet word for word; null for a text you write or a talk',
       ),
   }),
 });

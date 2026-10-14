@@ -111,7 +111,10 @@ export function compareReading(text: string, transcript: string): ReadingCompari
   return { correct, skipped: skipped.reverse(), misread: misread.reverse() };
 }
 
-/** Does the quote stand in the transcript (case, punctuation and fillers aside)? */
+/**
+ * Does the quote stand in the transcript (case, punctuation and fillers aside)? Also whether a
+ * passage "from her sheet" stands on the sheet word for word (#636).
+ */
 export function quoteInTranscript(quote: string, transcript: string): boolean {
   const q = wordsOf(quote).map(fold).join(' ');
   if (q === '') return false;

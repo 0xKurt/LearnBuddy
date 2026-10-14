@@ -7,9 +7,10 @@ import { t } from '../../i18n/index.js';
 import { daysBetween } from '../../lib/time.js';
 import type { ActionOf } from './decision.js';
 import { findOrCreateSubject } from '../learning/state.js';
-import { wordsOf } from './talkMeasure.js';
+import { quoteInTranscript, wordsOf } from './talkMeasure.js';
 import {
   goalOf,
+  materialOf,
   requireQuote,
   resolveFutureDay,
   today,
@@ -108,6 +109,29 @@ export async function runPlanTalk(
 }
 
 /**
+ * A passage said to come from her sheet stands on it word for word (#636): asked for the text on
+ * her sheet, the model once wrote another one. Read from the sheet itself, this learner's only.
+ */
+async function requireFromSheet(ctx: ToolContext, alias: string, text: string): Promise<void> {
+  const sheet = materialOf(ctx, alias);
+  const row = await ctx.db.maybeOne<{ extracted_text: string | null }>(
+    `select extracted_text from materials
+      where id = $1 and learner_id = $2 and archived_at is null`,
+    [sheet.id, ctx.learnerId],
+  );
+  if (!row?.extracted_text) {
+    throw new ToolRejection(
+      `sheet ${alias} has no text to read aloud — leave this action out and tell her what the sheet holds`,
+    );
+  }
+  if (!quoteInTranscript(text, row.extracted_text)) {
+    throw new ToolRejection(
+      `"text" is not on sheet ${alias} — copy the passage from the sheet word for word (search_material finds it), or set sheet null for a text you write yourself`,
+    );
+  }
+}
+
+/**
  * The card that records her. It changes nothing: what she records is measured by
  * `POST /buddy/rehearsals`, which reads this action back — the passage to read and the talk it
  * belongs to come from here, never from the app.
@@ -144,6 +168,7 @@ export async function runOfferRehearsal(
       `a text to read aloud must be the text itself, ${READ_ALOUD_WORDS.min}–${READ_ALOUD_WORDS.max} words — this one has ${words.length}. Put the passage itself in "text" (shorten it, or take a part of it).`,
     );
   }
+  if (a.sheet) await requireFromSheet(ctx, a.sheet, text);
   return {
     summary: {
       tool: 'offer_rehearsal',

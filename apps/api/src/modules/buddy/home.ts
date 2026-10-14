@@ -437,39 +437,42 @@ async function systemOf(
   state: BuddyState,
 ): Promise<BuddyHome['system']> {
   const now = deps.now();
+  const today = localParts(now, state.settings.timezone).date;
+  // One statement for the four facts (#712): the home is read on one connection inside its
+  // snapshot, where every statement is a round trip of its own.
+  const facts = await deps.db.one<{
+    tokens: string[];
+    last_finished_at: Date | null;
+    waiting: boolean;
+    calls: number | null;
+  }>(
+    `select
+       (select coalesce(array_agg(status::text), '{}') from push_tokens where learner_id = $1)
+         as tokens,
+       (select last_finished_at from system_heartbeats where name = 'tick') as last_finished_at,
+       exists (select 1 from jobs where learner_id = $1 and status = 'queued' and run_at < $2)
+         as waiting,
+       (select calls from usage_daily where learner_id = $1 and day = $3 and kind = 'buddy_turn')
+         as calls`,
+    [learnerId, new Date(now.getTime() - HEARTBEAT_STALE_MS), today],
+  );
   let push: BuddyHome['system']['push'] = 'disabled';
   if (deps.push.enabled) {
-    const tokens = await deps.db.query<{ status: string }>(
-      `select status from push_tokens where learner_id = $1`,
-      [learnerId],
-    );
-    push = tokens.some((t) => t.status === 'active')
+    push = facts.tokens.includes('active')
       ? 'active'
-      : tokens.length > 0
+      : facts.tokens.length > 0
         ? 'invalid'
         : 'no_token';
   }
-  const hb = await deps.db.maybeOne<{ last_finished_at: Date | null }>(
-    `select last_finished_at from system_heartbeats where name = 'tick'`,
-  );
-  const recent =
-    !!hb?.last_finished_at && now.getTime() - hb.last_finished_at.getTime() < HEARTBEAT_STALE_MS;
+  const last = facts.last_finished_at;
+  const recent = !!last && now.getTime() - last.getTime() < HEARTBEAT_STALE_MS;
   // Her own work waiting well past its time means nothing is running it — also when there has
   // never been a heartbeat (a misconfigured scheduler is not "unknown", audit M-67).
-  const waiting = await deps.db.maybeOne(
-    `select 1 from jobs where learner_id = $1 and status = 'queued' and run_at < $2 limit 1`,
-    [learnerId, new Date(now.getTime() - HEARTBEAT_STALE_MS)],
-  );
-  const scheduler =
-    waiting || (hb?.last_finished_at && !recent) ? 'stale' : recent ? 'ok' : 'unknown';
+  const scheduler = facts.waiting || (last && !recent) ? 'stale' : recent ? 'ok' : 'unknown';
   // "Buddy can answer" only when a model is configured and today's allowance is not used up
   // (audit p2-F-journey-outage-invisible-on-home).
-  const today = localParts(now, state.settings.timezone).date;
-  const used = await deps.db.maybeOne<{ calls: number }>(
-    `select calls from usage_daily where learner_id = $1 and day = $2 and kind = 'buddy_turn'`,
-    [learnerId, today],
-  );
-  const model = deps.llm.available && (used?.calls ?? 0) < DAILY_LIMITS.buddy_turn;
+  const used = { calls: facts.calls ?? 0 };
+  const model = deps.llm.available && used.calls < DAILY_LIMITS.buddy_turn;
   return {
     model,
     push,

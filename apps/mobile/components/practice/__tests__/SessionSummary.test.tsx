@@ -75,6 +75,33 @@ describe('SessionSummary — the Probetest review', () => {
     expect(paths).toContain('M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z');
   });
 
+  it('calls a solution she asked for after her try "not right yet", never "skipped" (issue #643)', () => {
+    // The device: "Übersprungen" under a question she had answered "5/8" before "Lösung zeigen".
+    const eye = 'M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z';
+    const { unmount } = renderInApp(
+      <SessionSummary
+        summary={SUMMARY}
+        mode="practice"
+        review={[row('s', 'Berechne 3/8 + 1/8.', 'skipped', '1/2', null)]}
+      />,
+    );
+    expect(screen.queryByText('Übersprungen')).toBeNull();
+    expect(screen.getByText('Noch nicht richtig')).toBeDefined();
+    const paths = () =>
+      Array.from(document.querySelectorAll('svg path')).map((p) => p.getAttribute('d'));
+    expect(paths()).toContain(eye);
+    unmount();
+    // In a test "Überspringen" is what she did: it stays "Übersprungen".
+    renderInApp(
+      <SessionSummary
+        summary={SUMMARY}
+        mode="test"
+        review={[row('s', 'Berechne 3/8 + 1/8.', 'skipped', '1/2', null)]}
+      />,
+    );
+    expect(screen.getAllByText('Übersprungen').length).toBeGreaterThan(0);
+  });
+
   it('says the lead as one paragraph, sentence after sentence (Done.jsx:26)', () => {
     renderInApp(
       <SessionSummary

@@ -286,6 +286,37 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
     );
   });
 
+  it('takes a passage "from her sheet" only as it stands on the sheet (#636)', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Ida', birthDate: '2013-03-01' });
+    const sheet =
+      'A Day in London\n\nOn Saturday morning we took the bus to the market. My sister bought apples and I looked at the old books.';
+    await env.db.query(
+      `insert into materials (learner_id, client_request_id, status, photo_count, title,
+                              extracted_text, ready_at, created_at)
+       values ($1, gen_random_uuid(), 'ready', 1, 'Reading', $2, $3, $3)`,
+      [l.learnerId, sheet, env.clock.now()],
+    );
+    const passage =
+      'On Saturday morning we took the bus to the market. My sister bought apples and I looked at the old books.';
+    const invented =
+      'Last summer Tom visited London with his family and took the big red bus to Big Ben.';
+    const fromSheet = (text: string) => ({
+      actions: [
+        { tool: 'offer_rehearsal', args: { kind: 'read_aloud', goal: null, text, sheet: 'sh1' } },
+      ],
+    });
+    env.llm.script(
+      'buddy_turn',
+      { json: turn(fromSheet(invented)) },
+      { json: turn(fromSheet(passage)) },
+    );
+    const home = await say(l, 'Können wir den Text auf meinem Blatt vorlesen üben?');
+    const reading = card(home, 'offer_rehearsal');
+    expect(reading.summary).toMatchObject({ kind: 'read_aloud', text: passage });
+    const repair = env.llm.callsFor('buddy_turn').at(-1);
+    expect(JSON.stringify(repair?.contents)).toMatch(/is not on sheet sh1/);
+  });
+
   it('counts the same recording once, keeps other learners out, and stores nothing when it fails', async () => {
     const l = await onboard(env, { relation: 'child', name: 'Dora', birthDate: '2016-03-01' });
     const reading = await offer(

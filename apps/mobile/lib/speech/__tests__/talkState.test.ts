@@ -2,7 +2,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { heardHim, talkHeadline, talkStatus, type MicState, type TalkPhase } from '../talkState.js';
+import {
+  heardHim,
+  shownMic,
+  talkHeadline,
+  talkStatus,
+  type MicState,
+  type TalkPhase,
+} from '../talkState.js';
 
 const MICS: MicState[] = ['idle', 'starting', 'recording', 'transcribing'];
 const PHASES: TalkPhase[] = ['listening', 'thinking', 'speaking', 'paused'];
@@ -91,5 +98,12 @@ describe('the one status line (design ui_kits/app/Talk.jsx:28)', () => {
     expect(heardHim(true, 'listening', 'speaking')).toBe(false);
     expect(heardHim(true, 'thinking', 'idle')).toBe(false);
     expect(heardHim(true, 'paused', 'idle')).toBe(false);
+  });
+
+  it('says "getting ready" from the first frame of a Talk that will listen, never "paused" (#644)', () => {
+    expect(talkHeadline('paused', shownMic('idle', true))).toBe('buddy:talk.getting_ready');
+    expect(talkHeadline('paused', shownMic('idle', false))).toBe('buddy:talk.paused');
+    // Once the recogniser has its own state, that state is what is shown.
+    for (const mic of MICS.filter((m) => m !== 'idle')) expect(shownMic(mic, true)).toBe(mic);
   });
 });

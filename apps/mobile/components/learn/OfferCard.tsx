@@ -9,8 +9,9 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { ChatCard, PracticeReady } from '../buddy/ChatCard.js';
+import { PracticeReady } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';
+import { FinishedOffer } from './FinishedOffer.js';
 import { KIND_LABEL } from './kinds.js';
 import { useStartTopic } from './useStartTopic.js';
 import { reacted, tapped } from '../../lib/perf.js';
@@ -81,27 +82,9 @@ export function OfferCard({
     reacted('start_offer');
   }
 
-  // She already worked through it (issue #630): the card says so and opens what came of it —
-  // "Los geht's" on a run she finished promised a start that was over. Drawn like the finished
-  // practice's own card (HomeNotices `ResultView`): the tick, "Geschafft!", "Ansehen".
+  // She already worked through it (issue #630): the card says so and opens what came of it.
   if (offer.finished_session_id !== null) {
-    const sessionId = offer.finished_session_id;
-    return (
-      <ChatCard
-        tone="accent"
-        icon="check"
-        label={label}
-        title={offer.text}
-        titleLines={2}
-        detail={t('buddy:now.result_title')}
-        primary={{
-          label: t('buddy:now.result_view'),
-          variant: 'secondary',
-          accessibilityHint: `${label}: ${offer.text}`,
-          onPress: () => router.push(`/practice/${sessionId}`),
-        }}
-      />
-    );
+    return <FinishedOffer label={label} title={offer.text} sessionId={offer.finished_session_id} />;
   }
 
   return (
