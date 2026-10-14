@@ -578,6 +578,9 @@ declares them in `modules/learning/lookups.ts` and registers them at start-up (`
   not run;
 - every connector query is scoped by the learner id; lookups change nothing;
 - the audit (`buddy_decisions.output.lookups`) records which lookups ran, not their results.
+- the lookups of one round run side by side and come back in the order the model asked, so a
+  round waits for its slowest lookup, not for their sum (`search_material` alone carries an
+  embedding call, p50 270 ms live; issue #626, `lookups-parallel.test.ts`).
 
 Live eval (`evals/buddy/run.ts`, case `de_lookup_sheet`): the answer came from the sheet in every
 run (6/6). Act tools move to the same registry in stage 2; external connectors (stage 3) and
