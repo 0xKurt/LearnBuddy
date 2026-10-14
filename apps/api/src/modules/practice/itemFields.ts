@@ -19,6 +19,12 @@ export const RUBRIC_KINDS = ['long'] as const;
  */
 export const FREE_TEXT_KINDS = ['long', 'essay'] as const;
 
+/**
+ * A task that asks her for a reason (#642, item 9) is answered in her own words: only a long
+ * answer can hold one, so only a schema that offers it asks whether a task wants one.
+ */
+export const REASON_KINDS = ['long'] as const;
+
 /** The ± a rounded or measured number may be off (only a number has one). */
 export const TOLERANCE_KINDS = ['numeric'] as const;
 
@@ -51,6 +57,7 @@ export function kindIn(kinds: readonly string[], kind: string): boolean {
  */
 export function unusedItemFields(kinds: readonly string[]): {
   rubric?: true;
+  asks_reason?: true;
   tolerance?: true;
   spelling?: true;
   choice_figures?: true;
@@ -61,6 +68,7 @@ export function unusedItemFields(kinds: readonly string[]): {
   const none = (some: readonly string[]) => !kinds.some((k) => kindIn(some, k));
   return {
     ...(none(RUBRIC_KINDS) ? { rubric: true } : {}),
+    ...(none(REASON_KINDS) ? { asks_reason: true } : {}),
     ...(none(TOLERANCE_KINDS) ? { tolerance: true } : {}),
     ...(none(SPELLING_KINDS) ? { spelling: true } : {}),
     ...(none(CHOICE_FIGURE_KINDS) ? { choice_figures: true } : {}),
