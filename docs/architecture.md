@@ -995,6 +995,30 @@ that is honestly known about it — so this rate is a floor, never a ceiling. Ev
 app stays the owner's: quotas and region in the Cloud Console, and evals and video shoots on
 their own project so they stop taking capacity from the live app (issue #206, points 1 and 2).
 
+**Refused, unusable, oversized, silent** (issue #650, audit F2-b). From 03.10. to 14.10.2026
+Vertex refused every practice run, test, help and sheet reading with a bare 400 (#627) and
+nothing said so: the alarm above counts only 429s, and the chat kept working. Three checks on
+every tick now go the same way — into the run's errors, so `GET /health` answers 503 and the
+health workflow mails the owner within its 30 minutes:
+(1) **per purpose**, the share of calls refused (`error_code 'refused…'`, a 4xx other than 429)
+or unusable (`outcome 'invalid_output'`: cut off, empty, not JSON) over the same 60-minute
+app-clock window — at least **2 failed and 25 %** of the purpose's calls
+(`scheduler/throttle.ts` `modelFailures`; on `/health` as `scheduler.model_failures`). Per
+purpose, because one purpose failing completely is a few percent of all calls. Answers that
+parse but fail a module's own zod check are recorded as `ok` and are not counted yet.
+(2) **every schema the running build sends** — one list, `buddy/schemas.ts` plus what the domain
+registers (`learning/schemas.ts`), the same the CI guard and the schema inventory read — against
+the measured bound (`llm/schemaBudget.ts`). No model call, so on every tick: a deploy that ships a
+schema past the bound is red on its first minute (`scheduler/canary.ts` `schemasOverBudget`).
+(3) **one tiny real call an hour** on Buddy's turn model (`purpose 'canary'`, a one-field schema,
+minimal thinking; measured 59 input + 5 output tokens, 2.2 s, 70 micro-USD, ≈ 5 US cents a month),
+claimed once across concurrent ticks and run last, only with its whole 20 s left. It proves
+credentials, model and region; it is recorded in `llm_calls` without a learner, and its failure
+stays on the `model_canary` heartbeat — red on every tick — until the next call passes
+(`scheduler.model_canary`). The provider's own words go to the function log, never to the public
+`/health`. What it does not prove: that Vertex still serves a schema at the bound — sending the
+largest schema hourly would cost its input tokens every time; a lowered bound shows as (1).
+
 Models per task: each call names its purpose; `VERTEX_ROUTES` (JSON, zod-checked) maps a purpose
 to a model, else a measured default (`DEFAULT_ROUTES` in `llm/vertex.ts`: pronunciation on 3.1
 Flash-Lite — as strict as 3.6 Flash in `evals/speak`, half the cost), else the tier's model. A model may carry its location

@@ -111,9 +111,11 @@ const DEFAULT_ROUTES: Partial<Record<LlmRequest['purpose'], string>> = {
 
 /** The model spec a request runs on: explicit route → measured default → the tier's model. */
 export function modelFor(config: Config, req: Pick<LlmRequest, 'purpose' | 'tier'>): string {
+  // The canary (#650) runs where Buddy's turn runs: the call every learner makes first.
+  const purpose = req.purpose === 'canary' ? 'buddy_turn' : req.purpose;
   return (
-    config.VERTEX_ROUTES[req.purpose] ??
-    DEFAULT_ROUTES[req.purpose] ??
+    config.VERTEX_ROUTES[purpose] ??
+    DEFAULT_ROUTES[purpose] ??
     (req.tier === 'smart' ? config.VERTEX_MODEL_SMART : config.VERTEX_MODEL_FAST)
   );
 }

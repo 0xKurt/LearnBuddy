@@ -327,7 +327,8 @@ export function widest(full: JsonSchema): JsonSchema {
   return withinBudget(full) ? full : fitted(full, offered(full)).schema;
 }
 
-const CHOOSER = `NOW ONLY CHOOSE, DO NOT WRITE THE TASK. Before the answer above is written, choose what it needs from the two lists of this answer's schema: "forms" — the task forms beyond plain questions (the structured kinds and the separate lists of tasks), and "figures" — the figure types its questions need drawn. Choose the fewest that serve this learner and this material well, the most needed first; an empty list when plain questions serve. What is not chosen cannot be used.`;
+/** What the choosing call is told on top of the main call's system prompt (listed in `learning/schemas.ts`). */
+export const CHOOSER = `NOW ONLY CHOOSE, DO NOT WRITE THE TASK. Before the answer above is written, choose what it needs from the two lists of this answer's schema: "forms" — the task forms beyond plain questions (the structured kinds and the separate lists of tasks), and "figures" — the figure types its questions need drawn. Choose the fewest that serve this learner and this material well, the most needed first; an empty list when plain questions serve. What is not chosen cannot be used.`;
 
 /**
  * The schema the main call goes out with: `full` when it fits; otherwise narrowed to what a first,

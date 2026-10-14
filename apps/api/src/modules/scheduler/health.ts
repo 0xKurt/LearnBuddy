@@ -7,7 +7,13 @@
 
 import type { Db } from '../../lib/db.js';
 import type { JobKind } from './jobs.js';
-import { modelThrottle, type ModelThrottle } from './throttle.js';
+import { lastCanary, type CanaryRun } from './canary.js';
+import {
+  modelFailures,
+  modelThrottle,
+  type ModelThrottle,
+  type PurposeFailures,
+} from './throttle.js';
 import type { RetentionStats } from './tick.js';
 
 /** A tick runs every minute; ten minutes without one means the scheduler is not running. */
@@ -36,6 +42,13 @@ export type SchedulerHealth = {
    * `last_error` and so turns `state` to 'failing' on its own.
    */
   model_throttle: ModelThrottle;
+  /**
+   * Refused and unusable model calls per purpose in the last hour, and the hourly real call
+   * (issue #650). Reported like `model_throttle`, for the same reason: their alarms travel as
+   * `last_error`, which turns `state` to 'failing' — these are the numbers behind the line.
+   */
+  model_failures: PurposeFailures[];
+  model_canary: CanaryRun;
 };
 
 export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealth> {
@@ -67,6 +80,8 @@ export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealt
     stats: RetentionStats | null;
   }>(`select last_finished_at, stats from system_heartbeats where name = 'retention'`);
   const throttle = await modelThrottle(db, now);
+  const failures = await modelFailures(db, now);
+  const canary = await lastCanary({ db });
   const state: SchedulerHealth['state'] =
     !recent || waiting ? 'stale' : hb?.last_error ? 'failing' : 'ok';
   return {
@@ -80,5 +95,7 @@ export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealt
       counts: retention?.stats ?? null,
     },
     model_throttle: throttle,
+    model_failures: failures,
+    model_canary: canary,
   };
 }

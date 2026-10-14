@@ -21,6 +21,7 @@ import { registerWaitingStart } from '../buddy/offers.js';
 import { runPreparePractice, runShowReady } from '../buddy/practiceTool.js';
 import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../buddy/review.js';
 import { registerContextProvider, type ContextProvider } from '../buddy/provider.js';
+import { registerSentSchemas } from '../buddy/schemas.js';
 import { endForConcern, runStartRoleplay } from '../buddy/roleplay.js';
 import { registerStepStarter } from '../buddy/stepStart.js';
 import { runOfferRehearsal, runPlanTalk } from '../buddy/talkTools.js';
@@ -43,6 +44,7 @@ import { LEARNING_LOOKUPS } from './lookups.js';
 import { findLearningLookBack } from './lookback.js';
 import { LEARNING_PRIVACY_TABLES } from './privacy.js';
 import { LEARNING_TURN_RULES } from './prompt.js';
+import { learningSchemas } from './schemas.js';
 import { learningBuddyRoutes } from './routes.js';
 import { findOrCreateSubject, loadLearningState, readySheet, subjectNames } from './state.js';
 import { homeworkLeak, roleplayMode } from './turn.js';
@@ -138,4 +140,7 @@ export function registerLearning(): void {
 
   // What it keeps about her: in her export, and gone with her account — children first.
   registerPrivacyTables(...LEARNING_PRIVACY_TABLES);
+
+  // What its model calls send, for the schema budget and the model canary (issue #650).
+  registerSentSchemas(learningSchemas);
 }

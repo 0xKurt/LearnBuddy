@@ -54,7 +54,8 @@ async function releaseReservation(
 
 async function record(
   deps: ModelDeps,
-  learnerId: string,
+  /** Null only for the canary, which runs on no learner's behalf. */
+  learnerId: string | null,
   req: LlmRequest,
   outcome: 'ok' | 'invalid_output' | 'error' | 'timeout',
   usage: LlmResult['usage'] | null,
@@ -151,18 +152,47 @@ export async function callAhead(
     return result;
   } catch (err) {
     if (err instanceof LlmError) {
-      await record(
-        deps,
-        learnerId,
-        req,
-        err.kind === 'timeout' ? 'timeout' : 'error',
-        err.usage,
-        err.kind,
-      );
+      await record(deps, learnerId, req, outcomeOf(err), err.usage, err.kind);
       await book(err.usage);
     }
     throw err;
   }
+}
+
+/** How a failed call is recorded: timeout, unusable output, or any other error. */
+function outcomeOf(err: LlmError): 'invalid_output' | 'error' | 'timeout' {
+  return err.kind === 'timeout'
+    ? 'timeout'
+    : err.kind === 'invalid_output'
+      ? 'invalid_output'
+      : 'error';
+}
+
+/** One call recorded as it ended, without a reservation and without a day to book it to. */
+async function recorded(
+  deps: ModelDeps,
+  learnerId: string | null,
+  req: LlmRequest,
+): Promise<LlmResult> {
+  try {
+    const result = await timedModel(() => deps.llm.generate(req));
+    await record(deps, learnerId, req, 'ok', result.usage, null);
+    return result;
+  } catch (err) {
+    if (err instanceof LlmError)
+      await record(deps, learnerId, req, outcomeOf(err), err.usage, err.kind);
+    throw err;
+  }
+}
+
+/**
+ * The scheduler's canary (#650, `scheduler/canary.ts`): no learner asked for it, so nothing of
+ * hers is reserved. It is recorded like every call — its cost and outcome are in `llm_calls`,
+ * without a learner, and a refusal of it counts towards the model alarms like any other.
+ */
+export async function callCanary(deps: ModelDeps, req: LlmRequest): Promise<LlmResult> {
+  if (req.purpose !== 'canary') throw new Error('only the canary runs on no learner’s behalf');
+  return recorded(deps, null, req);
 }
 
 /**
@@ -181,6 +211,7 @@ export async function callModel(
   const kind = req.purpose;
   // A choosing call has no limit of its own: it is metered with its call (`callAhead`).
   if (kind === 'forms') throw new Error('a forms call goes through callAhead');
+  if (kind === 'canary') throw new Error('the canary goes through callCanary');
   const own =
     reservation !== null &&
     reservation.held &&

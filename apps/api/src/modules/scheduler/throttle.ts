@@ -91,3 +91,79 @@ export function throttleAlarm(t: ModelThrottle): string {
     `${THROTTLE_ALARM_PERCENT} %) — check the Vertex quota for this project`
   );
 }
+
+// Refused and unusable answers, per purpose (issue #650, audit F2-b). From 03.10. to 14.10.2026
+// every practice run, test, help and sheet reading was refused with a bare 400 because its schema
+// had grown past what Vertex serves (#627) — eleven days, and nothing here said so, because this
+// file counted only 429s. A 400 is no throttle: the request itself is wrong, the same request
+// fails the same way, and only a code change helps. So it is counted per purpose — one purpose
+// failing completely is drowned in the share of all calls when the chat keeps working — together
+// with answers that came back unusable (`invalid_output`: cut off, empty, not JSON), the other
+// shape a broken prompt or schema takes.
+
+/**
+ * Failed calls of one purpose before its share is raised as an alarm. One refusal in a quiet hour
+ * can be one odd request; two mean the same thing happened again.
+ */
+export const FAILURE_MIN_FAILED = 2;
+
+/**
+ * The share of a purpose's calls that may fail before the alarm. A broken schema fails every call
+ * of its purpose (100 %); a model that cuts off long sheets now and then stays well under it.
+ */
+export const FAILURE_ALARM_PERCENT = 25;
+
+export type PurposeFailures = {
+  purpose: string;
+  calls: number;
+  /** The provider rejected the request itself (`error_code` 'refused…', HTTP 4xx other than 429). */
+  refused: number;
+  /** The answer came back unusable (`outcome = 'invalid_output'`). */
+  invalid_output: number;
+  /** `(refused + invalid_output) / calls` in percent, one decimal. */
+  percent: number;
+  alarming: boolean;
+};
+
+/** Per purpose with any call in the window, the most failing first. */
+export async function modelFailures(db: Db, now: Date): Promise<PurposeFailures[]> {
+  // Same window and the same app-clock boundaries as the throttle above (rule 7).
+  const since = new Date(now.getTime() - THROTTLE_WINDOW_MINUTES * 60_000);
+  const rows = await db.query<{
+    purpose: string;
+    calls: number;
+    refused: number;
+    invalid: number;
+  }>(
+    `select purpose, count(*)::int as calls,
+            count(*) filter (where error_code like 'refused%')::int as refused,
+            count(*) filter (where outcome = 'invalid_output')::int as invalid
+       from llm_calls where created_at >= $1 and created_at <= $2
+      group by purpose`,
+    [since, now],
+  );
+  return rows
+    .map((r) => {
+      const failed = r.refused + r.invalid;
+      const percent = Math.round((1000 * failed) / r.calls) / 10;
+      return {
+        purpose: r.purpose,
+        calls: r.calls,
+        refused: r.refused,
+        invalid_output: r.invalid,
+        percent,
+        alarming: failed >= FAILURE_MIN_FAILED && percent >= FAILURE_ALARM_PERCENT,
+      };
+    })
+    .sort((a, b) => b.percent - a.percent || a.purpose.localeCompare(b.purpose));
+}
+
+/** One purpose's alarm, with its numbers and where to look. */
+export function failureAlarm(f: PurposeFailures): string {
+  return (
+    `model calls failing: ${f.purpose} — ${f.refused} refused and ${f.invalid_output} unusable ` +
+    `of ${f.calls} calls in the last ${THROTTLE_WINDOW_MINUTES} min (${f.percent} %, alarm at ` +
+    `${FAILURE_ALARM_PERCENT} %) — a refused request is the code's (schema, prompt or arguments), ` +
+    `not the provider's quota`
+  );
+}

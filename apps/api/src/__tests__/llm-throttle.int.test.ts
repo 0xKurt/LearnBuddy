@@ -222,11 +222,12 @@ describe.skipIf(!dbReady)('a throttled model provider', () => {
     expect(alarmed.body.ok).toBe(false);
     expect(alarmed.body.scheduler.state).toBe('failing');
     expect(alarmed.body.scheduler.last_error).toBe(stats.errors[0]);
-    // The number is on /health whether or not it is the error that got to last_error.
+    // The number is on /health whether or not it is the error that got to last_error. The run
+    // ended with its hourly canary call (#650, scheduler/canary.ts), which is a model call too.
     expect(alarmed.body.scheduler.model_throttle).toMatchObject({
-      calls: 100,
+      calls: 101,
       rate_limited: 40,
-      percent: 40,
+      percent: 39.6,
       window_minutes: THROTTLE_WINDOW_MINUTES,
       alarming: true,
     });

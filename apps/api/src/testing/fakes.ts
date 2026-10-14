@@ -167,6 +167,7 @@ export class ScriptedGateway implements LlmGateway {
   reset(): void {
     this.queues.clear();
     this.calls.length = 0;
+    this.canaries.length = 0;
     this.unexpected.length = 0;
     this.scriptErrors.length = 0;
   }
@@ -202,6 +203,20 @@ export class ScriptedGateway implements LlmGateway {
    * a chooser that is always right, so a test about something else is not about the choice.
    */
   readonly choices: LlmRequest[] = [];
+
+  /**
+   * The scheduler's hourly canary (#650, `scheduler/canary.ts`), kept apart from `calls` like the
+   * choosing calls: every tick may send one, and a test about something else is not about it.
+   * Answered from `script('canary', …)` when scripted, otherwise as a healthy model would.
+   */
+  readonly canaries: LlmRequest[] = [];
+  private canary(req: LlmRequest): LlmResult {
+    this.canaries.push(req);
+    const answer = this.queues.get('canary')?.shift() ?? { json: { ok: true } };
+    if (typeof answer === 'function') throw new Error('script the canary with a value');
+    if ('error' in answer) throw answer.error;
+    return { json: answer.json, usage: { ...SCRIPTED_USAGE } };
+  }
   private readonly choiceQueue: ScriptedAnswer[] = [];
 
   scriptChoice(...answers: ScriptedAnswer[]): this {
@@ -261,6 +276,7 @@ export class ScriptedGateway implements LlmGateway {
             : answer.json;
       return { json, usage: { ...SCRIPTED_USAGE } };
     }
+    if (req.purpose === 'canary') return this.canary(req);
     this.calls.push(req);
     const answer = this.queues.get(req.purpose)?.shift() ?? this.defaults.get(req.purpose);
     if (!answer) {

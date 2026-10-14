@@ -28,32 +28,16 @@ import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
 
 import { loadConfig } from '../../src/config.js';
-import type { JsonSchema, LlmRequest } from '../../src/llm/gateway.js';
+import type { JsonSchema } from '../../src/llm/gateway.js';
 import { ensureCredentialsFile, modelFor, splitModelSpec } from '../../src/llm/vertex.js';
-import * as consolidate from '../../src/modules/buddy/consolidate.js';
 import * as decision from '../../src/modules/buddy/decision.js';
 import * as lookups from '../../src/modules/buddy/lookups.js';
-import * as prompts from '../../src/modules/buddy/prompts.js';
 import * as registry from '../../src/modules/buddy/registry.js';
-import * as rehearse from '../../src/modules/buddy/rehearse.js';
-import * as roleplay from '../../src/modules/buddy/roleplay.js';
-import * as summarise from '../../src/modules/buddy/summarise.js';
-import * as extract from '../../src/modules/materials/extract.js';
-import * as images from '../../src/modules/materials/images.js';
-import * as sheetSources from '../../src/modules/materials/sources.js';
-import * as cloze from '../../src/modules/practice/cloze.js';
-import * as essay from '../../src/modules/practice/essay.js';
+import { sentSchemas, type SentSchema } from '../../src/modules/buddy/schemas.js';
 import * as formChoice from '../../src/modules/practice/formChoice.js';
 import * as generate from '../../src/modules/practice/generate.js';
 import * as setProfiles from '../../src/modules/practice/setProfiles.js';
-import * as hints from '../../src/modules/practice/hints.js';
-import * as reexplain from '../../src/modules/practice/reexplain.js';
-import * as practice from '../../src/modules/practice/answerTutor.js';
-import * as speak from '../../src/modules/practice/speak.js';
 import * as structured from '../../src/modules/practice/structured.js';
-import * as tutor from '../../src/modules/practice/tutor.js';
-import * as workPhoto from '../../src/modules/practice/workPhoto.js';
-import * as voice from '../../src/modules/voice/service.js';
 import { registerLearning } from '../../src/modules/learning/register.js';
 import {
   serialize,
@@ -66,7 +50,7 @@ import {
   type Union,
 } from './measure.js';
 
-// Buddy's prompt is built from what the learning domain registers (issue #107).
+// Buddy's prompt is built from what the learning domain registers, its schemas too (issue #107).
 registerLearning();
 
 const API = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -81,295 +65,36 @@ const DEFAULT_OUT = join(REPO, 'docs/measurements');
 const SHEET_TOPICS: [string, ...string[]] = ['Brüche addieren', 'Brüche kürzen', 'Dezimalzahlen'];
 
 /**
- * Every explain call there is: each kind of run, and the two kinds a photographed sheet can bind
- * (`sheetsOf` reads sheets only for a test or a practice). One row each, so a profile per kind
- * (D2) is measured against what that very kind sent before.
+ * The two kinds a photographed sheet can bind (`sheetsOf` reads sheets only for a test or a
+ * practice): measured here with the placeholder topics, on top of every schema the app lists
+ * itself (`buddy/schemas.ts`, `learning/schemas.ts`).
  */
-const EXPLAIN_RUNS: { kind: StartTopicRequest['kind']; sheets: boolean }[] = [
-  { kind: 'practice', sheets: false },
-  { kind: 'test', sheets: false },
-  { kind: 'vocab', sheets: false },
-  { kind: 'speak', sheets: false },
-  { kind: 'help', sheets: false },
-  { kind: 'listen', sheets: false },
-  { kind: 'spelling_dictation', sheets: false },
-  { kind: 'teach_back', sheets: false },
-  { kind: 'read', sheets: false },
-  { kind: 'essay', sheets: false },
-  { kind: 'practice', sheets: true },
-  { kind: 'test', sheets: true },
-];
+const SHEET_KINDS: StartTopicRequest['kind'][] = ['practice', 'test'];
 
 const TOKEN_LABEL =
   'Text-token count of the serialized text (countTokens on a plain text part) — NOT native usage, billing or cache.';
 
-export type Variant = {
-  purpose: LlmRequest['purpose'];
-  /** Which of the purpose's schema/prompt combinations (the profiles that exist today). */
-  profile: string;
-  /** As the call site passes it (summary is the only 'fast' one). */
-  tier: LlmRequest['tier'];
+/** One call's schema and prompt; the fields stay optional for reports of older commits. */
+export type Variant = Omit<SentSchema, 'promptVersion' | 'system' | 'schema'> & {
   promptVersion: string | undefined;
   system: string | undefined;
   schema: JsonSchema | undefined;
-  /** Where the call site picks this combination. */
-  where: string;
 };
 
 export function variants(): Variant[] {
-  const leanOf = (system: string | undefined) =>
-    system === undefined ? undefined : `${system}\n\n${extract.LEAN_RULES}`;
-  const p = prompts.buddyPrompt();
-  const buddy = p.version;
   return [
-    {
-      purpose: 'buddy_turn',
-      profile: 'step (lookups allowed; every first call of a turn)',
-      tier: 'smart',
-      promptVersion: buddy,
-      system: p.turnSystem,
-      schema: p.turnStepSchema,
-      where:
-        'buddy/prompts.ts (buddyPrompt), sent by turn.ts — final ? turnSchema : turnStepSchema',
-    },
-    {
-      purpose: 'buddy_turn',
-      profile: 'final (after MAX_LOOKUP_STEPS)',
-      tier: 'smart',
-      promptVersion: buddy,
-      system: p.turnSystem,
-      schema: p.turnSchema,
-      where: 'buddy/turn.ts',
-    },
-    {
-      purpose: 'buddy_turn',
-      profile: 'roleplay line (#244)',
-      tier: 'smart',
-      promptVersion: roleplay.ROLEPLAY_PROMPT_VERSION,
-      system: roleplay.ROLEPLAY_SYSTEM,
-      schema: roleplay.ROLEPLAY_TURN_SCHEMA,
-      where: 'learning/turn.ts — roleplayRound',
-    },
-    {
-      purpose: 'buddy_turn',
-      profile: 'roleplay feedback (#244)',
-      tier: 'smart',
-      promptVersion: roleplay.ROLEPLAY_PROMPT_VERSION,
-      system: roleplay.ROLEPLAY_FEEDBACK_SYSTEM,
-      schema: roleplay.FEEDBACK_SCHEMA,
-      where: 'buddy/roleplay.ts',
-    },
-    {
-      purpose: 'buddy_check',
-      profile: 'step',
-      tier: 'smart',
-      promptVersion: buddy,
-      system: p.checkSystem,
-      schema: p.checkStepSchema,
-      where: 'buddy/check.ts — final ? CHECK_SCHEMA : CHECK_STEP_SCHEMA',
-    },
-    {
-      purpose: 'buddy_check',
-      profile: 'final',
-      tier: 'smart',
-      promptVersion: buddy,
-      system: p.checkSystem,
-      schema: p.checkSchema,
-      where: 'buddy/check.ts',
-    },
-    {
-      purpose: 'explain',
-      profile: 'GENERATED_SCHEMA (global)',
-      tier: 'smart',
-      promptVersion: generate.GENERATE_PROMPT_VERSION,
-      system: generate.GENERATE_SYSTEM,
-      schema: formChoice.widest(setProfiles.GENERATED_SCHEMA),
-      where: 'practice/setProfiles.ts — GENERATED_SCHEMA',
-    },
-    ...EXPLAIN_RUNS.map(
-      ({ kind, sheets }): Variant => ({
+    ...sentSchemas(),
+    ...SHEET_KINDS.map(
+      (kind): Variant => ({
         purpose: 'explain',
-        profile: sheets
-          ? `kind=${kind} + sheets (${SHEET_TOPICS.length} placeholder topics)`
-          : `kind=${kind}`,
+        profile: `kind=${kind} + sheets (${SHEET_TOPICS.length} placeholder topics)`,
         tier: 'smart',
         promptVersion: generate.GENERATE_PROMPT_VERSION,
         system: generate.GENERATE_SYSTEM,
-        schema: formChoice.widest(setProfiles.explainSchemaFor(kind, sheets ? SHEET_TOPICS : null)),
-        where: `practice/setProfiles.ts — explainSchemaFor('${kind}', ${sheets ? 'sheets.topics' : 'null'})`,
+        schema: formChoice.widest(setProfiles.explainSchemaFor(kind, SHEET_TOPICS)),
+        where: `practice/setProfiles.ts — explainSchemaFor('${kind}', sheets.topics)`,
       }),
     ),
-    {
-      purpose: 'extraction',
-      profile: 'study',
-      tier: 'smart',
-      promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
-      system: extract.EXTRACT_SYSTEM,
-      schema: formChoice.widest(sheetSources.EXTRACTION_SCHEMA),
-      where: 'materials/reader.ts — homework ? HOMEWORK_* : EXTRACT_*',
-    },
-    {
-      purpose: 'extraction',
-      profile: 'study + LEAN_RULES (after a cut-off answer)',
-      tier: 'smart',
-      promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
-      system: leanOf(extract.EXTRACT_SYSTEM),
-      schema: formChoice.widest(sheetSources.EXTRACTION_SCHEMA),
-      where: 'materials/reader.ts — lean',
-    },
-    {
-      purpose: 'extraction',
-      profile: 'homework',
-      tier: 'smart',
-      promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
-      system: extract.HOMEWORK_SYSTEM,
-      schema: formChoice.widest(sheetSources.HOMEWORK_SCHEMA),
-      where: 'materials/reader.ts',
-    },
-    {
-      purpose: 'extraction',
-      profile: 'homework + LEAN_RULES',
-      tier: 'smart',
-      promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
-      system: leanOf(extract.HOMEWORK_SYSTEM),
-      schema: formChoice.widest(sheetSources.HOMEWORK_SCHEMA),
-      where: 'materials/reader.ts — lean',
-    },
-    {
-      purpose: 'tutor',
-      profile: 'tutor',
-      tier: 'smart',
-      promptVersion: practice.TUTOR_PROMPT_VERSION,
-      system: tutor.TUTOR_SYSTEM,
-      schema: practice.TUTOR_SCHEMA,
-      where: 'practice/answerTutor.ts — asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA',
-    },
-    {
-      purpose: 'tutor',
-      profile: 'rubric (#211)',
-      tier: 'smart',
-      promptVersion: practice.TUTOR_PROMPT_VERSION,
-      system: tutor.TUTOR_SYSTEM,
-      schema: practice.RUBRIC_SCHEMA,
-      where: 'practice/answerTutor.ts',
-    },
-    {
-      purpose: 'tutor',
-      profile: 'long text (#258)',
-      tier: 'smart',
-      promptVersion: essay.ESSAY_PROMPT_VERSION,
-      system: essay.ESSAY_SYSTEM,
-      schema: essay.ESSAY_SCHEMA,
-      where: 'practice/essay.ts',
-    },
-    {
-      purpose: 'tutor',
-      profile: 'cloze gaps (#232)',
-      tier: 'smart',
-      promptVersion: cloze.CLOZE_JUDGE_PROMPT_VERSION,
-      system: cloze.JUDGE_SYSTEM,
-      schema: cloze.GAP_SCHEMA,
-      where: 'practice/cloze.ts',
-    },
-    {
-      purpose: 'figures',
-      profile: '-',
-      tier: 'smart',
-      promptVersion: images.FIGURES_PROMPT_VERSION,
-      system: images.FIGURES_SYSTEM,
-      schema: images.FIGURES_SCHEMA,
-      where: 'materials/images.ts',
-    },
-    {
-      purpose: 'hints',
-      profile: '-',
-      tier: 'smart',
-      promptVersion: hints.HINTS_PROMPT_VERSION,
-      system: hints.SYSTEM,
-      schema: hints.HINTS_SCHEMA,
-      where: 'practice/hints.ts',
-    },
-    {
-      purpose: 'pronounce',
-      profile: 'sentence',
-      tier: 'smart',
-      promptVersion: speak.PRONOUNCE_PROMPT_VERSION,
-      system: speak.SYSTEM,
-      schema: speak.JUDGEMENT_SCHEMA,
-      where: 'practice/speak.ts',
-    },
-    {
-      purpose: 'pronounce',
-      profile: 'one word',
-      tier: 'smart',
-      promptVersion: `${speak.PRONOUNCE_PROMPT_VERSION}-word`,
-      system: speak.WORD_SYSTEM,
-      schema: speak.WORD_SCHEMA,
-      where: 'practice/speak.ts',
-    },
-    {
-      purpose: 'transcribe',
-      profile: '-',
-      tier: 'smart',
-      promptVersion: voice.TRANSCRIBE_PROMPT_VERSION,
-      system: voice.SYSTEM,
-      schema: voice.SCHEMA,
-      where: 'voice/service.ts',
-    },
-    {
-      purpose: 'transcribe',
-      profile: 'a rehearsal talk (#264)',
-      tier: 'smart',
-      promptVersion: rehearse.REHEARSE_PROMPT_VERSION,
-      system: rehearse.TALK_SYSTEM,
-      schema: rehearse.HEARD_SCHEMA,
-      where: 'buddy/rehearse.ts',
-    },
-    {
-      purpose: 'transcribe',
-      profile: 'reading aloud (#264)',
-      tier: 'smart',
-      promptVersion: rehearse.REHEARSE_PROMPT_VERSION,
-      system: rehearse.READ_SYSTEM,
-      schema: rehearse.HEARD_SCHEMA,
-      where: 'buddy/rehearse.ts',
-    },
-    {
-      purpose: 'transcribe',
-      profile: 'her working, photographed (#444)',
-      tier: 'smart',
-      promptVersion: workPhoto.WORK_PROMPT_VERSION,
-      system: workPhoto.WORK_SYSTEM,
-      schema: workPhoto.WORK_SCHEMA,
-      where: 'practice/workPhoto.ts',
-    },
-    {
-      purpose: 'reexplain',
-      profile: '-',
-      tier: 'smart',
-      promptVersion: reexplain.REEXPLAIN_PROMPT_VERSION,
-      system: reexplain.REEXPLAIN_SYSTEM,
-      schema: reexplain.SCHEMA,
-      where: 'practice/reexplain.ts',
-    },
-    {
-      purpose: 'consolidate',
-      profile: '-',
-      tier: 'smart',
-      promptVersion: consolidate.CONSOLIDATE_PROMPT_VERSION,
-      system: consolidate.SYSTEM,
-      schema: consolidate.SCHEMA,
-      where: 'buddy/consolidate.ts',
-    },
-    {
-      purpose: 'summary',
-      profile: '-',
-      tier: 'fast',
-      promptVersion: summarise.SUMMARY_PROMPT_VERSION,
-      system: summarise.SYSTEM,
-      schema: summarise.SCHEMA,
-      where: 'buddy/summarise.ts',
-    },
   ];
 }
 
