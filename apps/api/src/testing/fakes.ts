@@ -20,8 +20,12 @@ import {
   type LlmPurpose,
   type LlmRequest,
   type LlmResult,
+  type LlmUsage,
+  type JsonSchema,
 } from '../llm/gateway.js';
 import { answerUpTo } from '../llm/partial.js';
+import { withinBudget } from '../llm/schemaBudget.js';
+import { fitted, isChoosing, offered, usedBy } from '../modules/practice/formChoice.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
 import type { SpeechAudio, SpeechError, SpeechGateway, SpeechInput } from '../speech/gateway.js';
 import {
@@ -53,6 +57,32 @@ export class TestClock {
     return this.now();
   }
 }
+
+/**
+ * The schema a main call goes out with when the scripted chooser answers for `answer` (#627): the
+ * whole one when it fits, else the narrowing to what the answer uses.
+ */
+export function sentFor(full: JsonSchema, answer: unknown): JsonSchema {
+  if (withinBudget(full)) return full;
+  const can = offered(full);
+  const used = usedBy(answer);
+  return fitted(full, {
+    forms: used.forms.filter((f) => can.forms.includes(f)),
+    figures: used.figures.filter((f) => can.figures.includes(f)),
+  }).schema;
+}
+
+/** What a scripted call reports as used. */
+const SCRIPTED_USAGE: LlmUsage = {
+  model: 'scripted',
+  inputTokens: 1000,
+  outputTokens: 200,
+  thoughtTokens: 0,
+  // No provider, no prefix cache: the fake never claims a cache hit (issue #25).
+  cachedTokens: 0,
+  costMicros: 800,
+  latencyMs: 1,
+};
 
 /** One scripted model answer: JSON, an error, or a function of the request (may have side effects). */
 export type ScriptedAnswer =
@@ -165,7 +195,71 @@ export class ScriptedGateway implements LlmGateway {
       .join('\n');
   }
 
+  /**
+   * The choosing calls before a main call whose schema is past the budget (#627,
+   * `practice/formChoice.ts`). Kept apart from `calls`, answered from `scriptChoice` and
+   * otherwise with exactly the forms and figures the next scripted answer of that purpose uses —
+   * a chooser that is always right, so a test about something else is not about the choice.
+   */
+  readonly choices: LlmRequest[] = [];
+  private readonly choiceQueue: ScriptedAnswer[] = [];
+
+  scriptChoice(...answers: ScriptedAnswer[]): this {
+    this.choiceQueue.push(...answers);
+    return this;
+  }
+
+  private async defaultChoice(req: LlmRequest): Promise<unknown> {
+    const enumOf = (key: string): string[] => {
+      const props = req.schema.properties;
+      const list = props && typeof props === 'object' && !Array.isArray(props) ? props[key] : null;
+      const items = list && typeof list === 'object' && !Array.isArray(list) ? list.items : null;
+      const values =
+        items && typeof items === 'object' && !Array.isArray(items) ? items.enum : null;
+      return Array.isArray(values) ? values.filter((v): v is string => typeof v === 'string') : [];
+    };
+    const offered = { forms: enumOf('forms'), figures: enumOf('figures') };
+    const of = (answer: unknown) => {
+      const used = usedBy(answer);
+      return {
+        forms: used.forms.filter((f) => offered.forms.includes(f)),
+        figures: used.figures.filter((f) => offered.figures.includes(f)),
+      };
+    };
+    const next = this.queues.get(req.purpose)?.[0] ?? this.defaults.get(req.purpose);
+    if (next && typeof next !== 'function' && 'json' in next) return of(next.json);
+    // A scripted function is read ahead by asking it once more: most return a fixed answer. One
+    // that waits on something or fails is no answer to read, and then everything offered goes.
+    if (typeof next === 'function') {
+      try {
+        const late = Symbol('late');
+        const ahead = await Promise.race([
+          Promise.resolve(next(req)),
+          new Promise((r) => setTimeout(() => r(late), 20)),
+        ]);
+        if (ahead !== late && ahead !== undefined) return of(ahead);
+      } catch {
+        // falls through to everything offered
+      }
+    }
+    return offered;
+  }
+
   async generate(req: LlmRequest): Promise<LlmResult> {
+    if (isChoosing(req)) {
+      this.choices.push(req);
+      const answer = this.choiceQueue.shift();
+      const json = !answer
+        ? await this.defaultChoice(req)
+        : typeof answer === 'function'
+          ? await answer(req)
+          : 'error' in answer
+            ? (() => {
+                throw answer.error;
+              })()
+            : answer.json;
+      return { json, usage: { ...SCRIPTED_USAGE } };
+    }
     this.calls.push(req);
     const answer = this.queues.get(req.purpose)?.shift() ?? this.defaults.get(req.purpose);
     if (!answer) {
@@ -202,19 +296,7 @@ export class ScriptedGateway implements LlmGateway {
           req.onPartial(text.slice(0, n));
       }
     }
-    return {
-      json,
-      usage: {
-        model: 'scripted',
-        inputTokens: 1000,
-        outputTokens: 200,
-        thoughtTokens: 0,
-        // No provider, no prefix cache: the fake never claims a cache hit (issue #25).
-        cachedTokens: 0,
-        costMicros: 800,
-        latencyMs: 1,
-      },
-    };
+    return { json, usage: { ...SCRIPTED_USAGE } };
   }
 }
 

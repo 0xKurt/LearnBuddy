@@ -23,6 +23,7 @@ import type { SessionView, StartTopicRequest } from '@learnbuddy/shared-types/co
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { explainSchemaFor, GENERATED_SCHEMA } from '../modules/practice/setProfiles.js';
+import { sentFor } from '../testing/fakes.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import { schemaErrors } from '../testing/schemaCheck.js';
@@ -377,7 +378,9 @@ describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
       await env.flushBackground();
 
       const [call] = env.llm.callsFor('explain');
-      expect(call?.schema).toEqual(explainSchemaFor(kind, null));
+      // Past the budget, the profile goes out narrowed to what was chosen first (#627); the
+      // scripted chooser picks what the answer uses, so the schema is that narrowing of the profile.
+      expect(call?.schema).toEqual(sentFor(explainSchemaFor(kind, null), EVERYTHING));
       expect(JSON.stringify(call?.schema).length).toBeLessThan(
         JSON.stringify(GENERATED_SCHEMA).length,
       );
@@ -426,7 +429,7 @@ describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
     });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     const [call] = env.llm.callsFor('explain');
-    expect(call?.schema).toEqual(explainSchemaFor('test', ['Brüche']));
+    expect(call?.schema).toEqual(sentFor(explainSchemaFor('test', ['Brüche']), EVERYTHING));
     expect(JSON.stringify(call?.schema)).toContain('"enum":["Brüche"]');
     expect(Object.keys(call?.schema?.properties ?? {})).not.toContain('bars');
     // The same forms as an unbound test: the sheets narrow the topics, not the forms.

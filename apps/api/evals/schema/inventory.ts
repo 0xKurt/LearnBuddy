@@ -43,6 +43,7 @@ import * as images from '../../src/modules/materials/images.js';
 import * as sheetSources from '../../src/modules/materials/sources.js';
 import * as cloze from '../../src/modules/practice/cloze.js';
 import * as essay from '../../src/modules/practice/essay.js';
+import * as formChoice from '../../src/modules/practice/formChoice.js';
 import * as generate from '../../src/modules/practice/generate.js';
 import * as setProfiles from '../../src/modules/practice/setProfiles.js';
 import * as hints from '../../src/modules/practice/hints.js';
@@ -102,7 +103,7 @@ const EXPLAIN_RUNS: { kind: StartTopicRequest['kind']; sheets: boolean }[] = [
 const TOKEN_LABEL =
   'Text-token count of the serialized text (countTokens on a plain text part) — NOT native usage, billing or cache.';
 
-type Variant = {
+export type Variant = {
   purpose: LlmRequest['purpose'];
   /** Which of the purpose's schema/prompt combinations (the profiles that exist today). */
   profile: string;
@@ -115,7 +116,7 @@ type Variant = {
   where: string;
 };
 
-function variants(): Variant[] {
+export function variants(): Variant[] {
   const leanOf = (system: string | undefined) =>
     system === undefined ? undefined : `${system}\n\n${extract.LEAN_RULES}`;
   const p = prompts.buddyPrompt();
@@ -182,7 +183,7 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: generate.GENERATE_PROMPT_VERSION,
       system: generate.GENERATE_SYSTEM,
-      schema: setProfiles.GENERATED_SCHEMA,
+      schema: formChoice.widest(setProfiles.GENERATED_SCHEMA),
       where: 'practice/setProfiles.ts — GENERATED_SCHEMA',
     },
     ...EXPLAIN_RUNS.map(
@@ -194,7 +195,7 @@ function variants(): Variant[] {
         tier: 'smart',
         promptVersion: generate.GENERATE_PROMPT_VERSION,
         system: generate.GENERATE_SYSTEM,
-        schema: setProfiles.explainSchemaFor(kind, sheets ? SHEET_TOPICS : null),
+        schema: formChoice.widest(setProfiles.explainSchemaFor(kind, sheets ? SHEET_TOPICS : null)),
         where: `practice/setProfiles.ts — explainSchemaFor('${kind}', ${sheets ? 'sheets.topics' : 'null'})`,
       }),
     ),
@@ -204,7 +205,7 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: extract.EXTRACT_SYSTEM,
-      schema: sheetSources.EXTRACTION_SCHEMA,
+      schema: formChoice.widest(sheetSources.EXTRACTION_SCHEMA),
       where: 'materials/reader.ts — homework ? HOMEWORK_* : EXTRACT_*',
     },
     {
@@ -213,7 +214,7 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: leanOf(extract.EXTRACT_SYSTEM),
-      schema: sheetSources.EXTRACTION_SCHEMA,
+      schema: formChoice.widest(sheetSources.EXTRACTION_SCHEMA),
       where: 'materials/reader.ts — lean',
     },
     {
@@ -222,7 +223,7 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: extract.HOMEWORK_SYSTEM,
-      schema: sheetSources.HOMEWORK_SCHEMA,
+      schema: formChoice.widest(sheetSources.HOMEWORK_SCHEMA),
       where: 'materials/reader.ts',
     },
     {
@@ -231,7 +232,7 @@ function variants(): Variant[] {
       tier: 'smart',
       promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
       system: leanOf(extract.HOMEWORK_SYSTEM),
-      schema: sheetSources.HOMEWORK_SCHEMA,
+      schema: formChoice.widest(sheetSources.HOMEWORK_SCHEMA),
       where: 'materials/reader.ts — lean',
     },
     {

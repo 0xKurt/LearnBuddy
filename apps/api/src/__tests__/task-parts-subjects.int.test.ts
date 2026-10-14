@@ -139,22 +139,15 @@ describe.skipIf(!dbReady)('tasks in parts across subjects (#297, Schnitt 4)', ()
       expect(i.item.task_part?.stem).toBe(CART_STEM);
       expect(i.item.figure).toEqual(CART_TABLE);
     }
-    // The model was offered the material's drawings, and only those.
+    // The model was offered the material's drawings, and only those — of them, only the one this
+    // run was chosen to need (#627: the chooser picked the table its answer draws).
     type Node = { properties: Record<string, Node>; items: Node; anyOf?: Node[]; enum?: string[] };
     const sent = env.llm.callsFor('explain')[0]!.schema as unknown as Node;
     const material = sent.properties.part_tasks!.items.properties.figure!;
     const kinds = (material.anyOf ?? [])
       .flatMap((o) => o.anyOf ?? [o])
       .flatMap((o) => o.properties?.type?.enum ?? []);
-    expect(kinds).toEqual([
-      'table',
-      'function_plot',
-      'bar_chart',
-      'line_chart',
-      'climate_chart',
-      'pie_chart',
-      'scatter_plot',
-    ]);
+    expect(kinds).toEqual(['table']);
     // Folgefehler with the table beside it, as without one.
     const [a, b] = s.items.map((i) => i.item.id) as [string, string];
     expect((await answer(s, a, '9 m')).body.verdict).toBe('incorrect');

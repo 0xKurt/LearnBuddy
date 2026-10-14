@@ -370,6 +370,8 @@ describe.skipIf(!dbReady)('material lifecycle and erasure', () => {
   it('deleting during the reading yields no ready sheet, no questions and no wake-up (repro-13)', async () => {
     const m = await create(env, lena);
     for (const p of m.paths) env.storage.put(p);
+    // The forms are chosen first (#627); the answer below uses none of them.
+    env.llm.scriptChoice({ json: { forms: [], figures: [] } });
     env.llm.script('extraction', async () => {
       // She deletes the sheet while the model reads it.
       expect((await lena.api.delete(`/materials/${m.id}`)).status).toBeLessThan(300);

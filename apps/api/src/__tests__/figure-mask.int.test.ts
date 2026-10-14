@@ -16,6 +16,7 @@ import type { SessionView, StartTopicRequest } from '@learnbuddy/shared-types/co
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { explainSchemaFor } from '../modules/practice/setProfiles.js';
+import { sentFor } from '../testing/fakes.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import { schemaErrors } from '../testing/schemaCheck.js';
@@ -104,7 +105,8 @@ describe.skipIf(!dbReady)('no figure on a vocab or speak card (#375)', () => {
 
   it('a practice run is unchanged: its figures stay, a vocab card in it keeps none', async () => {
     const { schema, stored } = await run('practice', [NUMERIC, VOCAB[0]!]);
-    expect(schema).toEqual(explainSchemaFor('practice', null));
+    // Narrowed to the figures this run's answer uses (#627): the fraction stays in the schema.
+    expect(schema).toEqual(sentFor(explainSchemaFor('practice', null), { items: [NUMERIC] }));
     expect(JSON.stringify(schema)).toContain('"figure"');
     const figureOf = (prompt: string) => stored.find((r) => r.prompt === prompt)?.figure;
     expect(figureOf(NUMERIC.prompt)).toEqual(THREE_QUARTERS);

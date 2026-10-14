@@ -6,8 +6,9 @@ import type { Deps } from '../../deps.js';
 import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
-import type { LlmPart, LlmResult } from '../../llm/gateway.js';
+import type { LlmMessage, LlmPart, LlmResult } from '../../llm/gateway.js';
 import { curriculumBlock } from '../curriculum/state.js';
+import { chooseForms, keepChosen, type Narrowed } from '../practice/formChoice.js';
 import { ageOn } from '../identity/model.js';
 import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM, LEAN_RULES } from './extract.js';
 import {
@@ -56,34 +57,47 @@ export async function sheetReader(
       : learner.level === 'unknown'
         ? 'unknown'
         : learner.level;
-  const read: Reader = (lean, extra) =>
-    callModel(deps, learner.id, localParts(opts.now, tz).date, {
+  const day = localParts(opts.now, tz).date;
+  const system = opts.homework ? HOMEWORK_SYSTEM : `${EXTRACT_SYSTEM}\n\n${SOURCE_RULES}`;
+  const version = `${EXTRACT_PROMPT_VERSION}${opts.homework ? '' : `+${SOURCES_PROMPT_VERSION}`}`;
+  const contents: LlmMessage[] = [
+    {
+      role: 'user',
+      parts: [
+        {
+          text: [
+            `LEARNER: ${ageOn(learner.birth_date, opts.now)} years, level ${level}, app language ${learner.locale}`,
+            // Which curriculum decides what a complete answer is (issue #214). The sheet
+            // itself is never questioned here — only the key written from it.
+            curriculumBlock({ region: learner.curriculum_region, grade: learner.grade }),
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        },
+        ...opts.parts,
+      ],
+    },
+  ];
+  // The forms and figures this sheet needs, chosen once for every reading of it: the whole
+  // schema is past what Vertex serves (#627, `practice/formChoice.ts`).
+  let narrowed: Promise<Narrowed> | null = null;
+  const read: Reader = async (lean, extra) => {
+    narrowed ??= chooseForms(deps, learner.id, day, {
+      purpose: 'extraction',
+      promptVersion: version,
+      system,
+      contents,
+      full: opts.homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
+    });
+    const { schema, keep } = await narrowed;
+    const res = await callModel(deps, learner.id, day, {
       purpose: 'extraction',
       tier: 'smart',
-      promptVersion: `${EXTRACT_PROMPT_VERSION}${opts.homework ? '' : `+${SOURCES_PROMPT_VERSION}`}`,
+      promptVersion: version,
       // A study reading also says what kind of page it is (issue #259); homework never does.
-      system: `${opts.homework ? HOMEWORK_SYSTEM : `${EXTRACT_SYSTEM}\n\n${SOURCE_RULES}`}${
-        lean ? `\n\n${LEAN_RULES}` : ''
-      }${extra ? `\n\n${extra}` : ''}`,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: [
-                `LEARNER: ${ageOn(learner.birth_date, opts.now)} years, level ${level}, app language ${learner.locale}`,
-                // Which curriculum decides what a complete answer is (issue #214). The sheet
-                // itself is never questioned here — only the key written from it.
-                curriculumBlock({ region: learner.curriculum_region, grade: learner.grade }),
-              ]
-                .filter(Boolean)
-                .join('\n'),
-            },
-            ...opts.parts,
-          ],
-        },
-      ],
-      schema: opts.homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
+      system: `${system}${lean ? `\n\n${LEAN_RULES}` : ''}${extra ? `\n\n${extra}` : ''}`,
+      contents,
+      schema,
       // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
       // reading that runs on is cut off after seconds, not after 40 (live finding 2).
       maxOutputTokens: opts.homework ? 8_000 : 12_000,
@@ -92,5 +106,7 @@ export async function sheetReader(
       // Read once in the background: time to think (see generate.ts).
       thinkingBudget: 2048,
     });
+    return { ...res, json: keepChosen(res.json, keep) };
+  };
   return { learner, timezone: tz, read };
 }
