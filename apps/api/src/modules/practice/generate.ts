@@ -36,6 +36,7 @@ import { prepareHints } from './hints.js';
 import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
 import { availableLine, chooseForms, keepChosen, keptAndLost, type Keep } from './formChoice.js';
+import { runOfRequest } from './lifecycle.js';
 import { homeLandLine } from './mapCheck.js';
 import {
   CHOICE_RULES,
@@ -700,11 +701,9 @@ async function prepareTopic(
     });
   }
 
-  const existing = await deps.db.maybeOne<{ id: string }>(
-    `select id from practice_sessions where learner_id = $1 and client_request_id = $2`,
-    [learner.id, input.client_request_id],
-  );
-  if (existing) return existing.id;
+  // The same request again (her tap on a card already prepared): that run, never a second one.
+  const existing = await runOfRequest(deps.db, learner.id, input.client_request_id, deps.now());
+  if (existing) return existing;
 
   // Hörverstehen without a voice is not an exercise (issue #210). Refused BEFORE the model is
   // asked: a set of questions about a text nobody can hear would be worse than none, and the call

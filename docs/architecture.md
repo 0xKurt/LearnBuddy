@@ -3482,7 +3482,10 @@ nothing stays open forever:
 session_status`; "Weiter mit der Hausaufgabe" in "Mein Stoff").
 - _Idle sessions_ are closed by the scheduler (`closeIdleSessions`): help after 14 days, other
   sessions after 3 days without activity are `abandoned` and their step goes back to `prepared`
-  (Buddy can offer it again); a session with nothing open left is finished instead.
+  (Buddy can offer it again); a session with nothing open left is finished instead. Her tap on
+  the offer card that started an abandoned run (same request id, `POST /practice/topic` or
+  `/practice/drills`) reopens it where she left it (`runOfRequest`, #643) — it answered
+  "Los geht's" with "Diese Übung ist schon beendet."; a finished run stays finished.
 - _Summary_ (`practice/summary.ts`): one computation for the result screen, the home card and
   Buddy's context — a topic is named as having gone well only when every closed question of it
   was right at once **and** at least `ENOUGH_FOR_A_TOPIC` (2) of them were answered in a way
@@ -5759,8 +5762,9 @@ at the top of what the screen shows — never nowhere, since History draws no no
 week after the test (`OUTCOME_ASK_DAYS`, `modules/buddy/home.ts`); after that she can still tell
 Buddy in the chat. The visit's greeting names the finished practice ("… gerade beantwortet") only
 when it ended after the last message (`sessionAnchor.ts` `justBefore`). An offer whose run she
-finished reads as finished and opens its result (`finished_session_id`, decorated from the run with
-the offer's request id) instead of "Los geht's". The system notes (no model, background
+finished — practice (`offer_learning`) or a Kopfrechnen round (`offer_drill`, #643) — reads as
+finished and opens its result (`finished_session_id`, decorated from the run with the offer's
+request id; one card, `components/learn/FinishedOffer.tsx`) instead of "Los geht's". The system notes (no model, background
 work stale) join the layer on top. The bar **lies over** the greeting and the row of ways to
 start, directly under the header, with a soft shadow (`components/buddy/TopOverlay.tsx`): the
 header, the greeting, the row and the conversation stand in exactly the same place with or
