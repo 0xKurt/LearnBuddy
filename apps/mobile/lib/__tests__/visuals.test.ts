@@ -1,7 +1,14 @@
 import type { Figure } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { boardCap, roomCap, standsAlone, visualCaps, visualGrows } from '../practice/visuals.js';
+import {
+  bodySpare,
+  boardCap,
+  roomCap,
+  standsAlone,
+  visualCaps,
+  visualGrows,
+} from '../practice/visuals.js';
 
 describe('the figure table (issue #310, step 5)', () => {
   it('lets every drawing grow but a note line, which only gives (#275)', () => {
@@ -56,5 +63,18 @@ describe('a picture that gives way to the measured room (#599)', () => {
     expect(roomCap(40, -200, 2, 89, 36)).toBe(36);
     // A rounding pixel to spare over two rows moves nothing.
     expect(roomCap(74, 1, 2, 89, 36)).toBe(74);
+  });
+});
+
+describe('the room in the ordinary body (#642)', () => {
+  it('is what is left under everything in it, the conversation included', () => {
+    // The flower over "Kronblatt" and "Buddy schaut sich deine Antwort an": 15 pt past the body.
+    expect(bodySpare(560, 575.4)).toBe(-15);
+    expect(bodySpare(560, 500)).toBe(60);
+  });
+
+  it('is not known before both are measured', () => {
+    expect(bodySpare(0, 500)).toBeNull();
+    expect(bodySpare(560, 0)).toBeNull();
   });
 });

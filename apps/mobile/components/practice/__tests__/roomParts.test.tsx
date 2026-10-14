@@ -38,6 +38,7 @@ function Screen({ seen }: { seen: Seen[] }) {
     turnsAgain: [],
     quiet: false,
     dictationCompact: false,
+    ordinary: false,
     viewHeight: 440,
     windowWidth: 360,
     safeBottom: 0,

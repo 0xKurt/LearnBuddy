@@ -38,6 +38,12 @@ type Question = {
   quiet: boolean;
   /** The Diktat card is one row (`DictationCard` `compact`). */
   dictationCompact: boolean;
+  /**
+   * The question, her answer and the conversation share one scrolling body (`AnswerShell`'s
+   * ordinary body): there the card neither grows nor gives, and a picture under it sizes itself
+   * to the body's own room (`PictureRoom`).
+   */
+  ordinary: boolean;
   viewHeight: number;
   windowWidth: number;
   safeBottom: number;
@@ -177,8 +183,11 @@ export function useScreenRoom() {
     // While she types the drawing folds to one row (`Question`, `formDensity` tight): growing
     // the card then only made an empty band under that row and squeezed the conversation — a
     // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
+    // Not in the ordinary body (#642): this room is the column's, measured from a conversation box
+    // and a free room that body does not have. Its "give" took up to 48 pt off the drawing's cap
+    // while Buddy checked her answer, and the pie of "Berechne 1/5 + 2/5" stood as an empty frame.
     const cardGrows =
-      visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight';
+      !q.ordinary && visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight';
     const shared = threadRoom({
       room,
       short: Math.max(0, -left),

@@ -240,6 +240,10 @@ export default function PracticeScreen() {
     form.typed && (item.kind === 'short' || item.kind === 'vocab') ? drafts.text : undefined;
   // "Nochmal vorlesen" in the conversation row — only where the server allows hearing it.
   const readAgain = item.read_aloud ? { onReadAgain: () => voice.readQuestion(item) } : {};
+  const originalForm = answerForm(item, true);
+  const ordinaryBody =
+    (originalForm.typed && item.kind !== 'spelling_dictation' && originalForm.code === null) ||
+    (originalForm.choices !== null && !item.choice_figures?.length);
   // How the conversation and the card share the room (issues #96, #286, #232): `threadRoom`.
   const room = measured.layout({
     // A figure she taps stands in the answer, not in the card (`FigureTapAnswer`, `CodeLineAnswer`).
@@ -250,15 +254,12 @@ export default function PracticeScreen() {
     turnsAgain: view.turnsAgain,
     quiet: view.turns.length === 0,
     dictationCompact: view.dictationCompact,
+    ordinary: ordinaryBody,
     viewHeight,
     windowWidth,
     safeBottom: insets.bottom,
   });
 
-  const originalForm = answerForm(item, true);
-  const ordinaryBody =
-    (originalForm.typed && item.kind !== 'spelling_dictation' && originalForm.code === null) ||
-    (originalForm.choices !== null && !item.choice_figures?.length);
   const questionCard = (
     <SlideIn key={item.id}>
       {/* Homework says what it is as a quiet line above the question (design
@@ -293,11 +294,7 @@ export default function PracticeScreen() {
               heard={heard}
               markHeard={markHeard}
               disabled={locked}
-              minHeight={
-                !ordinaryBody && room.cardGrowTo > 0
-                  ? room.cardNatural + room.cardGrowTo
-                  : undefined
-              }
+              minHeight={room.cardGrowTo > 0 ? room.cardNatural + room.cardGrowTo : undefined}
               caps={room.caps}
               filling={filling}
               readAgain={readAgain}
