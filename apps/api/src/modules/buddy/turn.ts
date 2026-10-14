@@ -31,7 +31,7 @@ import { contextProvider } from './provider.js';
 import { askedButActed, emptyReply, TurnDecision } from './registry.js';
 import { recallText } from './recall.js';
 import { bumpContext } from './plan.js';
-import { replyProgress, type ReplyProgress } from './stream.js';
+import { aliasSet, replyProgress, type ReplyProgress } from './stream.js';
 import { buddyPrompt, repairMessage, schemaErrors } from './prompts.js';
 import { withLookups } from './lookups.js';
 import { loadBuddyState, loadSettings, type MessageRow, TURN_STALL_MS } from './state.js';
@@ -299,6 +299,9 @@ async function decideTurn(
       dialogue,
       repairErrors ? repairMessage(repairErrors) : undefined,
     );
+    // The aliases this answer may name: a reply is spoken early only if its actions name these
+    // (#666, stream.ts).
+    const known = aliasSet(ctx.aliases);
     const { meta, record } = turnRecord(deps, learner.id, message.id, {
       contextVersion: ctx.contextVersion,
       attempt: attempt,
@@ -333,7 +336,7 @@ async function decideTurn(
             ...(onReply
               ? {
                   onPartial: (raw: string) => {
-                    const p = replyProgress(raw);
+                    const p = replyProgress(raw, known);
                     if (!p) return;
                     const key = `${p.text}|${p.speakable}|${p.done}`;
                     if (key === last) return;
