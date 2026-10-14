@@ -141,13 +141,28 @@ describe('a throttled call inside the caller’s budget', () => {
       },
       f.waits,
     );
-    expect(result).toBe(answer);
+    // The answer says how often it was asked for, so `llm_calls.attempts` shows the throttle (#652).
+    expect(result).toEqual({ ...answer, attempts: 3 });
     expect(calls).toBe(3);
     // The first attempt may use the whole budget; each later one gets only what is left.
     expect(seen[0]).toBe(30_000);
     expect(seen[1]).toBe(30_000 - 100 - RETRY_PAUSE_MS);
     expect(seen[2]).toBe(30_000 - 200 - RETRY_PAUSE_MS - RETRY_PAUSE_MS * RETRY_PAUSE_FACTOR);
     expect(f.slept).toEqual([RETRY_PAUSE_MS, RETRY_PAUSE_MS * RETRY_PAUSE_FACTOR]);
+  });
+
+  it('says on the error how often it was tried when every attempt was throttled (#652)', async () => {
+    const f = fakeWaits();
+    const err = await generateWithRetries(
+      request(),
+      async () => {
+        f.takes(100);
+        throw new LlmError('rate_limited', 'provider rate limit');
+      },
+      f.waits,
+    ).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(LlmError);
+    expect((err as LlmError).attempts).toBe(3);
   });
 
   it('never spends more than the timeout the caller asked for', async () => {
@@ -262,7 +277,7 @@ describe('a throttled call inside the caller’s budget', () => {
       },
       f.waits,
     );
-    expect(result).toBe(answer);
+    expect(result).toEqual({ ...answer, attempts: 2 });
     expect(calls).toBe(2);
   });
 
@@ -289,7 +304,7 @@ describe('a throttled call inside the caller’s budget', () => {
       },
       f.waits,
     );
-    expect(plain).toBe(answer);
+    expect(plain).toEqual({ ...answer, attempts: 2 });
     expect(calls).toBe(2);
   });
 });

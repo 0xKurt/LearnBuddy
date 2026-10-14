@@ -914,7 +914,12 @@ timeout; `DisabledGateway` when no model is configured (Buddy says so). Every ca
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
 tokens (input, output, thinking, and what the provider served from its prefix cache —
 `cached_tokens`, §Speed), cost, latency and outcome — never with prompt or answer text; a safety
-block keeps the provider's finish reason (`blocked:SAFETY`). A call that the provider did not run for her — provider
+block keeps the provider's finish reason (`blocked:SAFETY`). Each row also says what the call was
+part of and how she waited for it (#652, migration 0106): the Buddy decision it was a round of
+(`decision_id`, chosen before the call), its `round`, the `schema_variant` that went out
+(`step`/`final`, or `whole`/`chosen`/`minimal`/`fallback` for a run or reading), whether it was
+`streamed` and its `first_token_ms`, how many requests the gateway sent (`attempts`, retries
+included) and the whole wait (`total_ms`; `latency_ms` stays the last attempt's). A call that the provider did not run for her — provider
 down, request refused, safety block — gives its reservation back; a timeout or unusable output
 keeps it (the provider may have done and billed the work).
 
