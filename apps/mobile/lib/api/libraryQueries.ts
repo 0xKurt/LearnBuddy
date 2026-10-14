@@ -7,13 +7,18 @@ import { useQuery } from '@tanstack/react-query';
 
 import { getLibrary, getMaterialItems } from './endpoints.js';
 import { followMaterial, libraryPollMs } from './libraryCache.js';
+import { useOnScreen } from '../screenFocus.js';
 import { keys, queryClient } from './queries.js';
 
-/** Follows a sheet being read (live finding 3): fetched often while one is, and on every visit. */
+/**
+ * Follows a sheet being read (live finding 3): fetched often while one is, and on every visit —
+ * by the screen she sees only (#637).
+ */
 export const useLibrary = () =>
   useQuery({
     queryKey: keys.library,
     queryFn: getLibrary,
+    subscribed: useOnScreen(),
     refetchInterval: (q) => libraryPollMs(q.state.data),
     refetchOnMount: (q) => (libraryPollMs(q.state.data) === false ? true : 'always'),
   });
@@ -22,6 +27,7 @@ export const useLibrary = () =>
 export const useMaterialItems = (id: string) =>
   useQuery({
     queryKey: keys.materialItems(id),
+    subscribed: useOnScreen(),
     queryFn: async () => {
       const v = await getMaterialItems(id);
       followMaterial(queryClient, v.material);
