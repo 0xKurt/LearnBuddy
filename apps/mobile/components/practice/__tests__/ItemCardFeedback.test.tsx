@@ -70,7 +70,7 @@ function show(value: SessionItemView) {
       disabled={false}
       minHeight={undefined}
       caps={{ figure: 180, image: 180 }}
-      filling={undefined}
+      filling={null}
       readAgain={{}}
     />,
   );

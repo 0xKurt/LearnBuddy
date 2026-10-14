@@ -7,6 +7,7 @@
 import type { SessionItemView, SpeakStreamEvent } from '@learnbuddy/shared-types/contracts';
 
 import type { ReactNode } from 'react';
+import { useDraftText, type DraftStore } from '../../lib/drafts.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 
@@ -35,8 +36,11 @@ type Props = {
   minHeight: number | undefined;
   /** The drawing's and the picture's largest height (`visualCaps`). */
   caps: { figure: number; image: number };
-  /** Her short answer, shown in the gap of a fill-in sentence while she types. */
-  filling: string | undefined;
+  /**
+   * Her short answer, shown in the gap of a fill-in sentence while she types (null: no gap to
+   * fill). The card reads it itself, so the screen is not drawn again for every key (#713).
+   */
+  filling: DraftStore | null;
   /** While Vorlesen is on, a tap on the question reads it again (#434): where it may be heard. */
   readAgain: { onReadAgain?: () => void };
 };
@@ -58,6 +62,7 @@ export function ItemCard({
   readAgain,
 }: Props) {
   useTheme();
+  const typed = useDraftText(filling);
   const { item } = shown;
   if (form.speaking)
     return (
@@ -103,7 +108,7 @@ export function ItemCard({
       fromBuddy={item.origin === 'buddy'}
       minHeight={minHeight}
       dense={form.staff !== null || item.figure?.type === 'code'}
-      answer={filling}
+      answer={typed}
       // What she answers from: a reading text (#233), a task's situation (#297).
       stimulus={item}
       answerBoard={form.board || form.choices !== null || form.tapChoices !== null}

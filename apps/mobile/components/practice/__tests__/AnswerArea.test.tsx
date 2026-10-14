@@ -7,9 +7,18 @@ import type { ItemView, PracticeTurnView } from '@learnbuddy/shared-types/contra
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { DraftStore } from '../../../lib/drafts.js';
 import { answerForm } from '../../../lib/practice/answerForm.js';
 import { renderInApp } from '../../../testing/render.js';
 import { AnswerArea } from '../AnswerArea.js';
+
+/** An empty answer draft that never changes. */
+const idle: DraftStore = {
+  get: () => '',
+  set: () => undefined,
+  clear: () => undefined,
+  subscribe: () => () => undefined,
+};
 
 const TWO = '$\\frac{2}{3}$';
 const THREE = '$\\frac{3}{5}$';
@@ -63,7 +72,7 @@ function show({
         tried: new Set(turns.filter((t) => t.verdict === 'incorrect').map((t) => t.text)),
       }}
       canReveal
-      drafts={{ text: '', setText: () => undefined }}
+      drafts={{ answer: idle, setText: () => undefined }}
       actions={{
         answer,
         spoke: vi.fn(),

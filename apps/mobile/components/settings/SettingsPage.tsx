@@ -83,8 +83,6 @@ type PendingProps = {
  * bones — under the same head, with Buddy thinking.
  */
 export function SettingsPending({ title, subtitle, root = false, start, queries }: PendingProps) {
-  const { t } = useTranslation('common');
-  const failed = queries.find((q) => q.data === undefined && q.error);
   return (
     <Screen
       title={title}
@@ -93,15 +91,26 @@ export function SettingsPending({ title, subtitle, root = false, start, queries 
       back={root}
       leading={root ? undefined : SETTINGS_BACK}
     >
-      {failed ? (
-        <LoadFailed
-          error={failed.error}
-          onRetry={() => void Promise.all(queries.map((q) => q.refetch()))}
-        />
-      ) : (
-        <SettingsSkeleton label={t('loading')} start={start} />
-      )}
+      <PendingBody start={start} queries={queries} />
     </Screen>
+  );
+}
+
+/**
+ * What stands under the head until the page's data is there. A page that keeps its head while
+ * the data arrives draws this inside its own `Screen` (#637: mounting the head a second time
+ * cost ~620 ms on the POCO X3).
+ */
+export function PendingBody({ start, queries }: Pick<PendingProps, 'start' | 'queries'>) {
+  const { t } = useTranslation('common');
+  const failed = queries.find((q) => q.data === undefined && q.error);
+  return failed ? (
+    <LoadFailed
+      error={failed.error}
+      onRetry={() => void Promise.all(queries.map((q) => q.refetch()))}
+    />
+  ) : (
+    <SettingsSkeleton label={t('loading')} start={start} />
   );
 }
 

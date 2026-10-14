@@ -15,6 +15,7 @@ import { choiceMarks } from '../../lib/practice/choiceMarks.js';
 import type { QuestionView } from '../../lib/practice/questionView.js';
 import type { ScreenRoom } from '../../lib/practice/screenRoom.js';
 import type { PracticeActions } from '../../lib/practice/usePracticeActions.js';
+import { useDraftText } from '../../lib/drafts.js';
 import type { PracticeDrafts } from '../../lib/practice/usePracticeDrafts.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 import { AnswerShell } from './AnswerShell.js';
@@ -38,7 +39,7 @@ type Props = {
   view: Pick<QuestionView, 'turns' | 'tried'>;
   /** The session lets her past a question (`reveal_allowed`): the recorder offers to skip. */
   canReveal: boolean;
-  drafts: Pick<PracticeDrafts, 'text' | 'setText'>;
+  drafts: Pick<PracticeDrafts, 'answer' | 'setText'>;
   actions: Pick<PracticeActions, 'answer' | 'spoke' | 'reveal' | 'refetch' | 'stepOpen'>;
   measured: Pick<ScreenRoom, 'setSurfaceHeight'>;
   /** "Nochmal vorlesen" in the conversation row — only where the server allows hearing it. */
@@ -71,7 +72,8 @@ export function AnswerArea({
   const conversation = useVoiceMode((s) => s.conversation);
   const { choices, tapChoices, speaking, staff, taps, barSurface, tapFigure, codeLines, typed } =
     form;
-  const { text, setText } = drafts;
+  const { setText } = drafts;
+  const text = useDraftText(drafts.answer) ?? '';
   const { answer } = actions;
   // A shaded bar is a tap, even though "Prüfen" sends it (issue #163).
   const check = (value: string, via: 'typed' | 'tapped' = 'typed') =>

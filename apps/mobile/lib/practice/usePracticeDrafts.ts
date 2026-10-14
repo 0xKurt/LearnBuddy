@@ -6,7 +6,7 @@
 import { useRef } from 'react';
 import { Keyboard } from 'react-native';
 
-import { useDraft } from '../drafts.js';
+import { useDraft, useDraftStore } from '../drafts.js';
 
 /** The last answer sent; until the server confirms it, retrying the same answer reuses its id. */
 type SentAnswer = {
@@ -23,11 +23,14 @@ type SentAnswer = {
 };
 
 export function usePracticeDrafts(id: string) {
-  const { text, setText } = useDraft(`session.${id}`);
+  // Her answer as a store: the screen around the field is not drawn again for every key she
+  // types (#713); what shows the answer reads it (`useDraftText`).
+  const answer = useDraftStore(`session.${id}`);
+  const setText = answer.set;
   const question = useDraft(`session.${id}.ask`);
   const lastSent = useRef<SentAnswer | null>(null);
   return {
-    text,
+    answer,
     setText,
     question,
     lastSent,

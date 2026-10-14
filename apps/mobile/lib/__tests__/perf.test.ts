@@ -41,4 +41,23 @@ describe('perf spans', () => {
     reacted('t-replaced');
     expect(last()).toEqual({ action: 't-replaced', ms: 200 });
   });
+
+  // A device measurement runs release-mode JS (issue #711): no __DEV__, so the spans need the
+  // flag to reach the log, and stay quiet without it.
+  it('logs a span on the phone only in development or when asked for a measurement', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    try {
+      tapped('t-quiet');
+      reacted('t-quiet');
+      vi.stubEnv('EXPO_PUBLIC_PERF_LOG', '1');
+      tapped('t-logged');
+      vi.setSystemTime(1_120);
+      reacted('t-logged');
+      const lines = log.mock.calls.map((c) => String(c[0]));
+      expect(lines).toEqual(['[lb-perf] t-logged 120ms']);
+    } finally {
+      vi.unstubAllEnvs();
+      log.mockRestore();
+    }
+  });
 });
