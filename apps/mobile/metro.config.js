@@ -2,10 +2,8 @@
 // into every bundle and its source map, so a crash report can be read as real file names
 // instead of minified noise (issue #36). It needs no account and no token — without the
 // Sentry build plugin (app.config.ts, only with SENTRY_ORG/SENTRY_PROJECT set) nothing is
-// uploaded and the id is simply unused. NativeWind wraps it below; it touches the
-// transformer, not the serializer, so the two do not collide.
+// uploaded and the id is simply unused.
 const { getSentryExpoConfig } = require('@sentry/react-native/metro');
-const { withNativeWind } = require('nativewind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -57,4 +55,4 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-module.exports = withNativeWind(config, { input: './global.css' });
+module.exports = config;

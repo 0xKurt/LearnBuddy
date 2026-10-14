@@ -94,8 +94,7 @@ export default defineConfig({
   // because true switches on Expo's development-only code paths, which reach for modules that
   // cannot be loaded here; the consequence for lib/env.ts is handled under `test.env` below.
   define: { __DEV__: 'false', 'process.env.EXPO_OS': JSON.stringify('web') },
-  // The app's JSX runs through Babel with `jsxImportSource: 'nativewind'` (babel.config.js);
-  // here the plain React runtime is enough — these tests read rendered output, not classNames.
+  // The app's JSX is React's own automatic runtime, as Babel builds it (babel.config.js).
   esbuild: { jsx: 'automatic', jsxImportSource: 'react' },
   plugins: [webTwinsFirst(), jsxInPublishedJs(), withoutExpoDevRuntime()],
   resolve: {
