@@ -1232,6 +1232,13 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   level. The pronunciation judgement uses none (heard_ipa is its close listening; twice as fast,
   no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- **An animated part writes only what changed, and nothing while it cannot be seen** (issue
+  #637). On Android every animated style Reanimated sends is a shadow-tree commit on the UI
+  thread, and a style returning a fresh transform is sent every frame. Buddy's orb therefore keeps
+  `zIndex`, opacity and movement in separate styles and skips the movement of a part at opacity 0
+  (`lib/buddy/orbStyles.ts`): the header orb went from 19 view updates (61 props) a frame to 10
+  (17), with every visible part's props unchanged frame by frame
+  (`lib/buddy/__tests__/orbStyles.test.ts`).
 - **On the phone, nothing moves by itself where it cannot be seen** (issue #637). Every animated
   style Reanimated updates on Android is a shadow-tree commit on the UI thread, every frame. One
   small orb idle cost ≈ 1 core on the POCO X3 (dev client, frame p50 32 ms); two kept every frame
