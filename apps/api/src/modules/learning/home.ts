@@ -303,7 +303,6 @@ async function nowCardOf(
     };
   };
   const recent = open.find((s) => now.getTime() - s.last_activity_at.getTime() < 12 * 3_600_000);
-  if (recent) return resumeCard(recent);
   const justFinished = state.sessions.find(
     (s) =>
       s.status === 'finished' &&
@@ -312,6 +311,14 @@ async function nowCardOf(
       s.finished_at &&
       now.getTime() - s.finished_at.getTime() < 30 * 60_000,
   );
+  // What she did last comes first (issue #643): a run she paused this morning outranked the one
+  // she finished a minute ago, so the result never reached the home — Buddy greeted her with a
+  // bare "Abend, Testkind!" right after eight questions. The paused one is the bar again once
+  // the result's half hour is over, and its card in the conversation resumes it all along.
+  const finishedLast =
+    justFinished?.finished_at != null &&
+    (!recent || justFinished.finished_at.getTime() > recent.last_activity_at.getTime());
+  if (recent && !finishedLast) return resumeCard(recent);
   // Today's prepared practice (the earliest test first). What was just finished is not it
   // (its step is no longer 'prepared').
   const prepared = preparedOf(state, today, await askedForSteps(deps, learnerId));
