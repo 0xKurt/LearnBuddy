@@ -84,6 +84,7 @@ import { questionView } from '../../lib/practice/questionView.js';
 import { PictureRoom, useScreenRoom } from '../../lib/practice/screenRoom.js';
 import { useCornerConfirm } from '../../lib/practice/useCornerConfirm.js';
 import { usePracticeActions } from '../../lib/practice/usePracticeActions.js';
+import { useDraftSelect } from '../../lib/drafts.js';
 import { usePracticeDrafts } from '../../lib/practice/usePracticeDrafts.js';
 import { usePracticeVoice } from '../../lib/practice/usePracticeVoice.js';
 import { backToBuddy, useSessionEnd } from '../../lib/practice/useSessionEnd.js';
@@ -118,6 +119,9 @@ export default function PracticeScreen() {
   // What was there when the screen opened stands still; a judgement that arrives now is fresh.
   const knownTurns = useRef<ReadonlySet<string> | null>(null);
   const judgedDraft = useRef<{ id: string; text: string } | null>(null);
+  // Her answer is a store (#713): the screen is drawn again when it starts or stops matching
+  // what was judged (the head's orb waits for her then), not for every key she types.
+  useDraftSelect(drafts.answer, (text) => text === judgedDraft.current?.text);
   /** A test with time: the minutes left and its gentle sentence, as its clock reports them. */
   const clock = useTestClock();
   if (session && knownTurns.current === null)
@@ -235,12 +239,12 @@ export default function PracticeScreen() {
   // What stood in her answer field when that try's judgement arrived: once it differs, she has
   // started again and the head waits for her.
   if (lastTry && judgedDraft.current?.id !== lastTry.id)
-    judgedDraft.current = { id: lastTry.id, text: drafts.text };
+    judgedDraft.current = { id: lastTry.id, text: drafts.answer.get() };
   // Which way she answers — exactly one (`answerForm`).
   const form = answerForm(item, open);
   // Her short answer appears in the gap of a fill-in sentence while she types.
   const filling =
-    form.typed && (item.kind === 'short' || item.kind === 'vocab') ? drafts.text : undefined;
+    form.typed && (item.kind === 'short' || item.kind === 'vocab') ? drafts.answer : null;
   // "Nochmal vorlesen" in the conversation row — only where the server allows hearing it.
   const readAgain = item.read_aloud ? { onReadAgain: () => voice.readQuestion(item) } : {};
   const originalForm = answerForm(item, true);
@@ -418,7 +422,7 @@ export default function PracticeScreen() {
           !offers.testing &&
           lastTry !== undefined &&
           lastTry.verdict !== 'correct' &&
-          judgedDraft.current?.text === drafts.text,
+          judgedDraft.current?.text === drafts.answer.get(),
       })}
       // The question's own ⋯ ("Frage passt nicht", "Einspruch"), drawn only while it has something
       // to offer: its action cannot stand in the shared menu before that sheet has room for it.
