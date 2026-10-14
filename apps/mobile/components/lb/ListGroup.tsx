@@ -201,6 +201,7 @@ export function Row({
           >
             {({ pressed }) => (
               <View
+                collapsable={false}
                 style={[
                   style,
                   {
@@ -258,6 +259,7 @@ function ActionPill({
     >
       {({ pressed }) => (
         <View
+          collapsable={false}
           style={{
             flexDirection: 'row',
             alignItems: 'center',

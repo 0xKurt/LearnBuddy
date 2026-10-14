@@ -262,6 +262,7 @@ export function Btn(props: Props) {
     >
       {({ pressed }) => (
         <View
+          collapsable={false}
           style={{
             // minHeight, not height: large system text grows the button instead of clipping it
             // (audit M-84); the label's scaling is capped below so a row still fits.
@@ -404,6 +405,7 @@ function IconOnlyBtn({
     >
       {({ pressed }) => (
         <View
+          collapsable={false}
           style={{
             width: ICON_BTN_SIZE,
             height: ICON_BTN_SIZE,

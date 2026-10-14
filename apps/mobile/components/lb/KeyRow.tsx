@@ -183,6 +183,7 @@ function OneKey({
     >
       {({ pressed }) => (
         <View
+          collapsable={false}
           testID="key-tile"
           style={{
             height: COMPOSER.key.height,

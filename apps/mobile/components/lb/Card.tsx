@@ -67,7 +67,10 @@ export function Card({
         accessibilityHint={accessibilityHint}
       >
         {({ pressed }) => (
-          <View style={[baseStyle, style, pressed ? { opacity: UI.pressed.surface } : null]}>
+          <View
+            collapsable={false}
+            style={[baseStyle, style, pressed ? { opacity: UI.pressed.surface } : null]}
+          >
             {children}
           </View>
         )}

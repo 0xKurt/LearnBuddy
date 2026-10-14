@@ -60,6 +60,7 @@ export function DayChoice({ value, onToggle, label, locale, disabled = false }: 
           >
             {(pressed) => (
               <View
+                collapsable={false}
                 style={{
                   flex: 1,
                   marginHorizontal: inset,

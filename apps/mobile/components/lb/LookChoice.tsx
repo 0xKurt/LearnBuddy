@@ -38,6 +38,7 @@ export function FamilyChoice({ variant = 'settings' }: { variant?: 'settings' | 
           >
             {({ pressed }) => (
               <View
+                collapsable={false}
                 style={{
                   minHeight: geometry.minHeight,
                   flexGrow: 1,

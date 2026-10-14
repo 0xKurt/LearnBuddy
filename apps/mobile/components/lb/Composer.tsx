@@ -343,6 +343,7 @@ export function ActionPill({
     >
       {({ pressed }) => (
         <View
+          collapsable={false}
           style={{
             height: COMPOSER.slot,
             flexDirection: 'row',

@@ -98,6 +98,7 @@ export function Chip({
     >
       {({ pressed }) => (
         <View
+          collapsable={false}
           style={disabled ? { opacity: UI.disabledOpacity } : pressedStyle(pressed, reduced)}
           accessible={false}
         >

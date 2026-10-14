@@ -49,7 +49,11 @@ export function TalkOrb({
   if (!onPress) return orb;
   return (
     <PressArea accessibilityRole="button" accessibilityLabel={pressLabel} onPress={onPress}>
-      {(pressed) => <View style={{ transform: [{ scale: pressed ? 0.97 : 1 }] }}>{orb}</View>}
+      {(pressed) => (
+        <View collapsable={false} style={{ transform: [{ scale: pressed ? 0.97 : 1 }] }}>
+          {orb}
+        </View>
+      )}
     </PressArea>
   );
 }

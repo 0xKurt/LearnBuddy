@@ -68,6 +68,7 @@ export function PadKey({
     >
       {({ pressed }) => (
         <View
+          collapsable={false}
           style={{
             ...(fill ? { flex: 1 } : { height: TOUCH + SPACE.sm }),
             borderRadius: RADIUS.md,

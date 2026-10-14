@@ -135,6 +135,10 @@ const DIM: ViewStyle = { opacity: PRESSED.control };
  * How a design control answers a finger (readme.md "States": press = scale .97, nothing else).
  * With Reduce Motion the dip is off, and the press dims instead — as it did before the redesign —
  * so the control never stays mute under a finger.
+ *
+ * The View that wears it carries `collapsable={false}`: at rest this style is empty, and Android
+ * would flatten the view between press-in and press-out — moving its label to another native
+ * parent while the screen may be leaving, which crashed the app (#631, `pressFace.test.ts`).
  */
 export function pressedStyle(pressed: boolean, reduced: boolean): ViewStyle {
   return pressed ? (reduced ? DIM : DIP) : REST;

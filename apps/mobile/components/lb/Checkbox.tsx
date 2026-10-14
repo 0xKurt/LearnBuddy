@@ -40,6 +40,7 @@ export function Checkbox({
           alone); with Reduce Motion the row dims instead. */}
       {({ pressed }) => (
         <View
+          collapsable={false}
           style={{
             flexDirection: 'row',
             gap: SPACE.md,
@@ -52,6 +53,7 @@ export function Checkbox({
           }}
         >
           <View
+            collapsable={false}
             style={{
               width: ONBOARDING.check.box,
               height: ONBOARDING.check.box,
