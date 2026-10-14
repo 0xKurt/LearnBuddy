@@ -45,7 +45,12 @@ export type LlmPurpose =
   | 'hints'
   | 'reexplain'
   | 'summary'
-  | 'consolidate';
+  | 'consolidate'
+  /**
+   * The forms and figures an explain or extraction call needs, chosen before it (#627,
+   * `practice/formChoice.ts`). Metered as part of that call (`callAhead`), not on its own.
+   */
+  | 'forms';
 
 export type LlmRequest = {
   purpose: LlmPurpose;

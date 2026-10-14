@@ -19,7 +19,7 @@ import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
-import { callModel } from '../../llm/call.js';
+import { callAhead } from '../../llm/call.js';
 import type { JsonSchema, LlmMessage, LlmPurpose } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { promptVersion } from '../../llm/promptVersion.js';
@@ -174,9 +174,14 @@ const isRaw = (v: unknown): v is Raw => typeof v === 'object' && v !== null && !
 const figureType = (f: unknown): string | null =>
   isRaw(f) && typeof f.type === 'string' ? f.type : null;
 
-/** Whether a question has option pictures that were not chosen: such options are no question. */
+/**
+ * Whether a question or task leans on a figure that was not chosen: its own figure, or one of its
+ * option pictures. Without it the question cannot be answered, so it goes.
+ */
 function outside(el: unknown, keep: Keep): boolean {
   if (!isRaw(el)) return false;
+  const fig = figureType(el.figure);
+  if (fig !== null && !keep.figures.has(fig)) return true;
   if (
     Array.isArray(el.choice_figures) &&
     el.choice_figures.some((f) => !keep.figures.has(figureType(f) ?? ''))
@@ -186,10 +191,10 @@ function outside(el: unknown, keep: Keep): boolean {
 }
 
 /**
- * The raw answer with nothing outside `keep`, at any depth. A figure that was not chosen is taken
- * off its question, as a figure the contract does not know always was ("a figure is dropped, never
- * the question", `items.ts`). A question whose option pictures were not chosen goes, as does a
- * block or a structured form that was not chosen. The schema already allows nothing else. This is
+ * The raw answer with nothing outside `keep`, at any depth. A question or task with a figure or
+ * option pictures that were not chosen goes. It was written to be read off a drawing she would
+ * not see, so taking only the figure off would leave a question she cannot answer. A block or a
+ * structured form that was not chosen goes too. The schema already allows nothing else. This is
  * the code that holds to it (CLAUDE.md rule 1).
  */
 export function keepChosen(raw: unknown, keep: Keep | null): unknown {
@@ -197,10 +202,7 @@ export function keepChosen(raw: unknown, keep: Keep | null): unknown {
   const clean = (v: unknown): unknown => {
     if (Array.isArray(v)) return v.filter((el) => !outside(el, keep)).map(clean);
     if (!isRaw(v)) return v;
-    const out = Object.fromEntries(Object.entries(v).map(([k, x]) => [k, clean(x)]));
-    const fig = figureType(v.figure);
-    if (fig !== null && !keep.figures.has(fig)) out.figure = null;
-    return out;
+    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, clean(x)]));
   };
   const out = clean(raw) as Raw;
   for (const b of BLOCKS)
@@ -212,9 +214,29 @@ export function keepChosen(raw: unknown, keep: Keep | null): unknown {
   return out;
 }
 
-/** Whether a request is the choosing call (its prompt version is named after it). */
-export function isChoosing(req: { promptVersion: string }): boolean {
-  return req.promptVersion.startsWith('forms.');
+/** Whether a request is the choosing call. */
+export function isChoosing(req: { purpose: LlmPurpose }): boolean {
+  return req.purpose === 'forms';
+}
+
+/** The purpose of the call a choosing call chooses for, from its prompt version's name. */
+export function chosenFor(req: { promptVersion: string }): 'explain' | 'extraction' | null {
+  const m = /^forms-(explain|extraction)\./.exec(req.promptVersion);
+  return m ? (m[1] as 'explain' | 'extraction') : null;
+}
+
+/**
+ * The line the main call's system prompt gets when its schema was narrowed: the rules above
+ * teach every form and figure, and only the ones named here can be used (#627). A principle, no
+ * example question: written examples get copied.
+ */
+export function availableLine(narrowed: Narrowed): string | null {
+  if (narrowed.how === 'whole' || narrowed.keep === null) return null;
+  const { forms, figures } = narrowed.keep;
+  if (forms.size + figures.size === 0)
+    return 'IN THIS ANSWER NO FIGURE CAN BE DRAWN AND NO TASK FORM BESIDES PLAIN QUESTIONS CAN BE WRITTEN, whatever the rules above allow: every question must be answerable from its text alone, never from a picture or a drawing.';
+  const list = (xs: ReadonlySet<string>) => (xs.size > 0 ? [...xs].join(', ') : 'none');
+  return `IN THIS ANSWER ONLY THESE CAN BE USED, whatever the rules above allow: figures — ${list(figures)}; task forms besides plain questions — ${list(forms)}. A question that would need any other figure or form is not written; a question without a figure must be answerable from its text alone.`;
 }
 
 /** The forms and figure types an answer uses: what a perfect choice for it would have been. */
@@ -288,10 +310,11 @@ export async function chooseForms(
   if (withinBudget(call.full)) return { schema: call.full, keep: null, how: 'whole' };
   const Choice = choiceFor(call.full);
   try {
-    const res = await callModel(deps, learnerId, localDay, {
-      purpose: call.purpose,
+    // Metered with the call it belongs to (`callAhead`): her daily limit counts runs, not calls.
+    const res = await callAhead(deps, learnerId, localDay, call.purpose, {
+      purpose: 'forms',
       tier: 'fast',
-      promptVersion: promptVersion('forms', CHOOSER, call.promptVersion),
+      promptVersion: promptVersion(`forms-${call.purpose}`, CHOOSER, call.promptVersion),
       system: `${call.system}\n\n${CHOOSER}`,
       contents: call.contents,
       schema: toJsonSchema(Choice),

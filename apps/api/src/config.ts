@@ -34,6 +34,7 @@ const VertexRoutes = z
     reexplain: ModelSpec,
     summary: ModelSpec,
     consolidate: ModelSpec,
+    forms: ModelSpec,
   })
   .partial()
   .strict();
@@ -283,11 +284,9 @@ export const DAILY_LIMITS = {
   buddy_turn: 80,
   buddy_check: 8,
   tutor: 300,
-  // A practice run and a sheet reading whose schema is past what Vertex serves are two calls
-  // each: the small one choosing the forms, then the one writing them (#627, practice/formChoice.ts).
-  // Doubled so that she has as many runs and readings a day as before.
-  explain: 120,
-  extraction: 24,
+  // The forms chosen before a run or a reading (#627) count with it, not on their own (callAhead).
+  explain: 60,
+  extraction: 12,
   /** Concept images (issue #50): one vision pass per reading, bounded like extraction. */
   figures: 12,
   pronounce: 200,

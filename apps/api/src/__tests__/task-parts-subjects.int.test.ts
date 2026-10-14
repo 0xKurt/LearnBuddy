@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { explainSchemaFor } from '../modules/practice/setProfiles.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import { pageJpeg } from '../testing/pagePhoto.js';
@@ -148,6 +149,20 @@ describe.skipIf(!dbReady)('tasks in parts across subjects (#297, Schnitt 4)', ()
       .flatMap((o) => o.anyOf ?? [o])
       .flatMap((o) => o.properties?.type?.enum ?? []);
     expect(kinds).toEqual(['table']);
+    // … out of the profile's seven material drawings, which the unnarrowed profile still offers.
+    const profile = explainSchemaFor('practice', null) as unknown as Node;
+    const all = (profile.properties.part_tasks!.items.properties.figure!.anyOf ?? [])
+      .flatMap((o) => o.anyOf ?? [o])
+      .flatMap((o) => o.properties?.type?.enum ?? []);
+    expect(all).toEqual([
+      'table',
+      'function_plot',
+      'bar_chart',
+      'line_chart',
+      'climate_chart',
+      'pie_chart',
+      'scatter_plot',
+    ]);
     // Folgefehler with the table beside it, as without one.
     const [a, b] = s.items.map((i) => i.item.id) as [string, string];
     expect((await answer(s, a, '9 m')).body.verdict).toBe('incorrect');

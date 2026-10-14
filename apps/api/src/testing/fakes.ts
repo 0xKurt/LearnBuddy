@@ -25,7 +25,7 @@ import {
 } from '../llm/gateway.js';
 import { answerUpTo } from '../llm/partial.js';
 import { withinBudget } from '../llm/schemaBudget.js';
-import { fitted, isChoosing, offered, usedBy } from '../modules/practice/formChoice.js';
+import { chosenFor, fitted, isChoosing, offered, usedBy } from '../modules/practice/formChoice.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
 import type { SpeechAudio, SpeechError, SpeechGateway, SpeechInput } from '../speech/gateway.js';
 import {
@@ -226,7 +226,8 @@ export class ScriptedGateway implements LlmGateway {
         figures: used.figures.filter((f) => offered.figures.includes(f)),
       };
     };
-    const next = this.queues.get(req.purpose)?.[0] ?? this.defaults.get(req.purpose);
+    const main = chosenFor(req);
+    const next = main ? (this.queues.get(main)?.[0] ?? this.defaults.get(main)) : undefined;
     if (next && typeof next !== 'function' && 'json' in next) return of(next.json);
     // A scripted function is read ahead by asking it once more: most return a fixed answer. One
     // that waits on something or fails is no answer to read, and then everything offered goes.

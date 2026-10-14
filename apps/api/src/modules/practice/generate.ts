@@ -35,7 +35,7 @@ import { ESSAY_RULES, essayItems } from './essayTask.js';
 import { prepareHints } from './hints.js';
 import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
-import { chooseForms, keepChosen, type Keep } from './formChoice.js';
+import { availableLine, chooseForms, keepChosen, type Keep } from './formChoice.js';
 import { homeLandLine } from './mapCheck.js';
 import {
   CHOICE_RULES,
@@ -461,11 +461,12 @@ async function generateSet(
       full: explainSchemaFor(input.kind, sheets?.topics ?? null, off),
     });
     keep = narrowed.keep;
+    const line = availableLine(narrowed);
     const res = await callModel(deps, learner.id, day, {
       purpose: 'explain',
       tier: 'smart',
       promptVersion: GENERATE_PROMPT_VERSION,
-      system: GENERATE_SYSTEM,
+      system: line ? `${GENERATE_SYSTEM}\n\n${line}` : GENERATE_SYSTEM,
       contents,
       schema: narrowed.schema,
       maxOutputTokens: 10_000,

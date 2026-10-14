@@ -910,16 +910,20 @@ main call, plus `CHOOSER`) answers two closed lists taken from the schema itself
 figure types it needs, the most needed first. Code then builds the main schema (`pruned`: the other
 branches of every figure and form union go, and so do the other blocks). It adds what was chosen in
 the model's order, only while the schema stays within the budget (`fitted`). It also takes from the
-answer whatever lies outside the choice (`keepChosen`): a figure that was not chosen comes off its
-question, a question with option pictures that were not chosen goes, and so does a block or a
-structured form that was not chosen. A sheet is chosen for once, and every reading of it (lean,
+answer whatever lies outside the choice (`keepChosen`). A question or task whose figure or option
+pictures were not chosen goes, because it was written to be read off a drawing she would not see.
+A block or a structured form that was not chosen goes too. The main call's system prompt teaches
+every form, so a narrowed call also gets one more line, a rule with no example in it
+(`availableLine`). It names the figures and forms this answer can use; in the minimal set it says
+that no figure can be drawn and that every question must be answerable from its text alone. A sheet is chosen for once, and every reading of it (lean,
 continued) uses that choice. When the choosing call is refused, fails or answers nothing usable,
 the main call goes out with the minimal set (plain questions, no figures, no other forms), and the
 run still starts. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
-costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). Both calls count against the same
-daily limit, so `explain` and `extraction` were doubled (120 / 24): she has as many runs and
-readings as before.
+costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
+`llm_calls`) and no limit of its own: `callAhead` meters it with its run. It reserves nothing, so
+`explain` (60) and `extraction` (12) count runs and readings exactly as before, and it runs only
+while that limit still has room. A choice never comes without the call it belongs to.
 
 **One error classification at every external seam** (`lib/outcome.ts`, audit S-7): `ok`,
 `refused` (a definitive no: a 4xx other than 429, a safety block, unusable output — never
@@ -1324,7 +1328,7 @@ reasons (#159 keeps that promise separate from the internal pilot).
 
 | What                            | Limit                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, explain 120, extraction 24 (two calls each when the forms are chosen first, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                                     |
+| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12 (the forms chosen before a run or reading count with it, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                              |
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                                                                |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                                                         |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                                                        |
@@ -2344,7 +2348,7 @@ nicht gesehen hat (Regel 5: gelesen ist nicht geschrieben).
   Storage; die Abschrift auch nicht. Nichts an der Frage ändert sich — kein Turn, kein Versuch,
   keine Wiederholung; ein zweites Foto ist eine zweite Lesung. Gespeichert wird, was sie selbst
   als Antwort schickt (`docs/privacy.md` §What is stored). Budget: eine Antwort (600/h) und ein
-  `transcribe`-Aufruf (400/Tag) je Foto — `extraction` (24/Tag, zwei Aufrufe je Blatt seit #627) ist für Blätter bemessen.
+  `transcribe`-Aufruf (400/Tag) je Foto — `extraction` (12/Tag) ist für Blätter bemessen.
 - **Belegt:** `work-photo.int.test.ts` (echtes Postgres, gescriptetes Modell: Abschrift → Antwort →
   gebrochene Zeile ohne Tutor; geratene Zeile wird `null`; unlesbar/kein Weg; anderer Lernender
   404 ohne Modellaufruf; dasselbe Foto zweimal ändert nichts, dieselbe Antwort zählt einmal;

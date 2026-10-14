@@ -88,6 +88,44 @@ async function record(
 }
 
 /**
+ * A call that is part of a metered one: the forms chosen before an explain or extraction call
+ * (#627). It reserves nothing of its own, so the daily limit of `meteredAs` counts runs and
+ * readings exactly as before. It runs only while that limit still has room, so it can never come
+ * without the call it belongs to. It is recorded under its own purpose (`llm_calls`).
+ */
+export async function callAhead(
+  deps: ModelDeps,
+  learnerId: string,
+  localDay: string,
+  meteredAs: keyof typeof DAILY_LIMITS,
+  req: LlmRequest,
+): Promise<LlmResult> {
+  if (!deps.llm.available) throw new LlmError('unavailable', 'no model configured');
+  const used = await deps.db.maybeOne<{ calls: number }>(
+    `select calls from usage_daily where learner_id = $1 and day = $2 and kind = $3`,
+    [learnerId, localDay, meteredAs],
+  );
+  if ((used?.calls ?? 0) >= DAILY_LIMITS[meteredAs])
+    throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
+  try {
+    const result = await deps.llm.generate(req);
+    await record(deps, learnerId, req, 'ok', result.usage, null);
+    return result;
+  } catch (err) {
+    if (err instanceof LlmError)
+      await record(
+        deps,
+        learnerId,
+        req,
+        err.kind === 'timeout' ? 'timeout' : 'error',
+        err.usage,
+        err.kind,
+      );
+    throw err;
+  }
+}
+
+/**
  * Call the model on behalf of a learner. Throws AppError('budget_exhausted')
  * when today's limit is used up, LlmError on provider/output problems.
  */
@@ -99,6 +137,8 @@ export async function callModel(
 ): Promise<LlmResult> {
   if (!deps.llm.available) throw new LlmError('unavailable', 'no model configured');
   const kind = req.purpose;
+  // A choosing call has no limit of its own: it is metered with its call (`callAhead`).
+  if (kind === 'forms') throw new Error('a forms call goes through callAhead');
   if (!(await reserveModelCall(deps.db, learnerId, localDay, kind))) {
     throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
   }

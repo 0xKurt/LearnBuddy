@@ -16,9 +16,10 @@ import { randomUUID } from 'node:crypto';
 import type { MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { DAILY_LIMITS } from '../config.js';
 import { LlmError, type JsonSchema } from '../llm/gateway.js';
 import { schemaProperties, MAX_SCHEMA_PROPERTIES } from '../llm/schemaBudget.js';
-import { offered } from '../modules/practice/formChoice.js';
+import { chosenFor, offered } from '../modules/practice/formChoice.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -57,7 +58,7 @@ const SET = {
   items: [
     item('Wie viel ist drei Viertel von 8?', '6', { figure: FRACTION }),
     item('Wie viel ist ein Viertel von 8?', '2'),
-    // A figure that was not chosen: the question stays, the figure does not.
+    // A figure that was not chosen: the question was written to be read off it, so it goes.
     item('Wie spät ist es auf der Uhr?', '7:45', { kind: 'short', figure: CLOCK, topic: 'Uhr' }),
   ],
   // A form that was not chosen: not kept.
@@ -108,11 +109,19 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     expect(schemaProperties(main!.schema)).toBeLessThanOrEqual(MAX_SCHEMA_PROPERTIES);
     expect(shown(main!.schema)).toEqual({ forms: [], figures: ['fraction'] });
 
+    // The main call is told what it can use, and only that (#627).
+    expect(main?.system).toContain('IN THIS ANSWER ONLY THESE CAN BE USED');
+    expect(main?.system).toContain('figures — fraction; task forms besides plain questions — none');
+    expect(choice?.system).not.toContain('IN THIS ANSWER');
+
     const rows = await stored();
-    expect(rows.map((r) => r.prompt)).toHaveLength(3);
-    const figureOf = (p: string) => rows.find((r) => r.prompt.startsWith(p))?.figure ?? null;
-    expect(figureOf('Wie viel ist drei')?.type).toBe('fraction');
-    expect(figureOf('Wie spät')).toBeNull();
+    expect(rows.map((r) => r.prompt).sort()).toEqual([
+      'Wie viel ist drei Viertel von 8?',
+      'Wie viel ist ein Viertel von 8?',
+    ]);
+    expect(rows.find((r) => r.prompt.startsWith('Wie viel ist drei'))?.figure?.type).toBe(
+      'fraction',
+    );
     const structured = await env.db.query(
       `select 1 from items where learner_id = $1 and kind = 'order'`,
       [l.learnerId],
@@ -133,9 +142,12 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     const [main] = env.llm.callsFor('explain');
     expect(shown(main!.schema)).toEqual({ forms: [], figures: [] });
     expect(JSON.stringify(main!.schema)).not.toContain('"figure"');
+    expect(main?.system).toContain('NO FIGURE CAN BE DRAWN');
+    expect(main?.system).toContain('answerable from its text alone');
+    // A question written with a figure anyway leans on a drawing she would not see: it goes, and
+    // only the plain question survives.
     const rows = await stored();
-    expect(rows).toHaveLength(3);
-    expect(rows.every((r) => r.figure === null)).toBe(true);
+    expect(rows.map((r) => r.prompt)).toEqual(['Wie viel ist ein Viertel von 8?']);
   });
 
   it('ends in model_unavailable when Vertex refuses the main call, and asks once', async () => {
@@ -175,6 +187,38 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     expect(env.llm.choices).toHaveLength(1);
     const [main] = env.llm.callsFor('explain');
     expect(shown(main!.schema)).toEqual({ forms: [], figures: ['fraction'] });
+  });
+
+  it('counts a run once against her daily limit: the choice is metered with it', async () => {
+    const day = '2026-10-14';
+    await env.db.query(
+      `insert into usage_daily (learner_id, day, kind, calls) values ($1, $2, 'explain', $3)`,
+      [l.learnerId, day, DAILY_LIMITS.explain - 1],
+    );
+    env.llm.scriptChoice({ json: { forms: [], figures: ['fraction'] } });
+    env.llm.script('explain', { json: SET });
+    const last = await start();
+    expect(last.status, JSON.stringify(last.body)).toBe(201);
+    await env.flushBackground();
+    const used = async () =>
+      (
+        await env.db.one<{ calls: number }>(
+          `select calls from usage_daily where learner_id = $1 and day = $2 and kind = 'explain'`,
+          [l.learnerId, day],
+        )
+      ).calls;
+    // The last run of the day ran whole: its choice took nothing of the limit.
+    expect(await used()).toBe(DAILY_LIMITS.explain);
+    const forms = await env.db.query(
+      `select 1 from llm_calls where learner_id = $1 and purpose = 'forms'`,
+      [l.learnerId],
+    );
+    expect(forms).toHaveLength(1);
+    // Once the limit is used up, nothing is asked: no choice without the run it belongs to.
+    const over = await start();
+    expect(over.status).toBe(429);
+    expect(env.llm.choices).toHaveLength(1);
+    expect(await used()).toBe(DAILY_LIMITS.explain);
   });
 
   it('asks for no choice when the schema fits as it is', async () => {
@@ -228,12 +272,13 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     expect((await l.api.post(`/materials/${created.body.material.id}/submit`)).status).toBe(202);
     await env.flushBackground();
 
-    expect(env.llm.choices.filter((c) => c.purpose === 'extraction')).toHaveLength(1);
+    expect(env.llm.choices.filter((c) => chosenFor(c) === 'extraction')).toHaveLength(1);
     const [reading] = env.llm.callsFor('extraction');
     expect(schemaProperties(reading!.schema)).toBeLessThanOrEqual(MAX_SCHEMA_PROPERTIES);
     expect(shown(reading!.schema).figures).toEqual(['fraction']);
     const rows = await stored();
-    expect(rows.find((r) => r.prompt.startsWith('Wie spät'))?.figure ?? null).toBeNull();
+    expect(rows.some((r) => r.prompt.startsWith('Wie spät'))).toBe(false);
+    expect(reading?.system).toContain('figures — fraction');
     expect(rows.find((r) => r.prompt.startsWith('Wie viel ist drei'))?.figure?.type).toBe(
       'fraction',
     );

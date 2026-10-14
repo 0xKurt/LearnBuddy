@@ -8,7 +8,7 @@ import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import type { LlmMessage, LlmPart, LlmResult } from '../../llm/gateway.js';
 import { curriculumBlock } from '../curriculum/state.js';
-import { chooseForms, keepChosen, type Narrowed } from '../practice/formChoice.js';
+import { availableLine, chooseForms, keepChosen, type Narrowed } from '../practice/formChoice.js';
 import { ageOn } from '../identity/model.js';
 import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM, LEAN_RULES } from './extract.js';
 import {
@@ -89,13 +89,15 @@ export async function sheetReader(
       contents,
       full: opts.homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
     });
-    const { schema, keep } = await narrowed;
+    const chosen = await narrowed;
+    const { schema, keep } = chosen;
+    const line = availableLine(chosen);
     const res = await callModel(deps, learner.id, day, {
       purpose: 'extraction',
       tier: 'smart',
       promptVersion: version,
       // A study reading also says what kind of page it is (issue #259); homework never does.
-      system: `${system}${lean ? `\n\n${LEAN_RULES}` : ''}${extra ? `\n\n${extra}` : ''}`,
+      system: `${system}${line ? `\n\n${line}` : ''}${lean ? `\n\n${LEAN_RULES}` : ''}${extra ? `\n\n${extra}` : ''}`,
       contents,
       schema,
       // Homework is at most 12 tasks without worked solutions: a smaller limit, so a

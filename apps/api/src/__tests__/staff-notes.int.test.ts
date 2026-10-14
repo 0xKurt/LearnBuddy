@@ -365,10 +365,23 @@ describe.skipIf(!dbReady)('die Notenzeile', () => {
   });
 
   it('lässt das Modell keine Notenzeile neben eine eigene Frage legen', async () => {
-    // Ein `figure` vom Typ `staff` steht nicht in `ModelFigure`: der Vertrag nimmt es nicht an,
-    // die Figur fällt weg (`.catch(null)`), und die Frage bleibt — ohne erfundene Notenzeile.
+    // Ein `figure` vom Typ `staff` steht nicht in `ModelFigure`: der Vertrag nimmt es nicht an.
+    // Die Frage ist von dieser Notenzeile abzulesen, also geht sie mit ihr (#627) — ohne erfundene
+    // Notenzeile und ohne eine Frage, die sie nicht beantworten kann. Die Frage ohne Figur bleibt.
     const session = await prepare([], {
       items: [
+        {
+          kind: 'short',
+          prompt: 'Wie viele Linien hat ein Notensystem?',
+          answer: '5',
+          accepted_answers: [],
+          unit: null,
+          choices: null,
+          correct_choice: null,
+          topic: 'Noten lesen',
+          difficulty: 1,
+          source_excerpt: null,
+        },
         {
           kind: 'short',
           prompt: 'Wie heißt diese Note?',
@@ -390,7 +403,9 @@ describe.skipIf(!dbReady)('die Notenzeile', () => {
         },
       ],
     });
-    expect(session.items).toHaveLength(1);
+    expect(session.items.map((i) => i.item.prompt)).toEqual([
+      'Wie viele Linien hat ein Notensystem?',
+    ]);
     expect(session.items[0]?.item.figure).toBeNull();
   });
 
