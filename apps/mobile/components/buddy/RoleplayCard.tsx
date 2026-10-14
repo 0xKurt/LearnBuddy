@@ -7,7 +7,7 @@
 // Its way out is NOT on the card: the card scrolls away with the scene, so the one "end" button
 // lives in the strip pinned above the conversation (`RoleplayStrip`) — and, while the scene is
 // spoken, on the conversation screen (app/talk.tsx). Once over, the card is a quiet line — the
-// feedback stands below it in the conversation.
+// feedback stands below it in the conversation, where there is one (`ended_reason`).
 //
 // No count of turns, no progress bar, no score (rule 6): a scene is not a test.
 
@@ -87,7 +87,13 @@ export function RoleplayCard({
         label={label}
         title={roleplay.scene}
         titleLines={2}
-        detail={t('buddy:roleplay.ended')}
+        // Buddy's feedback follows only a scene played to its end or ended by her; after a
+        // concern or a lapse there is none to point to — and the card never names why (#599).
+        detail={
+          roleplay.ended_reason === 'turns' || roleplay.ended_reason === 'her'
+            ? t('buddy:roleplay.ended')
+            : t('buddy:roleplay.ended_quiet')
+        }
       />
     );
 

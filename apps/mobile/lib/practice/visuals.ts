@@ -80,3 +80,18 @@ export function visualCaps(
 export function boardCap(viewHeight: number): number {
   return Math.round(viewHeight * BOARD_SHARE);
 }
+
+/**
+ * A picture's cap from the room the screen measured (`usePictureCap`, #599): the cap it stood at
+ * and what is left under the bar (`spare`, < 0: how far the screen runs past), shared by the
+ * `rows` pictures above each other — never above `most`, never below `least`.
+ */
+export function roomCap(
+  cap: number,
+  spare: number,
+  rows: number,
+  most: number,
+  least: number,
+): number {
+  return Math.max(least, Math.min(most, cap + Math.floor(spare / Math.max(1, rows))));
+}

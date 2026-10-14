@@ -81,7 +81,7 @@ import { answerForm } from '../../lib/practice/answerForm.js';
 import { useHeardTexts } from '../../lib/practice/heardTexts.js';
 import { questionOffers, questionOnScreen } from '../../lib/practice/offers.js';
 import { questionView } from '../../lib/practice/questionView.js';
-import { useScreenRoom } from '../../lib/practice/screenRoom.js';
+import { PictureRoom, useScreenRoom } from '../../lib/practice/screenRoom.js';
 import { useCornerConfirm } from '../../lib/practice/useCornerConfirm.js';
 import { usePracticeActions } from '../../lib/practice/usePracticeActions.js';
 import { usePracticeDrafts } from '../../lib/practice/usePracticeDrafts.js';
@@ -453,67 +453,72 @@ export default function PracticeScreen() {
     >
       <KeyboardSafe style={{ flex: 1 }}>
         <FreeSpaceReport.Provider value={measured.free}>
-          {/* Her question (issue #402): the field of the bar on every form without a typed answer. */}
+          {/* Her question (issue #402): the field of the bar on every form without a typed answer.
+              The room left under the bar, for the pictures that give way to it (`PictureRoom`). */}
           <AskRoute.Provider value={askRoute(item.id)}>
-            {/* The column, measured: its end mark (below) says how far its content runs past it. */}
-            <View
-              style={{ flex: 1, minHeight: 0 }}
-              ref={measured.columnRef}
-              onLayout={(e) => measured.onColumn(Math.round(e.nativeEvent.layout.height))}
-            >
-              {ordinaryBody ? null : (
-                <View
-                  style={{
-                    // The question and the conversation take what they need, no more: the free room
-                    // collects under them and the way to answer stands at the bottom (`AnswerShell`,
-                    // issues #286, #386). The question never shrinks; the conversation does, by whole
-                    // turns (`threadCap`).
-                    flexGrow: 0,
-                    flexShrink: 1,
-                    minHeight: measured.questionContentHeight,
-                  }}
-                >
-                  <ScrollView
-                    testID="scroll-question"
-                    // No clamp and no shrinking: the question must NEVER scroll (rule 16), so
-                    // nothing may cut it below its content — an irreducible question (three-line
-                    // fraction prompt + the figure's legible minimum) beat every cap by a few px
-                    // on 360×740. When space runs out the conversation yields: whole turns (threadCap).
-                    style={{ flexGrow: 0, flexShrink: 0 }}
-                    keyboardShouldPersistTaps="handled"
-                    contentContainerStyle={{
-                      paddingHorizontal: SPACE.lg,
-                      paddingTop: SPACE.xs,
-                      gap: SPACE.md,
+            <PictureRoom.Provider value={room.spare}>
+              {/* The column, measured: its end mark (below) says how far its content runs past it. */}
+              <View
+                style={{ flex: 1, minHeight: 0 }}
+                ref={measured.columnRef}
+                onLayout={(e) => measured.onColumn(Math.round(e.nativeEvent.layout.height))}
+              >
+                {ordinaryBody ? null : (
+                  <View
+                    style={{
+                      // The question and the conversation take what they need, no more: the free room
+                      // collects under them and the way to answer stands at the bottom (`AnswerShell`,
+                      // issues #286, #386). The question never shrinks; the conversation does, by whole
+                      // turns (`threadCap`).
+                      flexGrow: 0,
+                      flexShrink: 1,
+                      minHeight: measured.questionContentHeight,
                     }}
-                    onContentSizeChange={(_, h) => measured.setQuestionContentHeight(Math.round(h))}
                   >
-                    {/* The next question comes in softly from the side (keyed by the question). Its
+                    <ScrollView
+                      testID="scroll-question"
+                      // No clamp and no shrinking: the question must NEVER scroll (rule 16), so
+                      // nothing may cut it below its content — an irreducible question (three-line
+                      // fraction prompt + the figure's legible minimum) beat every cap by a few px
+                      // on 360×740. When space runs out the conversation yields: whole turns (threadCap).
+                      style={{ flexGrow: 0, flexShrink: 0 }}
+                      keyboardShouldPersistTaps="handled"
+                      contentContainerStyle={{
+                        paddingHorizontal: SPACE.lg,
+                        paddingTop: SPACE.xs,
+                        gap: SPACE.md,
+                      }}
+                      onContentSizeChange={(_, h) =>
+                        measured.setQuestionContentHeight(Math.round(h))
+                      }
+                    >
+                      {/* The next question comes in softly from the side (keyed by the question). Its
                       drawing reports while it sizes itself: the card's own height waits for it. */}
-                    {questionCard}
-                  </ScrollView>
-                </View>
-              )}
-              <CheckOverrideProvider key={item.id}>
-                {ordinaryBody && offers.explainAgain ? (
-                  <Reexplain
-                    draftKey={`${session.id}.${item.id}.why`}
-                    turns={view.turnsAgain}
-                    pending={actions.again?.itemId === item.id ? actions.again.way : null}
-                    disabled={locked}
-                    delay={DURATION.gentle}
-                    onAsk={(way, choice) => actions.explainAgain(item.id, way, choice)}
-                    why={shown.why}
-                    render={({ body, actions: shortcuts, revealTop, revealKey }) =>
-                      renderFlow(body, shortcuts, revealTop, revealKey)
-                    }
-                  />
-                ) : (
-                  renderFlow()
+                      {questionCard}
+                    </ScrollView>
+                  </View>
                 )}
-              </CheckOverrideProvider>
-              <View style={{ height: 0 }} ref={measured.endRef} />
-            </View>
+                <CheckOverrideProvider key={item.id}>
+                  {ordinaryBody && offers.explainAgain ? (
+                    <Reexplain
+                      draftKey={`${session.id}.${item.id}.why`}
+                      turns={view.turnsAgain}
+                      pending={actions.again?.itemId === item.id ? actions.again.way : null}
+                      disabled={locked}
+                      delay={DURATION.gentle}
+                      onAsk={(way, choice) => actions.explainAgain(item.id, way, choice)}
+                      why={shown.why}
+                      render={({ body, actions: shortcuts, revealTop, revealKey }) =>
+                        renderFlow(body, shortcuts, revealTop, revealKey)
+                      }
+                    />
+                  ) : (
+                    renderFlow()
+                  )}
+                </CheckOverrideProvider>
+                <View style={{ height: 0 }} ref={measured.endRef} />
+              </View>
+            </PictureRoom.Provider>
           </AskRoute.Provider>
         </FreeSpaceReport.Provider>
       </KeyboardSafe>

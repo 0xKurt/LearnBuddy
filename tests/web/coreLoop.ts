@@ -69,9 +69,9 @@ export function worksheetJpeg(page: Page): Promise<string> {
 
 /**
  * A parent sets up the account for Mia (7th grade, Niedersachsen) and allows notifications right
- * after the PIN (issue #518); she skips the first-start cards. No voice step: this stack has no
- * natural voices (issue #526). core-loop-setup.spec.ts walks the same way with every check and
- * shot.
+ * after the PIN (issue #518); she skips the first-start cards. A voice step only where the stack
+ * has Buddy's own voices (LB_DEV_SPEECH=fake, issue #526): then the offered one is taken.
+ * core-loop-setup.spec.ts walks the same way with every check and shot.
  */
 export async function signUpMia(page: Page, email: string, learnerName = 'Mia'): Promise<void> {
   await page.goto('/');
@@ -95,7 +95,14 @@ export async function signUpMia(page: Page, email: string, learnerName = 'Mia'):
   await page.getByRole('button', { name: 'Weiter' }).click();
   await page.getByRole('button', { name: 'Ja, erlauben' }).click();
   await page.getByRole('button', { name: `Los geht's, ${learnerName}!` }).click();
-  await page.getByRole('button', { name: 'Überspringen' }).click();
+  // With Buddy's own voices (LB_DEV_SPEECH=fake) the setup has one more step, the voice: taken
+  // as offered, so every spec that signs up here runs the same with and without them.
+  const voice = page.getByRole('radiogroup', { name: 'Buddys Stimme', exact: true });
+  const skip = page.getByRole('button', { name: 'Überspringen' });
+  await expect(voice.or(skip)).toBeVisible();
+  if (await voice.isVisible())
+    await page.getByRole('button', { name: 'Weiter', exact: true }).click();
+  await skip.click();
   await expect(page.getByText('LearnBuddy')).toBeVisible();
 }
 

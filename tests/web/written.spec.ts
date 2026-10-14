@@ -49,7 +49,7 @@ async function checkRight(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt', { exact: false }).last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Geschafft!' })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 }
 

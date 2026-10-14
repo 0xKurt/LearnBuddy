@@ -19,6 +19,7 @@ import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { QuestionCard as PresentationCard, RunMeta, RunMetaLine } from '../lb/QuestionCard.js';
+import { usePictureCap } from '../../lib/practice/screenRoom.js';
 import { boardCap, standsAlone } from '../../lib/practice/visuals.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { Progress } from '../lb/Progress.js';
@@ -243,6 +244,10 @@ export function QuestionCard({
   const filled = fillableAnswer(prompt, answer);
   // A labelled picture that is an image stands under the card, a card of its own (`standsAlone`).
   const picture = figure && standsAlone(figure) ? figure : null;
+  // As tall as the room left after the card and the bar allows (#599): a skeleton under a
+  // two-line question ran 13 pt past 360×740 at a fixed share of the window. Held while she types:
+  // folded, it measures the room of its row.
+  const pictureMax = usePictureCap(`${prompt}:${seen.window}`, boardCap(viewHeight), 1, typing);
   const inCard = picture ? null : figure;
   const hasVisual = inCard !== null || (image !== null && imageKey !== undefined);
   // Only a card that USES the room takes it (issue #143). #96 gave the card whatever the
@@ -374,7 +379,7 @@ export function QuestionCard({
       {/* As far under the question as her answer stands under both; folded while she types, like
           every drawing (#379). */}
       <View testID="question-picture" style={{ marginTop: PRACTICE.ordinaryBody.gap }}>
-        <QuestionFigure figure={picture} maxHeight={boardCap(viewHeight)} folded={typing} />
+        <QuestionFigure figure={picture} maxHeight={pictureMax} folded={typing} />
       </View>
     </>
   );

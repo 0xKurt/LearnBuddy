@@ -142,11 +142,12 @@ type SessionBrief = {
   answered: number;
   first_try: number;
   /**
-   * Written by the background preparation of an offer (practice/prepare.ts, issue #48) and never
-   * worked in: nothing she started, so nothing to "go on with" (`loadStandingOffers` reads
-   * "taken up" the same way; CLAUDE.md rule 5).
+   * Never worked in (`WORKED_IN`): nothing she started, so nothing to "go on with" — whether the
+   * background preparation of an offer wrote it (practice/prepare.ts, issue #48), or she opened a
+   * practice prepared from her photo and left before answering (#599). Never a homework (`help`):
+   * the home card is its way in. `loadStandingOffers` reads "taken up" the same way (rule 5).
    */
-  untouched_offer: boolean;
+  untouched: boolean;
   secure_topics: string[];
   shaky_topics: string[];
 };
@@ -396,10 +397,10 @@ async function loadSessions(db: Db, learnerId: string): Promise<SessionBrief[]> 
             count(si.item_id)::int as total,
             count(*) filter (where si.status <> 'open')::int as answered,
             count(*) filter (where si.status = 'correct' and si.first_try_correct)::int as first_try,
-            (exists (select 1 from buddy_actions a
-                      where a.learner_id = ps.learner_id and a.id = ps.client_request_id
-                        and a.tool = 'offer_learning')
-             and not ${WORKED_IN}) as untouched_offer,
+            -- Her homework from her own photos is hers from the moment she sent it: the home card
+            -- is its way in, worked in or not (session-lifecycle H-7). Every other session is
+            -- hers to go on with only once she worked in it (#599).
+            (ps.mode <> 'help' and not ${WORKED_IN}) as untouched,
             coalesce(json_agg(json_build_object('topic', i.topic, 'status', si.status,
                                                 'first_try_correct', si.first_try_correct,
                                                 -- Recognition and production are different

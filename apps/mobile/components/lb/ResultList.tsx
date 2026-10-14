@@ -5,6 +5,7 @@
 
 import type { SessionItemView } from '@learnbuddy/shared-types/contracts';
 import type { Palette } from '../../lib/theme/palettes.js';
+import { useState, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { ROW_SPLIT } from '../../lib/theme/components.js';
@@ -79,59 +80,114 @@ function stateSkin(
   }
 }
 
+/**
+ * The widest single word among the states, measured as drawn (#599): the state column never
+ * stands narrower, so "Übersprungen" ends inside the card and "Noch nicht richtig" takes two
+ * lines, not three. Each word is laid out on its own, out of sight and out of the reading order.
+ */
+function useWidestWord(labels: readonly string[]): { least: number; measure: ReactNode } {
+  const [widths, setWidths] = useState<Readonly<Record<string, number>>>({});
+  const words = [...new Set(labels.flatMap((label) => label.split(/\s+/).filter(Boolean)))];
+  const least = Math.ceil(Math.max(0, ...words.map((w) => widths[w] ?? 0)));
+  const measure = (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      aria-hidden
+      pointerEvents="none"
+      style={{ position: 'absolute', top: 0, left: 0, height: 0, overflow: 'hidden' }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+        {words.map((word) => (
+          <Text
+            key={word}
+            numberOfLines={1}
+            style={[TYPE.meta, { flexShrink: 0 }]}
+            onLayout={(e) => {
+              const w = e.nativeEvent.layout.width;
+              setWidths((now) => (now[word] === w ? now : { ...now, [word]: w }));
+            }}
+          >
+            {word}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+  return { least, measure };
+}
+
 export function ResultList({ variant = 'cards', title, rows, delay = 0, animate = true }: Props) {
+  if (variant === 'rows') return <ResultRows rows={rows} />;
+  return <ResultCards title={title} rows={rows} delay={delay} animate={animate} />;
+}
+
+function ResultRows({ rows }: { rows: readonly ResultRow[] }) {
   const { palette } = useTheme();
-  if (variant === 'rows')
-    return (
-      <View style={{ backgroundColor: palette.paper, borderRadius: RADIUS.lg, ...SHADOW.soft }}>
-        {rows.map((row, i) => {
-          const skin = stateSkin(row, palette);
-          return (
+  const state = useWidestWord(rows.map((row) => row.label));
+  return (
+    <View style={{ backgroundColor: palette.paper, borderRadius: RADIUS.lg, ...SHADOW.soft }}>
+      {state.measure}
+      {rows.map((row, i) => {
+        const skin = stateSkin(row, palette);
+        return (
+          <View
+            key={row.key}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: SPACE.md,
+              minHeight: RESULT.row,
+              paddingHorizontal: SPACE.lg,
+              paddingVertical: RESULT.pad,
+              borderTopWidth: i ? RESULT.border : 0,
+              borderTopColor: palette.hairline,
+            }}
+          >
             <View
-              key={row.key}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
               style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                gap: SPACE.md,
-                minHeight: RESULT.row,
-                paddingHorizontal: SPACE.lg,
-                paddingVertical: RESULT.pad,
-                borderTopWidth: i ? RESULT.border : 0,
-                borderTopColor: palette.hairline,
+                width: RESULT.badge,
+                height: RESULT.badge,
+                borderRadius: RADIUS.round,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: skin.bg,
               }}
             >
-              <View
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-                style={{
-                  width: RESULT.badge,
-                  height: RESULT.badge,
-                  borderRadius: RADIUS.round,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: skin.bg,
-                }}
-              >
-                <Icon name={skin.icon} size={RESULT.glyph} color={skin.color} />
-              </View>
-              {/* The title keeps its room, the state takes the rest and wraps there — the list
-                  row's own pattern (`ROW_SPLIT`): with the state unshrinkable at up to 45 % of the
-                  row, "Noch nicht beantwortet" cut the title down to a word per line on 360. */}
-              <View style={[ROW_SPLIT.title, { gap: RESULT.textGap }]}>
-                <InlineText text={tailTied(row.text)} style={TYPE.option} />
-                {row.detail ? <InlineText text={row.detail} style={TYPE.meta} /> : null}
-                {row.note ? (
-                  <InlineText text={row.note} style={[TYPE.meta, { color: palette.ink2 }]} />
-                ) : null}
-              </View>
-              <Text style={[TYPE.meta, { lineHeight: TYPE.option.lineHeight }, ROW_SPLIT.value]}>
-                {row.label}
-              </Text>
+              <Icon name={skin.icon} size={RESULT.glyph} color={skin.color} />
             </View>
-          );
-        })}
-      </View>
-    );
+            {/* The title keeps its room, the state takes the rest and wraps there — the list
+                  row's own pattern (`ROW_SPLIT`): with the state unshrinkable at up to 45 % of the
+                  row, "Noch nicht beantwortet" cut the title down to a word per line on 360. But
+                  never narrower than the states' widest word (`useWidestWord`): there the title
+                  gives way (#599). */}
+            <View style={[ROW_SPLIT.title, { flexShrink: 1, minWidth: 0, gap: RESULT.textGap }]}>
+              <InlineText text={tailTied(row.text)} style={TYPE.option} />
+              {row.detail ? <InlineText text={row.detail} style={TYPE.meta} /> : null}
+              {row.note ? (
+                <InlineText text={row.note} style={[TYPE.meta, { color: palette.ink2 }]} />
+              ) : null}
+            </View>
+            <Text
+              style={[
+                TYPE.meta,
+                { lineHeight: TYPE.option.lineHeight },
+                ROW_SPLIT.value,
+                { minWidth: state.least },
+              ]}
+            >
+              {row.label}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function ResultCards({ title, rows, delay, animate }: Required<Omit<Props, 'variant'>>) {
   return (
     <View style={{ gap: SPACE.md }}>
       <Rise delay={delay} animate={animate}>

@@ -179,11 +179,15 @@ export default function MaterialScreen() {
     }
   }
 
-  // Back to where she came from; opened by a link, to her material.
+  // Back to where she came from (design Extra.jsx `SheetQuestions` → its subject). Opened by a
+  // link, what lies below is the app's anchor — the home —, and only with no history at all does
+  // this lead to her material.
   const back = () => (router.canGoBack() ? router.back() : router.replace('/library'));
   // The sheet is not there any more (404): the head rests, and `LoadFailed` offers the way back
-  // alone.
+  // alone — to her material, wherever she came from: a link to a sheet that is gone led to the
+  // home (#599). The library's own screen when it is below, else it takes this one's place.
   const sheetGone = !data && query.isError && isGone(query.error);
+  const toMaterial = () => router.dismissTo('/library');
 
   let content: ReactNode;
   if (!data || !material) {
@@ -192,7 +196,7 @@ export default function MaterialScreen() {
         error={query.error}
         busy={query.isFetching}
         onRetry={() => void query.refetch()}
-        back={{ label: t('library:items.back'), onPress: back }}
+        back={{ label: t('library:items.back'), onPress: sheetGone ? toMaterial : back }}
       />
     ) : (
       <QuestionsSkeleton label={t('library:items.loading')} />
@@ -320,7 +324,7 @@ export default function MaterialScreen() {
       leading={{
         icon: 'back',
         label: t('library:items.back'),
-        onPress: back,
+        onPress: sheetGone ? toMaterial : back,
       }}
       // Design ui_kits/app/Extra.jsx `SheetQuestions`: with a sheet open Buddy waits for what she
       // wants to do with it; until it is there he thinks (`SystemState` "load-list") — and rests

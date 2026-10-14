@@ -192,13 +192,22 @@ test('feature tour: undo, resend, memory, history, settings, parents, photo, exp
   // ── What Buddy knows: change it, then remove it ──
   await openMenu(page, 'Was Buddy über dich weiß');
   await expect(page.getByText('Mag Katzen', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Ändern: Mag Katzen' }).click();
+  // The row opens its sheet; the sheet carries "Ändern" and "Entfernen" (#599, More.jsx:39–44).
+  await page.getByRole('button', { name: /^Mag Katzen/ }).click();
+  await page
+    .locator('[aria-modal="true"]')
+    .getByRole('button', { name: 'Ändern: Mag Katzen', exact: true })
+    .click();
   await page.getByLabel('Was Buddy sich merken soll').fill('Mag Katzen und Hunde');
   await page.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByText('Mag Katzen und Hunde', { exact: true })).toBeVisible();
   await expect(page.getByText('Von dir geändert.')).toBeVisible();
   await shot(page, '43-memory-edited');
-  await page.getByRole('button', { name: 'Entfernen: Mag Katzen und Hunde' }).click();
+  await page.getByRole('button', { name: /^Mag Katzen und Hunde/ }).click();
+  await page
+    .locator('[aria-modal="true"]')
+    .getByRole('button', { name: 'Entfernen: Mag Katzen und Hunde', exact: true })
+    .click();
   // Removed at once; the toast offers "Rückgängig" (#599, ui_kits/app/More.jsx:42).
   await expect(page.getByText('Entfernt. Buddy vergisst das.')).toBeVisible();
   await expect(page.getByText('Mag Katzen und Hunde', { exact: true })).toHaveCount(0);

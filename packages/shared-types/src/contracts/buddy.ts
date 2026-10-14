@@ -238,6 +238,11 @@ export const ActionSummary = z.discriminatedUnion('tool', [
     role: z.string(),
     points: z.array(z.string()),
     status: z.enum(['active', 'ended']).default('active'),
+    /**
+     * Why it ended, decorated like `status` (#599): after `turns` and `her` Buddy's feedback stands
+     * in the conversation; after `concern` and `lapsed` there is none. null while it runs.
+     */
+    ended_reason: z.enum(['turns', 'her', 'concern', 'lapsed']).nullable().default(null),
   }),
   /**
    * A talk planned as a goal with its steps (issue #264): the day of the talk and one step per

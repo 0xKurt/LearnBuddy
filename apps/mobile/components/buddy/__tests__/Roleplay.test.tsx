@@ -27,7 +27,7 @@ beforeEach(() => {
 
 describe('the role card', () => {
   it('names the language and what it is, the scene, who Buddy plays and her tasks', () => {
-    renderInApp(<RoleplayCard roleplay={{ ...CARD, status: 'active' }} />);
+    renderInApp(<RoleplayCard roleplay={{ ...CARD, status: 'active', ended_reason: null }} />);
     expect(screen.getByText('Englisch · Rollenspiel')).toBeTruthy();
     // The label is written as it is, not in capitals.
     expect(screen.queryByText('ROLLENSPIEL · ENGLISCH')).toBeNull();
@@ -39,17 +39,28 @@ describe('the role card', () => {
   });
 
   it('starts the scene as a conversation — and has no "end" of its own', () => {
-    renderInApp(<RoleplayCard roleplay={{ ...CARD, status: 'active' }} />);
+    renderInApp(<RoleplayCard roleplay={{ ...CARD, status: 'active', ended_reason: null }} />);
     expect(screen.getAllByRole('button')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Gespräch starten' }));
     expect(pushed).toEqual(['/talk']);
   });
 
   it('is a quiet line once the scene is over: nothing to start', () => {
-    renderInApp(<RoleplayCard roleplay={{ ...CARD, status: 'ended' }} />);
+    renderInApp(<RoleplayCard roleplay={{ ...CARD, status: 'ended', ended_reason: 'turns' }} />);
     expect(screen.getByText('Vorbei. Die Rückmeldung steht im Gespräch.')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.queryByText('Deine Aufgaben')).toBeNull();
+  });
+
+  it('points to no feedback where none came: a concern or a scene she left (#599)', () => {
+    for (const reason of ['concern', 'lapsed'] as const) {
+      const { unmount } = renderInApp(
+        <RoleplayCard roleplay={{ ...CARD, status: 'ended', ended_reason: reason }} />,
+      );
+      expect(screen.getByText('Vorbei.')).toBeTruthy();
+      expect(screen.queryByText(/Rückmeldung/)).toBeNull();
+      unmount();
+    }
   });
 });
 

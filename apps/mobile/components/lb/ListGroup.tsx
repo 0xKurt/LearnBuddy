@@ -41,6 +41,22 @@ export function ListGroup({ label, children }: { label?: string; children: React
   );
 }
 
+/** A row's box: its least height and its padding — for a row and a group's note alike. */
+const ROW_BOX = {
+  minHeight: UI.list.row,
+  paddingHorizontal: SPACE.lg,
+  paddingVertical: UI.list.padY,
+} as const;
+
+/** A group's one line of text where it has no rows yet ("Noch keine Fächer …"), in a row's box. */
+export function RowNote({ text }: { text: string }) {
+  return (
+    <View style={[ROW_BOX, { justifyContent: 'center' }]}>
+      <Text style={TYPE.meta}>{text}</Text>
+    </View>
+  );
+}
+
 /** The quiet action a row may end in, in the chevron's place (ui_kits/app/Library.jsx). */
 type RowAction = {
   label: string;
@@ -164,9 +180,7 @@ export function Row({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: SPACE.md,
-    minHeight: UI.list.row,
-    paddingHorizontal: SPACE.lg,
-    paddingVertical: UI.list.padY,
+    ...ROW_BOX,
     flex: 1,
   };
   return (

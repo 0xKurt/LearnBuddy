@@ -65,4 +65,8 @@ it('keeps failed-query retry and factual empty recovery', () => {
   rerender(<ProfileSubjects onOpenSubject={vi.fn()} />);
   expect(screen.getByText('Noch keine Fächer mit Material.')).toBeTruthy();
   expect(screen.queryByRole('button')).toBeNull();
+  // In a row's box, not a strip with its text at the card's edge (#599, set-profile-360).
+  const box = screen.getByText('Noch keine Fächer mit Material.').parentElement!;
+  expect(box.style.paddingLeft).toBe('16px');
+  expect(box.style.minHeight).toBe('56px');
 });

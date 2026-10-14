@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useThreadFollow } from '../../lib/buddy/useThreadFollow.js';
+import { PictureRoom } from '../../lib/practice/screenRoom.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 
@@ -144,6 +145,7 @@ function OrdinaryBody({
 }) {
   const follow = useThreadFollow(flow.newestReply ?? null, { initiallyFollowing: false });
   const [contentHeight, setContentHeight] = useState(0);
+  const [box, setBox] = useState(0);
   const { pieces, onHeight } = useStackTops(
     PRACTICE.ordinaryBody.gap,
     ['question', 'answer', 'thread'],
@@ -170,8 +172,19 @@ function OrdinaryBody({
     if (flow.readKey != null && target !== undefined && contentHeight > 0)
       currentFollow.current.readFrom(flow.readKey, target);
   }, [flow.readKey, target, contentHeight]);
+  // The room the question and her answer leave in the body (#599): the conversation under them is
+  // the part that scrolls, never they — a labelled picture under the question sizes itself to it.
+  const thread = pieces[2];
+  const spare =
+    box > 0 && contentHeight > 0 && thread
+      ? box -
+        (PRACTICE.ordinaryBody.paddingTop +
+          thread.top -
+          thread.step +
+          PRACTICE.ordinaryBody.paddingBottom)
+      : null;
   return (
-    <>
+    <PictureRoom.Provider value={spare}>
       <ScrollView
         ref={follow.scroll}
         testID="scroll-practice-body"
@@ -185,7 +198,10 @@ function OrdinaryBody({
         }}
         {...follow.inputProps}
         onScroll={follow.onScroll}
-        onLayout={follow.onLayout}
+        onLayout={(e) => {
+          setBox(Math.round(e.nativeEvent.layout.height));
+          follow.onLayout(e);
+        }}
         onContentSizeChange={(width, height) => {
           setContentHeight(height);
           follow.onContentSizeChange(width, height);
@@ -200,6 +216,6 @@ function OrdinaryBody({
         </View>
       </ScrollView>
       <CheckBar {...action} keys={keys} chips={flow.tools} />
-    </>
+    </PictureRoom.Provider>
   );
 }

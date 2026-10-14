@@ -100,13 +100,17 @@ describe('SchematicBody', () => {
     expect([line.getAttribute('x2'), line.getAttribute('y2')]).toEqual(['12', '12']);
   });
 
-  it('scales the numbers with the image: half the width, half the ring', async () => {
+  it('scales the numbers with the image, but keeps their least size where it leaves room (#599)', async () => {
     const { container } = renderInApp(<SchematicBody figure={labelled} width={150} />);
     await loaded();
+    // The rings, not the leader dots: half the width gives a ring half the design's radius at
+    // least, and up to its least size in pt as far as its neighbours and the edge leave room.
     const radii = Array.from(container.querySelectorAll('circle'), (c) =>
       Number(c.getAttribute('r')),
-    );
-    expect(Math.max(...radii)).toBe(FIGURE_PICTURE.badge.radius / 2);
+    ).filter((r) => r >= FIGURE_PICTURE.badge.radius / 2);
+    expect(radii.length).toBeGreaterThan(0);
+    expect(Math.max(...radii)).toBeGreaterThan(FIGURE_PICTURE.badge.radius / 2);
+    expect(Math.max(...radii)).toBeLessThanOrEqual(FIGURE_PICTURE.badge.least);
   });
 
   it('a stored picture that names a part it no longer has shows the image without numbers (#599)', async () => {

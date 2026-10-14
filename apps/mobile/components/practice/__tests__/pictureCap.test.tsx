@@ -1,0 +1,52 @@
+// A picture that gives way to the room the screen measured (#599, `usePictureCap`): four
+// pictures under a drawing ran the bar 30 pt past 360×740, a skeleton under a two-line question
+// made the body scroll 13 pt. Each measurement is answered once, so a render that brings the same
+// measurement again never gives the room twice.
+
+import { screen } from '@testing-library/react';
+import { Text } from 'react-native';
+import { describe, expect, it } from 'vitest';
+
+import { renderInApp } from '../../../testing/render.js';
+import { PictureRoom, usePictureCap } from '../../../lib/practice/screenRoom.js';
+
+function Probe({ id, hold = false }: { id: string; hold?: boolean }) {
+  return <Text testID="cap">{usePictureCap(id, 89, 2, hold)}</Text>;
+}
+
+const at = (spare: number | null, id = 'q1', hold = false) => (
+  <PictureRoom.Provider value={spare}>
+    <Probe id={id} hold={hold} />
+  </PictureRoom.Provider>
+);
+
+const cap = () => Number(screen.getByTestId('cap').textContent);
+
+describe('a picture sized from the measured room', () => {
+  it('stands at its share until the screen measures less room, then gives it once', () => {
+    const view = renderInApp(at(null));
+    expect(cap()).toBe(89);
+    view.rerender(at(-30));
+    expect(cap()).toBe(74);
+    // The same measurement again (a render for something else): nothing more is given.
+    view.rerender(at(-30));
+    expect(cap()).toBe(74);
+    // Fits now: it stays where it fits.
+    view.rerender(at(0));
+    expect(cap()).toBe(74);
+    // Room comes free: it takes it back, up to its share.
+    view.rerender(at(40));
+    expect(cap()).toBe(89);
+  });
+
+  it('starts every question at its share, and holds while she types', () => {
+    const view = renderInApp(at(-30));
+    view.rerender(at(-30, 'q2'));
+    // The measurement it finds is the last question's.
+    expect(cap()).toBe(89);
+    view.rerender(at(-12, 'q2'));
+    expect(cap()).toBe(83);
+    view.rerender(at(60, 'q2', true));
+    expect(cap()).toBe(83);
+  });
+});

@@ -38,6 +38,7 @@ const start = (roleplay_id: string): ActionView => ({
     role: 'Kellner',
     points: ['Begrüßen'],
     status: 'active',
+    ended_reason: null,
   },
 });
 

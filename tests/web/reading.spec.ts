@@ -139,7 +139,9 @@ test('a reading text: one text above every question, scrolling alone, folding aw
       // Open again for the questions after it: folded stays folded until she opens it.
       await page.getByRole('button', { name: 'Der Schulweg' }).click();
       await expect(page.getByTestId('scroll-text')).toBeVisible();
-      await page.getByRole('button', { name: 'Falsch' }).click();
+      // A choice is a radio that drafts; "Prüfen" submits it (#599 answer forms).
+      await page.getByRole('radio', { name: 'Falsch' }).click();
+      await page.getByRole('button', { name: 'Prüfen' }).click();
       await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
     } else if (await on(LATER)) {
       seen.add(LATER);

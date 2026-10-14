@@ -97,23 +97,41 @@ async function closeLapsed(db: Db, learnerId: string, now: Date): Promise<void> 
   );
 }
 
-/** Where each roleplay on a page of the thread stands now (the card offers "end" only while it runs). */
+/** Why a roleplay ended: after `turns` and `her` Buddy's feedback follows; after the others none. */
+type RoleplayEndReason = 'turns' | 'her' | 'concern' | 'lapsed';
+export type RoleplayStanding =
+  | { status: 'active'; ended_reason: null }
+  | { status: 'ended'; ended_reason: RoleplayEndReason };
+
+/**
+ * Where each roleplay on a page of the thread stands now (the card offers "end" only while it
+ * runs), and why it ended (#599: one ended by a concern has no feedback the card may point to).
+ * One she left is lapsed by the app clock (rule 7), whatever its row still says.
+ */
 export async function roleplayStatuses(
   db: Db,
   learnerId: string,
   ids: readonly string[],
   now: Date,
-): Promise<Map<string, 'active' | 'ended'>> {
+): Promise<Map<string, RoleplayStanding>> {
   if (ids.length === 0) return new Map();
-  const rows = await db.query<{ id: string; status: 'active' | 'ended'; last_at: Date }>(
-    `select id, status, last_at from buddy_roleplays where learner_id = $1 and id = any($2::uuid[])`,
+  const rows = await db.query<{
+    id: string;
+    status: 'active' | 'ended';
+    ended_reason: RoleplayEndReason | null;
+    last_at: Date;
+  }>(
+    `select id, status, ended_reason, last_at
+       from buddy_roleplays where learner_id = $1 and id = any($2::uuid[])`,
     [learnerId, ids],
   );
   const cutoff = now.getTime() - ROLEPLAY_IDLE_MS;
   return new Map(
-    rows.map((r) => [
+    rows.map((r): [string, RoleplayStanding] => [
       r.id,
-      r.status === 'active' && r.last_at.getTime() > cutoff ? 'active' : 'ended',
+      r.status === 'active' && r.last_at.getTime() > cutoff
+        ? { status: 'active', ended_reason: null }
+        : { status: 'ended', ended_reason: r.ended_reason ?? 'lapsed' },
     ]),
   );
 }
@@ -666,6 +684,7 @@ export async function runStartRoleplay(
       role: a.role,
       points: a.points,
       status: 'active',
+      ended_reason: null,
     },
     // Not undone: she ends it with the card's button, or by saying so, and gets her feedback.
     undo: null,

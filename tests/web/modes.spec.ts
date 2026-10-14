@@ -1327,6 +1327,9 @@ test('formulas: a reaction equation typed with the chemistry keys and counted (i
   await field.pressSequentially('SO');
   await tap('Tiefstellen');
   await field.pressSequentially('4');
+  // "Ladung" stands on the row's next page: "Weitere Zeichen" turns to it, as in the math row.
+  await field.focus();
+  for (let i = 0; i < 4 && (await key('Ladung').count()) === 0; i++) await tap('Weitere Zeichen');
   await tap('Ladung');
   await field.pressSequentially('2-');
   await expect(field).toHaveValue('SO₄²⁻');
@@ -1373,8 +1376,9 @@ test('formulas: math keys page by page, the new notation drawn, only the sign ov
   };
   await field.pressSequentially('x');
   await turnTo('Hochzahl');
-  await keyRowShots(page, '77-math-keys-more');
   await field.pressSequentially('2');
+  // Shot with the digit in: the raised mode is shown in the field, not only on its key.
+  await keyRowShots(page, '77-math-keys-more');
   await turnTo('kleiner gleich');
   await field.pressSequentially('3');
   await expect(field).toHaveValue('x² ≤ 3');

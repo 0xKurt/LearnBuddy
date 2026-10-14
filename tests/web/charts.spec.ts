@@ -148,8 +148,13 @@ test('charts: every chart type drawn, read and judged by code', async ({ page })
           ...Array.from(el.querySelectorAll('svg'), (s) => s.getBoundingClientRect().width),
         ),
       );
+      // As wide as the card lets it be: on 360 the column's 16 a side, the card's design padding
+      // (`--card-pad` 20 a side, #599) and the frame's 26 (FIGURE_CHROME) leave
+      // 360 − 32 − 40 − 26 = 262 — 4 under CHART_WIDTH since the card took the design's padding
+      // (it had 16); the chart then stands at the card's whole width, never narrower.
+      const room = phone.width - 2 * 16 - 2 * 20 - 26;
       expect(drawn, `${q.name} @${phone.width}: the chart's width`).toBeGreaterThanOrEqual(
-        CHART_WIDTH,
+        Math.min(CHART_WIDTH, room),
       );
     }
     await page.setViewportSize({ width: 390, height: 844 });

@@ -14,7 +14,7 @@ import { View } from 'react-native';
 import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 
 import type { SchematicImageId } from '../../../../packages/shared-math/src/schematics.js';
-import { pictureLayout } from '../../lib/math/schematicLayout.js';
+import { badgeRadii, pictureLayout } from '../../lib/math/schematicLayout.js';
 import { useFigureNames } from '../../lib/math/useFigureNames.js';
 import { useSchematicPictures } from '../../lib/math/useSchematicPictures.js';
 import { FIGURE_PICTURE } from '../../lib/theme/figurePicture.js';
@@ -33,6 +33,8 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
   const names = useFigureNames(figure);
   const loaded = pictures && names ? { anchors: pictures.anchors[figure.d], names } : null;
   const { k, height, badges } = pictureLayout(figure, width, loaded);
+  // Never smaller than its least size in pt, where the picture leaves room (#599).
+  const radii = badgeRadii(badges, k, { width, height }, badge);
   return (
     <View
       testID="schematic-picture"
@@ -53,6 +55,9 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
           <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }}>
             {badges.map(({ from, at }, i) => {
               const asked = i + 1 === figure.ask;
+              // The ring's size against the design's: the number and its baseline go with it.
+              const r = radii[i] ?? badge.radius * k;
+              const size = r / badge.radius;
               const line = asked ? figureAccent : ink;
               // A number that stands on its part (a row picture's cell) needs no line to it.
               const apart =
@@ -73,16 +78,16 @@ export function SchematicPicture({ figure, width }: { figure: PictureFigure; wid
                   <Circle
                     cx={at[0]}
                     cy={at[1]}
-                    r={badge.radius * k}
+                    r={r}
                     fill={asked ? figureAccent : paper}
                     stroke={line}
                     strokeWidth={badge.stroke}
                   />
                   <SvgText
                     x={at[0]}
-                    y={at[1] + badge.baseline * k}
+                    y={at[1] + badge.baseline * size}
                     fontFamily={FAMILY}
-                    fontSize={badge.fontSize * k}
+                    fontSize={badge.fontSize * size}
                     fontWeight={badge.fontWeight}
                     fill={asked ? onFigureAccent : ink}
                     textAnchor="middle"

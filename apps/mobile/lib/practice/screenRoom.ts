@@ -7,14 +7,23 @@
 // within its size (docs/engineering-guards.md, rule 4) — the rules themselves are unchanged.
 
 import type { ItemView, PracticeTurnView } from '@learnbuddy/shared-types/contracts';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
 import type { View } from 'react-native';
 
 import { answerFolds, formDensity } from '../keyboard.js';
 import { useFigureSizing } from '../math/figureSizing.js';
 import { useVisibleHeight } from '../useVisibleHeight.js';
 import { boardKeeps, newestReply, readsThrough, threadRoom, type Room } from './threadRoom.js';
-import { CARD_REACH, visualCaps, visualGrows } from './visuals.js';
+import { MIN_FIGURE_SCALE } from '../math/figureScale.js';
+import { CARD_REACH, roomCap, visualCaps, visualGrows } from './visuals.js';
 
 /** The question on screen, and the window it is laid out in. */
 type Question = {
@@ -109,6 +118,8 @@ export function useScreenRoom() {
 
   function layout(q: Question): Room & {
     caps: { figure: number; image: number };
+    /** The room left under the bar (< 0: how far it runs past), for the pictures (`PictureRoom`). */
+    spare: number | null;
     cardNatural: number;
     tops: number[];
     /** Where the conversation rests: the top of a reply she reads through (`ThreadBox`, #258, #298). */
@@ -176,7 +187,13 @@ export function useScreenRoom() {
           : Infinity,
       cardNatural,
       cardDelta,
-      visual: cardNatural > 0 && Boolean(item.figure || item.image) && !q.speaking,
+      // Pictures as options give the room (`PictureRoom`), not the card: two parts answering the
+      // same measurement gave both, then took both back (#599).
+      visual:
+        cardNatural > 0 &&
+        Boolean(item.figure || item.image) &&
+        !q.speaking &&
+        !item.choice_figures?.length,
       // While she types the drawing folds to one row (`Question`, `formDensity` tight): growing
       // the card then only made an empty band under that row and squeezed the conversation — a
       // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
@@ -205,6 +222,9 @@ export function useScreenRoom() {
     return {
       ...shared,
       caps: visualCaps(viewHeight, shared.cardGrowTo),
+      // Not while the answer is folded away: it then holds no picture that could give.
+      spare:
+        column > 0 && !answerFolds(asking, seen.window, seen.overlap) ? freeSpace - overrun : null,
       cardNatural,
       // ThreadBox rests its edge on any of them.
       tops: [...tops, ...partTops],
@@ -237,6 +257,33 @@ export function useScreenRoom() {
       columnRef.current?.measureInWindow((_x, y) => setColumnTop(Math.round(y)));
     },
   };
+}
+
+/**
+ * The room the screen measured left over under the bar (< 0: how far it runs past), for the
+ * pictures that give way to it: the pictures as options (`ChoiceList`) and a labelled picture
+ * under its question (`Question`). null: not measured.
+ */
+export const PictureRoom = createContext<number | null>(null);
+
+/**
+ * The tallest a picture that gives way may stand (#599): `most` until the screen measures less
+ * room, then as large as that room allows (`roomCap`), `rows` pictures above each other sharing
+ * it. Each measurement is taken once: a render with the same measurement changes nothing, so a
+ * room it already answered is never given twice. `hold` keeps the cap (a picture folded while
+ * she types gives the room of a row, not its own). Per `key`: a question and a window.
+ */
+export function usePictureCap(key: string, most: number, rows: number, hold = false): number {
+  const spare = useContext(PictureRoom);
+  // A new question starts at `most`; the measurement it finds is the last question's.
+  const held = useRef<{ key: string; cap: number; spare: number | null } | null>(null);
+  if (held.current?.key !== key) held.current = { key, cap: most, spare };
+  const now = held.current;
+  if (!hold && spare !== null && spare !== now.spare) {
+    now.cap = roomCap(now.cap, spare, rows, most, Math.round(most * MIN_FIGURE_SCALE));
+    now.spare = spare;
+  }
+  return Math.min(now.cap, most);
 }
 
 /** The practice screen's measurements and setters (`useScreenRoom`). */
