@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { tapped } from '../../lib/perf.js';
 import { HEADER, headerIsBrand, headerOrbSlot } from '../../lib/theme/header.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
@@ -154,7 +155,14 @@ export function BuddyHeader({
             {menu === null ? null : 'own' in menu ? (
               menu.own
             ) : (
-              <IconBtn tone="plain" icon="more" onPress={menu.onPress} />
+              <IconBtn
+                tone="plain"
+                icon="more"
+                onPress={() => {
+                  tapped('menu');
+                  menu.onPress();
+                }}
+              />
             )}
           </>
         )}

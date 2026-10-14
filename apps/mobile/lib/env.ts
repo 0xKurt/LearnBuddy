@@ -26,6 +26,14 @@ export const ENV = {
    * the screen where they would have been. It buys nothing else, and `production` ignores it.
    */
   INTERNAL_BUILD: process.env.EXPO_PUBLIC_INTERNAL_BUILD === '1',
+  /**
+   * A device measurement with release-mode JS (issue #711): tap spans (lib/perf.ts) go to the
+   * log, as they do in a development build. Set only on Metro for that run; a store build leaves
+   * it unset. Read when asked, so a test can switch it.
+   */
+  get PERF_LOG(): boolean {
+    return process.env.EXPO_PUBLIC_PERF_LOG === '1';
+  },
 };
 
 declare const __DEV__: boolean;

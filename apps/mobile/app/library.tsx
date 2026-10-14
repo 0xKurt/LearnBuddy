@@ -32,6 +32,7 @@ import { useLibrary } from '../lib/api/libraryQueries.js';
 import { GUTTER_APP, SPACE } from '../lib/theme/space.js';
 import type { LibrarySubject } from '@learnbuddy/shared-types/contracts';
 import { attachInChat } from '../lib/capture/attachRequest.js';
+import { useShown } from '../lib/perfShown.js';
 
 /** One card in the list: a subject of hers, or the sheets whose subject is not known yet. */
 type Row = { key: string; name: string; subject: LibrarySubject | null };
@@ -39,6 +40,8 @@ type Row = { key: string; name: string; subject: LibrarySubject | null };
 export default function LibraryScreen() {
   const { t } = useTranslation(['library', 'common']);
   const library = useLibrary();
+  useShown('library', true);
+  useShown('library_data', library.data !== undefined);
   const { busyId, start } = useStartMaterial();
   const [pulling, setPulling] = useState(false);
 

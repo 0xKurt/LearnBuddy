@@ -88,6 +88,7 @@ import { usePracticeDrafts } from '../../lib/practice/usePracticeDrafts.js';
 import { usePracticeVoice } from '../../lib/practice/usePracticeVoice.js';
 import { backToBuddy, useSessionEnd } from '../../lib/practice/useSessionEnd.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { useShown } from '../../lib/perfShown.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 
 export default function PracticeScreen() {
@@ -96,6 +97,8 @@ export default function PracticeScreen() {
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? '';
   const query = usePracticeSession(id);
   const session = query.data;
+  useShown('practice_open', true);
+  useShown('practice_question', session !== undefined);
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   // What she can see, keyboard or not: with it up the window keeps its height (edge-to-edge),
