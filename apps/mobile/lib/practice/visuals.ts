@@ -82,6 +82,17 @@ export function boardCap(viewHeight: number): number {
 }
 
 /**
+ * The room left in the ordinary body (`AnswerShell`) under everything in it — the question, her
+ * answer AND the conversation (#642) — for the pictures that give way (`PictureRoom`); < 0: how
+ * far it runs past. null until both are measured. Counting only what stands above the
+ * conversation, the flower of "Wie heißt Teil 3?" stood so tall that "Buddy schaut sich deine
+ * Antwort an" ran past the body, and following it pushed the question card up against the bar.
+ */
+export function bodySpare(box: number, content: number): number | null {
+  return box > 0 && content > 0 ? box - Math.round(content) : null;
+}
+
+/**
  * A picture's cap from the room the screen measured (`usePictureCap`, #599): the cap it stood at
  * and what is left under the bar (`spare`, < 0: how far the screen runs past), shared by the
  * `rows` pictures above each other — never above `most`, never below `least`.

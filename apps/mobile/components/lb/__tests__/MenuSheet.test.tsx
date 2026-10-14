@@ -45,6 +45,14 @@ describe('the ⋯ menu (App.jsx:125–134)', () => {
     expect(rows()).toEqual(PLACES);
   });
 
+  it('gives every place a sign of its own (#642: "Profil" wore the memory sparkle)', () => {
+    renderInApp(<HeaderMenu visible onClose={() => undefined} />);
+    const signs = PLACES.map(
+      (name) => screen.getByRole('button', { name }).querySelector('svg')?.innerHTML ?? '',
+    );
+    expect(new Set(signs).size).toBe(PLACES.length);
+  });
+
   it.each([
     ['Dein Material', '/library'],
     ['Was Buddy über dich weiß', '/memory'],

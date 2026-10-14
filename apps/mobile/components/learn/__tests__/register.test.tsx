@@ -3,6 +3,7 @@
 // its math — the core works without them, so nothing else would turn red. A place filled twice
 // is a wiring fault: a second card for the same tool, or the registration run twice.
 
+import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { homeFollowers } from '../../../lib/api/queries.js';
@@ -21,7 +22,10 @@ import {
   startMenu,
   workingOn,
 } from '../../buddy/extensions.js';
-import { inlineNotation } from '../../lb/InlineText.js';
+import { InlineText, inlineNotation } from '../../lb/InlineText.js';
+import { TYPE } from '../../../lib/theme/type.js';
+import { renderInApp } from '../../../testing/render.js';
+import { MathText } from '../../math/MathText.js';
 
 registerLearning();
 
@@ -67,5 +71,22 @@ describe('nothing is given twice', () => {
 
   it('refuses a second card for a tool that has one', () => {
     expect(() => addActionCard('offer_drill', () => null)).toThrow(/offer_drill schon belegt/);
+  });
+});
+
+describe('a run of model text is running text (#642)', () => {
+  it('sets its fractions in the line, as the question sets them (#288)', () => {
+    // Stacked at the full step a ¼ in Buddy's reply stood two lines tall and pulled its line apart
+    // from the ones around it; it is drawn exactly as the question's sentence draws it.
+    const text = 'Dann hast du $\\frac{1}{4}$ der Pizza.';
+    const drawn = (node: ReactNode) => {
+      const view = renderInApp(<>{node}</>);
+      const html = view.container.innerHTML;
+      view.unmount();
+      return html;
+    };
+    expect(drawn(<InlineText text={text} style={TYPE.body} />)).toBe(
+      drawn(<MathText text={text} style={TYPE.body} inlineFractions />),
+    );
   });
 });

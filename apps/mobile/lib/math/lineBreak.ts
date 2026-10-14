@@ -40,17 +40,31 @@ export function breakGroups(runs: PromptRun[]): Piece[][] {
       });
       continue;
     }
+    // A break after an operator inside this math, as the group it closed.
+    let broke = false;
+    const breakAfterOperator = () => {
+      if (cur.length === 0) return;
+      close();
+      broke = true;
+    };
     for (const atom of run.atoms) {
       if (atom.type !== 'chars') {
         cur.push({ kind: 'atom', atom, bold: run.bold });
-        if (atom.type === 'symbol' && atom.char.endsWith(THIN)) close();
+        if (atom.type === 'symbol' && atom.char.endsWith(THIN)) breakAfterOperator();
         continue;
       }
-      // Break after a spaced operator: "x² − 4x + 3" → "x² − " | "4x + " | "3".
+      // Break after a spaced operator: "x² − 4x + 3" → "x² − " | "4x + 3".
       for (const p of splitAfterOperators(atom.text)) {
         cur.push({ kind: 'atom', atom: { type: 'chars', text: p }, bold: run.bold });
-        if (p.endsWith(THIN)) close();
+        if (p.endsWith(THIN)) breakAfterOperator();
       }
+    }
+    // Never before the last term (#642): a result row read "… möglich: 2/8 +" and under it "4/8",
+    // alone on its line. The last term stays with the operator before it.
+    const last = groups.at(-1);
+    if (broke && cur.length > 0 && last) {
+      groups.pop();
+      cur = [...last, ...cur];
     }
   }
   close();

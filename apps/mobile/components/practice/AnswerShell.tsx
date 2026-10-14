@@ -13,6 +13,7 @@ import {
 import { ScrollView, View } from 'react-native';
 import { useThreadFollow } from '../../lib/buddy/useThreadFollow.js';
 import { PictureRoom } from '../../lib/practice/screenRoom.js';
+import { bodySpare } from '../../lib/practice/visuals.js';
 import { useStackTops } from '../../lib/practice/useStackTops.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 
@@ -172,17 +173,9 @@ function OrdinaryBody({
     if (flow.readKey != null && target !== undefined && contentHeight > 0)
       currentFollow.current.readFrom(flow.readKey, target);
   }, [flow.readKey, target, contentHeight]);
-  // The room the question and her answer leave in the body (#599): the conversation under them is
-  // the part that scrolls, never they — a labelled picture under the question sizes itself to it.
-  const thread = pieces[2];
-  const spare =
-    box > 0 && contentHeight > 0 && thread
-      ? box -
-        (PRACTICE.ordinaryBody.paddingTop +
-          thread.top -
-          thread.step +
-          PRACTICE.ordinaryBody.paddingBottom)
-      : null;
+  // The room under everything in the body, the conversation included (`bodySpare`, #599, #642):
+  // a picture gives room first, so her answer and Buddy's newest turn show without a scroll.
+  const spare = bodySpare(box, contentHeight);
   return (
     <PictureRoom.Provider value={spare}>
       <ScrollView

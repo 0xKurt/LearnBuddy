@@ -8,6 +8,7 @@ import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderInApp } from '../../../testing/render.js';
+import { PictureRoom } from '../../../lib/practice/screenRoom.js';
 import { QuestionCard } from '../Question.js';
 
 const seen = vi.hoisted(() => ({ window: 740, overlap: 0, visible: 740 }));
@@ -47,11 +48,38 @@ describe('a labelled picture next to its question', () => {
     expect(screen.queryByTestId('question-picture')).toBeNull();
   });
 
-  it('folds to one line while she types', () => {
+  it('stays drawn while she types and the room holds it (#642)', () => {
+    // "Wie heißt Teil 3?" — folded to "Abbildung · Ansehen" she had the number without the
+    // picture, over an empty band of room.
     show(picture, 440);
+    expect(screen.queryByTestId('figure-folded')).toBeNull();
     expect(
-      screen.getByTestId('question-picture').contains(screen.getByTestId('figure-folded')),
+      screen.getByTestId('question-picture').contains(screen.getByTestId('question-figure')),
     ).toBe(true);
+  });
+
+  it('folds while she types only where even its least size leaves no room', () => {
+    Object.assign(seen, { window: 440, visible: 440 });
+    const card = (spare: number | null, visible = 440) => {
+      Object.assign(seen, { window: visible, visible });
+      return (
+        <PictureRoom.Provider value={spare}>
+          <QuestionCard prompt="Wie heißt Teil 1?" topic={null} figure={picture} />
+        </PictureRoom.Provider>
+      );
+    };
+    const view = renderInApp(card(null));
+    expect(screen.queryByTestId('figure-folded')).toBeNull();
+    // Far past the room: down to its least size, and still past it.
+    view.rerender(card(-400));
+    view.rerender(card(-401));
+    expect(screen.getByTestId('figure-folded')).toBeTruthy();
+    // Folded, its row freed room: it does not unfold into it while she types …
+    view.rerender(card(120));
+    expect(screen.getByTestId('figure-folded')).toBeTruthy();
+    // … and stands drawn again once the keyboard goes.
+    view.rerender(card(120, 740));
+    expect(screen.queryByTestId('figure-folded')).toBeNull();
   });
 
   it('is not drawn under a question that stepped back to its closed line', () => {

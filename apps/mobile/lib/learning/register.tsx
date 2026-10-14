@@ -26,7 +26,7 @@ import {
   workingOn,
 } from '../../components/buddy/extensions.js';
 import { PhotoCheckCard } from '../../components/capture/PhotoCheckCard.js';
-import { inlineNotation } from '../../components/lb/InlineText.js';
+import { inlineNotation, type InlineTextProps } from '../../components/lb/InlineText.js';
 import { MathText } from '../../components/math/MathText.js';
 import { useSayMath } from '../../components/math/useSpokenMath.js';
 import { newId } from '../api/client.js';
@@ -45,6 +45,15 @@ import { sayNotation } from '../speech/say.js';
 
 /** The real outside world of a send: the two API calls, the native PUT, fresh request ids. */
 const SEND: UploadDeps = { createMaterial, submitMaterial, putPhoto, newId };
+
+/**
+ * A run of model text — Buddy's reply, a caption, a result row — is running text: its fractions
+ * sit in the line, as in the question's sentence (#288). Stacked at full size, a ¼ in a reply
+ * stood two lines tall and pulled its line apart from the ones around it (#642).
+ */
+function RunningMath(props: InlineTextProps) {
+  return <MathText {...props} inlineFractions />;
+}
 
 export function registerLearning(): void {
   // ── The chat: Buddy's offers to start something, always shown, one tap starts it …
@@ -80,7 +89,7 @@ export function registerLearning(): void {
 
   // ── Text: $…$ math, drawn (MathText), kept whole by Markdown and said in words.
   notation.fill(mathSpans);
-  inlineNotation.fill(MathText);
+  inlineNotation.fill(RunningMath);
   sayNotation.fill(useSayMath);
 
   // ── The home: the finished practice, a sheet being read, the ways to start.

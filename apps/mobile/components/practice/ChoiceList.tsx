@@ -335,7 +335,6 @@ function FigureChoices({
     `${choices.join('|')}:${screenHeight}`,
     Math.min(FIGURE_CHOICE_MAX_HEIGHT, Math.round(screenHeight * FIGURE_CHOICE_SCREEN_SHARE)),
     Math.ceil(choices.length / 2),
-    false,
     sizing.natural,
   );
   // What each option shows, in words (the letter first, as voice mode names them).

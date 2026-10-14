@@ -4460,7 +4460,9 @@ keeps our drawing until one exists (`SCHEMATIC_DRAWN`, with its reason).
   numbers in columns beside it (`schematicLayout` on `columnLabels`). A picture that is an image
   stands under its question as a card of its own at card width (`standsAlone`,
   lib/practice/visuals.ts; design task-label), as tall as the picture she taps may be (`boardCap`):
-  one sizing, and its numbers the design's size. Tapping is
+  one sizing, and its numbers the design's size. While she types it stays drawn and shrinks with
+  the room (#642: she names what it shows); it folds to "Abbildung · Ansehen" only where even its
+  least size leaves no room, and stays folded until the keyboard goes. Tapping is
   `TapFigure` with `tapLayout` (`pictureTaps`: `anchorAt` in the picture's frame; the chosen part
   is marked with a ring on its anchor). The line under it says "Teil gewählt"; the part's name is
   only in `aria-valuetext` (#409). `describeSchematic` says the picture and how many parts are
@@ -5114,7 +5116,9 @@ word list, so it stays a prompt rule.
   characters at 17 pt), otherwise one under the other — a grid where one tile wraps and its
   neighbour does not looked restless. A fraction or term alone (`mathOnly`) is set at 22 pt and
   centred; a fraction inside the question's sentence is set flat (`MathText inlineFractions`) so it
-  does not tear the line. The options stand directly under the hint row (no padding of their own above, #286). A picture option is at most 12 % of the window high (`FIGURE_CHOICE_SCREEN_SHARE`), so after a wrong try — Buddy's reply and "Lösung zeigen" above the tiles — both rows still fit 360×740.
+  does not tear the line — and so is one in every run of model text (`InlineText`: Buddy's reply, a
+  caption, a result row, #642). Math breaks after an operator, never before its last term: "2/8 +"
+  over a lone "4/8" was a result row's line (`lineBreak.ts`, #642). The options stand directly under the hint row (no padding of their own above, #286). A picture option is at most 12 % of the window high (`FIGURE_CHOICE_SCREEN_SHARE`), so after a wrong try — Buddy's reply and "Lösung zeigen" above the tiles — both rows still fit 360×740.
   While a tapped question is open her answer is not echoed as a bubble (`ItemThread echoAnswers`,
   as for structured items): the tried tile says it — except in a conversation, where the bubble is
   the only place she sees what was heard.
@@ -6038,7 +6042,9 @@ variants `forest`, `ocean`, `sunset`. **A screen asks `useTheme()` for its colou
 (`tones.bg`, `tones.deep`) and the figure ink — derived from the palette by pure functions in
 `palettes.ts`, so nothing a screen holds can belong to another theme. The provider re-renders
 the tree when the choice changes (and remounts it by key, so a style built once cannot keep
-old colours). It **mirrors** the applied palette rather than keeping a copy
+old colours). The tapped segment or tile moves in the tap's own commit (`useOptimistic` in
+`LookChoice`); the repaint of the whole app — 2–4.5 s on the phone — follows in a transition
+behind it (#642). It **mirrors** the applied palette rather than keeping a copy
 (`useSyncExternalStore(onPaletteApplied, activeTheme)`): the provider mounts with the app,
 but `restoreTheme()` reads the device from the root screen's effect afterwards — a remembered
 choice would never reach the tree otherwise. The choice is per device, kept through

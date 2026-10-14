@@ -38,6 +38,12 @@ type Question = {
   quiet: boolean;
   /** The Diktat card is one row (`DictationCard` `compact`). */
   dictationCompact: boolean;
+  /**
+   * The question, her answer and the conversation share one scrolling body (`AnswerShell`'s
+   * ordinary body): there the card neither grows nor gives, and a picture under it sizes itself
+   * to the body's own room (`PictureRoom`).
+   */
+  ordinary: boolean;
   viewHeight: number;
   windowWidth: number;
   safeBottom: number;
@@ -177,8 +183,11 @@ export function useScreenRoom() {
     // While she types the drawing folds to one row (`Question`, `formDensity` tight): growing
     // the card then only made an empty band under that row and squeezed the conversation — a
     // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
+    // Not in the ordinary body (#642): this room is the column's, measured from a conversation box
+    // and a free room that body does not have. Its "give" took up to 48 pt off the drawing's cap
+    // while Buddy checked her answer, and the pie of "Berechne 1/5 + 2/5" stood as an empty frame.
     const cardGrows =
-      visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight';
+      !q.ordinary && visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight';
     const shared = threadRoom({
       room,
       short: Math.max(0, -left),
@@ -273,21 +282,14 @@ export const PictureRoom = createContext<number | null>(null);
  * The tallest a picture that gives way may stand (#599): `most` until the screen measures less
  * room, then as large as that room allows (`roomCap`), `rows` pictures above each other sharing
  * it. Each measurement is taken once: a render with the same measurement changes nothing, so a
- * room it already answered is never given twice. `hold` keeps the cap (a picture folded while
- * she types gives the room of a row, not its own). Per `key`: a question and a window.
+ * room it already answered is never given twice. Per `key`: a question and a window.
  *
  * `natural`: the tallest of the pictures at full size (`useFigureSizing`, 0 while unknown). A
  * picture drawn below its cap does not shrink with it: the room is taken from the height it
  * stands at, the smaller of the two (#599: the views of a cube building stood 60 pt under a cap
  * of 89; lowering the cap by 15 moved nothing, and the bar stayed 30 pt past 360×740).
  */
-export function usePictureCap(
-  key: string,
-  most: number,
-  rows: number,
-  hold = false,
-  natural = 0,
-): number {
+export function usePictureCap(key: string, most: number, rows: number, natural = 0): number {
   const spare = useContext(PictureRoom);
   // A new question starts at `most`; the measurement it finds is the last question's.
   const held = useRef<{
@@ -298,7 +300,7 @@ export function usePictureCap(
   } | null>(null);
   if (held.current?.key !== key) held.current = { key, cap: most, spare, natural };
   const now = held.current;
-  if (!hold && spare !== null && (spare !== now.spare || natural !== now.natural)) {
+  if (spare !== null && (spare !== now.spare || natural !== now.natural)) {
     const stands = natural > 0 ? Math.min(natural, now.cap) : now.cap;
     now.cap = roomCap(stands, spare, rows, most, Math.round(most * MIN_FIGURE_SCALE));
     now.spare = spare;

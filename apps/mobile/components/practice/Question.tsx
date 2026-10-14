@@ -9,7 +9,7 @@ import { useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { FIGURE_CHROME, figureChrome } from '../../lib/math/figureScale.js';
+import { FIGURE_CHROME, figureChrome, MIN_FIGURE_SCALE } from '../../lib/math/figureScale.js';
 import { useDrawingNatural } from '../../lib/math/figureSizing.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
@@ -19,7 +19,7 @@ import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { QuestionCard as PresentationCard, RunMeta, RunMetaLine } from '../lb/QuestionCard.js';
-import { usePictureCap } from '../../lib/practice/screenRoom.js';
+import { PictureRoom, usePictureCap } from '../../lib/practice/screenRoom.js';
 import { boardCap, standsAlone } from '../../lib/practice/visuals.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { Progress } from '../lb/Progress.js';
@@ -389,10 +389,15 @@ export function QuestionCard({
 /**
  * A labelled picture under its question, as tall as the room left after the card and the bar
  * allows (#599): a skeleton under a two-line question ran 13 pt past 360×740 at a fixed share of
- * the window. Held while she types: folded, it measures the room of its row. Its own component,
- * so only a question WITH such a picture follows the measured room (`PictureRoom`): every other
- * card re-rendered with each measurement, and the code task's feedback at 360×440 stood half
- * drawn where it had not been drawn at all (gallery 262e).
+ * the window. Its own component, so only a question WITH such a picture follows the measured room
+ * (`PictureRoom`): every other card re-rendered with each measurement, and the code task's
+ * feedback at 360×440 stood half drawn where it had not been drawn at all (gallery 262e).
+ *
+ * While she types it stays drawn (#642): she names what it shows ("Wie heißt Teil 3?"), and folded
+ * to "Abbildung · Ansehen" it left her the number without the picture — over an empty band of
+ * room. It shrinks with the room as it always does; it folds only where even its least size leaves
+ * no room, and then stays folded while she types: unfolded again into the room its fold freed,
+ * it would take that room once more and fold again.
  */
 function QuestionPicture({
   figure,
@@ -405,10 +410,16 @@ function QuestionPicture({
   most: number;
   typing: boolean;
 }) {
-  const maxHeight = usePictureCap(sizeKey, most, 1, typing);
+  const maxHeight = usePictureCap(sizeKey, most, 1);
+  const spare = useContext(PictureRoom);
+  const [folded, setFolded] = useState(false);
+  const cramped =
+    typing && spare !== null && spare < 0 && maxHeight <= Math.round(most * MIN_FIGURE_SCALE);
+  if (cramped && !folded) setFolded(true);
+  if (!typing && folded) setFolded(false);
   return (
     <View testID="question-picture" style={{ marginTop: PRACTICE.ordinaryBody.gap }}>
-      <QuestionFigure figure={figure} maxHeight={maxHeight} folded={typing} />
+      <QuestionFigure figure={figure} maxHeight={maxHeight} folded={folded || cramped} />
     </View>
   );
 }

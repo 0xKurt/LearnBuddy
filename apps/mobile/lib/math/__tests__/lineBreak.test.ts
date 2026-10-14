@@ -42,8 +42,18 @@ describe('breakGroups', () => {
     expect(groups('$x$ ist 3,5 m² oder 20 %')).toEqual(['x', 'ist', '3,5~m²', 'oder', '20~%']);
   });
 
-  it('still breaks after a spaced operator inside math', () => {
+  it('still breaks after a spaced operator inside math, but never before its last term', () => {
     // A thin space on each side of the operator; the break comes after the second one.
-    expect(groups('$x^{2} - 4x + 3$')).toEqual(['x[sup]^−', '4x^+', '3']);
+    expect(groups('$x^{2} - 4x + 3$')).toEqual(['x[sup]^−', '4x^+^3']);
+  });
+
+  it('never leaves a fraction alone on the next line (#642)', () => {
+    // A result row read "… möglich: 2/8 +" and under it "4/8", on a line of its own.
+    expect(groups('Kürze: $\\frac{2}{8} + \\frac{4}{8}$')).toEqual(['Kürze:', '[frac]^+^[frac]']);
+    expect(groups('$\\frac{1}{2} + \\frac{1}{3} - \\frac{1}{4}$ ist')).toEqual([
+      '[frac]^+',
+      '[frac]^−^[frac]',
+      'ist',
+    ]);
   });
 });
