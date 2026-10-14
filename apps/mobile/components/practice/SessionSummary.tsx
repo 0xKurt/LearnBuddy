@@ -100,7 +100,7 @@ export function SessionSummary({
         <ResultList
           variant="rows"
           title={t('summary_test.review')}
-          rows={review.map((row) => reviewRow(row, ranOut, t))}
+          rows={review.map((row) => reviewRow(row, mode, ranOut, t))}
           animate={false}
         />
       ) : null}
@@ -109,11 +109,22 @@ export function SessionSummary({
 }
 
 /** One question of a practice test as a row of the result list: its state and its solution. */
-function reviewRow(row: SessionItemView, ranOut: boolean, t: TFunction): ResultRow {
+function reviewRow(
+  row: SessionItemView,
+  mode: SessionMode,
+  ranOut: boolean,
+  t: TFunction,
+): ResultRow {
   const right = row.status === 'correct';
+  // Outside a test, "Lösung zeigen" is only there after a try or a hint (`revealReady`), and the
+  // server stores it as `skipped` (practice/setAside.ts). She did not skip it — she tried and then
+  // looked at the solution, which is what a solution shown after her miss says (issue #643, device:
+  // "Übersprungen" under a question she had answered "5/8"). In a test it is "Überspringen".
+  const shown = mode !== 'test' && row.status === 'skipped' && row.attempts + row.hints_used > 0;
+  const state = shown ? 'revealed' : row.status;
   const status = right
     ? t('summary_test.right')
-    : row.status === 'skipped'
+    : state === 'skipped'
       ? t('summary_test.skipped')
       : row.status === 'open'
         ? // Left open when the time ran out: not answered — said as exactly that (issue #241).
@@ -128,7 +139,7 @@ function reviewRow(row: SessionItemView, ranOut: boolean, t: TFunction): ResultR
   return {
     key: row.item.id,
     right,
-    status: row.status,
+    status: state,
     // The state alone, at the row's right end (Done.jsx:36): the question is the row's title.
     label: status,
     text: row.item.prompt,

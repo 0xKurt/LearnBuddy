@@ -3474,7 +3474,8 @@ nothing stays open forever:
   "Übung beenden" and where it leads): the header title is one line (#287), and a worded pill
   left the topic ~125 pt at 360 wide, cut to "Flächeninhalt Rec…" (#286).
 - _Resuming_ is keyed on `last_activity_at`: a session used in the last 12 h is the first now
-  card; an older open one (homework help up to 14 days, any other session up to 3 days) comes
+  card — unless a run she finished after its last activity is still in its half hour: what she
+  did last comes first, so the result (and the greeting's "gerade") reaches the home (#643); an older open one (homework help up to 14 days, any other session up to 3 days) comes
   after Buddy's prepared practice. Every open session is loaded into Buddy's state, however old.
   A homework sheet leads to its help session (`POST /practice/sessions {material_id}` returns
   it; after an abandoned one, a new session with the tasks not solved yet; `MaterialView.
