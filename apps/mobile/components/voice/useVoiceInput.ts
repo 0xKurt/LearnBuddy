@@ -221,6 +221,7 @@ export function useVoiceInput({
 
   const rec = useRecording({
     onChunk: onPiece,
+    onLevel,
     onFailed: (why) => {
       if (why !== 'denied') setHint(why);
     },
@@ -254,15 +255,18 @@ export function useVoiceInput({
   // Hands-free on the recording path too (issue #523): where the on-device recogniser is
   // unavailable, a sustained pause after clear speech ends the recording
   // (lib/speech/pauseEnd.ts); the tap keeps working.
+  // Every reading counts, as the recorder takes it (`onLevel`, #637): the pause is not judged
+  // only when the screen happens to draw.
   const pause = useRef(new PauseEnd()).current;
   const pauseEnds = untilPause && !onDevice && recorderMeters;
+  const listening = useRef(false);
+  listening.current = pauseEnds && state === 'recording';
   useEffect(() => {
-    if (!pauseEnds || state !== 'recording') {
-      pause.reset();
-      return;
-    }
-    if (pause.observe(rec.level, Date.now())) void rec.stop();
-  }, [pauseEnds, state, rec.level, rec.elapsedMs, rec, pause]);
+    if (!listening.current) pause.reset();
+  }, [pauseEnds, state, pause]);
+  function onLevel(level: number, now: number): void {
+    if (listening.current && pause.observe(level, now)) void rec.stop();
+  }
 
   async function begin(): Promise<void> {
     guard.begin();
