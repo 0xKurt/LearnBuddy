@@ -20,6 +20,7 @@ import { bottomRoom, CARD_PAD, CONTROL, GUTTER_APP, RHYTHM, SPACE } from '../../
 import { SKELETON } from '../../lib/theme/states.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Bone, BoneCard, BoneRule, BoneText, SkeletonGroup } from './Skeleton.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 const { line, width } = SKELETON;
 
@@ -43,6 +44,7 @@ function Rows({
   /** False for a group that has none (her card in the settings, the one choice of a page). */
   label?: boolean;
 }) {
+  useTheme();
   return (
     <View style={{ gap: SPACE.sm }}>
       {label ? (
@@ -79,6 +81,7 @@ function Rows({
 
 /** Two lines Buddy says: in the thread they start after his orb's column (States.jsx:20). */
 function BuddyLines() {
+  useTheme();
   return (
     <View style={{ paddingLeft: CHAT.orb.indent }}>
       <BoneText type={TYPE.body} width={width.long} height={line.text} />
@@ -89,6 +92,7 @@ function BuddyLines() {
 
 /** One bubble of hers at the end edge, as tall as a one-line message (States.jsx:21). */
 function OwnBubble() {
+  useTheme();
   return (
     <View style={{ alignItems: 'flex-end' }}>
       <Bone
@@ -126,6 +130,7 @@ function Bar({ inset = false }: { inset?: boolean }) {
 
 /** The practice screen under its head: the question card, four answers, the bar (States.jsx:25–28). */
 export function PracticeSkeleton({ label }: { label: string }) {
+  useTheme();
   return (
     <SkeletonGroup label={label} style={{ flex: 1 }}>
       <View
@@ -159,6 +164,7 @@ export function PracticeSkeleton({ label }: { label: string }) {
  * from the groups): as many lines as the page has, the last one shorter.
  */
 function Lead({ lines }: { lines: number }) {
+  useTheme();
   return (
     <View style={{ paddingHorizontal: SPACE.xs }}>
       {times(lines, (i) => (
@@ -203,6 +209,7 @@ export function GroupSkeleton({ label }: { label: string }) {
 
 /** "Was Buddy über dich weiß": the page's two lines, then what he remembers as rows. */
 export function MemorySkeleton({ label }: { label: string }) {
+  useTheme();
   return (
     <SkeletonGroup
       label={label}
@@ -261,6 +268,7 @@ const PAGES = MATERIAL_DETAIL.pages;
  * (components/library/SheetPages.tsx), then a card each — which question it is, its two lines.
  */
 export function QuestionsSkeleton({ label }: { label: string }) {
+  useTheme();
   return (
     <SkeletonGroup label={label}>
       <View

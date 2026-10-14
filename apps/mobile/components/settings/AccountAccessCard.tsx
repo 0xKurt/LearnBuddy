@@ -43,6 +43,7 @@ type Props = {
 type Open = 'email' | 'password' | null;
 
 export function AccountAccessCard({ minor, pinSet, email, enabled, first }: Props) {
+  useTheme();
   const { t } = useTranslation(['settings', 'common']);
   const [open, setOpen] = useState<Open>(null);
   const { opening, open: openAsAdult } = useAdultOpener(minor, pinSet, 'credentials');

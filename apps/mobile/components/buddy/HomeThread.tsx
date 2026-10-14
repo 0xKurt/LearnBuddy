@@ -135,6 +135,7 @@ const PILL_ROUND = RADIUS.round;
 const PillEntrance = Platform.OS === 'web' ? Appear : Rise;
 
 function NewReplyPill({ onPress }: { onPress: () => void }) {
+  useTheme();
   const { t } = useTranslation('buddy');
   return (
     <PillEntrance

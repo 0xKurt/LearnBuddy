@@ -14,6 +14,7 @@ import { TOUCH } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { TapSurface } from '../lb/TapSurface.js';
 import type { SpokenWord } from './WordSheet.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function SpokenWordTargets({
   words,
@@ -28,6 +29,7 @@ export function SpokenWordTargets({
   label: (word: SpokenWord) => string;
   onWord: (word: SpokenWord) => void;
 }) {
+  useTheme();
   const [boxes, setBoxes] = useState<ReadonlyArray<WordBox | undefined>>([]);
   const place = (i: number) => (e: LayoutChangeEvent) => {
     const { x, y, width, height } = e.nativeEvent.layout;

@@ -21,6 +21,7 @@ import { SPACE } from '../../lib/theme/space.js';
 import { LOADING_STATE } from '../../lib/theme/states.js';
 import { BuddyOrb } from './BuddyOrb.js';
 import { Appear } from './Motion.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function LoadingState({
   label,
@@ -30,6 +31,7 @@ export function LoadingState({
   /** False under a head whose orb already shows Buddy thinking: one Buddy per screen (#599). */
   orb?: boolean;
 }) {
+  useTheme();
   const reduced = useReducedMotion();
   const breath = useSharedValue(0);
   useEffect(() => {

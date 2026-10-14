@@ -34,6 +34,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { ChatCard } from './ChatCard.js';
 import { quietVariant, type Quiet } from './extensions.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_rehearsal' }>;
 
@@ -47,6 +48,7 @@ export function RehearseCard({
   /** Whether the start may be the screen's one filled button (extensions.ts `loudCard`). */
   quiet?: Quiet;
 }) {
+  useTheme();
   const { t } = useTranslation(['buddy', 'practice']);
   const mounted = useMounted();
   const [sending, setSending] = useState(false);

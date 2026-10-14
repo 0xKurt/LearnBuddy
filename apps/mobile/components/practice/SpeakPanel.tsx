@@ -90,6 +90,7 @@ function MarkedWords({
   /** A word she taps: it opens on its own to listen to and to try again (issue #83). */
   onWord?: (word: PronunciationFeedback['words'][number]) => void;
 }) {
+  useTheme();
   const weak = useWeak();
   const { t } = useTranslation('practice');
   const signs = signsAround(prompt, feedback.words);
@@ -136,6 +137,7 @@ function MarkedWords({
  * feedback replaces it (issue #8).
  */
 function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent['words'] }) {
+  useTheme();
   const weak = useWeak();
   const parts = prompt.split(/(\s+)/);
   let at = 0;
@@ -178,6 +180,7 @@ type CardProps = {
  * reply in the thread (PronunciationNote, ItemThread).
  */
 export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
+  useTheme();
   const { t } = useTranslation('practice');
   const feedback = latestPronunciation(turns);
   /** The word she tapped, to hear and try on its own (issue #83). */
@@ -230,6 +233,7 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
  * The thread may scroll; the card above it may not.
  */
 export function PronunciationNote({ feedback }: { feedback: PronunciationFeedback }) {
+  useTheme();
   const { t } = useTranslation('practice');
   const tips = feedback.words.filter((w) => !w.ok && w.tip);
   // No verdict line here: the words are marked in the card, the chip under her own turn

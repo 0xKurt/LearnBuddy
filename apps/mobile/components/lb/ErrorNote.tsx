@@ -9,8 +9,10 @@ import { TYPE } from '../../lib/theme/type.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { CARD_PAD } from '../../lib/theme/space.js';
 import { Card } from './Card.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function ErrorNote({ text }: { text: string | null }) {
+  useTheme();
   useAnnounce(text);
   if (!text) return null;
   return (

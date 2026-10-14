@@ -18,6 +18,7 @@ import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from './Btn.js';
 import { Sheet, SHEET_TEXT } from './Sheet.js';
 import { ChoiceOptions } from './ChoiceOptions.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 /**
  * A required picker has an answer. The screen's CTA waits on this (app/profile.tsx): nothing
@@ -53,6 +54,7 @@ export function PickerField<T extends string>({
   onChange,
   disabled = false,
 }: Props<T>) {
+  useTheme();
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
   const chosen = options.find((o) => o.value === value) ?? null;

@@ -189,6 +189,7 @@ function ResultRows({ rows }: { rows: readonly ResultRow[] }) {
 }
 
 function ResultCards({ title, rows, delay, animate }: Required<Omit<Props, 'variant'>>) {
+  useTheme();
   return (
     <View style={{ gap: SPACE.md }}>
       <Rise delay={delay} animate={animate}>

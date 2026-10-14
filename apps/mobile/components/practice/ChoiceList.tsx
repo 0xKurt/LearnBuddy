@@ -317,6 +317,7 @@ function FigureChoices({
   disabled,
   onChoose,
 }: Props & { figures: readonly Figure[] }) {
+  useTheme();
   const { t } = useTranslation('practice');
   const { t: tm } = useTranslation('math');
   const said = useMarkWords();

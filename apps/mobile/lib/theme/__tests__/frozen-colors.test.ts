@@ -1,9 +1,9 @@
-// Theme colours must be read at render time (issue #84). `applyPalette` mutates the live
-// token objects (LB, TYPE, SHADOW, TONE_*, FIGURE); a module-scope constant that captures a
-// value from them keeps the start palette forever — the tree remounts on a theme change,
-// but modules are not re-evaluated. That is how pastel-dark ink ended up invisible on the
-// night background. Two guards:
-//   1. applyPalette really refills TYPE and SHADOW in place (identity preserved).
+// Theme colours must be read at render time (issue #84). `applyPalette` renews the live
+// tokens (LB, TYPE, SHADOW, TONE_*, FIGURE); a module-scope constant that captures a value
+// from them keeps the start palette forever — modules are not re-evaluated. That is how
+// pastel-dark ink ended up invisible on the night background. Two guards:
+//   1. applyPalette replaces the TYPE and SHADOW styles (new objects, so React Native repaints
+//      without the tree remounting, #631; readers subscribe: themeSubscribers.test.ts).
 //   2. No source file captures a live token value in a module-scope constant.
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -17,8 +17,8 @@ import { SHADOW } from '../shadow.js';
 import { TYPE } from '../type.js';
 
 describe('theme tokens stay live across a palette change', () => {
-  it('refills TYPE and SHADOW in place when the palette changes', () => {
-    const body = TYPE.body; // a held reference, like a component module would hold
+  it('replaces the TYPE and SHADOW styles when the palette changes (#631)', () => {
+    const body = TYPE.body; // what a component rendered with before the change
     const soft = SHADOW.soft;
     try {
       applyPalette('pastellDark');
@@ -26,9 +26,11 @@ describe('theme tokens stay live across a palette change', () => {
       expect(LB.ink).toBe(night.ink);
       expect(TYPE.body.color).toBe(night.ink);
       expect(TYPE.label.color).toBe(night.ink2);
-      // The very same objects, not replacements: held references must see the new colours.
-      expect(body.color).toBe(night.ink);
-      expect(soft.shadowColor).toBe(night.shadowColor);
+      expect(SHADOW.soft.shadowColor).toBe(night.shadowColor);
+      // New objects: the tree no longer remounts, and React Native repaints a style only when it
+      // gets a different object — a refilled one has nothing to diff (1.39:1 headings, #148).
+      expect(TYPE.body).not.toBe(body);
+      expect(SHADOW.soft).not.toBe(soft);
     } finally {
       applyPalette(DEFAULT_THEME);
     }
@@ -112,9 +114,14 @@ describe('no module-scope capture of live theme tokens', () => {
 // What the removal was really about — a screen losing its state — is handled where it
 // belongs, by the screens that have state worth keeping (app/onboarding.tsx, lib/drafts.ts).
 describe('a palette change repaints what is on screen', () => {
-  it('remounts the tree, so a style that passes a token through is re-applied', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'ThemeProvider.tsx'), 'utf8');
-    expect(src).toMatch(/key=\{name\}/);
-    expect(src).toMatch(/issue(s)? #84, #148, #171/);
+  it('renews its readers instead of remounting the tree (#631)', () => {
+    // The remount crashed Android mid screen transition; the readers subscribe instead
+    // (themeSubscribers.test.ts) and get new style objects (the first test above).
+    const src = readFileSync(join(import.meta.dirname, '..', 'ThemeProvider.tsx'), 'utf8').replace(
+      /\/\/.*$/gm,
+      '',
+    );
+    expect(src).not.toMatch(/<\w+ key=\{name\}/);
+    expect(src).toMatch(/<Ctx\.Provider value=\{value\}>\{children\}<\/Ctx\.Provider>/);
   });
 });

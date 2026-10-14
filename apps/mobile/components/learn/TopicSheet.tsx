@@ -21,6 +21,7 @@ import { useVoiceInput } from '../voice/useVoiceInput.js';
 import { KIND_EXAMPLES } from './kinds.js';
 import { StartStatus } from './StartStatus.js';
 import { useStartTopic, type TopicKind } from './useStartTopic.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 /** StartTopicRequest.text allows at most 3000 characters. */
 const MAX_TEXT = 3000;
@@ -32,6 +33,7 @@ type Props = {
 };
 
 export function TopicSheet({ kind, onClose }: Props) {
+  useTheme();
   const { t } = useTranslation(['learn', 'common']);
   const { state, start, reset } = useStartTopic();
   const [text, setText] = useState('');

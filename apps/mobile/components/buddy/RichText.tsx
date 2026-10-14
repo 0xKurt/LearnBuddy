@@ -12,8 +12,10 @@ import { InlineText } from '../lb/InlineText.js';
 import { CHAT } from '../../lib/theme/chat.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
 export function RichText({ text, style }: { text: string; style: StyleProp<TextStyle> }) {
+  useTheme();
   const blocks = useMemo(() => markdownBlocks(text), [text]);
   if (blocks.length === 1 && blocks[0]?.type === 'para')
     return <InlineText text={blocks[0].text} accessible={false} style={style} />;
