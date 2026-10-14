@@ -3667,7 +3667,11 @@ so the rules only say it when it is certain; everything else goes to the tutor (
 2–3 hints (what is asked → which rule → the first step) and the solution explained step by step:
 questions from a photo in the (background) reading call, questions on a topic in a separate
 background call right after the session starts (`hints.ts`, purpose `hints`) — writing them in the
-start call made her wait 8–11 s instead of 5–6 s. A hint that states the result in any form
+start call made her wait 8–11 s instead of 5–6 s. Once per question (F9-a, #660): the call that
+creates the run (`hintsFor` in `generate.ts`, also when Buddy prepares an offered run ahead in
+`prepare.ts`, so its hints are there by her tap) asks for the questions it brought, the call that
+adds an early run's rest for exactly those; a request that only finds the run starts none. No lock
+is needed: the sets are disjoint, and the write keeps `hints = '{}'` as its fence. A hint that states the result in any form
 (also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. The ladder counts only
 hints she was really shown as hints (migration `0043_prepared_hints_used.sql`: `hints_used` = every
 hint shown, prepared or written by the tutor; `prepared_hints_used` = which prepared one is next).
