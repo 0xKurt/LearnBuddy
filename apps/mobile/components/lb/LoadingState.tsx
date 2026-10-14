@@ -35,14 +35,15 @@ export function LoadingState({
   const reduced = useReducedMotion();
   const breath = useSharedValue(0);
   useEffect(() => {
-    if (reduced) return;
+    // No orb, nothing breathes: a loop with nothing to move still runs every frame (#637).
+    if (reduced || !withOrb) return;
     breath.value = withRepeat(
       withTiming(1, { duration: LOADING_STATE.breathMs, easing: EASE.breathe }),
       -1,
       true,
     );
     return () => cancelAnimation(breath);
-  }, [reduced, breath]);
+  }, [reduced, withOrb, breath]);
   const orb = useAnimatedStyle(() => ({
     opacity: LOADING_STATE.dim + breath.value * LOADING_STATE.dimSpan,
     transform: [{ scale: LOADING_STATE.scale + breath.value * LOADING_STATE.scaleSpan }],
