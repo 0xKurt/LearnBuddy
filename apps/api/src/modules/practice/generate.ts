@@ -236,6 +236,22 @@ ${STRUCTURED_RULES}
 
 Answer with the JSON object described by the schema.`;
 
+/**
+ * The kinds of picture she asked for (#724): only for questions on a topic — practice and a
+ * practice test. Another kind of run writes no figure from her wish.
+ */
+function wishedFigures(input: StartTopicRequest): readonly string[] {
+  return input.kind === 'practice' || input.kind === 'test' ? (input.figures ?? []) : [];
+}
+
+/** What the run is told of them: a principle, never a sample question. */
+function pictureLine(input: StartTopicRequest): string | null {
+  const wished = wishedFigures(input);
+  return wished.length > 0
+    ? `PICTURES: she asked to see ${wished.join(', ')}. Give every question the topic allows such a figure; a question it cannot serve goes without one.`
+    : null;
+}
+
 const MODE: Record<StartTopicRequest['kind'], 'practice' | 'help' | 'test'> = {
   test: 'test',
   practice: 'practice',
@@ -443,6 +459,7 @@ async function generateSet(
               input.subject ? `SUBJECT (as the learner said): ${input.subject}` : null,
               `TASK: ${TASK[input.kind]}`,
               input.difficulty ? LEVEL[input.difficulty] : null,
+              pictureLine(input),
               sheets
                 ? `SHEETS (she photographed them for this test; stay strictly within them — only their topics, tasks like theirs with other numbers or words, nothing the sheets do not cover):\nTOPICS: ${sheets.topics.join(' | ')}\nTEXT:\n${sheets.text}`
                 : null,
@@ -467,6 +484,7 @@ async function generateSet(
       system: GENERATE_SYSTEM,
       contents,
       full: explainSchemaFor(input.kind, sheets?.topics ?? null, off),
+      wished: wishedFigures(input),
     });
     reservation = narrowed.reservation;
     keep = narrowed.keep;

@@ -51,6 +51,8 @@ export function prepareOffered(
           // A test she asked to sit with time keeps its minutes (issue #241). The clock itself
           // starts only when she opens it — not here, while she is still reading his reply.
           minutes: offer.minutes,
+          // The kinds of picture she asked for (#724), as her tap hands them over.
+          figures: offer.figures?.length ? offer.figures : null,
         });
       } catch (err) {
         // "Nothing to learn from this" is not an outage — it is the generator saying this

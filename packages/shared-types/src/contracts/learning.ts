@@ -4,7 +4,7 @@ import { AnswerSurface } from './bars.js';
 import { IsoDateTime, SubjectKind, Uuid } from './common.js';
 import { DrillView } from './drill.js';
 import { ESSAY_TEXT_MAX, EssayFeedback } from './essay.js';
-import { Figure } from './figure.js';
+import { Figure, PictureWish } from './figure.js';
 import { ListenRef } from './listen.js';
 import { PassageView } from './reading.js';
 import { HeardTones } from './staff.js';
@@ -1049,6 +1049,12 @@ export const StartTopicRequest = z.object({
    * it before a model is asked (`practice/generate.ts`).
    */
   minutes: TestMinutes.nullable().optional(),
+  /**
+   * practice / test: the kinds of picture she asked for in the chat (#724), carried by Buddy's
+   * offer. The run's form choice takes them first (`practice/formChoice.ts`); another kind of run
+   * ignores them.
+   */
+  figures: PictureWish.nullable().optional(),
 });
 export type StartTopicRequest = z.infer<typeof StartTopicRequest>;
 

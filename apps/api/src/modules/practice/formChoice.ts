@@ -346,6 +346,11 @@ export async function chooseForms(
     system: string;
     contents: LlmMessage[];
     full: JsonSchema;
+    /**
+     * Figure types she asked for (#724): they come first, before anything the choice ranks,
+     * and stay even when no choice could be made.
+     */
+    wished?: readonly string[];
   },
 ): Promise<Narrowed & { reservation: Reservation | null }> {
   if (withinBudget(call.full))
@@ -388,7 +393,10 @@ async function narrow(
       const can = offered(call.full);
       const wanted = {
         forms: parsed.data.forms.filter((f) => can.forms.includes(f)),
-        figures: parsed.data.figures.filter((f) => can.figures.includes(f)),
+        figures: withWished(
+          parsed.data.figures.filter((f) => can.figures.includes(f)),
+          call,
+        ),
       };
       const named = parsed.data.forms.length + parsed.data.figures.length;
       // Only names it was not offered: no choice was made, whatever the answer's shape.
@@ -399,5 +407,15 @@ async function narrow(
     if (isAppError(err)) throw err;
   }
   console.warn(`[forms] ${call.purpose}: no choice, the minimal set goes out (#627)`);
-  return { ...fitted(call.full, { forms: [], figures: [] }), how: 'fallback' };
+  return { ...fitted(call.full, { forms: [], figures: withWished([], call) }), how: 'fallback' };
+}
+
+/** What she asked to see first (#724) — only types this schema has — then the rest, once each. */
+function withWished(
+  chosen: readonly string[],
+  call: { full: JsonSchema; wished?: readonly string[] },
+): string[] {
+  const can = offered(call.full).figures;
+  const wished = (call.wished ?? []).filter((f) => can.includes(f));
+  return [...new Set([...wished, ...chosen])];
 }

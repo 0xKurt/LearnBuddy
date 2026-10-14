@@ -9,6 +9,8 @@ import type { ChartFigure } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { TICK_CHAR } from '../../../../../packages/shared-math/src/charts.js';
+import { ITTEN_HUES } from '../../../../../packages/shared-math/src/itten.js';
+import { DEFAULT_THEME, figureOf, paletteOf } from '../../../lib/theme/palettes.js';
 import { renderInApp } from '../../../testing/render.js';
 import { ChartBody, describeChart } from '../ChartFigures.js';
 
@@ -99,6 +101,19 @@ describe('the labels at the ends of a measured axis (#387)', () => {
     const at = labelX(container, last);
     expect(at.length).toBeGreaterThan(0);
     for (const x of at) expect(x + (last.length * TICK_CHAR) / 2).toBeLessThanOrEqual(width);
+  });
+});
+
+describe('a pie whose slices are named after colours (#724)', () => {
+  it('draws each in the colour it names, not in the palette’s slot', () => {
+    // The device: "Blau" over a violet slice, and the question asked for the blue part.
+    const pie: ChartFigure = { type: 'pie_chart', half: false, l: ['Blau', 'Weiß'], v: [25, 75] };
+    const { container } = renderInApp(<ChartBody figure={pie} width={266} />);
+    const ink = figureOf(paletteOf(DEFAULT_THEME));
+    const fills = Array.from(container.querySelectorAll('path')).map((p) =>
+      (p.getAttribute('fill') ?? '').toLowerCase(),
+    );
+    expect(fills).toEqual([ink.hues[ITTEN_HUES.indexOf('blue')], ink.plain.white]);
   });
 });
 
