@@ -16,6 +16,7 @@ import { projectSolid, type SolidXY } from '../../../../packages/shared-math/src
 import type { Translate } from '../../lib/i18n/index.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { FONT, HaloText } from './figureText.js';
+import { FittedSvg } from './TreeFigures.js';
 
 export type CubesFig = Extract<Figure, { type: 'cubes' }>;
 
@@ -39,14 +40,34 @@ const CUBE_EDGE = 32;
 const pathOf = (pts: readonly SolidXY[]) =>
   `${pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} Z`;
 
-export function CubesBody({ fig, width }: { fig: CubesFig; width: number }) {
-  if (fig.v === 'oblique') return <Oblique fig={fig} width={width} />;
+/**
+ * `scale`: how far FigureView shrinks the drawing. A building's squares and edges have a size of
+ * their own (`CUBE_EDGE`, `VIEW_CELL`), so its height does not follow the width it is given: it is
+ * laid out at its full width and drawn at `scale`, as a tree or a circuit (`FittedSvg`) — a
+ * question with a building and four views ran the bar 30 pt past 360×740 while the card's cap
+ * asked the building for 30 pt less and it kept every one (#599).
+ */
+export function CubesBody({
+  fig,
+  width,
+  scale = 1,
+}: {
+  fig: CubesFig;
+  width: number;
+  scale?: number;
+}) {
+  const fit = { width: width / scale, scale };
+  if (fig.v === 'oblique') return <Oblique fig={fig} {...fit} />;
+  // A plan's numbers are text: it follows the width it is given, as before (its squares shrink
+  // with it, its digits keep their size).
   if (fig.v === 'plan') return <Plan fig={fig} width={width} />;
-  return <Squares grid={cubesView(fig.g, fig.v)} width={width} />;
+  return <Squares grid={cubesView(fig.g, fig.v)} {...fit} />;
 }
 
+type Fit = { width: number; scale: number };
+
 /** The Schrägbild: every cube's front, top and right face, painted from the back to the front. */
-function Oblique({ fig, width }: { fig: CubesFig; width: number }) {
+function Oblique({ fig, width, scale: fitted }: { fig: CubesFig } & Fit) {
   const { figure: ink, palette } = useTheme();
   type Face = { pts: SolidXY[]; fill: string };
   const faces: Face[] = [];
@@ -77,7 +98,7 @@ function Oblique({ fig, width }: { fig: CubesFig; width: number }) {
   const ox = (width - (x1 - x0) * scale) / 2;
   const at = (q: SolidXY): SolidXY => ({ x: ox + (q.x - x0) * scale, y: pad + (q.y - y0) * scale });
   return (
-    <Svg width={width} height={(y1 - y0) * scale + 2 * pad}>
+    <FittedSvg width={width} height={(y1 - y0) * scale + 2 * pad} scale={fitted}>
       {faces.map((f, i) => (
         <Path
           key={i}
@@ -88,7 +109,7 @@ function Oblique({ fig, width }: { fig: CubesFig; width: number }) {
           strokeLinejoin="round"
         />
       ))}
-    </Svg>
+    </FittedSvg>
   );
 }
 
@@ -140,14 +161,14 @@ function Plan({ fig, width }: { fig: CubesFig; width: number }) {
 }
 
 /** A view: the squares one sees, as rows from the top down (`cubesView`). */
-function Squares({ grid, width }: { grid: number[][]; width: number }) {
+function Squares({ grid, width, scale }: { grid: number[][] } & Fit) {
   const { figure: ink } = useTheme();
   const rows = grid.length;
   const cols = grid[0]?.length ?? 0;
   const cell = Math.min(VIEW_CELL, width / Math.max(cols, 1), VIEW_HEIGHT / Math.max(rows, 1));
   const ox = (width - cols * cell) / 2;
   return (
-    <Svg width={width} height={rows * cell}>
+    <FittedSvg width={width} height={rows * cell} scale={scale}>
       {grid.flatMap((row, r) =>
         row.map((on, c) =>
           on ? (
@@ -164,7 +185,7 @@ function Squares({ grid, width }: { grid: number[][]; width: number }) {
           ) : null,
         ),
       )}
-    </Svg>
+    </FittedSvg>
   );
 }
 

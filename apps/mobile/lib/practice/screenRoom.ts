@@ -173,6 +173,12 @@ export function useScreenRoom() {
       partTops,
     });
     const reads = readsThrough(newest.turn);
+    const cardVisual = Boolean(item.figure || item.image) && !q.speaking;
+    // While she types the drawing folds to one row (`Question`, `formDensity` tight): growing
+    // the card then only made an empty band under that row and squeezed the conversation — a
+    // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
+    const cardGrows =
+      visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight';
     const shared = threadRoom({
       room,
       short: Math.max(0, -left),
@@ -187,17 +193,8 @@ export function useScreenRoom() {
           : Infinity,
       cardNatural,
       cardDelta,
-      // Pictures as options give the room (`PictureRoom`), not the card: two parts answering the
-      // same measurement gave both, then took both back (#599).
-      visual:
-        cardNatural > 0 &&
-        Boolean(item.figure || item.image) &&
-        !q.speaking &&
-        !item.choice_figures?.length,
-      // While she types the drawing folds to one row (`Question`, `formDensity` tight): growing
-      // the card then only made an empty band under that row and squeezed the conversation — a
-      // short question beside a map or picture left "Tipp" half shown at 360×440 (#252).
-      growable: visualGrows(item.figure) && formDensity(seen.window, seen.overlap) !== 'tight',
+      visual: cardNatural > 0 && cardVisual,
+      growable: cardGrows,
       reach: CARD_REACH,
       // A Diktat card before her first answer holds only the way to hear the word (issue #242):
       // it takes all the room the conversation does not use, so no empty band is left under it.
@@ -222,9 +219,15 @@ export function useScreenRoom() {
     return {
       ...shared,
       caps: visualCaps(viewHeight, shared.cardGrowTo),
-      // Not while the answer is folded away: it then holds no picture that could give.
+      // Not while the answer is folded away: it then holds no picture that could give. And not
+      // where the card's own drawing gives (`cardGrowTo`): one part answers a measurement, or
+      // both gave and then both took back. The card's drawing comes first — it is drawn to its
+      // width, while a picture as an option may already stand at its own size and give nothing
+      // (#599: the views of a cube building, 60 pt at any cap, left the bar 30 pt past 360×740).
       spare:
-        column > 0 && !answerFolds(asking, seen.window, seen.overlap) ? freeSpace - overrun : null,
+        column > 0 && !(cardVisual && cardGrows) && !answerFolds(asking, seen.window, seen.overlap)
+          ? freeSpace - overrun
+          : null,
       cardNatural,
       // ThreadBox rests its edge on any of them.
       tops: [...tops, ...partTops],
@@ -272,16 +275,34 @@ export const PictureRoom = createContext<number | null>(null);
  * it. Each measurement is taken once: a render with the same measurement changes nothing, so a
  * room it already answered is never given twice. `hold` keeps the cap (a picture folded while
  * she types gives the room of a row, not its own). Per `key`: a question and a window.
+ *
+ * `natural`: the tallest of the pictures at full size (`useFigureSizing`, 0 while unknown). A
+ * picture drawn below its cap does not shrink with it: the room is taken from the height it
+ * stands at, the smaller of the two (#599: the views of a cube building stood 60 pt under a cap
+ * of 89; lowering the cap by 15 moved nothing, and the bar stayed 30 pt past 360×740).
  */
-export function usePictureCap(key: string, most: number, rows: number, hold = false): number {
+export function usePictureCap(
+  key: string,
+  most: number,
+  rows: number,
+  hold = false,
+  natural = 0,
+): number {
   const spare = useContext(PictureRoom);
   // A new question starts at `most`; the measurement it finds is the last question's.
-  const held = useRef<{ key: string; cap: number; spare: number | null } | null>(null);
-  if (held.current?.key !== key) held.current = { key, cap: most, spare };
+  const held = useRef<{
+    key: string;
+    cap: number;
+    spare: number | null;
+    natural: number;
+  } | null>(null);
+  if (held.current?.key !== key) held.current = { key, cap: most, spare, natural };
   const now = held.current;
-  if (!hold && spare !== null && spare !== now.spare) {
-    now.cap = roomCap(now.cap, spare, rows, most, Math.round(most * MIN_FIGURE_SCALE));
+  if (!hold && spare !== null && (spare !== now.spare || natural !== now.natural)) {
+    const stands = natural > 0 ? Math.min(natural, now.cap) : now.cap;
+    now.cap = roomCap(stands, spare, rows, most, Math.round(most * MIN_FIGURE_SCALE));
     now.spare = spare;
+    now.natural = natural;
   }
   return Math.min(now.cap, most);
 }

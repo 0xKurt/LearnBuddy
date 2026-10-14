@@ -41,7 +41,16 @@ const DASH = '5 4';
 /** A measure's size on a solid or a net. */
 const LABEL_SIZE = FONT + 1;
 
-export function SpaceBody({ figure, width }: { figure: SpaceFig; width: number }) {
+/** `scale`: FigureView's; a cube building needs it (its height does not follow its width). */
+export function SpaceBody({
+  figure,
+  width,
+  scale = 1,
+}: {
+  figure: SpaceFig;
+  width: number;
+  scale?: number;
+}) {
   switch (figure.type) {
     case 'solid':
       return <SolidView fig={figure} width={width} />;
@@ -50,7 +59,7 @@ export function SpaceBody({ figure, width }: { figure: SpaceFig; width: number }
     case 'axes3d':
       return <AxesView fig={figure} width={width} />;
     case 'cubes':
-      return <CubesBody fig={figure} width={width} />;
+      return <CubesBody fig={figure} width={width} scale={scale} />;
   }
 }
 

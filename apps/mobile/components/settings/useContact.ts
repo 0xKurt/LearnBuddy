@@ -123,7 +123,9 @@ export function useContact({ settings, isMinor, pinSet, push }: ContactProps) {
   async function pauseUntil(until: string) {
     const next = await patch({ paused_until: until });
     if (next?.paused_until) {
-      toast.show(t('contact.paused_toast', { date: formatLastDay(next.paused_until, lang) }));
+      toast.show(
+        t('contact.paused_toast', { date: formatLastDay(next.paused_until, lang, 'sentenceEnd') }),
+      );
     }
   }
 
@@ -172,7 +174,7 @@ export function useContact({ settings, isMinor, pinSet, push }: ContactProps) {
     state === 'off'
       ? t('contact.state_off')
       : state === 'paused'
-        ? t('contact.pause_until', { date: formatLastDay(pausedUntil!, lang) })
+        ? t('contact.pause_until', { date: formatLastDay(pausedUntil!, lang, 'sentenceEnd') })
         : t('contact.state_on', { quiet: settings.quiet_start });
   // Another device (a parent's phone, an old one) may hold the messages: say so per device (M-65).
   const [here, setHere] = useState<boolean | null>(null);
