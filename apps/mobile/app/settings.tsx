@@ -25,7 +25,7 @@ import { AdultSection } from '../components/settings/AdultSection.js';
 import { LookSection } from '../components/settings/LookSection.js';
 import { ProfileGroup } from '../components/settings/ProfileGroup.js';
 import { ProfileSection } from '../components/settings/ProfileSection.js';
-import { SettingsBody, SettingsPending } from '../components/settings/SettingsPage.js';
+import { PendingBody, SettingsBody } from '../components/settings/SettingsPage.js';
 import { useContact } from '../components/settings/useContact.js';
 import { useHome, useMe, useSettings } from '../lib/api/queries.js';
 import { useShown } from '../lib/perfShown.js';
@@ -50,25 +50,31 @@ export default function SettingsScreen() {
   }
 
   const title = t('title');
-  if (!settings.data || !me.data)
-    return <SettingsPending title={title} root start="profile" queries={[settings, me]} />;
-
-  const { account, learner } = me.data;
+  const account = me.data?.account;
+  const learner = me.data?.learner;
   // Without an account or profile there is nothing to set here; the start screen routes on.
-  if (!account || !learner) return <Redirect href="/" />;
+  if (me.data && (!account || !learner)) return <Redirect href="/" />;
+  const loaded =
+    settings.data && account && learner ? { settings: settings.data, account, learner } : null;
 
+  // One head while the groups arrive (#637): Buddy thinks over the bones, then rests. The head
+  // is not drawn a second time when the content comes.
   return (
-    <Screen back title={title}>
-      {/* A list she browses on purpose (like her material): it may grow past the screen
-          (tests/web/fit.ts, CLAUDE.md §16). */}
-      <SettingsBody list refresh={{ refreshing, onRefresh: () => void refresh() }}>
-        <Groups
-          settings={settings.data}
-          account={account}
-          learner={learner}
-          push={home.data?.system.push ?? null}
-        />
-      </SettingsBody>
+    <Screen back title={title} state={loaded ? 'idle' : 'think'}>
+      {loaded ? (
+        // A list she browses on purpose (like her material): it may grow past the screen
+        // (tests/web/fit.ts, CLAUDE.md §16).
+        <SettingsBody list refresh={{ refreshing, onRefresh: () => void refresh() }}>
+          <Groups
+            settings={loaded.settings}
+            account={loaded.account}
+            learner={loaded.learner}
+            push={home.data?.system.push ?? null}
+          />
+        </SettingsBody>
+      ) : (
+        <PendingBody start="profile" queries={[settings, me]} />
+      )}
     </Screen>
   );
 }
