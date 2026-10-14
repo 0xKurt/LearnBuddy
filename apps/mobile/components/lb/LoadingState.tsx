@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { read } from '../../lib/sharedRead.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { EASE } from '../../lib/theme/motion.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -45,8 +46,8 @@ export function LoadingState({
     return () => cancelAnimation(breath);
   }, [reduced, withOrb, breath]);
   const orb = useAnimatedStyle(() => ({
-    opacity: LOADING_STATE.dim + breath.value * LOADING_STATE.dimSpan,
-    transform: [{ scale: LOADING_STATE.scale + breath.value * LOADING_STATE.scaleSpan }],
+    opacity: LOADING_STATE.dim + read(breath, 0) * LOADING_STATE.dimSpan,
+    transform: [{ scale: LOADING_STATE.scale + read(breath, 0) * LOADING_STATE.scaleSpan }],
   }));
   return (
     <Appear

@@ -40,6 +40,8 @@ export function useMoon(
   pose: SharedValue<MoonPose>;
   fade: SharedValue<number>;
   order: SharedValue<MoonOrder>;
+  /** What `pose` and `order` were created with (lib/buddy/orbStyles.ts `read`, issue #637). */
+  born: { pose: MoonPose; order: MoonOrder };
 } {
   const start = useRef<{ sim: MoonSim; pose: MoonPose; order: MoonOrder } | null>(null);
   if (start.current === null) {
@@ -122,7 +124,7 @@ export function useMoon(
     // `level` only matters for the listening pose, taken when the state changes.
   }, [live, state, pose, fade, order, ghosts]);
 
-  return { pose, fade, order };
+  return { pose, fade, order, born: start.current };
 }
 
 /** The sparkle burst is on screen only while a "happy" plays. */

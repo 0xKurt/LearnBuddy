@@ -17,6 +17,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { read } from '../../lib/sharedRead.js';
 import { UI } from '../../lib/theme/components.js';
 import {
   ACTIVE_MOTION,
@@ -43,7 +44,8 @@ type Props = Omit<ViewProps, 'style'> & {
 function useEntrance(animate: boolean, delay: number, duration: number) {
   const reduced = useMotionReduced();
   const run = animate && !reduced;
-  const p = useSharedValue(run ? 0 : 1);
+  const from = run ? 0 : 1;
+  const p = useSharedValue(from);
   const started = useRef(false);
   useEffect(() => {
     if (reduced) {
@@ -66,7 +68,8 @@ function useEntrance(animate: boolean, delay: number, duration: number) {
     );
     // Once, on mount (a later change of the props does not replay it).
   }, [reduced, run, p, delay, duration]);
-  return p;
+  // What `p` starts at: a style's first run at mount takes it without a blocking read (#637).
+  return { p, from };
 }
 
 export function Rise({
@@ -78,11 +81,15 @@ export function Rise({
   style,
   ...rest
 }: Props) {
-  const p = useEntrance(animate, delay + index * STAGGER, slow ? DURATION.gentle : DURATION.base);
+  const { p, from } = useEntrance(
+    animate,
+    delay + index * STAGGER,
+    slow ? DURATION.gentle : DURATION.base,
+  );
   const distance = slow ? RISE * UI.entrance.slowMultiplier : RISE;
   const a = useAnimatedStyle(() => ({
-    opacity: p.value,
-    transform: [{ translateY: (1 - p.value) * distance }],
+    opacity: read(p, from),
+    transform: [{ translateY: (1 - read(p, from)) * distance }],
   }));
   return (
     <Animated.View {...rest} style={[style, a]}>
@@ -92,10 +99,10 @@ export function Rise({
 }
 
 export function SlideIn({ children, delay = 0, animate = true, style, ...rest }: Props) {
-  const p = useEntrance(animate, delay, DURATION.gentle);
+  const { p, from } = useEntrance(animate, delay, DURATION.gentle);
   const a = useAnimatedStyle(() => ({
-    opacity: p.value,
-    transform: [{ translateX: (1 - p.value) * UI.entrance.slide }],
+    opacity: read(p, from),
+    transform: [{ translateX: (1 - read(p, from)) * UI.entrance.slide }],
   }));
   return (
     <Animated.View {...rest} style={[style, a]}>
@@ -113,8 +120,8 @@ export function Appear({
   style,
   ...rest
 }: Props & { duration?: number }) {
-  const p = useEntrance(animate, delay + index * STAGGER, duration);
-  const a = useAnimatedStyle(() => ({ opacity: p.value }));
+  const { p, from } = useEntrance(animate, delay + index * STAGGER, duration);
+  const a = useAnimatedStyle(() => ({ opacity: read(p, from) }));
   return (
     <Animated.View {...rest} style={[style, a]}>
       {children}
@@ -154,8 +161,8 @@ export function AppearText({
   animate?: boolean;
   style?: StyleProp<TextStyle>;
 }) {
-  const p = useEntrance(animate, delay + index * STAGGER, duration);
-  const a = useAnimatedStyle(() => ({ opacity: p.value }));
+  const { p, from } = useEntrance(animate, delay + index * STAGGER, duration);
+  const a = useAnimatedStyle(() => ({ opacity: read(p, from) }));
   return (
     <Animated.Text {...rest} style={[style, a]}>
       {children}

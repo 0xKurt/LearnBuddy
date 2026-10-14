@@ -20,6 +20,9 @@
 
 import type { MoonOrder, MoonPose } from './moon.js';
 
+/** What the orb's shared values were created with: the JS thread's copy of them. */
+export type Born = { pose: MoonPose; order: MoonOrder };
+
 /** Nothing to write: equal to the last `{}`, so Reanimated sends nothing. */
 type Still = Record<string, never>;
 
