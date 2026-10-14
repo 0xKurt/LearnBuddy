@@ -1780,7 +1780,9 @@ scanned school PDF (the tests script the model).
 **Concept images** (issue #50, `modules/materials/images.ts`): the questions of a sheet may show
 the sheet's own teaching figure — a REAL crop from the photographed page, never a generated
 picture (the only possible failure is a slightly loose frame, never an invented shape). After a
-sheet became ready, one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
+sheet became ready — in the background, beside Buddy's look at the sheet and the search index,
+never before them (F4-a, #654: nothing the check decides depends on it), and cropping from the
+page bytes the reading already loaded (`PageBytes`, no second download) — one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
 migration 0050) looks at the page photos and the questions read from them and returns one tight
 box per WHOLE figure (a labelled diagram; a reference chart kept whole, never split into cells) —
 omitting comics, scenes and pure text. sharp crops exactly those pixels and lightly cleans them
