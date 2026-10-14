@@ -9,6 +9,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const reads = vi.hoisted(() => ({ n: 0 }));
 
+// On a phone, where a UI runtime runs the frames (on the web every frame reads the value itself:
+// sharedReadWeb.test.tsx).
+vi.mock('react-native', async (load) => {
+  const real = await load<{ Platform: Record<string, unknown> }>();
+  return { ...real, Platform: { ...real.Platform, OS: 'android' } };
+});
+
 vi.mock('react-native-reanimated', async (load) => {
   const real = await load<Record<string, unknown>>();
   const useSharedValue = real.useSharedValue as <T>(v: T) => { value: T };
