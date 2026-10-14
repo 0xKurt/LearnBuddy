@@ -4,7 +4,7 @@
 // survive; text was the gap. Drafts count as local work: they belong to whoever
 // was signed in and are wiped with the rest (lib/localWork.ts).
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { readItem, writeItem } from './api/outboxStorage.js';
 
@@ -52,29 +52,70 @@ function persist(key: string, text: string): void {
   else void writeItem(key, null);
 }
 
-/**
- * A text field whose value is kept on the device (debounced) and comes back
- * after a restart. `clear()` on a successful send; typing over a restored
- * draft replaces it.
- */
-export function useDraft(name: string): {
-  text: string;
-  setText: (value: string | ((current: string) => string)) => void;
+/** A kept text a component can read without being rendered for every key of it (#713). */
+export type DraftStore = {
+  /** What stands in the draft now. */
+  get: () => string;
+  set: (value: string | ((current: string) => string)) => void;
+  /** Sent: empty, here and on the device. */
   clear: () => void;
-} {
+  subscribe: (listener: () => void) => () => void;
+};
+
+/**
+ * A text kept on the device (debounced) that comes back after a restart, as a store: only who
+ * reads it (`useDraftText`, `useDraftSelect`) is drawn again when it changes. A screen that holds
+ * the draft for its parts no longer renders whole for every key she types (#713: ~120 ms of JS
+ * per keystroke on the POCO X3, most of it the practice screen around the field).
+ */
+export function useDraftStore(name: string): DraftStore {
   const key = PREFIX + name;
-  const [text, setValue] = useState('');
   const latest = useRef('');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listeners = useRef(new Set<() => void>());
+  const keyNow = useRef(key);
+  keyNow.current = key;
+  const [store] = useState<DraftStore>(() => {
+    const put = (next: string) => {
+      latest.current = next;
+      memory.set(keyNow.current, next);
+      for (const listener of listeners.current) listener();
+    };
+    return {
+      get: () => latest.current,
+      set: (value) => {
+        const next = typeof value === 'function' ? value(latest.current) : value;
+        const at = keyNow.current;
+        put(next);
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => {
+          void remember(at);
+          void writeItem(at, next.trim().length > 0 ? next : null);
+        }, SAVE_AFTER_MS);
+      },
+      clear: () => {
+        put('');
+        if (timer.current) clearTimeout(timer.current);
+        void writeItem(keyNow.current, null);
+      },
+      subscribe: (listener) => {
+        listeners.current.add(listener);
+        return () => listeners.current.delete(listener);
+      },
+    };
+  });
 
   useEffect(() => {
     let alive = true;
+    const notify = () => {
+      for (const listener of listeners.current) listener();
+    };
     // A new key is a new field: the previous one's text must not stay on screen
     // (a session's answer draft in the next session, review 28.09.).
     // What this process already holds wins: it is newer than anything on the device.
     const held = memory.get(key);
     latest.current = held ?? '';
-    setValue(held ?? '');
+    notify();
     if (held !== undefined) {
       return () => {
         if (timer.current) clearTimeout(timer.current);
@@ -86,7 +127,7 @@ export function useDraft(name: string): {
       if (alive && kept && latest.current.length === 0) {
         latest.current = kept;
         memory.set(key, kept);
-        setValue(kept);
+        notify();
       }
     });
     return () => {
@@ -96,27 +137,42 @@ export function useDraft(name: string): {
     };
   }, [key]);
 
-  const setText = (value: string | ((current: string) => string)) => {
-    const next = typeof value === 'function' ? value(latest.current) : value;
-    latest.current = next;
-    memory.set(key, next);
-    setValue(next);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
-      void remember(key);
-      void writeItem(key, next.trim().length > 0 ? next : null);
-    }, SAVE_AFTER_MS);
-  };
+  return store;
+}
 
-  const clear = () => {
-    latest.current = '';
-    memory.set(key, '');
-    setValue('');
-    if (timer.current) clearTimeout(timer.current);
-    void writeItem(key, null);
-  };
+/** What a draft says now; the component is drawn again when it changes. `null`: no draft. */
+export function useDraftText(store: DraftStore | null): string | undefined {
+  return useDraftSelect(store, (text) => text);
+}
 
-  return { text, setText, clear };
+/**
+ * Something a component needs to know about a draft, not the draft itself: it is drawn again
+ * only when that answer changes (`same as what was judged`, not every key).
+ */
+export function useDraftSelect<T>(
+  store: DraftStore | null,
+  pick: (text: string) => T,
+): T | undefined {
+  return useSyncExternalStore(store?.subscribe ?? noSubscription, () =>
+    store ? pick(store.get()) : undefined,
+  );
+}
+
+const noSubscription = () => () => undefined;
+
+/**
+ * A text field whose value is kept on the device (debounced) and comes back
+ * after a restart. `clear()` on a successful send; typing over a restored
+ * draft replaces it.
+ */
+export function useDraft(name: string): {
+  text: string;
+  setText: (value: string | ((current: string) => string)) => void;
+  clear: () => void;
+} {
+  const store = useDraftStore(name);
+  const text = useDraftText(store) ?? '';
+  return { text, setText: store.set, clear: store.clear };
 }
 
 /**
