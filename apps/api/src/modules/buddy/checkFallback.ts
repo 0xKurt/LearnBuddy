@@ -50,8 +50,19 @@ export async function fallback(
       // the context a version further. A fallback that waits wrote a decision row and nothing
       // else, and bumping for it made every chat turn running meanwhile stale for nothing.
       let changed = false;
-      const prepared = async (goalId: string | null, subjectId: string | null, title: string) => {
-        const p = await preparedPractice(tx, learner.id, { goalId, subjectId, title }, today, now);
+      const prepared = async (
+        goalId: string | null,
+        subjectId: string | null,
+        title: string,
+        materialId: string | null = null,
+      ) => {
+        const p = await preparedPractice(
+          tx,
+          learner.id,
+          { goalId, subjectId, materialId, title },
+          today,
+          now,
+        );
         if (p?.created) changed = true;
         return p;
       };
@@ -126,10 +137,12 @@ export async function fallback(
         // The sheet as the domain knows it (provider.ts).
         const m = await contextProvider().readySheet(tx, learner.id, trig.materialId);
         if (m && m.questions > 0) {
+          // Her sheet's own practice, never another sheet's (issue #721).
           const p = await prepared(
             m.goalId,
             m.subjectId,
             m.title ?? t(learner.locale, 'practice.untitled'),
+            trig.materialId,
           );
           proposal = {
             kind: 'result',
@@ -209,30 +222,52 @@ export async function fallback(
 }
 
 /**
- * Practice waiting for her on this goal (null: none), or made now from her questions — the start a
- * fixed line or her sheet's answer points at (issue #721). Null when there is nothing to practise.
+ * The practice a fixed line or her sheet's answer points at (issue #721): for a sheet, a waiting
+ * practice that holds only that sheet's questions (the domain says which, `sheetPractice`) or one
+ * made now from its questions — never another sheet's or a review of something else; otherwise
+ * the waiting practice of the goal, or one made now from its pool. Null when there is nothing to
+ * practise.
  */
 export async function preparedPractice(
   tx: Db,
   learnerId: string,
-  scope: { goalId: string | null; subjectId: string | null; title: string },
+  scope: {
+    goalId: string | null;
+    subjectId: string | null;
+    materialId?: string | null;
+    title: string;
+  },
   today: string,
   now: Date,
 ): Promise<{ stepId: string; count: number; minutes: number; created: boolean } | null> {
-  const existing = await tx.maybeOne<{
+  const sheet = scope.materialId ?? null;
+  const waiting = await tx.query<{
     id: string;
     payload: { item_ids?: string[]; est_minutes?: number };
   }>(
     `select id, payload from buddy_steps
       where learner_id = $1 and kind = 'practice' and state = 'prepared'
-        and goal_id is not distinct from $2
-      order by created_at desc, seq desc limit 1`,
-    [learnerId, scope.goalId],
+        and ($2::boolean or goal_id is not distinct from $3)
+      order by created_at desc, seq desc`,
+    [learnerId, sheet !== null, scope.goalId],
   );
-  if (existing?.payload.item_ids?.length) {
+  const own = sheet
+    ? (
+        await contextProvider().sheetPractice(
+          tx,
+          learnerId,
+          sheet,
+          waiting.map((w) => w.id),
+        )
+      ).only
+    : null;
+  const existing = waiting.find(
+    (w) => (own === null || own.has(w.id)) && (w.payload.item_ids?.length ?? 0) > 0,
+  );
+  if (existing) {
     return {
       stepId: existing.id,
-      count: existing.payload.item_ids.length,
+      count: existing.payload.item_ids?.length ?? 0,
       minutes: existing.payload.est_minutes ?? 10,
       created: false,
     };
@@ -240,7 +275,7 @@ export async function preparedPractice(
   const { itemIds: items, minutes } = await fillPractice(
     tx,
     learnerId,
-    { goalId: scope.goalId, subjectId: scope.subjectId },
+    { goalId: scope.goalId, subjectId: scope.subjectId, materialId: sheet },
     [],
     now,
   );

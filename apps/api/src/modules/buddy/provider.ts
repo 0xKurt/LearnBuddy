@@ -215,6 +215,16 @@ export type ContextProvider = {
     subjectId: string | null;
     questions: number;
   } | null>;
+  /**
+   * Which of these waiting practice steps hold questions of this sheet (`some`), and which hold
+   * only its questions (`only`) — so her sheet's answer starts that sheet's practice (#721).
+   */
+  sheetPractice(
+    db: Db,
+    learnerId: string,
+    materialId: string,
+    stepIds: readonly string[],
+  ): Promise<{ some: Set<string>; only: Set<string> }>;
   /** Its undo kinds: whether one still applies, and applying it. */
   undo: {
     applies(db: Db, learnerId: string, undo: DomainUndo): Promise<boolean>;

@@ -104,10 +104,10 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
         // Her own sheet is answered whatever the model chose (issue #721).
         const answered =
           outcome === 'retry_later'
-            ? 'none'
+            ? []
             : await answerHerSheets(deps, learner, others, lease, since);
-        if (answered === 'fallback' || answered === 'start_attached')
-          outcome = `${outcome}+${answered}`;
+        const added = answered.filter((a) => a !== 'answered');
+        if (added.length > 0) outcome = `${outcome}+${added.join('+')}`;
       } catch (err) {
         if (!(err instanceof LeaseLost)) throw err;
         return { jobs: jobs.length, outcome: 'lease_lost' };

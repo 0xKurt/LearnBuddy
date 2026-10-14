@@ -68,8 +68,13 @@ const OUTREACH = (step: string | null) => ({
   step,
 });
 
-async function sendSheet(env: TestEnv, l: Learner): Promise<void> {
-  env.llm.script('extraction', SHEET);
+async function sendSheet(
+  env: TestEnv,
+  l: Learner,
+  sheet: typeof SHEET = SHEET,
+  flush = true,
+): Promise<string> {
+  env.llm.script('extraction', sheet);
   const created = await l.api.post<{ material: { id: string }; uploads: Array<{ path: string }> }>(
     '/materials',
     { client_request_id: randomUUID(), photo_mimes: ['image/jpeg'], sending: true },
@@ -77,7 +82,39 @@ async function sendSheet(env: TestEnv, l: Learner): Promise<void> {
   expect(created.status).toBe(201);
   for (const u of created.body.uploads) env.storage.put(u.path);
   expect((await l.api.post(`/materials/${created.body.material.id}/submit`)).status).toBe(202);
-  await env.flushBackground();
+  if (flush) await env.flushBackground();
+  return created.body.material.id;
+}
+
+/** A second sheet, goal-less like the first, with questions of its own. */
+const OTHER = {
+  json: {
+    ...SHEET.json,
+    title: 'Brüche kürzen',
+    subject: { name: 'Mathe', kind: 'math' },
+    extracted_text: 'Brüche kürzen',
+    items: [item('Kürze 2/4.', '1/2'), item('Kürze 3/9.', '1/3')],
+  },
+};
+
+/** Each of Buddy's lines about a sheet, with the sheet its start's questions come from. */
+async function startsBySheet(env: TestEnv, l: Learner): Promise<Map<string, string[]>> {
+  const home = (await l.api.get<BuddyHome>('/buddy')).body;
+  const out = new Map<string, string[]>();
+  for (const m of home.thread) {
+    if (m.role !== 'buddy' || !m.announces) continue;
+    const rows = await env.db.query<{ material_id: string }>(
+      `select distinct i.material_id from buddy_steps s
+         join items i on i.id::text = any(array(select jsonb_array_elements_text(s.payload -> 'item_ids')))
+        where s.id = $1`,
+      [m.announces.step_id],
+    );
+    out.set(
+      m.id,
+      rows.map((r) => r.material_id),
+    );
+  }
+  return out;
 }
 
 /** Buddy's messages after her sheet, and the practice waiting for her. */
@@ -151,6 +188,24 @@ describe.skipIf(!dbReady)('every sheet she sends is answered (issue #721)', () =
     expect(after).toHaveLength(1);
     const steps = await preparedSteps(env, lena);
     expect(after[0]?.announces).toMatchObject({ step_id: steps[0] });
+  });
+
+  it("starts each goal-less sheet with its own questions, never another sheet's", async () => {
+    env.llm.byDefault('buddy_check', WAIT);
+    const first = await sendSheet(env, lena);
+    const second = await sendSheet(env, lena, OTHER);
+    const starts = [...(await startsBySheet(env, lena)).values()];
+    expect(starts).toEqual([[first], [second]]);
+  });
+
+  it('answers two sheets one check woke for, each with its own start', async () => {
+    env.llm.byDefault('buddy_check', WAIT);
+    env.holdBackground();
+    const first = await sendSheet(env, lena, SHEET, false);
+    const second = await sendSheet(env, lena, OTHER, false);
+    await env.flushBackground();
+    const starts = [...(await startsBySheet(env, lena)).values()].map((s) => s.join());
+    expect(starts.sort()).toEqual([first, second].sort());
   });
 
   it('adds nothing when the check already said it with its start', async () => {
