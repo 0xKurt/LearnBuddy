@@ -73,7 +73,9 @@ import {
   reflOpacity,
   reflPlace,
   stack,
+  type Born,
 } from '../../lib/buddy/orbStyles.js';
+import { read } from '../../lib/sharedRead.js';
 import { useBurst, useMoon } from '../../lib/buddy/useMoon.js';
 import { circle } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -122,18 +124,18 @@ export function BuddyOrb({
   const detail = moonDetail(size);
   // Decoration stops with reduce motion; "Buddy is working" does not (issue #182).
   const live = orbMoves(breathe, reduce, state);
-  const { pose, fade, order } = useMoon(state, level, live, detail.ghosts);
+  const { pose, fade, order, born } = useMoon(state, level, live, detail.ghosts);
   const bob = useSharedValue(1);
   const u = (size * FILL) / ORB_R;
   const burst = useBurst(state, live && detail.sparkles > 0);
 
   const bodyStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pose.value.orb * bob.value }],
+    transform: [{ scale: read(pose, born.pose).orb * read(bob, 1) }],
   }));
   // Each moving part writes only what changed and nothing while it cannot be seen
   // (lib/buddy/orbStyles.ts, issue #637); what she sees is the same.
-  const haloShown = useAnimatedStyle(() => ({ opacity: haloOpacity(pose.value) }));
-  const haloScaled = useAnimatedStyle(() => haloScale(pose.value));
+  const haloShown = useAnimatedStyle(() => ({ opacity: haloOpacity(read(pose, born.pose)) }));
+  const haloScaled = useAnimatedStyle(() => haloScale(read(pose, born.pose)));
 
   const haloSize = ORB_R * 1.36 * 2 * u;
   const orb = (
@@ -153,6 +155,7 @@ export function BuddyOrb({
           pose={pose}
           fade={fade}
           order={order}
+          born={born}
           u={u}
           size={size}
           detail={detail}
@@ -160,7 +163,9 @@ export function BuddyOrb({
       ) : null}
       <Animated.View style={[{ width: size, height: size }, bodyStyle]}>
         <Glass size={size} />
-        {detail.reflection ? <Reflection pose={pose} fade={fade} u={u} size={size} /> : null}
+        {detail.reflection ? (
+          <Reflection pose={pose} fade={fade} born={born} u={u} size={size} />
+        ) : null}
       </Animated.View>
       {detail.moon ? (
         <MoonLayer
@@ -168,6 +173,7 @@ export function BuddyOrb({
           pose={pose}
           fade={fade}
           order={order}
+          born={born}
           u={u}
           size={size}
           detail={detail}
@@ -356,6 +362,8 @@ type LayerProps = {
   fade: SharedValue<number>;
   /** Which part lies on top (the prototype's node order). */
   order: SharedValue<MoonOrder>;
+  /** What the shared values were created with (lib/buddy/orbStyles.ts `read`). */
+  born: Born;
   /** Pixels per moon unit. */
   u: number;
   size: number;
@@ -378,15 +386,17 @@ function MoonLayer({ detail, ...layer }: LayerProps & { detail: MoonDetail }) {
   );
 }
 
-function Moon({ side, pose, fade, order, u, size }: LayerProps) {
+function Moon({ side, pose, fade, order, born, u, size }: LayerProps) {
   const id = useSvgId('moon');
   const m = 44 * u;
   const front = side === 'front';
-  const shown = useAnimatedStyle(() => ({ opacity: moonOpacity(pose.value, fade.value, front) }));
-  const stacked = useAnimatedStyle(() => stack(order.value, 0));
-  const placed = useAnimatedStyle(() => moonPlace(pose.value, fade.value, front, u));
-  const glowShown = useAnimatedStyle(() => ({ opacity: glowOpacity(pose.value) }));
-  const glowScaled = useAnimatedStyle(() => glowScale(pose.value, fade.value, front));
+  const shown = useAnimatedStyle(() => ({
+    opacity: moonOpacity(read(pose, born.pose), read(fade, 1), front),
+  }));
+  const stacked = useAnimatedStyle(() => stack(read(order, born.order), 0));
+  const placed = useAnimatedStyle(() => moonPlace(read(pose, born.pose), read(fade, 1), front, u));
+  const glowShown = useAnimatedStyle(() => ({ opacity: glowOpacity(read(pose, born.pose)) }));
+  const glowScaled = useAnimatedStyle(() => glowScale(read(pose, born.pose), read(fade, 1), front));
   return (
     <Animated.View style={[centered(size, m), shown, stacked, placed]}>
       <Animated.View style={[LAYER, { width: m, height: m }, glowShown, glowScaled]}>
@@ -433,14 +443,16 @@ function Moon({ side, pose, fade, order, u, size }: LayerProps) {
   );
 }
 
-function Ghost({ index, side, pose, fade, order, u, size }: LayerProps & { index: number }) {
+function Ghost({ index, side, pose, fade, order, born, u, size }: LayerProps & { index: number }) {
   const d = 8.4 * u;
   const front = side === 'front';
   const shown = useAnimatedStyle(() => ({
-    opacity: ghostOpacity(pose.value, index, fade.value, front),
+    opacity: ghostOpacity(read(pose, born.pose), index, read(fade, 1), front),
   }));
-  const stacked = useAnimatedStyle(() => stack(order.value, index + 2));
-  const placed = useAnimatedStyle(() => ghostPlace(pose.value, index, fade.value, front, u));
+  const stacked = useAnimatedStyle(() => stack(read(order, born.order), index + 2));
+  const placed = useAnimatedStyle(() =>
+    ghostPlace(read(pose, born.pose), index, read(fade, 1), front, u),
+  );
   return (
     <Animated.View
       style={[
@@ -455,13 +467,13 @@ function Ghost({ index, side, pose, fade, order, u, size }: LayerProps & { index
 }
 
 /** "Your turn": a thin white ring that leaves the waiting moon (a 1.6-unit line). */
-function Ping({ side, pose, order, u, size }: LayerProps) {
+function Ping({ side, pose, order, born, u, size }: LayerProps) {
   const line = 1.6;
   const front = side === 'front';
-  const shown = useAnimatedStyle(() => ({ opacity: pingOpacity(pose.value, front) }));
-  const stacked = useAnimatedStyle(() => stack(order.value, 1));
+  const shown = useAnimatedStyle(() => ({ opacity: pingOpacity(read(pose, born.pose), front) }));
+  const stacked = useAnimatedStyle(() => stack(read(order, born.order), 1));
   // The ring grows; its line stays thin (the box grows, not a scale) — only while it is seen.
-  const boxed = useAnimatedStyle(() => pingBox(pose.value, front, u, size, line));
+  const boxed = useAnimatedStyle(() => pingBox(read(pose, born.pose), front, u, size, line));
   return (
     <Animated.View
       style={[
@@ -475,13 +487,15 @@ function Ping({ side, pose, order, u, size }: LayerProps) {
 }
 
 /** The moon's light on the glass when it passes close (large orbs). */
-function Reflection({ pose, fade, u, size }: Omit<LayerProps, 'side' | 'order'>) {
+function Reflection({ pose, fade, born, u, size }: Omit<LayerProps, 'side' | 'order'>) {
   const id = useSvgId('refl');
   const r = ORB_R * u;
   const E = 14;
   const box = E * 2 * u;
-  const shown = useAnimatedStyle(() => ({ opacity: reflOpacity(pose.value, fade.value) }));
-  const placed = useAnimatedStyle(() => reflPlace(pose.value, fade.value, u));
+  const shown = useAnimatedStyle(() => ({
+    opacity: reflOpacity(read(pose, born.pose), read(fade, 1)),
+  }));
+  const placed = useAnimatedStyle(() => reflPlace(read(pose, born.pose), read(fade, 1), u));
   return (
     <View
       pointerEvents="none"

@@ -1239,6 +1239,12 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   (`lib/buddy/orbStyles.ts`): the header orb went from 19 view updates (61 props) a frame to 10
   (17), with every visible part's props unchanged frame by frame
   (`lib/buddy/__tests__/orbStyles.test.ts`).
+- **A style's first run at mount reads no shared value** (issue #637). On the JS thread `.value`
+  is a blocking call into the UI runtime, and Reanimated runs each style's worklet there twice
+  when its view mounts. With the UI thread busy, those waits were a third of the JS time of
+  opening Settings and of a chat reply on the POCO X3 (orb, entrances, skeleton). Styles read
+  through `lib/sharedRead.ts` `read(sv, born)`: the value itself on the UI thread, what it was
+  created with on the JS thread — the same value at mount.
 - **On the phone, nothing moves by itself where it cannot be seen** (issue #637). Every animated
   style Reanimated updates on Android is a shadow-tree commit on the UI thread, every frame. One
   small orb idle cost ≈ 1 core on the POCO X3 (dev client, frame p50 32 ms); two kept every frame

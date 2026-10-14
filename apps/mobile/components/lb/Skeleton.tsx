@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { read } from '../../lib/sharedRead.js';
 import { UI } from '../../lib/theme/components.js';
 import { ACTIVE_MOTION, useMotionReduced } from '../../lib/theme/motion.js';
 import { RADIUS } from '../../lib/theme/radius.js';
@@ -103,7 +104,8 @@ export function Bone({
   const { palette } = useTheme();
   const pulse = useContext(Pulse);
   const beat = useAnimatedStyle(
-    () => ({ opacity: pulse ? 1 - pulse.value * (1 - SKELETON.pulseLow) : 1 }),
+    // The pulse starts at 0: no blocking read across threads while the bones mount (#637).
+    () => ({ opacity: pulse ? 1 - read(pulse, 0) * (1 - SKELETON.pulseLow) : 1 }),
     [pulse],
   );
   return (
