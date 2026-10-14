@@ -3679,7 +3679,10 @@ themselves) gives the next prepared hint at once, or, with none left, lets the t
 request for help, never graded (`not_an_attempt`), and the tutor's own hint is shown and counted as a
 hint. The tutor model, when it must judge, sees the prepared hints; a reply that gives the solution
 away before the second hint is replaced by the next prepared hint (or a first-step question), without
-a second call. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
+a second call (`ladderHoldsSolution`, `namesTheSolution` in `answerReply.ts`). After that, a reply
+she reads that states the solution counts as revealed whatever the model's `revealed_answer` says
+(F9-b, #661, `answerTutor.ts`) — except a confirmation of her own right answer, free text, rubric
+tasks and tasks in parts; homework keeps its own repair. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
 she asks for help again once every prepared hint and at least `HINTS_BEFORE_SOLUTION` (2) hints were
 shown — never on the first "Tipp"; the question then counts as
 revealed (FSRS brings it back soon). Tests give no hints; homework keeps its own rules (never the
