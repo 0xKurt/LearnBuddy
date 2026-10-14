@@ -95,34 +95,33 @@ ${lines.join('\n')}
 
 type LookupRecord = { tool: string; ok: boolean; result: unknown };
 
-/** Runs one step's lookups (validated, scoped, bounded); invalid or failing calls report an error. */
+/**
+ * Runs one step's lookups (validated, scoped, bounded); invalid or failing calls report an error.
+ * They read and change nothing, so they run side by side: a step's wait is its slowest lookup,
+ * not their sum — `search_material` alone carries an embedding call (p50 270 ms live, #447, #626).
+ * The results keep the order the model asked in.
+ */
 async function runLookups(
   ctx: LookupContext,
   surface: Surface,
   calls: unknown[],
 ): Promise<LookupRecord[]> {
-  const out: LookupRecord[] = [];
   const call = lookupCall();
-  for (const raw of calls.slice(0, MAX_LOOKUPS_PER_STEP)) {
-    const parsed = call.safeParse(raw);
-    if (!parsed.success) {
-      out.push({ tool: toolName(raw), ok: false, result: 'invalid arguments' });
-      continue;
-    }
-    // The union and the registry share the same arg schemas.
-    const spec = registry.find((l) => l.name === parsed.data.tool);
-    if (!spec || !spec.surfaces.includes(surface)) {
-      out.push({ tool: parsed.data.tool, ok: false, result: 'not available here' });
-      continue;
-    }
-    try {
-      const result = await spec.run(ctx, parsed.data.args);
-      out.push({ tool: spec.name, ok: true, result });
-    } catch {
-      out.push({ tool: spec.name, ok: false, result: 'failed, try without it' });
-    }
-  }
-  return out;
+  return Promise.all(
+    calls.slice(0, MAX_LOOKUPS_PER_STEP).map(async (raw): Promise<LookupRecord> => {
+      const parsed = call.safeParse(raw);
+      if (!parsed.success) return { tool: toolName(raw), ok: false, result: 'invalid arguments' };
+      // The union and the registry share the same arg schemas.
+      const spec = registry.find((l) => l.name === parsed.data.tool);
+      if (!spec || !spec.surfaces.includes(surface))
+        return { tool: parsed.data.tool, ok: false, result: 'not available here' };
+      try {
+        return { tool: spec.name, ok: true, result: await spec.run(ctx, parsed.data.args) };
+      } catch {
+        return { tool: spec.name, ok: false, result: 'failed, try without it' };
+      }
+    }),
+  );
 }
 
 function toolName(raw: unknown): string {
