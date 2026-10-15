@@ -3,7 +3,7 @@
 // herself, and a concern gets the app's fixed help answer by age (`i18n/safeguarding.ts`).
 //
 // The check never depends on the judgement working. The tutor's own concern bit counts when the
-// tutor answered; every other answer in her own words goes to the distress check (`distress.ts`).
+// tutor answered; every other answer in her own words goes to the distress check (`buddy/distress.ts`).
 // When no check could run at all (outage, timeout, invalid output, the day's limit), it fails
 // safe: the reply code gives anyway carries one fixed sentence that names a trusted adult and the
 // helpline (`safeguarding.unchecked`). The full help answer for every answer in an outage would be
@@ -15,7 +15,7 @@ import { safeguardingText } from '../../i18n/safeguarding.js';
 import type { Deps } from '../../deps.js';
 import { isMinor } from '../identity/model.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
-import { distressCheck, type DistressFinding } from './distress.js';
+import { distressCheck, type DistressFinding } from '../buddy/distress.js';
 import { NEAR_MISS } from './evaluate.js';
 import type { RubricClaim } from './rubric.js';
 import { solutionsOf } from './service.js';
@@ -107,7 +107,9 @@ export function settle(
 /** Her words checked for distress, when there are any (`ownWords`). */
 export async function checkDistress(deps: Deps, c: AnswerCase): Promise<DistressFinding> {
   const words = ownWords(c);
-  return words === null ? 'clear' : distressCheck(deps, c.learner.id, c.item.prompt, words);
+  return words === null
+    ? 'clear'
+    : distressCheck(deps, c.learner.id, words, { question: c.item.prompt });
 }
 
 /** The judgement code gave alone, with her words checked (#747): code grades, it does not listen. */

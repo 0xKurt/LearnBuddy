@@ -12,7 +12,7 @@ import { SUMMARY_PROMPT_VERSION } from '../../modules/buddy/summarise.js';
 import { FIGURES_PROMPT_VERSION } from '../../modules/materials/images.js';
 import { EXTRACT_PROMPT_VERSION, SOURCES_PROMPT_VERSION } from '../../modules/materials/sources.js';
 import { TUTOR_PROMPT_VERSION } from '../../modules/practice/answerTutor.js';
-import { DISTRESS_PROMPT_VERSION } from '../../modules/practice/distress.js';
+import { DISTRESS_PROMPT_VERSION } from '../../modules/buddy/distress.js';
 import { CLOZE_JUDGE_PROMPT_VERSION } from '../../modules/practice/cloze.js';
 import { ESSAY_PROMPT_VERSION } from '../../modules/practice/essay.js';
 import { GENERATE_PROMPT_VERSION } from '../../modules/practice/generate.js';

@@ -19,7 +19,7 @@ import { cautiousAt, curriculumLine } from '../curriculum/state.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
 import { ladderHoldsSolution, namesTheSolution } from './answerReply.js';
 import { checkDistress, safeguarded, settle, type TutorJudgement } from './answerSafeguard.js';
-import { concernRaised } from './distress.js';
+import { concernRaised } from '../buddy/distress.js';
 import { formNoteFor } from './evaluate.js';
 import { givesHints } from './modeRules.js';
 import { articleMissing, NEAR_MISS_REPLY } from './nearMiss.js';
