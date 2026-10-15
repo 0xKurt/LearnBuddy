@@ -1297,6 +1297,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   the web the walkthrough reads it into `test-results/web/perf.jsonl` (first measurement:
   sending a message reacts in 0 ms, so the wait she called "hängt" is not in that render).
   Budgets come after the numbers, not before.
+- **No call waits forever** (#662, audit F14-a; `apps/mobile/lib/api/watchdog.ts`): a JSON call
+  ends after 15 s without an answer (`wait: 'long'` — a call that waits for the model or a full
+  export — after 150 s, above the API's own longest model budget) as `network` with reason
+  `timeout`; a streamed call ends after `STREAM_IDLE_MS` (20 s) without a byte as `stream_lost`,
+  and `http/stream.ts` sends a `: keepalive` comment every `STREAM_KEEPALIVE_MS` (10 s) while its
+  work runs, so only a dead line is that quiet. Both are `network` failures, so the existing
+  idempotent resend paths (`sendWhenOnline`, `turnIds`) carry them; her own "Stopp" stays
+  `aborted`.
 - **Buddy's replies stream** (`POST /buddy/messages` with `Accept: text/event-stream`;
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
