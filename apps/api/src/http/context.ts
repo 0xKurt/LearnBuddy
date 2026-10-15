@@ -9,6 +9,7 @@ import type { Deps } from '../deps.js';
 import { AppError } from '../lib/errors.js';
 import { isValidTimeZone } from '../lib/time.js';
 import { DEFAULT_TIMEZONE } from '../lib/zone.js';
+import { PRESENCE_EVERY_S } from '../modules/buddy/inApp.js';
 import { bumpContext } from '../modules/buddy/plan.js';
 import {
   findAccountByUser,
@@ -114,9 +115,6 @@ export const requireAccountAnyConsent: MiddlewareHandler<AppEnv> = async (c, nex
   await loadAccount(c);
   await next();
 };
-
-/** Her presence is written at most this often (seconds; #671). */
-const PRESENCE_EVERY_S = 60;
 
 /**
  * Learner profile of the account. Also records presence and the device's
