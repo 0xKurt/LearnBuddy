@@ -16,7 +16,7 @@ import * as images from '../materials/images.js';
 import * as sheetSources from '../materials/sources.js';
 import * as practice from '../practice/answerTutor.js';
 import * as cloze from '../practice/cloze.js';
-import * as distress from '../practice/distress.js';
+import * as distress from '../buddy/distress.js';
 import * as essay from '../practice/essay.js';
 import * as formChoice from '../practice/formChoice.js';
 import * as generate from '../practice/generate.js';
@@ -153,7 +153,7 @@ export function learningSchemas(): SentSchema[] {
       promptVersion: distress.DISTRESS_PROMPT_VERSION,
       system: distress.DISTRESS_SYSTEM,
       schema: distress.DISTRESS_SCHEMA,
-      where: 'practice/distress.ts',
+      where: 'buddy/distress.ts — practice/answerSafeguard.ts, buddy/turn.ts failHerTurn',
     },
     {
       purpose: 'tutor',

@@ -38,8 +38,8 @@ export type LlmPurpose =
   | 'buddy_check'
   | 'tutor'
   /**
-   * Does what she typed into a practice answer tell of danger to herself (#747,
-   * `practice/distress.ts`)? Metered on its own (`DAILY_LIMITS.safeguard`), so ordinary practice
+   * Does what she wrote tell of danger to herself (#747,
+   * `buddy/distress.ts`), or in a chat or roleplay turn whose model call failed (#761)? Metered on its own (`DAILY_LIMITS.safeguard`), so ordinary practice
    * never uses up the reserve her words need.
    */
   | 'safeguard'

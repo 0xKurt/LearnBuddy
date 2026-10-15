@@ -34,7 +34,7 @@ import {
   callFailed,
   concernText,
   currentOutcome,
-  failTurn,
+  failHerTurn,
   holdClaim,
   turnDialogue,
   turnErrorCode,
@@ -159,7 +159,7 @@ async function roleplayRound(
       } catch (err) {
         const code = turnErrorCode(err);
         await record('failed', [`feedback:${code}`]);
-        return { kind: 'outcome', outcome: await failTurn(deps, message, code) };
+        return { kind: 'outcome', outcome: await failHerTurn(deps, learner, message, code) };
       }
     }
     step = {
