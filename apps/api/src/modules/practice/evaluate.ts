@@ -112,6 +112,8 @@ export type ItemForCheck = {
   figure?: unknown;
   /** She answers by tapping a place in the figure (issue #248): judged by `tapRuleVerdict`. */
   tap?: boolean;
+  /** The language the answer is written in (`items.lang`): only read by `articleAgainst`. */
+  lang?: string | null;
 };
 
 /**
@@ -123,6 +125,8 @@ const FORM_ONLY: ReadonlySet<RuleVerdict> = new Set([
   'spelling',
   'close',
   'missing_word',
+  'no_article',
+  'other_article',
   'typo',
   'folded',
 ]);
@@ -144,7 +148,10 @@ function contentOnly(verdict: RuleVerdict): RuleVerdict {
  * Anki, Quizlet and LibreLingo do):
  * - 'spelling': the same except case, ß/ss or punctuation, where spelling is the point;
  * - 'close': the same except for accents/diacritics ("eleve" for "élève");
- * - 'missing_word': the key without its first word ("Küche" for "die Küche");
+ * - 'missing_word': the key without its first word ("Schule gehen" for "zur Schule gehen");
+ * - 'no_article': a German noun key's noun without its article ("Küche" for "die Küche",
+ *   issues #146, #759) — right, decided by code;
+ * - 'other_article': that noun with another word in the article's place ("der Küche");
  * - 'typo': a small slip — Damerau distance within a limit that grows with the
  *   word (none up to 4 letters, 1 up to 8, else 2). A slip can also be another
  *   real word ("horse" for "house"), so it is never counted right: the app shows
@@ -157,6 +164,8 @@ export type RuleVerdict =
   | 'spelling'
   | 'close'
   | 'missing_word'
+  | 'no_article'
+  | 'other_article'
   | 'typo'
   | 'folded'
   /** A written path whose steps stop following each other (issue #209). */
@@ -187,6 +196,9 @@ export const NEAR_MISS = new Set<RuleVerdict>([
   'spelling',
   'close',
   'missing_word',
+  // The noun is hers and right; the article in front of it is not (issue #759). A missing
+  // article is no near miss: it counts as right (#146), see `articleAgainst`.
+  'other_article',
   'typo',
   // The substances are hers and right; the counting is not finished. Wrong would be unfair
   // and unhelpful, and the question stays open so she fixes it herself (issue #212).
@@ -362,6 +374,8 @@ const STRENGTH: readonly RuleVerdict[] = [
   'correct',
   'spelling',
   'close',
+  'no_article',
+  'other_article',
   'missing_word',
   'typo',
   // Counting is certain, so it outranks "I cannot tell" — but never a match against a key.
@@ -421,6 +435,43 @@ export function typoShape(wanted: string, said: string): TypoShape {
   return 'wrong';
 }
 
+/**
+ * Her answer against a German noun key, article and noun (issue #759): the right noun without
+ * its article, or with another word in the article's place. The owner's rule (#146) stands: the
+ * noun without its article counts as right, so "küche" for "die Küche" is right — decided here
+ * by code, where the tutor used to be asked. Another article is the wrong gender, and the gender
+ * is learnt with the word: "der Küche" is partly right.
+ *
+ * Which word is the article is read off the KEY's own spelling, not off a list of articles
+ * (CLAUDE.md rule 3): German capitalises every noun and, inside a phrase, nothing that stands
+ * before one. So a key of exactly two words, the first in lower case and the second capitalised,
+ * is a word that accompanies a noun and that noun: "die Küche", "das Fahrrad", "ein Apfel". A verb
+ * phrase ("zur Schule gehen", "sich freuen") does not have that shape and stays a missing word
+ * for the tutor (`articleMissing`, issue #146). French, Spanish and Italian mark no noun by case,
+ * so this is German only (`lang`); elsewhere the tutor still decides as before.
+ *
+ * Known limit: a fixed preposition before a noun ("zu Hause") has the same shape, so "Hause"
+ * would count as right too — the same call the tutor had to make for a missing first word.
+ */
+function articleAgainst(
+  item: Pick<ItemForCheck, 'kind' | 'lang'>,
+  key: string,
+  said: string,
+): 'no_article' | 'other_article' | null {
+  if (item.kind !== 'vocab' || item.lang !== 'de') return null;
+  const words = key.trim().split(/\s+/);
+  if (words.length !== 2) return null;
+  const [companion, noun] = words as [string, string];
+  if (!/^\p{Ll}/u.test(companion) || !/^\p{Lu}/u.test(noun)) return null;
+  const her = said.split(' ');
+  const nounPlain = normalizeShortAnswer(noun);
+  if (her.length === 1 && her[0] === nounPlain) return 'no_article';
+  if (her.length === 2 && her[1] === nounPlain && her[0] !== normalizeShortAnswer(companion)) {
+    return 'other_article';
+  }
+  return null;
+}
+
 /** A written answer against one key. */
 function writtenAgainst(item: ItemForCheck, key: string, text: string): RuleVerdict {
   // Counted before compared (issue #212): a reaction equation written in another order is the
@@ -448,6 +499,8 @@ function writtenAgainst(item: ItemForCheck, key: string, text: string): RuleVerd
   const saidPlain = withoutAccents(said);
   const wantedPlain = withoutAccents(wanted);
   if (saidPlain === wantedPlain) return 'close';
+  const article = articleAgainst(item, key, said);
+  if (article !== null) return article;
   if (item.kind === 'vocab' || item.kind === 'short') {
     const words = wanted.split(' ');
     if (words.length >= 2 && words.slice(1).join(' ') === said) return 'missing_word';

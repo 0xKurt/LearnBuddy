@@ -18,6 +18,7 @@ import * as practice from '../practice/answerTutor.js';
 import * as cloze from '../practice/cloze.js';
 import * as distress from '../buddy/distress.js';
 import * as essay from '../practice/essay.js';
+import { choosingCatalogue } from '../practice/choosingCatalogue.js';
 import * as formChoice from '../practice/formChoice.js';
 import * as generate from '../practice/generate.js';
 import * as hints from '../practice/hints.js';
@@ -44,19 +45,26 @@ const RUN_KINDS: StartTopicRequest['kind'][] = [
 const leanOf = (system: string) => `${system}\n\n${extract.LEAN_RULES}`;
 
 /**
- * The choosing call before a main call whose whole schema is past the budget (#627, #665): the
- * same system prompt with the chooser's rule on top, and two closed lists as its answer.
+ * The choosing call before a main call whose whole schema is past the budget (#627, #665): two
+ * closed lists as its answer, with the chooser's rule on top of the reading's own system prompt,
+ * or of a run's short catalogue of what it offers (#669, `choosingCatalogue`).
  */
 function choosingFor(main: SentSchema, full: SentSchema['schema']): SentSchema[] {
   if (withinBudget(full)) return [];
   const purpose = main.purpose === 'extraction' ? 'extraction' : 'explain';
+  const lead = purpose === 'explain' ? choosingCatalogue(formChoice.offered(full)) : main.system;
   return [
     {
       purpose: 'forms',
       profile: `before ${main.purpose} ${main.profile}`,
       tier: 'fast',
-      promptVersion: promptVersion(`forms-${purpose}`, formChoice.CHOOSER, main.promptVersion),
-      system: `${main.system}\n\n${formChoice.CHOOSER}`,
+      promptVersion: promptVersion(
+        `forms-${purpose}`,
+        formChoice.CHOOSER,
+        ...(purpose === 'explain' ? [lead] : []),
+        main.promptVersion,
+      ),
+      system: `${lead}\n\n${formChoice.CHOOSER}`,
       schema: toJsonSchema(formChoice.choiceFor(full)),
       where: 'practice/formChoice.ts — chooseForms',
     },
@@ -69,7 +77,8 @@ export function learningSchemas(): SentSchema[] {
     profile,
     tier: 'smart',
     promptVersion: generate.GENERATE_PROMPT_VERSION,
-    system: generate.GENERATE_SYSTEM,
+    // The largest prompt this run can go out with: the rules of what its widest schema offers (#669).
+    system: generate.generateSystem(formChoice.offered(formChoice.widest(full))),
     schema: formChoice.widest(full),
     where,
   });

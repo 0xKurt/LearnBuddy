@@ -1029,7 +1029,16 @@ turn's step schema stood at the budget (269) with #725, so `pictures` came with 
 produce) — a level is a wish for questions on a topic, a direction one for vocabulary pairs, never
 both in one offer. Flat calls (#726) brought the step schema to 242, and a test holds it at least 20 properties under the bound (`buddy/__tests__/offer.test.ts`). A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
-costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
+costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). **The prompt follows the schema**
+(KI-Audit F5-3, #669): a run is told only the rules of the figure families, structured forms and
+lists its schema offers (`generateSystem(offered(schema))`, `figureRules`, `structuredRules`), and the
+choosing call before a run reads a catalogue of what it can choose — one line per form, taken from the
+same rules, and the figure types by name (`choosingCatalogue`) — instead of the whole prompt. The
+whole prompt stays byte for byte what a sheet reading gets (`FIGURE_RULES`, `GENERATE_SYSTEM`); the
+reading's own choosing call keeps it, since it reads the photos anyway. Measured (`inventory:schema`):
+explain 37 963 characters for every run → 5 149 (vocab, speak, Diktat, teach_back, read, essay), at
+most 15 370 (practice) and 17 769 (test) with everything that fits; the choosing call before a run
+38 434 → 1 162–3 581. It has its own purpose (`forms`, in
 `llm_calls`) and no limit of its own: `callAhead` meters it with its run. **The run's allowance is
 held before the choice** (#665, `reserveCall`): one atomic reservation for the chain, used up by the
 main call (`callModel(…, reservation)`) and given back when the run fails before its call writes
@@ -2833,7 +2842,13 @@ preposition and does not, and telling those apart needs the language rather than
 articles per language the app would have to keep (hard rule 3). So the tutor judges it, the
 reply names the missing word, and `enforceTutorInvariants` allows a "correct" there and nowhere
 else among the near misses. The key is not extended in that case: the article stays part of the
-question. See **Grading** below for what "decidable" means. A key that contradicts the arithmetic its OWN question asks for is
+question. A **German** noun key is the exception code can decide (issue #759, `articleAgainst` in
+`practice/evaluate.ts`): German capitalises the noun and nothing before it, so a two-word key of a
+lower-case word and a capitalised one ("die Küche") is article and noun by its own spelling, no
+article list needed. The noun alone (`no_article`) is then right by rule, as #146 decided, without
+a model, and the reply shows the whole word with its article. Another word in the article's place
+(`other_article`, the wrong gender) is partly right: the first reply says the article is not right
+yet, from the second try on the whole word is shown, as for a slip. See **Grading** below for what "decidable" means. A key that contradicts the arithmetic its OWN question asks for is
 dropped before the question is ever asked (`practice/keyCheck.ts`, issue #157): the external
 audit put `8` on `6 + 4` and watched the right answer `10` be rejected by a rule check that
 sounds certain, leaving a child to argue with it. Only what arithmetic makes decidable is
