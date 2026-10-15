@@ -312,10 +312,11 @@ async function threadOf(
     decision_id: string | null;
     roleplay_id: string | null;
     rehearsal_id: string | null;
+    material_id: string | null;
     created_at: Date;
   }>(
     `select id, role, text, status, failure_code, client_message_id, ask, reply_to_id, outreach_id,
-            decision_id, roleplay_id, rehearsal_id, created_at
+            decision_id, roleplay_id, rehearsal_id, material_id, created_at
        from buddy_messages
       where learner_id = $1
         and ($2::uuid is null or seq < (select seq from buddy_messages where id = $2 and learner_id = $1))

@@ -8,6 +8,7 @@ import { DrillOfferCard } from '../../components/learn/DrillOfferCard.js';
 import { OfferCard } from '../../components/learn/OfferCard.js';
 import { ReadyCard } from '../../components/learn/ReadyCard.js';
 import { ResultNotice } from '../../components/learn/ResultNotice.js';
+import { SentSheet } from '../../components/learn/SentSheet.js';
 import { LearnStartSheets } from '../../components/learn/StartSheets.js';
 import { startItems } from '../../components/learn/startItems.js';
 import { ReadAlongBubble } from '../../components/buddy/ReadAlongBubble.js';
@@ -18,6 +19,7 @@ import { RoleplayResult } from '../../components/buddy/RoleplayResult.js';
 import {
   addActionCard,
   messageCards,
+  messageExtras,
   readAlong,
   profileSubjects,
   readingSteps,
@@ -81,6 +83,12 @@ export function registerLearning(): void {
   );
   messageCards.add('rehearsal', (m) =>
     m.rehearsal ? <RehearsalResult rehearsal={m.rehearsal} /> : null,
+  );
+  // … and her sheet sent through the chat: her pages and where they stand (issue #632).
+  messageCards.add('sheet', (m) => (m.sheet ? <SentSheet sheet={m.sheet} /> : null));
+  // Under Buddy's background message: the start of the practice it announces (issue #632).
+  messageExtras.add('announces', (m, quiet) =>
+    m.announces ? <ReadyCard ready={m.announces} quiet={quiet} /> : null,
   );
   readAlong.fill(ReadAlongBubble);
   profileSubjects.fill(ProfileLibrarySubjects);

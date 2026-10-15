@@ -11,6 +11,8 @@
 
 import { z } from 'zod';
 
+import { flatUnion, nestCall } from './calls.js';
+import type { Aliases } from './context.js';
 import { ACT_SCHEMAS, Outreach, type ActionOf, type AnyAction, type ToolName } from './decision.js';
 import type { Surface } from './lookups.js';
 import { ToolRejection, type ToolContext, type ToolOutcome } from './toolKit.js';
@@ -39,7 +41,18 @@ type ActSpec = {
   undoable: boolean;
   /** One line for the catalogue: what it does. */
   does: string;
+  /**
+   * What STATE must name for the tool to be offered in a turn (KI-Audit F3 stage 2, #668): a tool
+   * that changes a memory, a test, a step or a sheet needs one to name. Without it the call could
+   * only be refused by code, so the model is not offered it — one schema less to read on every
+   * turn of a learner who has none. Absent: always offered.
+   */
+  needs?: Fact;
 };
+
+/** What a tool can need STATE to name (counted from the turn's aliases, `turnFacts`). */
+type Fact = 'memories' | 'goals' | 'steps' | 'materials';
+export type ToolFacts = Record<Fact, number>;
 
 const TURN: readonly Surface[] = ['turn'];
 const BOTH: readonly Surface[] = ['turn', 'check'];
@@ -50,28 +63,30 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     touches: ['memory'],
     needsQuote: true,
     undoable: true,
-    does: 'keep something lasting or temporary about the learner; "about" says what it is — health, trouble at home, being hurt and who they are are refused by the app',
+    does: 'keep something lasting or temporary about her',
   },
   correct_memory: {
     surfaces: TURN,
+    needs: 'memories',
     touches: ['memory'],
     needsQuote: true,
     undoable: true,
-    does: 'correct something you know (mN); "about" as in remember',
+    does: 'correct something you know (mN)',
   },
   forget: {
     surfaces: TURN,
+    needs: 'memories',
     touches: ['memory'],
     needsQuote: true,
     undoable: true,
-    does: 'forget something you know (mN)',
+    does: 'forget something you know (mN), or all of it',
   },
   set_level: {
     surfaces: TURN,
     touches: ['profile'],
     needsQuote: true,
     undoable: true,
-    does: 'set school grade / university / adult',
+    does: 'set her school year, university or adult',
   },
   plan_exam: {
     surfaces: TURN,
@@ -82,13 +97,15 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
   },
   update_goal: {
     surfaces: TURN,
+    needs: 'goals',
     touches: ['goals'],
     needsQuote: true,
     undoable: true,
-    does: "change a test's day or title (gN)",
+    does: "change a test's day, title or topics (gN)",
   },
   close_goal: {
     surfaces: TURN,
+    needs: 'goals',
     touches: ['goals'],
     needsQuote: true,
     undoable: true,
@@ -99,24 +116,26 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     touches: ['practice', 'steps'],
     needsQuote: false,
     undoable: true,
-    does: 'prepare practice from her questions, for a test or topic — only the ones that went wrong, easier or harder ones, or one direction of her vocabulary, when she asks for that',
+    does: 'prepare practice from her questions, for a test, topic or sheet',
   },
   plan_step: {
     surfaces: TURN,
     touches: ['steps'],
     needsQuote: true,
     undoable: true,
-    does: 'plan a step, e.g. an agreed reminder at a time',
+    does: 'plan a step, or a reminder she agreed to',
   },
   update_step: {
     surfaces: TURN,
+    needs: 'steps',
     touches: ['steps'],
     needsQuote: true,
     undoable: true,
-    does: 'move, skip or cancel a step (stN)',
+    does: 'move, skip or cancel a step, or end its repetition (stN)',
   },
   mark_step_done: {
     surfaces: TURN,
+    needs: 'steps',
     touches: ['steps'],
     needsQuote: true,
     undoable: true,
@@ -127,20 +146,22 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     touches: ['steps'],
     needsQuote: false,
     undoable: true,
-    does: 'ask for a photo of a worksheet',
+    does: 'ask for a photo of a sheet, or of a page missing from one',
   },
   delete_material: {
     // Only in the conversation: requireQuote does not apply to a check, and Buddy must never
     // reach for one of her sheets on his own initiative (issue #111).
     surfaces: TURN,
+    needs: 'materials',
     touches: ['material'],
     needsQuote: true,
     // archiveMaterial erases the photos and the transcript right away — nothing to put back.
     undoable: false,
-    does: 'delete one of her sheets with its questions (she asked for it to go)',
+    does: 'propose deleting one of her sheets with its questions',
   },
   rename_material: {
     surfaces: TURN,
+    needs: 'materials',
     touches: ['material'],
     needsQuote: true,
     undoable: true,
@@ -150,10 +171,11 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     // Same reasons as delete_material: only in the conversation, only on her words, and
     // nothing comes back — its text, solution and her answers are erased (issue #120).
     surfaces: TURN,
+    needs: 'materials',
     touches: ['material'],
     needsQuote: true,
     undoable: false,
-    does: 'take one question off a sheet (she asked for it to go)',
+    does: 'propose taking one question off a sheet',
   },
   set_contact: {
     surfaces: TURN,
@@ -167,7 +189,7 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     touches: ['settings'],
     needsQuote: true,
     undoable: true,
-    does: 'change how you sound when read aloud: slower, faster, normal, or another voice',
+    does: 'change how you sound when read aloud',
   },
   schedule_check: {
     surfaces: BOTH,
@@ -181,42 +203,42 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     touches: ['nothing'],
     needsQuote: false,
     undoable: false,
-    does: 'offer a button that starts learning now (practice, test, vocab, speak, listen, help) — easier or harder, one vocabulary direction, or a test with time, when she asks for that',
+    does: 'a button that starts learning now (kinds below)',
   },
   offer_drill: {
     surfaces: TURN,
     touches: ['nothing'],
     needsQuote: false,
     undoable: false,
-    does: 'offer a button that starts a quick mental-arithmetic round (Einmaleins, plus/minus, simple fractions or percentages): code writes every task from the range you pick, she types on a digit pad',
+    does: 'a button that starts a quick mental-arithmetic round',
   },
   open_area: {
     surfaces: TURN,
     touches: ['nothing'],
     needsQuote: false,
     undoable: false,
-    does: 'show a button that opens a part of the app she asks for (her sheets, what you know, settings, earlier messages, the camera), or with practice the start of the practice you prepared that waits for her — the way to point her to it',
+    does: 'a button that opens a part of the app, or the start of a practice you prepared',
   },
   start_roleplay: {
     surfaces: TURN,
     touches: ['roleplay'],
     needsQuote: true,
     undoable: false,
-    does: 'start a roleplay in the foreign language she wants to practise speaking (she asks for one, or sends a role card): you set the scene, your role and 3 to 5 tasks for her; the app then runs it turn by turn with you in the role and gives her feedback on each task afterwards. Your reply says in her language that it starts, then opens the scene in the roleplay language',
+    does: 'start a roleplay in a foreign language',
   },
   plan_talk: {
     surfaces: TURN,
     touches: ['goals', 'steps'],
     needsQuote: true,
     undoable: true,
-    does: 'plan a talk (Referat, GFS, presentation, recital) with its day and the steps before it',
+    does: 'plan a talk with its day and the steps before it',
   },
   offer_rehearsal: {
     surfaces: TURN,
     touches: ['nothing'],
     needsQuote: false,
     undoable: false,
-    does: 'offer a card that records a rehearsal of her talk, or her reading a given text aloud, and measures it',
+    does: 'a card that records her talk rehearsal or her reading aloud, and measures it',
   },
 };
 
@@ -236,15 +258,52 @@ export type TurnAction = ActionOf<KeysFor<'turn'>>;
 
 type Option = (typeof ACT_SCHEMAS)[ToolName];
 
+/** What code validates: a call as `{ tool, args }`, or flat as the model writes it (calls.ts). */
 function unionFor(surface: Surface) {
   const options = toolsFor(surface).map((n): Option => ACT_SCHEMAS[n]);
   const [first, second, ...rest] = options;
   if (!first || !second) throw new Error(`surface ${surface} needs at least two act tools`);
-  return z.discriminatedUnion('tool', [first, second, ...rest]);
+  return z.preprocess(nestCall, z.discriminatedUnion('tool', [first, second, ...rest]));
 }
 
 export const TurnActionSchema = unionFor('turn');
 export const CheckActionSchema = unionFor('check');
+
+/** What the model is offered: these tools, each call flat (calls.ts, #726). */
+function modelUnionOf(tools: readonly ToolName[]) {
+  return flatUnion(tools.map((n) => ACT_SCHEMAS[n]));
+}
+
+/** The turn's tools that apply to what STATE names (#668); every tool when `facts` is absent. */
+export function offeredTools(facts?: ToolFacts): ToolName[] {
+  return toolsFor('turn').filter((n) => {
+    const need = ACT_TOOLS[n].needs;
+    return !facts || !need || facts[need] > 0;
+  });
+}
+
+/** What the turn's STATE names, counted from its aliases (they grow when a lookup finds a sheet). */
+export function turnFacts(aliases: Aliases): ToolFacts {
+  return {
+    memories: aliases.memories.size,
+    goals: aliases.goals.size,
+    steps: aliases.steps.size,
+    materials: aliases.materials.size,
+  };
+}
+
+/**
+ * What a turn's offer is named in `llm_calls.schema_variant`: what STATE had nothing of, so its
+ * tools were left out ("no memories,steps"), or "all tools".
+ */
+export function offerVariant(tools: readonly ToolName[]): string {
+  const missing = new Set<Fact>();
+  for (const n of toolsFor('turn')) {
+    const need = ACT_TOOLS[n].needs;
+    if (need && !tools.includes(n)) missing.add(need);
+  }
+  return missing.size === 0 ? 'all tools' : `no ${[...missing].join(',')}`;
+}
 
 /** The longest reply that passes validation; a longer one is never shown or spoken early. */
 export const REPLY_MAX = 700;
@@ -252,7 +311,7 @@ export const REPLY_MAX = 700;
 const Concern = z
   .boolean()
   .describe(
-    'true if the learner tells of distress: being hurt, bullied, abused or threatened, thinking of hurting themselves or harming their own body (starving themselves counts), or feeling unsafe or hopeless. Heavy news alone is not this — see the safeguarding rule. Then the app answers with a fixed caring message and nothing about it is remembered.',
+    'true only when she tells of danger to herself (the rules under "When she writes about herself"); the app then replaces your reply with its fixed help answer. Never for an insult, rudeness or hard news alone.',
   );
 
 /**
@@ -264,7 +323,7 @@ const Concern = z
 const AlsoAsked = z
   .boolean()
   .describe(
-    'Only read when concern is true: true if the same message also asks for something about learning (help with a task, practice, a test). The app then adds one fixed sentence saying that question is not forgotten. It is not answered and nothing is prepared for it in this answer.',
+    'only read when concern is true: the same message also asks for something about her learning',
   );
 
 export const TurnDecision = z.object({
@@ -319,23 +378,34 @@ export type TurnDecision = {
  * being streamed code already knows whether the answer changes anything: a reply
  * without actions can be shown and spoken at once (docs/architecture.md §Speed).
  */
-export const TurnDecisionForModel = z.object({
-  // First, so code knows before any reply text arrives whether this is a safeguarding answer.
-  concern: Concern,
-  // Right behind it: whether that same message also carried a question about learning.
-  also_asked: AlsoAsked,
-  actions: TurnDecision.shape.actions,
-  reply: TurnDecision.shape.reply,
-  options: TurnDecision.shape.options,
-  asks_permission: z
-    .boolean()
-    // A German sample question stood in here until issue #213 — in the response schema, which
-    // reaches the model in the same request as the prompt, so it is the same material that
-    // put German into an English reply (#200). What the bit MEANS needs no sample sentence.
-    .describe(
-      'true if your reply asks the learner whether you should do something instead of doing it. Then that thing must not be in actions — it happens in a later answer, after they said yes.',
-    ),
-});
+export function turnDecisionForModel(tools: readonly ToolName[] = toolsFor('turn')) {
+  return z.object({
+    // First, so code knows before any reply text arrives whether this is a safeguarding answer.
+    concern: Concern,
+    // Right behind it: whether that same message also carried a question about learning.
+    also_asked: AlsoAsked,
+    // Flat calls (calls.ts): one property less per tool than the `{ tool, args }` code validates.
+    actions: z.array(modelUnionOf(tools)).max(6),
+    // The rule for the reply stands in the prompt once; here only what the field holds (#667).
+    reply: z
+      .string()
+      .trim()
+      .max(REPLY_MAX)
+      .describe('your answer in her language; empty only when concern is true'),
+    options: TurnDecision.shape.options,
+    asks_permission: z
+      .boolean()
+      // A German sample question stood in here until issue #213 — in the response schema, which
+      // reaches the model in the same request as the prompt, so it is the same material that
+      // put German into an English reply (#200). What the bit MEANS needs no sample sentence.
+      .describe(
+        'your reply asks whether you should do something instead of doing it; then it is not in actions',
+      ),
+  });
+}
+
+/** The turn as the model sees it with every tool: what the inventory and the tests read. */
+export const TurnDecisionForModel = turnDecisionForModel();
 
 /**
  * Code-enforced: only a safeguarding answer may come without a reply (its text is
@@ -407,12 +477,17 @@ export const CheckDecision = z.object({
     .describe('Only when a LOOK BACK fact is offered and it fits; otherwise null'),
 });
 
+/** What the check's model is offered: the same decision, its calls flat (calls.ts). */
+export const CheckDecisionForModel = CheckDecision.extend({
+  actions: z.array(modelUnionOf(toolsFor('check'))).max(3),
+});
+
 /** The catalogue of act tools for the prompt, generated from the registry. */
 export function actToolsPrompt(surface: Surface): string {
   const lines = toolsFor(surface).map((n) => {
     const t = ACT_TOOLS[n];
     const notes = [
-      t.needsQuote ? 'needs the learner’s quote' : null,
+      t.needsQuote ? 'her quote' : null,
       t.undoable ? 'undoable' : null,
       t.touches.includes('nothing') ? 'changes nothing' : null,
     ].filter(Boolean);

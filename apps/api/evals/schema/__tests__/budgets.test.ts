@@ -22,7 +22,7 @@ describe('prompt budgets (#651)', () => {
     const budget = PROMPT_BUDGETS.buddy_turn!.schemaChars;
     const grown = { ...turn.schema, description: 'x'.repeat(budget) };
     expect(overBudget([{ ...turn, schema: grown }])).toEqual([
-      expect.stringMatching(/^buddy_turn — .*: schema \d+ chars > budget 43500$/),
+      expect.stringMatching(new RegExp(`^buddy_turn — .*: schema \\d+ chars > budget ${budget}$`)),
     ]);
   });
 

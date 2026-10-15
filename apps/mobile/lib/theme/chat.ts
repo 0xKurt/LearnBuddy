@@ -38,6 +38,21 @@ export const CHAT = {
     zIndex: 10,
     elevation: 12,
   },
+  /**
+   * Her sheet in the thread (issue #632): the design's page (ui_kits/app/Capture.jsx `SheetThumb`,
+   * 104 × 140, radius md, soft shadow) — her photo where the phone still has it, otherwise the
+   * paper with its lines. At most two pages side by side; the line under them counts the rest.
+   */
+  sheet: {
+    width: 104,
+    height: 140,
+    shown: 2,
+    padX: 12,
+    padY: 22,
+    rule: 3,
+    ruleGap: 7,
+    rules: ['80%', '95%', '70%', '90%', '60%', '85%', '75%'] as const,
+  },
   mine: { borderRadius: RADIUS.lg, paddingHorizontal: SPACE.lg, paddingVertical: 10 },
   tail: 6,
   failedBorder: 1,

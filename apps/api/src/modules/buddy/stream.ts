@@ -103,6 +103,6 @@ function changesNothing(raw: string, aliases: ReadonlySet<string>): boolean {
     if (!spec.touches.every((t) => t === 'nothing')) return false;
     const parsed = TurnActionSchema.safeParse(a);
     if (!parsed.success) return false;
-    return aliasesIn((a as { args?: unknown }).args).every((x) => aliases.has(x));
+    return aliasesIn(parsed.data.args).every((x) => aliases.has(x));
   });
 }

@@ -15,6 +15,7 @@ import {
   addActionCard,
   cardTools,
   messageCards,
+  messageExtras,
   readAlong,
   profileSubjects,
   readingSteps,
@@ -40,8 +41,12 @@ describe('the learning domain fills every place of the core (issue #107)', () =>
     ]);
   });
 
-  it('draws the roleplay feedback and the rehearsal in place of their bubbles', () => {
-    expect(messageCards.keys()).toEqual(['roleplay_feedback', 'rehearsal']);
+  it('draws the roleplay feedback, the rehearsal and her sent sheet in place of their bubbles', () => {
+    expect(messageCards.keys()).toEqual(['roleplay_feedback', 'rehearsal', 'sheet']);
+  });
+
+  it('hangs the start a background message announces under it (issue #632)', () => {
+    expect(messageExtras.keys()).toEqual(['announces']);
   });
 
   it('keeps the library list in step with the home', () => {
