@@ -649,7 +649,11 @@ review moments `review_next_day`, `review_due`). Gates, cheapest first:
    right after the reading or the practice, not on the next scheduler run;
 4. nothing to work with → silence, no model call. With contact to the phone off or paused Buddy
    still looks and speaks in the app (ADR 0006); the daily routine look runs while an exam is
-   within 14 days;
+   within 14 days. A routine look whose state the model already decided about within 48 hours
+   (`lookedAtThisState`: its last check decision, wait or applied, and `context_version` exactly
+   where that decision left it — one higher only if it wrote an action, a look back or a message
+   that was not suppressed, read back from those rows) waits by code (F4-d, #656) — anything new
+   she or Buddy did moves the context and the model is asked again;
 5. no model configured → fixed fallbacks immediately;
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
 7. apply with the context fence; the contact policy decides whether and when a message is sent.
