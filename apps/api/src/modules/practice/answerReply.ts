@@ -5,7 +5,7 @@
 
 import { t } from '../../i18n/index.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
-import type { TutorJudgement } from './answerTutor.js';
+import type { TutorJudgement } from './answerSafeguard.js';
 import { asTestTurn, REVEAL_AFTER_MISSES } from './ladder.js';
 import { givesHints } from './modeRules.js';
 import { ladderEndReply } from './pointSteps.js';

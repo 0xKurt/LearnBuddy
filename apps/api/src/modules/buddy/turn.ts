@@ -27,6 +27,7 @@ import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { applyDecision, recordUnapplied, type DecisionMeta } from './apply.js';
 import { buildContents, buildContext } from './context.js';
+import { distressCheck } from './distress.js';
 import { contextProvider } from './provider.js';
 import { askedButActed, emptyReply, TurnDecision } from './registry.js';
 import { recallText } from './recall.js';
@@ -169,7 +170,9 @@ export async function processTurn(
   try {
     return await decideTurn(deps, learner, message, ahead, onReply);
   } catch (err) {
-    return failTurn(deps, message, isAppError(err) ? err.code : 'internal');
+    const code = isAppError(err) ? err.code : 'internal';
+    // Her words are still read for distress (#761); if even that cannot run, the turn just fails.
+    return failHerTurn(deps, learner, message, code).catch(() => failTurn(deps, message, code));
   } finally {
     // No work of a turn outlives it — also when it never used the look-ahead (superseded).
     await ahead;
@@ -261,7 +264,7 @@ async function decideTurn(
       });
       if (step.kind === 'outcome') return step.outcome;
       if (step.kind === 'repair') {
-        if (repairErrors) return failTurn(deps, message, 'model_invalid');
+        if (repairErrors) return failHerTurn(deps, learner, message, 'model_invalid');
         repairErrors = step.errors;
       }
       continue;
@@ -369,14 +372,14 @@ async function decideTurn(
     if (!parsed.success) {
       const errors = schemaErrors(parsed.error);
       await record('rejected', errors);
-      if (repairErrors) return failTurn(deps, message, 'model_invalid');
+      if (repairErrors) return failHerTurn(deps, learner, message, 'model_invalid');
       repairErrors = errors;
       continue;
     }
     const contradictions = [...askedButActed(parsed.data), ...emptyReply(parsed.data)];
     if (contradictions.length > 0) {
       await record('rejected', contradictions);
-      if (repairErrors) return failTurn(deps, message, 'model_invalid');
+      if (repairErrors) return failHerTurn(deps, learner, message, 'model_invalid');
       repairErrors = contradictions;
       continue;
     }
@@ -387,7 +390,7 @@ async function decideTurn(
       : await hooks.checkReply(deps, learner.id, parsed.data.reply, learnerWords);
     if (leak.length > 0) {
       await record('rejected', leak);
-      if (repairErrors) return failTurn(deps, message, 'model_invalid');
+      if (repairErrors) return failHerTurn(deps, learner, message, 'model_invalid');
       repairErrors = leak;
       continue;
     }
@@ -426,13 +429,13 @@ async function decideTurn(
     // Another runner took this message over (e.g. recovery after a timeout): report where it stands.
     if (result.status === 'superseded') return currentOutcome(deps, message.id);
     if (result.status === 'rejected') {
-      if (repairErrors) return failTurn(deps, message, 'model_invalid');
+      if (repairErrors) return failHerTurn(deps, learner, message, 'model_invalid');
       repairErrors = result.errors;
       continue;
     }
     // stale: something changed while the model was thinking — rebuild and ask again.
   }
-  return failTurn(deps, message, 'stale');
+  return failHerTurn(deps, learner, message, 'stale');
 }
 
 /**
@@ -454,7 +457,7 @@ export async function callFailed(
   }
   const code = turnErrorCode(err);
   await record('failed', [code]);
-  return failTurn(deps, message, code);
+  return failHerTurn(deps, learner, message, code);
 }
 
 export function turnErrorCode(err: unknown): string {
@@ -530,32 +533,58 @@ export function concernText(learner: TurnLearner, alsoAsked: boolean): string {
 }
 
 /**
- * The safety filter held back the turn: Buddy answers with the fixed reply for the
- * learner's language and age, her message is answered (no "send again") and marked so
- * it is never sent to the model again. Depends on nothing Buddy decided, so no fence.
+ * A fixed answer without a model decision: the safety filter held back the turn (`blocked`), or the
+ * distress check found a concern in her words after the turn's model call failed (`concern`,
+ * #761). Buddy answers with the fixed reply for her language and age, her message is answered (no
+ * "send again") and marked so no model sees it again — a held-back message as a placeholder, a
+ * disclosure not at all (recall.ts). Her earlier messages that waited for this answer are answered
+ * with it. A scene does not go on over either (issue #244): it ends, without feedback. Depends on
+ * nothing Buddy decided, so no fence.
  */
 async function answerWithSafeguarding(
   deps: Deps,
   learner: TurnLearner,
   message: ClaimedMessage,
-  kind: 'blocked',
+  kind: 'blocked' | 'concern',
+  /** Her earlier messages the distress check read with this one: a disclosure in any of them. */
+  read: readonly string[] = [],
 ): Promise<TurnOutcome> {
   const now = deps.now();
   const answered = await deps.db.tx(async (tx) => {
     // Lock order: the learner's settings row first, like every fenced write (docs §Turns).
     await tx.query(`select 1 from buddy_settings where learner_id = $1 for update`, [learner.id]);
     const owned = await tx.query(
-      `update buddy_messages set status = 'done', failure_code = 'blocked', recall_block = 'blocked'
+      `update buddy_messages set status = 'done', failure_code = $3, recall_block = $4
         where id = $1 and status = 'processing' and claim_token = $2 returning id`,
-      [message.id, message.claim_token],
+      [message.id, message.claim_token, kind === 'blocked' ? 'blocked' : null, kind],
     );
     if (owned.length !== 1) return false;
     await tx.query(
+      `update buddy_messages b set status = 'done'
+         from buddy_messages me
+        where me.id = $1 and b.learner_id = me.learner_id and b.role = 'learner'
+          and b.status = 'processing' and b.claim_token is null and b.seq < me.seq`,
+      [message.id],
+    );
+    // The disclosure may stand in an earlier message the check read with hers (#761 review):
+    // every one of them is kept from later models, not only the one that triggered the turn.
+    if (kind === 'concern' && read.length > 0) {
+      await tx.query(
+        `update buddy_messages set recall_block = 'concern'
+          where id = any($1::uuid[]) and learner_id = $2 and recall_block is null`,
+        [read, learner.id],
+      );
+    }
+    await tx.query(
       `insert into buddy_messages (learner_id, role, text, reply_to_id, created_at)
        values ($1, 'buddy', $2, $3, $4)`,
-      [learner.id, safeguardingText(learner, kind), message.id, now],
+      [
+        learner.id,
+        kind === 'concern' ? concernText(learner, false) : safeguardingText(learner, kind),
+        message.id,
+        now,
+      ],
     );
-    // A scene does not go on over a held-back message (issue #244): it ends, without feedback.
     await contextProvider().turn.concern(tx, learner.id, now);
     await bumpContext(tx, learner.id);
     return true;
@@ -563,11 +592,64 @@ async function answerWithSafeguarding(
   return answered ? { status: 'done', errorCode: null } : currentOutcome(deps, message.id);
 }
 
-export async function failTurn(
+/**
+ * Her turn ends without the model's answer (outage, timeout, invalid output, the day's limit, a
+ * stale context, a bug): the model that would have read her words for distress did not answer, so
+ * the distress check reads them before the turn fails (CLAUDE.md rule 18, #761). A concern gets
+ * the fixed concern answer and a provider block of the check the fixed blocked one — her message
+ * is then answered, and sending it again replays that answer. Nothing found: the turn fails as
+ * before ("send again"). No check possible: it fails, and Buddy's fixed help line follows her
+ * message once, however often she sends it again.
+ */
+export async function failHerTurn(
   deps: Deps,
+  learner: TurnLearner,
   message: ClaimedMessage,
   code: string,
 ): Promise<TurnOutcome> {
+  const words = await herWords(deps, message);
+  const found = await distressCheck(deps, learner.id, words.text, {
+    scene: (await contextProvider().turn.mode(deps.db, learner.id, deps.now())) !== null,
+  });
+  if (found === 'concern' || found === 'blocked') {
+    return answerWithSafeguarding(deps, learner, message, found, words.earlier);
+  }
+  const outcome = await failTurn(deps, message, code);
+  if (found === 'unchecked' && outcome.status === 'failed') {
+    await deps.db.tx(async (tx) => {
+      const added = await tx.query(
+        `insert into buddy_messages (learner_id, role, text, reply_to_id, created_at)
+         select $1, 'buddy', $2, $3, $4
+          where not exists (select 1 from buddy_messages where reply_to_id = $3 and role = 'buddy')
+         returning id`,
+        [learner.id, safeguardingText(learner, 'unchecked'), message.id, deps.now()],
+      );
+      if (added.length === 1) await bumpContext(tx, learner.id);
+    });
+  }
+  return outcome;
+}
+
+/** Her words this turn answers: her message and the earlier ones that waited for its answer. */
+async function herWords(
+  deps: Deps,
+  message: ClaimedMessage,
+): Promise<{ text: string; earlier: string[] }> {
+  const earlier = await deps.db.query<{ id: string; text: string }>(
+    `select b.id, b.text from buddy_messages b join buddy_messages me on me.id = $1
+      where b.learner_id = me.learner_id and b.role = 'learner' and b.seq < me.seq
+        and b.status = 'processing' and b.claim_token is null and b.recall_block is null
+      order by b.seq desc limit 10`,
+    [message.id],
+  );
+  const ordered = [...earlier].reverse();
+  return {
+    text: [...ordered.map((m) => m.text), message.text].join('\n'),
+    earlier: ordered.map((m) => m.id),
+  };
+}
+
+async function failTurn(deps: Deps, message: ClaimedMessage, code: string): Promise<TurnOutcome> {
   // Only the current owner may mark it failed — together with the earlier messages it
   // superseded (released, waiting for this answer).
   const rows = await deps.db.tx(async (tx) => {

@@ -15,6 +15,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { t } from '../i18n/index.js';
 import { LlmError } from '../llm/gateway.js';
 import { CLOZE_JUDGE_PROMPT_VERSION } from '../modules/practice/cloze.js';
 import { testDatabaseAvailable } from '../testing/database.js';
@@ -261,6 +262,46 @@ describe.skipIf(!dbReady)('cloze items', () => {
     expect(res.body.verdict).toBe('incorrect');
     expect(res.body.reply.text).toBe('Bei „11“ passt es noch nicht.');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
+    // Her words were read for distress all the same (#747), and nothing was found.
+    expect(env.llm.callsFor('safeguard')).toHaveLength(1);
+  });
+
+  // #747: code judges these gaps alone, so no tutor ever reads them — the distress check does.
+  it.each(['practice', 'test'] as const)(
+    'answers distress in a gap with the fixed help answer, in a %s too',
+    async (kind) => {
+      const session = await prepare(
+        [cloze('Ein Jahr hat ___ Monate, und ein ___ hat sieben Tage.', ['12', 'Woche'])],
+        kind,
+      );
+      const si = session.items[0]!;
+      env.llm.script('safeguard', { json: { concern: true } });
+      const words = 'mein Vater schlägt mich, wenn ich das falsch habe';
+      const res = await answer(session, si, ['11', words]);
+      expect(res.status).toBe(200);
+      expect(res.body.reply.text).toBe(t('de', 'safeguarding.concern'));
+      expect(res.body.verdict).toBe('not_an_attempt');
+      expect(env.llm.callsFor('tutor')).toHaveLength(0);
+      expect(ScriptedGateway.textOf(env.llm.callsFor('safeguard')[0]!)).toContain(words);
+      const row = await env.db.one<{ attempts: number; status: string }>(
+        `select attempts, status from session_items where session_id = $1 and item_id = $2`,
+        [session.id, si.item.id],
+      );
+      expect(row).toEqual({ attempts: 0, status: 'open' });
+    },
+  );
+
+  it('adds the fixed help line to code’s reply when no check can read the gaps', async () => {
+    const session = await prepare([
+      cloze('Ein Jahr hat ___ Monate, und ein ___ hat sieben Tage.', ['12', 'Woche']),
+    ]);
+    env.llm.script('safeguard', { error: new LlmError('timeout', 'slow') });
+    const res = await answer(session, session.items[0]!, ['11', 'Wochenende']);
+    // Code's judgement stands; the line follows it, because nobody read her words.
+    expect(res.body.verdict).toBe('incorrect');
+    expect(res.body.reply.text).toBe(
+      `Bei „11“ passt es noch nicht. ${t('de', 'safeguarding.unchecked')}`,
+    );
   });
 
   it('shows the solution after the third miss', async () => {

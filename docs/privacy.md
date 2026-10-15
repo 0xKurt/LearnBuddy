@@ -186,6 +186,11 @@ sweep records when it ran and how many rows it removed — counts only, never co
   be hurt at home (decision D-10). The message itself stays in the conversation like any other
   and is deleted with it. **Pedagogical and legal review** of the text and of this policy is
   required before production use.
+- In practice, an answer in her own words that no tutor call read (code graded it, the tutor
+  failed, a long text) goes to one small distress check with the question (#747), and so does a
+  chat or roleplay message whose turn failed (#761): the same
+  provider and region as the tutor, nothing new is stored — `llm_calls` keeps tokens, cost and
+  outcome, never the text.
 - A message the provider's safety filter blocked is kept (her conversation, her data), marked
   `blocked`, and never sent to the model again.
 - **One rule decides what a model may be told about a past message**, not one rule per path
