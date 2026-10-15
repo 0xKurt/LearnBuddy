@@ -294,7 +294,7 @@ export function moreRules(alreadyRead: readonly string[]): string {
   return `CONTINUE — this sheet was read before and more was left. These questions already exist, word for word:
 ${alreadyRead.map((p) => `- ${p}`).join('\n')}
 
-Write ONLY the ones that are still missing, in the order they stand on the sheet. Never repeat one of the above, not even worded differently. extracted_text: the same faithful transcription as before. pages: the same page reports. Set more_items true if there is still more after what you write now.`;
+Write ONLY the ones that are still missing, in the order they stand on the sheet. Never repeat one of the above, not even worded differently. extracted_text: "" — the transcription is stored already. pages: [] — the page reports are stored already. Set more_items true if there is still more after what you write now.`;
 }
 
 /**

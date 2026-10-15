@@ -1523,8 +1523,11 @@ open (#169).**
 **A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
 whether the sheet has more (`more_items`), and the sheet is read again for the rest with the
-prompts it already wrote listed, up to `MOST_READINGS` (4) readings in all. New questions are
-merged; a prompt that only differs in spacing or case is the same question and is not added
+prompts it already wrote listed, up to `MOST_READINGS` (4) readings in all. A continued reading
+is told the transcription and the page reports are stored already and returns them empty
+(`moreRules`, F6 #658): the code always kept the first reading's, and writing them again cost
+about 600 output tokens per continuation (live M5, 90-pair list: 4 873 instead of 5 490–6 823
+tokens, same 30 new pairs). New questions are merged; a prompt that only differs in spacing or case is the same question and is not added
 twice. Until 30.09. the cap was 25 with no second reading, so a fifty-word list quietly became
 twenty-five while the page report still said "all" — the silent cut of #49 one layer below where
 it was looked for, and the reason "frag mich alle Vokabeln ab" could not work however well the
