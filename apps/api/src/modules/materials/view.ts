@@ -36,18 +36,26 @@ export type MaterialRow = {
   created_at: Date;
 };
 
-/**
- * The sentences on this sheet to read aloud (issue #223 point 2). Exactly what a speaking run
- * started from the sheet would hold — the same two conditions `practice/selection.ts` applies
- * for `run = 'speak'` — so the offer the card makes and what the run then holds can never
- * disagree (the same reason `offersCardPass` lives in one place).
- */
-const SPEAK_COUNT = `(select count(*) from items i
-   where i.material_id = m.id and i.archived_at is null
-     and i.kind = 'speak' and i.origin <> 'homework')::int`;
-
 /** A material row with what its card shows besides: subject, question counts, latest session. */
-export type MaterialViewRow = MaterialRow & {
+export type MaterialViewRow = Pick<
+  MaterialRow,
+  | 'id'
+  | 'subject_id'
+  | 'title'
+  | 'status'
+  | 'failure_reason'
+  | 'photos_deleted_at'
+  | 'purpose'
+  | 'source'
+  | 'pages_resolved_at'
+  | 'page_problems'
+  | 'items_incomplete'
+  | 'not_practicable'
+  | 'photo_count'
+  | 'merged_into'
+  | 'goal_id'
+  | 'created_at'
+> & {
   subject_name: string | null;
   item_count: number;
   speak_count: number;
@@ -55,15 +63,28 @@ export type MaterialViewRow = MaterialRow & {
   session_status: MaterialView['session_status'];
 };
 
-/** The one query behind every card (`MaterialViewRow`); the caller adds `where` and order. */
-export const VIEW_SELECT = `select m.*, s.name as subject_name,
-            (select count(*) from items i where i.material_id = m.id and i.archived_at is null)::int as item_count,
-            ${SPEAK_COUNT} as speak_count,
-            (select ps.id from practice_sessions ps where ps.material_id = m.id
-              order by ps.started_at desc, ps.seq desc limit 1) as session_id,
-            (select ps.status from practice_sessions ps where ps.material_id = m.id
-              order by ps.started_at desc, ps.seq desc limit 1) as session_status
-       from materials m left join subjects s on s.id = m.subject_id`;
+/**
+ * The one query behind every card (`MaterialViewRow`); the caller adds `where` and order.
+ * Only the columns a card shows, the two counts in one pass over its questions and the newest
+ * session found once (#717): the library reads up to 200 sheets with it. The speaking count is
+ * exactly what a speaking run started from the sheet would hold — the same two conditions
+ * `practice/selection.ts` applies for `run = 'speak'` (issue #223 point 2).
+ */
+export const VIEW_SELECT = `select m.id, m.subject_id, m.title, m.status, m.failure_reason, m.photos_deleted_at, m.purpose,
+            m.source, m.pages_resolved_at, m.page_problems, m.items_incomplete, m.not_practicable,
+            m.photo_count, m.merged_into, m.goal_id, m.created_at,
+            s.name as subject_name,
+            q.item_count, q.speak_count,
+            ls.id as session_id, ls.status as session_status
+       from materials m
+       left join subjects s on s.id = m.subject_id
+       cross join lateral (
+         select count(*)::int as item_count,
+                (count(*) filter (where i.kind = 'speak' and i.origin <> 'homework'))::int as speak_count
+           from items i where i.material_id = m.id and i.archived_at is null) q
+       left join lateral (
+         select ps.id, ps.status from practice_sessions ps where ps.material_id = m.id
+          order by ps.started_at desc, ps.seq desc limit 1) ls on true`;
 
 export async function materialView(
   db: Db,
