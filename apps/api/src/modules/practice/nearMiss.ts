@@ -9,7 +9,9 @@ import type { ItemRow } from './service.js';
 import { checkPath } from './steps.js';
 
 /**
- * A vocabulary answer that is only missing its first word goes to the tutor (issue #146).
+ * A vocabulary answer that is only missing its first word goes to the tutor (issue #146) —
+ * unless the key's own spelling shows the word is a German article (`no_article`, issue #759,
+ * `articleAgainst` in evaluate.ts): then code knows which word it is, and decides it right.
  *
  * The rules can see THAT a word is missing, never WHICH: "vélo" for "le vélo" forgot the
  * article and is what the owner wants counted right — "du sport" for "faire du sport"
@@ -59,8 +61,16 @@ export const NEAR_MISS_REPLY: Partial<Record<RuleVerdict, MessageKey>> = {
   spelling: 'practice.spelling',
   close: 'practice.accents',
   missing_word: 'practice.missing_word',
+  other_article: 'practice.other_article',
   not_transformed: 'practice.not_transformed',
 };
+
+/**
+ * Near misses whose first reply says WHAT is off and whose second shows the spelling, counted as
+ * help given (issue #207): a slip of the pen, and a German noun with the wrong article
+ * (issue #759) — the article is part of the word she types, so it goes the same way.
+ */
+export const SPELLED_ON_RETRY = new Set<RuleVerdict>(['typo', 'other_article']);
 
 /**
  * Where a written path stops following itself (issue #209). The line numbers are the ones she

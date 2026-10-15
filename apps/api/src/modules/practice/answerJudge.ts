@@ -21,6 +21,7 @@ import {
   locatedOrNotHelp,
   NEAR_MISS_REPLY,
   pathReply,
+  SPELLED_ON_RETRY,
   TYPO_REPLY,
 } from './nearMiss.js';
 import { ladderEndReply } from './pointSteps.js';
@@ -76,8 +77,10 @@ export function judgeByRules(c: AnswerCase): Judged | null {
       gaveHint: false,
       revealed: true,
     };
-  } else if (rule === 'correct' || guided?.kind === 'solved') {
-    // Right — or, in a guided example (#298), the way's last line with the key's value.
+  } else if (rule === 'correct' || rule === 'no_article' || guided?.kind === 'solved') {
+    // Right — or, in a guided example (#298), the way's last line with the key's value. A German
+    // noun without its article is right too (#146, #759); the reply shows the whole word, so the
+    // gender is seen once more.
     const praise = t(
       learner.locale,
       session.mode === 'help' ? 'practice.help_solved' : 'practice.correct',
@@ -90,9 +93,11 @@ export function judgeByRules(c: AnswerCase): Judged | null {
       evaluatedBy: partsCheck ? structuredDecidedBy(partsCheck) : 'rule',
       reply: followed
         ? t(learner.locale, 'practice.parts.follow_on', { part: `${followed})` })
-        : passed
-          ? `${passed} ${praise}`
-          : praise,
+        : rule === 'no_article'
+          ? t(learner.locale, 'practice.correct_article', { answer: plainMath(item.answer) })
+          : passed
+            ? `${passed} ${praise}`
+            : praise,
       gaveHint: false,
       revealed: false,
     };
@@ -145,15 +150,16 @@ export function judgeByRules(c: AnswerCase): Judged | null {
     // hint, because that is what it is (issue #207). `first_try_correct` is false after the
     // first attempt anyway, so a later right answer is already recorded as "with help"; the
     // hint count makes the record say WHY.
-    const spellOut = rule === 'typo' && item.attempts > 0;
+    // A German noun with the wrong article goes the same way (issue #759): first what is off —
+    // the article — and from the second try on the whole word with it.
+    const spellOut = SPELLED_ON_RETRY.has(rule) && item.attempts > 0;
     return {
       verdict: 'partially_correct',
       evaluatedBy: 'rule',
-      reply:
-        rule === 'typo'
-          ? spellOut
-            ? t(learner.locale, 'practice.typo', { answer: plainMath(item.answer) })
-            : t(learner.locale, TYPO_REPLY[typoShapeFor(item, text)])
+      reply: spellOut
+        ? t(learner.locale, 'practice.typo', { answer: plainMath(item.answer) })
+        : rule === 'typo'
+          ? t(learner.locale, TYPO_REPLY[typoShapeFor(item, text)])
           : // Code found the place: the broken step (issue #209) or the count that does not
             // add up (issue #212). Only then the fixed near-miss texts.
             (pathReply(learner.locale, text) ??
