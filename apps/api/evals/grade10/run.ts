@@ -74,7 +74,7 @@ async function read(criteria: Criteria, reversed: boolean, text: string): Promis
     maxOutputTokens: 600,
     temperature: 0,
     timeoutMs: 45_000,
-    thinkingBudget: 0,
+    thinking: 'off',
   });
   return schema.parse(res.json) as Reading;
 }

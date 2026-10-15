@@ -53,7 +53,8 @@ const vertex = new VertexGateway(config);
 /** Reading answers kept for the transcript (to see why a sheet failed). */
 const readings: unknown[] = [];
 const gateway: LlmGateway = {
-  available: true,
+  // The real gateway's availability and profile (#646); only generate is watched.
+  ...vertex,
   async generate(req) {
     const res = await vertex.generate(req);
     if (req.purpose === 'extraction') readings.push(res.json);

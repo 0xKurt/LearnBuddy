@@ -122,7 +122,7 @@ async function main(): Promise<void> {
         maxOutputTokens: 500,
         temperature: 0,
         timeoutMs: 45_000,
-        thinkingBudget: 0,
+        thinking: 'off',
       });
       const v = Verdict.parse(res.json);
       const flags = [

@@ -381,7 +381,7 @@ export async function runConsolidation(deps: Deps, job: JobRow): Promise<void> {
           maxOutputTokens: 1200,
           temperature: 0.1,
           timeoutMs: 30_000,
-          thinkingBudget: 512,
+          thinking: 'low',
         });
         answer = res.json;
       } catch (err) {

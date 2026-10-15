@@ -197,7 +197,7 @@ describe.skipIf(!dbReady)('the model alarms (#650)', () => {
     expect(env.llm.canaries).toHaveLength(1);
     const req = env.llm.canaries[0]!;
     // Tiny on purpose: one field, a two-line prompt, no thinking to pay for.
-    expect(req).toMatchObject({ purpose: 'canary', tier: 'smart', thinkingLevel: 'minimal' });
+    expect(req).toMatchObject({ purpose: 'canary', tier: 'smart', thinking: 'minimal' });
     expect(Object.keys((req.schema as { properties: object }).properties)).toEqual(['ok']);
 
     const rows = await env.db.query<{ learner_id: string | null; outcome: string }>(

@@ -103,7 +103,7 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     const [choice] = env.llm.choices;
     expect(env.llm.choices).toHaveLength(1);
     expect(choice?.tier).toBe('fast');
-    expect(choice?.thinkingBudget).toBe(0);
+    expect(choice?.thinking).toBe('off');
     // It is asked with what the main call is asked: the same message.
     const [main] = env.llm.callsFor('explain');
     expect(choice?.contents).toEqual(main?.contents);

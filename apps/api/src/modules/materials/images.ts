@@ -220,7 +220,7 @@ Look at the attached page images and return the JSON object defined in your inst
     maxOutputTokens: 2_000,
     temperature: 0.2,
     timeoutMs: 60_000,
-    thinkingBudget: 1024,
+    thinking: 'medium',
   });
   const found = FiguresParse.parse(res.json).assets.filter(
     (a) => a.page_index < pages.length && a.item_indices.some((i) => i < items.length),
