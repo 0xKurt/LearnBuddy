@@ -240,7 +240,7 @@ describe.skipIf(!dbReady)('material and practice under failure', () => {
     await upload(env, l);
     const home = (await l.api.get<BuddyHome>('/buddy')).body;
     // Her sheet is her message after the question now (issue #632) …
-    expect(last(home).sheet).toMatchObject({ stage: 'ready' });
+    expect(home.thread.find((m) => m.sheet)?.sheet).toMatchObject({ stage: 'ready' });
     // … and the question's quick answers are gone.
     const asked = home.thread.find((m) => m.text === 'Hast du ein Arbeitsblatt dazu?');
     expect(asked?.options).toBeNull();

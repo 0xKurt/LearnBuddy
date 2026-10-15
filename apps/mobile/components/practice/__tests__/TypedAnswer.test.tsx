@@ -202,6 +202,20 @@ describe('her working, photographed (issue #444)', () => {
     expect(screen.getByTestId('bottom-bar').contains(camera())).toBe(true);
   });
 
+  it('is the design’s + (#596), opening the attach sheet with the camera and her photos, no file', () => {
+    show('numeric', 'Löse die Gleichung 2x + 3 = 7.', 'math', work);
+    const plus = camera();
+    // The sign: the composer's plus, the same as the chat's +, never the camera glyph.
+    const sign = plus?.querySelector('svg')?.innerHTML ?? '';
+    expect(sign).toContain('M12 5v14M5 12h14');
+    fireEvent.click(plus!);
+    const sheet = screen.getByRole('dialog');
+    expect(sheet.textContent).toContain('Deinen Rechenweg anhängen');
+    expect(screen.getByRole('button', { name: 'Foto aufnehmen' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Aus der Galerie' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Aus Dateien' })).toBeNull();
+  });
+
   it('offers none where a line break means nothing (a vocabulary word)', () => {
     show('vocab', 'der Hund', null, work);
     expect(camera()).toBeNull();

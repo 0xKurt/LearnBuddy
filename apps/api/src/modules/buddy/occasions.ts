@@ -24,7 +24,8 @@ type Occasion = {
 type PracticeFiller = (
   db: Db,
   learnerId: string,
-  scope: { goalId: string | null; subjectId: string | null },
+  /** `materialId`: only this sheet's questions. */
+  scope: { goalId: string | null; subjectId: string | null; materialId?: string | null },
   focusTopics: string[],
   now: Date,
 ) => Promise<{ itemIds: string[]; minutes: number }>;

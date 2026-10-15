@@ -66,6 +66,7 @@ import { insertAtCursor, MathKeys, type Insertion, type Selection } from '../mat
 import { TypedMathPreview } from '../math/TypedMathPreview.js';
 import { useConversation } from '../voice/useConversation.js';
 import { useVoiceInput } from '../voice/useVoiceInput.js';
+import { AttachMenu, type OwnAttach } from '../capture/AttachMenu.js';
 import { AnswerShell } from './AnswerShell.js';
 import { useWorkPhoto, type WorkTarget } from './useWorkPhoto.js';
 import { WorkPhotoNote } from './WorkPhotoNote.js';
@@ -110,6 +111,13 @@ type Props = {
 /** No question to read a photo for: the hook still runs, its controls are not shown. */
 const NO_WORK: WorkTarget = { sessionId: '', itemId: '' };
 
+/** What the + offers in a practice (#596): her working, from the camera or a photo she took. */
+const WORK_ATTACH: OwnAttach = {
+  title: 'practice:work.attach_title',
+  line: 'practice:work.attach_line',
+  sources: ['camera', 'library'],
+};
+
 export function TypedAnswer({
   kind,
   prompt = '',
@@ -148,6 +156,8 @@ export function TypedAnswer({
   const [focused, setFocused] = useState(false);
   /** The writing view of a long text is open (issue #525); it closes once her text is checked. */
   const [writing, setWriting] = useState(false);
+  /** The + is open: camera or a photo she already took, for her working (#596). */
+  const [attaching, setAttaching] = useState(false);
   useEffect(() => {
     if (disabled) setWriting(false);
   }, [disabled]);
@@ -358,14 +368,14 @@ export function TypedAnswer({
             : {}),
           // Gespräch, in the primary slot like the chat's (issue #386).
           onTalk: canTalk ? conversation.start : null,
-          // Her working, photographed (issue #444): the camera where the chat has its +. A long
-          // text: its writing view in the same place (issue #525). Neither is drawn by the
-          // design; both stay reachable as before it.
+          // Her working, photographed (issue #444), behind the design's + (#596), where the chat
+          // has its own: the same sheet asks camera or a photo she already took. A long text: its
+          // writing view in the same place (issue #525), not drawn by the design.
           tool: photoHere
             ? {
-                icon: 'camera',
+                icon: 'plus',
                 label: t('work.take'),
-                ...(disabled ? {} : { onPress: photo.take }),
+                ...(disabled ? {} : { onPress: () => setAttaching(true) }),
               }
             : long
               ? {
@@ -374,7 +384,21 @@ export function TypedAnswer({
                   ...(disabled ? {} : { onPress: () => setWriting(true) }),
                 }
               : null,
-          attached: photoHere ? <WorkPhotoNote photo={photo} value={value} /> : null,
+          attached: photoHere ? (
+            <>
+              <WorkPhotoNote photo={photo} value={value} />
+              <AttachMenu
+                visible={attaching}
+                link={WORK_ATTACH}
+                onChoose={(source) => {
+                  setAttaching(false);
+                  if (source === 'camera') photo.take();
+                  else photo.pick();
+                }}
+                onClose={() => setAttaching(false)}
+              />
+            </>
+          ) : null,
         },
         ...(long
           ? {

@@ -128,10 +128,12 @@ describe.skipIf(!dbReady)('her sheet as her message in the conversation (issue #
       text: 'hab dir mein blatt geschickt',
     });
     expect(res.status).toBe(200);
-    const roles = (await thread(lena)).map((m) => [m.role, m.text, Boolean(m.sheet)]);
-    expect(roles.slice(0, 2)).toEqual([
-      ['learner', '', true],
-      ['learner', 'hab dir mein blatt geschickt', false],
+    const mine = (await thread(lena))
+      .filter((m) => m.role === 'learner')
+      .map((m) => [m.text, Boolean(m.sheet)]);
+    expect(mine).toEqual([
+      ['', true],
+      ['hab dir mein blatt geschickt', false],
     ]);
     const call = env.llm.callsFor('buddy_turn').at(-1)!;
     const learnerTurns = call.contents.filter((c) => c.role === 'user');

@@ -22,6 +22,7 @@ import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
 import { isMinor, type LearnerRow } from '../identity/model.js';
 import { claimJobs, enqueueJob, finishJob } from '../scheduler/jobs.js';
 import { decide } from './checkDecide.js';
+import { answerHerSheets } from './checkAnswer.js';
 import { fallback } from './checkFallback.js';
 import { acquireLease, LEASE_SECONDS, LeaseLost, releaseLease } from './checkLease.js';
 import { sendAgreedReminder } from './checkReminder.js';
@@ -97,7 +98,16 @@ export async function runLearnerJobs(deps: Deps, learnerId: string): Promise<Che
     let outcome = 'done';
     if (others.length > 0) {
       try {
-        outcome = await decide(deps, learner, others, { learnerId, token, jobs });
+        const lease = { learnerId, token, jobs };
+        const since = deps.now();
+        outcome = await decide(deps, learner, others, lease);
+        // Her own sheet is answered whatever the model chose (issue #721).
+        const answered =
+          outcome === 'retry_later'
+            ? []
+            : await answerHerSheets(deps, learner, others, lease, since);
+        const added = answered.filter((a) => a !== 'answered');
+        if (added.length > 0) outcome = `${outcome}+${added.join('+')}`;
       } catch (err) {
         if (!(err instanceof LeaseLost)) throw err;
         return { jobs: jobs.length, outcome: 'lease_lost' };

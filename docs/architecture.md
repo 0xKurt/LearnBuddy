@@ -1629,6 +1629,23 @@ start: code attaches the step the message is linked to, or the practice the same
 prepared, while it still waits (`MessageView.announces`) — the start no longer lies only in the bar
 on top, if anywhere.
 
+**Her sheet is always answered** (issue #721, `modules/buddy/checkAnswer.ts`). The check her
+sheet's reading wakes is the model's to decide, and on the phone it chose to wait: "Ich mache aus
+deinem Blatt gerade Übungen …" for half a minute, then nothing, with seven tasks in her library.
+Whether she hears back about her own photo is not the model's choice (rules 1 and 5): after every
+check woken by `material_ready`, code reads, sheet by sheet, what the check said about that sheet
+(an outreach of origin `learner` since the check began, not held back). A line whose start — its
+step, or practice its decision prepared — holds that sheet's questions is its answer. A line that
+names the sheet in its topic (`material:<id>`, or the model's `sh` alias resolved to its id) but
+starts nothing of it gets the sheet's practice as its step, so it carries the card it announces
+(`MessageView.announces`). Nothing of either — it waited, prepared practice without a word, spoke
+of something else, or was suppressed — and the fixed answer for that sheet runs (`fallback`, the
+ready line with practice from that sheet). The practice is always the sheet's own
+(`preparedPractice` with `materialId`): a waiting step is reused only if it holds only that
+sheet's questions (the domain says which, `sheetPractice`), otherwise one is made from that
+sheet's questions — never another goal-less sheet's practice or a review of something else. A
+check that already said it with its start gets nothing added.
+
 **A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
 whether the sheet has more (`more_items`), and the sheet is read again for the rest with the
@@ -2543,7 +2560,9 @@ Antwort (Vorschlag 3 in #221) steht im nächsten Absatz.
 **Fotografiert auch** (Issue #444, `modules/practice/workPhoto.ts`, `contracts/workPhoto.ts`). Sie
 rechnet im Heft und fotografiert ihren Weg, statt ihn abzutippen: wo ein Weg geprüft wird
 (`pathPossible`, jetzt die EINE Liste für `evaluate.ts`, die ↵-Taste und das Foto), steht am Anfang
-der Antwortleiste eine Kamera, wo der Chat sein + hat. Das Modell **schreibt nur ab**
+der Antwortleiste das + des Designs (`Composer.jsx`, #596), wie im Chat; es öffnet dasselbe Blatt
+wie dort (`AttachMenu`), hier mit Kamera und Galerie (`useWorkPhoto` `take`/`pick`), ohne Dateien.
+Das Modell **schreibt nur ab**
 (`POST /practice/sessions/:id/work-photo`, Zweck `transcribe`); die Abschrift kommt in IHR Feld,
 sie vergleicht sie mit ihrem Heft und schickt sie mit „Prüfen" — über den gewöhnlichen Antwortweg,
 also `checkPath`, den Folgefehler aus #297 und alles andere, was eine getippte Antwort bekommt. Kein

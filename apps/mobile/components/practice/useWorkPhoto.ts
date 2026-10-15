@@ -6,6 +6,7 @@
 // (`PhotoCheckCard`). Only where it goes differs: read in the request and dropped, never uploaded.
 
 import { WORK_PHOTO_BASE64_MAX } from '@learnbuddy/shared-types/contracts';
+import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +22,8 @@ export type WorkPhoto = {
   state: WorkPhotoState;
   /** The camera button: take a photo of her working (again). */
   take: () => void;
+  /** Or one she already took (#596): the system's photo picker, no permission needed. */
+  pick: () => void;
   /** "Trotzdem behalten" on the phone's check: read it as it is. */
   keep: () => void;
   /** She sent her answer: the copy is hers now, the note goes. */
@@ -69,21 +72,27 @@ export function useWorkPhoto(target: WorkTarget, onCopy: (text: string) => void)
     }
   }
 
-  async function take(): Promise<void> {
+  async function take(source: 'camera' | 'library'): Promise<void> {
     if (busy.current) return;
     busy.current = true;
     const itemId = target.itemId;
     try {
       let uri: string | null;
       try {
-        const shot = await openCamera();
+        const shot =
+          source === 'camera'
+            ? await openCamera()
+            : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] });
         if (shot === 'blocked') {
           setState({ step: 'failed', text: t('practice:work.camera_blocked') });
           return;
         }
         uri = shot.canceled ? null : (shot.assets[0]?.uri ?? null);
       } catch {
-        setState({ step: 'failed', text: t('practice:work.camera_failed') });
+        setState({
+          step: 'failed',
+          text: t(source === 'camera' ? 'practice:work.camera_failed' : 'capture:error.library'),
+        });
         return;
       }
       if (uri === null) return;
@@ -104,7 +113,8 @@ export function useWorkPhoto(target: WorkTarget, onCopy: (text: string) => void)
 
   return {
     state,
-    take: () => void take(),
+    take: () => void take('camera'),
+    pick: () => void take('library'),
     keep: () => {
       if (state.step === 'checking') void read(state.base64);
     },
