@@ -12,7 +12,12 @@ import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { findOrCreateSubject } from '../learning/state.js';
 import { formsOn, insertItems, reasonLost, samePrompt } from '../practice/items.js';
-import { finishJob, type JobRow } from '../scheduler/jobs.js';
+import {
+  extendJobLease,
+  finishJob,
+  type JobRow,
+  WAITING_LEASE_SECONDS,
+} from '../scheduler/jobs.js';
 import { MOST_READINGS, MOST_UNCLEAR_SPOTS, moreRules, type PageReport } from './extract.js';
 import { intoHelpSession } from './helpSession.js';
 import { attachConceptImages } from './images.js';
@@ -59,7 +64,6 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   }
   if (loaded.missing !== null) return fail(deps, job, materialId, 'photos_missing');
   const { photos } = loaded;
-  const now = deps.now();
   const homework = m.purpose === 'homework';
   const {
     learner,
@@ -68,7 +72,8 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   } = await sheetReader(deps, m.learner_id, {
     homework,
     parts: loaded.parts,
-    now,
+    // The day and her age the reading is told: when it starts.
+    now: deps.now(),
   });
 
   // Without a model nothing can read the photos: say so at once, not after minutes of futile
@@ -85,6 +90,11 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // whatever the model said about the rest (#664): the sheet says so, like one with more left.
   let partial = false;
   const read = async (lean: boolean, alreadyRead: readonly string[] = []) => {
+    // Up to MOST_READINGS calls of up to two minutes each outlast one lease: it is extended
+    // before every call (K6, #663), and a run whose lease went to another run stops asking the
+    // model — it would write nothing anyway, and it would spend her allowance twice.
+    if (!(await extendJobLease(deps.db, job, deps.now(), WAITING_LEASE_SECONDS)))
+      throw new LeaseGone();
     const res = await readOnce(lean, alreadyRead.length > 0 ? moreRules(alreadyRead) : '');
     if (res.lost > 0 || res.fallback) partial = true;
     return res;
@@ -160,6 +170,7 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       }
     }
   } catch (err) {
+    if (err instanceof LeaseGone) return;
     if (isAppError(err) && err.code === 'budget_exhausted')
       return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
     // An outage, or cut off twice: try again later; after the last run she gets an honest
@@ -230,28 +241,39 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // Concept images are a bonus on top of a sheet that is already ready (issue #50):
   // attachConceptImages never throws — a vision pass or Storage that fails leaves the
   // sheet ready without images, it never becomes a failure path of the reading.
-  if (sheetForImages) {
-    // Search passages for the sheet that carries the text (the merge target when pages
-    // joined an earlier sheet): rewritten from scratch so they follow the grown text.
-    // Like the images below, a bonus on a sheet that is already ready — indexMaterialPassages
-    // never throws, and a sheet without its index is still found by full text (issue #23).
-    await indexMaterialPassages(deps, {
-      materialId: sheetForImages,
-      learnerId: learner.id,
-      timezone,
+  // Search passages for the sheet that carries the text (the merge target when pages
+  // joined an earlier sheet): rewritten from scratch so they follow the grown text.
+  // Like the images, a bonus on a sheet that is already ready — indexMaterialPassages
+  // never throws, and a sheet without its index is still found by full text (issue #23).
+  //
+  // Both run beside Buddy's look at the sheet, not before it (F4-a, #654): nothing the check
+  // decides depends on them, and in this order they stood between "ready" and the practice
+  // card she waits for (1.7 s measured). The images crop from the pages this run already
+  // loaded instead of downloading every photo again.
+  const sheetId: string | null = sheetForImages;
+  if (sheetId) {
+    deps.background(async () => {
+      await Promise.all([
+        indexMaterialPassages(deps, { materialId: sheetId, learnerId: learner.id, timezone }),
+        // A corrected test's photos are gone already (sources.ts): nothing to crop, and nothing of it should be.
+        x.source !== 'corrected_test'
+          ? attachConceptImages(deps, {
+              materialId,
+              sheetId,
+              learnerId: learner.id,
+              locale: learner.locale,
+              timezone,
+              pages: loaded.pages,
+            })
+          : Promise.resolve(),
+      ]);
     });
-    // A corrected test's photos are gone already (sources.ts): nothing to crop, and nothing of it should be.
-    if (x.source !== 'corrected_test')
-      await attachConceptImages(deps, {
-        materialId,
-        sheetId: sheetForImages,
-        learnerId: learner.id,
-        locale: learner.locale,
-        timezone,
-      });
   }
 
   async function readyTx(tx: Db): Promise<'ready' | 'deleted'> {
+    // Everything written here happened once the reading was done, many seconds after it started:
+    // `ready_at`, the event, the step and the purge read the clock now (#653, rule 7).
+    const now = deps.now();
     const current = await tx.one<MaterialRow>(`select * from materials where id = $1 for update`, [
       materialId,
     ]);
@@ -449,6 +471,9 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     return 'ready';
   }
 }
+
+/** This run's lease went to another run while it read: it stops without writing anything. */
+class LeaseGone extends Error {}
 
 /**
  * The pages that were not read completely, as the model reported them: only real
