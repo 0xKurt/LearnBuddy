@@ -836,7 +836,8 @@ days (rule 6).
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
-  or push is disabled; a message due now while she is in the app (used it in the last 3 min) is
+  or push is disabled; a message due now while she is in the app (up to 3 min after her last request, and up to 1 min
+  more, because her presence is written at most once a minute — `inApp.ts`, #671) is
   `in_app` from the start and in the thread in the same transaction as the change it is about
   (the card of the practice it prepared), not a delivery run later (`planOutreach`). Only the app can record `opened`. The text is always also in the thread.
 - `DeviceNotRegistered` (ticket or receipt) deactivates the token.

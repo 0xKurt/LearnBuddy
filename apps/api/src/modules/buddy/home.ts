@@ -19,7 +19,7 @@ import type { Deps } from '../../deps.js';
 import { addDays, daysBetween, localParts, zonedToInstant } from '../../lib/time.js';
 import type { BuddyState, GoalRow } from './state.js';
 import type { UndoSpec } from './toolKit.js';
-import { undoApplies, undoLoosensContact } from './undo.js';
+import { undoAppliesAll, undoLoosensContact } from './undo.js';
 import { contextProvider } from './provider.js';
 import { loadBuddyState, loadSettings } from './state.js';
 
@@ -211,19 +211,28 @@ async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<Acti
       order by seq desc limit 12`,
     [learnerId, new Date(now.getTime() - DONE_WINDOW_MS)],
   );
+  // Offered only when it would work now (nothing changed since): asked for all in one
+  // statement (#712); the home is read on one connection (one snapshot).
+  const open = rows.flatMap((r) =>
+    r.status === 'applied' &&
+    r.undo !== null &&
+    now.getTime() - r.created_at.getTime() < UNDO_WINDOW_MS
+      ? [{ id: r.id, undo: r.undo }]
+      : [],
+  );
+  const applies = await undoAppliesAll(
+    deps.db,
+    learnerId,
+    open.map((o) => o.undo),
+  );
+  const works = new Set(open.filter((_, i) => applies[i]).map((o) => o.id));
   const views: ActionView[] = [];
-  // One after the other: the home is read on one connection (one snapshot).
   for (const r of rows) {
     views.push({
       id: r.id,
       status: r.status,
-      // Offered only when it would work now (nothing changed since).
       undoable:
-        r.status === 'applied' &&
-        r.undo !== null &&
-        now.getTime() - r.created_at.getTime() < UNDO_WINDOW_MS &&
-        (await undoApplies(deps.db, learnerId, r.undo)) &&
-        !(await needsAdult(deps, learner, r.undo, now)),
+        r.undo !== null && works.has(r.id) && !(await needsAdult(deps, learner, r.undo, now)),
       summary: r.result,
       created_at: r.created_at.toISOString(),
     });
@@ -369,13 +378,21 @@ async function threadOf(
   // Undo that would need the adult is not offered to a minor (see needsAdult), and undo is
   // offered only when it would work — the same check as the undo itself (audit M-56).
   const adultOnly = new Set<string>();
-  const undoWorks = new Set<string>();
-  for (const a of actions) {
-    if (a.status !== 'applied' || a.undo === null) continue;
-    if (now.getTime() - a.created_at.getTime() >= UNDO_WINDOW_MS) continue;
-    if (await needsAdult(deps, learner, a.undo, now)) adultOnly.add(a.id);
-    if (await undoApplies(deps.db, learnerId, a.undo)) undoWorks.add(a.id);
-  }
+  const undoable = actions.flatMap((a) =>
+    a.status === 'applied' &&
+    a.undo !== null &&
+    now.getTime() - a.created_at.getTime() < UNDO_WINDOW_MS
+      ? [{ id: a.id, undo: a.undo }]
+      : [],
+  );
+  for (const a of undoable) if (await needsAdult(deps, learner, a.undo, now)) adultOnly.add(a.id);
+  // Whether each would still work, asked in one statement (#712).
+  const applies = await undoAppliesAll(
+    deps.db,
+    learnerId,
+    undoable.map((a) => a.undo),
+  );
+  const undoWorks = new Set(undoable.filter((_, i) => applies[i]).map((a) => a.id));
   // Quick answers belong to their moment: once she acted since (the domain says when — in
   // LearnBuddy: sent a photo, started a practice), they are gone (live finding 8).
   const domain = contextProvider().home;
