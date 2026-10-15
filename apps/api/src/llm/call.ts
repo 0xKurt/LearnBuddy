@@ -66,6 +66,42 @@ async function releaseReservation(
   );
 }
 
+/** How the caller waited for one call (#652): measured here, the same for every gateway. */
+type CallTiming = {
+  streamed: boolean;
+  /** From the call to its first streamed text; null when nothing was streamed. */
+  firstTokenMs: number | null;
+  /** The whole wait, retries and their pauses included (`latency_ms` is the last attempt's). */
+  totalMs: number;
+  attempts: number;
+};
+
+/**
+ * The request as it goes to the gateway, and a stopwatch read when the call has ended (#652).
+ * `performance.now()`, not the app clock: it measures this call's wait and decides nothing
+ * (rule 7).
+ */
+function stopwatch(req: LlmRequest) {
+  const started = performance.now();
+  let firstTokenMs: number | null = null;
+  const sent: LlmRequest = req.onPartial
+    ? {
+        ...req,
+        onPartial: (raw) => {
+          firstTokenMs ??= Math.round(performance.now() - started);
+          req.onPartial?.(raw);
+        },
+      }
+    : req;
+  const read = (attempts: number): CallTiming => ({
+    streamed: req.onPartial !== undefined,
+    firstTokenMs,
+    totalMs: Math.round(performance.now() - started),
+    attempts,
+  });
+  return { sent, read };
+}
+
 async function record(
   deps: ModelDeps,
   /** Null only for the canary, which runs on no learner's behalf. */
@@ -74,15 +110,19 @@ async function record(
   outcome: 'ok' | 'invalid_output' | 'error' | 'timeout',
   usage: LlmResult['usage'] | null,
   errorCode: string | null,
+  timing: CallTiming,
 ): Promise<void> {
   // `error_code` is what makes one failure distinguishable from another after the fact: a
   // throttle lands here as 'rate_limited' (vertex.ts classify, HTTP 429), which is what the
-  // alarm counts (modules/scheduler/throttle.ts, issue #206).
+  // alarm counts (modules/scheduler/throttle.ts, issue #206). The trace columns (#652, migration
+  // 0107) say which decision and round a call was, how often it was sent and how long she
+  // waited for its first word.
   await deps.db.query(
     `insert into llm_calls (learner_id, purpose, model, prompt_version, input_tokens, output_tokens,
                             thought_tokens, cached_tokens, cost_micros, latency_ms, outcome, error_code,
-                            created_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+                            created_at, decision_id, round, schema_variant, streamed, first_token_ms,
+                            attempts, total_ms)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
     [
       learnerId,
       req.purpose,
@@ -99,6 +139,13 @@ async function record(
       outcome,
       errorCode,
       deps.now(),
+      req.trace?.decisionId ?? null,
+      req.trace?.round ?? null,
+      req.trace?.schemaVariant ?? null,
+      timing.streamed,
+      timing.firstTokenMs,
+      timing.attempts,
+      timing.totalMs,
     ],
   );
 }
@@ -159,14 +206,23 @@ export async function callAhead(
         [learnerId, day, kind, usage.costMicros],
       );
   };
+  const watch = stopwatch(req);
   try {
-    const result = await timedModel(() => generate(deps.llm, req));
-    await record(deps, learnerId, req, 'ok', result.usage, null);
+    const result = await timedModel(() => generate(deps.llm, watch.sent));
+    await record(deps, learnerId, req, 'ok', result.usage, null, watch.read(result.attempts ?? 1));
     await book(result.usage);
     return result;
   } catch (err) {
     if (err instanceof LlmError) {
-      await record(deps, learnerId, req, outcomeOf(err), err.usage, err.kind);
+      await record(
+        deps,
+        learnerId,
+        req,
+        outcomeOf(err),
+        err.usage,
+        err.kind,
+        watch.read(err.attempts),
+      );
       await book(err.usage);
     }
     throw err;
@@ -188,13 +244,22 @@ async function recorded(
   learnerId: string | null,
   req: LlmRequest,
 ): Promise<LlmResult> {
+  const watch = stopwatch(req);
   try {
-    const result = await timedModel(() => generate(deps.llm, req));
-    await record(deps, learnerId, req, 'ok', result.usage, null);
+    const result = await timedModel(() => generate(deps.llm, watch.sent));
+    await record(deps, learnerId, req, 'ok', result.usage, null, watch.read(result.attempts ?? 1));
     return result;
   } catch (err) {
     if (err instanceof LlmError)
-      await record(deps, learnerId, req, outcomeOf(err), err.usage, err.kind);
+      await record(
+        deps,
+        learnerId,
+        req,
+        outcomeOf(err),
+        err.usage,
+        err.kind,
+        watch.read(err.attempts),
+      );
     throw err;
   }
 }
@@ -236,9 +301,10 @@ export async function callModel(
   else if (!(await reserveModelCall(deps.db, learnerId, localDay, kind))) {
     throw new AppError('budget_exhausted', 'Daily limit for this kind of help is reached');
   }
+  const watch = stopwatch(req);
   try {
-    const result = await timedModel(() => generate(deps.llm, req));
-    await record(deps, learnerId, req, 'ok', result.usage, null);
+    const result = await timedModel(() => generate(deps.llm, watch.sent));
+    await record(deps, learnerId, req, 'ok', result.usage, null, watch.read(result.attempts ?? 1));
     await deps.db.query(
       `update usage_daily set cost_micros = cost_micros + $4
         where learner_id = $1 and day = $2 and kind = $3`,
@@ -260,6 +326,7 @@ export async function callModel(
         outcome,
         err.usage,
         err.finishReason ? `${err.kind}:${err.finishReason}` : err.kind,
+        watch.read(err.attempts),
       );
       // Nothing usable came back: the learner's daily allowance is not used up by a
       // provider outage, a rejected request or a safety block (her words are not "spent").

@@ -1,6 +1,8 @@
 // The background check's model decision: what is due, what Buddy may do about it.
 // Split from check.ts (#311); docs/architecture.md §Proactivity.
 
+import { randomUUID } from 'node:crypto';
+
 import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
 import { daysBetween, localParts } from '../../lib/time.js';
@@ -198,6 +200,8 @@ export async function decide(
   }
 
   let repair: string[] | null = null;
+  /** The model rounds of this check so far, over every attempt (`llm_calls.round`, #652). */
+  let rounds = 0;
   for (let attempt = 1; attempt <= 3; attempt++) {
     const at = deps.now();
     if (attempt > 1) state = await loadBuddyState(deps.db, learner.id, at);
@@ -222,6 +226,8 @@ export async function decide(
       : null;
     const tail = `${describeTriggers(state, triggers, today)}${lookBack ? `\n\n${describeLookBack(lookBack)}` : ''}${repair ? `\n\n${repairMessage(repair)}` : ''}`;
     const meta = {
+      // Chosen now, so every model round of this attempt names it in `llm_calls` (#652).
+      id: randomUUID(),
       mode: 'check' as const,
       attempt,
       model: null as string | null,
@@ -260,6 +266,11 @@ export async function decide(
             temperature: 0.3,
             timeoutMs: 40_000,
             thinking: 'medium',
+            trace: {
+              decisionId: meta.id,
+              round: ++rounds,
+              schemaVariant: final ? 'final' : 'step',
+            },
           });
           meta.model = res.usage.model;
           return res.json;

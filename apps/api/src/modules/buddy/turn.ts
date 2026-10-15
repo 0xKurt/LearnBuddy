@@ -335,6 +335,11 @@ async function decideTurn(
             // Minimal, not a budget: at 512 the model was measured thinking up to 885 tokens, and the
             // first byte waits for all of them (issue #626, docs/architecture.md §Speed).
             thinking: 'minimal',
+            trace: {
+              decisionId: meta.id,
+              round: thisRound,
+              schemaVariant: final ? 'final' : 'step',
+            },
             ...(onReply
               ? {
                   onPartial: (raw: string) => {
@@ -675,6 +680,8 @@ export function turnRecord(
   },
 ) {
   const meta = {
+    // Chosen now, so every model round of this attempt names it in `llm_calls` (#652).
+    id: randomUUID(),
     mode: 'turn' as const,
     attempt: at.attempt,
     model: null as string | null,

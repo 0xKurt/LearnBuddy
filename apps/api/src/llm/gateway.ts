@@ -80,6 +80,21 @@ export type LlmRequest = {
    * progress — decisions are still made on the whole, validated result.
    */
   onPartial?: (rawSoFar: string) => void;
+  /**
+   * What `llm_calls` notes about this call beyond its purpose (#652): the decision it is part
+   * of, its round within that decision's turn, and which variant of its schema went out. Never
+   * sent to the provider.
+   */
+  trace?: CallTrace;
+};
+
+type CallTrace = {
+  /** The Buddy decision (`buddy_decisions.id`) this call is a round of. */
+  decisionId?: string;
+  /** The model round within the turn or check, 1 first (lookups and repairs add rounds). */
+  round?: number;
+  /** Which schema went out: `step`/`final` for Buddy, `whole`/`chosen`/`fallback` for a run. */
+  schemaVariant?: string;
 };
 
 export type LlmUsage = {
@@ -97,7 +112,12 @@ export type LlmUsage = {
   latencyMs: number;
 };
 
-export type LlmResult = { json: unknown; usage: LlmUsage };
+export type LlmResult = {
+  json: unknown;
+  usage: LlmUsage;
+  /** How many requests the gateway sent for this answer, retries included (absent: one). */
+  attempts?: number;
+};
 
 export type LlmErrorKind =
   | 'unavailable' // not configured / provider down (5xx, network)
@@ -115,6 +135,8 @@ export class LlmError extends Error {
   readonly usage: LlmUsage | null;
   /** The provider's finish reason when it stopped the answer (e.g. SAFETY), for the audit. */
   readonly finishReason: string | null;
+  /** How many requests the gateway sent before it gave up, retries included (#652). */
+  attempts = 1;
   constructor(
     kind: LlmErrorKind,
     message: string,
