@@ -15,7 +15,7 @@ import {
   type EmbedResult,
 } from './embeddings.js';
 import { LlmError } from './gateway.js';
-import { costMicros } from './pricing.js';
+import { costMicros, VERTEX_EU_PRICES } from './pricing.js';
 import { classify, ensureCredentialsFile, splitModelSpec } from './vertex.js';
 
 /** Texts per request; far above what one material yields, far below the measured 128. */
@@ -83,7 +83,12 @@ export class VertexEmbeddings implements EmbeddingGateway {
       usage: {
         model,
         inputTokens,
-        costMicros: costMicros(model, inputTokens, 0, 0),
+        costMicros: costMicros(VERTEX_EU_PRICES, model, {
+          inputTokens,
+          audioInputTokens: 0,
+          outputTokens: 0,
+          thoughtTokens: 0,
+        }),
         latencyMs: Date.now() - started,
       },
     };

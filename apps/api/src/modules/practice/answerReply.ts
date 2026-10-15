@@ -14,6 +14,31 @@ import { shownSolution } from './service.js';
 import { secretsOf } from './structured.js';
 import { mentionsSolution } from './tutor.js';
 
+/**
+ * Does a reply the tutor wrote state this question's solution, in any form code can find
+ * (`mentionsSolution`)? For a structured item any of its secrets — a cloze's every key (#232).
+ * The one rule the hint ladder's guard below and the tutor's own flag (`answerTutor.ts`, F9-b
+ * #661) both use.
+ */
+export function namesTheSolution(
+  c: Pick<AnswerCase, 'item' | 'structured'>,
+  reply: string,
+): boolean {
+  const { item, structured } = c;
+  if (!structured) return mentionsSolution(reply, shownSolution(item), item.prompt);
+  const { secrets, visible } = secretsOf(structured, item.prompt);
+  return secrets.some((s) => mentionsSolution(reply, s, visible));
+}
+
+/**
+ * Whether the hint ladder still keeps the solution back: never before the second hint, and a
+ * question never reveals (#391) — the solution comes by the ladder, „Tipp" and a try. A reply
+ * that states it then is replaced below, so it is never shown.
+ */
+export function ladderHoldsSolution(c: Pick<AnswerCase, 'session' | 'item' | 'question'>): boolean {
+  return givesHints(c.session.mode) && (c.question || c.item.hints_used < 2);
+}
+
 export function finishReply(
   c: AnswerCase,
   { judged: decided, claims, safeguarded }: TutorJudgement,
@@ -24,8 +49,7 @@ export function finishReply(
   columnStep: number | null;
 } {
   const { learner, session, item, question, hintRequest, essay, text } = c;
-  const { structured, partsCheck, rubric, explaining, sofar, nextHint, atLadderEnd, pointsLadder } =
-    c;
+  const { partsCheck, rubric, explaining, sofar, nextHint, atLadderEnd, pointsLadder } = c;
   let judged = decided;
   let explained: string[] = [];
   // ─────────────── Schreibaufgabe: Rückmeldung je Element statt eines Urteils (issue #211) ──
@@ -71,19 +95,13 @@ export function finishReply(
     // hint (or a neutral line) takes its place, without a second model call.
     // A cloze reply quotes HER words and is code's, even where the model judged a gap
     // (issue #232); only a reply the tutor wrote can give a key away — any gap's key.
-    const leaks = (reply: string) =>
-      structured
-        ? secretsOf(structured, item.prompt).secrets.some((s) =>
-            mentionsSolution(reply, s, secretsOf(structured, item.prompt).visible),
-          )
-        : mentionsSolution(reply, shownSolution(item), item.prompt);
+    const leaks = (reply: string) => namesTheSolution(c, reply);
     if (
       judged.evaluatedBy === 'model' &&
       !essay &&
       !partsCheck &&
       judged.verdict !== 'correct' &&
-      // A question never reveals (#391): the solution comes by the ladder, "Tipp" and a try.
-      (question || item.hints_used < 2) &&
+      ladderHoldsSolution(c) &&
       (judged.revealed || leaks(judged.reply))
     ) {
       judged = {

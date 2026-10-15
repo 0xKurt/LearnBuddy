@@ -16,6 +16,7 @@ import { promptVersion } from '../../llm/promptVersion.js';
 import { ageOn, isMinor } from '../identity/model.js';
 import { cautiousAt, curriculumLine } from '../curriculum/state.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
+import { ladderHoldsSolution, namesTheSolution } from './answerReply.js';
 import { formNoteFor } from './evaluate.js';
 import { givesHints } from './modeRules.js';
 import { articleMissing, NEAR_MISS_REPLY } from './nearMiss.js';
@@ -215,6 +216,23 @@ async function tutorDecision(
       if (!parsed.success) throw new Error('tutor output invalid');
       d = parsed.data;
     }
+    // A reply she will read that states the solution has revealed it, whatever the model's own
+    // flag says (F9-b, #661; rules 1 and 5): otherwise she copies it, the question counts as
+    // "right with help", and the repetition plan learns she knew it. Not for her own right
+    // answer — confirming it names it on purpose — not for free text, rubric tasks and tasks in
+    // parts, which have nothing to reveal this way, not where the hint ladder replaces such a
+    // reply anyway (`ladderHoldsSolution`), and not in homework, whose repair below keeps it out.
+    if (
+      session.mode !== 'help' &&
+      !d.revealed_answer &&
+      d.verdict !== 'correct' &&
+      !asked.length &&
+      item.kind !== 'long' &&
+      !c.partsCheck &&
+      !ladderHoldsSolution(c) &&
+      namesTheSolution(c, d.reply)
+    )
+      d = { ...d, revealed_answer: true };
     const held = enforceTutorInvariants(
       d,
       rule,

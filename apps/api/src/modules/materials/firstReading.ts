@@ -59,7 +59,6 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   }
   if (loaded.missing !== null) return fail(deps, job, materialId, 'photos_missing');
   const { photos } = loaded;
-  const now = deps.now();
   const homework = m.purpose === 'homework';
   const {
     learner,
@@ -68,7 +67,8 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   } = await sheetReader(deps, m.learner_id, {
     homework,
     parts: loaded.parts,
-    now,
+    // The day and her age the reading is told: when it starts.
+    now: deps.now(),
   });
 
   // Without a model nothing can read the photos: say so at once, not after minutes of futile
@@ -260,6 +260,9 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   }
 
   async function readyTx(tx: Db): Promise<'ready' | 'deleted'> {
+    // Everything written here happened once the reading was done, many seconds after it started:
+    // `ready_at`, the event, the step and the purge read the clock now (#653, rule 7).
+    const now = deps.now();
     const current = await tx.one<MaterialRow>(`select * from materials where id = $1 for update`, [
       materialId,
     ]);
