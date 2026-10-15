@@ -12,7 +12,7 @@
 # (LB_TEST_DATABASE_URL, default 127.0.0.1:5432) the gate fails instead of
 # passing with every database test skipped (audit precommit-green-without-postgres).
 export LB_REQUIRE_TEST_DB=1
-LB_FULL_SUITE='pnpm -r --parallel test'
+LB_FULL_SUITE='pnpm -r --workspace-concurrency=1 test'
 LB_GREEN_TREE=tools/guards/green-tree.mjs
 
 # One test run per machine, at most LB_TEST_MAX_WORKERS (default 2 outside CI) workers, and

@@ -15,7 +15,7 @@ import { decide, parsePushLines, runKey } from './green-tree.mjs';
 import { REPO_ROOT } from './measure.mjs';
 import { scratchRepo } from './scratch-repo.mjs';
 
-const FULL = 'pnpm -r --parallel test';
+const FULL = 'pnpm -r --workspace-concurrency=1 test';
 const RELATED = 'pnpm -C apps/api run test:related src/modules/buddy/policy.ts';
 const RUN = { command: FULL, node: 'v22.12.0', requireDb: '1', database: 'pg://t', packages: 'a1' };
 const T1 = '1'.repeat(40);
