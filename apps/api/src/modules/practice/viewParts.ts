@@ -13,8 +13,18 @@ import { structuredTaskOf, viewOf } from './structured.js';
 import type { ItemRow } from './service.js';
 import { tapItemProblem } from './tapCheck.js';
 
-/** How long a signed concept-image URL lives; every session fetch signs afresh (issue #50). */
+/** How long a signed concept-image URL lives (issue #50). */
 const IMAGE_URL_TTL_SECONDS = 1800;
+/**
+ * A signed URL is handed out again while it has at least this long left (#671): the app shows
+ * the picture right away, and a session that stays open re-fetches its view long before.
+ */
+const IMAGE_URL_KEEP_MS = 10 * 60_000;
+/** At most this many signed URLs are kept in the process (oldest first out). */
+const IMAGE_URL_CACHE_MAX = 500;
+
+/** Signed URLs this process handed out, by object path, with the instant they expire. */
+const signedUrls = new Map<string, { url: string; expires: number }>();
 
 export type ItemImageRow = {
   image_path: string | null;
@@ -24,27 +34,47 @@ export type ItemImageRow = {
 };
 
 /**
- * Signed URLs for the concept images of a view, one sign per distinct crop. A Storage
- * outage never breaks loading the session: the image is simply left out (null).
+ * Signed URLs for the concept images of a view (#637, #671). Every answer and every poll
+ * rebuilds the session view; its pictures were signed again each time, one Storage request per
+ * picture. Now a URL that still has ten minutes left is handed out again, and what is missing is
+ * signed in ONE Storage request. A Storage outage never breaks loading the session: a picture
+ * that could not be signed is simply left out, and the next fetch tries again.
  */
 export async function signImageUrls(
   storage: StorageGateway,
   rows: ItemImageRow[],
+  /** The app clock (CLAUDE.md rule 7). */
+  now: Date,
 ): Promise<Map<string, string>> {
-  // Side by side (#637): one after another, a session with eight pictures waited for eight
-  // Storage round trips on every answer. A session holds a bounded handful of crops.
+  const at = now.getTime();
   const paths = [...new Set(rows.map((r) => r.image_path).filter((p): p is string => !!p))];
-  const signed = await Promise.all(
-    paths.map(async (path) => {
-      try {
-        return [path, await storage.createDownloadUrl(path, IMAGE_URL_TTL_SECONDS)] as const;
-      } catch {
-        // Left out; the next fetch tries again.
-        return null;
-      }
-    }),
-  );
-  return new Map(signed.filter((s): s is readonly [string, string] => s !== null));
+  const urls = new Map<string, string>();
+  const missing: string[] = [];
+  for (const path of paths) {
+    const kept = signedUrls.get(path);
+    if (kept && kept.expires - at > IMAGE_URL_KEEP_MS) urls.set(path, kept.url);
+    else missing.push(path);
+  }
+  if (missing.length === 0) return urls;
+  let fresh: Map<string, string>;
+  try {
+    fresh = await storage.createDownloadUrls(missing, IMAGE_URL_TTL_SECONDS);
+  } catch {
+    // Left out; the next fetch tries again.
+    return urls;
+  }
+  const expires = at + IMAGE_URL_TTL_SECONDS * 1000;
+  for (const [path, url] of fresh) {
+    urls.set(path, url);
+    signedUrls.delete(path);
+    signedUrls.set(path, { url, expires });
+  }
+  while (signedUrls.size > IMAGE_URL_CACHE_MAX) {
+    const oldest = signedUrls.keys().next().value;
+    if (oldest === undefined) break;
+    signedUrls.delete(oldest);
+  }
+  return urls;
 }
 
 /**
