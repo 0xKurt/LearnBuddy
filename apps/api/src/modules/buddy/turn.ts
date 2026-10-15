@@ -614,7 +614,12 @@ async function heldBack(
   learner: TurnLearner,
   message: ClaimedMessage,
 ): Promise<TurnOutcome> {
-  const { found, earlier } = await checkHerWords(deps, learner, message);
+  // This is the help path: whatever goes wrong while checking (a database error, a bug), it
+  // still ends in the fixed answer with the helpline, never in a failed turn.
+  const { found, earlier } = await checkHerWords(deps, learner, message).catch(() => ({
+    found: 'unchecked' as const,
+    earlier: [],
+  }));
   return found === 'concern'
     ? answerWithSafeguarding(deps, learner, message, 'concern', earlier)
     : answerWithSafeguarding(deps, learner, message, found === 'clear' ? 'held' : 'blocked');

@@ -501,6 +501,17 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     expect(await lastReply(l)).toBe(t('de', 'safeguarding.blocked'));
   });
 
+  it('a held-back turn whose check throws something else still ends in the helpline', async () => {
+    // Review of #781: the held-back path was a pure fixed-text path; a throw inside the check
+    // (a database error, a bug) must not turn it into a failed turn.
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    filterHolds();
+    env.llm.script('safeguard', { error: new Error('not a model error') as unknown as LlmError });
+    const res = await send(l, DISCLOSURE);
+    expect(res.body.status).toBe('done');
+    expect(await lastReply(l)).toBe(t('de', 'safeguarding.blocked'));
+  });
+
   // ── #761: a failed turn never leaves her distress unread ───────────────────────────────────
 
   const helpLines = async (l: Learner) =>
