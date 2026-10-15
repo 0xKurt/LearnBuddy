@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
 import { SHOTS } from './fit';
+import { expectSeen } from './seen';
 
 export const PIN = '4826';
 
@@ -155,6 +156,8 @@ export async function practise(
     for (const a of ANSWERS)
       if (await page.getByText(a.prompt, { exact: true }).first().isVisible()) current = a;
     if (!current) throw new Error(`no known question on screen (question ${n})`);
+    // The question itself is seen, not only laid out (#738).
+    await expectSeen(page.getByText(current.prompt, { exact: true }).first());
     if (current.choice) {
       await page.getByRole('radio', { name: current.answer, exact: true }).click();
       await page.getByRole('button', { name: 'Prüfen' }).click();

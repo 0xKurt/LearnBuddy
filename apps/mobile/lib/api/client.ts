@@ -15,6 +15,7 @@ import { deviceTimeZone } from '../time.js';
 import { ApiError } from './apiError.js';
 import { SseReader, type SseEvent } from './sse.js';
 import { streamingFetch } from './streamingFetch.js';
+import { STREAM_SILENCE_MS, timedOut, WAIT_MS, Watchdog, type Wait } from './watchdog.js';
 
 // Lives in lib/api/apiError.ts (free of Expo modules, so the code that decides
 // what a failure means is testable under Node); this stays its usual address.
@@ -49,14 +50,18 @@ const APP_VERSION = Constants.expoConfig?.version ?? null;
 
 type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
 
-/** One authorised call; a 401 refreshes the session once and tries again. */
+/**
+ * One authorised call; a 401 refreshes the session once and tries again. The watchdog bounds
+ * it (#662): no answer in its time ends the call with the watchdog's own error.
+ */
 async function authorised(
   method: Method,
   path: string,
   body: unknown,
   accept: string,
+  wd: Watchdog,
   fetchFn: FetchLike = fetch,
-  signal?: AbortSignal,
+  stopped?: AbortSignal,
 ): Promise<Response> {
   const send = async (token: string | null): Promise<Response> => {
     // Only listed headers: anything else fails the browser's CORS preflight.
@@ -70,20 +75,23 @@ async function authorised(
     const admin = adminToken();
     if (admin) headers['x-admin-token'] = admin;
     try {
-      return await fetchFn(`${ENV.API_URL}/v1${path}`, {
-        method,
-        headers: headers as Record<string, string>,
-        body: body !== undefined ? JSON.stringify(body) : undefined,
-        ...(signal ? { signal } : {}),
-      });
+      return await wd.race(
+        fetchFn(`${ENV.API_URL}/v1${path}`, {
+          method,
+          headers: headers as Record<string, string>,
+          body: body !== undefined ? JSON.stringify(body) : undefined,
+          signal: wd.signal,
+        }),
+      );
     } catch {
-      if (signal?.aborted) throw aborted();
+      if (wd.fired) throw wd.expired();
+      if (stopped?.aborted) throw aborted();
       throw new ApiError('network', 'No connection', 0);
     }
   };
-  let res = await send(await validToken());
+  let res = await send(await wd.race(validToken()));
   if (res.status === 401 && currentSession()) {
-    const next = await refreshOnce();
+    const next = await wd.race(refreshOnce());
     if (next) res = await send(next.access_token);
     // Still signed in but no new token: the sign-in service could not answer
     // (outage, rate limit). Not "sign in again" — try later (audit H-28).
@@ -93,23 +101,29 @@ async function authorised(
   return res;
 }
 
+/** `wait`: how long the answer may take (`quick` unless the call waits for the model or a full export). */
 export async function request<S extends ZodTypeAny>(
   method: Method,
   path: string,
-  opts: { body?: unknown; schema: S },
+  opts: { body?: unknown; schema: S; wait?: Wait },
 ): Promise<z.infer<S>>;
 export async function request(
   method: Method,
   path: string,
-  opts?: { body?: unknown },
+  opts?: { body?: unknown; wait?: Wait },
 ): Promise<unknown>;
 export async function request<S extends ZodTypeAny>(
   method: Method,
   path: string,
-  opts: { body?: unknown; schema?: S } = {},
+  opts: { body?: unknown; schema?: S; wait?: Wait } = {},
 ): Promise<unknown> {
-  const res = await authorised(method, path, opts.body, 'application/json');
-  return readJson(res, method, path, opts.schema);
+  const wd = new Watchdog(WAIT_MS[opts.wait ?? 'quick'], timedOut);
+  try {
+    const res = await authorised(method, path, opts.body, 'application/json', wd);
+    return await readJson(res, method, path, opts.schema, wd);
+  } finally {
+    wd.stop();
+  }
 }
 
 async function readJson<S extends ZodTypeAny>(
@@ -117,8 +131,15 @@ async function readJson<S extends ZodTypeAny>(
   method: Method,
   path: string,
   schema: S | undefined,
+  wd: Watchdog,
 ): Promise<unknown> {
-  const text = await res.text();
+  let text: string;
+  try {
+    text = await wd.race(res.text());
+  } catch {
+    if (wd.fired) throw wd.expired();
+    throw new ApiError('network', 'No connection', 0);
+  }
   let json: unknown = null;
   if (text) {
     try {
@@ -198,12 +219,29 @@ export async function streamRequest<S extends ZodTypeAny>(
     signal?: AbortSignal;
   },
 ): Promise<z.infer<S>> {
+  // Silence for STREAM_SILENCE_MS ends the call (#662): the API sends a keepalive more often
+  // than that while it works, so only a dead line stays this quiet.
+  const wd = new Watchdog(STREAM_SILENCE_MS, streamLost, opts.signal);
+  try {
+    return await readStream(method, path, opts, wd);
+  } finally {
+    wd.stop();
+  }
+}
+
+async function readStream<S extends ZodTypeAny>(
+  method: Method,
+  path: string,
+  opts: { body?: unknown; schema: S; onEvent: (event: SseEvent) => void; signal?: AbortSignal },
+  wd: Watchdog,
+): Promise<z.infer<S>> {
   // expo/fetch streams the body on the phone as well (React Native's fetch does not).
   const res = await authorised(
     method,
     path,
     opts.body,
     'text/event-stream',
+    wd,
     streamingFetch,
     opts.signal,
   );
@@ -211,17 +249,19 @@ export async function streamRequest<S extends ZodTypeAny>(
     (res.headers.get('content-type') ?? '').includes('text/event-stream') && res.body
       ? res.body.getReader()
       : null;
-  if (!reader) return readJson(res, method, path, opts.schema) as Promise<z.infer<S>>;
+  if (!reader) return readJson(res, method, path, opts.schema, wd) as Promise<z.infer<S>>;
   const sse = new SseReader();
   const decoder = new TextDecoder();
   for (;;) {
     let chunk: ReadableStreamReadResult<Uint8Array>;
     try {
-      chunk = await reader.read();
+      chunk = await wd.race(reader.read());
     } catch {
+      if (wd.fired) throw streamLost();
       if (opts.signal?.aborted) throw aborted();
       throw streamLost();
     }
+    wd.touch();
     if (opts.signal?.aborted) {
       letGo(reader);
       throw aborted();

@@ -12,6 +12,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { freshEmail, openMenu, PIN, sendWorksheet, signUpMia } from './coreLoop';
 import { overflows, PHONES, setScheme, settle, SHOTS } from './fit';
+import { expectSeen } from './seen';
 
 const OUT = join(SHOTS, 'header');
 const SCHEMES = ['light', 'dark'] as const;
@@ -157,6 +158,15 @@ function check(m: Measured | null, screen: string, look: string, want: Want): vo
   }
 }
 
+/** The title of the head on top: the heading in the row of the orb's slot, as `measure` reads it. */
+const titleOf = (page: Page) =>
+  page
+    .locator('[data-testid^="header-orb-"]:visible')
+    .last()
+    .locator('xpath=..')
+    .locator('[role="heading"]')
+    .first();
+
 /** One screen that stands still: both phones, both schemes, shot and measured. */
 async function head(
   page: Page,
@@ -170,6 +180,8 @@ async function head(
     for (const phone of PHONES) {
       await page.setViewportSize(phone);
       await settle(page, 900);
+      // The title is seen, not only laid out: on #734's old head it stood at opacity 0 (#738).
+      await expectSeen(titleOf(page), { what: `${name} ${scheme} @${phone.width}: the title` });
       await page.screenshot({ path: join(OUT, `${name}-${scheme}-${phone.width}.png`) });
       check(await measure(page), name, `${scheme} @${phone.width}`, want);
     }
