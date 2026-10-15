@@ -15,7 +15,7 @@ import type { Db } from '../../lib/db.js';
 import { canonicalTopicKey, type Aliases } from './context.js';
 import type { AnyAction, Outreach } from './decision.js';
 import type { LookBackFact } from './lookback.js';
-import { planOutreach, type OutreachPlan } from './delivery.js';
+import { OUTREACH_STEP_STATES, planOutreach, type OutreachPlan } from './delivery.js';
 import { bumpContext } from './plan.js';
 import { LIMITS, loadSettings, TURN_STALL_MS, type SettingsRow } from './state.js';
 import { runAct } from './registry.js';
@@ -316,7 +316,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           goalId: outreachLink(input.outreach.goal, (a) => input.aliases.goals.get(a)?.id, 'goal'),
           stepId: outreachLink(
             input.outreach.step,
-            (a) => (a === 'new' ? (created.stepId ?? undefined) : input.aliases.steps.get(a)?.id),
+            (a) => (a === 'new' ? (created.stepId ?? undefined) : waitingStep(input.aliases, a)),
             'step',
           ),
         });
@@ -367,6 +367,23 @@ function outreachLink(
   const id = resolve(alias);
   if (!id) throw new ToolRejection(`outreach: unknown ${what} ${alias}`);
   return id;
+}
+
+/**
+ * A step a message may still be about (K2, #663): one she has not started yet. A message about
+ * a step she is already in is cancelled as obsolete before it is sent (`sendDueOutreach`), so it
+ * is refused here instead — the check gets a repair round, and the job no longer reports a
+ * `scheduled` message that can never go out.
+ */
+function waitingStep(aliases: Aliases, alias: string): string | undefined {
+  const step = aliases.steps.get(alias);
+  if (!step) return undefined;
+  if (!OUTREACH_STEP_STATES.includes(step.state)) {
+    throw new ToolRejection(
+      `outreach: step ${alias} is ${step.state}; a message can only be about a step not started yet`,
+    );
+  }
+  return step.id;
 }
 
 export async function recordUnapplied(

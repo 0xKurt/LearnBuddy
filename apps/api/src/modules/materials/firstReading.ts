@@ -12,7 +12,12 @@ import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
 import { findOrCreateSubject } from '../learning/state.js';
 import { formsOn, insertItems, reasonLost, samePrompt } from '../practice/items.js';
-import { finishJob, type JobRow } from '../scheduler/jobs.js';
+import {
+  extendJobLease,
+  finishJob,
+  type JobRow,
+  WAITING_LEASE_SECONDS,
+} from '../scheduler/jobs.js';
 import { MOST_READINGS, MOST_UNCLEAR_SPOTS, moreRules, type PageReport } from './extract.js';
 import { intoHelpSession } from './helpSession.js';
 import { attachConceptImages } from './images.js';
@@ -85,6 +90,11 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // whatever the model said about the rest (#664): the sheet says so, like one with more left.
   let partial = false;
   const read = async (lean: boolean, alreadyRead: readonly string[] = []) => {
+    // Up to MOST_READINGS calls of up to two minutes each outlast one lease: it is extended
+    // before every call (K6, #663), and a run whose lease went to another run stops asking the
+    // model — it would write nothing anyway, and it would spend her allowance twice.
+    if (!(await extendJobLease(deps.db, job, deps.now(), WAITING_LEASE_SECONDS)))
+      throw new LeaseGone();
     const res = await readOnce(lean, alreadyRead.length > 0 ? moreRules(alreadyRead) : '');
     if (res.lost > 0 || res.fallback) partial = true;
     return res;
@@ -160,6 +170,7 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       }
     }
   } catch (err) {
+    if (err instanceof LeaseGone) return;
     if (isAppError(err) && err.code === 'budget_exhausted')
       return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
     // An outage, or cut off twice: try again later; after the last run she gets an honest
@@ -460,6 +471,9 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     return 'ready';
   }
 }
+
+/** This run's lease went to another run while it read: it stops without writing anything. */
+class LeaseGone extends Error {}
 
 /**
  * The pages that were not read completely, as the model reported them: only real
