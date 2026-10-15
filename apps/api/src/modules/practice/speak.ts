@@ -16,13 +16,16 @@ import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
 import { AppError, isAppError } from '../../lib/errors.js';
+import type { Db } from '../../lib/db.js';
 import { learnerDay } from '../../lib/zone.js';
 import { t } from '../../i18n/index.js';
+import { safeguardingText } from '../../i18n/safeguarding.js';
+import { distressCheck, saysMoreThan } from '../buddy/distress.js';
 import { callModel } from '../../llm/call.js';
-import { recordingPart } from '../../llm/gateway.js';
+import { LlmError, recordingPart } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { partialArray, partialString } from '../../llm/partial.js';
-import { ageOn } from '../identity/model.js';
+import { ageOn, isMinor } from '../identity/model.js';
 import { reviewItem } from './fsrs.js';
 import { settleTurn, replayTurn, touchRun, type PracticeLearner } from './service.js';
 import { promptVersion } from '../../llm/promptVersion.js';
@@ -263,7 +266,21 @@ export async function speakItem(
     judged = parsed.data;
   } catch (err) {
     if (isAppError(err)) throw err;
+    // The provider's filter held back what she said: the fixed answer, as in every free text (#765).
+    if (err instanceof LlmError && err.kind === 'blocked') {
+      return helpTake(deps, learner, sessionId, item.id, input.client_turn_id, 'blocked', '');
+    }
     throw new AppError('model_unavailable', 'Could not listen right now');
+  }
+
+  // What she said is read for distress when it holds a word the sentence does not (#765): it is
+  // her own words, like a written answer (CLAUDE.md rule 18). The judge has no concern bit.
+  const said = judged.audible ? judged.heard : '';
+  const found = saysMoreThan(said, [item.prompt])
+    ? await distressCheck(deps, learner.id, said, { question: item.prompt })
+    : 'clear';
+  if (found === 'concern' || found === 'blocked') {
+    return helpTake(deps, learner, sessionId, item.id, input.client_turn_id, found, said);
   }
 
   const overall = judged.audible ? judged.overall : 'retry';
@@ -276,30 +293,21 @@ export async function speakItem(
   const verdict =
     overall === 'good' ? 'correct' : overall === 'almost' ? 'partially_correct' : 'incorrect';
   const closes = overall !== 'retry';
-  const reply = judged.audible ? judged.reply : t(learner.locale, 'practice.heard_retry');
+  const plain = judged.audible ? judged.reply : t(learner.locale, 'practice.heard_retry');
+  // No check could read her words: the fixed help line follows the reply (#747, #765).
+  const reply =
+    found === 'unchecked'
+      ? `${plain} ${safeguardingText(learner.locale, isMinor(learner, now), 'unchecked')}`
+      : plain;
 
   return settleTurn(deps, learner.id, sessionId, item.id, input.client_turn_id, verdict, () =>
     deps.db.tx(async (tx) => {
-      // The model call took seconds: "Beenden" may have finished the session meanwhile. The
-      // session row is locked first (the same order as finishSession), so the judgement
-      // commits into an active session or not at all (audit M-34 speak-commits-after-finish).
-      const current = await tx.one<{ status: string }>(
-        `select status from practice_sessions where id = $1 and learner_id = $2 for update`,
-        [sessionId, learner.id],
-      );
-      if (current.status !== 'active') throw new AppError('conflict', 'Session has ended');
+      const seq = await nextTurnIn(tx, learner.id, sessionId);
       const si = await tx.one<{ status: string; attempts: number; hints_used: number }>(
         `select status, attempts, hints_used from session_items where session_id = $1 and item_id = $2 for update`,
         [sessionId, item.id],
       );
       if (si.status !== 'open') throw new AppError('conflict', 'This question is already closed');
-      const seq =
-        (
-          await tx.one<{ n: number }>(
-            `select coalesce(max(seq), 0)::int as n from practice_turns where session_id = $1`,
-            [sessionId],
-          )
-        ).n + 1;
       await tx.query(
         `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id)
          values ($1, $2, $3, $4, 'learner', $5, $6, 'model', $7)`,
@@ -337,6 +345,58 @@ export async function speakItem(
           now,
         );
       }
+      await touchRun(tx, learner.id, sessionId, now);
+    }),
+  );
+}
+
+/**
+ * The next turn's number in a run that is still active. The model call took seconds: "Beenden" may
+ * have finished the session meanwhile. The session row is locked first (the same order as
+ * finishSession), so a take commits into an active session or not at all (audit M-34).
+ */
+async function nextTurnIn(tx: Db, learnerId: string, sessionId: string): Promise<number> {
+  const current = await tx.one<{ status: string }>(
+    `select status from practice_sessions where id = $1 and learner_id = $2 for update`,
+    [sessionId, learnerId],
+  );
+  if (current.status !== 'active') throw new AppError('conflict', 'Session has ended');
+  const last = await tx.one<{ n: number }>(
+    `select coalesce(max(seq), 0)::int as n from practice_turns where session_id = $1`,
+    [sessionId],
+  );
+  return last.n + 1;
+}
+
+/**
+ * A take that told of danger, or that the provider's filter held back (#765): her words stay in
+ * her turns, the reply is the app's fixed help answer by age, and nothing is judged — no try, no
+ * pronunciation feedback, the sentence stays open.
+ */
+async function helpTake(
+  deps: Deps,
+  learner: PracticeLearner,
+  sessionId: string,
+  itemId: string,
+  clientTurnId: string,
+  kind: 'concern' | 'blocked',
+  said: string,
+): Promise<AnswerResponse> {
+  const now = deps.now();
+  const reply = safeguardingText(learner.locale, isMinor(learner, now), kind);
+  return settleTurn(deps, learner.id, sessionId, itemId, clientTurnId, 'not_an_attempt', () =>
+    deps.db.tx(async (tx) => {
+      const seq = await nextTurnIn(tx, learner.id, sessionId);
+      await tx.query(
+        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id)
+         values ($1, $2, $3, $4, 'learner', $5, 'not_an_attempt', 'rule', $6)`,
+        [sessionId, learner.id, itemId, seq, `🎤 ${said || '…'}`, clientTurnId],
+      );
+      await tx.query(
+        `insert into practice_turns (session_id, learner_id, item_id, seq, role, text)
+         values ($1, $2, $3, $4, 'tutor', $5)`,
+        [sessionId, learner.id, itemId, seq + 1, reply],
+      );
       await touchRun(tx, learner.id, sessionId, now);
     }),
   );

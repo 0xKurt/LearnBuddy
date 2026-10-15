@@ -15,7 +15,7 @@ import { safeguardingText } from '../../i18n/safeguarding.js';
 import type { Deps } from '../../deps.js';
 import { isMinor } from '../identity/model.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
-import { distressCheck, type DistressFinding } from '../buddy/distress.js';
+import { distressCheck, saysMoreThan, wordsIn, type DistressFinding } from '../buddy/distress.js';
 import { NEAR_MISS } from './evaluate.js';
 import type { RubricClaim } from './rubric.js';
 import { solutionsOf } from './service.js';
@@ -51,10 +51,6 @@ function safeguard(c: AnswerCase, kind: 'concern' | 'blocked'): Judged {
   };
 }
 
-/** Her words of two letters or more: a lone letter is a variable ("2x = 8"), a choice or a unit. */
-const wordsOf = (s: string): string[] =>
-  (s.toLocaleLowerCase().match(/\p{L}{2,}/gu) ?? []).map((w) => w.normalize('NFC'));
-
 /**
  * The words of hers a check has to read, or null when there are none: "Tipp" carries nothing she
  * wrote, a tap or a choice is one of the app's own options, and digits, signs and the lone letters
@@ -67,22 +63,17 @@ export function ownWords(c: AnswerCase): string | null {
   const { input, rule, text, item } = c;
   if (c.hintRequest && !c.question) return null;
   if (input.via === 'tapped' || (input.text == null && input.parts == null)) return null;
-  const hers = wordsOf(text);
-  if (hers.length === 0) return null;
+  if (wordsIn(text).length === 0) return null;
   const matched = rule === 'correct' || NEAR_MISS.has(rule) || VALUE_CONFIRMED.has(rule);
   if (!matched) return text;
-  const task = new Set(
-    wordsOf(
-      [
-        ...solutionsOf(item),
-        item.prompt,
-        JSON.stringify(c.structured ?? null),
-        JSON.stringify(c.codeTask ?? null),
-        JSON.stringify(c.staffTask ?? null),
-      ].join(' '),
-    ),
-  );
-  return hers.every((w) => task.has(w)) ? null : text;
+  const task = [
+    ...solutionsOf(item),
+    item.prompt,
+    JSON.stringify(c.structured ?? null),
+    JSON.stringify(c.codeTask ?? null),
+    JSON.stringify(c.staffTask ?? null),
+  ];
+  return saysMoreThan(text, task) ? text : null;
 }
 
 /** The fixed help answer as the whole judgement: nothing goes on top of it. */
