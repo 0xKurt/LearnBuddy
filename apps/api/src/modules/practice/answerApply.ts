@@ -9,6 +9,7 @@ import type { AnswerResponse } from '@learnbuddy/shared-types/contracts';
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
+import { TUTOR_PROMPT_VERSION } from './answerTutor.js';
 import { noSingleSolution } from './evaluate.js';
 import { reviewItem, type ItemOutcome } from './fsrs.js';
 import { MAX_ACCEPTED } from './items.js';
@@ -51,9 +52,9 @@ export function applyAnswer(
         );
         if (si.status !== 'open') throw new AppError('conflict', 'This question is already closed');
         const seq = await nextSeq(tx, sessionId);
-        await tx.query(
+        const turn = await tx.one<{ id: string }>(
           `insert into practice_turns (session_id, learner_id, item_id, seq, role, text, verdict, evaluated_by, client_turn_id)
-         values ($1, $2, $3, $4, 'learner', $5, $6, $7, $8)`,
+         values ($1, $2, $3, $4, 'learner', $5, $6, $7, $8) returning id`,
           [
             sessionId,
             learner.id,
@@ -106,7 +107,9 @@ export function applyAnswer(
           session.mode !== 'test' &&
           text.trim().length <= 80
         ) {
-          await tx.query(
+          // What the key learnt and where from (#675): provisional, and taken back out when she
+          // disputes this question's judgement (`retractLearned`, contest.ts).
+          const learnt = await tx.query<{ id: string }>(
             `update items set accepted_answers = array_append(accepted_answers, $3)
             where id = $1 and learner_id = $2 and not ($3 = any(accepted_answers))
               and coalesce(array_length(accepted_answers, 1), 0) < $4
@@ -116,9 +119,16 @@ export function applyAnswer(
                    and (other.material_id = items.material_id
                         or other.id in (select item_id from session_items where session_id = $5))
                    and lower($3) in (select lower(btrim(k))
-                                       from unnest(array_prepend(other.answer, other.accepted_answers)) k))`,
+                                       from unnest(array_prepend(other.answer, other.accepted_answers)) k))
+             returning id`,
             [item.id, learner.id, text.trim(), MAX_ACCEPTED, sessionId],
           );
+          if (learnt.length > 0)
+            await tx.query(
+              `insert into learned_answers (learner_id, item_id, answer, turn_id, prompt_version, created_at)
+               values ($1, $2, $3, $4, $5, $6) on conflict (item_id, answer) do nothing`,
+              [learner.id, item.id, text.trim(), turn.id, TUTOR_PROMPT_VERSION, now],
+            );
         }
         // A version of her long text is a try though nothing was graded (#258).
         const attempted =
