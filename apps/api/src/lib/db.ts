@@ -115,11 +115,19 @@ export function connectionOptions(
   };
 }
 
+/**
+ * An idle connection is kept a minute (#671): a warm function instance answers her next tap, poll
+ * or spoken sentence on the connection it already has, instead of opening a new TLS connection to
+ * the pooler after ten idle seconds. On Vercel the pool is attached to the instance's lifecycle
+ * (api/index.ts, `attachDatabasePool`), which closes idle connections before it suspends.
+ */
+const POOL_IDLE_MS = 60_000;
+
 export function createDb(connectionString: string, opts: { max?: number; ca?: string } = {}): PgDb {
   const pool = new pg.Pool({
     ...connectionOptions(connectionString, opts.ca),
     max: opts.max ?? 5,
-    idleTimeoutMillis: 10_000,
+    idleTimeoutMillis: POOL_IDLE_MS,
     connectionTimeoutMillis: 10_000,
   });
   // An idle client error (e.g. the pooler closed the connection) must not
