@@ -71,6 +71,7 @@
     "card_knew": "Je le savais",
     "card_not_yet": "Pas encore",
     "correct": "C'est juste – bravo !",
+    "correct_article": "C'est juste – bravo ! Avec son article : {{answer}}.",
     "dictation": {
       "prompt_word": "Écoute et écris le mot.",
       "prompt_sentence": "Écoute et écris la phrase.",
@@ -103,6 +104,7 @@
     "help_step": "Allons-y pas à pas : qu'est-ce qui est donné dans l'exercice, et qu'est-ce qu'on cherche ?",
     "hint_request": "Un indice, s'il te plaît",
     "missing_word": "Presque – il manque encore un mot. Regarde encore une fois.",
+    "other_article": "Presque – le nom est juste ! Seul l'article devant ne va pas encore.",
     "no_single_solution": "Il n'y a pas ici une seule bonne réponse que je pourrais te montrer : dans un texte comme celui-là, ce qui compte, c'est la façon dont tu argumentes. Dis-moi où tu bloques et on regarde ton texte ensemble.",
     "not_lowest": "Bien équilibrée ! Il reste à simplifier – tous les nombres devant se divisent par {{factor}}.",
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",

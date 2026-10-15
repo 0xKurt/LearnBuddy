@@ -200,6 +200,10 @@ voneinander wussten. Das Repository erzwingt jetzt vernünftige Last selbst, ohn
   Hält der Aufrufer die Sperre schon selbst, setzt er `LB_TEST_LOCK_HELD=1`; dann ist das Einbinden
   ein No-op und ein verschachtelter Hook wartet nie auf seinen Aufrufer. In der CI wird nichts
   gesperrt.
+- **Pakete nacheinander:** die volle Suite der Hooks läuft als
+  `pnpm -r --workspace-concurrency=1 test`, also ein Paket nach dem anderen. `--parallel` startete
+  alle Pakete auf einmal, je mit eigenen Workern und esbuild-Prozessen, und füllte die CPU schon bei
+  einem einzigen Push (Owner 15.10.2026). Die CI ruft weiter `pnpm test` (parallel) auf.
 - **Eine Datenbank:** Integrationstests nehmen den erreichbaren `LB_TEST_DATABASE_URL` (jede
   Datei bekommt ihre eigene Wegwerf-Datenbank aus einer Vorlage). Kein Skript startet einen
   eigenen Server daneben; `scripts/pg-up.sh` startet keinen Cluster, wenn die URL schon antwortet.

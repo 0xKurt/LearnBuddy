@@ -71,6 +71,7 @@
     "card_knew": "I knew it",
     "card_not_yet": "Not yet",
     "correct": "That's right – well done!",
+    "correct_article": "That's right – well done! With its article: {{answer}}.",
     "dictation": {
       "prompt_word": "Listen and write the word.",
       "prompt_sentence": "Listen and write the sentence.",
@@ -103,6 +104,7 @@
     "help_step": "Let's go step by step: what does the task give you, and what are you looking for?",
     "hint_request": "A hint, please",
     "missing_word": "Almost – a word is still missing. Take another look.",
+    "other_article": "Almost – the noun is right! Only the article in front of it isn't right yet.",
     "no_single_solution": "There isn't one right answer I could show you here: in a text like this, what counts is how you argue it. Tell me where you're stuck and we'll look at your text together.",
     "not_lowest": "Balanced correctly! Now reduce it – every number in front divides by {{factor}}.",
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",

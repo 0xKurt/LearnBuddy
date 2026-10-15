@@ -71,6 +71,7 @@
     "card_knew": "Lo sapevo",
     "card_not_yet": "Non ancora",
     "correct": "Esatto – ottimo lavoro!",
+    "correct_article": "Esatto – ottimo lavoro! Con il suo articolo: {{answer}}.",
     "dictation": {
       "prompt_word": "Ascolta e scrivi la parola.",
       "prompt_sentence": "Ascolta e scrivi la frase.",
@@ -103,6 +104,7 @@
     "help_step": "Andiamo passo per passo: cosa ti dà l'esercizio e cosa bisogna trovare?",
     "hint_request": "Un suggerimento, per favore",
     "missing_word": "Quasi – manca ancora una parola. Guarda di nuovo.",
+    "other_article": "Quasi – il nome è giusto! Solo l'articolo davanti non va ancora.",
     "no_single_solution": "Qui non c'è un'unica risposta giusta che possa mostrarti: in un testo così conta come lo argomenti. Dimmi dove ti blocchi e guardiamo insieme il tuo testo.",
     "not_lowest": "Bilanciata bene! Ora semplificala – tutti i numeri davanti si dividono per {{factor}}.",
     "not_quite": "Non ancora del tutto. Riguarda la domanda – oppure mostra la soluzione.",
