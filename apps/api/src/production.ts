@@ -3,7 +3,7 @@
 import { SupabaseAuthVerifier } from './auth/verifier.js';
 import { bootWarnings, type Config } from './config.js';
 import type { Deps } from './deps.js';
-import { createDb } from './lib/db.js';
+import { createDb, type PgDb } from './lib/db.js';
 import { DisabledEmbeddings } from './llm/embeddings.js';
 import { DisabledGateway } from './llm/gateway.js';
 import { VertexEmbeddings } from './llm/vertex-embeddings.js';
@@ -13,11 +13,18 @@ import { DisabledSpeech } from './speech/gateway.js';
 import { GoogleSpeech } from './speech/google.js';
 import { SupabaseStorage } from './storage/gateway.js';
 
-export function productionDeps(config: Config, background: Deps['background']): Deps {
+export function productionDeps(
+  config: Config,
+  background: Deps['background'],
+  /** Hands the database pool to the host's lifecycle (Vercel: `attachDatabasePool`, #671). */
+  attachPool?: (pool: PgDb['pool']) => void,
+): Deps {
   for (const warning of bootWarnings(config)) console.warn(`[api] config warning: ${warning}`);
+  const db = createDb(config.DATABASE_URL, { ca: config.DATABASE_CA_CERT });
+  attachPool?.(db.pool);
   return {
     config,
-    db: createDb(config.DATABASE_URL, { ca: config.DATABASE_CA_CERT }),
+    db,
     now: () => new Date(),
     auth: new SupabaseAuthVerifier(config),
     storage: new SupabaseStorage(config),
