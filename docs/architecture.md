@@ -1280,7 +1280,11 @@ carries the last 24 messages — a good conversation, and nothing three weeks la
 those messages share one budget of `CONTEXT_CHARS` (40 000 characters, KI-Audit F19, #672,
 `fitDialogue` in `buddy/context.ts`): STATE goes whole (each section has its own cap and carries
 the aliases code resolves), the conversation gets the rest, its oldest messages go first, and
-what she wrote since Buddy's last answer is never cut. An ordinary turn is far below it. When a
+what she wrote since Buddy's last answer is never cut. An ordinary turn is far below it. Each
+earlier conversation says how long ago it was, counted by code (`(about 3 weeks ago)`, weeks from
+a week on, issue #783): asked about "three weeks ago", Buddy had two dates to count back from and
+told her of a talk she gave two weeks ago as if it were three. And answer chips belong to a
+question: a reply without a question mark carries none (`optionsFor`, `buddy/registry.ts`). When a
 conversation has come to rest (nothing said for four hours, the same gap the app draws its
 session line at), the scheduler has the model write **two to four sentences** about it plus
 up to five topics, stored per stretch with `until_message_id`; the newest ten travel in the

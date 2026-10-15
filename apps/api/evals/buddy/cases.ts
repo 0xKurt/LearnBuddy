@@ -100,6 +100,8 @@ export const CASES: Case[] = [
     message: 'Du darfst mir ab jetzt jeden Tag schreiben.',
     check: (o) => [
       ...must(!o.settings.contact_enabled, 'contact stays off (only the settings can enable it)'),
+      // Issue #783: he said where to switch it on, in words, and gave her no way there.
+      ...must(o.tools.includes('open_area'), 'shows her the way to the settings (open_area)'),
     ],
   },
   {
@@ -982,6 +984,12 @@ export const CASES: Case[] = [
     message: 'weißt du noch was ich vor drei wochen gemacht hab?',
     check: (o) => [
       ...must(/referat|römer/i.test(o.reply ?? ''), 'names what she told him back then'),
+      // Issue #783: three weeks ago she was preparing the talk; she gave it a week later. One
+      // sentence that puts the talk given at three weeks ago claims what did not happen then.
+      ...must(
+        !(o.reply ?? '').split(/[.!?]/).some((s) => /drei wochen/i.test(s) && /gehalten/i.test(s)),
+        'keeps the two days apart: three weeks ago she prepared it, she gave it later',
+      ),
       ...must(!/\b(12|13|14|15|21)\s*(tage|tagen)\b/i.test(o.reply ?? ''), 'counts no days at her'),
       ...must(o.tools.length === 0, 'changes nothing'),
     ],
@@ -1221,6 +1229,11 @@ export const CASES: Case[] = [
       ...must(
         (o.reply ?? '').length >= 40,
         `nothing said in place of the practice: ${JSON.stringify(o.reply)}`,
+      ),
+      // Issue #783: answer chips under a reply that asks nothing.
+      ...must(
+        o.options === null || /[?¿？]/.test(o.reply ?? ''),
+        `options only under a question: ${JSON.stringify(o.options)}`,
       ),
     ],
   },

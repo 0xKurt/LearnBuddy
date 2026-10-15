@@ -29,7 +29,14 @@ import { applyDecision, recordUnapplied, type DecisionMeta } from './apply.js';
 import { buildContents, buildContext } from './context.js';
 import { distressCheck, type DistressFinding } from './distress.js';
 import { contextProvider } from './provider.js';
-import { askedButActed, emptyReply, offeredTools, TurnDecision, turnFacts } from './registry.js';
+import {
+  askedButActed,
+  emptyReply,
+  offeredTools,
+  optionsFor,
+  TurnDecision,
+  turnFacts,
+} from './registry.js';
 import { recallText } from './recall.js';
 import { bumpContext } from './plan.js';
 import { aliasSet, replyProgress, type ReplyProgress } from './stream.js';
@@ -399,7 +406,7 @@ async function decideTurn(
     // Distress: the words she gets are fixed by code, not improvised (D-10, audit H-31).
     const reply = parsed.data.concern
       ? { text: concernText(learner, parsed.data.also_asked), options: null }
-      : { text: parsed.data.reply, options: parsed.data.options };
+      : { text: parsed.data.reply, options: optionsFor(parsed.data.reply, parsed.data.options) };
 
     const result = await applyDecision(deps.db, {
       learnerId: learner.id,
