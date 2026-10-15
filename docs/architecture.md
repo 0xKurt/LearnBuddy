@@ -1297,6 +1297,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   the web the walkthrough reads it into `test-results/web/perf.jsonl` (first measurement:
   sending a message reacts in 0 ms, so the wait she called "hängt" is not in that render).
   Budgets come after the numbers, not before.
+- **No call waits forever** (#662, audit F14-a; `apps/mobile/lib/api/watchdog.ts`): a JSON call
+  ends after 15 s without an answer (`wait: 'long'` — a call that waits for the model or a full
+  export — after 150 s, above the API's own longest model budget) as `network` with reason
+  `timeout`; a streamed call ends after `STREAM_IDLE_MS` (20 s) without a byte as `stream_lost`,
+  and `http/stream.ts` sends a `: keepalive` comment every `STREAM_KEEPALIVE_MS` (10 s) while its
+  work runs, so only a dead line is that quiet. Both are `network` failures, so the existing
+  idempotent resend paths (`sendWhenOnline`, `turnIds`) carry them; her own "Stopp" stays
+  `aborted`.
 - **Buddy's replies stream** (`POST /buddy/messages` with `Accept: text/event-stream`;
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
@@ -1463,9 +1471,13 @@ made them small so the last one uploads fast; silent tails are not sent), so 600
 more than 2½ hours of nonstop talking within one hour, and 400 pieces a day is over an hour
 and a half of nonstop dictation on the recording path alone — the device path counts nothing.
 
-Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
-gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
-from 2027; output includes thinking). Note: Gemini 3.x bills the response schema as input tokens
+Pricing used for cost records: one price table per gateway (`apps/api/src/llm/pricing.ts`,
+`VERTEX_EU_PRICES`, read 2026-10-14, issue #648); a new gateway brings its own table from its
+provider's price page. gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens net —
+the introductory price comes as a 50 % credit on the $1.65 / $8.25 invoice until 2026-12-31, and
+3.6 is switched off on 2026-11-19; output includes thinking; audio input on 3.1 Flash-Lite is
+$0.55, twice its text price, read from the provider's per-modality token split; an unknown model
+counts at the table's highest figures, so a record is a ceiling, never an undercount. Note: Gemini 3.x bills the response schema as input tokens
 (Buddy's turn schema ≈ 9 400 → 8 500 tokens after flattening day/duration specs into one object
 each and moving repeated descriptions into the prompt; `$ref`/`$defs` do not help, Gemini expands
 them before billing — measured 2026-09-26), 2.5 did not. Tokens scale with schema text; the
@@ -1780,7 +1792,9 @@ scanned school PDF (the tests script the model).
 **Concept images** (issue #50, `modules/materials/images.ts`): the questions of a sheet may show
 the sheet's own teaching figure — a REAL crop from the photographed page, never a generated
 picture (the only possible failure is a slightly loose frame, never an invented shape). After a
-sheet became ready, one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
+sheet became ready — in the background, beside Buddy's look at the sheet and the search index,
+never before them (F4-a, #654: nothing the check decides depends on it), and cropping from the
+page bytes the reading already loaded (`PageBytes`, no second download) — one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
 migration 0050) looks at the page photos and the questions read from them and returns one tight
 box per WHOLE figure (a labelled diagram; a reference chart kept whole, never split into cells) —
 omitting comics, scenes and pure text. sharp crops exactly those pixels and lightly cleans them
@@ -3667,7 +3681,11 @@ so the rules only say it when it is certain; everything else goes to the tutor (
 2–3 hints (what is asked → which rule → the first step) and the solution explained step by step:
 questions from a photo in the (background) reading call, questions on a topic in a separate
 background call right after the session starts (`hints.ts`, purpose `hints`) — writing them in the
-start call made her wait 8–11 s instead of 5–6 s. A hint that states the result in any form
+start call made her wait 8–11 s instead of 5–6 s. Once per question (F9-a, #660): the call that
+creates the run (`hintsFor` in `generate.ts`, also when Buddy prepares an offered run ahead in
+`prepare.ts`, so its hints are there by her tap) asks for the questions it brought, the call that
+adds an early run's rest for exactly those; a request that only finds the run starts none. No lock
+is needed: the sets are disjoint, and the write keeps `hints = '{}'` as its fence. A hint that states the result in any form
 (also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. The ladder counts only
 hints she was really shown as hints (migration `0043_prepared_hints_used.sql`: `hints_used` = every
 hint shown, prepared or written by the tutor; `prepared_hints_used` = which prepared one is next).
@@ -3679,7 +3697,10 @@ themselves) gives the next prepared hint at once, or, with none left, lets the t
 request for help, never graded (`not_an_attempt`), and the tutor's own hint is shown and counted as a
 hint. The tutor model, when it must judge, sees the prepared hints; a reply that gives the solution
 away before the second hint is replaced by the next prepared hint (or a first-step question), without
-a second call. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
+a second call (`ladderHoldsSolution`, `namesTheSolution` in `answerReply.ts`). After that, a reply
+she reads that states the solution counts as revealed whatever the model's `revealed_answer` says
+(F9-b, #661, `answerTutor.ts`) — except a confirmation of her own right answer, free text, rubric
+tasks and tasks in parts; homework keeps its own repair. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
 she asks for help again once every prepared hint and at least `HINTS_BEFORE_SOLUTION` (2) hints were
 shown — never on the first "Tipp"; the question then counts as
 revealed (FSRS brings it back soon). Tests give no hints; homework keeps its own rules (never the
