@@ -1,4 +1,4 @@
-# ADR 0010 — The model after Gemini 3.6: Gemini 3.8 as the bridge, one EU provider outside Vertex measured next
+# ADR 0011 — The model after Gemini 3.6: Gemini 3.8 as the bridge, one EU provider outside Vertex measured next
 
 - Status: proposed (switching production is the owner's call)
 - Date: 2026-10-15

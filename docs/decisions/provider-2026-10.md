@@ -5,7 +5,7 @@ candidate, choose by evidence. Measured against `docs/decisions/baseline-2026-10
 axes (Speed, Qualität, Kosten, Anwendungsfall). Eval spend for this decision ≈ **$4.4 of the $15**
 allowed (ledger `BUDGET-LEDGER.md` of the audit round).
 
-## Recommendation (two steps; ADR 0010)
+## Recommendation (two steps; ADR 0011)
 
 1. **Survive 19.11. on `eu/gemini-3.8-flash`, with every thinking level sent as LOW.** Of what can
    be measured with the credentials configured, it is the only candidate that keeps children's data
@@ -91,7 +91,7 @@ throughout). That blocker is gone.
   audio, images, schemas and streaming unchanged; no switch-off date. Not met: an insult from a
   child is still held back by the provider's filter (#758, 0/20 on 3.8).
 
-## What this PR changes (ADR 0010)
+## What this PR changes (ADR 0011)
 
 - `llm/vertex.ts`: Gemini 3.8 and Gemini 4 take a thinking **level** only — a budget can be refused
   with 400, MINIMAL is a validation error on 3.8 — so every neutral level goes out as **LOW** there.
