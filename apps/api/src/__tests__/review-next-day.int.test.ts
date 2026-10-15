@@ -165,7 +165,9 @@ describe.skipIf(!dbReady)('the review the day after (#446)', () => {
     expect(steps[0]!.payload.item_ids).toHaveLength(4);
     // It stands in the thread, as Buddy's words.
     const said = await env.db.query<{ text: string }>(
-      `select text from buddy_messages where learner_id = $1 and outreach_id is not null`,
+      // Her sheet's own answer stands there too (issue #721); this is about the review.
+      `select m.text from buddy_messages m join buddy_outreach o on o.id = m.outreach_id
+        where m.learner_id = $1 and o.topic_key like 'review:%'`,
       [l.learnerId],
     );
     expect(said.map((m) => m.text)).toEqual([
@@ -184,7 +186,12 @@ describe.skipIf(!dbReady)('the review the day after (#446)', () => {
     await readSheet(env, l.learnerId);
     await nextMorning(env, l.learnerId);
     expect((await outreach(env, l.learnerId)).map((o) => o.status)).toEqual(['accepted']);
-    expect(env.push.sent.map((m) => m.body)).toEqual(['Buddy hat eine Idee für dich.']);
+    // The review's push, then the answer to her sheet itself (issue #721): the read sheet's
+    // wake-up runs in the same morning tick here, after the review.
+    expect(env.push.sent.map((m) => m.body)).toEqual([
+      'Buddy hat eine Idee für dich.',
+      'Buddy hat etwas für dich fertig.',
+    ]);
   });
 
   it('a wake-up that runs twice says it once and prepares it once', async () => {

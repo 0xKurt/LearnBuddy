@@ -442,8 +442,23 @@ resolvers — is in `modules/buddy/toolKit.ts`.
 `modules/buddy/registry.ts` (ADR 0005 stage 2) registers every act tool once: its call schema
 (`decision.ts`), the surfaces allowed to call it (`turn`, `check`), what it touches, whether it
 needs the learner's quote and can be undone; its handler comes from `tools.ts`. The model-facing
-action schemas and the tool catalogue in the prompt are generated from it; `runAct` checks the
+action schemas and the background check's tool catalogue are generated from it; `runAct` checks the
 surface again before running (a check can never run a turn-only tool — also unit-tested).
+
+**One description per thing** (KI-Audit F3 stage 1, #667): a tool's schema says what each field
+holds and in what form; the turn prompt says when and why it is used ("What to do when", "Learning
+now"). The turn has no catalogue of its own any more — it repeated the rules a third time. No issue
+number and no sample sentence reaches the model. **Calls are flat** (#726, `buddy/calls.ts`): the
+model writes `{ tool, ...args }`, code nests it to `{ tool, args }` before validating, so handlers,
+stored decisions and scripted answers keep their shape; the `args` wrapper cost one schema property
+per tool. **Only the tools that can apply are offered** (F3 stage 2, #668, `offeredTools`): a tool
+that needs a memory, a test, a step or a sheet to name (`needs` in the registry) goes out only when
+the turn's aliases have one — counted each round, since a lookup can name an older sheet. The
+system prompt stays one static block (the cached prefix); `llm_calls.schema_variant` names the
+offer (`step, no memories,steps`). Measured: the turn prompt 32 545 → 24 947 characters, the full
+step schema 43 216 → 29 768 characters and 269 → 242 properties, a learner with nothing yet 23 360
+characters and 181 properties; `evals/buddy` 64/65 as at the baseline (`docs/decisions/baseline-2026-10.md`),
+input per call ≈ 27 200 → 18 200 tokens.
 
 Every part of the app is reachable by asking: `open_area` (library, memory, settings, history,
 capture) changes nothing and shows a button in the conversation, like `offer_learning`.
@@ -452,7 +467,7 @@ picks the practice prepared last that still waits, and its `show_ready` card is 
 reply — "liegt schon bereit … mit einem Tippen" with nothing to tap was the defect. When nothing
 waits the call is refused and the words are repaired; once the practice is started or replaced the
 card shows no start (`ready`, decorated when the thread is served). A tool of its own did not fit:
-the turn step schema stands one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
+the turn step schema then stood one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
 "say where it is". He never says which task forms or pictures a practice will have: those are
 chosen when the run is built, after his answer; naming the parts of a picture the app shows is not
 a drawing (`learning/prompt.ts`).
@@ -1012,7 +1027,7 @@ minimal set. The run is told so in one line (`PICTURES`, a principle, no sample 
 turn's step schema stood at the budget (269) with #725, so `pictures` came with a fold:
 `offer_learning`'s `difficulty` and `direction` are one field `wish` (harder, easier, recognise,
 produce) — a level is a wish for questions on a topic, a direction one for vocabulary pairs, never
-both in one offer. The step schema stays at 269, with no room left: the next field needs another fold. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
+both in one offer. Flat calls (#726) brought the step schema to 242, and a test holds it at least 20 properties under the bound (`buddy/__tests__/offer.test.ts`). A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
 costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
 `llm_calls`) and no limit of its own: `callAhead` meters it with its run. **The run's allowance is
@@ -1617,6 +1632,23 @@ Buddy's background message that announces practice ("Neues Arbeitsblatt bereit")
 start: code attaches the step the message is linked to, or the practice the same decision
 prepared, while it still waits (`MessageView.announces`) — the start no longer lies only in the bar
 on top, if anywhere.
+
+**Her sheet is always answered** (issue #721, `modules/buddy/checkAnswer.ts`). The check her
+sheet's reading wakes is the model's to decide, and on the phone it chose to wait: "Ich mache aus
+deinem Blatt gerade Übungen …" for half a minute, then nothing, with seven tasks in her library.
+Whether she hears back about her own photo is not the model's choice (rules 1 and 5): after every
+check woken by `material_ready`, code reads, sheet by sheet, what the check said about that sheet
+(an outreach of origin `learner` since the check began, not held back). A line whose start — its
+step, or practice its decision prepared — holds that sheet's questions is its answer. A line that
+names the sheet in its topic (`material:<id>`, or the model's `sh` alias resolved to its id) but
+starts nothing of it gets the sheet's practice as its step, so it carries the card it announces
+(`MessageView.announces`). Nothing of either — it waited, prepared practice without a word, spoke
+of something else, or was suppressed — and the fixed answer for that sheet runs (`fallback`, the
+ready line with practice from that sheet). The practice is always the sheet's own
+(`preparedPractice` with `materialId`): a waiting step is reused only if it holds only that
+sheet's questions (the domain says which, `sheetPractice`), otherwise one is made from that
+sheet's questions — never another goal-less sheet's practice or a review of something else. A
+check that already said it with its start gets nothing added.
 
 **A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
@@ -2532,7 +2564,9 @@ Antwort (Vorschlag 3 in #221) steht im nächsten Absatz.
 **Fotografiert auch** (Issue #444, `modules/practice/workPhoto.ts`, `contracts/workPhoto.ts`). Sie
 rechnet im Heft und fotografiert ihren Weg, statt ihn abzutippen: wo ein Weg geprüft wird
 (`pathPossible`, jetzt die EINE Liste für `evaluate.ts`, die ↵-Taste und das Foto), steht am Anfang
-der Antwortleiste eine Kamera, wo der Chat sein + hat. Das Modell **schreibt nur ab**
+der Antwortleiste das + des Designs (`Composer.jsx`, #596), wie im Chat; es öffnet dasselbe Blatt
+wie dort (`AttachMenu`), hier mit Kamera und Galerie (`useWorkPhoto` `take`/`pick`), ohne Dateien.
+Das Modell **schreibt nur ab**
 (`POST /practice/sessions/:id/work-photo`, Zweck `transcribe`); die Abschrift kommt in IHR Feld,
 sie vergleicht sie mit ihrem Heft und schickt sie mit „Prüfen" — über den gewöhnlichen Antwortweg,
 also `checkPath`, den Folgefehler aus #297 und alles andere, was eine getippte Antwort bekommt. Kein
@@ -2784,7 +2818,11 @@ her for a reason ("Begründe", "Erkläre warum" — marked by the model's `asks_
 words) is a free text the tutor reads, never a choice graded by its index or a number graded by its
 key alone: written as either, code makes it a long answer whose key is the worked solution, or drops
 it when there is none (`reasonKept` in `practice/items.ts`, #642 item 9). A sheet that lost one
-that way is marked `items_incomplete` (`reasonLost`, `firstReading.ts`), so it never passes for whole. Answers are checked by rules where exactness is decidable (multiple choice,
+that way is marked `items_incomplete` (`reasonLost`, `firstReading.ts`), so it never passes for whole.
+A task that asks her to fill gaps (the model's `fills_gaps`) must show them: a plain question holds
+each gap as `___` (or `\square` in math), several gaps in one text are the cloze form; one without a
+gap mark is dropped (`gapsMissing`, #760 — "Ergänze die passenden Fälle in den Lücken." went out
+with no gap anywhere). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing
 accents, a missing first word such as the article, a slip within a length-scaled edit distance: a
 fixed kind reply at once, a slip shows the spelling and stays open so she types it herself; never in

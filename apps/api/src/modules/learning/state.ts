@@ -590,3 +590,32 @@ export async function readySheet(
   );
   return m ? { title: m.title, goalId: m.goal_id, subjectId: m.subject_id, questions: m.n } : null;
 }
+
+/**
+ * Which of these waiting practice steps hold questions of this sheet, and which hold only its
+ * questions (issue #721): her sheet's answer must start that sheet's practice, never another's.
+ */
+export async function sheetPractice(
+  db: Db,
+  learnerId: string,
+  materialId: string,
+  stepIds: readonly string[],
+): Promise<{ some: Set<string>; only: Set<string> }> {
+  if (stepIds.length === 0) return { some: new Set(), only: new Set() };
+  const rows = await db.query<{ id: string; mine: number; total: number }>(
+    `select s.id,
+            count(*) filter (where i.material_id = $3)::int as mine,
+            count(*)::int as total
+       from buddy_steps s
+       cross join lateral jsonb_array_elements_text(coalesce(s.payload -> 'item_ids', '[]'::jsonb)) as x(item_id)
+       join items i on i.id::text = x.item_id and i.learner_id = $1
+      where s.learner_id = $1 and s.id = any($2::uuid[])
+        and s.kind = 'practice' and s.state = 'prepared'
+      group by s.id`,
+    [learnerId, stepIds, materialId],
+  );
+  return {
+    some: new Set(rows.filter((r) => r.mine > 0).map((r) => r.id)),
+    only: new Set(rows.filter((r) => r.mine > 0 && r.mine === r.total).map((r) => r.id)),
+  };
+}

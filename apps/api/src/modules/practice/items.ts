@@ -236,6 +236,20 @@ export const ItemDraft = z.object({
     .describe(
       'true when the task, as printed or as you write it, asks her to justify or explain her answer (why it holds), also beside a choice or a result: then kind long, and answer gives the result with its reason in a few words; else omit',
     ),
+  /**
+   * The task asks her to fill gaps (#760): then the gaps must stand in it. A plain question shows
+   * a gap as ___ (the app draws it and fills her answer in); several gaps in one text are the
+   * cloze form. "Ergänze die passenden Fälle in den Lücken." went out with no gap anywhere — she
+   * could not answer it. Code drops such a task (`gapsMissing`); decided by the model's flag and
+   * the gap mark, never by the words of the task (rule 3).
+   */
+  fills_gaps: z
+    .boolean()
+    .optional()
+    .catch(undefined)
+    .describe(
+      'true when the task asks her to fill a gap: then the prompt holds the gap as ___ (several gaps in one text are a cloze task instead); else omit',
+    ),
   tolerance: z
     .number()
     .positive()
@@ -359,6 +373,18 @@ export function reasonLost(
   it: Pick<ItemDraft, 'asks_reason' | 'kind' | 'worked_solution'>,
 ): boolean {
   return reasonOutsideForm(it) && reasonKey(it) === null;
+}
+
+/** Where a plain question shows a gap: three or more underscores, or \\square inside math. */
+const GAP_MARK = /_{3,}|\\square/;
+
+/**
+ * A gap-filling task without a gap to fill (#760): she is asked to complete something the
+ * question does not show. Only a plain question can be one — the cloze form carries its text and
+ * its gaps by structure (`cloze.ts`).
+ */
+function gapsMissing(it: Pick<ItemDraft, 'fills_gaps' | 'prompt'>): boolean {
+  return it.fills_gaps === true && !GAP_MARK.test(it.prompt);
 }
 
 /**
@@ -637,6 +663,11 @@ export function usableItems(
     const raw = viewed && reasonKept(viewed);
     if (!raw) {
       drop('map_or_reason');
+      continue;
+    }
+    // A task that asks her to fill gaps the question does not show cannot be answered (#760).
+    if (gapsMissing(raw)) {
+      drop('gaps_missing');
       continue;
     }
     // A word to translate or a sentence to say carries no drawing (#375): its figure is dropped

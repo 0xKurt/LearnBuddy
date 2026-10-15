@@ -29,11 +29,11 @@ import { applyDecision, recordUnapplied, type DecisionMeta } from './apply.js';
 import { buildContents, buildContext } from './context.js';
 import { distressCheck } from './distress.js';
 import { contextProvider } from './provider.js';
-import { askedButActed, emptyReply, TurnDecision } from './registry.js';
+import { askedButActed, emptyReply, offeredTools, TurnDecision, turnFacts } from './registry.js';
 import { recallText } from './recall.js';
 import { bumpContext } from './plan.js';
 import { aliasSet, replyProgress, type ReplyProgress } from './stream.js';
-import { buddyPrompt, repairMessage, schemaErrors } from './prompts.js';
+import { buddyPrompt, repairMessage, schemaErrors, turnSchemasFor } from './prompts.js';
 import { withLookups } from './lookups.js';
 import { loadBuddyState, loadSettings, type MessageRow, TURN_STALL_MS } from './state.js';
 
@@ -325,13 +325,15 @@ async function decideTurn(
           // Stopped by her, or taken over: no further model call for a turn that is not ours.
           if (!(await holdClaim(deps, message))) throw new ClaimLost();
           let last = '';
+          // Only the tools that apply to what STATE names now — a lookup can add a sheet (#668).
+          const offer = turnSchemasFor(offeredTools(turnFacts(ctx.aliases)));
           const result = await callModel(deps, learner.id, today, {
             purpose: 'buddy_turn',
             tier: 'smart',
             promptVersion: prompt.version,
             system: prompt.turnSystem,
             contents: messages,
-            schema: final ? prompt.turnSchema : prompt.turnStepSchema,
+            schema: final ? offer.final : offer.step,
             maxOutputTokens: 2048,
             temperature: 0.4,
             timeoutMs: 30_000,
@@ -341,7 +343,7 @@ async function decideTurn(
             trace: {
               decisionId: meta.id,
               round: thisRound,
-              schemaVariant: final ? 'final' : 'step',
+              schemaVariant: `${final ? 'final' : 'step'}, ${offer.variant}`,
             },
             ...(onReply
               ? {

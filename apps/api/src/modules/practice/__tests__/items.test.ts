@@ -34,6 +34,31 @@ describe('usableItems: the language of a question', () => {
   });
 });
 
+describe('usableItems: a task that asks her to fill gaps (#760)', () => {
+  // evals/content, german-cases: "Ergänze die passenden Fälle in den Lücken." went out with no gap
+  // anywhere — the judge: the gap text is missing from the question.
+  const gaps = (prompt: string) =>
+    draft({ prompt, answer: 'des Vaters', topic: 'Fälle', fills_gaps: true });
+
+  it('drops one whose gaps the question does not show, and says why', () => {
+    const why: string[] = [];
+    const kept = usableItems([gaps('Ergänze die passenden Fälle in den Lücken.')], {
+      onDrop: (w) => why.push(w),
+    });
+    expect(kept).toEqual([]);
+    expect(why).toEqual(['gaps_missing']);
+  });
+
+  it('keeps one that shows its gap, in a sentence or inside math', () => {
+    expect(usableItems([gaps('Das Haus ___ ist groß. (der Vater)')])).toHaveLength(1);
+    expect(usableItems([gaps('Ergänze: $\\frac{3}{4} = \\frac{\\square}{8}$')])).toHaveLength(1);
+  });
+
+  it('leaves every other question alone', () => {
+    expect(usableItems([draft({})])).toHaveLength(1);
+  });
+});
+
 describe('usableItems: a number asked for behind a placeholder (live finding 5)', () => {
   const numeric = (prompt: string) =>
     draft({ kind: 'numeric', prompt, answer: '3', topic: 'Brüche' });

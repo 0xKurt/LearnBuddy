@@ -46,7 +46,13 @@ import { LEARNING_PRIVACY_TABLES } from './privacy.js';
 import { LEARNING_TURN_RULES } from './prompt.js';
 import { learningSchemas } from './schemas.js';
 import { learningBuddyRoutes } from './routes.js';
-import { findOrCreateSubject, loadLearningState, readySheet, subjectNames } from './state.js';
+import {
+  findOrCreateSubject,
+  loadLearningState,
+  readySheet,
+  sheetPractice,
+  subjectNames,
+} from './state.js';
 import { homeworkLeak, roleplayMode } from './turn.js';
 
 /**
@@ -59,7 +65,7 @@ const LEARNING: ContextProvider = {
     load: loadLearningState,
     level: levelOf,
     noAliases: () => ({ subjects: new Map(), materials: new Map() }),
-    topicKeyAliases: { f: 'subjects' },
+    topicKeyAliases: { f: 'subjects', sh: 'materials' },
     sections: LEARNING_SECTIONS,
     render: renderLearning,
     turnRules: LEARNING_TURN_RULES,
@@ -75,6 +81,7 @@ const LEARNING: ContextProvider = {
   },
   lookBack: findLearningLookBack,
   readySheet,
+  sheetPractice,
   undo: { applies: renameBackApplies, run: renameBack },
 };
 
