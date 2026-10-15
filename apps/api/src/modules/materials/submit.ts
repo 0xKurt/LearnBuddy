@@ -89,7 +89,7 @@ export async function submitMaterial(
 /**
  * Her message for the sheet (issue #632): in the conversation at the moment it went off, with
  * the photos — so "Buddy liest" and "Blatt bereit" follow it in time. No text and no image: the
- * row only points at the material (migration 0105, docs/privacy.md). One per sheet, also when
+ * row only points at the material (migration 0106, docs/privacy.md). One per sheet, also when
  * the submit is repeated.
  */
 async function postSheetMessage(

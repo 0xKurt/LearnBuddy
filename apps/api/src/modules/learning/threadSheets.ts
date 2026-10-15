@@ -1,7 +1,7 @@
 // What the conversation says about her sheets (issue #632): her message for a sheet she sent, with
 // where its reading stands now, and the start of the practice Buddy's background message
 // announces. Both are read from the rows that decide them every time the thread is read — the
-// message itself stores nothing but the material it points at (migration 0105), so it can never
+// message itself stores nothing but the material it points at (migration 0106), so it can never
 // say more than the material does (CLAUDE.md rule 5).
 
 import type { AnnouncedPractice, SheetMessage } from '@learnbuddy/shared-types/contracts';

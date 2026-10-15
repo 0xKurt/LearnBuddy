@@ -1581,7 +1581,7 @@ open (#169).**
 
 ## Material
 
-**Her sheet is her message in the conversation** (issue #632, migration `0105_sheet_message.sql`).
+**Her sheet is her message in the conversation** (issue #632, migration `0106_sheet_message.sql`).
 Before, a sheet sent through the chat bar was a `materials` row only: the thumbnails above the field
 vanished, nothing of hers stood in the thread, and while it was read 10–20 s showed nothing
 (behind a prepared practice the reading bar did not show either). Now the app draws it as her
