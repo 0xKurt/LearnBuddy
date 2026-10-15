@@ -9,6 +9,7 @@
 // leaves room in the width anyway. The same soft pill with the speaker as every "Anhören".
 
 import type { Figure } from '@learnbuddy/shared-types/contracts';
+import { memo } from 'react';
 import { View } from 'react-native';
 
 import { SPACE, TOUCH } from '../../lib/theme/space.js';
@@ -23,7 +24,15 @@ type Props = {
   folded?: boolean;
 };
 
-export function QuestionFigure({ figure, maxHeight, folded = false }: Props) {
+/**
+ * Drawn again only when the drawing, its room or its fold changes (#713): the card around it
+ * renders with every key she types into a fill-in gap.
+ */
+export const QuestionFigure = memo(function QuestionFigure({
+  figure,
+  maxHeight,
+  folded = false,
+}: Props) {
   // A program retains its text renderer and horizontal scrolling (issue #262). During
   // keyboard density it uses the same collapsed affordance and viewer as other figures.
   if (figure.type === 'code') {
@@ -48,4 +57,4 @@ export function QuestionFigure({ figure, maxHeight, folded = false }: Props) {
       </View>
     </View>
   );
-}
+});

@@ -25,6 +25,7 @@ import { givesHints } from './modeRules.js';
 import { articleMissing, NEAR_MISS_REPLY } from './nearMiss.js';
 import type { RubricClaim } from './rubric.js';
 import { solutionsOf } from './service.js';
+import { passageFor } from './sourcePassage.js';
 import { secretsOf } from './structured.js';
 import {
   RubricDecision,
@@ -48,7 +49,12 @@ export const TUTOR_SCHEMA = toJsonSchema(TutorDecision);
  */
 // Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
 export const RUBRIC_SCHEMA = toJsonSchema(RubricDecision);
-const MATERIAL_CHARS = 4000;
+/**
+ * The turns of this question the tutor reads back (#674): the latest ones. Hints given, prepared
+ * steps shown and attempts stand in its context as numbers code keeps (`tutorContext`), so an
+ * older turn adds nothing it needs — but fifty of them made every later answer slower and dearer.
+ */
+export const TUTOR_TURNS = 8;
 
 /** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */
 export const TUTOR_PROMPT_VERSION = promptVersion(
@@ -307,8 +313,11 @@ async function tutorMessages(
     [learner.id, now],
   );
   const history = await deps.db.query<{ role: 'learner' | 'tutor'; text: string }>(
-    `select role, text from practice_turns where session_id = $1 and item_id = $2 order by seq`,
-    [sessionId, item.id],
+    `select role, text from (
+       select role, text, seq from practice_turns where session_id = $1 and item_id = $2
+        order by seq desc limit $3) latest
+      order by seq`,
+    [sessionId, item.id, TUTOR_TURNS],
   );
   const tz = await learnerTimezone(deps.db, learner.id);
   const contents: LlmMessage[] = [
@@ -338,10 +347,11 @@ async function tutorMessages(
             // For a listening question the material IS the text she heard (issue #210):
             // without it the tutor would judge an answer about a text it cannot read. For a
             // part of a task it is the situation above it (#297): an open part („Begründe …")
-            // is judged on it, and its question alone does not say what it is about.
+            // is judged on it, and its question alone does not say what it is about. Of a
+            // sheet, the stretch where this question stands, not its beginning (#674).
             material: listenTask
               ? listenTask.text
-              : (taskPart?.stem ?? item.extracted_text?.slice(0, MATERIAL_CHARS) ?? null),
+              : (taskPart?.stem ?? passageFor(item.extracted_text, item.prompt)),
             preferences: preferences.map((p) => p.statement),
             // What her Bundesland expects at this question's curriculum place — or, when
             // no state rule applies, that none does and the judgement stays cautious
