@@ -37,10 +37,10 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
       '47757f85aa8db4c1910c1c4bbe71db8dc6eaa7ec6e7514dbd8822616796b4708',
     ]);
     expect(sha(p.turnSchema)).toBe(
-      'bbced6c850165ae5bd78c9cfdb548a08508ceeafd745abd89c50dd1426e77f76',
+      '08d5860d3d31dcc6db2800865479e74822c602674562f2ca1b2360d10cf5571f',
     );
     expect(sha(p.turnStepSchema)).toBe(
-      'f4ae80c6222f2f572b8d8b6b0f7d7e76c650bf21c11cfc123656aa9292ebfb38',
+      'c60bfa8d2a6442a0b504bd241ce19f07d2984ae80f8184bfa8c281eda97ba226',
     );
     expect(sha(p.checkSchema)).toBe(
       '137db5f43ac591de092f6fb2e579514c21adcdc27e50a61dcad7656a45dddffb',
@@ -48,7 +48,7 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
     expect(sha(p.checkStepSchema)).toBe(
       '71c169c4b9fa524d188a62c899668186d34d04795f06bf79992b875c565a7888',
     );
-    expect(p.version).toBe('buddy.202e79b3');
+    expect(p.version).toBe('buddy.b3ba6067');
   });
 
   it('is built once: every call hands out the same prompt', () => {

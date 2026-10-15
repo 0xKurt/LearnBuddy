@@ -10,80 +10,113 @@ import type { SettingsRow } from './state.js';
 import { normalizeForMatch } from './text.js';
 import { MAX_ACTIVE_MEMORIES, type UndoSpec } from './toolKit.js';
 
+/** The one row whose presence says an undo still applies: a statement and its parameters. */
+type Probe = { sql: string; params: unknown[] };
+
 /**
- * Whether `runUndo` would apply right now: the same conditions, read-only. The home offers
- * "undo" only then (a photo request whose photo arrived, or settings changed since, cannot be
- * undone, so the button would only fail).
+ * How to tell whether an undo still applies: the row the core's simple kinds need to find, or
+ * the check in code for the kinds a row cannot say (un-forgetting counts what she knows; the
+ * domain's own kinds). One place for each condition: `undoAppliesAll` asks every probe of a
+ * page in one statement.
  */
-export async function undoApplies(db: Db, learnerId: string, undo: UndoSpec): Promise<boolean> {
-  const exists = async (sql: string, params: unknown[]) =>
-    (await db.maybeOne(sql, params)) !== null;
+function undoCheck(db: Db, learnerId: string, undo: UndoSpec): Probe | (() => Promise<boolean>) {
   switch (undo.type) {
     case 'retract_memory':
-      return exists(
-        `select 1 from buddy_memories where id = $1 and learner_id = $2 and status = 'active'`,
-        [undo.memory_id, learnerId],
-      );
+      return {
+        sql: `select 1 from buddy_memories where id = $1 and learner_id = $2 and status = 'active'`,
+        params: [undo.memory_id, learnerId],
+      };
     case 'restore_memory':
-      return exists(
-        `select 1 from buddy_memories where id = $1 and learner_id = $2 and status = 'active'`,
-        [undo.new_id, learnerId],
-      );
+      return {
+        sql: `select 1 from buddy_memories where id = $1 and learner_id = $2 and status = 'active'`,
+        params: [undo.new_id, learnerId],
+      };
+    case 'restore_level':
+      return {
+        sql: `select 1 from learners where id = $1 and level = $2 and grade is not distinct from $3`,
+        params: [learnerId, undo.expect_level, undo.expect_grade],
+      };
+    case 'drop_goal':
+      return {
+        sql: `select 1 from buddy_goals where id = $1 and learner_id = $2 and status = 'active'`,
+        params: [undo.goal_id, learnerId],
+      };
+    case 'restore_goal':
+      return {
+        sql: `select 1 from buddy_goals where id = $1 and learner_id = $2 and version = $3`,
+        params: [undo.goal_id, learnerId, undo.expect_version],
+      };
+    case 'cancel_step':
+      return {
+        sql: `select 1 from buddy_steps where id = $1 and learner_id = $2 and state in ('planned','prepared')`,
+        params: [undo.step_id, learnerId],
+      };
+    case 'restore_step':
+      return {
+        sql: `select 1 from buddy_steps where id = $1 and learner_id = $2 and version = $3
+            and state in ('planned','prepared','skipped','cancelled','done')`,
+        params: [undo.step_id, learnerId, undo.expect_version],
+      };
+    case 'restore_settings':
+    case 'restore_voice':
+      return {
+        sql: `select 1 from buddy_settings where learner_id = $1 and version = $2`,
+        params: [learnerId, undo.expect_version],
+      };
+    case 'cancel_check':
+      return {
+        sql: `select 1 from jobs where id = $1 and learner_id = $2 and status = 'queued'`,
+        params: [undo.job_id, learnerId],
+      };
     case 'unretract_memory':
-      return (await unretractPlan(db, learnerId, undo.memory_id)) !== 'no';
-    case 'unretract_memories': {
+      return async () => (await unretractPlan(db, learnerId, undo.memory_id)) !== 'no';
+    case 'unretract_memories':
       // Offered while at least one of them can still come back; the ones whose undo window
       // has passed are gone for good and are not counted against it.
-      const plans = await Promise.all(
-        undo.memory_ids.map((id) => unretractPlan(db, learnerId, id)),
-      );
-      return plans.some((p) => p !== 'no');
-    }
-    case 'restore_level':
-      return exists(
-        `select 1 from learners where id = $1 and level = $2 and grade is not distinct from $3`,
-        [learnerId, undo.expect_level, undo.expect_grade],
-      );
-    case 'drop_goal':
-      return exists(
-        `select 1 from buddy_goals where id = $1 and learner_id = $2 and status = 'active'`,
-        [undo.goal_id, learnerId],
-      );
-    case 'restore_goal':
-      return exists(
-        `select 1 from buddy_goals where id = $1 and learner_id = $2 and version = $3`,
-        [undo.goal_id, learnerId, undo.expect_version],
-      );
-    case 'cancel_step':
-      return exists(
-        `select 1 from buddy_steps where id = $1 and learner_id = $2 and state in ('planned','prepared')`,
-        [undo.step_id, learnerId],
-      );
-    case 'restore_step':
-      return exists(
-        `select 1 from buddy_steps where id = $1 and learner_id = $2 and version = $3
-            and state in ('planned','prepared','skipped','cancelled','done')`,
-        [undo.step_id, learnerId, undo.expect_version],
-      );
-    case 'restore_settings':
-      return exists(`select 1 from buddy_settings where learner_id = $1 and version = $2`, [
-        learnerId,
-        undo.expect_version,
-      ]);
-    case 'restore_voice':
-      return exists(`select 1 from buddy_settings where learner_id = $1 and version = $2`, [
-        learnerId,
-        undo.expect_version,
-      ]);
-    case 'cancel_check':
-      return exists(`select 1 from jobs where id = $1 and learner_id = $2 and status = 'queued'`, [
-        undo.job_id,
-        learnerId,
-      ]);
+      return async () =>
+        (await Promise.all(undo.memory_ids.map((id) => unretractPlan(db, learnerId, id)))).some(
+          (p) => p !== 'no',
+        );
     default:
       // The domain's own kinds (provider.ts).
-      return contextProvider().undo.applies(db, learnerId, undo);
+      return () => contextProvider().undo.applies(db, learnerId, undo);
   }
+}
+
+/**
+ * Whether `runUndo` would apply right now, for every undo of a page of the thread: the same
+ * conditions, read-only. The home offers "undo" only then (a photo request whose photo arrived,
+ * or settings changed since, cannot be undone, so the button would only fail). The simple kinds
+ * are asked in ONE statement, each condition an `exists` of its own, instead of a round trip per
+ * action (#712) — the home reads them inside its snapshot, one statement after another.
+ */
+export async function undoAppliesAll(
+  db: Db,
+  learnerId: string,
+  undos: readonly UndoSpec[],
+): Promise<boolean[]> {
+  const checks = undos.map((undo) => undoCheck(db, learnerId, undo));
+  const asked: string[] = [];
+  const params: unknown[] = [];
+  for (const probe of checks) {
+    if (typeof probe === 'function') continue;
+    const offset = params.length;
+    asked.push(
+      `exists(${probe.sql.replace(/\$(\d+)/g, (_, n: string) => `$${Number(n) + offset}`)})`,
+    );
+    params.push(...probe.params);
+  }
+  const found =
+    asked.length > 0
+      ? await db.one<{ found: boolean[] }>(`select array[${asked.join(', ')}] as found`, params)
+      : { found: [] };
+  let next = 0;
+  const out: boolean[] = [];
+  for (const check of checks) {
+    if (typeof check === 'function') out.push(await check());
+    else out.push(found.found[next++] === true);
+  }
+  return out;
 }
 
 /**

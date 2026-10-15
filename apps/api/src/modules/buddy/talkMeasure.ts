@@ -112,6 +112,19 @@ export function compareReading(text: string, transcript: string): ReadingCompari
 }
 
 /**
+ * A sheet's read text as the words printed on it (#726): a word hyphenated at a line end is one
+ * word again („Mar-\nkt“ → „Markt“, only when the line goes on in lower case — a capital after
+ * the break is a compound that keeps its hyphen), soft hyphens go, and ligatures and other
+ * compatibility forms the reading left („ﬁ“) become their letters.
+ */
+export function sheetWords(text: string): string {
+  return text
+    .normalize('NFKC')
+    .replace(/\u00AD/g, '')
+    .replace(/(\p{L})[-\u2010\u2011][ \t]*\r?\n[ \t]*(\p{Ll})/gu, '$1$2');
+}
+
+/**
  * Does the quote stand in the transcript (case, punctuation and fillers aside)? Also whether a
  * passage "from her sheet" stands on the sheet word for word (#636).
  */

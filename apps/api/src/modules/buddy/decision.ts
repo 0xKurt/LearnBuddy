@@ -762,10 +762,11 @@ const offerRehearsal = z.object({
       .describe(
         `read_aloud: the text as she reads it (${READ_ALOUD_WORDS.min}–${READ_ALOUD_WORDS.max} words, no headings or lists); null for a talk`,
       ),
-    // Asked for the text on her sheet, he once wrote a different one (#636): code checks it.
-    sheet: MaterialRef.nullable()
-      .optional()
-      .describe('read_aloud from her sheet: its alias, text word for word from it; else null'),
+    // Asked for the text on her sheet, he once wrote a different one (#636): code checks it. The
+    // turn has to decide it every time (#726): an optional field let a sheet's text pass unchecked.
+    sheet: MaterialRef.nullable().describe(
+      'read_aloud from her sheet: its alias, text word for word from it; else null',
+    ),
   }),
 });
 

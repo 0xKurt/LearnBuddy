@@ -116,7 +116,7 @@ describe('a button is spoken early only if the answer will pass its checks (#666
     expect(replyProgress(forGoal, new Set(['g1', 'sh1']))?.speakable).toBe(false);
     expect(replyProgress(forGoal, new Set(['g1', 'g2']))?.speakable).toBe(true);
     const rehearsal = answer([
-      { tool: 'offer_rehearsal', args: { kind: 'talk', goal: 'g7', text: null } },
+      { tool: 'offer_rehearsal', args: { kind: 'talk', goal: 'g7', text: null, sheet: null } },
     ]);
     expect(replyProgress(rehearsal, NONE)?.speakable).toBe(false);
   });

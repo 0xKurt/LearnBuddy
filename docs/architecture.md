@@ -836,7 +836,8 @@ days (rule 6).
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
-  or push is disabled; a message due now while she is in the app (used it in the last 3 min) is
+  or push is disabled; a message due now while she is in the app (up to 3 min after her last request, and up to 1 min
+  more, because her presence is written at most once a minute — `inApp.ts`, #671) is
   `in_app` from the start and in the thread in the same transaction as the change it is about
   (the card of the practice it prepared), not a delivery run later (`planOutreach`). Only the app can record `opened`. The text is always also in the thread.
 - `DeviceNotRegistered` (ticket or receipt) deactivates the token.
@@ -5883,7 +5884,7 @@ own (CLAUDE.md rule 16).
   and once rehearsed what was measured; the home's list shows the day as `UpcomingItem.kind 'talk'`.
 - **The card that records** (tool `offer_rehearsal`, `components/buddy/RehearseCard.tsx`): kind
   `talk` (up to 10 min, for a planned talk or none) or `read_aloud` (up to 2 min, the passage itself
-  in the offer, 15–220 words, checked by code; a passage given as from one of her sheets (`sheet: sh1`) must stand on that sheet word for word, or the action is refused, #636). The card shows the talk's title or the whole
+  in the offer, 15–220 words, checked by code; a passage given as from one of her sheets (`sheet: sh1`) must stand on that sheet word for word, or the action is refused, #636; the sheet's text is compared as printed words — a line-end hyphen joined when the line goes on in lower case, soft hyphens and ligatures undone (`sheetWords`, #726) — and the turn must always say `sheet`, null only for a text Buddy writes or a talk, with no repair hint offering null as a way around the check, #726). The card shows the talk's title or the whole
   passage, the length she was given, one button that starts and ends the recording; while it
   runs the card shows the running time large and the given length beside "ich höre zu" (design
   `Modes.jsx:40–50`; the chat's head listens while the recorder runs (`lib/buddy/headState.ts`

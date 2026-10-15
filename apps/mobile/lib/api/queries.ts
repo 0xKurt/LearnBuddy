@@ -139,6 +139,19 @@ export function setHome(home: BuddyHome): void {
 }
 
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: getSettings });
+
+/**
+ * What a place of the ⋯ menu shows, loaded while she looks at the menu (#711): the first open of
+ * the settings waited ~3.8 s for its request after the tap on the POCO X3. What is still fresh is
+ * not asked again. A domain adds its own places (the learning domain: her library).
+ */
+export const menuPreloads = registry<string, () => void>('Menü vorladen');
+
+export function preloadPlaces(): void {
+  void queryClient.prefetchQuery({ queryKey: keys.settings, queryFn: getSettings });
+  void queryClient.prefetchQuery({ queryKey: keys.me, queryFn: getMe, staleTime: ME_FRESH_MS });
+  for (const preload of menuPreloads.values()) preload();
+}
 export const useMemory = () => useQuery({ queryKey: keys.memory, queryFn: getMemory });
 /**
  * One practice run. It is normally not polled at all — every change comes back in the answer to

@@ -186,7 +186,7 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
     );
     const rehearsal = await offer(
       l,
-      { kind: 'talk', goal: 'g1', text: null },
+      { kind: 'talk', goal: 'g1', text: null, sheet: null },
       'Kann ich mein Referat einmal üben?',
     );
     expect(rehearsal.summary).toMatchObject({ kind: 'talk', title: 'Vulkane', minutes: 5 });
@@ -257,7 +257,7 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
     const l = await onboard(env, { relation: 'child', name: 'Cem', birthDate: '2016-03-01' });
     const reading = await offer(
       l,
-      { kind: 'read_aloud', goal: null, text: READ_PASSAGE },
+      { kind: 'read_aloud', goal: null, text: READ_PASSAGE, sheet: null },
       'Ich möchte vorlesen üben.',
     );
     expect(reading.summary).toMatchObject({ kind: 'read_aloud', text: READ_PASSAGE });
@@ -317,11 +317,77 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
     expect(JSON.stringify(repair?.contents)).toMatch(/is not on sheet sh1/);
   });
 
+  // #726: the print's line breaks are no reason to refuse her sheet's passage.
+  it('takes a sheet passage the model wrote without the line-end hyphen', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Ella', birthDate: '2013-03-01' });
+    await env.db.query(
+      `insert into materials (learner_id, client_request_id, status, photo_count, title,
+                              extracted_text, ready_at, created_at)
+       values ($1, gen_random_uuid(), 'ready', 1, 'Reading', $2, $3, $3)`,
+      [
+        l.learnerId,
+        'On Saturday morning we took the bus to the mar-\nket. My sister bought apples and I looked at the old books.',
+        env.clock.now(),
+      ],
+    );
+    const passage =
+      'On Saturday morning we took the bus to the market. My sister bought apples and I looked at the old books.';
+    env.llm.script('buddy_turn', {
+      json: turn({
+        actions: [
+          {
+            tool: 'offer_rehearsal',
+            args: { kind: 'read_aloud', goal: null, text: passage, sheet: 'sh1' },
+          },
+        ],
+      }),
+    });
+    const home = await say(l, 'Können wir den Text auf meinem Blatt vorlesen üben?');
+    expect(card(home, 'offer_rehearsal').summary).toMatchObject({
+      kind: 'read_aloud',
+      text: passage,
+    });
+    expect(env.llm.callsFor('buddy_turn')).toHaveLength(1);
+  });
+
+  it('makes the turn say whether a text to read aloud is from her sheet', async () => {
+    // #726: an optional `sheet` let a sheet's text pass without the word-for-word check.
+    const l = await onboard(env, { relation: 'child', name: 'Fritzi', birthDate: '2013-03-01' });
+    env.llm.script(
+      'buddy_turn',
+      {
+        json: turn({
+          actions: [
+            {
+              tool: 'offer_rehearsal',
+              args: { kind: 'read_aloud', goal: null, text: READ_PASSAGE },
+            },
+          ],
+        }),
+      },
+      {
+        json: turn({
+          actions: [
+            {
+              tool: 'offer_rehearsal',
+              args: { kind: 'read_aloud', goal: null, text: READ_PASSAGE, sheet: null },
+            },
+          ],
+        }),
+      },
+    );
+    const home = await say(l, 'Ich möchte vorlesen üben.');
+    expect(card(home, 'offer_rehearsal').summary).toMatchObject({ kind: 'read_aloud' });
+    const repair = env.llm.callsFor('buddy_turn').at(-1);
+    expect(env.llm.callsFor('buddy_turn')).toHaveLength(2);
+    expect(JSON.stringify(repair?.contents)).toMatch(/sheet/);
+  });
+
   it('counts the same recording once, keeps other learners out, and stores nothing when it fails', async () => {
     const l = await onboard(env, { relation: 'child', name: 'Dora', birthDate: '2016-03-01' });
     const reading = await offer(
       l,
-      { kind: 'read_aloud', goal: null, text: READ_PASSAGE },
+      { kind: 'read_aloud', goal: null, text: READ_PASSAGE, sheet: null },
       'Ich möchte vorlesen üben.',
     );
     const count = async () =>
