@@ -115,6 +115,30 @@ export function sourceList(source, name, only) {
   return out;
 }
 
+/**
+ * A table of numbers as `entry.field → number`: every numeric field of every entry, so a raised
+ * number is growth like a larger count (the prompt budgets, #651/#753). A field that is not a
+ * plain number is an error — a budget written as an expression would blind the guard.
+ * @param {string} source
+ * @param {string} name
+ * @returns {Record<string, number>}
+ */
+export function numberList(source, name) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const { key, value } of objectLiteral(source, name)) {
+    if (value.type !== 'ObjectExpression') throw new Error(`${name}.${key}: kein Objekt-Literal`);
+    for (const p of /** @type {Node[]} */ (value.properties)) {
+      const field = p.type === 'Property' ? keyName(/** @type {Node} */ (p.key)) : null;
+      const v = /** @type {Node} */ (p.value);
+      if (field === null || v?.type !== 'Literal' || typeof v.value !== 'number')
+        throw new Error(`${name}.${key}: nur Zahlen als Werte (keine Ausdrücke)`);
+      out[`${key}.${field}`] = v.value;
+    }
+  }
+  return out;
+}
+
 /** A route whose reason is thin today (minimalism.test.ts): a WEAK entry is debt, not a reason. */
 export const isWeak = (/** @type {string} */ reason) => reason.trimStart().startsWith('WEAK');
 
@@ -143,6 +167,9 @@ export const SOURCE_LISTS = {
   'apps/mobile/lib/__tests__/headerShell.test.ts#BARE_SHELL': (s) => sourceList(s, 'BARE_SHELL'),
   'apps/mobile/lib/__tests__/headerShell.test.ts#ORB_HOLDERS': (s) => sourceList(s, 'ORB_HOLDERS'),
   'apps/mobile/lib/__tests__/headerShell.test.ts#NO_MENU': (s) => sourceList(s, 'NO_MENU'),
+  // What each model purpose may send as system prompt and schema, in characters (#651, #753):
+  // a raised budget is growth and needs its reason.
+  'apps/api/evals/schema/budgets.ts#PROMPT_BUDGETS': (s) => numberList(s, 'PROMPT_BUDGETS'),
 };
 
 /** "a/b.ts#NAME(…)" → "a/b.ts" */

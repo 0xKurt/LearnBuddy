@@ -37,7 +37,7 @@ import { allowed, problems } from './licences.mjs';
 import { growth, LISTS, TRAILER } from './no-growth.mjs';
 import { prBodyProblems } from './pr-body.mjs';
 import { scratchRepo } from './scratch-repo.mjs';
-import { fileOf, isWeak, SOURCE_LISTS, sourceList } from './source-lists.mjs';
+import { fileOf, isWeak, numberList, SOURCE_LISTS, sourceList } from './source-lists.mjs';
 import { REPO_ROOT, UI_DIRS, sourceFiles } from './measure.mjs';
 
 const exists = (/** @type {string} */ f) => existsSync(join(REPO_ROOT, f));
@@ -631,6 +631,31 @@ describe('source lists: the Ausnahmelisten a source test keeps are compared with
     assert.deepEqual(before, { 'a.tsx': 1 });
     assert.deepEqual(growth(before, after), ['neu: b.tsx (1)']);
     assert.throws(() => sourceList('const HOLDERS = [...more];', 'HOLDERS'), /Zeichenketten/);
+  });
+
+  it('reads a table of budgets as numbers, and a raised one is growth (#753)', () => {
+    const before = numberList(
+      'export const B: Partial<Record<string, X>> = { turn: { systemChars: 33_000, schemaChars: 43_500 } };',
+      'B',
+    );
+    assert.deepEqual(before, { 'turn.systemChars': 33000, 'turn.schemaChars': 43500 });
+    const raised = numberList(
+      'const B = { turn: { systemChars: 33_000, schemaChars: 44_000 }, tutor: { systemChars: 1 } };',
+      'B',
+    );
+    assert.deepEqual(growth(before, raised), [
+      'größer: turn.schemaChars (43500 → 44000)',
+      'neu: tutor.systemChars (1)',
+    ]);
+    const lowered = numberList(
+      'const B = { turn: { systemChars: 30_000, schemaChars: 25_000 } };',
+      'B',
+    );
+    assert.deepEqual(growth(before, lowered), []);
+    assert.throws(
+      () => numberList('const B = { turn: { systemChars: 2 * N } };', 'B'),
+      /nur Zahlen/,
+    );
   });
 
   it('turns a new entry or a larger count into growth', () => {

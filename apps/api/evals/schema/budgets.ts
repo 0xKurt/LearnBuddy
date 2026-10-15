@@ -7,9 +7,11 @@
 // Characters, not tokens: they are exact and need no model, so the guard runs on every commit.
 // The inventory adds the provider's own token count when Vertex is configured (`inventory.ts`).
 //
-// The budgets are today's sizes (2026-10-15, commit before #651), rounded up to the next 500, so a
-// growing prompt or schema has to raise its number here, in the same change, with the reason in
-// the commit. A prompt that shrank may lower its number to hold the saving.
+// The budgets are today's sizes (2026-10-15, commit before #651), rounded up to the next 500. They
+// only shrink, like every Ausnahmeliste (#753): `tools/guards/no-growth.mjs` compares every number
+// with main (`source-lists.mjs` `PROMPT_BUDGETS`), and a raised one is red unless a commit says
+// `Ausnahmeliste-Zuwachs: #<issue> <reason>`. A prompt that shrank lowers its number to hold the
+// saving.
 //
 // Target, not yet held: Buddy's turn schema at 25 000 characters (KI-Audit F3). Today it is 43 216.
 // requires live verification in Claude Code session (the budgets are offline; tokens need Vertex)
