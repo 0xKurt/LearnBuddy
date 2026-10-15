@@ -1033,7 +1033,14 @@ main call, plus `CHOOSER`) answers two closed lists taken from the schema itself
 figure types it needs, the most needed first. Code then builds the main schema (`pruned`: the other
 branches of every figure and form union go, and so do the other blocks). It adds what was chosen in
 the model's order, only while the schema stays within the budget (`fitted`). It also takes from the
-answer whatever lies outside the choice (`keepChosen`). A question or task whose figure or option
+answer whatever lies outside the choice (`keepChosen`). **Where the choice is known, no choosing
+call** (F5, #657, `chooseForms`' `known`): "more of this" (`from_session_id`) and a run for a test
+from her read sheets go out with the forms and figures their source questions use, read off the
+rows by `formSources.ts` (structured kinds, the block columns, `figure` and `choice_figures`) —
+only when every source question can be read so, else the model chooses as before. A sheet keeps
+the choice its reading made (`materials.form_choice`, migration 0109, `formMemory.ts`), keyed on
+the reading's prompt version and `FORMS_OFF`; a clarification or a reading run again uses it
+instead of choosing again from the same photos. A question or task whose figure or option
 pictures were not chosen goes, because it was written to be read off a drawing she would not see.
 A block or a structured form that was not chosen goes too. The main call's system prompt teaches
 every form, so a narrowed call also gets one more line, a rule with no example in it
