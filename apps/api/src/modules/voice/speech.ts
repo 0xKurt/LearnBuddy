@@ -87,12 +87,38 @@ export async function synthesizeSpeech(
           where learner_id = $1 and key = $2 and expires_at > $3`,
         [who.learnerId, key, now],
       );
-  if (cached) return answer(cached.mime, cached.audio);
+  // Every sentence asked for is counted, numbers only (#682, `speech_calls`): cache answers too.
+  const count = (row: {
+    outcome: 'ok' | 'cached' | 'shared' | 'error';
+    latencyMs?: number;
+    errorKind?: string;
+  }) =>
+    deps.db.query(
+      `insert into speech_calls (learner_id, outcome, characters, latency_ms, cost_micros, error_kind,
+                                 created_at)
+       values ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        who.learnerId,
+        row.outcome,
+        text.length,
+        row.latencyMs ?? 0,
+        row.outcome === 'ok' ? text.length * deps.speech.microsPerCharacter : 0,
+        row.errorKind ?? null,
+        now,
+      ],
+    );
+  if (cached) {
+    await count({ outcome: shared ? 'shared' : 'cached' });
+    return answer(cached.mime, cached.audio);
+  }
 
   const budget = await consume(deps.db, 'speech', who.accountId, now);
   if (!budget.allowed) throw limitError(budget);
 
   let audio;
+  // How long the provider took: a measure of this call, never a decision (rule 7).
+  const started = performance.now();
+  const took = () => Math.round(performance.now() - started);
   try {
     audio = await deps.speech.synthesize({
       text,
@@ -103,6 +129,7 @@ export async function synthesizeSpeech(
     });
   } catch (err) {
     if (err instanceof SpeechError) {
+      await count({ outcome: 'error', latencyMs: took(), errorKind: err.kind });
       // Logs carry the kind only, never the text.
       console.warn('[voice] speech provider failed', { kind: err.kind });
       throw new AppError('unavailable', 'Buddy’s own voice is not available right now', {
@@ -111,6 +138,7 @@ export async function synthesizeSpeech(
     }
     throw err;
   }
+  await count({ outcome: 'ok', latencyMs: took() });
   if (shared) {
     await deps.db.query(
       `insert into speech_cache_shared (key, mime, audio, created_at, expires_at)

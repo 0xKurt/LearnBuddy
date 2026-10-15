@@ -5591,7 +5591,10 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`readsIn`, `speech/gateway.ts` — the same test a listening text and a Diktat use). Without it
   the setup leaves the voice step out and the settings leave the group out; nothing is guessed
   from a sample that happened to sound like the phone. Audio is
-  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). The app
+  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). Every sentence
+  asked for is counted in `speech_calls` (#682): outcome (made, her cache, the shared sample cache,
+  error), characters, latency and the gateway's list-price cost (`microsPerCharacter`), never the
+  text; TTS characters per day are one query on it. The app
   (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
   sentence with the phone's voice (`expo-speech`) when the server says no (off, budget, language,
   error) or is unreachable — never silence. `useBuddyVoice()` (`lib/speech/voiceState.ts`)

@@ -100,6 +100,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0107_llm_call_trace',
   '0108_learned_answers',
   '0109_material_form_choice',
+  '0109_speech_calls',
   '0111_rehearsal_partial',
 ];
 

@@ -47,6 +47,11 @@ export class SpeechError extends Error {
 export interface SpeechGateway {
   readonly available: boolean;
   /**
+   * The provider's list price per character read, in micro-USD (#682): each sentence's cost is
+   * recorded in `speech_calls`, from the gateway's own figure like a model's price table.
+   */
+  readonly microsPerCharacter: number;
+  /**
    * The provider voice a request runs on, for the cache key: a change of the mapping never
    * serves audio of the old voice.
    */
@@ -70,6 +75,7 @@ export function readsIn(
 
 export class DisabledSpeech implements SpeechGateway {
   readonly available = false;
+  readonly microsPerCharacter = 0;
   voiceId(): string {
     return 'disabled';
   }
