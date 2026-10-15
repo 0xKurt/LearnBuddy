@@ -22,6 +22,12 @@ it. Where the answer to "which layer should have caught this" is **none of them*
 
 `pnpm verify` = typecheck · lint · test · walkthrough. The pre-commit hook runs the first three.
 
+**Visible is not seen (#738).** Playwright's `toBeVisible` passes at opacity 0: on #734's old head
+every entrance stayed at 0 and two specs passed while the screen showed nothing new. Where she must
+see something — a new chat line, a card, the head's title, a practice question — a spec asserts
+`expectSeen` (`tests/web/seen.ts`): visible, and the opacity down every ancestor above zero once
+the entrance has settled. `tests/web/seen.spec.ts` proves it fails where `toBeVisible` passes.
+
 ### What is deliberately outside all of it
 
 The live model's judgement (that is what `evals/` is for, and it costs money), real push delivery,

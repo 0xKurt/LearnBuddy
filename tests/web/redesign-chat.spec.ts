@@ -5,6 +5,7 @@ import { TOUCH } from '../../apps/mobile/lib/theme/space';
 import { expect, test, type Response } from '@playwright/test';
 import { freshEmail, planTest, sendWorksheet, signUpMia } from './coreLoop';
 import { SCREEN_LOOKS, screenLook, screenShots } from './redesign-screen-matrix';
+import { expectSeen } from './seen';
 async function messageResult(response: Response) {
   const stream = await response.text();
   const done = stream.split(/\r?\n\r?\n/).find((event) => event.startsWith('event: done'));
@@ -34,7 +35,7 @@ for (const look of SCREEN_LOOKS)
       .filter((action) => action.undoable && action.status !== 'undone');
     expect(actions).toHaveLength(1);
     const actionId = actions[0]!.id;
-    await expect(page.getByText('Cool – Handball merke ich mir.')).toBeVisible();
+    await expectSeen(page.getByText('Cool – Handball merke ich mir.'));
     const trigger = page.getByRole('button', { name: 'Zurücknehmen', exact: true });
     await expect(trigger).toHaveCount(1);
     await trigger.focus();
