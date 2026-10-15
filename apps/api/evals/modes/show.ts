@@ -20,8 +20,10 @@ const config = loadConfig({
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
 const real = new VertexGateway(config);
-const gateway = {
+// The real gateway's profile (#646): without it a run's schema cannot be sized (#647).
+const gateway: LlmGateway = {
   available: true,
+  profile: real.profile,
   generate: async (req: LlmRequest) => {
     try {
       const r = await real.generate(req);
@@ -34,7 +36,7 @@ const gateway = {
       throw e;
     }
   },
-} as LlmGateway;
+};
 const env = await createTestEnv({ start: '2026-09-28T14:00:00Z', gateway });
 const l = await onboard(env, {
   relation: 'child',
