@@ -71,6 +71,7 @@
     "card_knew": "Lo sabía",
     "card_not_yet": "Todavía no",
     "correct": "¡Correcto, muy bien!",
+    "correct_article": "¡Correcto, muy bien! Con su artículo: {{answer}}.",
     "dictation": {
       "prompt_word": "Escucha y escribe la palabra.",
       "prompt_sentence": "Escucha y escribe la frase.",
@@ -103,6 +104,7 @@
     "help_step": "Vamos paso a paso: ¿qué datos te da el ejercicio y qué hay que buscar?",
     "hint_request": "Una pista, por favor",
     "missing_word": "Casi – todavía falta una palabra. Míralo otra vez.",
+    "other_article": "Casi – el sustantivo está bien. Solo el artículo de delante todavía no.",
     "no_single_solution": "Aquí no hay una única respuesta correcta que pueda mostrarte: en un texto así, lo que cuenta es cómo lo argumentas. Dime dónde te atascas y miramos tu texto juntos.",
     "not_lowest": "Bien ajustada. Ahora simplifícala – todos los números de delante se dividen por {{factor}}.",
     "not_quite": "Todavía no del todo. Vuelve a mirar la pregunta – o muestra la solución.",

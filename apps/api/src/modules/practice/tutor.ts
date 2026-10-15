@@ -122,6 +122,9 @@ const RULE_TEXT: Record<RuleVerdict, string> = {
   spelling: 'close: right except capitalisation, ß/ss or punctuation, which matter here',
   close: 'close: right except accents',
   missing_word: 'close: a word is missing (e.g. the article)',
+  no_article: 'the answer is right: the noun, its article left out, which counts (checked)',
+  other_article:
+    'close: the noun is right, the article before it is not (checked) — partially_correct; say the article is not right yet, do not write it',
   typo: 'close: a small spelling slip',
   folded:
     'differs from the solution only in capitalisation, ß/ss or punctuation — judge gently whether that matters for this question',

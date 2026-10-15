@@ -2810,7 +2810,13 @@ preposition and does not, and telling those apart needs the language rather than
 articles per language the app would have to keep (hard rule 3). So the tutor judges it, the
 reply names the missing word, and `enforceTutorInvariants` allows a "correct" there and nowhere
 else among the near misses. The key is not extended in that case: the article stays part of the
-question. See **Grading** below for what "decidable" means. A key that contradicts the arithmetic its OWN question asks for is
+question. A **German** noun key is the exception code can decide (issue #759, `articleAgainst` in
+`practice/evaluate.ts`): German capitalises the noun and nothing before it, so a two-word key of a
+lower-case word and a capitalised one ("die Küche") is article and noun by its own spelling, no
+article list needed. The noun alone (`no_article`) is then right by rule, as #146 decided, without
+a model, and the reply shows the whole word with its article. Another word in the article's place
+(`other_article`, the wrong gender) is partly right: the first reply says the article is not right
+yet, from the second try on the whole word is shown, as for a slip. See **Grading** below for what "decidable" means. A key that contradicts the arithmetic its OWN question asks for is
 dropped before the question is ever asked (`practice/keyCheck.ts`, issue #157): the external
 audit put `8` on `6 + 4` and watched the right answer `10` be rejected by a rule check that
 sounds certain, leaving a child to argue with it. Only what arithmetic makes decidable is
