@@ -836,7 +836,8 @@ days (rule 6).
 - Evidence chain (`buddy_outreach.status`): `scheduled → sending → accepted` (Expo ticket) →
   `provider_accepted | provider_rejected` (receipt, 15 min–24 h). `send_uncertain` (no answer, or
   a crash while sending) is never resent. `in_app` when the learner is in the app, has no device
-  or push is disabled; a message due now while she is in the app (used it in the last 3 min) is
+  or push is disabled; a message due now while she is in the app (up to 3 min after her last request, and up to 1 min
+  more, because her presence is written at most once a minute — `inApp.ts`, #671) is
   `in_app` from the start and in the thread in the same transaction as the change it is about
   (the card of the practice it prepared), not a delivery run later (`planOutreach`). Only the app can record `opened`. The text is always also in the thread.
 - `DeviceNotRegistered` (ticket or receipt) deactivates the token.
@@ -1225,8 +1226,14 @@ each of those calls is a separate, stateless task that needs its input. Decided 
 - **The sheet's text in `explain` and every `tutor` call — kept.** Once per request (≤ 6 000
   characters in `explain`, ≤ 4 000 in `tutor`, ≈ 1 530 text tokens at that cap, 2.6 characters
   per token for a fractions sheet); each tutor call is a new request and has no other way to
-  know the sheet it judges against. Narrowing it to "the part of the sheet the question is
-  from" is a grounding change and needs the tutor eval with the live model.
+  know the sheet it judges against. Since KI-Audit F15 (#674) it is the part of the sheet the
+  question stands in (`practice/sourcePassage.ts`: the 4 000 characters around the line where
+  most of the question's own words stand, the beginning when none do), and the tutor reads back
+  only the latest `TUTOR_TURNS` (8) turns of the question; hints, prepared steps and attempts
+  stand in its context as numbers. **A key learnt from the tutor** (#675): an answer it judged
+  right that the rules did not know still enters `accepted_answers`, now with a row in
+  `learned_answers` (the turn, the tutor's prompt version, provisional); disputing the
+  question's judgement takes those answers back out of the key (`retractLearned`).
 - **The day list of `## Now` — kept.** Once per Buddy request (`buddy_turn`, `buddy_check`):
   471 characters, ≈ 353 text tokens. Grouping the dates by month ("2026-10: +0 Fri 02, …")
   carries the same days in 312 characters / ≈ 188 tokens, but it changes what the model reads

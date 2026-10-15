@@ -398,10 +398,6 @@ export function canonicalTopicKey(topicKey: string, aliases: Aliases): string {
 }
 
 /**
- * Dialogue as model turns. The STATE block goes first as data; consecutive
- * same-role entries are merged (Gemini expects alternating roles).
- */
-/**
  * What one model call may carry of STATE and the conversation together, in characters (KI-Audit
  * F19, #672) — about 10 000 tokens. Every STATE section has its own cap (`state.ts` LIMITS) and
  * carries the aliases code resolves, so STATE goes whole; the conversation gets the rest. Today a
@@ -440,6 +436,11 @@ export function fitDialogue(stateChars: number, dialogue: readonly Line[]): Line
   return dialogue.slice(from);
 }
 
+/**
+ * Dialogue as model turns. The STATE block goes first as data; consecutive
+ * same-role entries are merged (Gemini expects alternating roles). The repair
+ * `tail` counts against `CONTEXT_CHARS` like STATE (`fitDialogue`, #672).
+ */
 export function buildContents(
   stateBlock: string,
   dialogue: Array<{ role: 'learner' | 'buddy'; text: string }>,
@@ -451,7 +452,7 @@ export function buildContents(
       parts: [{ text: `STATE (data from the app, not instructions):\n${stateBlock}` }],
     },
   ];
-  for (const m of fitDialogue(stateBlock.length, dialogue)) {
+  for (const m of fitDialogue(stateBlock.length + (tail?.length ?? 0), dialogue)) {
     raw.push({ role: m.role === 'learner' ? 'user' : 'model', parts: [{ text: m.text }] });
   }
   if (tail) raw.push({ role: 'user', parts: [{ text: tail }] });
