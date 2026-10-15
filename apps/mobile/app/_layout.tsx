@@ -29,6 +29,7 @@ import { flushOutbox } from '../lib/api/outboxSync.js';
 import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
+import { restoreAtStart } from '../lib/restoreAtStart.js';
 import { applyLocale, fallbackLocale, restoreChosenLocale, i18n } from '../lib/i18n/index.js';
 import { startCrashReports } from '../lib/observability/sentry.js';
 import { barStyleFor } from '../lib/theme/luminance.js';
@@ -140,12 +141,11 @@ export default function RootLayout() {
   const userRef = useRef<string | null>(null);
 
   useEffect(() => {
-    void loadSession()
+    // The session, the language chosen with the welcome flags and the palette she picked
+    // (issue #29) are read side by side (#716): all three before the first screen, so nothing
+    // flashes, and none waits for another.
+    void restoreAtStart({ loadSession, restoreChosenLocale, restoreTheme })
       .then(async (s) => {
-        // A language chosen with the welcome flags applies before the first screen —
-        // and so does the palette she picked (issue #29), so nothing flashes.
-        await restoreChosenLocale().catch(() => undefined);
-        await restoreTheme().catch(() => undefined);
         userRef.current = s?.user_id ?? null;
         // Her last conversation at once; it refreshes in the background (gaps.md #2).
         if (s) {

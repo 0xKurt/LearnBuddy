@@ -29,8 +29,8 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
   it('is byte for byte what it was before the domain registered its part', () => {
     const p = buddyPrompt();
     expect([p.turnSystem.length, sha(p.turnSystem)]).toEqual([
-      24947,
-      '3b63b0fbe71cc6f9bffdba3a10c8d20eb413aa2f003e976c3f32fcff8a64fe7e',
+      24934,
+      '39c6ccea4c516a21159525263676af2e93d979db56350825530973444adf87f2',
     ]);
     expect([p.checkSystem.length, sha(p.checkSystem)]).toEqual([
       7517,
@@ -48,7 +48,7 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
     expect(sha(p.checkStepSchema)).toBe(
       '71c169c4b9fa524d188a62c899668186d34d04795f06bf79992b875c565a7888',
     );
-    expect(p.version).toBe('buddy.b3ba6067');
+    expect(p.version).toBe('buddy.b8c05aac');
   });
 
   it('is built once: every call hands out the same prompt', () => {
@@ -400,10 +400,10 @@ describe('the STATE block Buddy sends (pinned, issue #107)', () => {
     });
     setStateAudit(null);
     expect([text.length, sha(text)]).toEqual([
-      6959,
-      '182c973015016737517586b33b4af8e634e43767fec7c8a8c4b142daa4668624',
+      6971,
+      '2e39fc1dc169cea9a2555d99025c71c964b9f7acb1e71341af245672b01ddfde',
     ]);
-    expect(sha(samples)).toBe('0f2db35301b8b36cd096ec55e9e2ab807d8379fee040dee6b2928be6dfd39b3b');
+    expect(sha(samples)).toBe('9bc871931cb9c76694fcac893d4ecc7fbf39f3c1d221a89a06c83fc86e631eb7');
     expect(Object.fromEntries(Object.entries(aliases).map(([k, m]) => [k, [...m.keys()]]))).toEqual(
       {
         goals: ['g1', 'g2', 'g3'],
@@ -413,5 +413,24 @@ describe('the STATE block Buddy sends (pinned, issue #107)', () => {
         materials: ['sh1', 'sh2', 'sh3', 'sh4', 'sh5', 'sh6'],
       },
     );
+  });
+
+  it('says how long ago an earlier conversation was, counted by code (#783)', () => {
+    // Asked about "three weeks ago", Buddy had two dates to count back from and put a talk she
+    // gave two weeks ago at three. Weeks from a week on: no count of days to repeat at her.
+    const earlier = {
+      ...state,
+      summaries: [
+        { day: '2026-09-08', summary: 'Referat vorbereitet.', topics: ['Referat'] },
+        { day: '2026-09-15', summary: 'Referat gehalten.', topics: ['Referat'] },
+        { day: '2026-09-25', summary: 'Brüche.', topics: [] },
+        { day: '2026-09-27', summary: 'Vokabeln.', topics: [] },
+      ],
+    };
+    const { state: text } = buildContext(learner, earlier, day('2026-09-28T08:00:00Z'));
+    expect(text).toContain('- 2026-09-08 (about 3 weeks ago) [Referat]: Referat vorbereitet.');
+    expect(text).toContain('- 2026-09-15 (about 2 weeks ago) [Referat]: Referat gehalten.');
+    expect(text).toContain('- 2026-09-25 (3 days ago): Brüche.');
+    expect(text).toContain('- 2026-09-27 (yesterday): Vokabeln.');
   });
 });

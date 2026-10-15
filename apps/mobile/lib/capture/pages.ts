@@ -86,8 +86,8 @@ export type PageHandler = {
   check: {
     /** How wide the small copy the check looks at is. */
     width: number;
-    /** What the small copy (a JPEG) shows; empty = looks fine. */
-    run(smallJpegBase64: string, originalMinSide: number): PhotoProblem[];
+    /** What the small copy (a JPEG) shows; empty = looks fine. Loaded with the first photo. */
+    run(smallJpegBase64: string, originalMinSide: number): Promise<PhotoProblem[]>;
     /** The card for a photo it found hard to read: take it again, or keep it. */
     Review: ComponentType<PhotoReviewProps>;
   };
