@@ -1,22 +1,25 @@
 // Answering one question, step 5 of `answerItem` (answer.ts, #311): the tutor, for what the rules
 // leave open — one model call with structured output (two in homework when the first gives the
 // solution away), its decision held to the rules' invariants, and the fixed answers when the
-// model is unavailable or its safety filter holds the answer back. docs/architecture.md §Practice.
+// model is unavailable or its safety filter holds the answer back. Its concern bit counts on its
+// own; without a usable answer her words go to the distress check (`answerSafeguard.ts`, #747).
+// docs/architecture.md §Practice.
 
 import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
 import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
 import { t } from '../../i18n/index.js';
-import { safeguardingText } from '../../i18n/safeguarding.js';
 import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { promptVersion } from '../../llm/promptVersion.js';
-import { ageOn, isMinor } from '../identity/model.js';
+import { ageOn } from '../identity/model.js';
 import { cautiousAt, curriculumLine } from '../curriculum/state.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
 import { ladderHoldsSolution, namesTheSolution } from './answerReply.js';
+import { checkDistress, safeguarded, settle, type TutorJudgement } from './answerSafeguard.js';
+import { concernRaised } from './distress.js';
 import { formNoteFor } from './evaluate.js';
 import { givesHints } from './modeRules.js';
 import { articleMissing, NEAR_MISS_REPLY } from './nearMiss.js';
@@ -55,27 +58,12 @@ export const TUTOR_PROMPT_VERSION = promptVersion(
   RUBRIC_SCHEMA,
 );
 
-/** The tutor's judgement of her answer, and what it said about a rubric's elements. */
-export type TutorJudgement = {
-  judged: Judged;
-  /**
-   * What the model said about the elements it was asked about. It stays empty when no model was
-   * called at all (the rules alone answered, or the model was unavailable) — and then every
-   * judged element is `unknown` rather than missing: nobody measured it.
-   */
-  claims: readonly RubricClaim[];
-  /** The app's fixed help answer (#389): nothing may be put on top of it. */
-  safeguarded: boolean;
-};
-
 export async function tutorJudgement(deps: Deps, c: AnswerCase): Promise<TutorJudgement> {
   const { learner, session, question, hintRequest, rule } = c;
   const heard: { claims: readonly RubricClaim[] } = { claims: [] };
   try {
     const d = await tutorDecision(deps, c, heard);
-    if (d.concern) {
-      return { judged: safeguard(c, 'concern'), claims: heard.claims, safeguarded: true };
-    }
+    if (d.concern) return safeguarded(c, 'concern', heard.claims);
     const judged: Judged =
       hintRequest && !(question && d.intent === 'wants_to_stop')
         ? {
@@ -115,14 +103,17 @@ export async function tutorJudgement(deps: Deps, c: AnswerCase): Promise<TutorJu
       judged: stepOnRequest(c.item, d.intent, c.nextHint) ?? judged,
       claims: heard.claims,
       safeguarded: false,
+      unchecked: false,
     };
   } catch (err) {
     if (isAppError(err) && err.code !== 'budget_exhausted') throw err;
     // The safety filter held the answer back: the fixed help answer, as in the chat (#389).
     if (err instanceof LlmError && err.kind === 'blocked') {
-      return { judged: safeguard(c, 'blocked'), claims: heard.claims, safeguarded: true };
+      return safeguarded(c, 'blocked', heard.claims);
     }
-    // No model: say what the rules know, never pretend to have judged.
+    // No usable tutor answer (outage, timeout, invalid output, the day's limit): the tutor was
+    // also the distress check, so her words go to the check of their own (#747) before code
+    // says what the rules know — never pretending to have judged.
     const judged: Judged = hintRequest
       ? {
           // "Tipp" without a model: a general first step, honestly no judgement. A question
@@ -156,24 +147,23 @@ export async function tutorJudgement(deps: Deps, c: AnswerCase): Promise<TutorJu
               gaveHint: false,
               revealed: false,
             };
-    return { judged, claims: heard.claims, safeguarded: false };
+    return settle(c, await checkDistress(deps, c), {
+      judged,
+      claims: heard.claims,
+      safeguarded: false,
+    });
   }
 }
 
-/**
- * Distress in the answer field, or the provider's safety filter (issue #389): the reply is
- * the app's fixed help answer, the same as in the chat — never the model's words, never a
- * hint, a solution or the test's neutral line on top of it, and never a try.
- */
-function safeguard(c: AnswerCase, kind: 'concern' | 'blocked'): Judged {
-  return {
-    verdict: 'not_an_attempt',
-    evaluatedBy: 'rule',
-    reply: safeguardingText(c.learner.locale, isMinor(c.learner, c.now), kind),
-    gaveHint: false,
-    revealed: false,
-  };
-}
+/** The decision when the tutor raised a concern: nothing else of it is read. */
+const CONCERN_RAISED: TutorDecisionT = {
+  intent: 'off_topic',
+  verdict: 'not_an_attempt',
+  reply: '',
+  gave_hint: false,
+  revealed_answer: false,
+  concern: true,
+};
 
 /**
  * The tutor's decision, held to what code knows: one call, and in homework one repair when it
@@ -203,6 +193,9 @@ async function tutorDecision(
       timeoutMs: 20_000,
       thinking: 'off',
     });
+    // Distress stands on its own (#747): the tutor is told its reply is replaced then, and an
+    // empty reply must not fail the decision and throw the concern away with it.
+    if (concernRaised(r.json)) return CONCERN_RAISED;
     // A writing task with required elements answers in a wider schema — the same decision
     // plus one line per element (issue #211); everything else answers as before.
     let d: TutorDecisionT;

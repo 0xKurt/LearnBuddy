@@ -44,7 +44,7 @@ import {
   transcribeRules,
   tutorRules,
 } from './rules.js';
-import { scriptSafeguarding } from './safeguarding.js';
+import { practiceDistress, scriptSafeguarding } from './safeguarding.js';
 import { scriptSelectAll } from './selectAll.js';
 import { scriptTimedTest } from './timedTest.js';
 import { scriptTaskParts } from './taskParts.js';
@@ -138,6 +138,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   reexplainRules.install(scripted);
   // A conversation that came to rest is summarised by the scheduler (issue #22); in the
   // walkthrough nobody asks for those sentences, so one answer for all of them is enough.
+  scripted.byDefault('safeguard', practiceDistress);
   scripted.byDefault('summary', {
     json: { summary: 'Sie hat mit Buddy geübt und Fragen gestellt.', topics: ['Üben'] },
   });

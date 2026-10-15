@@ -37,6 +37,12 @@ export type LlmPurpose =
   | 'buddy_turn'
   | 'buddy_check'
   | 'tutor'
+  /**
+   * Does what she typed into a practice answer tell of danger to herself (#747,
+   * `practice/distress.ts`)? Metered as the tutor's: it is the tutor's check, run where no tutor
+   * call read her words.
+   */
+  | 'safeguard'
   | 'explain'
   | 'extraction'
   /** Boxes of the teaching figures on a photographed page (concept images, issue #50). */

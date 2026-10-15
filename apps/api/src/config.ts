@@ -25,6 +25,7 @@ const VertexRoutes = z
     buddy_turn: ModelSpec,
     buddy_check: ModelSpec,
     tutor: ModelSpec,
+    safeguard: ModelSpec,
     explain: ModelSpec,
     extraction: ModelSpec,
     figures: ModelSpec,

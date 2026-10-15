@@ -287,7 +287,9 @@ export async function callModel(
   reservation: Reservation | null = null,
 ): Promise<LlmResult> {
   if (!deps.llm.available) throw new LlmError('unavailable', 'no model configured');
-  const kind = req.purpose;
+  // The distress check in practice (#747) counts against the tutor's limit: `usage_daily` keeps
+  // one count per kind of help, and the check is part of the tutor's.
+  const kind = req.purpose === 'safeguard' ? 'tutor' : req.purpose;
   // A choosing call has no limit of its own: it is metered with its call (`callAhead`).
   if (kind === 'forms') throw new Error('a forms call goes through callAhead');
   if (kind === 'canary') throw new Error('the canary goes through callCanary');
