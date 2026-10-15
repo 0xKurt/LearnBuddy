@@ -189,16 +189,25 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // What kind of page it is decides what is kept of the reading (issue #259, sources.ts).
   const sourced = applySource(result.data, m.photo_count);
   const x = sourced.reading;
-  // Still more on the sheet after every reading it was given (#150), tasks lost to the choice of
-  // forms (#664), or a task that asks for a reason and goes without one to read hers against
-  // (#642, `reasonLost`): said out loud instead of letting a half-read sheet pass for whole.
-  const incomplete = x.more_items || partial || x.items.some(reasonLost);
   // Every form held to its own rules by code before anything is stored (`sheetQuestions.ts`).
+  // A written question the checks drop is a task of her sheet without a question (#757: 60 of 90
+  // pairs of a list went without a word, because their languages were missing).
+  const dropped: string[] = [];
   const checked = sheetQuestions(x, {
     locale: learner.locale,
     off: deps.config.FORMS_OFF,
     homework,
+    onDrop: (why) => dropped.push(why),
   });
+  if (dropped.length > 0)
+    console.warn(
+      `[reading] material=${materialId}: ${dropped.length} written questions dropped (${[...new Set(dropped)].join(',')})`,
+    );
+  // Still more on the sheet after every reading it was given (#150), tasks lost to the choice of
+  // forms (#664), a task that asks for a reason and goes without one to read hers against
+  // (#642, `reasonLost`), or a written question dropped by the checks (#757): said out loud
+  // instead of letting a half-read sheet pass for whole.
+  const incomplete = x.more_items || partial || x.items.some(reasonLost) || dropped.length > 0;
   // A form switched off in this environment is not stored (#296, `config.FORMS_OFF`).
   const items = formsOn(checked, deps.config.FORMS_OFF);
   const pageProblems = pageProblemsOf(x.pages, m.photo_count);
