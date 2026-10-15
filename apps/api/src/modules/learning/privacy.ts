@@ -48,6 +48,8 @@ export const LEARNING_PRIVACY_TABLES: readonly PrivacyTable[] = [
   { table: 'buddy_roleplays' },
   // What her rehearsal talks and read-alouds measured (issue #264): numbers only, never a recording.
   { table: 'rehearsals' },
+  // Answers her questions' keys learnt from a tutor's judgement, with where they came from (#675).
+  { table: 'learned_answers' },
   { table: 'subjects' },
   {
     // Spots of a page the reading could not decide, and the reading she picked (issue #164):
