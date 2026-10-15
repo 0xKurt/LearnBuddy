@@ -14,6 +14,13 @@ type PhotoRow = {
 };
 
 /**
+ * A photographed page as it came from Storage, in position order (PDFs are not among them: sharp
+ * cannot crop a PDF page). The concept-image pass crops from these instead of downloading every
+ * photo a second time (F4-a, #654).
+ */
+export type PageBytes = { mime: 'image/jpeg' | 'image/png'; bytes: Buffer };
+
+/**
  * Each page is labelled, so a page number in the answer names this photo and not the model's
  * count of unlabelled images (p2-model-page-numbers-unlabeled-images); a PDF brings its pages in
  * one file, and its label says which page numbers they are.
@@ -25,7 +32,7 @@ type PhotoRow = {
 export async function loadPhotos(
   deps: Deps,
   materialId: string,
-): Promise<{ photos: PhotoRow[]; parts: LlmPart[]; missing: number | null }> {
+): Promise<{ photos: PhotoRow[]; parts: LlmPart[]; pages: PageBytes[]; missing: number | null }> {
   const photos = await deps.db.query<PhotoRow>(
     `select position, storage_path, mime, page_count from material_photos
       where material_id = $1 order by position`,
@@ -34,9 +41,11 @@ export async function loadPhotos(
   const ranges = pageRanges(photos);
   const pageTotal = ranges.at(-1)?.last ?? 0;
   const parts: LlmPart[] = [];
+  const pages: PageBytes[] = [];
   for (const [i, p] of photos.entries()) {
     const bytes = await deps.storage.download(p.storage_path);
-    if (!bytes) return { photos, parts, missing: p.position };
+    if (!bytes) return { photos, parts, pages, missing: p.position };
+    if (p.mime !== PDF_MIME) pages.push({ mime: p.mime, bytes: Buffer.from(bytes) });
     const range = ranges[i]!;
     parts.push({
       text:
@@ -46,5 +55,5 @@ export async function loadPhotos(
     });
     parts.push({ inlineData: { mimeType: p.mime, data: Buffer.from(bytes).toString('base64') } });
   }
-  return { photos, parts, missing: null };
+  return { photos, parts, pages, missing: null };
 }

@@ -89,6 +89,12 @@ export type OutreachPlan = {
  */
 const SAID = ['scheduled', 'sending', 'accepted', 'provider_accepted', 'send_uncertain', 'in_app'];
 
+/**
+ * The states of a step a message may be about: once she started it (or it ended), a message
+ * about it is obsolete (`sendDueOutreach`) and the decision that names one is refused (apply.ts).
+ */
+export const OUTREACH_STEP_STATES: readonly string[] = ['planned', 'prepared'];
+
 /** A late agreed reminder says so when it is more than this late. */
 const LATE_MS = 15 * 60_000;
 
@@ -394,9 +400,9 @@ export async function sendDueOutreach(deps: Deps, limit = 50): Promise<DeliveryS
     // What it refers to may be done already (practised early, test cancelled).
     const obsolete = await deps.db.maybeOne(
       `select 1
-        where exists (select 1 from buddy_steps where id = $1 and state not in ('planned','prepared'))
+        where exists (select 1 from buddy_steps where id = $1 and not (state = any($3::text[])))
            or exists (select 1 from buddy_goals where id = $2 and status <> 'active')`,
-      [o.step_id, o.goal_id],
+      [o.step_id, o.goal_id, OUTREACH_STEP_STATES],
     );
     if (obsolete) {
       if (await settle(deps.db, o, 'cancelled', { reason: 'obsolete' })) stats.suppressed++;

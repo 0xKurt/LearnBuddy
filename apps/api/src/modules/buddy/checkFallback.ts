@@ -45,6 +45,10 @@ export async function fallback(
           )
         : null;
 
+      // Whether this fallback wrote anything a decision could depend on (K1, #663): only then is
+      // the context a version further. A fallback that waits wrote a decision row and nothing
+      // else, and bumping for it made every chat turn running meanwhile stale for nothing.
+      let changed = false;
       const prepared = async (goalId: string | null, subjectId: string | null, title: string) => {
         const existing = await tx.maybeOne<{
           id: string;
@@ -83,6 +87,7 @@ export async function fallback(
             now,
           ],
         );
+        changed = true;
         return { stepId: step.id, count: items.length, minutes };
       };
 
@@ -124,6 +129,7 @@ export async function fallback(
                values ($1, $2, 'capture', $3, 'planned', $4)`,
               [learner.id, goal.id, goal.title, today],
             );
+            changed = true;
           }
           proposal = {
             kind: 'idea',
@@ -210,6 +216,9 @@ export async function fallback(
           stepId: proposal.stepId,
           template: proposal.template,
         });
+        // A message to show or to send: Buddy's state names it. One kept only as suppressed
+        // changes nothing a decision reads — the same rule as `applyDecision`.
+        if (outreach.id && outreach.status !== 'suppressed') changed = true;
       }
       await tx.query(
         `insert into buddy_decisions (learner_id, mode, triggers, context_version, disposition, reason,
@@ -224,7 +233,7 @@ export async function fallback(
           now,
         ],
       );
-      await bumpContext(tx, learner.id);
+      if (changed) await bumpContext(tx, learner.id);
       return {
         outcome: proposal ? 'fallback_act' : 'fallback_wait',
         outreach: outreach?.status ?? null,

@@ -138,6 +138,40 @@ describe.skipIf(!dbReady)('reading stages on the home card', () => {
     expect(after.working).toBeNull();
   });
 
+  it('stamps what the reading wrote with the time it was done, not when it started (#653)', async () => {
+    const m = await create(lena, 1);
+    // The model takes its time: 12 s pass on the app clock with every call while it reads.
+    const started = env.clock.now();
+    env.llm.script('extraction', async () => {
+      env.clock.advance(12_000);
+      return SHEET;
+    });
+    env.llm.script('buddy_check', WAIT);
+    for (const u of m.uploads) env.storage.put(u.path);
+    await lena.api.post(`/materials/${m.material.id}/submit`);
+    await env.flushBackground();
+    const done = env.clock.now();
+    expect(done.getTime() - started.getTime()).toBeGreaterThanOrEqual(12_000);
+
+    const row = await env.db.one<{ status: string; ready_at: Date }>(
+      `select status, ready_at from materials where id = $1`,
+      [m.material.id],
+    );
+    expect(row.status).toBe('ready');
+    expect(row.ready_at.toISOString()).toBe(done.toISOString());
+    const event = await env.db.one<{ created_at: Date }>(
+      `select created_at from buddy_events where ref_id = $1 and type = 'material_ready'`,
+      [m.material.id],
+    );
+    expect(event.created_at.toISOString()).toBe(done.toISOString());
+    // No job the reading planned is due before the reading was done.
+    const early = await env.db.query<{ kind: string; run_at: Date }>(
+      `select kind, run_at from jobs where learner_id = $1 and kind <> 'extract_material' and run_at < $2`,
+      [lena.learnerId, done],
+    );
+    expect(early).toEqual([]);
+  });
+
   it('waits honestly while the reader is busy, and a requeued reading starts over', async () => {
     const m = await create(lena, 1);
     env.llm.script('extraction', { error: new LlmError('unavailable', 'busy') });
