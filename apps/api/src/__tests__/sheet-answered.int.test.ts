@@ -12,6 +12,7 @@ import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { LlmError } from '../llm/gateway.js';
+import { runTick } from '../modules/scheduler/tick.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -198,12 +199,14 @@ describe.skipIf(!dbReady)('every sheet she sends is answered (issue #721)', () =
     expect(starts).toEqual([[first], [second]]);
   });
 
-  it('answers two sheets one check woke for, each with its own start', async () => {
+  it('answers two sheets sent together, each with its own start', async () => {
     env.llm.byDefault('buddy_check', WAIT);
     env.holdBackground();
     const first = await sendSheet(env, lena, SHEET, false);
     const second = await sendSheet(env, lena, OTHER, false);
     await env.flushBackground();
+    // A wake-up that found the learner's check already running waits for the next tick.
+    expect((await runTick(env.deps)).errors).toEqual([]);
     const starts = [...(await startsBySheet(env, lena)).values()].map((s) => s.join());
     expect(starts.sort()).toEqual([first, second].sort());
   });
