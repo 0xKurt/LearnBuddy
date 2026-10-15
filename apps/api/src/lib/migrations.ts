@@ -98,6 +98,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0105_safeguard_limit',
   '0106_sheet_message',
   '0107_llm_call_trace',
+  '0108_learned_answers',
 ];
 
 /**

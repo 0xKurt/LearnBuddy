@@ -33,6 +33,7 @@ import { GUTTER_APP, SPACE } from '../lib/theme/space.js';
 import type { LibrarySubject } from '@learnbuddy/shared-types/contracts';
 import { attachInChat } from '../lib/capture/attachRequest.js';
 import { useShown } from '../lib/perfShown.js';
+import { useAfterFirstFrame } from '../lib/useAfterFirstFrame.js';
 
 /** One card in the list: a subject of hers, or the sheets whose subject is not known yet. */
 type Row = { key: string; name: string; subject: LibrarySubject | null };
@@ -63,6 +64,10 @@ export default function LibraryScreen() {
     }
   }
   const entering = useListEntrance(view !== undefined);
+  // What fits the first screen comes with the first frame; the rest of up to 200 sheets in the
+  // frame after (#714) — she can only reach them by scrolling.
+  const allRows = useAfterFirstFrame(view !== undefined);
+  const recentShown = allRows ? recent : recent.slice(0, LIBRARY.firstRows);
 
   // A new sheet: the chat's + menu (issue #519).
   const openCapture = () => attachInChat({ open: 'menu' });
@@ -134,7 +139,7 @@ export default function LibraryScreen() {
             </ListGroup>
             {recent.length > 0 ? (
               <ListGroup label={t('library:recent')}>
-                {recent.map((material) => (
+                {recentShown.map((material) => (
                   <MaterialRow
                     key={material.id}
                     material={material}

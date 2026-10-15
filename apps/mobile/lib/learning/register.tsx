@@ -32,9 +32,9 @@ import { inlineNotation, type InlineTextProps } from '../../components/lb/Inline
 import { MathText } from '../../components/math/MathText.js';
 import { useSayMath } from '../../components/math/useSpokenMath.js';
 import { newId } from '../api/client.js';
-import { createMaterial, submitMaterial } from '../api/endpoints.js';
+import { createMaterial, getLibrary, submitMaterial } from '../api/endpoints.js';
 import { followHome } from '../api/libraryCache.js';
-import { homeFollowers, queryClient } from '../api/queries.js';
+import { homeFollowers, keys, menuPreloads, queryClient } from '../api/queries.js';
 import { readingView } from '../buddy/readingStages.js';
 import { notation } from '../buddy/notation.js';
 import { MaterialUpload, type UploadDeps } from '../capture/materialUpload.js';
@@ -114,6 +114,10 @@ export function registerLearning(): void {
   startMenu.fill({ items: startItems, Sheets: LearnStartSheets });
   // The library list that still shows a sheet being read follows the home (live finding 3).
   homeFollowers.add('library', (home) => followHome(queryClient, home));
+  // "Dein Material" opens with her sheets: loaded while the ⋯ menu stands open (#711).
+  menuPreloads.add('library', () => {
+    void queryClient.prefetchQuery({ queryKey: keys.library, queryFn: getLibrary });
+  });
 
   // ── Pages she attaches: sent as a sheet to read, photos checked for blur, light and tilt.
   pageHandler.fill({

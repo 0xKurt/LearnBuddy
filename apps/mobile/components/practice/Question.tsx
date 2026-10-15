@@ -5,7 +5,7 @@
 // answer it stands in the gap, so she sees the whole sentence.
 
 import type { Figure, ItemImage, ItemView, TaskPartView } from '@learnbuddy/shared-types/contracts';
-import { useContext, useState, type ReactNode } from 'react';
+import { memo, useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -399,7 +399,7 @@ export function QuestionCard({
  * no room, and then stays folded while she types: unfolded again into the room its fold freed,
  * it would take that room once more and fold again.
  */
-function QuestionPicture({
+const QuestionPicture = memo(function QuestionPicture({
   figure,
   sizeKey,
   most,
@@ -422,7 +422,7 @@ function QuestionPicture({
       <QuestionFigure figure={figure} maxHeight={maxHeight} folded={folded || cramped} />
     </View>
   );
-}
+});
 
 /**
  * The letters of a task in parts, the current one in the accent: where she is, never how many are

@@ -48,6 +48,14 @@ describe('the conversation within what STATE leaves of the budget', () => {
     expect(fitDialogue(CONTEXT_CHARS, lines)).toEqual([lines[1]]);
   });
 
+  it('counts a repair round’s tail against the budget too', () => {
+    const contents = buildContents('x'.repeat(30_000), longAfternoon(), 'y'.repeat(9_000));
+    const sent = contents.flatMap((c) => c.parts.map((p) => ('text' in p ? (p.text ?? '') : '')));
+    // Her run of two long messages is never cut, so that much may stand above the budget.
+    expect(sent.join('').length).toBeLessThanOrEqual(CONTEXT_CHARS + 4_000 + 100);
+    expect(sent.join('')).not.toContain('learner 10 ');
+  });
+
   it('is what buildContents sends', () => {
     const contents = buildContents('x'.repeat(30_000), longAfternoon());
     const sent = contents.flatMap((c) => c.parts.map((p) => ('text' in p ? (p.text ?? '') : '')));
