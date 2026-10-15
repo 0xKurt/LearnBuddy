@@ -2797,7 +2797,11 @@ her for a reason ("Begründe", "Erkläre warum" — marked by the model's `asks_
 words) is a free text the tutor reads, never a choice graded by its index or a number graded by its
 key alone: written as either, code makes it a long answer whose key is the worked solution, or drops
 it when there is none (`reasonKept` in `practice/items.ts`, #642 item 9). A sheet that lost one
-that way is marked `items_incomplete` (`reasonLost`, `firstReading.ts`), so it never passes for whole. Answers are checked by rules where exactness is decidable (multiple choice,
+that way is marked `items_incomplete` (`reasonLost`, `firstReading.ts`), so it never passes for whole.
+A task that asks her to fill gaps (the model's `fills_gaps`) must show them: a plain question holds
+each gap as `___` (or `\square` in math), several gaps in one text are the cloze form; one without a
+gap mark is dropped (`gapsMissing`, #760 — "Ergänze die passenden Fälle in den Lücken." went out
+with no gap anywhere). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing
 accents, a missing first word such as the article, a slip within a length-scaled edit distance: a
 fixed kind reply at once, a slip shows the spelling and stays open so she types it herself; never in
