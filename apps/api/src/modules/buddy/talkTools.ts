@@ -7,7 +7,7 @@ import { t } from '../../i18n/index.js';
 import { daysBetween } from '../../lib/time.js';
 import type { ActionOf } from './decision.js';
 import { findOrCreateSubject } from '../learning/state.js';
-import { quoteInTranscript, wordsOf } from './talkMeasure.js';
+import { quoteInTranscript, sheetWords, wordsOf } from './talkMeasure.js';
 import {
   goalOf,
   materialOf,
@@ -124,9 +124,9 @@ async function requireFromSheet(ctx: ToolContext, alias: string, text: string): 
       `sheet ${alias} has no text to read aloud — leave this action out and tell her what the sheet holds`,
     );
   }
-  if (!quoteInTranscript(text, row.extracted_text)) {
+  if (!quoteInTranscript(text, sheetWords(row.extracted_text))) {
     throw new ToolRejection(
-      `"text" is not on sheet ${alias} — copy the passage from the sheet word for word (search_material finds it), or set sheet null for a text you write yourself`,
+      `"text" is not on sheet ${alias} — copy the passage from the sheet word for word (search_material finds it)`,
     );
   }
 }
