@@ -7,7 +7,7 @@ import { keys } from '../keys.js';
 
 // Only identity and the context fence matter here: the cache stores whatever it is given.
 const home = (tag: string, context_version = 1) =>
-  ({ tag, context_version }) as unknown as BuddyHome;
+  ({ tag, context_version, thread: [] }) as unknown as BuddyHome;
 
 function deferred<T>() {
   let resolve!: (v: T) => void;

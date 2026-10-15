@@ -18,6 +18,32 @@ export function refreshSettings(client: QueryClient): void {
   void client.invalidateQueries({ queryKey: keys.settings, refetchType: 'all' });
 }
 
+/** Buddy's level changes the home shows, with where each stands (`set_level` and its undo). */
+function levelSteps(home: BuddyHome): string {
+  return home.thread
+    .flatMap((m) => m.actions)
+    .filter((a) => a.summary.tool === 'set_level')
+    .map((a) => `${a.id}:${a.status}`)
+    .sort()
+    .join(',');
+}
+
+/**
+ * Her profile is kept fresh for five minutes (`useMe`, #671), but Buddy changes her level and
+ * grade on the server in a turn (`set_level`), and taking that back changes them again. A home
+ * that shows such a change she has not seen yet fetches `/me` again at once, so the settings
+ * never show the old grade and a save never sends the old version (rule 5). Any other home
+ * leaves it alone; the first home there is to compare with changes nothing.
+ */
+export function refreshProfileIfChanged(
+  client: QueryClient,
+  incoming: BuddyHome,
+  held: BuddyHome | undefined,
+): void {
+  if (held === undefined || levelSteps(incoming) === levelSteps(held)) return;
+  void client.invalidateQueries({ queryKey: keys.me, refetchType: 'all' });
+}
+
 /**
  * Whether a home that a request brought back may be written over the one the app holds. Two
  * requests can be on their way at once — a turn and a tap on a card, her spoken turn and
@@ -47,6 +73,7 @@ export function newerHome(
  */
 export function writeHome(client: QueryClient, home: BuddyHome): boolean {
   if (!newerHome(home, client.getQueryData<BuddyHome>(keys.home))) return false;
+  refreshProfileIfChanged(client, home, client.getQueryData<BuddyHome>(keys.home));
   void client.cancelQueries({ queryKey: keys.home });
   client.setQueryData(keys.home, home);
   void client.invalidateQueries({ queryKey: keys.memory, refetchType: 'none' });
