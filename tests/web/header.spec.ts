@@ -315,10 +315,9 @@ test('the head on every screen: orb state, one-line title, Vorlesen and ⋯', as
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByTestId('thread-turn').first()).toBeVisible();
   // Not right yet: Buddy speaks about it (design App.jsx:62) — until she starts her next answer.
-  // A change of scheme draws the app anew, and a reply that was there when the screen opened
-  // moves nothing: the dark shots show the task waiting.
-  await head(page, 'practice-wrong', { pose: 'speak', more: 'own' }, ['light']);
-  await head(page, 'practice-wrong', { pose: 'wait', more: 'own' }, ['dark']);
+  // A change of scheme no longer draws the app anew (#640, #631): the screen keeps its state,
+  // so the dark shots show Buddy still speaking, as the light ones do (#743).
+  await head(page, 'practice-wrong', { pose: 'speak', more: 'own' });
   await page.getByLabel('Deine Antwort').fill('0,5');
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.locator('[data-testid="header-orb-speak"]:visible').last()).toBeVisible();
