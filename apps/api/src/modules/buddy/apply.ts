@@ -22,6 +22,11 @@ import { runAct } from './registry.js';
 import { ToolRejection, type ToolOutcome } from './toolKit.js';
 
 export type DecisionMeta = {
+  /**
+   * The decision's id, chosen before its model calls so `llm_calls.decision_id` can name it
+   * (#652); a decision recorded without a model call gets one from the database.
+   */
+  id?: string;
   mode: 'turn' | 'check';
   attempt: number;
   model: string | null;
@@ -162,10 +167,11 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
       }
 
       const decision = await tx.one<{ id: string }>(
-        `insert into buddy_decisions (learner_id, mode, trigger_message_id, triggers, context_version,
+        `insert into buddy_decisions (id, learner_id, mode, trigger_message_id, triggers, context_version,
                                       attempt, disposition, reason, topic_key, output, model, prompt_version,
                                       created_at)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) returning id`,
+         values (coalesce($14::uuid, gen_random_uuid()), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+                 $12, $13) returning id`,
         [
           input.learnerId,
           input.meta.mode,
@@ -185,6 +191,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           input.meta.model,
           input.meta.promptVersion,
           input.now,
+          input.meta.id ?? null,
         ],
       );
 
@@ -393,9 +400,10 @@ export async function recordUnapplied(
   errors: string[] | null,
 ): Promise<string> {
   const row = await db.one<{ id: string }>(
-    `insert into buddy_decisions (learner_id, mode, trigger_message_id, triggers, context_version, attempt,
+    `insert into buddy_decisions (id, learner_id, mode, trigger_message_id, triggers, context_version, attempt,
                                   disposition, reason, topic_key, output, errors, model, prompt_version, created_at)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) returning id`,
+     values (coalesce($15::uuid, gen_random_uuid()), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+             $13, $14) returning id`,
     [
       input.learnerId,
       input.meta.mode,
@@ -411,6 +419,7 @@ export async function recordUnapplied(
       input.meta.model,
       input.meta.promptVersion,
       input.now,
+      input.meta.id ?? null,
     ],
   );
   return row.id;

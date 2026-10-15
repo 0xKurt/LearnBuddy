@@ -513,6 +513,8 @@ async function generateSet(
         // cost, more careful content (docs/architecture.md §Speed).
         thinking: 'high',
         onPartial,
+        // Which set went out, in `llm_calls` (#652): the whole schema, a choice, or the fallback.
+        trace: { schemaVariant: narrowed.how },
       },
       reservation,
     );

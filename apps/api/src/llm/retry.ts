@@ -134,9 +134,12 @@ export async function generateWithRetries(
   for (;;) {
     const left = deadline - waits.elapsedMs();
     try {
-      return await attempt(watched, Math.max(Math.round(left), 0));
+      const result = await attempt(watched, Math.max(Math.round(left), 0));
+      // A throttle answered on the third try is no longer invisible in `llm_calls` (#652).
+      return { ...result, attempts: attemptsDone + 1 };
     } catch (err) {
       attemptsDone++;
+      if (err instanceof LlmError) err.attempts = attemptsDone;
       if (handedOut || attemptsDone >= attemptsFor(err)) throw err;
       const pause = retryPauseMs(attemptsDone, waits.random);
       // No room for the pause AND an attempt that could finish: give up honestly now

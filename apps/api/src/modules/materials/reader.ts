@@ -121,6 +121,8 @@ export async function sheetReader(
         timeoutMs: 120_000,
         // Read once in the background: time to think (see generate.ts).
         thinking: 'high',
+        // Which set went out, in `llm_calls` (#652): the whole schema, a choice, or the fallback.
+        trace: { schemaVariant: chosen.how },
       },
       chosen.reservation,
     );
