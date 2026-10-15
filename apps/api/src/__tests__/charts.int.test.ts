@@ -131,9 +131,12 @@ describe.skipIf(!dbReady)('charts', () => {
 
   it('„Üb mit mir Klimadiagramme“: five questions, each judged by code', async () => {
     env.llm.script('explain', async (req) => {
-      // The generator is told what a chart is and what a reading is.
-      expect(req.system).toContain('climate_chart');
-      expect(req.system).toContain('"read"');
+      // The generator is told what a chart is and what a reading is. The fake chooser reads this
+      // answer ahead with its own request, whose catalogue names the types only (#669).
+      if (req.purpose === 'explain') {
+        expect(req.system).toContain('climate_chart');
+        expect(req.system).toContain('"read"');
+      }
       return SET;
     });
     const res = await l.api.post<SessionView>('/practice/topic', {

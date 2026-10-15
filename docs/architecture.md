@@ -1029,7 +1029,16 @@ turn's step schema stood at the budget (269) with #725, so `pictures` came with 
 produce) — a level is a wish for questions on a topic, a direction one for vocabulary pairs, never
 both in one offer. Flat calls (#726) brought the step schema to 242, and a test holds it at least 20 properties under the bound (`buddy/__tests__/offer.test.ts`). A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
-costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
+costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). **The prompt follows the schema**
+(KI-Audit F5-3, #669): a run is told only the rules of the figure families, structured forms and
+lists its schema offers (`generateSystem(offered(schema))`, `figureRules`, `structuredRules`), and the
+choosing call before a run reads a catalogue of what it can choose — one line per form, taken from the
+same rules, and the figure types by name (`choosingCatalogue`) — instead of the whole prompt. The
+whole prompt stays byte for byte what a sheet reading gets (`FIGURE_RULES`, `GENERATE_SYSTEM`); the
+reading's own choosing call keeps it, since it reads the photos anyway. Measured (`inventory:schema`):
+explain 37 963 characters for every run → 5 149 (vocab, speak, Diktat, teach_back, read, essay), at
+most 15 370 (practice) and 17 769 (test) with everything that fits; the choosing call before a run
+38 434 → 1 162–3 581. It has its own purpose (`forms`, in
 `llm_calls`) and no limit of its own: `callAhead` meters it with its run. **The run's allowance is
 held before the choice** (#665, `reserveCall`): one atomic reservation for the chain, used up by the
 main call (`callModel(…, reservation)`) and given back when the run fails before its call writes
