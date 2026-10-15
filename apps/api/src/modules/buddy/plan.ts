@@ -2,7 +2,14 @@
 // versioning, exam wake-ups, agreed-step reminders.
 
 import type { Db } from '../../lib/db.js';
-import { addDays, daysBetween, localParts, weekdayOf, zonedToInstant } from '../../lib/time.js';
+import {
+  addDays,
+  daysBetween,
+  localParts,
+  minutesOf,
+  weekdayOf,
+  zonedToInstant,
+} from '../../lib/time.js';
 import { cancelQueuedJobs, enqueueJob } from '../scheduler/jobs.js';
 import type { SettingsRow } from './state.js';
 
@@ -55,6 +62,29 @@ export async function testAhead(db: Db, learnerId: string, today: string): Promi
  * learner's preferred window, in their zone. Old wake-ups for the goal are
  * cancelled first, so moving a date never produces reminders for both dates.
  */
+/** How far into her preferred window a daily routine look may move (K3, #680). */
+const ROUTINE_SPREAD_MIN = 30;
+
+/**
+ * When a learner's daily routine look runs: the start of her preferred window plus a fixed
+ * offset of her own, at most `ROUTINE_SPREAD_MIN` minutes and at most half her window (K3, #680).
+ * Every routine look fell on the same minute — 15:00 for everyone with the default window — and
+ * queued up behind each other. The offset comes from her id, so it is the same every day (no
+ * randomness to test around) and different from most other learners'.
+ */
+export function routineAt(
+  day: string,
+  settings: Pick<SettingsRow, 'timezone' | 'preferred_start' | 'preferred_end'>,
+  learnerId: string,
+): Date {
+  const window = minutesOf(settings.preferred_end) - minutesOf(settings.preferred_start);
+  const span = Math.max(1, Math.min(ROUTINE_SPREAD_MIN, Math.floor(window / 2)));
+  let h = 0;
+  for (const ch of learnerId) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const start = zonedToInstant(day, settings.preferred_start, settings.timezone);
+  return new Date(start.getTime() + (h % span) * 60_000);
+}
+
 export async function scheduleExamWakeups(
   db: Db,
   learnerId: string,

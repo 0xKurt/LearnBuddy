@@ -197,18 +197,26 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
       deps.db,
       deps.now(),
       ['buddy_check', 'buddy_turn'],
-      25,
+      25 * CHECKS_AT_ONCE,
       deps.config.CONSENT_VERSION,
     );
-    for (const learnerId of learners) {
-      if (left() < 12_000) break;
-      // One learner's failure must not stop Buddy for everybody else; the
-      // jobs stay leased and come back after the lease (bounded by attempts).
-      await guard(`buddy[${learnerId.slice(0, 8)}]`, async () => {
-        await runLearnerJobs(deps, learnerId);
-      });
-      stats.learners++;
-    }
+    // CHECKS_AT_ONCE learners side by side (K3, #680): one after the other, a check of ~4 s on the
+    // model made six to eight learners per run, and 15:00 became an hour-long queue. Each learner
+    // still has her own lease (checkLease.ts), so two of these never work on the same learner; a
+    // new one starts only while the run has time for a whole check.
+    let next = 0;
+    const lane = async () => {
+      while (next < learners.length && left() >= 12_000) {
+        const learnerId = learners[next++]!;
+        // One learner's failure must not stop Buddy for everybody else; the
+        // jobs stay leased and come back after the lease (bounded by attempts).
+        await guard(`buddy[${learnerId.slice(0, 8)}]`, async () => {
+          await runLearnerJobs(deps, learnerId);
+        });
+        stats.learners++;
+      }
+    };
+    await Promise.all(Array.from({ length: CHECKS_AT_ONCE }, lane));
   });
 
   await guard('delivery', async () => {
@@ -334,6 +342,12 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   );
   return stats;
 }
+
+/**
+ * Learners whose Buddy work runs side by side in one run (K3, #680). Three, not more: each check
+ * holds a database connection through its transactions, and the pool has five per instance.
+ */
+const CHECKS_AT_ONCE = 3;
 
 /** How often the retention pass runs at most (its rules count in hours and days). */
 const RETENTION_EVERY_MS = 15 * 60_000;
