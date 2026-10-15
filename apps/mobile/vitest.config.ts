@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { workerLimits } from '../../tools/vitest-workers.mjs';
 
 // Pure-logic modules (lib/camera/*, lib/auth/pin etc.) run under Node — no React Native
 // bridge, no Expo runtime. Components and screens are a project of their own
@@ -7,6 +8,8 @@ import { defineConfig } from 'vitest/config';
 // not leak into the resolution these tests have today.
 export default defineConfig({
   test: {
+    // Worker cap for shared machines: LB_TEST_MAX_WORKERS (tools/vitest-workers.mjs).
+    ...workerLimits(),
     name: 'lib',
     environment: 'node',
     include: ['lib/**/*.test.ts'],
