@@ -1593,6 +1593,27 @@ open (#169).**
 
 ## Material
 
+**Her sheet is her message in the conversation** (issue #632, migration `0106_sheet_message.sql`).
+Before, a sheet sent through the chat bar was a `materials` row only: the thumbnails above the field
+vanished, nothing of hers stood in the thread, and while it was read 10–20 s showed nothing
+(behind a prepared practice the reading bar did not show either). Now the app draws it as her
+message from the tap on "Senden" (`lib/capture/sending.ts`: the upload's own progress, only what
+the phone knows); `submitMaterial` writes her stored message in the same transaction that queues
+the reading — `buddy_messages.material_id`, role `learner`, no text, one per sheet (a repeated
+submit writes none) — and that message takes the local one's place. It holds no image and no text:
+the app shows her pages from its own copy on the phone while it keeps one (a day,
+`lib/capture/draft.ts`), the paper of the design's `SheetThumb` otherwise. Where the sheet stands
+is read from the material every time the thread is read (`modules/learning/threadSheets.ts`
+`sheetStage`): waiting or being read only while a reading run is alive, `building` while the check
+its reading woke makes practice, then ready, failed or deleted — never more than the rows say
+(rule 5). A failed reading says "Nicht gelesen" there; the card with the ways on stays the home's
+`material_failed`, after it. The model is never shown this wordless message (`state.ts`,
+`summarise.ts` and the roleplay transcript leave it out); it learns about the sheet from STATE.
+Buddy's background message that announces practice ("Neues Arbeitsblatt bereit") carries its
+start: code attaches the step the message is linked to, or the practice the same decision
+prepared, while it still waits (`MessageView.announces`) — the start no longer lies only in the bar
+on top, if anywhere.
+
 **A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
 whether the sheet has more (`more_items`), and the sheet is read again for the rest with the

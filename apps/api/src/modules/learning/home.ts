@@ -22,6 +22,7 @@ import { rehearsalsOf } from '../buddy/rehearse.js';
 import { activeRoleplay, roleplayFeedbacks, roleplayStatuses } from '../buddy/roleplay.js';
 import type { BuddyState, StepRow } from '../buddy/state.js';
 import { resumable } from '../practice/lifecycle.js';
+import { announcedPractice, sheetMessages } from './threadSheets.js';
 
 const UPLOAD_WINDOW_MS = 10 * 60_000;
 /** How long a reading that just failed stays on top of everything else. */
@@ -498,6 +499,10 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
     learnerId,
     page.messages.flatMap((m) => (m.rehearsal_id ? [m.rehearsal_id] : [])),
   );
+  // Her sheets in the conversation and where they stand; the practice a background message
+  // announces, with its start (issue #632).
+  const sheets = await sheetMessages(db, learnerId, page, now);
+  const announced = await announcedPractice(db, learnerId, page);
   return {
     summary: (actionId: string, s: ActionSummary): ActionSummary => {
       // Where the roleplay stands now (issue #244): the card offers "end" only while it runs.
@@ -525,6 +530,8 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
     message: (m: ThreadPage['messages'][number]) => ({
       roleplay_feedback: m.roleplay_id ? (feedbacks.get(m.roleplay_id) ?? null) : null,
       ...(m.rehearsal_id ? { rehearsal: rehearsals.get(m.rehearsal_id) ?? null } : {}),
+      ...(sheets.has(m.id) ? { sheet: sheets.get(m.id) } : {}),
+      ...(announced.has(m.id) ? { announces: announced.get(m.id) } : {}),
     }),
   };
 }

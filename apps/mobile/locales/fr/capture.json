@@ -79,5 +79,17 @@
     "nothing": "Envoie-moi une photo ou un PDF de ta fiche – je ne peux pas lire de texte ni de liens ici.",
     "signed_out": "Connecte-toi d'abord – puis partage à nouveau la fiche avec LearnBuddy."
   },
-  "preview_failed": "Aperçu impossible"
+  "preview_failed": "Aperçu impossible",
+  "sent": {
+    "photos_one": "1 photo",
+    "photos_other": "{{count}} photos",
+    "label_one": "Tu as envoyé une photo",
+    "label_other": "Tu as envoyé {{count}} photos",
+    "waiting": "Arrivé · Buddy va le lire",
+    "reading": "Buddy le lit …",
+    "building": "Lu · Buddy en fait des exercices …",
+    "ready": "Lu",
+    "failed": "Pas lu",
+    "deleted": "Supprimé"
+  }
 }

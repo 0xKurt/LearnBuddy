@@ -358,6 +358,35 @@ export type OutreachView = z.infer<typeof OutreachView>;
 
 // ─────────────── conversation ───────────────
 
+/**
+ * Her message for a sheet she sent through the chat (issue #632): the material it is, never the
+ * image — the app shows the page from its own copy on the phone while it keeps one. `stage` is
+ * where that sheet stands now, from its row (CLAUDE.md rule 5): waiting for the reader, being
+ * read, read while Buddy makes practice from it, ready, not read (`failed`), or deleted since.
+ * Null where nothing alive says what happens to it — then the line says nothing.
+ */
+export const SheetMessage = z.object({
+  material_id: Uuid,
+  pages: z.number().int().min(1),
+  stage: z
+    .enum(['waiting', 'reading', 'building', 'ready', 'failed', 'deleted'])
+    .nullable()
+    .catch(null),
+});
+export type SheetMessage = z.infer<typeof SheetMessage>;
+
+/**
+ * The practice one of Buddy's messages from the background announces ("dein Blatt ist bereit"),
+ * while it still waits for her (issue #632): its start stands under the words that announce it.
+ */
+export const AnnouncedPractice = z.object({
+  step_id: Uuid,
+  title: z.string(),
+  question_count: z.number().int(),
+  est_minutes: z.number().int(),
+});
+export type AnnouncedPractice = z.infer<typeof AnnouncedPractice>;
+
 export const MessageView = z.object({
   id: Uuid,
   role: z.enum(['learner', 'buddy']),
@@ -388,6 +417,10 @@ export const MessageView = z.object({
    * shown as the result card. Absent on every other message, and from an older server.
    */
   rehearsal: RehearsalView.nullable().optional().catch(null),
+  /** Her sheet sent through the chat (issue #632); absent on every other message. */
+  sheet: SheetMessage.nullable().optional().catch(null),
+  /** The waiting practice a background message announces (issue #632); absent otherwise. */
+  announces: AnnouncedPractice.nullable().optional().catch(null),
   created_at: IsoDateTime,
 });
 export type MessageView = z.infer<typeof MessageView>;

@@ -23,7 +23,7 @@ import { formatDay, localDateOf } from '../../lib/time.js';
 import { Appear, Rise } from '../lb/Motion.js';
 import { PressArea } from '../lb/PressArea.js';
 import { deliveryText, describeAction } from './describe.js';
-import { actionCard, hasCard, messageCard, readAlong } from './extensions.js';
+import { actionCard, hasCard, messageCard, messageExtra, readAlong } from './extensions.js';
 import type { MenuMessage } from './MessageMenu.js';
 import { RichText } from './RichText.js';
 import {
@@ -37,6 +37,8 @@ import {
 } from './ThreadParts.js';
 import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
+/** A card of Buddy's takes the thread's whole width. */
+const CARD_WIDTH = { width: CHAT.cardWidth };
 
 export const Entrance = Platform.OS === 'web' ? Appear : Rise;
 
@@ -283,6 +285,12 @@ export const MessageRow = memo(function MessageRow({
           </Entrance>
         ) : null;
       })}
+      {/* What a domain hangs under it: the start a background message announces (#632). */}
+      {messageExtra(m, 'soft').map((card, i) => (
+        <Entrance key={`extra-${i}`} animate={enters} index={1} style={CARD_WIDTH}>
+          {card}
+        </Entrance>
+      ))}
       {showActions && done.length > 0 ? (
         // The receipt and its way back are one piece, under the line's text (issue #191:
         // the whole sentence, never clipped to its first word).

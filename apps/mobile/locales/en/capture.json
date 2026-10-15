@@ -79,5 +79,17 @@
     "nothing": "Send me a photo or PDF of your sheet – I can't read text or links here.",
     "signed_out": "Please sign in first – then share the sheet with LearnBuddy again."
   },
-  "preview_failed": "No preview"
+  "preview_failed": "No preview",
+  "sent": {
+    "photos_one": "1 photo",
+    "photos_other": "{{count}} photos",
+    "label_one": "You sent a photo",
+    "label_other": "You sent {{count}} photos",
+    "waiting": "Arrived · Buddy will read it in a moment",
+    "reading": "Buddy is reading it …",
+    "building": "Read · Buddy is making exercises from it …",
+    "ready": "Read",
+    "failed": "Not read",
+    "deleted": "Deleted"
+  }
 }

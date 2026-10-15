@@ -43,6 +43,7 @@ import { HomeIntro } from '../components/buddy/HomeIntro.js';
 import { homeNotices, ResultView } from '../components/buddy/HomeNotices.js';
 import { HomeThread } from '../components/buddy/HomeThread.js';
 import { HomeTop } from '../components/buddy/HomeTop.js';
+import { SendingSheetBubble } from '../components/buddy/SheetBubble.js';
 import { StartSheets } from '../components/buddy/StartSheets.js';
 import { Btn } from '../components/lb/Btn.js';
 import { EDGE_FADE } from '../components/lb/EdgeFade.js';
@@ -72,6 +73,7 @@ import { useThreadFollow } from '../lib/buddy/useThreadFollow.js';
 import { useClosedCard } from '../lib/homeCard.js';
 import { homeLayout, topKey } from '../lib/homeLayout.js';
 import { askAttach } from '../lib/capture/attachRequest.js';
+import { useSendingInThread } from '../lib/capture/sending.js';
 import { SPACE } from '../lib/theme/space.js';
 import { warmRecognition } from '../lib/speech/recognize.js';
 import { voiceLocale } from '../lib/speech/voice.js';
@@ -107,6 +109,8 @@ export default function BuddyScreen() {
   const newestReply = thread ? newestBuddyId(thread) : null;
   const follow = useThreadFollow(newestReply);
   const { pending, live, send, stopReply } = useHomeSend({ thread, onSend: follow.followNext });
+  // Her sheet from the tap on "Senden" until her stored message is there (issue #632).
+  const sending = useSendingInThread(thread);
   const enableContact = useContactOptIn(home.data, act);
   const sessionStart = useSessionStart(home);
 
@@ -176,7 +180,10 @@ export default function BuddyScreen() {
   const { messages, captureUndo, carriedOnTop } = threadOnScreen(h, layout);
   // Each notice at its own moment among the messages (issue #630); what is about now ends it.
   const placed = placeByTime(messages, timed);
-  const notices = placed.end;
+  // What is about now ends the conversation; her sheet on its way is the newest of it.
+  const notices = sending
+    ? [...placed.end, <SendingSheetBubble key="sending" sheet={sending} />]
+    : placed.end;
   // Hide the optimistic bubble once the server has the message.
   const shownPending =
     pending && !h.thread.some((m) => m.client_message_id === pending.id)
