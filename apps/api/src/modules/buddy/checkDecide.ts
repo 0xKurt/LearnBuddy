@@ -259,7 +259,7 @@ export async function decide(
             maxOutputTokens: 2048,
             temperature: 0.3,
             timeoutMs: 40_000,
-            thinkingBudget: 768,
+            thinking: 'medium',
           });
           meta.model = res.usage.model;
           return res.json;

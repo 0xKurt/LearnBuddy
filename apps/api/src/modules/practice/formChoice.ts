@@ -157,6 +157,8 @@ function pruned(schema: JsonSchema, keep: Keep): JsonSchema {
 export function fitted(
   schema: JsonSchema,
   wanted: { forms: string[]; figures: string[] },
+  /** The gateway's bound (`GatewayProfile.structuredOutput`, #646); Vertex's unless given. */
+  maxProperties?: number,
 ): Narrowed {
   const forms = new Set<string>();
   const figures = new Set<string>();
@@ -170,7 +172,7 @@ export function fitted(
     const into = list === 'forms' ? forms : figures;
     into.add(name);
     const next = pruned(schema, { forms, figures });
-    if (withinBudget(next)) best = next;
+    if (withinBudget(next, maxProperties)) best = next;
     else into.delete(name);
   }
   return {
@@ -353,11 +355,13 @@ export async function chooseForms(
     wished?: readonly string[];
   },
 ): Promise<Narrowed & { reservation: Reservation | null }> {
-  if (withinBudget(call.full))
+  // The bound of the gateway this call goes to (#646): another provider serves other sizes.
+  const max = deps.llm.profile.structuredOutput.maxSchemaProperties;
+  if (withinBudget(call.full, max))
     return { schema: call.full, keep: null, how: 'whole', reservation: null };
   // Before the choosing call, never after it: a run her limit refuses costs no choice (#665).
   const reservation = await reserveCall(deps, learnerId, localDay, call.purpose);
-  const narrowed = await narrow(deps, reservation, call);
+  const narrowed = await narrow(deps, reservation, call, max);
   // Which set the main call goes out with, for the function log (#665): no prompt, no answer.
   console.info(
     `[forms] ${call.purpose}: ${narrowed.how}` +
@@ -372,6 +376,7 @@ async function narrow(
   deps: Deps,
   reservation: Reservation,
   call: Parameters<typeof chooseForms>[3],
+  max: number,
 ): Promise<Narrowed> {
   const Choice = choiceFor(call.full);
   try {
@@ -386,7 +391,7 @@ async function narrow(
       maxOutputTokens: 300,
       temperature: 0,
       timeoutMs: 20_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = ChoiceRead.safeParse(res.json);
     if (parsed.success) {
@@ -401,13 +406,16 @@ async function narrow(
       const named = parsed.data.forms.length + parsed.data.figures.length;
       // Only names it was not offered: no choice was made, whatever the answer's shape.
       if (named === 0 || wanted.forms.length + wanted.figures.length > 0)
-        return fitted(call.full, wanted);
+        return fitted(call.full, wanted, max);
     }
   } catch (err) {
     if (isAppError(err)) throw err;
   }
   console.warn(`[forms] ${call.purpose}: no choice, the minimal set goes out (#627)`);
-  return { ...fitted(call.full, { forms: [], figures: withWished([], call) }), how: 'fallback' };
+  return {
+    ...fitted(call.full, { forms: [], figures: withWished([], call) }, max),
+    how: 'fallback',
+  };
 }
 
 /** What she asked to see first (#724) — only types this schema has — then the rest, once each. */

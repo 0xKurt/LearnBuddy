@@ -380,7 +380,7 @@ export async function judgeEssay(
       maxOutputTokens: 2048,
       temperature: 0.2,
       timeoutMs: 45_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = EssayDecision.safeParse(res.json);
     if (!parsed.success) return unavailable;

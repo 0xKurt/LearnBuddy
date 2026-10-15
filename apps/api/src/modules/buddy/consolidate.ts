@@ -34,7 +34,13 @@ import { localParts } from '../../lib/time.js';
 import { DEFAULT_TIMEZONE, learnerZoneSql } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
-import { consentCurrentSql, enqueueJob, finishJob, type JobRow } from '../scheduler/jobs.js';
+import {
+  consentCurrentSql,
+  enqueueJob,
+  extendJobLease,
+  finishJob,
+  type JobRow,
+} from '../scheduler/jobs.js';
 import { bumpContext } from './plan.js';
 import { unsupportedSpecifics } from './text.js';
 import { MAX_ACTIVE_MEMORIES } from './toolKit.js';
@@ -130,10 +136,20 @@ export async function planConsolidations(deps: Deps): Promise<number> {
                 and (m.valid_until is null or m.valid_until > $1)) >= $2
         and not exists (select 1 from jobs j
                          where j.learner_id = l.id and j.kind = 'consolidate_memories'
-                           and j.status in ('queued','running'))
+                           and (j.status in ('queued','running') or j.run_at > $5))
         and ${consentCurrentSql('l.id', 3)}
+      order by l.id
       limit 50`,
-    [now, CONSOLIDATE_AT, deps.config.CONSENT_VERSION, DEFAULT_TIMEZONE],
+    [
+      now,
+      CONSOLIDATE_AT,
+      deps.config.CONSENT_VERSION,
+      DEFAULT_TIMEZONE,
+      // One run a day is planned (the key is the local day): a learner who had hers within the
+      // last day is not picked again, so she no longer takes a place of the 50 for nothing and
+      // every learner past the threshold gets her turn (F7, #659).
+      new Date(now.getTime() - 24 * 3_600_000),
+    ],
   );
   let planned = 0;
   for (const l of learners) {
@@ -296,13 +312,8 @@ export async function applyConsolidation(db: Db, input: ApplyInput): Promise<'ap
 }
 
 /** Still ours? The lease is extended before every model call, like a Buddy check's. */
-async function holdsLease(deps: Deps, job: JobRow): Promise<boolean> {
-  const held = await deps.db.maybeOne(
-    `update jobs set lease_until = $3::timestamptz + make_interval(secs => $4)
-      where id = $1 and lease_token = $2 and status = 'running' returning id`,
-    [job.id, job.lease_token, deps.now(), LEASE_SECONDS],
-  );
-  return held !== null;
+function holdsLease(deps: Deps, job: JobRow): Promise<boolean> {
+  return extendJobLease(deps.db, job, deps.now(), LEASE_SECONDS);
 }
 
 type ConsolidationResult = {
@@ -325,13 +336,22 @@ type ConsolidationResult = {
  */
 export async function runConsolidation(deps: Deps, job: JobRow): Promise<void> {
   const learnerId = job.learner_id;
-  if (!learnerId) return;
-  const learner = await deps.db.maybeOne<{ locale: string; timezone: string }>(
-    `select l.locale, ${learnerZoneSql('l.id', 2)} as timezone
-       from learners l where l.id = $1`,
-    [learnerId, DEFAULT_TIMEZONE],
-  );
-  if (!learner) return;
+  const learner = learnerId
+    ? await deps.db.maybeOne<{ locale: string; timezone: string }>(
+        `select l.locale, ${learnerZoneSql('l.id', 2)} as timezone
+           from learners l where l.id = $1`,
+        [learnerId, DEFAULT_TIMEZONE],
+      )
+    : null;
+  // Her account is gone meanwhile: the job ends here, saying so — not left running until its
+  // lease expires (K4, #663).
+  if (!learnerId || !learner) {
+    await finishJob(deps.db, job, deps.now(), {
+      status: 'done',
+      result: { outcome: 'nothing_to_do' },
+    });
+    return;
+  }
   const result: ConsolidationResult = { groups: 0, merged: 0, invalidated: 0, discarded: 0 };
   const memories = await activeMemories(deps.db, learnerId, deps.now());
   if (memories.length < CONSOLIDATE_AT) {
@@ -371,7 +391,7 @@ export async function runConsolidation(deps: Deps, job: JobRow): Promise<void> {
           maxOutputTokens: 1200,
           temperature: 0.1,
           timeoutMs: 30_000,
-          thinkingBudget: 512,
+          thinking: 'low',
         });
         answer = res.json;
       } catch (err) {

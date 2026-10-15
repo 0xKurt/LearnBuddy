@@ -154,16 +154,39 @@ async function pendingSession(
  */
 export async function planSummaries(deps: Deps): Promise<number> {
   const now = deps.now();
+  // Only learners with a stretch of conversation that has come to rest and is not written down
+  // yet, the longest waiting first (F7, #659): the list was 50 learners in no order, already
+  // summarised ones included, so from about 50 learners some never got their summary. A stretch
+  // has come to rest when one of her messages after the last summary is followed by
+  // SESSION_GAP_MS without another (or by nothing, that long ago) — exactly when `pendingSession`
+  // finds one, so no learner picked here is picked for nothing.
   const learners = await deps.db.query<{ id: string }>(
     `select l.id from learners l join accounts ca on ca.id = l.account_id
+       join lateral (select coalesce(max(s.ended_at), '-infinity'::timestamptz) as since
+                       from buddy_session_summaries s where s.learner_id = l.id) sm on true
+       join lateral (select min(m.created_at) as first_at from buddy_messages m
+                      where m.learner_id = l.id and m.status = 'done' and m.created_at > sm.since) pm on true
       where ca.consent_version = $1
         and ca.deletion_started_at is null
         and (ca.deletion_due_at is null or ca.deletion_due_at > $2)
-        and exists (select 1 from buddy_messages m where m.learner_id = l.id and m.status = 'done')
+        and pm.first_at is not null
+        and exists (select 1 from buddy_messages m
+                     where m.learner_id = l.id and m.status = 'done' and m.created_at > sm.since
+                       and m.created_at <= $3
+                       and not exists (select 1 from buddy_messages n
+                                        where n.learner_id = l.id and n.status = 'done'
+                                          and n.created_at > m.created_at
+                                          and n.created_at < m.created_at + make_interval(secs => $4)))
         and not exists (select 1 from jobs j where j.learner_id = l.id and j.kind = 'summarise_session'
                           and j.status in ('queued','running'))
+      order by pm.first_at, l.id
       limit 50`,
-    [deps.config.CONSENT_VERSION, now],
+    [
+      deps.config.CONSENT_VERSION,
+      now,
+      new Date(now.getTime() - SESSION_GAP_MS),
+      SESSION_GAP_MS / 1000,
+    ],
   );
   let planned = 0;
   for (const l of learners) {
@@ -253,7 +276,7 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
       maxOutputTokens: 600,
       temperature: 0.2,
       timeoutMs: 30_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = Summary.safeParse(res.json);
     // Throwing means the job retries; after its last try the terminal effect writes the

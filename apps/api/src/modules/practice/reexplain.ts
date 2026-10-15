@@ -244,7 +244,7 @@ export async function reexplain(
       maxOutputTokens: 1024,
       temperature: 0.5,
       timeoutMs: 20_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = ReexplanationRead.safeParse(r.json);
     if (!parsed.success) throw new LlmError('invalid_output', 'reexplanation invalid');

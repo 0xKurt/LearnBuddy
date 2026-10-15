@@ -656,7 +656,11 @@ review moments `review_next_day`, `review_due`). Gates, cheapest first:
    she or Buddy did moves the context and the model is asked again;
 5. no model configured → fixed fallbacks immediately;
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
-7. apply with the context fence; the contact policy decides whether and when a message is sent;
+7. apply with the context fence; the contact policy decides whether and when a message is sent.
+   A message about a step she already started is refused (`waitingStep` in `apply.ts`, K2 #663:
+   it would be cancelled as obsolete before sending) and goes back to the model as a repair
+   round. A fallback bumps `context_version` only when it wrote a step or a message (K1 #663);
+   one that waits leaves running chat turns valid;
 8. provider outage → retry in 10 minutes (bounded), then fallbacks keep time-critical help
    working (prepared practice before a test, "how did it go", and Buddy's own promise to look
    again as an honest in-app line). A check that answers her own action falls back also after
@@ -801,11 +805,21 @@ finishing and retrying are compare-and-set on the token, so a worker whose lease
 overwrite its successor. A Buddy check heartbeats its leases (the learner's check lease and
 its claimed jobs) before every model call, so a check that runs longer than one lease is never
 taken over while alive; it applies a decision (and its fallbacks) only while it still holds the
-learner's lease — a check is never applied twice (repro-17). At most `max_attempts` (default 3), then parked as `failed` — except the
+learner's lease — a check is never applied twice (repro-17). A sheet's reading does the same
+before each of its up to `MOST_READINGS` calls (`extendJobLease`, K6 #663) and stops without a
+call once its lease went to another run. A job whose handler throws is queued again after its
+backoff with the error as `last_error` (`retryJob`, K4 #663 — before, the lease ran out and
+`lease_expired` replaced the reason). At most `max_attempts` (default 3), then parked as `failed` — except the
 erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KINDS` in
 `scheduler/jobs.ts`): a privacy promise does not expire after three tries, so they are queued
 again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
 lease. A cancelled job can be planned again with the same key (an exam moved away and back).
+The planners reach every learner (F7, #659): `planSummaries` takes only learners with a stretch of
+conversation at rest and not written down yet, longest waiting first; `planConsolidations` skips a
+learner whose run was planned within the day, in a stable order — before, both took 50 learners in
+no order, finished ones included, so from about 50 learners some were never reached. A claim is one
+statement, without a transaction; the retention sweeps run at most every 15 minutes (what Storage
+still owes goes every run), so an idle run stays under 40 round trips.
 
 The tick never names the learning domain (issue #107): the domain registers its job kinds and
 its share of a run at start-up (`scheduler/registry.ts`, from `modules/learning/register.ts`) —
@@ -895,7 +909,17 @@ An event never bypasses the contact rules.
 ## Model calls
 
 `llm/`. One seam (`LlmGateway`): structured JSON for a zod-derived schema, validated again with
-zod. `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) with explicit output-token cap, thinking budget and
+zod. The contract is provider-neutral (#646, `llm/profile.ts`): a call names a **thinking level**
+(`off`/`minimal`/`low`/`medium`/`high`), never a provider's budget, and every gateway carries a
+`GatewayProfile` — the media it reads (`image`, `pdf`, `audio`; a part it cannot read is refused
+in `call.ts` before it is sent), the schema keywords it serves, whether it keeps property order
+and streams partial JSON, and its schema property bound (the practice and reading schemas are
+narrowed to the bound of the gateway they go to, `formChoice.ts`); its prices are its own table
+(`pricing.ts`). A second provider is a new gateway with its profile and its wire test
+(`__tests__/vertex-request.test.ts` for Vertex), with no call site changed.
+`VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) maps the
+levels onto Vertex: `minimal` as Gemini 3's own level, the others as the budgets the call sites
+sent before (off 0, low 512, medium 1024, high 2048), with explicit output-token cap, thinking and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
 tokens (input, output, thinking, and what the provider served from its prefix cache —
@@ -1224,7 +1248,7 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   and gave more careful content. The tutor gets none: on 3.6 Flash more thinking was slower and not
   better (0: 26/27 at 1.1 s; 1024: 16/18 at 1.4–1.7 s; 4096: 17/18 at 2.5 s, evals/tutor).
 - A model call is only as slow as it must be: thinking budget only where it measurably helps.
-  Buddy's turns think at the **minimal level** (`thinkingLevel`, issue #626), not with a
+  Buddy's turns think at the **minimal level** (`thinking: 'minimal'`, issue #626), not with a
   budget: Gemini 3 treats a numeric budget as a hint. At 512 the turn was measured spending up to
   885 thought tokens, and the first byte waits for all of them. On 30.09. the same budget was
   free (0 thought tokens on six turns, first byte 1.0–2.6 s). By 07.10., with the system prompt
@@ -1301,6 +1325,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   the web the walkthrough reads it into `test-results/web/perf.jsonl` (first measurement:
   sending a message reacts in 0 ms, so the wait she called "hängt" is not in that render).
   Budgets come after the numbers, not before.
+- **No call waits forever** (#662, audit F14-a; `apps/mobile/lib/api/watchdog.ts`): a JSON call
+  ends after 15 s without an answer (`wait: 'long'` — a call that waits for the model or a full
+  export — after 150 s, above the API's own longest model budget) as `network` with reason
+  `timeout`; a streamed call ends after `STREAM_IDLE_MS` (20 s) without a byte as `stream_lost`,
+  and `http/stream.ts` sends a `: keepalive` comment every `STREAM_KEEPALIVE_MS` (10 s) while its
+  work runs, so only a dead line is that quiet. Both are `network` failures, so the existing
+  idempotent resend paths (`sendWhenOnline`, `turnIds`) carry them; her own "Stopp" stays
+  `aborted`.
 - **Buddy's replies stream** (`POST /buddy/messages` with `Accept: text/event-stream`;
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
@@ -1467,9 +1499,13 @@ made them small so the last one uploads fast; silent tails are not sent), so 600
 more than 2½ hours of nonstop talking within one hour, and 400 pieces a day is over an hour
 and a half of nonstop dictation on the recording path alone — the device path counts nothing.
 
-Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
-gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
-from 2027; output includes thinking). Note: Gemini 3.x bills the response schema as input tokens
+Pricing used for cost records: one price table per gateway (`apps/api/src/llm/pricing.ts`,
+`VERTEX_EU_PRICES`, read 2026-10-14, issue #648); a new gateway brings its own table from its
+provider's price page. gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens net —
+the introductory price comes as a 50 % credit on the $1.65 / $8.25 invoice until 2026-12-31, and
+3.6 is switched off on 2026-11-19; output includes thinking; audio input on 3.1 Flash-Lite is
+$0.55, twice its text price, read from the provider's per-modality token split; an unknown model
+counts at the table's highest figures, so a record is a ceiling, never an undercount. Note: Gemini 3.x bills the response schema as input tokens
 (Buddy's turn schema ≈ 9 400 → 8 500 tokens after flattening day/duration specs into one object
 each and moving repeated descriptions into the prompt; `$ref`/`$defs` do not help, Gemini expands
 them before billing — measured 2026-09-26), 2.5 did not. Tokens scale with schema text; the
@@ -1515,15 +1551,21 @@ open (#169).**
 **A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
 whether the sheet has more (`more_items`), and the sheet is read again for the rest with the
-prompts it already wrote listed, up to `MOST_READINGS` (4) readings in all. New questions are
-merged; a prompt that only differs in spacing or case is the same question and is not added
+prompts it already wrote listed, up to `MOST_READINGS` (4) readings in all. A continued reading
+is told the transcription and the page reports are stored already and returns them empty
+(`moreRules`, F6 #658): the code always kept the first reading's, and writing them again cost
+about 600 output tokens per continuation (live M5, 90-pair list: 4 873 instead of 5 490–6 823
+tokens, same 30 new pairs). New questions are merged; a prompt that only differs in spacing or case is the same question and is not added
 twice. Until 30.09. the cap was 25 with no second reading, so a fifty-word list quietly became
 twenty-five while the page report still said "all" — the silent cut of #49 one layer below where
 it was looked for, and the reason "frag mich alle Vokabeln ab" could not work however well the
 selection behaved ("das kunstlich deckeln ist der falsche weg", owner 30.09.). If the sheet still
 has more after the last reading, `materials.items_incomplete` says so, Buddy is told in STATE, and
-he says it plainly instead of letting a half-read sheet pass for a whole one (rule 5). Homework is
-a short list by design and is never continued.
+he says it plainly instead of letting a half-read sheet pass for a whole one (rule 5). The same
+holds when the checks drop a question the reading wrote (#757, `usableItems`' `onDrop`): a pair
+without both languages, a key that contradicts its arithmetic, a figure that does not hold — the
+task is on her sheet without a question, so the sheet is `items_incomplete`, and the function log
+says how many were dropped and why. Homework is a short list by design and is never continued.
 
 **An exercise form Buddy cannot practise is reported, not replaced** (issue #198,
 `docs/lehrplan-und-uebungsformen.md` §12.3). A sheet whose task is an essay, a construction with
@@ -1784,7 +1826,9 @@ scanned school PDF (the tests script the model).
 **Concept images** (issue #50, `modules/materials/images.ts`): the questions of a sheet may show
 the sheet's own teaching figure — a REAL crop from the photographed page, never a generated
 picture (the only possible failure is a slightly loose frame, never an invented shape). After a
-sheet became ready, one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
+sheet became ready — in the background, beside Buddy's look at the sheet and the search index,
+never before them (F4-a, #654: nothing the check decides depends on it), and cropping from the
+page bytes the reading already loaded (`PageBytes`, no second download) — one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
 migration 0050) looks at the page photos and the questions read from them and returns one tight
 box per WHOLE figure (a labelled diagram; a reference chart kept whole, never split into cells) —
 omitting comics, scenes and pure text. sharp crops exactly those pixels and lightly cleans them
@@ -3671,7 +3715,11 @@ so the rules only say it when it is certain; everything else goes to the tutor (
 2–3 hints (what is asked → which rule → the first step) and the solution explained step by step:
 questions from a photo in the (background) reading call, questions on a topic in a separate
 background call right after the session starts (`hints.ts`, purpose `hints`) — writing them in the
-start call made her wait 8–11 s instead of 5–6 s. A hint that states the result in any form
+start call made her wait 8–11 s instead of 5–6 s. Once per question (F9-a, #660): the call that
+creates the run (`hintsFor` in `generate.ts`, also when Buddy prepares an offered run ahead in
+`prepare.ts`, so its hints are there by her tap) asks for the questions it brought, the call that
+adds an early run's rest for exactly those; a request that only finds the run starts none. No lock
+is needed: the sets are disjoint, and the write keeps `hints = '{}'` as its fence. A hint that states the result in any form
 (also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. The ladder counts only
 hints she was really shown as hints (migration `0043_prepared_hints_used.sql`: `hints_used` = every
 hint shown, prepared or written by the tutor; `prepared_hints_used` = which prepared one is next).
@@ -3683,7 +3731,10 @@ themselves) gives the next prepared hint at once, or, with none left, lets the t
 request for help, never graded (`not_an_attempt`), and the tutor's own hint is shown and counted as a
 hint. The tutor model, when it must judge, sees the prepared hints; a reply that gives the solution
 away before the second hint is replaced by the next prepared hint (or a first-step question), without
-a second call. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
+a second call (`ladderHoldsSolution`, `namesTheSolution` in `answerReply.ts`). After that, a reply
+she reads that states the solution counts as revealed whatever the model's `revealed_answer` says
+(F9-b, #661, `answerTutor.ts`) — except a confirmation of her own right answer, free text, rubric
+tasks and tasks in parts; homework keeps its own repair. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
 she asks for help again once every prepared hint and at least `HINTS_BEFORE_SOLUTION` (2) hints were
 shown — never on the first "Tipp"; the question then counts as
 revealed (FSRS brings it back soon). Tests give no hints; homework keeps its own rules (never the

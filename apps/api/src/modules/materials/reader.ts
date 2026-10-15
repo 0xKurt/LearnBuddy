@@ -120,7 +120,7 @@ export async function sheetReader(
         temperature: 0.3,
         timeoutMs: 120_000,
         // Read once in the background: time to think (see generate.ts).
-        thinkingBudget: 2048,
+        thinking: 'high',
       },
       chosen.reservation,
     );

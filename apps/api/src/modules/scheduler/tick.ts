@@ -40,12 +40,14 @@ import {
   type PurposeFailures,
 } from './throttle.js';
 import {
+  backoffMs,
   claimJobs,
-  finishJob,
   learnersWithDueJobs,
   PERSISTENT_KINDS,
   recoverExpiredLeases,
   rescheduleJob,
+  retryJob,
+  WAITING_LEASE_SECONDS,
   type JobRow,
 } from './jobs.js';
 
@@ -82,7 +84,7 @@ export type TickStats = {
   idleSessions: number;
   delivery: DeliveryStats | null;
   receipts: { checked: number; rejected: number } | null;
-  /** Null when the budget left no room for the retention pass this run. */
+  /** Null when the budget left no room for the retention pass this run, or it ran < 15 min ago. */
   retention: RetentionStats | null;
   /** The provider's 429 share over the last hour (issue #206); alarms into `errors`. */
   throttle: ModelThrottle | null;
@@ -280,7 +282,18 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   await guard('retention', async () => {
     if (left() < 5_000) return;
     const startedAt = deps.now();
+    // What Storage still owes goes every run: a deleted photo or crop leaves at once.
     const storage = await drainStorageDeletions(deps);
+    // The sweeps at most every RETENTION_EVERY_MS (F7, #659): each of their rules counts in hours
+    // or days, and running all of them every minute was most of an idle run's round trips.
+    const last = await deps.db.maybeOne<{ last_started_at: Date | null }>(
+      `select last_started_at from system_heartbeats where name = 'retention'`,
+    );
+    if (
+      last?.last_started_at &&
+      startedAt.getTime() - last.last_started_at.getTime() < RETENTION_EVERY_MS
+    )
+      return;
     const swept: Record<string, number> = {};
     for (const w of tickWork()) if (w.sweep) swept[w.sweep.key] = await w.sweep.run(deps);
     const closedMemories = await purgeClosedMemories(deps);
@@ -322,8 +335,8 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   return stats;
 }
 
-/** The lease of a job a learner waits for. */
-const WAITING_LEASE_SECONDS = 180;
+/** How often the retention pass runs at most (its rules count in hours and days). */
+const RETENTION_EVERY_MS = 15 * 60_000;
 
 /**
  * The handler of a claimed job of the waiting or the erasure lane (the kinds claimed above, and
@@ -371,9 +384,15 @@ async function runJobSafely(deps: Deps, job: JobRow, fn: () => Promise<void>): P
       await rescheduleJob(deps.db, job, { now: deps.now(), error: message });
       return;
     }
-    if (job.attempts >= job.max_attempts) {
-      await finishJob(deps.db, job, deps.now(), { status: 'failed', error: message });
-    }
-    // Otherwise the lease expires and the job is retried by a later run.
+    // Back to the queue after its backoff, with the reason kept (K4, #663): waiting for the lease
+    // to expire wrote `lease_expired` over it, and a job that failed three times said only that.
+    // On its last attempt `retryJob` parks it as failed, with the same reason.
+    const now = deps.now();
+    await retryJob(deps.db, job, {
+      runAt: new Date(now.getTime() + backoffMs(job.attempts)),
+      error: message,
+      countAttempt: true,
+      now,
+    });
   }
 }

@@ -185,7 +185,7 @@ export async function readWork(
       // A copy, not a judgement: no sampling, no thinking (like `voice/service.ts`). Unmeasured
       // on real notebooks — the live eval of #444 decides whether reading needs more.
       temperature: 0,
-      thinkingBudget: 0,
+      thinking: 'off',
       timeoutMs: 30_000,
     });
     const parsed = WorkDraft.safeParse(res.json);

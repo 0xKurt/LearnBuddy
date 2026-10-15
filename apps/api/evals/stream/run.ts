@@ -41,6 +41,7 @@ const marks: Mark[] = [];
 
 const gateway: LlmGateway = {
   available: true,
+  profile: real.profile,
   async generate(req: LlmRequest) {
     const t0 = performance.now();
     const m: Mark = {

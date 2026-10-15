@@ -16,6 +16,7 @@ import {
   GoogleGenAI,
   HarmBlockThreshold,
   HarmCategory,
+  MediaModality,
   ThinkingLevel,
   type GenerateContentResponse,
   type SafetySetting,
@@ -29,12 +30,39 @@ import {
   type LlmRequest,
   type LlmResult,
   type LlmUsage,
-  type ThinkingLevelName,
   TRUNCATED,
 } from './gateway.js';
 import { repairJsonStrings } from './latex.js';
-import { costMicros } from './pricing.js';
+import { costMicros, VERTEX_EU_PRICES } from './pricing.js';
+import type { GatewayProfile, Thinking } from './profile.js';
 import { generateWithRetries } from './retry.js';
+import { MAX_SCHEMA_PROPERTIES } from './schemaBudget.js';
+
+/**
+ * What Gemini on Vertex accepts (#646): every media kind in the same call as structured output,
+ * every keyword our schemas use (`$ref` would be expanded before billing, so we send none),
+ * properties written in declared order, JSON streamed while it is written, and the property bound
+ * measured on `eu/gemini-3.6-flash` (#627, `schemaBudget.ts`).
+ */
+export const VERTEX_PROFILE: GatewayProfile = {
+  name: 'vertex',
+  media: new Set(['image', 'pdf', 'audio']),
+  structuredOutput: {
+    keywords: new Set([
+      'type',
+      'description',
+      'enum',
+      'items',
+      'anyOf',
+      'properties',
+      'additionalProperties',
+      'required',
+    ]),
+    keepsPropertyOrder: true,
+    streamsPartialJson: true,
+    maxSchemaProperties: MAX_SCHEMA_PROPERTIES,
+  },
+};
 
 // Children use the app: strict on sexual content, medium elsewhere.
 const SAFETY: SafetySetting[] = [
@@ -80,13 +108,23 @@ export function usageOf(
   // cost_micros stays the full price and this is the number that shows the saving, not
   // a discount we assume (rule 5, docs/architecture.md §Speed).
   const cachedTokens = meta?.cachedContentTokenCount ?? 0;
+  // Audio input is billed apart on some models (3.1 Flash-Lite: twice the text price, #648):
+  // the provider's modality split of the prompt says how much of it was audio.
+  const audioInputTokens = (meta?.promptTokensDetails ?? [])
+    .filter((d) => d.modality === MediaModality.AUDIO)
+    .reduce((n, d) => n + (d.tokenCount ?? 0), 0);
   return {
     model,
     inputTokens,
     outputTokens,
     thoughtTokens,
     cachedTokens,
-    costMicros: costMicros(model, inputTokens, outputTokens, thoughtTokens),
+    costMicros: costMicros(VERTEX_EU_PRICES, model, {
+      inputTokens,
+      audioInputTokens,
+      outputTokens,
+      thoughtTokens,
+    }),
     latencyMs,
   };
 }
@@ -120,20 +158,25 @@ export function modelFor(config: Config, req: Pick<LlmRequest, 'purpose' | 'tier
   );
 }
 
-const THINKING_LEVEL: Record<ThinkingLevelName, ThinkingLevel> = {
-  minimal: ThinkingLevel.MINIMAL,
-  low: ThinkingLevel.LOW,
-  medium: ThinkingLevel.MEDIUM,
-  high: ThinkingLevel.HIGH,
-};
-
-/** A level wins over a budget: the two are alternatives, a request carries one. */
-function thinkingConfigOf(req: LlmRequest) {
-  if (req.thinkingLevel)
-    return { thinkingConfig: { thinkingLevel: THINKING_LEVEL[req.thinkingLevel] } };
-  if (req.thinkingBudget !== undefined)
-    return { thinkingConfig: { thinkingBudget: req.thinkingBudget } };
-  return {};
+/**
+ * A neutral thinking level as Vertex takes it (#646). `minimal` is Gemini 3's own level: a budget
+ * is only a hint there, and Buddy's turn at 512 was measured thinking up to 885 tokens, the first
+ * byte waiting for every one of them (#626). The others are the budgets the call sites sent before
+ * the contract was neutral, so the wire stays as it was: off 0, low 512, medium 1024, high 2048.
+ */
+function thinkingConfigOf(thinking: Thinking) {
+  switch (thinking) {
+    case 'minimal':
+      return { thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } };
+    case 'off':
+      return { thinkingConfig: { thinkingBudget: 0 } };
+    case 'low':
+      return { thinkingConfig: { thinkingBudget: 512 } };
+    case 'medium':
+      return { thinkingConfig: { thinkingBudget: 1024 } };
+    case 'high':
+      return { thinkingConfig: { thinkingBudget: 2048 } };
+  }
 }
 
 /**
@@ -155,7 +198,7 @@ export function paramsFor(req: LlmRequest, model: string, timeoutMs: number) {
       responseMimeType: 'application/json',
       responseJsonSchema: req.schema,
       safetySettings: SAFETY,
-      ...thinkingConfigOf(req),
+      ...thinkingConfigOf(req.thinking),
       // Not req.timeoutMs: that is the budget for the whole call including retries, and
       // this attempt only gets what is left of it (retry.ts).
       abortSignal: AbortSignal.timeout(timeoutMs),
@@ -165,6 +208,7 @@ export function paramsFor(req: LlmRequest, model: string, timeoutMs: number) {
 
 export class VertexGateway implements LlmGateway {
   readonly available = true;
+  readonly profile = VERTEX_PROFILE;
   /** One client per location (the EU multi-region "eu" serves models europe-west4 doesn't). */
   private readonly clients = new Map<string, GoogleGenAI>();
 

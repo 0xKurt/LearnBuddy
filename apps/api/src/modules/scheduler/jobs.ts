@@ -129,9 +129,10 @@ export async function claimJobs(
     consentVersion?: string;
   },
 ): Promise<JobRow[]> {
-  return db.tx(async (tx) =>
-    tx.query<JobRow>(
-      `with due as (
+  // One statement claims atomically (`for update skip locked` inside it): no transaction around
+  // it, which cost three more round trips per claim on every run (F7, #659).
+  return db.query<JobRow>(
+    `with due as (
          select id from jobs
           where status = 'queued' and run_at <= $1 and kind = any($2::text[])
             and ($5::uuid is null or learner_id = $5)
@@ -148,15 +149,14 @@ export async function claimJobs(
          from due
         where j.id = due.id
        returning j.*`,
-      [
-        opts.now,
-        opts.kinds,
-        opts.limit,
-        opts.leaseSeconds,
-        opts.learnerId ?? null,
-        opts.consentVersion ?? null,
-      ],
-    ),
+    [
+      opts.now,
+      opts.kinds,
+      opts.limit,
+      opts.leaseSeconds,
+      opts.learnerId ?? null,
+      opts.consentVersion ?? null,
+    ],
   );
 }
 
@@ -181,6 +181,28 @@ export async function learnersWithDueJobs(
     [now, kinds, limit, consentVersion ?? null],
   );
   return rows.map((r) => r.learner_id);
+}
+
+/** The lease of a job a learner waits for (a reading of her photos). */
+export const WAITING_LEASE_SECONDS = 180;
+
+/**
+ * Still this run's job? Extends its lease by `seconds` from `now` and says whether it held — a
+ * long run calls this before each model call, so its lease never runs out while it works and no
+ * second run claims the same job (K6, #663).
+ */
+export async function extendJobLease(
+  db: Db,
+  job: JobRow,
+  now: Date,
+  seconds: number,
+): Promise<boolean> {
+  const held = await db.maybeOne(
+    `update jobs set lease_until = $3::timestamptz + make_interval(secs => $4)
+      where id = $1 and lease_token = $2 and status = 'running' returning id`,
+    [job.id, job.lease_token, now, seconds],
+  );
+  return held !== null;
 }
 
 /** Complete a job; false if the lease was lost (another worker owns it now). */

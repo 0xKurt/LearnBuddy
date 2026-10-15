@@ -1,0 +1,91 @@
+// What a gateway can do, said in the gateway's own words (issue #646, KI-Audit F1 (2)). The call
+// sites ask in neutral terms — a thinking level, media parts, a JSON schema — and every gateway
+// says here what it accepts and how it translates it, so a second provider is plugged in by
+// writing its gateway and its profile, never by touching a call site. docs/architecture.md §Model
+// calls.
+//
+// Prices are the gateway's too: it reports each call's cost in `LlmUsage.costMicros` from its own
+// table (`pricing.ts`).
+
+import type { LlmPart, LlmRequest } from './gateway.js';
+
+/**
+ * How much the model may think before it answers, in the call site's terms. Each gateway maps it
+ * onto what its provider offers (a level, a token budget, a model, or nothing at all).
+ */
+export type Thinking = 'off' | 'minimal' | 'low' | 'medium' | 'high';
+
+/** What a media part is, as far as a model's abilities go. */
+export type MediaKind = 'image' | 'pdf' | 'audio';
+
+/**
+ * Every JSON Schema keyword the response schemas we send use (`json-schema.ts` emits only these).
+ * A gateway lists the ones its provider serves; `__tests__/profile.test.ts` holds every schema we
+ * send to the keywords of the gateway in production.
+ */
+type SchemaKeyword =
+  | 'type'
+  | 'description'
+  | 'enum'
+  | 'items'
+  | 'anyOf'
+  | 'properties'
+  | 'additionalProperties'
+  | 'required';
+
+export type GatewayProfile = {
+  /** For logs and errors: which provider and endpoint. */
+  name: string;
+  /** The media a request may carry; a part of another kind is refused before it is sent. */
+  media: ReadonlySet<MediaKind>;
+  structuredOutput: {
+    keywords: ReadonlySet<SchemaKeyword>;
+    /**
+     * Whether the model writes the properties in the order the schema declares them. The stream
+     * reads a reply before the actions behind it (`buddy/stream.ts`) because of it.
+     */
+    keepsPropertyOrder: boolean;
+    /**
+     * Whether the JSON arrives piece by piece while it is written. Without it nothing is spoken
+     * early (`partial.ts`, `buddy/stream.ts`): the whole answer comes at once, and is still right.
+     */
+    streamsPartialJson: boolean;
+    /** The most properties over every object of a schema the provider serves (`schemaBudget.ts`). */
+    maxSchemaProperties: number;
+  };
+};
+
+export function mediaKindOf(part: LlmPart): MediaKind | null {
+  if (!('inlineData' in part)) return null;
+  const mime = part.inlineData.mimeType;
+  if (mime === 'application/pdf') return 'pdf';
+  if (mime.startsWith('image/')) return 'image';
+  return 'audio';
+}
+
+/** The media kinds `req` carries that `profile` does not accept, each once. */
+export function unsupportedMedia(profile: GatewayProfile, req: LlmRequest): MediaKind[] {
+  const kinds = new Set<MediaKind>();
+  for (const m of req.contents)
+    for (const p of m.parts) {
+      const kind = mediaKindOf(p);
+      if (kind !== null && !profile.media.has(kind)) kinds.add(kind);
+    }
+  return [...kinds];
+}
+
+/** Every keyword a schema uses, over all its nodes. */
+export function schemaKeywordsOf(schema: object): Set<string> {
+  const used = new Set<string>();
+  const walk = (node: unknown, asProperties = false): void => {
+    if (Array.isArray(node)) return node.forEach((n) => walk(n));
+    if (typeof node !== 'object' || node === null) return;
+    for (const [key, value] of Object.entries(node)) {
+      // The names under `properties` are field names, not keywords.
+      if (!asProperties) used.add(key);
+      walk(value, !asProperties && key === 'properties');
+    }
+  };
+  walk(schema);
+  return used;
+}
