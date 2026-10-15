@@ -61,7 +61,7 @@ const request = (schema: JsonSchema): LlmRequest => ({
   maxOutputTokens: 1000,
   temperature: 0.3,
   timeoutMs: 10_000,
-  thinkingBudget: 0,
+  thinking: 'off',
 });
 
 describe('the request Vertex receives (issue #283)', () => {
@@ -86,17 +86,21 @@ describe('the request Vertex receives (issue #283)', () => {
     expect(config.thinkingConfig).toEqual({ thinkingBudget: 0 });
   });
 
-  it('sends a thinking level instead of a budget when the call names one (issue #626)', async () => {
+  // The neutral thinking levels (#646) go out as the budgets the call sites sent before, so the
+  // wire is what it was; `minimal` is Gemini 3's own level, never a budget (#626: 512 asked, 885
+  // spent).
+  it.each([
+    ['off', { thinkingBudget: 0 }],
+    ['minimal', { thinkingLevel: 'MINIMAL' }],
+    ['low', { thinkingBudget: 512 }],
+    ['medium', { thinkingBudget: 1024 }],
+    ['high', { thinkingBudget: 2048 }],
+  ] as const)('sends thinking %s as %j', async (thinking, wire) => {
     const { body } = await wireBody(
-      paramsFor(
-        { ...request(TURN_STEP_SCHEMA), thinkingBudget: 512, thinkingLevel: 'minimal' },
-        'gemini-3.6-flash',
-        5_000,
-      ),
+      paramsFor({ ...request(TURN_STEP_SCHEMA), thinking }, 'gemini-3.6-flash', 5_000),
     );
     const config = body.generationConfig as Record<string, unknown>;
-    // The level only: a numeric budget is a hint Gemini 3 overruns (512 asked, 885 spent).
-    expect(config.thinkingConfig).toEqual({ thinkingLevel: 'MINIMAL' });
+    expect(config.thinkingConfig).toEqual(wire);
   });
 
   it('canary: the SDK still drops responseFormat — re-check #283 when this fails', async () => {

@@ -255,7 +255,7 @@ export async function speakItem(
       // No extra thinking: writing heard_ipa first already is the close listening.
       // Measured live (evals/speak/run.ts, 3 runs each): twice as fast, and the
       // wrong word was caught 3/3 instead of 2/3 (docs/buddy/02-verifikation.md).
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = Judgement.safeParse(res.json);
     if (!parsed.success || judgementFault(item.prompt, parsed.data) !== null)
@@ -421,7 +421,7 @@ export async function speakWord(
       maxOutputTokens: 1024,
       temperature: 0.2,
       timeoutMs: 45_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = WordJudgement.safeParse(res.json);
     if (!parsed.success) throw new AppError('model_unavailable', 'Could not listen right now');

@@ -40,12 +40,14 @@ import {
   type PurposeFailures,
 } from './throttle.js';
 import {
+  backoffMs,
   claimJobs,
-  finishJob,
   learnersWithDueJobs,
   PERSISTENT_KINDS,
   recoverExpiredLeases,
   rescheduleJob,
+  retryJob,
+  WAITING_LEASE_SECONDS,
   type JobRow,
 } from './jobs.js';
 
@@ -322,9 +324,6 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   return stats;
 }
 
-/** The lease of a job a learner waits for. */
-const WAITING_LEASE_SECONDS = 180;
-
 /**
  * The handler of a claimed job of the waiting or the erasure lane (the kinds claimed above, and
  * only those): the registered one, or the core's own account deletion. Only work that must run
@@ -371,9 +370,15 @@ async function runJobSafely(deps: Deps, job: JobRow, fn: () => Promise<void>): P
       await rescheduleJob(deps.db, job, { now: deps.now(), error: message });
       return;
     }
-    if (job.attempts >= job.max_attempts) {
-      await finishJob(deps.db, job, deps.now(), { status: 'failed', error: message });
-    }
-    // Otherwise the lease expires and the job is retried by a later run.
+    // Back to the queue after its backoff, with the reason kept (K4, #663): waiting for the lease
+    // to expire wrote `lease_expired` over it, and a job that failed three times said only that.
+    // On its last attempt `retryJob` parks it as failed, with the same reason.
+    const now = deps.now();
+    await retryJob(deps.db, job, {
+      runAt: new Date(now.getTime() + backoffMs(job.attempts)),
+      error: message,
+      countAttempt: true,
+      now,
+    });
   }
 }

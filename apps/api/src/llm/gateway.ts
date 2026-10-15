@@ -8,6 +8,7 @@
 import type { AudioMime } from '@learnbuddy/shared-types/contracts';
 
 import type { Outcome } from '../lib/outcome.js';
+import type { GatewayProfile, Thinking } from './profile.js';
 
 export type JsonSchema = { [key: string]: JsonValue };
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -57,9 +58,6 @@ export type LlmPurpose =
    */
   | 'canary';
 
-/** Gemini 3 thinking levels (the Vertex `ThinkingConfig.thinkingLevel` values, lower case). */
-export type ThinkingLevelName = 'minimal' | 'low' | 'medium' | 'high';
-
 export type LlmRequest = {
   purpose: LlmPurpose;
   /** 'smart' for everything today; 'fast' is the cheaper model for low-stakes tasks. */
@@ -71,14 +69,12 @@ export type LlmRequest = {
   maxOutputTokens: number;
   temperature: number;
   timeoutMs: number;
-  /** Tokens the model may spend thinking (0 = off where the model allows). */
-  thinkingBudget?: number;
   /**
-   * Gemini 3's own thinking control, sent instead of `thinkingBudget` when set. A numeric
-   * budget is only a hint there: Buddy's turn at 512 was measured spending up to 885 thought
-   * tokens, and the first byte waits for every one of them (issue #626).
+   * How much the model may think first (#646): the call site's choice in neutral terms, which
+   * the gateway maps onto its provider (`profile.ts`). Thinking is billed as output and the first
+   * byte waits for it.
    */
-  thinkingLevel?: ThinkingLevelName;
+  thinking: Thinking;
   /**
    * Streaming: called with the JSON written so far, as it arrives. Only for showing
    * progress — decisions are still made on the whole, validated result.
@@ -163,11 +159,26 @@ export class LlmError extends Error {
 
 export interface LlmGateway {
   readonly available: boolean;
+  /** What this gateway accepts and how it is bounded (#646, `profile.ts`). */
+  readonly profile: GatewayProfile;
   generate(req: LlmRequest): Promise<LlmResult>;
 }
 
+/** No model: no media, and no schema is narrowed for a call that cannot run anyway. */
+const NO_MODEL: GatewayProfile = {
+  name: 'disabled',
+  media: new Set(),
+  structuredOutput: {
+    keywords: new Set(),
+    keepsPropertyOrder: false,
+    streamsPartialJson: false,
+    maxSchemaProperties: Number.POSITIVE_INFINITY,
+  },
+};
+
 export class DisabledGateway implements LlmGateway {
   readonly available = false;
+  readonly profile = NO_MODEL;
   async generate(): Promise<LlmResult> {
     throw new LlmError('unavailable', 'No language model is configured (LLM_BACKEND=disabled)');
   }

@@ -38,6 +38,7 @@ function request(
     maxOutputTokens: 1000,
     temperature: 0,
     timeoutMs: 1000,
+    thinking: 'off',
   };
 }
 

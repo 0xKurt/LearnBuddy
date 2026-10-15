@@ -52,7 +52,7 @@ const CANARY_REQUEST: Omit<LlmRequest, 'timeoutMs'> = {
   schema: CANARY_SCHEMA,
   maxOutputTokens: 64,
   temperature: 0,
-  thinkingLevel: 'minimal',
+  thinking: 'minimal',
 };
 
 export type OverBudget = { purpose: string; profile: string; properties: number };

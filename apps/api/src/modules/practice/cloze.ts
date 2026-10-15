@@ -485,7 +485,7 @@ export async function judgeOpenGaps(deps: Deps, input: JudgeInput): Promise<Cloz
       maxOutputTokens: 512,
       temperature: 0,
       timeoutMs: 20_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = GapJudgement.safeParse(res.json);
     if (!parsed.success) return input.check;

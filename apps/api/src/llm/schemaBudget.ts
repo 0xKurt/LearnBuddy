@@ -48,7 +48,10 @@ export function schemaProperties(schema: JsonSchema): number {
   return count;
 }
 
-/** Whether Vertex serves this schema, by the measured bound. */
-export function withinBudget(schema: JsonSchema): boolean {
-  return schemaProperties(schema) <= MAX_SCHEMA_PROPERTIES;
+/**
+ * Whether a gateway serves this schema, by its bound (`GatewayProfile.structuredOutput`,
+ * #646): the measured Vertex bound unless another is given.
+ */
+export function withinBudget(schema: JsonSchema, maxProperties = MAX_SCHEMA_PROPERTIES): boolean {
+  return schemaProperties(schema) <= maxProperties;
 }

@@ -511,7 +511,7 @@ async function generateSet(
         // Prepared once, and everything later builds on it (keys, hints, worked
         // solutions): time to think. Measured on 3.6 Flash: about the same time and
         // cost, more careful content (docs/architecture.md §Speed).
-        thinkingBudget: 2048,
+        thinking: 'high',
         onPartial,
       },
       reservation,
@@ -804,7 +804,7 @@ async function prepareTopic(
   if (!head || !first || first.items.length < FIRST_BATCH) {
     const { set, err } = await whole;
     if (!set) throw err;
-    return store(
+    const stored = await store(
       deps,
       learner,
       input,
@@ -822,11 +822,13 @@ async function prepareTopic(
         origin: input.kind === 'spelling_dictation' ? dictationOrigin(set, dictation) : null,
       },
     );
+    hintsFor(deps, learner, input, stored);
+    return stored.id;
   }
 
   // Three questions stand there and the rest is still being written. The run starts on them, and
   // it says so from the moment it exists: there is no instant at which three look like all.
-  const sessionId = await store(
+  const started = await store(
     deps,
     learner,
     input,
@@ -853,6 +855,8 @@ async function prepareTopic(
       origin: null,
     },
   );
+  const sessionId = started.id;
+  hintsFor(deps, learner, input, started);
   deps.background(async () => {
     // Whatever goes wrong behind her, the run stops saying "more is coming" instead of waiting out
     // its window for questions that will never arrive (rule 5).
@@ -870,6 +874,31 @@ async function prepareTopic(
     });
   });
   return sessionId;
+}
+
+/** The run `store` wrote, or found: `itemIds` are the questions it brought, none when it found it. */
+type Stored = { id: string; itemIds: string[] };
+
+/**
+ * Hints for the questions a run was just given, written in the background while she reads the
+ * first one (F9-a, #660). Only by the call that created the run: a second request for the same
+ * run (her tap on a card Buddy prepared, a lost reply sent again) finds it and starts nothing.
+ * Started here, not in the route, so a run Buddy prepares ahead (`prepare.ts`) has its hints by
+ * the time she taps. Best effort: if this never runs, the tutor model helps as before
+ * (hints.ts). A test shows no hints, but the same call writes each question's worked solution,
+ * which its review explains with (#388 §3.2).
+ */
+function hintsFor(
+  deps: Deps,
+  learner: PracticeLearner,
+  input: StartTopicRequest,
+  stored: Stored,
+): void {
+  if (input.kind !== 'practice' && input.kind !== 'test') return;
+  if (stored.itemIds.length === 0) return;
+  deps.background(async () => {
+    await prepareHints(deps, learner, stored.id, stored.itemIds).catch(() => 0);
+  });
 }
 
 /**
@@ -891,7 +920,7 @@ async function store(
     /** Where this run's questions come from, when the kind alone does not say (a Diktat, #242). */
     origin: 'typed' | 'buddy' | null;
   },
-): Promise<string> {
+): Promise<Stored> {
   if (
     !set.usable ||
     prepared.items.length +
@@ -956,16 +985,16 @@ async function store(
         now,
       );
       await bumpContext(tx, learner.id);
-      return id;
+      return { id, itemIds };
     });
   } catch (err) {
-    // The same request ran twice at once: return the one that won.
+    // The same request ran twice at once: return the one that won — its questions are its own.
     if (isUniqueViolation(err)) {
       const won = await deps.db.maybeOne<{ id: string }>(
         `select id from practice_sessions where learner_id = $1 and client_request_id = $2`,
         [learner.id, input.client_request_id],
       );
-      if (won) return won.id;
+      if (won) return { id: won.id, itemIds: [] };
     }
     throw err;
   }
@@ -1058,12 +1087,12 @@ async function addTheRest(
     const n = await addPreparedItems(tx, learner.id, sessionId, itemIds, now);
     // The run grew, so everything Buddy knows about it is a version behind (rule 4).
     if (n > 0) await bumpContext(tx, learner.id);
-    return n;
+    return n > 0 ? itemIds : [];
   });
-  // The questions that just arrived have no prepared ladder yet. `prepareHints` takes only the
-  // ones that have none, so this writes help for the rest of the set and never touches the first
-  // questions' (hints.ts). Best effort, like the call the route makes for the first ones.
-  if (added > 0) await prepareHints(deps, learner, sessionId).catch(() => 0);
+  // The questions that just arrived have no prepared ladder yet: hints for exactly these, never
+  // again for the first ones, whose own call may still be running (F9-a, #660). Best effort,
+  // like the call for the first questions.
+  if (added.length > 0) await prepareHints(deps, learner, sessionId, added).catch(() => 0);
 }
 
 /** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */

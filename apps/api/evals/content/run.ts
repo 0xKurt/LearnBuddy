@@ -46,6 +46,7 @@ const vertex = new VertexGateway(config);
 const seen: { purpose: string; json?: unknown; error?: string }[] = [];
 const gateway: LlmGateway = {
   available: true,
+  profile: vertex.profile,
   async generate(req) {
     try {
       const res = await vertex.generate(req);
@@ -157,7 +158,7 @@ async function judge(
     maxOutputTokens: 500,
     temperature: 0,
     timeoutMs: 45_000,
-    thinkingBudget: 0,
+    thinking: 'off',
   });
   return Verdict.parse(res.json);
 }

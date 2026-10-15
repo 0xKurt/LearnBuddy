@@ -24,7 +24,9 @@ import {
   type JsonSchema,
 } from '../llm/gateway.js';
 import { answerUpTo } from '../llm/partial.js';
+import type { GatewayProfile } from '../llm/profile.js';
 import { withinBudget } from '../llm/schemaBudget.js';
+import { VERTEX_PROFILE } from '../llm/vertex.js';
 import { chosenFor, fitted, isChoosing, offered, usedBy } from '../modules/practice/formChoice.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
 import type { SpeechAudio, SpeechError, SpeechGateway, SpeechInput } from '../speech/gateway.js';
@@ -144,6 +146,11 @@ function sizeOf(base64: string): string {
  */
 export class ScriptedGateway implements LlmGateway {
   available = true;
+  /**
+   * What the scripted model accepts: the production gateway's profile, so a schema is narrowed and
+   * a part refused as it would be there (#646). A test of another gateway's bounds sets its own.
+   */
+  profile: GatewayProfile = VERTEX_PROFILE;
   readonly calls: LlmRequest[] = [];
   readonly unexpected: LlmRequest[] = [];
   /** Errors thrown inside scripted functions (e.g. failed expectations about the context). */
