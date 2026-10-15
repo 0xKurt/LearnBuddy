@@ -16,6 +16,7 @@ describe('the shared real photo-quality decisions', () => {
         photo={{
           state: { step: 'checking', problems: ['blurry'], base64: 'YQ==' },
           take,
+          pick: vi.fn(),
           keep,
           done,
         }}

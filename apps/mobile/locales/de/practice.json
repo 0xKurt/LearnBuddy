@@ -420,7 +420,9 @@
     "too_long": "Das ist mehr, als in eine Antwort passt. Fotografier nur deinen Weg zu dieser Aufgabe.",
     "down": "Ich kann dein Foto gerade nicht lesen. Tipp deinen Weg ein oder versuch es gleich nochmal.",
     "camera_blocked": "LearnBuddy darf die Kamera noch nicht benutzen. Du kannst das in den Einstellungen erlauben – oder deinen Weg eintippen.",
-    "camera_failed": "Die Kamera ging gerade nicht auf. Versuch es nochmal oder tipp deinen Weg ein."
+    "camera_failed": "Die Kamera ging gerade nicht auf. Versuch es nochmal oder tipp deinen Weg ein.",
+    "attach_title": "Deinen Rechenweg anhängen",
+    "attach_line": "Ich lese ihn und schreibe ihn in dein Antwortfeld. Du prüfst jede Zeile, bevor du sendest."
   },
   "code": {
     "line": "Zeile {{n}}",

@@ -2507,7 +2507,9 @@ Antwort (Vorschlag 3 in #221) steht im nächsten Absatz.
 **Fotografiert auch** (Issue #444, `modules/practice/workPhoto.ts`, `contracts/workPhoto.ts`). Sie
 rechnet im Heft und fotografiert ihren Weg, statt ihn abzutippen: wo ein Weg geprüft wird
 (`pathPossible`, jetzt die EINE Liste für `evaluate.ts`, die ↵-Taste und das Foto), steht am Anfang
-der Antwortleiste eine Kamera, wo der Chat sein + hat. Das Modell **schreibt nur ab**
+der Antwortleiste das + des Designs (`Composer.jsx`, #596), wie im Chat; es öffnet dasselbe Blatt
+wie dort (`AttachMenu`), hier mit Kamera und Galerie (`useWorkPhoto` `take`/`pick`), ohne Dateien.
+Das Modell **schreibt nur ab**
 (`POST /practice/sessions/:id/work-photo`, Zweck `transcribe`); die Abschrift kommt in IHR Feld,
 sie vergleicht sie mit ihrem Heft und schickt sie mit „Prüfen" — über den gewöhnlichen Antwortweg,
 also `checkPath`, den Folgefehler aus #297 und alles andere, was eine getippte Antwort bekommt. Kein

@@ -17,6 +17,9 @@ import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 
 type Source = Exclude<AttachOpen, 'menu'>;
 
+/** A place that attaches something else than a sheet's pages: its words and its sources. */
+export type OwnAttach = { title: string; line: string; sources: readonly Source[] };
+
 const SOURCES: readonly { source: Source; icon: IconName }[] = [
   { source: 'camera', icon: 'camera' },
   { source: 'library', icon: 'book' },
@@ -44,25 +47,31 @@ export function AttachMenu({
   onClose,
 }: {
   visible: boolean;
-  /** What the pages will be for. */
-  link: DraftLink;
+  /**
+   * What the pages will be for — or, in a practice, what the photo is for (#596): her working,
+   * read into her answer, from the camera or a photo she already took; no file.
+   */
+  link: DraftLink | OwnAttach;
   onChoose: (source: Source) => void;
   onClose: () => void;
 }) {
   const { palette } = useTheme();
-  const { t } = useTranslation(['buddy', 'capture', 'common']);
-  const { title, line } = wording(link);
+  const { t } = useTranslation(['buddy', 'capture', 'common', 'practice']);
+  const { title, line } = 'sources' in link ? link : wording(link);
+  const pages = 'sources' in link ? 0 : link.pages;
+  const sources =
+    'sources' in link ? SOURCES.filter((s) => link.sources.includes(s.source)) : SOURCES;
   return (
     <Sheet
       visible={visible}
-      title={t(title, { pages: link.pages })}
+      title={t(title, { pages })}
       closeLabel={t('common:actions.close')}
       onClose={onClose}
     >
       <Text style={[TYPE.meta, SHEET_TEXT, { color: palette.ink2 }]}>
         {`${t(line)} ${t('capture:privacy')}`}
       </Text>
-      {SOURCES.map(({ source, icon }) => (
+      {sources.map(({ source, icon }) => (
         <Btn
           key={source}
           full
