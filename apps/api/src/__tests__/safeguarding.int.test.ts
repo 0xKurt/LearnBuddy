@@ -48,6 +48,8 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     env.llm.script('buddy_turn', {
       error: new LlmError('blocked', 'finish reason SAFETY', null, 'SAFETY'),
     });
+    // The distress check is held back too (#758): it fails safe, to the helpline.
+    env.llm.script('safeguard', { error: new LlmError('blocked', 'SAFETY', null, 'SAFETY') });
     const blocked = await send(l, DISCLOSURE);
     // Not a glitch to resend: answered, by code, with the helpline for her language.
     expect(blocked.body.status).toBe('done');
@@ -442,6 +444,61 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     expect(again.body.status).toBe('done');
     const home = await l.api.get<BuddyHome>('/buddy');
     expect(home.body.thread[0]).toMatchObject({ status: 'done', failure_code: null });
+  });
+
+  // ── #758: the safety filter cannot tell an insult from a disclosure; the distress check can ──
+
+  const INSULT = 'du bist voll dumm, du checkst echt gar nichts, du blöder bot';
+  const filterHolds = () =>
+    env.llm.script('buddy_turn', {
+      error: new LlmError('blocked', 'finish reason SAFETY', null, 'SAFETY'),
+    });
+  const lastReply = async (l: Learner) =>
+    (
+      await env.db.one<{ text: string }>(
+        `select text from buddy_messages where learner_id = $1 and role = 'buddy'
+          order by seq desc limit 1`,
+        [l.learnerId],
+      )
+    ).text;
+
+  it('an insult the filter holds back gets a calm fixed line, not the helpline', async () => {
+    // Live (15.10.): Vertex rates the streamed answer to an insult as harassment and blocks it;
+    // every one of 20 insults got the crisis text with 116 111.
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    filterHolds();
+    env.llm.script('safeguard', (req: LlmRequest) => {
+      expect(ScriptedGateway.textOf(req)).toContain(INSULT);
+      return { concern: false };
+    });
+    const res = await send(l, INSULT);
+    expect(res.body.status).toBe('done');
+    expect(await lastReply(l)).toBe(t('de', 'safeguarding.held'));
+    expect(await lastReply(l)).not.toContain('116 111');
+    // Her words are still never sent to the turn's model again.
+    const mine = await env.db.one<{ failure_code: string; recall_block: string }>(
+      `select failure_code, recall_block from buddy_messages where learner_id = $1 and role = 'learner'`,
+      [l.learnerId],
+    );
+    expect(mine).toEqual({ failure_code: 'blocked', recall_block: 'blocked' });
+  });
+
+  it('a disclosure the filter holds back gets the fixed concern answer', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    filterHolds();
+    env.llm.script('safeguard', { json: { concern: true } });
+    const res = await send(l, DISCLOSURE);
+    expect(res.body.status).toBe('done');
+    expect(await lastReply(l)).toBe(t('de', 'safeguarding.concern'));
+  });
+
+  it('a held-back turn whose check cannot run keeps the helpline (fails safe)', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    filterHolds();
+    env.llm.script('safeguard', { error: new LlmError('unavailable', 'down') });
+    const res = await send(l, INSULT);
+    expect(res.body.status).toBe('done');
+    expect(await lastReply(l)).toBe(t('de', 'safeguarding.blocked'));
   });
 
   // ── #761: a failed turn never leaves her distress unread ───────────────────────────────────

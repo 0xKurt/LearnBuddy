@@ -27,7 +27,7 @@ import { callModel } from '../../llm/call.js';
 import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { applyDecision, recordUnapplied, type DecisionMeta } from './apply.js';
 import { buildContents, buildContext } from './context.js';
-import { distressCheck } from './distress.js';
+import { distressCheck, type DistressFinding } from './distress.js';
 import { contextProvider } from './provider.js';
 import { askedButActed, emptyReply, offeredTools, TurnDecision, turnFacts } from './registry.js';
 import { recallText } from './recall.js';
@@ -442,9 +442,10 @@ async function decideTurn(
 
 /**
  * A turn's model call failed. The provider's safety filter held back her words or Buddy's
- * answer: that is not a glitch to resend — code answers with a fixed, caring reply (D-10), and
- * her message is never sent to the model again (audit H-31, H-32). Anything else fails the turn
- * with its stable code. Either way the decision record keeps why.
+ * answer: that is not a glitch to resend — code answers with a fixed reply (D-10), and her
+ * message is never sent to the model again (audit H-31, H-32). Which fixed reply the distress
+ * check decides (`heldBack`, #758). Anything else fails the turn with its stable code. Either way
+ * the decision record keeps why.
  */
 export async function callFailed(
   deps: Deps,
@@ -455,7 +456,7 @@ export async function callFailed(
 ): Promise<TurnOutcome> {
   if (err instanceof LlmError && err.kind === 'blocked') {
     await record('failed', [err.finishReason ? `blocked:${err.finishReason}` : 'blocked']);
-    return answerWithSafeguarding(deps, learner, message, 'blocked');
+    return heldBack(deps, learner, message);
   }
   const code = turnErrorCode(err);
   await record('failed', [code]);
@@ -547,7 +548,7 @@ async function answerWithSafeguarding(
   deps: Deps,
   learner: TurnLearner,
   message: ClaimedMessage,
-  kind: 'blocked' | 'concern',
+  kind: 'blocked' | 'concern' | 'held',
   /** Her earlier messages the distress check read with this one: a disclosure in any of them. */
   read: readonly string[] = [],
 ): Promise<TurnOutcome> {
@@ -558,7 +559,12 @@ async function answerWithSafeguarding(
     const owned = await tx.query(
       `update buddy_messages set status = 'done', failure_code = $3, recall_block = $4
         where id = $1 and status = 'processing' and claim_token = $2 returning id`,
-      [message.id, message.claim_token, kind === 'blocked' ? 'blocked' : null, kind],
+      [
+        message.id,
+        message.claim_token,
+        kind === 'concern' ? null : 'blocked',
+        kind === 'concern' ? 'concern' : 'blocked',
+      ],
     );
     if (owned.length !== 1) return false;
     await tx.query(
@@ -595,6 +601,26 @@ async function answerWithSafeguarding(
 }
 
 /**
+ * The safety filter held back the turn (#758). Live, Vertex rates an insult aimed at Buddy as
+ * harassment and blocks the streamed answer, and every block used to get the help answer with
+ * the helpline — 20 of 20 insults did. The filter cannot tell an insult from a disclosure; the
+ * distress check (structured, rule 3) is asked instead. A concern gets the fixed concern answer;
+ * nothing found gets the held-back line without a helpline (`safeguarding.held`); a block of the
+ * check itself, or no check at all, fails safe: the held-back line with the helpline, as before.
+ * Her message is never sent to the turn's model again either way.
+ */
+async function heldBack(
+  deps: Deps,
+  learner: TurnLearner,
+  message: ClaimedMessage,
+): Promise<TurnOutcome> {
+  const { found, earlier } = await checkHerWords(deps, learner, message);
+  return found === 'concern'
+    ? answerWithSafeguarding(deps, learner, message, 'concern', earlier)
+    : answerWithSafeguarding(deps, learner, message, found === 'clear' ? 'held' : 'blocked');
+}
+
+/**
  * Her turn ends without the model's answer (outage, timeout, invalid output, the day's limit, a
  * stale context, a bug): the model that would have read her words for distress did not answer, so
  * the distress check reads them before the turn fails (CLAUDE.md rule 18, #761). A concern gets
@@ -609,12 +635,9 @@ export async function failHerTurn(
   message: ClaimedMessage,
   code: string,
 ): Promise<TurnOutcome> {
-  const words = await herWords(deps, message);
-  const found = await distressCheck(deps, learner.id, words.text, {
-    scene: (await contextProvider().turn.mode(deps.db, learner.id, deps.now())) !== null,
-  });
+  const { found, earlier } = await checkHerWords(deps, learner, message);
   if (found === 'concern' || found === 'blocked') {
-    return answerWithSafeguarding(deps, learner, message, found, words.earlier);
+    return answerWithSafeguarding(deps, learner, message, found, earlier);
   }
   const outcome = await failTurn(deps, message, code);
   if (found === 'unchecked' && outcome.status === 'failed') {
@@ -630,6 +653,19 @@ export async function failHerTurn(
     });
   }
   return outcome;
+}
+
+/** Her words this turn answers, read by the distress check — in a scene it is told so. */
+async function checkHerWords(
+  deps: Deps,
+  learner: TurnLearner,
+  message: ClaimedMessage,
+): Promise<{ found: DistressFinding; earlier: string[] }> {
+  const words = await herWords(deps, message);
+  const found = await distressCheck(deps, learner.id, words.text, {
+    scene: (await contextProvider().turn.mode(deps.db, learner.id, deps.now())) !== null,
+  });
+  return { found, earlier: words.earlier };
 }
 
 /** Her words this turn answers: her message and the earlier ones that waited for its answer. */
