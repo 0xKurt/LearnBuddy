@@ -75,7 +75,7 @@ export async function distressCheck(
       maxOutputTokens: 64,
       temperature: 0,
       timeoutMs: 10_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     if (concernRaised(r.json)) return 'concern';
     return DistressDecision.safeParse(r.json).success ? 'clear' : 'unchecked';
