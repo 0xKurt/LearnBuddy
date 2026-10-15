@@ -4,6 +4,8 @@
 
 set -e
 . "$(dirname "$0")/full-suite.sh"
+# Typecheck, the test runs and the bundle export are the machine's heavy work: one at a time.
+take_test_lock
 
 echo "→ typecheck"
 pnpm -r --parallel typecheck

@@ -1,5 +1,6 @@
 import { transformWithEsbuild } from 'vite';
 import { defineConfig, type Plugin } from 'vitest/config';
+import { workerLimits } from '../../tools/vitest-workers.mjs';
 
 const here = (file: string): string => new URL(file, import.meta.url).pathname;
 
@@ -118,6 +119,8 @@ export default defineConfig({
     mainFields: ['module', 'browser', 'main'],
   },
   test: {
+    // Worker cap for shared machines: LB_TEST_MAX_WORKERS (tools/vitest-workers.mjs).
+    ...workerLimits(),
     name: 'components',
     environment: 'jsdom',
     include: ['components/**/__tests__/*.test.tsx'],
