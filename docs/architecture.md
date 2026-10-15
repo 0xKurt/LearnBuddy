@@ -1263,7 +1263,11 @@ for a phone. The first run found a textbook definition of photosynthesis without
 with "Kohlenstoffdioxid" left unexplained; buddy.26 asks for both explicitly.
 
 **What the days before were about** (`modules/buddy/summarise.ts`, issue #22). The context
-carries the last 24 messages — a good conversation, and nothing three weeks later. When a
+carries the last 24 messages — a good conversation, and nothing three weeks later. STATE and
+those messages share one budget of `CONTEXT_CHARS` (40 000 characters, KI-Audit F19, #672,
+`fitDialogue` in `buddy/context.ts`): STATE goes whole (each section has its own cap and carries
+the aliases code resolves), the conversation gets the rest, its oldest messages go first, and
+what she wrote since Buddy's last answer is never cut. An ordinary turn is far below it. When a
 conversation has come to rest (nothing said for four hours, the same gap the app draws its
 session line at), the scheduler has the model write **two to four sentences** about it plus
 up to five topics, stored per stretch with `until_message_id`; the newest ten travel in the
