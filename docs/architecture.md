@@ -1518,8 +1518,11 @@ twenty-five while the page report still said "all" — the silent cut of #49 one
 it was looked for, and the reason "frag mich alle Vokabeln ab" could not work however well the
 selection behaved ("das kunstlich deckeln ist der falsche weg", owner 30.09.). If the sheet still
 has more after the last reading, `materials.items_incomplete` says so, Buddy is told in STATE, and
-he says it plainly instead of letting a half-read sheet pass for a whole one (rule 5). Homework is
-a short list by design and is never continued.
+he says it plainly instead of letting a half-read sheet pass for a whole one (rule 5). The same
+holds when the checks drop a question the reading wrote (#757, `usableItems`' `onDrop`): a pair
+without both languages, a key that contradicts its arithmetic, a figure that does not hold — the
+task is on her sheet without a question, so the sheet is `items_incomplete`, and the function log
+says how many were dropped and why. Homework is a short list by design and is never continued.
 
 **An exercise form Buddy cannot practise is reported, not replaced** (issue #198,
 `docs/lehrplan-und-uebungsformen.md` §12.3). A sheet whose task is an essay, a construction with

@@ -23,10 +23,10 @@ type Forms = { locale: string; off: ReadonlySet<ItemKind> };
  */
 export function sheetQuestions(
   x: Pick<Read, 'items' | 'structured' | 'reading' | 'part_tasks' | 'extracted_text'>,
-  opts: Forms & { homework: boolean },
+  opts: Forms & { homework: boolean; onDrop?: (why: string) => void },
 ): StoredItem[] {
   return [
-    ...usableItems(x.items),
+    ...usableItems(x.items, { onDrop: opts.onDrop }),
     ...structuredItems(x.structured, SHEET_STRUCTURED, x.structured.length),
     ...(opts.homework ? [] : x.reading).flatMap((r) =>
       readingItems(r, { locale: opts.locale, transcript: x.extracted_text }),
