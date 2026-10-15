@@ -118,7 +118,8 @@ async function pendingSession(
   );
   const rows = await db.query<Row>(
     `select id, role, text, created_at, recall_block from buddy_messages
-      where learner_id = $1 and status = 'done' and ($2::timestamptz is null or created_at > $2)
+      where learner_id = $1 and status = 'done' and material_id is null
+        and ($2::timestamptz is null or created_at > $2)
       order by seq
       limit 200`,
     [learnerId, since?.ended_at ?? null],

@@ -3,6 +3,10 @@
 # core loop in Chromium (tests/web). Needs a local Postgres (see docs/architecture.md §Testing).
 set -e
 cd "$(dirname "$0")/.."
+# One browser run per machine, and everything this script starts (Metro export, API stack,
+# Chromium) dies with it: scripts/test-lock.sh. No own Postgres is ever started here — the
+# stack uses LB_TEST_DATABASE_URL (e.g. the shared server on 54316) as given.
+. scripts/test-lock.sh
 # Ports can be moved out of the way when Metro (8081) or another local server (8787)
 # already uses them: LB_WEB_PORT / LB_API_PORT (issue #42).
 API_PORT="${LB_API_PORT:-8787}"

@@ -79,5 +79,17 @@
     "nothing": "Mandami una foto o un PDF della tua scheda – qui non posso leggere testo o link.",
     "signed_out": "Prima accedi – poi condividi di nuovo la scheda con LearnBuddy."
   },
-  "preview_failed": "Anteprima non disponibile"
+  "preview_failed": "Anteprima non disponibile",
+  "sent": {
+    "photos_one": "1 foto",
+    "photos_other": "{{count}} foto",
+    "label_one": "Hai inviato una foto",
+    "label_other": "Hai inviato {{count}} foto",
+    "waiting": "Arrivato · Buddy lo legge tra poco",
+    "reading": "Buddy lo sta leggendo …",
+    "building": "Letto · Buddy ne sta facendo esercizi …",
+    "ready": "Letto",
+    "failed": "Non letto",
+    "deleted": "Eliminato"
+  }
 }

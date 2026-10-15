@@ -16,12 +16,19 @@ import { PracticeReady } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';
 import { KIND_LABEL } from './kinds.js';
 
-type Ready = Extract<ActionSummary, { tool: 'show_ready' }>;
+/**
+ * The practice it starts: shown again by Buddy (`show_ready`), or announced by his message from
+ * the background (`MessageView.announces`, issue #632) — the same card either way.
+ */
+type Ready = Pick<
+  Extract<ActionSummary, { tool: 'show_ready' }>,
+  'step_id' | 'title' | 'question_count' | 'est_minutes'
+> & { ready?: boolean };
 
 export function ReadyCard({ ready, quiet = 'primary' }: { ready: Ready; quiet?: Quiet }) {
   const { t } = useTranslation(['learn', 'buddy']);
   const { busy, act } = useHomeAct();
-  if (!ready.ready) return null;
+  if (ready.ready === false) return null;
   const label = t(`learn:${KIND_LABEL.practice}`);
   return (
     <PracticeReady

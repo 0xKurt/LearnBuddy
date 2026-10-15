@@ -16,6 +16,7 @@ import { z } from 'zod';
 
 import { compareWithKeys, NEAR_MISS, valuesIn, type RuleVerdict } from './evaluate.js';
 import { type FormNote, mathRunsOf, orderFreeLine } from './form.js';
+import { CONCERN_MEANING } from '../buddy/distress.js';
 import { RubricClaim, type AskedElement } from './rubric.js';
 
 export const TutorDecision = z.object({
@@ -42,7 +43,7 @@ export const TutorDecision = z.object({
     .boolean()
     .default(false)
     .describe(
-      'true only when the learner tells of DANGER to herself: being hurt, bullied, abused or threatened, thinking of hurting herself, harming her own body, feeling unsafe or hopeless. The app then replaces your reply with a fixed caring message and a helpline, and nothing is judged. NOT true for an insult, rudeness towards you, ordinary school stress ("I hate maths", "this is stupid"), or a hard turn in her life she is only telling you about while naming no danger.',
+      `${CONCERN_MEANING.is} The app then replaces your reply with a fixed caring message and a helpline, and nothing is judged. ${CONCERN_MEANING.isNot}`,
     ),
 });
 export type TutorDecision = z.infer<typeof TutorDecision>;

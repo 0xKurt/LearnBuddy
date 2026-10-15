@@ -12,6 +12,7 @@ import { SUMMARY_PROMPT_VERSION } from '../../modules/buddy/summarise.js';
 import { FIGURES_PROMPT_VERSION } from '../../modules/materials/images.js';
 import { EXTRACT_PROMPT_VERSION, SOURCES_PROMPT_VERSION } from '../../modules/materials/sources.js';
 import { TUTOR_PROMPT_VERSION } from '../../modules/practice/answerTutor.js';
+import { DISTRESS_PROMPT_VERSION } from '../../modules/buddy/distress.js';
 import { CLOZE_JUDGE_PROMPT_VERSION } from '../../modules/practice/cloze.js';
 import { ESSAY_PROMPT_VERSION } from '../../modules/practice/essay.js';
 import { GENERATE_PROMPT_VERSION } from '../../modules/practice/generate.js';
@@ -78,6 +79,7 @@ describe('promptVersion (#425)', () => {
       extract: EXTRACT_PROMPT_VERSION,
       sources: SOURCES_PROMPT_VERSION,
       tutor: TUTOR_PROMPT_VERSION,
+      safeguard: DISTRESS_PROMPT_VERSION,
       'cloze-gaps': CLOZE_JUDGE_PROMPT_VERSION,
       essay: ESSAY_PROMPT_VERSION,
       generate: GENERATE_PROMPT_VERSION,

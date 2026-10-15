@@ -9,7 +9,8 @@
 //   2. the rules' verdict on what she answered (answerRules.ts);
 //   3. what follows from earlier answers and shown steps (answerSteps.ts);
 //   4. the judgement code gives alone (answerJudge.ts) — a long text is judged by essay.ts;
-//   5. the tutor for what is left (answerTutor.ts);
+//   5. the tutor for what is left (answerTutor.ts) — and, whoever judged, her words checked for
+//      distress (answerSafeguard.ts, #747);
 //   6. the reply she gets, whoever judged (answerReply.ts);
 //   7. applied in one transaction (answerApply.ts).
 
@@ -21,6 +22,7 @@ import { judgeByRules, type AnswerCase } from './answerJudge.js';
 import { loadAnswer } from './answerLoad.js';
 import { finishReply } from './answerReply.js';
 import { ruleVerdict } from './answerRules.js';
+import { checkDistress, guardByCode, settle, withHelpLine } from './answerSafeguard.js';
 import { followOnAndSteps } from './answerSteps.js';
 import { tutorJudgement } from './answerTutor.js';
 import { judgeEssay } from './essay.js';
@@ -47,11 +49,21 @@ export async function answerItem(
   if ('replayed' in loaded) return loaded.replayed;
   const ruled = { ...loaded, ...(await ruleVerdict(deps, loaded)) };
   const c: AnswerCase = { ...ruled, ...(await followOnAndSteps(deps, ruled)) };
-  const byCode = c.essay ? await judgeEssay(deps, learner, c.item, c.text) : judgeByRules(c);
-  const { judged, explained, columnStep } = finishReply(
-    c,
-    byCode ? { judged: byCode, claims: [], safeguarded: false } : await tutorJudgement(deps, c),
-  );
+  const byCode = c.essay ? null : judgeByRules(c);
+  const judgement = c.essay
+    ? // The long-text feedback has no concern bit: the check reads the same version beside it.
+      await Promise.all([judgeEssay(deps, learner, c.item, c.text), checkDistress(deps, c)]).then(
+        ([essay, found]) => settle(c, found, { judged: essay, claims: [], safeguarded: false }),
+      )
+    : byCode
+      ? await guardByCode(deps, c, byCode)
+      : await tutorJudgement(deps, c);
+  const finished = finishReply(c, judgement);
+  const { explained, columnStep } = finished;
+  // No check could read her words (#747): whatever the reply is, the fixed help line follows it.
+  const judged = judgement.unchecked
+    ? { ...finished.judged, reply: withHelpLine(c, finished.judged.reply) }
+    : finished.judged;
   const settled = await applyAnswer(deps, c, judged, explained);
   return columnStep === null ? settled : { ...settled, column_step: columnStep };
 }
