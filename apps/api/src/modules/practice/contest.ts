@@ -9,6 +9,7 @@ import type { Db } from '../../lib/db.js';
 import { AppError } from '../../lib/errors.js';
 import { bumpContext } from '../buddy/plan.js';
 import { CARD_PASS } from './cards.js';
+import { retractLearned } from './learnedAnswers.js';
 import { DRILL_PASS } from './drill.js';
 import { touchRun, type ItemRow, type SessionItemRow } from './service.js';
 import { sessionView } from './sessionView.js';
@@ -185,6 +186,8 @@ export async function disputeVerdict(
     if (!si.archived_at) {
       await tx.query(`update items set archived_at = $2 where id = $1`, [itemId, now]);
     }
+    // And what it learnt from a model goes out of it again (#675).
+    await retractLearned(tx, learnerId, itemId, now);
     // And the spaced repetition goes back to what it was before this review.
     if (si.state_before) {
       await tx.query(
