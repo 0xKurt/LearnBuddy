@@ -548,9 +548,9 @@ export class MemoryStorage implements StorageGateway {
     this.maybeFail('upload');
     this.objects.set(path, bytes);
   }
-  async createDownloadUrl(path: string, ttlSeconds: number): Promise<string> {
+  async createDownloadUrls(paths: string[], ttlSeconds: number): Promise<Map<string, string>> {
     this.maybeFail('sign');
-    return `memory://${path}?signed&ttl=${ttlSeconds}`;
+    return new Map(paths.map((path) => [path, `memory://${path}?signed&ttl=${ttlSeconds}`]));
   }
   async remove(paths: string[]): Promise<void> {
     this.removeCalls.push([...paths]);
