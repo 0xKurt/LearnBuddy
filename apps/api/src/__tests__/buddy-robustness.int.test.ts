@@ -350,7 +350,8 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
     const before = env.llm.calls.length;
     const limited = await send(l, 'Noch da?');
     expect(limited.body).toMatchObject({ status: 'failed', error_code: 'budget_exhausted' });
-    expect(env.llm.calls.length).toBe(before);
+    // No turn call — only the distress check of her words, on its own reserve (#761).
+    expect(env.llm.calls.slice(before).map((c) => c.purpose)).toEqual(['safeguard']);
   });
 
   it('a long turn with several model calls is not taken over while it runs (turn-cost-and-stall-window)', async () => {

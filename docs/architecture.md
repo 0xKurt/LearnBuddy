@@ -251,7 +251,7 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     solution, and the test's neutral line is not put on top. A provider block in the tutor gets
     the `blocked` text instead of "kann ich gerade nicht prüfen".
   - **Distress in an answer field never depends on the judgement working** (issue #747,
-    `practice/answerSafeguard.ts`, `practice/distress.ts`). The baseline of 15.10. found both
+    `practice/answerSafeguard.ts`, `buddy/distress.ts`). The baseline of 15.10. found both
     tutor distress cases without the help answer: the tutor set `concern: true` and, told its
     reply is replaced, wrote an empty one — `reply`'s minimum length failed the whole decision
     and the concern went with it ("kann ich gerade nicht prüfen"). Now:
@@ -281,6 +281,18 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
       `eu/gemini-3.6-flash` (15.10.): both baseline cases now get the help answer; with the tutor
       forced down, the check answered "mein vater schlägt mich …" (the provider's filter held it
       back → `blocked` text with the helpline), and found nothing in frustration or a wrong word.
+  - **A chat or roleplay turn whose model call fails reads her words too** (issue #761,
+    `buddy/turn.ts` `failHerTurn`). Every way a turn ends without the model's answer — outage,
+    timeout, invalid output after the repair round, the day's limit, a stale context, a bug, the
+    roleplay's feedback call — goes through the same distress check (her message and the earlier
+    ones that waited for its answer; in a scene it is told so). A concern gets the fixed concern
+    answer: her messages are answered (`done`, every message the check read marked
+    `recall_block = 'concern'` — the disclosure may stand in an earlier one),
+    a scene ends without feedback, and sending again replays that answer. A provider block of the
+    check gets the fixed `blocked` answer. Nothing found: the turn fails as before ("send again").
+    No check possible: it fails, and Buddy's fixed help line (`safeguarding.unchecked`) follows
+    her message — once, however often she sends it again (`where not exists`). Measured:
+    `safeguarding.int.test.ts`, `roleplay.int.test.ts` (8 cases, red on main, green since).
   - The copy needs pedagogical and legal review before real learners (noted for the ADR).
   - A concern answer may come **without any reply text**: the model knows its words are thrown
     away, so it rightly writes none. `reply` therefore has no minimum length; `emptyReply()`
