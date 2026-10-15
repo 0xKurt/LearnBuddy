@@ -293,6 +293,16 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     No check possible: it fails, and Buddy's fixed help line (`safeguarding.unchecked`) follows
     her message — once, however often she sends it again (`where not exists`). Measured:
     `safeguarding.int.test.ts`, `roleplay.int.test.ts` (8 cases, red on main, green since).
+  - **A turn the provider's filter holds back asks the distress check which fixed answer fits**
+    (issue #758, `buddy/turn.ts` `heldBack`). The filter cannot tell an insult from a disclosure:
+    live (15.10.) Vertex rates the streamed answer to an insult aimed at Buddy as harassment and
+    blocks it, and 20 of 20 insults got the helpline. Now a concern gets the fixed concern answer,
+    nothing found gets `safeguarding.held` (the held-back line without a helpline), and a check
+    that is held back too, or cannot run, fails safe to the `blocked` text with the helpline. Her
+    message is never sent to the turn's model again. Measured live with the change: the five
+    distress cases of `evals/buddy` 5/5 with the helpline; the insult still 0/20, because the
+    same harassment filter holds back the check as well. The thresholds stay as they are (owner,
+    15.10.); the rest depends on the provider choice (#647).
   - The copy needs pedagogical and legal review before real learners (noted for the ADR).
   - A concern answer may come **without any reply text**: the model knows its words are thrown
     away, so it rightly writes none. `reply` therefore has no minimum length; `emptyReply()`

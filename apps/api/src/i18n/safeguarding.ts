@@ -7,7 +7,7 @@
 
 import { t } from './index.js';
 
-export type SafeguardingKind = 'blocked' | 'concern' | 'also_asked' | 'unchecked';
+export type SafeguardingKind = 'blocked' | 'held' | 'concern' | 'also_asked' | 'unchecked';
 
 export function safeguardingText(locale: string, minor: boolean, kind: SafeguardingKind): string {
   return t(locale, minor ? `safeguarding.${kind}` : `safeguarding.${kind}_adult`);
