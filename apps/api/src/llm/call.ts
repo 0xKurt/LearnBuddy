@@ -115,7 +115,7 @@ async function record(
   // `error_code` is what makes one failure distinguishable from another after the fact: a
   // throttle lands here as 'rate_limited' (vertex.ts classify, HTTP 429), which is what the
   // alarm counts (modules/scheduler/throttle.ts, issue #206). The trace columns (#652, migration
-  // 0106) say which decision and round a call was, how often it was sent and how long she
+  // 0107) say which decision and round a call was, how often it was sent and how long she
   // waited for its first word.
   await deps.db.query(
     `insert into llm_calls (learner_id, purpose, model, prompt_version, input_tokens, output_tokens,
