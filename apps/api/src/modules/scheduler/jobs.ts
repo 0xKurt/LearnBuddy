@@ -129,9 +129,10 @@ export async function claimJobs(
     consentVersion?: string;
   },
 ): Promise<JobRow[]> {
-  return db.tx(async (tx) =>
-    tx.query<JobRow>(
-      `with due as (
+  // One statement claims atomically (`for update skip locked` inside it): no transaction around
+  // it, which cost three more round trips per claim on every run (F7, #659).
+  return db.query<JobRow>(
+    `with due as (
          select id from jobs
           where status = 'queued' and run_at <= $1 and kind = any($2::text[])
             and ($5::uuid is null or learner_id = $5)
@@ -148,15 +149,14 @@ export async function claimJobs(
          from due
         where j.id = due.id
        returning j.*`,
-      [
-        opts.now,
-        opts.kinds,
-        opts.limit,
-        opts.leaseSeconds,
-        opts.learnerId ?? null,
-        opts.consentVersion ?? null,
-      ],
-    ),
+    [
+      opts.now,
+      opts.kinds,
+      opts.limit,
+      opts.leaseSeconds,
+      opts.learnerId ?? null,
+      opts.consentVersion ?? null,
+    ],
   );
 }
 

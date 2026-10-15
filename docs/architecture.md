@@ -649,7 +649,11 @@ review moments `review_next_day`, `review_due`). Gates, cheapest first:
    right after the reading or the practice, not on the next scheduler run;
 4. nothing to work with → silence, no model call. With contact to the phone off or paused Buddy
    still looks and speaks in the app (ADR 0006); the daily routine look runs while an exam is
-   within 14 days;
+   within 14 days. A routine look whose state the model already decided about within 48 hours
+   (`lookedAtThisState`: its last check decision, wait or applied, and `context_version` exactly
+   where that decision left it — one higher only if it wrote an action, a look back or a message
+   that was not suppressed, read back from those rows) waits by code (F4-d, #656) — anything new
+   she or Buddy did moves the context and the model is asked again;
 5. no model configured → fixed fallbacks immediately;
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
 7. apply with the context fence; the contact policy decides whether and when a message is sent.
@@ -810,6 +814,12 @@ erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KIN
 `scheduler/jobs.ts`): a privacy promise does not expire after three tries, so they are queued
 again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
 lease. A cancelled job can be planned again with the same key (an exam moved away and back).
+The planners reach every learner (F7, #659): `planSummaries` takes only learners with a stretch of
+conversation at rest and not written down yet, longest waiting first; `planConsolidations` skips a
+learner whose run was planned within the day, in a stable order — before, both took 50 learners in
+no order, finished ones included, so from about 50 learners some were never reached. A claim is one
+statement, without a transaction; the retention sweeps run at most every 15 minutes (what Storage
+still owes goes every run), so an idle run stays under 40 round trips.
 
 The tick never names the learning domain (issue #107): the domain registers its job kinds and
 its share of a run at start-up (`scheduler/registry.ts`, from `modules/learning/register.ts`) —
@@ -1556,8 +1566,11 @@ twenty-five while the page report still said "all" — the silent cut of #49 one
 it was looked for, and the reason "frag mich alle Vokabeln ab" could not work however well the
 selection behaved ("das kunstlich deckeln ist der falsche weg", owner 30.09.). If the sheet still
 has more after the last reading, `materials.items_incomplete` says so, Buddy is told in STATE, and
-he says it plainly instead of letting a half-read sheet pass for a whole one (rule 5). Homework is
-a short list by design and is never continued.
+he says it plainly instead of letting a half-read sheet pass for a whole one (rule 5). The same
+holds when the checks drop a question the reading wrote (#757, `usableItems`' `onDrop`): a pair
+without both languages, a key that contradicts its arithmetic, a figure that does not hold — the
+task is on her sheet without a question, so the sheet is `items_incomplete`, and the function log
+says how many were dropped and why. Homework is a short list by design and is never continued.
 
 **An exercise form Buddy cannot practise is reported, not replaced** (issue #198,
 `docs/lehrplan-und-uebungsformen.md` §12.3). A sheet whose task is an essay, a construction with

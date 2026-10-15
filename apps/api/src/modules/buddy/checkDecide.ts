@@ -91,6 +91,40 @@ function lookBackFocus(
   return { sessionId, subjectId };
 }
 
+/** How long a model's look at an unchanged state stands for a routine look (F4-d, #656). */
+const SAME_STATE_MS = 48 * 3_600_000;
+
+/**
+ * Did the model already decide about exactly this state, recently? Its last background decision
+ * (not a fallback, not one code made) within `SAME_STATE_MS`, and `context_version` exactly where
+ * that decision left it. A wait leaves it as it was. An applied decision moved it by one only when
+ * it wrote something (`applyDecision` bumps for an action, a look back, or a message that is not
+ * suppressed) — read back from what it wrote, so a decision whose only message was suppressed
+ * is not credited with a bump it never made. Anything she or Buddy did since — a message, a
+ * sheet, a practice, a goal — moved it further, and then the model is asked again.
+ */
+async function lookedAtThisState(
+  deps: Deps,
+  learnerId: string,
+  contextVersion: number,
+  now: Date,
+): Promise<boolean> {
+  const last = await deps.db.maybeOne<{ context_version: number; wrote: boolean }>(
+    `select d.context_version,
+            d.disposition = 'applied' and (
+                 exists (select 1 from buddy_actions a where a.decision_id = d.id)
+              or exists (select 1 from buddy_lookbacks b where b.decision_id = d.id)
+              or exists (select 1 from buddy_outreach o
+                          where o.decision_id = d.id and o.status <> 'suppressed')) as wrote
+       from buddy_decisions d
+      where d.learner_id = $1 and d.mode = 'check' and d.model is not null
+        and d.disposition in ('wait', 'applied') and d.created_at > $2
+      order by d.created_at desc, d.id desc limit 1`,
+    [learnerId, new Date(now.getTime() - SAME_STATE_MS)],
+  );
+  return last !== null && contextVersion === last.context_version + (last.wrote ? 1 : 0);
+}
+
 export async function decide(
   deps: Deps,
   learner: LearnerRow & { isMinor: boolean },
@@ -119,8 +153,8 @@ export async function decide(
   };
 
   let state = await loadBuddyState(deps.db, learner.id, now);
-  // With contact to the phone off, a routine look still speaks in the app (ADR 0006).
-  if (state.totals.activeGoals === 0 && state.totals.items === 0 && state.totals.openSteps === 0) {
+  /** Decided by code before any model call: recorded as a wait, every job finished. */
+  const waitByCode = async (reason: string, outcome: string) => {
     await recordUnapplied(
       deps.db,
       {
@@ -135,19 +169,29 @@ export async function decide(
           promptVersion: buddyPrompt().version,
           output: null,
           triggers: triggers.map((t) => t.reason),
-          reason: 'nothing to work with',
+          reason,
           topicKey: null,
         },
       },
       'wait',
       null,
     );
-    await finishAll({
-      outcome: 'wait',
-      reason: 'nothing_to_work_with',
-    });
+    await finishAll({ outcome: 'wait', reason: outcome });
     return 'wait';
-  }
+  };
+  // With contact to the phone off, a routine look still speaks in the app (ADR 0006).
+  if (state.totals.activeGoals === 0 && state.totals.items === 0 && state.totals.openSteps === 0)
+    return waitByCode('nothing to work with', 'nothing_to_work_with');
+
+  // A routine look with nothing new since Buddy's last look (F4-d, #656): the model was asked
+  // about this very state within 48 hours, and what it answered then stands. Measured: 5 of 9 of
+  // Buddy's own messages were never shown — cancelled, or suppressed as a topic he had just
+  // raised, which the contact policy only finds out after the call.
+  if (
+    triggers.every((t) => t.reason === 'routine') &&
+    (await lookedAtThisState(deps, learner.id, state.settings.context_version, now))
+  )
+    return waitByCode('nothing new since the last look', 'nothing_new');
 
   // No model configured at all: retrying later cannot help, the fixed fallbacks act now.
   if (!deps.llm.available) {

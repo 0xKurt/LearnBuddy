@@ -616,17 +616,29 @@ export function formsOn<T extends { kind: ItemKind }>(
  */
 export function usableItems(
   items: ItemDraft[],
-  opts: { locale?: string; land?: string | null } = {},
+  opts: {
+    locale?: string;
+    land?: string | null;
+    /**
+     * Told of every written question that is dropped here, with why (#757): a sheet whose task
+     * was written and then dropped has that task missing, and must not pass for read whole.
+     */
+    onDrop?: (why: string) => void;
+  } = {},
 ): ItemDraft[] {
   const out: ItemDraft[] = [];
   const land = opts.land ?? null;
+  const drop = (why: string) => opts.onDrop?.(why);
   // A worksheet's labelling task becomes one question per numbered part, written by code (#252).
   for (const written of items.flatMap((it) => labelQuestions(it, opts.locale ?? null))) {
     // A map without a view is the map of Germany where she has a Land, else no question (#429).
     // A task that asks for a reason is a free text the tutor reads, or none (#642).
     const viewed = mapViewed(written, land);
     const raw = viewed && reasonKept(viewed);
-    if (!raw) continue;
+    if (!raw) {
+      drop('map_or_reason');
+      continue;
+    }
     // A word to translate or a sentence to say carries no drawing (#375): its figure is dropped
     // before anything reads it, the card stays — like a spelling mode on a number.
     const figure = kindIn(FIGURE_KINDS, raw.kind) ? raw.figure : null;
@@ -652,28 +664,43 @@ export function usableItems(
     let it = checkedRead(normalised, figure, opts.locale ?? null);
     // The same for every other figure that is its question (`FIGURE_CHECKS`).
     for (const check of FIGURE_CHECKS) it = it && check(it, opts.locale ?? null);
-    if (!it) continue;
+    if (!it) {
+      drop('figure_check');
+      continue;
+    }
     // Her Land on a map of Germany, where it says nothing about the key (#429, `mapCheck.ts`).
     it = withHome(it, land);
     // Notation the app cannot draw (issue #239): a learner would read "\\overbrace" in the middle
     // of her question. Dropped, not repaired — the list is `MATH_NOTATION_RULE`, which the model
     // was given, and guessing what an unknown command meant is the model's job, not ours.
-    if (drawsUnsupported(it)) continue;
+    if (drawsUnsupported(it)) {
+      drop('notation');
+      continue;
+    }
     it.hints = it.hints.filter((h) => unsupportedMath(h).length === 0);
     if (it.worked_solution !== null && unsupportedMath(it.worked_solution).length > 0)
       it.worked_solution = null;
     // A number asked for behind a placeholder is no clear question: dropped, not guessed at.
-    if (placeholderQuestion(it)) continue;
+    if (placeholderQuestion(it)) {
+      drop('placeholder');
+      continue;
+    }
     // The key contradicts the arithmetic its own question asks for (issue #157). A rule
     // check would then reject her right answer with full authority, and she would have to
     // argue with a tutor that is sure of itself. Dropped, like every other item whose
     // shape does not hold together.
-    if (!keyAgreesWithPrompt(it)) continue;
+    if (!keyAgreesWithPrompt(it)) {
+      drop('key_arithmetic');
+      continue;
+    }
     // A figure that states numbers must agree with them and with the key read off it (issues
     // #253, #257): a structural formula whose shells do not hold, an arc labelled 50° that is
     // 70° wide, a resultant that is not the sum of its forces. The question is built on the
     // drawing, so it goes with it — dropped, not repaired (`figureCheck.ts`).
-    if (!figureHolds(it.figure, solutionText(it), it.kind === 'numeric', it.unit)) continue;
+    if (!figureHolds(it.figure, solutionText(it), it.kind === 'numeric', it.unit)) {
+      drop('figure_numbers');
+      continue;
+    }
     if (it.kind === 'multiple_choice') {
       // One question with ONE right option, or none at all (issue #227, finding 2; #231). Only the
       // index was ever checked, and it decides the verdict with full authority — a multiple-choice
@@ -681,7 +708,10 @@ export function usableItems(
       // text, or worth the same), the key IS the option the index points at, and pictures as
       // options are distinct graphs of which exactly the indexed one is the key's function
       // (`choiceCheck.ts` has every case). Dropped, not repaired.
-      if (choiceProblem(it) !== null) continue;
+      if (choiceProblem(it) !== null) {
+        drop('choices');
+        continue;
+      }
       it.hints = it.hints.filter((h) => !mentionsSolution(h, solutionText(it), it.prompt));
       out.push(it);
       continue;
@@ -696,12 +726,18 @@ export function usableItems(
     if (it.rubric && it.rubric.elements.some((e) => leaks(e.missing))) it.rubric = null;
     const plain = { ...it, choices: null, correct_choice: null, choice_figures: null };
     if (it.kind === 'vocab') {
-      if (!it.lang || !it.prompt_lang || it.lang === it.prompt_lang) continue;
+      if (!it.lang || !it.prompt_lang || it.lang === it.prompt_lang) {
+        drop('vocab_languages');
+        continue;
+      }
       out.push(plain);
       continue;
     }
     if (it.kind === 'speak') {
-      if (!it.lang) continue;
+      if (!it.lang) {
+        drop('speak_language');
+        continue;
+      }
       out.push({ ...plain, answer: it.prompt, prompt_lang: null });
       continue;
     }
