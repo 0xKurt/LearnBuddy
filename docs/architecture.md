@@ -810,6 +810,12 @@ erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KIN
 `scheduler/jobs.ts`): a privacy promise does not expire after three tries, so they are queued
 again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
 lease. A cancelled job can be planned again with the same key (an exam moved away and back).
+The planners reach every learner (F7, #659): `planSummaries` takes only learners with a stretch of
+conversation at rest and not written down yet, longest waiting first; `planConsolidations` skips a
+learner whose run was planned within the day, in a stable order — before, both took 50 learners in
+no order, finished ones included, so from about 50 learners some were never reached. A claim is one
+statement, without a transaction; the retention sweeps run at most every 15 minutes (what Storage
+still owes goes every run), so an idle run stays under 40 round trips.
 
 The tick never names the learning domain (issue #107): the domain registers its job kinds and
 its share of a run at start-up (`scheduler/registry.ts`, from `modules/learning/register.ts`) —
