@@ -157,8 +157,16 @@ describe.skipIf(!dbReady)('concept images (issue #50)', () => {
     expect(withImage[0]!.item.image!.width).toBeGreaterThan(0);
     expect(withImage[0]!.item.image!.height).toBeGreaterThan(0);
 
-    // A Storage that cannot sign right now costs the image, never the session (rule 5).
+    // A signed URL that is still good is handed out again: no Storage request (#671).
     env.storage.failNext('sign');
+    const kept = await lena.api.get<SessionView>(`/practice/sessions/${started.body.id}`);
+    expect(kept.body.items.find((i) => i.item.image !== null)?.item.image?.url).toBe(
+      withImage[0]!.item.image!.url,
+    );
+
+    // Twenty minutes on it is signed anew; a Storage that cannot sign right now costs the
+    // image, never the session (rule 5).
+    env.clock.minutes(21);
     const again = await lena.api.get<SessionView>(`/practice/sessions/${started.body.id}`);
     expect(again.status).toBe(200);
     expect(again.body.items.every((i) => i.item.image === null)).toBe(true);

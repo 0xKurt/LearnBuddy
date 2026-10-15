@@ -58,10 +58,10 @@ export interface StorageGateway {
    */
   upload(path: string, bytes: Uint8Array, contentType: string): Promise<void>;
   /**
-   * A short-lived signed URL to read one object (a concept image in a session view).
-   * Throws StorageError when the provider fails.
+   * Short-lived signed URLs for several objects in one request (#671), by path; a path the
+   * provider could not sign is left out. Throws StorageError when the request fails.
    */
-  createDownloadUrl(path: string, ttlSeconds: number): Promise<string>;
+  createDownloadUrls(paths: string[], ttlSeconds: number): Promise<Map<string, string>>;
   /**
    * Deletes at most STORAGE_REMOVE_LIMIT paths; a path that is already gone counts as
    * deleted. Throws StorageError when the provider fails.
@@ -131,12 +131,14 @@ export class SupabaseStorage implements StorageGateway {
     if (error) throw new StorageError('upload', storageOutcomeOf(error));
   }
 
-  async createDownloadUrl(path: string, ttlSeconds: number): Promise<string> {
+  async createDownloadUrls(paths: string[], ttlSeconds: number): Promise<Map<string, string>> {
     const { data, error } = await this.client.storage
       .from(PHOTO_BUCKET)
-      .createSignedUrl(path, ttlSeconds);
+      .createSignedUrls(paths, ttlSeconds);
     if (error || !data) throw new StorageError('sign', storageOutcomeOf(error));
-    return data.signedUrl;
+    const urls = new Map<string, string>();
+    for (const d of data) if (d.path && d.signedUrl && !d.error) urls.set(d.path, d.signedUrl);
+    return urls;
   }
 
   async remove(paths: string[]): Promise<void> {

@@ -84,7 +84,7 @@ export async function sessionView(
       where si.session_id = $1 order by si.position`,
     [sessionId],
   );
-  const imageUrls = await signImageUrls(storage, items);
+  const imageUrls = await signImageUrls(storage, items, now);
   const turns = await db.query<{
     id: string;
     item_id: string | null;
