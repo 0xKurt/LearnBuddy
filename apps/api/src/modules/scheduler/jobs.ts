@@ -183,6 +183,28 @@ export async function learnersWithDueJobs(
   return rows.map((r) => r.learner_id);
 }
 
+/** The lease of a job a learner waits for (a reading of her photos). */
+export const WAITING_LEASE_SECONDS = 180;
+
+/**
+ * Still this run's job? Extends its lease by `seconds` from `now` and says whether it held — a
+ * long run calls this before each model call, so its lease never runs out while it works and no
+ * second run claims the same job (K6, #663).
+ */
+export async function extendJobLease(
+  db: Db,
+  job: JobRow,
+  now: Date,
+  seconds: number,
+): Promise<boolean> {
+  const held = await db.maybeOne(
+    `update jobs set lease_until = $3::timestamptz + make_interval(secs => $4)
+      where id = $1 and lease_token = $2 and status = 'running' returning id`,
+    [job.id, job.lease_token, now, seconds],
+  );
+  return held !== null;
+}
+
 /** Complete a job; false if the lease was lost (another worker owns it now). */
 export async function finishJob(
   db: Db,

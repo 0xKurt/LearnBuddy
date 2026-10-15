@@ -81,12 +81,20 @@ function shown(r: Row): string {
     : `${r.answer}${r.unit ? ` ${r.unit}` : ''}`;
 }
 
-/** Writes hints for the session's questions that have none (practice). */
+/**
+ * Writes hints for these questions of the session that have none yet (practice, test). Each
+ * caller names the questions it brought into the run (F9-a, #660), so two calls never send the
+ * same question: the run's first questions come from the call that created it, the rest from the
+ * call that added them — never "every question without hints", which a second call running at
+ * the same time would have sent again.
+ */
 export async function prepareHints(
   deps: Deps,
   learner: PracticeLearner,
   sessionId: string,
+  itemIds: readonly string[],
 ): Promise<number> {
+  if (itemIds.length === 0) return 0;
   // A Diktat gets none (issue #242): a hint about a word she is to spell spells it, and it would be
   // a model call for a question code checks alone.
   const rows = await deps.db.query<Row>(
@@ -96,9 +104,10 @@ export async function prepareHints(
        left join subjects sub on sub.id = i.subject_id
        join practice_sessions ps on ps.id = si.session_id
       where si.session_id = $1 and ps.learner_id = $2 and ps.mode in ('practice', 'test')
+        and i.id = any($3::uuid[])
         and i.hints = '{}' and i.kind not in ('vocab', 'speak', 'spelling_dictation')
       order by si.position`,
-    [sessionId, learner.id],
+    [sessionId, learner.id, itemIds],
   );
   if (rows.length === 0) return 0;
   const now = deps.now();

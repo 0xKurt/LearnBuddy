@@ -110,7 +110,7 @@ export async function openAdminSession(pin: string): Promise<void> {
   setAdminToken(res.admin_token, res.expires_at);
 }
 
-export const exportAccount = () => request('GET', '/account/export');
+export const exportAccount = () => request('GET', '/account/export', { wait: 'long' });
 export const requestDeletion = () =>
   request('POST', '/account/deletion', { schema: DeletionResponse });
 export const cancelDeletion = () =>
@@ -157,7 +157,7 @@ export const stopMessage = (clientMessageId: string) =>
   request('POST', `/buddy/messages/${clientMessageId}/stop`, { schema: SendMessageResponse });
 
 export const startStep = (stepId: string) =>
-  request('POST', `/buddy/steps/${stepId}/start`, { schema: StartStepResponse });
+  request('POST', `/buddy/steps/${stepId}/start`, { schema: StartStepResponse, wait: 'long' });
 export const skipStep = (stepId: string) =>
   request('POST', `/buddy/steps/${stepId}/skip`, { schema: BuddyHome });
 export const undoAction = (actionId: string) =>
@@ -168,6 +168,7 @@ export const answerConfirmation = (pendingId: string, confirm: boolean) =>
   request('POST', `/buddy/confirmations/${pendingId}`, {
     body: { confirm },
     schema: BuddyHome,
+    wait: 'long',
   });
 
 /** Her tap on "end" under a running roleplay: the feedback lands in the thread (issue #244). */
@@ -175,6 +176,7 @@ export const endRoleplay = (roleplayId: string) =>
   request('POST', `/buddy/roleplays/${roleplayId}/end`, {
     body: {},
     schema: EndRoleplayResponse,
+    wait: 'long',
   });
 
 /**
@@ -182,7 +184,7 @@ export const endRoleplay = (roleplayId: string) =>
  * result lands in the thread as his message.
  */
 export const sendRehearsal = (body: RehearseRequest) =>
-  request('POST', '/buddy/rehearsals', { body, schema: RehearseResponse });
+  request('POST', '/buddy/rehearsals', { body, schema: RehearseResponse, wait: 'long' });
 
 export const reportOutcome = (goalId: string, outcome: 'good' | 'ok' | 'hard') =>
   request('POST', `/buddy/goals/${goalId}/outcome`, { body: { outcome }, schema: BuddyHome });
@@ -195,6 +197,7 @@ export const outreachAct = (outreachId: string, action: OutreachAction) =>
   request('POST', `/buddy/outreach/${outreachId}/act`, {
     body: { action },
     schema: OutreachActionResponse,
+    wait: 'long',
   });
 
 export const outreachOpened = (
@@ -256,7 +259,7 @@ export const deleteMaterialItem = (materialId: string, itemId: string) =>
 // ─────────────── practice ───────────────
 
 export const startPractice = (body: StartPracticeRequest) =>
-  request('POST', '/practice/sessions', { body, schema: SessionView });
+  request('POST', '/practice/sessions', { body, schema: SessionView, wait: 'long' });
 export const getSession = (id: string) =>
   request('GET', `/practice/sessions/${id}`, { schema: SessionView });
 /**
@@ -284,7 +287,11 @@ export async function answerItem(id: string, body: AnswerRequest): Promise<Answe
 
 /** The plain request (the outbox resends with it; same client_turn_id → recorded once). */
 export const postAnswer = (id: string, body: AnswerRequest) =>
-  request('POST', `/practice/sessions/${id}/answer`, { body, schema: AnswerResponse });
+  request('POST', `/practice/sessions/${id}/answer`, {
+    body,
+    schema: AnswerResponse,
+    wait: 'long',
+  });
 /**
  * A recording for a speak question; retrying the same recording reuses its
  * client_turn_id. Waits while offline, like answerItem.
@@ -319,7 +326,11 @@ export const speakItem = (
               }
             },
           })
-        : request('POST', `/practice/sessions/${id}/speak`, { body, schema: AnswerResponse }),
+        : request('POST', `/practice/sessions/${id}/speak`, {
+            body,
+            schema: AnswerResponse,
+            wait: 'long',
+          }),
     { isConnectionError: noConnection, signal: opts.signal },
   );
 /**
@@ -327,7 +338,11 @@ export const speakItem = (
  * could not be read as null. Nothing is stored and nothing counts — she sends the copy herself.
  */
 export const readWorkPhoto = (sessionId: string, body: ReadWorkRequest) =>
-  request('POST', `/practice/sessions/${sessionId}/work-photo`, { body, schema: WorkReading });
+  request('POST', `/practice/sessions/${sessionId}/work-photo`, {
+    body,
+    schema: WorkReading,
+    wait: 'long',
+  });
 
 /**
  * One word of a speaking question, said on its own (issue #83). Nothing is stored and
@@ -337,6 +352,7 @@ export const speakWord = (sessionId: string, body: SpeakWordRequest) =>
   request('POST', `/practice/sessions/${sessionId}/speak-word`, {
     body,
     schema: SpeakWordResponse,
+    wait: 'long',
   });
 
 /**
@@ -349,11 +365,12 @@ export const listenToItem = (sessionId: string, body: ListenAudioRequest) =>
   request('POST', `/practice/sessions/${sessionId}/listen`, {
     body,
     schema: ListenAudioResponse,
+    wait: 'long',
   });
 
 /** A session from something the learner named (a topic, a vocabulary list, sentences to say). */
 export const startTopic = (body: StartTopicRequest) =>
-  request('POST', '/practice/topic', { body, schema: SessionView });
+  request('POST', '/practice/topic', { body, schema: SessionView, wait: 'long' });
 export const revealItem = (id: string, itemId: string) =>
   request('POST', `/practice/sessions/${id}/reveal`, {
     body: { item_id: itemId },
@@ -367,6 +384,7 @@ export const hintItem = (id: string, itemId: string) =>
     request('POST', `/practice/sessions/${id}/hint`, {
       body: { client_turn_id: clientTurnId, item_id: itemId },
       schema: AnswerResponse,
+      wait: 'long',
     }),
   );
 /** A question whose answer was lost is sent again as the same turn (lib/api/turnIds.ts). */
@@ -383,6 +401,7 @@ export const askItem = (id: string, itemId: string, text: string) =>
     request('POST', `/practice/sessions/${id}/ask`, {
       body: { client_turn_id: clientTurnId, item_id: itemId, text },
       schema: AnswerResponse,
+      wait: 'long',
     }),
   );
 /** „Merk ich mir für nachher" (issue #402): the tutor turn that offered it, now kept. */
@@ -399,6 +418,7 @@ const reexplainItem = (id: string, itemId: string, way: ReexplainWay) =>
     request('POST', `/practice/sessions/${id}/reexplain`, {
       body: { client_turn_id: clientTurnId, item_id: itemId, way },
       schema: AnswerResponse,
+      wait: 'long',
     }),
   );
 /** A „Warum stimmt das?" tap whose answer was lost is sent again as the same turn. */
@@ -409,6 +429,7 @@ const whyItem = (id: string, itemId: string, choice: number) =>
     request('POST', `/practice/sessions/${id}/why`, {
       body: { client_turn_id: clientTurnId, item_id: itemId, choice },
       schema: AnswerResponse,
+      wait: 'long',
     }),
   );
 /**
@@ -424,6 +445,7 @@ export const explainItem = (id: string, itemId: string, way: ReexplainWay, choic
 export const disputeVerdict = (sessionId: string, itemId: string) =>
   request('POST', `/practice/sessions/${sessionId}/items/${itemId}/dispute`, {
     schema: SessionView,
+    wait: 'long',
   });
 
 /** "Frage passt nicht": skipped here, never asked again. */
@@ -444,6 +466,7 @@ export const startCardPass = (sessionId: string) =>
     request('POST', `/practice/sessions/${sessionId}/cards`, {
       body: { client_request_id: clientRequestId },
       schema: SessionView,
+      wait: 'long',
     }),
   );
 
@@ -470,6 +493,7 @@ export const startDrill = (requestId: string, spec: DrillSpec) =>
   request('POST', '/practice/drills', {
     body: { client_request_id: requestId, spec },
     schema: SessionView,
+    wait: 'long',
   });
 
 /**
@@ -490,7 +514,7 @@ export const answerDrill = (sessionId: string, itemId: string, text: string) =>
  * tasks is only paused by the server (decision D-5).
  */
 export const finishSession = (id: string) =>
-  request('POST', `/practice/sessions/${id}/finish`, { schema: SessionView });
+  request('POST', `/practice/sessions/${id}/finish`, { schema: SessionView, wait: 'long' });
 
 // ─────────────── voice ───────────────
 
@@ -518,8 +542,8 @@ export const transcribe = (
           }
         },
       })
-    : request('POST', '/voice/transcribe', { body, schema: TranscribeResponse });
+    : request('POST', '/voice/transcribe', { body, schema: TranscribeResponse, wait: 'long' });
 
 /** One sentence in Buddy's natural voice (ADR 0008); voice and speed are her settings. */
 export const synthesizeSpeech = (body: SpeechRequest) =>
-  request('POST', '/voice/speech', { body, schema: SpeechResponse });
+  request('POST', '/voice/speech', { body, schema: SpeechResponse, wait: 'long' });

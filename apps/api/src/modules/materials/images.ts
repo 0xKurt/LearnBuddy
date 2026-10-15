@@ -37,6 +37,7 @@ import { callModel } from '../../llm/call.js';
 import type { LlmPart } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { itemsOneByOne } from '../practice/items.js';
+import type { PageBytes } from './photos.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 
 /** At most this many crops per sheet (pages added later fill up to it, never past it). */
@@ -125,6 +126,11 @@ export type ConceptImagesInput = {
   learnerId: string;
   locale: string;
   timezone: string;
+  /**
+   * The material's photographed pages, as the reading just loaded them (F4-a, #654): no second
+   * download. Absent, they are fetched from Storage as before.
+   */
+  pages?: readonly PageBytes[];
 };
 
 /**
@@ -141,6 +147,23 @@ export async function attachConceptImages(deps: Deps, input: ConceptImagesInput)
       `[figures] material=${input.materialId} skipped — ${err instanceof Error ? err.message : String(err)}`,
     );
   }
+}
+
+/** The photographed pages from Storage; null when one is absent (purged) or Storage is down. */
+async function downloadPages(deps: Deps, materialId: string): Promise<PageBytes[] | null> {
+  const photos = await deps.db.query<{ storage_path: string; mime: 'image/jpeg' | 'image/png' }>(
+    `select storage_path, mime from material_photos
+      where material_id = $1 and mime in ('image/jpeg','image/png') order by position`,
+    [materialId],
+  );
+  const pages: PageBytes[] = [];
+  for (const p of photos) {
+    // An absent photo (already purged) or a Storage outage: no images this time.
+    const bytes = await deps.storage.download(p.storage_path);
+    if (!bytes) return null;
+    pages.push({ mime: p.mime, bytes: Buffer.from(bytes) });
+  }
+  return pages;
 }
 
 async function attach(deps: Deps, input: ConceptImagesInput): Promise<void> {
@@ -166,19 +189,8 @@ async function attach(deps: Deps, input: ConceptImagesInput): Promise<void> {
   if (items.length === 0) return;
   // Only photographed pages: a PDF page cannot be cropped by sharp (no rendering
   // happens anywhere, §Material PDFs), so PDFs simply get no concept images.
-  const photos = await deps.db.query<{ storage_path: string; mime: 'image/jpeg' | 'image/png' }>(
-    `select storage_path, mime from material_photos
-      where material_id = $1 and mime in ('image/jpeg','image/png') order by position`,
-    [input.materialId],
-  );
-  if (photos.length === 0) return;
-  const pages: Array<{ mime: 'image/jpeg' | 'image/png'; bytes: Buffer }> = [];
-  for (const p of photos) {
-    // An absent photo (already purged) or a Storage outage: no images this time.
-    const bytes = await deps.storage.download(p.storage_path);
-    if (!bytes) return;
-    pages.push({ mime: p.mime, bytes: Buffer.from(bytes) });
-  }
+  const pages = input.pages ? [...input.pages] : await downloadPages(deps, input.materialId);
+  if (!pages || pages.length === 0) return;
 
   const questionList = items
     .map((it, index) => `  [${index}] ${it.prompt.slice(0, 160)}`)

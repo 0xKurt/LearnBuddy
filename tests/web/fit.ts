@@ -511,35 +511,47 @@ export async function halfTurns(page: Page): Promise<string[]> {
 /**
  * Switches the phone's colour scheme and waits until the app has taken it (issue #443).
  *
- * A switch remounts the whole tree (ThemeProvider `key`, issues #84/#148), but not when
- * `emulateMedia` returns: the palette is applied in an effect after the scheme change, and the
- * remount follows that. Measured on the sum question of modes.spec (08.10., a loaded machine):
- * in 14 of 20 switches the old tree was still there when the next command ran, and the remount
- * came a median 102 ms (at most 164 ms) later. Playwright's `fill` focuses the field, then
- * inserts the text; a remount in between sends the text to `<body>` — the field stays empty and
- * "Prüfen" off. `emulateMedia` + `fill('16')` lost the "16" 3 times in 20, this helper 0 times.
- * So it waits until an element of the old tree is gone (every `testID` lives under the theme),
- * then until the page is still. A switch she types right after goes through here.
+ * The palette lands after `emulateMedia` returns: the provider applies it in an effect after the
+ * scheme change. Until #640 a switch remounted the whole tree, and a remount between `fill`'s
+ * focus and its text sent the text to `<body>` (modes.spec, 08.10.: 3 lost in 20 without this
+ * wait). Since #640 (#631) nothing remounts — the provider and the root frame read the applied
+ * palette from one store and render again in the same commit — so the old "wait until an element
+ * of the old tree is gone" waited forever (#743). It now waits until the root frame wears another
+ * background (every palette's `bg` differs between light and dark), then until the page is
+ * still. A switch she types right after goes through here.
  */
 export async function setScheme(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   await landScheme(page, scheme);
   await settle(page);
 }
 
-/** The switch of `setScheme` up to the remount, without waiting for the page to be still. */
+/**
+ * The background of the app's root frame (app/_layout.tsx, `palette.bg`): the outermost element
+ * under `#root` that paints one. Runs in the page.
+ */
+function rootBackground(): string | null {
+  for (let el = document.getElementById('root')?.firstElementChild; el; el = el.firstElementChild) {
+    const bg = getComputedStyle(el).backgroundColor;
+    if (bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+  }
+  return null;
+}
+
+/** The switch of `setScheme` up to the palette landing, without waiting for the page to be still. */
 async function landScheme(page: Page, scheme: 'light' | 'dark'): Promise<void> {
-  const changes = await page.evaluate((want) => {
-    if (matchMedia(`(prefers-color-scheme: ${want})`).matches) return false;
-    const old = document.querySelector('[data-testid]');
-    old?.setAttribute('data-before-scheme', want);
-    return old !== null;
-  }, scheme);
+  const switches = await page.evaluate(
+    (want) => !matchMedia(`(prefers-color-scheme: ${want})`).matches,
+    scheme,
+  );
+  const old = switches ? await page.evaluate(rootBackground) : null;
+  if (switches && old === null) throw new Error('setScheme: the app has no painted root frame');
   await page.emulateMedia({ colorScheme: scheme });
-  if (changes)
-    await expect(
-      page.locator('[data-before-scheme]'),
-      `the app takes the ${scheme} scheme (its mode follows the phone)`,
-    ).toHaveCount(0);
+  if (old !== null)
+    await expect
+      .poll(() => page.evaluate(rootBackground), {
+        message: `the app takes the ${scheme} scheme (its mode follows the phone)`,
+      })
+      .not.toBe(old);
 }
 
 /**

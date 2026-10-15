@@ -652,7 +652,11 @@ review moments `review_next_day`, `review_due`). Gates, cheapest first:
    within 14 days;
 5. no model configured → fixed fallbacks immediately;
 6. the model decides (`CheckDecision`: act or wait, ≤ 3 actions, ≤ 1 message proposal);
-7. apply with the context fence; the contact policy decides whether and when a message is sent;
+7. apply with the context fence; the contact policy decides whether and when a message is sent.
+   A message about a step she already started is refused (`waitingStep` in `apply.ts`, K2 #663:
+   it would be cancelled as obsolete before sending) and goes back to the model as a repair
+   round. A fallback bumps `context_version` only when it wrote a step or a message (K1 #663);
+   one that waits leaves running chat turns valid;
 8. provider outage → retry in 10 minutes (bounded), then fallbacks keep time-critical help
    working (prepared practice before a test, "how did it go", and Buddy's own promise to look
    again as an honest in-app line). A check that answers her own action falls back also after
@@ -797,7 +801,11 @@ finishing and retrying are compare-and-set on the token, so a worker whose lease
 overwrite its successor. A Buddy check heartbeats its leases (the learner's check lease and
 its claimed jobs) before every model call, so a check that runs longer than one lease is never
 taken over while alive; it applies a decision (and its fallbacks) only while it still holds the
-learner's lease — a check is never applied twice (repro-17). At most `max_attempts` (default 3), then parked as `failed` — except the
+learner's lease — a check is never applied twice (repro-17). A sheet's reading does the same
+before each of its up to `MOST_READINGS` calls (`extendJobLease`, K6 #663) and stops without a
+call once its lease went to another run. A job whose handler throws is queued again after its
+backoff with the error as `last_error` (`retryJob`, K4 #663 — before, the lease ran out and
+`lease_expired` replaced the reason). At most `max_attempts` (default 3), then parked as `failed` — except the
 erasure jobs (`purge_photos`, `purge_content`, `delete_account`, `PERSISTENT_KINDS` in
 `scheduler/jobs.ts`): a privacy promise does not expire after three tries, so they are queued
 again with backoff (1, 2, 4 … minutes, at most 6 h) with `last_error` recorded, also after a lost
@@ -1307,6 +1315,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   the web the walkthrough reads it into `test-results/web/perf.jsonl` (first measurement:
   sending a message reacts in 0 ms, so the wait she called "hängt" is not in that render).
   Budgets come after the numbers, not before.
+- **No call waits forever** (#662, audit F14-a; `apps/mobile/lib/api/watchdog.ts`): a JSON call
+  ends after 15 s without an answer (`wait: 'long'` — a call that waits for the model or a full
+  export — after 150 s, above the API's own longest model budget) as `network` with reason
+  `timeout`; a streamed call ends after `STREAM_IDLE_MS` (20 s) without a byte as `stream_lost`,
+  and `http/stream.ts` sends a `: keepalive` comment every `STREAM_KEEPALIVE_MS` (10 s) while its
+  work runs, so only a dead line is that quiet. Both are `network` failures, so the existing
+  idempotent resend paths (`sendWhenOnline`, `turnIds`) carry them; her own "Stopp" stays
+  `aborted`.
 - **Buddy's replies stream** (`POST /buddy/messages` with `Accept: text/event-stream`;
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
@@ -1525,8 +1541,11 @@ open (#169).**
 **A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
 whether the sheet has more (`more_items`), and the sheet is read again for the rest with the
-prompts it already wrote listed, up to `MOST_READINGS` (4) readings in all. New questions are
-merged; a prompt that only differs in spacing or case is the same question and is not added
+prompts it already wrote listed, up to `MOST_READINGS` (4) readings in all. A continued reading
+is told the transcription and the page reports are stored already and returns them empty
+(`moreRules`, F6 #658): the code always kept the first reading's, and writing them again cost
+about 600 output tokens per continuation (live M5, 90-pair list: 4 873 instead of 5 490–6 823
+tokens, same 30 new pairs). New questions are merged; a prompt that only differs in spacing or case is the same question and is not added
 twice. Until 30.09. the cap was 25 with no second reading, so a fifty-word list quietly became
 twenty-five while the page report still said "all" — the silent cut of #49 one layer below where
 it was looked for, and the reason "frag mich alle Vokabeln ab" could not work however well the
@@ -1794,7 +1813,9 @@ scanned school PDF (the tests script the model).
 **Concept images** (issue #50, `modules/materials/images.ts`): the questions of a sheet may show
 the sheet's own teaching figure — a REAL crop from the photographed page, never a generated
 picture (the only possible failure is a slightly loose frame, never an invented shape). After a
-sheet became ready, one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
+sheet became ready — in the background, beside Buddy's look at the sheet and the search index,
+never before them (F4-a, #654: nothing the check decides depends on it), and cropping from the
+page bytes the reading already loaded (`PageBytes`, no second download) — one budgeted vision pass (`purpose 'figures'`, its own `DAILY_LIMITS` entry,
 migration 0050) looks at the page photos and the questions read from them and returns one tight
 box per WHOLE figure (a labelled diagram; a reference chart kept whole, never split into cells) —
 omitting comics, scenes and pure text. sharp crops exactly those pixels and lightly cleans them
@@ -3681,7 +3702,11 @@ so the rules only say it when it is certain; everything else goes to the tutor (
 2–3 hints (what is asked → which rule → the first step) and the solution explained step by step:
 questions from a photo in the (background) reading call, questions on a topic in a separate
 background call right after the session starts (`hints.ts`, purpose `hints`) — writing them in the
-start call made her wait 8–11 s instead of 5–6 s. A hint that states the result in any form
+start call made her wait 8–11 s instead of 5–6 s. Once per question (F9-a, #660): the call that
+creates the run (`hintsFor` in `generate.ts`, also when Buddy prepares an offered run ahead in
+`prepare.ts`, so its hints are there by her tap) asks for the questions it brought, the call that
+adds an early run's rest for exactly those; a request that only finds the run starts none. No lock
+is needed: the sets are disjoint, and the write keeps `hints = '{}'` as its fence. A hint that states the result in any form
 (also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. The ladder counts only
 hints she was really shown as hints (migration `0043_prepared_hints_used.sql`: `hints_used` = every
 hint shown, prepared or written by the tutor; `prepared_hints_used` = which prepared one is next).
@@ -3693,7 +3718,10 @@ themselves) gives the next prepared hint at once, or, with none left, lets the t
 request for help, never graded (`not_an_attempt`), and the tutor's own hint is shown and counted as a
 hint. The tutor model, when it must judge, sees the prepared hints; a reply that gives the solution
 away before the second hint is replaced by the next prepared hint (or a first-step question), without
-a second call. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
+a second call (`ladderHoldsSolution`, `namesTheSolution` in `answerReply.ts`). After that, a reply
+she reads that states the solution counts as revealed whatever the model's `revealed_answer` says
+(F9-b, #661, `answerTutor.ts`) — except a confirmation of her own right answer, free text, rubric
+tasks and tasks in parts; homework keeps its own repair. The solution is explained after the third wrong try (`REVEAL_AFTER_MISSES`), or when
 she asks for help again once every prepared hint and at least `HINTS_BEFORE_SOLUTION` (2) hints were
 shown — never on the first "Tipp"; the question then counts as
 revealed (FSRS brings it back soon). Tests give no hints; homework keeps its own rules (never the

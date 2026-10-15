@@ -10,10 +10,13 @@
 // BUDDY_EVAL_OUT=run.json writes every answer down with its cost, so two prompt
 // versions can be compared case by case — a check that still passes can still have
 // got worse (issue #80). Read two such files with evals/buddy/compare.ts.
+// The measured turn is streamed like the app's; every case records its model rounds, thought
+// tokens and the time to the first reply Buddy could speak (issue #651).
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import { writeFileSync } from 'node:fs';
 
+import type { ReplyStreamEvent, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
@@ -23,7 +26,7 @@ import { registerLearning } from '../../src/modules/learning/register.js';
 import { VertexGateway } from '../../src/llm/vertex.js';
 import { BlockAudit } from './blockaudit.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
-import { createTestEnv, onboard } from '../../src/testing/harness.js';
+import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
 import { CASES, type Outcome } from './cases.js';
 import { judgeRuns, runsFor } from './repeat.js';
 import { bumpContext } from '../../src/modules/buddy/plan.js';
@@ -47,7 +50,82 @@ const transcript: Array<{
   cachedTokens: number;
   thoughtTokens: number;
   latenciesMs: number[];
+  /** Model rounds of the measured turn (lookups add one each, a repair another), per run (#651). */
+  rounds: number[];
+  /**
+   * Per run, ms from sending her message to the first streamed reply Buddy could speak (#651):
+   * null when no reply of that turn was speakable (it changes something, or it failed).
+   */
+  firstSpeakableMs: (number | null)[];
 }> = [];
+
+/**
+ * The measured turn, streamed as the app sends it (#651): its result, and when the first reply
+ * Buddy could already speak arrived. Read chunk by chunk, so the time is the arrival, not the end.
+ */
+async function streamedTurn(
+  env: TestEnv,
+  l: Learner,
+  text: string,
+): Promise<{
+  status: Outcome['status'];
+  errorCode: string | null;
+  firstSpeakableMs: number | null;
+}> {
+  const started = performance.now();
+  const res = await env.app.request('/v1/buddy/messages', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${l.token}`,
+      'content-type': 'application/json',
+      accept: 'text/event-stream',
+    },
+    body: JSON.stringify({ client_message_id: crypto.randomUUID(), text }),
+  });
+  let firstSpeakableMs: number | null = null;
+  let result: { status: Outcome['status']; errorCode: string | null } = {
+    status: 'failed',
+    errorCode: `http ${res.status}`,
+  };
+  const take = (block: string) => {
+    const event = /^event: (.+)$/m.exec(block)?.[1];
+    const data = /^data: (.+)$/m.exec(block)?.[1];
+    if (!event || !data) return;
+    if (
+      event === 'reply' &&
+      firstSpeakableMs === null &&
+      (JSON.parse(data) as ReplyStreamEvent).speakable
+    )
+      firstSpeakableMs = Math.round(performance.now() - started);
+    if (event === 'done') {
+      const done = JSON.parse(data) as SendMessageResponse;
+      result = { status: done.status, errorCode: done.error_code };
+    }
+    if (event === 'error')
+      result = { status: 'failed', errorCode: (JSON.parse(data) as { code: string }).code };
+  };
+  const reader = res.body?.getReader();
+  const decoder = new TextDecoder();
+  let pending = '';
+  for (let chunk = await reader?.read(); chunk && !chunk.done; chunk = await reader?.read()) {
+    pending += decoder.decode(chunk.value, { stream: true });
+    for (let end = pending.indexOf('\n\n'); end >= 0; end = pending.indexOf('\n\n')) {
+      take(pending.slice(0, end));
+      pending = pending.slice(end + 2);
+    }
+  }
+  take(pending);
+  return { ...result, firstSpeakableMs };
+}
+
+/** Buddy's turn calls recorded so far on this case's database. */
+async function turnCalls(env: TestEnv): Promise<number> {
+  return (
+    await env.db.one<{ n: number }>(
+      `select count(*)::int as n from llm_calls where purpose = 'buddy_turn'`,
+    )
+  ).n;
+}
 
 async function main(): Promise<void> {
   const config = loadConfig({
@@ -91,6 +169,8 @@ async function main(): Promise<void> {
       cached: 0,
       thought: 0,
       latencies: [] as number[],
+      rounds: [] as number[],
+      firstSpeakable: [] as (number | null)[],
     };
     for (let run = 1; run <= total; run++) {
       const env = await createTestEnv({ start: c.at ?? '2026-09-28T08:00:00Z', gateway });
@@ -114,13 +194,11 @@ async function main(): Promise<void> {
             text: said,
           });
         }
-        const res = await l.api.post<{ status: Outcome['status']; error_code: string | null }>(
-          '/buddy/messages',
-          {
-            client_message_id: crypto.randomUUID(),
-            text: c.message,
-          },
-        );
+        // Streamed, like the app: the wait for Buddy's first words is measured on the same path.
+        const callsBefore = await turnCalls(env);
+        const res = await streamedTurn(env, l, c.message);
+        caseCost.rounds.push((await turnCalls(env)) - callsBefore);
+        caseCost.firstSpeakable.push(res.firstSpeakableMs);
         const reply = await env.db.maybeOne<{ text: string; ask: { options?: string[] } | null }>(
           `select text, ask from buddy_messages where learner_id = $1 and role = 'buddy' order by seq desc limit 1`,
           [l.learnerId],
@@ -166,8 +244,8 @@ async function main(): Promise<void> {
           reply: r.text ?? '',
         }));
         const outcome: Outcome = {
-          status: res.body.status,
-          errorCode: res.body.error_code,
+          status: res.status,
+          errorCode: res.errorCode,
           reply: reply?.text ?? null,
           options: reply?.ask?.options ?? null,
           tools: (
@@ -309,7 +387,9 @@ async function main(): Promise<void> {
       `${problems.length ? '✗' : '✓'} ${c.id}` +
         (total > 1 ? `  [${total - verdict.failures}/${total} runs passed]` : '') +
         `  (${caseCost.calls} call(s), $${(caseCost.micros / 1e6).toFixed(4)}` +
-        `, ${caseCost.input} in, ${caseCost.cached} cached)` +
+        `, ${caseCost.input} in, ${caseCost.cached} cached, ${caseCost.thought} thought` +
+        `, rounds ${caseCost.rounds.join('/')}` +
+        `, first words ${caseCost.firstSpeakable.map((ms) => (ms === null ? '—' : `${ms} ms`)).join('/')})` +
         (problems.length
           ? `\n    - ${problems.join('\n    - ')}\n    reply: ${outcome.reply ?? '—'}\n    tools: ${outcome.tools.join(', ') || 'none'}\n    goals: ${JSON.stringify(outcome.goals)}`
           : '') +
@@ -339,11 +419,23 @@ async function main(): Promise<void> {
       // How long each model call took and how much it thought (issue #626): the wait, per case.
       thoughtTokens: caseCost.thought,
       latenciesMs: caseCost.latencies,
+      rounds: caseCost.rounds,
+      firstSpeakableMs: caseCost.firstSpeakable,
     });
   }
+  // The wait over every run that had words to speak: the median and the slowest tenth (#651).
+  const waits = transcript
+    .flatMap((t) => t.firstSpeakableMs)
+    .filter((ms): ms is number => ms !== null)
+    .sort((a, b) => a - b);
+  const at = (q: number) => waits[Math.min(waits.length - 1, Math.floor(q * waits.length))];
   console.info(
     `\n${cases.length - failed}/${cases.length} passed · total $${(costMicros / 1e6).toFixed(4)}` +
-      ` · ${inputTokens} input tokens, ${cachedTokens} of them from the provider's prefix cache`,
+      ` · ${inputTokens} input tokens, ${cachedTokens} of them from the provider's prefix cache` +
+      ` · rounds ${transcript.reduce((n, t) => n + t.rounds.reduce((a, b) => a + b, 0), 0)}` +
+      (waits.length
+        ? ` · first words p50 ${at(0.5)} ms, p90 ${at(0.9)} ms over ${waits.length} speakable turns`
+        : ''),
   );
   if (blocks && blockOut) {
     console.info(`\n${blocks.table()}`);
