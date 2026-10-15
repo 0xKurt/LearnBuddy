@@ -73,7 +73,14 @@ export function useOnline(): boolean {
 
 export { keys };
 
-export const useMe = () => useQuery({ queryKey: keys.me, queryFn: getMe });
+/**
+ * Who she is changes only through her own actions here (each updates or invalidates it) and
+ * through the server's refusals, which invalidate it (app/_layout.tsx): screens opened within
+ * five minutes share one answer instead of asking again (#671).
+ */
+const ME_FRESH_MS = 5 * 60_000;
+
+export const useMe = () => useQuery({ queryKey: keys.me, queryFn: getMe, staleTime: ME_FRESH_MS });
 
 /**
  * What a domain keeps in step with each home the server sends (issue #107): the library list
