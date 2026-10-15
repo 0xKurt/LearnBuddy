@@ -44,13 +44,16 @@ export function scriptTalks(): void {
     {
       when: /probevortrag/i,
       answer: says('Gern – halte ihn einmal, als ob die Klasse zuhört.', [
-        { tool: 'offer_rehearsal', args: { kind: 'talk', goal: 'g1', text: null } },
+        { tool: 'offer_rehearsal', args: { kind: 'talk', goal: 'g1', text: null, sheet: null } },
       ]),
     },
     {
       when: /vorlesen üben/i,
       answer: says('Lies mir diesen Text einmal laut vor.', [
-        { tool: 'offer_rehearsal', args: { kind: 'read_aloud', goal: null, text: READ_PASSAGE } },
+        {
+          tool: 'offer_rehearsal',
+          args: { kind: 'read_aloud', goal: null, text: READ_PASSAGE, sheet: null },
+        },
       ]),
     },
   );

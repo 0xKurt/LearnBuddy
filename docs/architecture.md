@@ -303,6 +303,18 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     distress cases of `evals/buddy` 5/5 with the helpline; the insult still 0/20, because the
     same harassment filter holds back the check as well. The thresholds stay as they are (owner,
     15.10.); the rest depends on the provider choice (#647).
+  - **What she says into the recorder is read too** (issue #765, `practice/speak.ts`). The
+    pronunciation judge writes down what it heard but has no concern bit, so a take that holds a
+    word the sentence does not (`saysMoreThan`, the same structural rule as for written answers)
+    goes to the distress check with the sentence. A concern, or the provider's filter holding the
+    take back, gets the fixed help answer: no try, no feedback, the sentence stays open, her
+    words stay in her turns. No check possible: the judgement stands and the fixed help line
+    follows the reply — on every take nobody could read, as on every written answer nobody could
+    read: each one is a new thing she said, and the line is what reaches her if that one told of
+    danger. A take of only the sentence asks nothing. **Known gap (#785):** practising one tapped
+    word (`speak-word`) is not checked, and it shows her words (`heard`, up to 60 characters)
+    back on her screen in an answer that has no slot for a help text; it stores nothing.
+    Measured: `speak-distress.int.test.ts` (3 cases red on main, green since).
   - The copy needs pedagogical and legal review before real learners (noted for the ADR).
   - A concern answer may come **without any reply text**: the model knows its words are thrown
     away, so it rightly writes none. `reply` therefore has no minimum length; `emptyReply()`
@@ -5865,7 +5877,7 @@ own (CLAUDE.md rule 16).
   and once rehearsed what was measured; the home's list shows the day as `UpcomingItem.kind 'talk'`.
 - **The card that records** (tool `offer_rehearsal`, `components/buddy/RehearseCard.tsx`): kind
   `talk` (up to 10 min, for a planned talk or none) or `read_aloud` (up to 2 min, the passage itself
-  in the offer, 15–220 words, checked by code; a passage given as from one of her sheets (`sheet: sh1`) must stand on that sheet word for word, or the action is refused, #636). The card shows the talk's title or the whole
+  in the offer, 15–220 words, checked by code; a passage given as from one of her sheets (`sheet: sh1`) must stand on that sheet word for word, or the action is refused, #636; the sheet's text is compared as printed words — a line-end hyphen joined when the line goes on in lower case, soft hyphens and ligatures undone (`sheetWords`, #726) — and the turn must always say `sheet`, null only for a text Buddy writes or a talk, with no repair hint offering null as a way around the check, #726). The card shows the talk's title or the whole
   passage, the length she was given, one button that starts and ends the recording; while it
   runs the card shows the running time large and the given length beside "ich höre zu" (design
   `Modes.jsx:40–50`; the chat's head listens while the recorder runs (`lib/buddy/headState.ts`
