@@ -5,8 +5,10 @@
 // first — some open a sheet of their own, and two modals in one frame do not come up on iOS.
 
 import { router, usePathname, type Href } from 'expo-router';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
+import { preloadPlaces } from '../../lib/api/queries.js';
 import { askAttach, attachInChat } from '../../lib/capture/attachRequest.js';
 import { tapped } from '../../lib/perf.js';
 import { useShown } from '../../lib/perfShown.js';
@@ -38,6 +40,10 @@ type Props = {
 export function HeaderMenu({ visible, onClose, actions = [], canAct = true }: Props) {
   const here = usePathname();
   useShown('menu', visible);
+  // The places she may tap load while the menu stands open (#711).
+  useEffect(() => {
+    if (visible) preloadPlaces();
+  }, [visible]);
   const leave = (go: () => void): void => {
     onClose();
     setTimeout(go, SHEET_SWAP_MS);

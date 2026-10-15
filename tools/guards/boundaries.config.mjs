@@ -57,6 +57,7 @@ export const DOMAIN_TABLES = [
   'session_items',
   'buddy_roleplays',
   'rehearsals',
+  'learned_answers',
 ];
 
 /** Where the guard looks: the two apps' production code. */
