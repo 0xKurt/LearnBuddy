@@ -257,14 +257,18 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     and the concern went with it ("kann ich gerade nicht prüfen"). Now:
     - the `concern` bit is read on its own, before the rest of the decision is validated;
     - every answer in her own words that no model with that bit has read goes to the **distress
-      check** — one small structured call (purpose `safeguard`, metered as `tutor`, 64 output
+      check** — one small structured call (purpose `safeguard`, its own daily reserve, 64 output
       tokens) that reads only the question and her words: an answer code grades alone (a
       cloze/match/table, a Diktat, a program, a note line, a test's wrong answer, the first and
       the third miss), an answer whose tutor call failed (outage, timeout, invalid output, the
       day's limit), and every version of a long text (beside the feedback call, which has no
       concern bit, so it adds no wait). Not checked, because there are no words of hers in it:
       „Tipp", a tap or a choice, digits, signs and the lone letters of mathematics, and a text
-      code matched to the key with no more than one word beyond the key's.
+      code found right (or a slip of the key) in which every word of hers is already the task's
+      own — the key, an accepted answer, the question, the structured task, program or note line.
+      "2 hilfe" for the key 2, or a passing program with a comment in her words, is read.
+    - The check has its own daily reserve (`DAILY_LIMITS.safeguard`, migration 0105): a long
+      practice day that used up the tutor's calls never leaves her words unread.
     - A concern gets the fixed `concern` answer, a provider block of the check the `blocked`
       one — both the same as everywhere, no try, no hint, no solution.
     - **When no check can run at all, it fails safe:** the reply code gives anyway is kept and
@@ -1495,7 +1499,7 @@ reasons (#159 keeps that promise separate from the internal pilot).
 
 | What                            | Limit                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300 (the practice distress check counts with it, #747), explain 60, extraction 12 (the forms chosen before a run or reading count with it, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                           |
+| Model calls per learner and day | turn 80, check 8, tutor 300, safeguard 600 (the practice distress check's own reserve, #747), explain 60, extraction 12 (the forms chosen before a run or reading count with it, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                             |
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                                                                |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                                                         |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                                                        |

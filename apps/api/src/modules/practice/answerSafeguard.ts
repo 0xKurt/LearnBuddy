@@ -51,26 +51,38 @@ function safeguard(c: AnswerCase, kind: 'concern' | 'blocked'): Judged {
   };
 }
 
-/** Words of two letters or more: a lone letter is a variable ("2x = 8"), a choice or a unit. */
-const words = (s: string): number => s.match(/\p{L}{2,}/gu)?.length ?? 0;
+/** Her words of two letters or more: a lone letter is a variable ("2x = 8"), a choice or a unit. */
+const wordsOf = (s: string): string[] =>
+  (s.toLocaleLowerCase().match(/\p{L}{2,}/gu) ?? []).map((w) => w.normalize('NFC'));
 
 /**
  * The words of hers a check has to read, or null when there are none: "Tipp" carries nothing she
- * wrote, a tap or a choice is one of the app's own options, digits, signs and the lone letters of
- * mathematics tell of nothing, and a text code matched to the key (right, or a slip of it) holds
- * no words beyond the key's.
+ * wrote, a tap or a choice is one of the app's own options, and digits, signs and the lone letters
+ * of mathematics tell of nothing. Otherwise only one answer skips the check (#747 review): one code
+ * found right, or a slip of the key, in which EVERY word of hers is already the task's own — in the
+ * key, an accepted answer, the question, or the structured task, program or note line the item
+ * holds. "2 hilfe" for the key 2, or a passing program with a comment in her words, is read.
  */
-function ownWords(c: AnswerCase): string | null {
-  const { input, rule, text } = c;
+export function ownWords(c: AnswerCase): string | null {
+  const { input, rule, text, item } = c;
   if (c.hintRequest && !c.question) return null;
   if (input.via === 'tapped' || (input.text == null && input.parts == null)) return null;
-  if (words(text) === 0) return null;
+  const hers = wordsOf(text);
+  if (hers.length === 0) return null;
   const matched = rule === 'correct' || NEAR_MISS.has(rule) || VALUE_CONFIRMED.has(rule);
   if (!matched) return text;
-  // A structured answer, a note line, a program or a Diktat that code found right is the key's.
-  if (c.partsCheck || c.staffCheck || c.codeCheck || c.dictationCheck) return null;
-  const longestKey = Math.max(0, ...solutionsOf(c.item).map(words));
-  return words(text) > longestKey + 1 ? text : null;
+  const task = new Set(
+    wordsOf(
+      [
+        ...solutionsOf(item),
+        item.prompt,
+        JSON.stringify(c.structured ?? null),
+        JSON.stringify(c.codeTask ?? null),
+        JSON.stringify(c.staffTask ?? null),
+      ].join(' '),
+    ),
+  );
+  return hers.every((w) => task.has(w)) ? null : text;
 }
 
 /** The fixed help answer as the whole judgement: nothing goes on top of it. */

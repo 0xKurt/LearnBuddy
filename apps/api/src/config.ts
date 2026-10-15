@@ -280,6 +280,12 @@ export const DAILY_LIMITS = {
   buddy_turn: 80,
   buddy_check: 8,
   tutor: 300,
+  /**
+   * The practice distress check (#747): a reserve of its own, so a long practice day that used up
+   * the tutor's calls never leaves her words unread. Generous — one tiny call per answer in her
+   * own words — and still a bound on abuse.
+   */
+  safeguard: 600,
   // The forms chosen before a run or a reading (#627) count with it, not on their own (callAhead).
   explain: 60,
   extraction: 12,

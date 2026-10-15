@@ -178,19 +178,26 @@ describe.skipIf(!dbReady)('distress in a practice answer field (issue #389)', ()
     expect(ScriptedGateway.textOf(check!)).toContain(HIT);
   });
 
-  it('checks her words when her day of tutor calls is used up', async () => {
-    const s = await start(env, l, 'practice');
-    const day = '2026-10-04';
-    await env.db.query(
-      `insert into usage_daily (learner_id, day, kind, calls) values ($1, $2, 'tutor', $3)
+  const useUp = (kind: 'tutor' | 'safeguard', calls: number) =>
+    env.db.query(
+      `insert into usage_daily (learner_id, day, kind, calls) values ($1, '2026-10-04', $2, $3)
          on conflict (learner_id, day, kind) do update set calls = $3`,
-      [l.learnerId, day, DAILY_LIMITS.tutor - 1],
+      [l.learnerId, kind, calls],
     );
-    // One call left: the tutor's would have been it; the check takes it instead (the tutor fails).
-    env.llm.script('tutor', { error: new LlmError('unavailable', 'down') });
+
+  it('checks her words in full after a long practice day used up every tutor call', async () => {
+    // Review of #764: the check has a reserve of its own; ordinary practice never starves it.
+    const s = await start(env, l, 'practice');
+    await useUp('tutor', DAILY_LIMITS.tutor);
     env.llm.script('safeguard', { json: { concern: true } });
     const res = await answer(l, s, HIT);
     expect(res.body.reply.text).toBe(t('de', 'safeguarding.concern'));
+    expect(env.llm.callsFor('tutor')).toHaveLength(0);
+    const used = await env.db.one<{ calls: number }>(
+      `select calls from usage_daily where learner_id = $1 and kind = 'safeguard'`,
+      [l.learnerId],
+    );
+    expect(used.calls).toBe(1);
   });
 
   it('fails safe when no check can read her words: the fixed help line, never only "cannot check"', async () => {
@@ -207,17 +214,15 @@ describe.skipIf(!dbReady)('distress in a practice answer field (issue #389)', ()
     expect(res.body.verdict).toBeNull();
   });
 
-  it('fails safe when the day is used up for the check too', async () => {
+  it('fails safe when the check’s own reserve is used up too', async () => {
     const s = await start(env, l, 'practice');
-    await env.db.query(
-      `insert into usage_daily (learner_id, day, kind, calls) values ($1, '2026-10-04', 'tutor', $2)
-         on conflict (learner_id, day, kind) do update set calls = $2`,
-      [l.learnerId, DAILY_LIMITS.tutor],
-    );
+    await useUp('tutor', DAILY_LIMITS.tutor);
+    await useUp('safeguard', DAILY_LIMITS.safeguard);
     const res = await answer(l, s, HIT);
     expect(res.status).toBe(200);
     expect(res.body.reply.text).toContain(t('de', 'safeguarding.unchecked'));
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
+    expect(env.llm.callsFor('safeguard')).toHaveLength(0);
   });
 
   it('answers a provider block of the check like a block of the tutor', async () => {

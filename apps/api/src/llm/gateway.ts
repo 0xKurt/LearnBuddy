@@ -39,8 +39,8 @@ export type LlmPurpose =
   | 'tutor'
   /**
    * Does what she typed into a practice answer tell of danger to herself (#747,
-   * `practice/distress.ts`)? Metered as the tutor's: it is the tutor's check, run where no tutor
-   * call read her words.
+   * `practice/distress.ts`)? Metered on its own (`DAILY_LIMITS.safeguard`), so ordinary practice
+   * never uses up the reserve her words need.
    */
   | 'safeguard'
   | 'explain'
