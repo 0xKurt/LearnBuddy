@@ -38,6 +38,7 @@ const WAIT = {
 describe.skipIf(!dbReady)('routine looks without anything new (#656)', () => {
   let env: TestEnv;
   let l: Learner;
+  let goalId: string;
   beforeEach(async () => {
     // Monday 10:00 in Berlin; her test is on Saturday.
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
@@ -48,6 +49,7 @@ describe.skipIf(!dbReady)('routine looks without anything new (#656)', () => {
        values ($1, 'exam', 'Mathearbeit', $2, '2026-10-03') returning id`,
       [l.learnerId, subject.id],
     );
+    goalId = goal.id;
     const sheet = await env.db.one<{ id: string }>(
       `insert into materials (learner_id, client_request_id, goal_id, subject_id, status, photo_count, title, created_at)
        values ($1, gen_random_uuid(), $2, $3, 'ready', 1, 'Arbeitsblatt', $4) returning id`,
@@ -95,5 +97,45 @@ describe.skipIf(!dbReady)('routine looks without anything new (#656)', () => {
       await env.db.tx((tx) => bumpContext(tx, l.learnerId));
     });
     expect(env.llm.callsFor('buddy_check')).toHaveLength(3);
+  });
+
+  it('a decision whose only message was suppressed moved nothing: one change after it is new', async () => {
+    // Buddy raised the same topic an hour before, so the message the model proposes is
+    // suppressed — the decision applies, writes nothing, and does not bump the context.
+    await env.db.query(
+      `insert into buddy_outreach (learner_id, kind, origin, topic_key, dedupe_key, title, body,
+                                   relevance, status, expires_at, created_at)
+       values ($1, 'idea', 'buddy', $2, 'earlier', 'Übung', 'Eine kurze Runde?', 0.8, 'in_app',
+               '2026-09-29T12:00:00Z', '2026-09-28T12:00:00Z')`,
+      [l.learnerId, `exam:${goalId}:prep`],
+    );
+    env.llm.script('buddy_check', {
+      json: {
+        disposition: 'act',
+        reason: 'test on Saturday',
+        actions: [],
+        outreach: {
+          kind: 'idea',
+          topic_key: 'exam:g1:prep',
+          title: 'Übung',
+          body: 'Eine kurze Runde für Samstag?',
+          why: 'Die Arbeit ist bald.',
+          relevance: 0.8,
+          expires_in_hours: 12,
+          goal: 'g1',
+          step: null,
+        },
+      },
+    });
+    // Then exactly one real change before the next afternoon.
+    await afternoons(2, async () => {
+      await env.db.tx((tx) => bumpContext(tx, l.learnerId));
+    });
+    const proposed = await env.db.one<{ status: string }>(
+      `select status from buddy_outreach where learner_id = $1 and dedupe_key <> 'earlier'`,
+      [l.learnerId],
+    );
+    expect(proposed.status).toBe('suppressed');
+    expect(env.llm.callsFor('buddy_check')).toHaveLength(2);
   });
 });

@@ -94,10 +94,12 @@ const SAME_STATE_MS = 48 * 3_600_000;
 
 /**
  * Did the model already decide about exactly this state, recently? Its last background decision
- * (not a fallback, not one code made) within `SAME_STATE_MS`, with the context not moved since:
- * a wait leaves `context_version` as it was; an applied decision moves it by its own bump at
- * most. Anything she or Buddy did since — a message, a sheet, a practice, a goal — moved it
- * further, and then the model is asked again.
+ * (not a fallback, not one code made) within `SAME_STATE_MS`, and `context_version` exactly where
+ * that decision left it. A wait leaves it as it was. An applied decision moved it by one only when
+ * it wrote something (`applyDecision` bumps for an action, a look back, or a message that is not
+ * suppressed) — read back from what it wrote, so a decision whose only message was suppressed
+ * is not credited with a bump it never made. Anything she or Buddy did since — a message, a
+ * sheet, a practice, a goal — moved it further, and then the model is asked again.
  */
 async function lookedAtThisState(
   deps: Deps,
@@ -105,17 +107,20 @@ async function lookedAtThisState(
   contextVersion: number,
   now: Date,
 ): Promise<boolean> {
-  const last = await deps.db.maybeOne<{ context_version: number; disposition: string }>(
-    `select context_version, disposition from buddy_decisions
-      where learner_id = $1 and mode = 'check' and model is not null
-        and disposition in ('wait', 'applied') and created_at > $2
-      order by created_at desc, id desc limit 1`,
+  const last = await deps.db.maybeOne<{ context_version: number; wrote: boolean }>(
+    `select d.context_version,
+            d.disposition = 'applied' and (
+                 exists (select 1 from buddy_actions a where a.decision_id = d.id)
+              or exists (select 1 from buddy_lookbacks b where b.decision_id = d.id)
+              or exists (select 1 from buddy_outreach o
+                          where o.decision_id = d.id and o.status <> 'suppressed')) as wrote
+       from buddy_decisions d
+      where d.learner_id = $1 and d.mode = 'check' and d.model is not null
+        and d.disposition in ('wait', 'applied') and d.created_at > $2
+      order by d.created_at desc, d.id desc limit 1`,
     [learnerId, new Date(now.getTime() - SAME_STATE_MS)],
   );
-  if (!last) return false;
-  return last.disposition === 'wait'
-    ? contextVersion === last.context_version
-    : contextVersion <= last.context_version + 1;
+  return last !== null && contextVersion === last.context_version + (last.wrote ? 1 : 0);
 }
 
 export async function decide(
