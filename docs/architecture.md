@@ -303,6 +303,18 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     distress cases of `evals/buddy` 5/5 with the helpline; the insult still 0/20, because the
     same harassment filter holds back the check as well. The thresholds stay as they are (owner,
     15.10.); the rest depends on the provider choice (#647).
+  - **What she says into the recorder is read too** (issue #765, `practice/speak.ts`). The
+    pronunciation judge writes down what it heard but has no concern bit, so a take that holds a
+    word the sentence does not (`saysMoreThan`, the same structural rule as for written answers)
+    goes to the distress check with the sentence. A concern, or the provider's filter holding the
+    take back, gets the fixed help answer: no try, no feedback, the sentence stays open, her
+    words stay in her turns. No check possible: the judgement stands and the fixed help line
+    follows the reply — on every take nobody could read, as on every written answer nobody could
+    read: each one is a new thing she said, and the line is what reaches her if that one told of
+    danger. A take of only the sentence asks nothing. **Known gap (#785):** practising one tapped
+    word (`speak-word`) is not checked, and it shows her words (`heard`, up to 60 characters)
+    back on her screen in an answer that has no slot for a help text; it stores nothing.
+    Measured: `speak-distress.int.test.ts` (3 cases red on main, green since).
   - The copy needs pedagogical and legal review before real learners (noted for the ADR).
   - A concern answer may come **without any reply text**: the model knows its words are thrown
     away, so it rightly writes none. `reply` therefore has no minimum length; `emptyReply()`

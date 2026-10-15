@@ -52,6 +52,20 @@ export const DISTRESS_PROMPT_VERSION = promptVersion('safeguard', DISTRESS_SYSTE
  */
 export type DistressFinding = 'concern' | 'blocked' | 'clear' | 'unchecked';
 
+/** Her words of two letters or more: a lone letter is a variable ("2x = 8"), a choice or a unit. */
+export function wordsIn(text: string): string[] {
+  return (text.toLocaleLowerCase().match(/\p{L}{2,}/gu) ?? []).map((w) => w.normalize('NFC'));
+}
+
+/**
+ * Whether she said or wrote a word the task does not hold (#747 review, #765): the one structural
+ * reason to skip the distress check is that every word of hers is already the task's own.
+ */
+export function saysMoreThan(text: string, task: readonly string[]): boolean {
+  const own = new Set(wordsIn(task.join(' ')));
+  return wordsIn(text).some((w) => !own.has(w));
+}
+
 /** The concern bit alone, read before anything else of a decision is validated (#747). */
 const ConcernRaised = z.object({ concern: z.literal(true) });
 
