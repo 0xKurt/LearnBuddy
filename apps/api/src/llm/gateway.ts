@@ -37,6 +37,12 @@ export type LlmPurpose =
   | 'buddy_turn'
   | 'buddy_check'
   | 'tutor'
+  /**
+   * Does what she typed into a practice answer tell of danger to herself (#747,
+   * `practice/distress.ts`)? Metered on its own (`DAILY_LIMITS.safeguard`), so ordinary practice
+   * never uses up the reserve her words need.
+   */
+  | 'safeguard'
   | 'explain'
   | 'extraction'
   /** Boxes of the teaching figures on a photographed page (concept images, issue #50). */

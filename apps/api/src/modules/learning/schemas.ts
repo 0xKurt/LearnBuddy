@@ -16,6 +16,7 @@ import * as images from '../materials/images.js';
 import * as sheetSources from '../materials/sources.js';
 import * as practice from '../practice/answerTutor.js';
 import * as cloze from '../practice/cloze.js';
+import * as distress from '../practice/distress.js';
 import * as essay from '../practice/essay.js';
 import * as formChoice from '../practice/formChoice.js';
 import * as generate from '../practice/generate.js';
@@ -144,6 +145,15 @@ export function learningSchemas(): SentSchema[] {
       system: tutor.TUTOR_SYSTEM,
       schema: practice.TUTOR_SCHEMA,
       where: 'practice/answerTutor.ts — asked.length ? RUBRIC_SCHEMA : TUTOR_SCHEMA',
+    },
+    {
+      purpose: 'safeguard',
+      profile: 'distress check (#747)',
+      tier: 'smart',
+      promptVersion: distress.DISTRESS_PROMPT_VERSION,
+      system: distress.DISTRESS_SYSTEM,
+      schema: distress.DISTRESS_SCHEMA,
+      where: 'practice/distress.ts',
     },
     {
       purpose: 'tutor',

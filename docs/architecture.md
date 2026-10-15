@@ -249,10 +249,38 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     (`i18n/safeguarding.ts`, one implementation for chat and tutor). The turn is
     `not_an_attempt`: no try is counted (in a test the one try stays hers), no hint, never the
     solution, and the test's neutral line is not put on top. A provider block in the tutor gets
-    the `blocked` text instead of "kann ich gerade nicht prüfen". Not covered: a text the rules
-    already judge without a model (a named choice, a different number) never reaches the tutor —
-    a disclosure has neither. Measured by `practice-safeguarding.int.test.ts` (scripted) and the
-    `distress_*`/`*_no_alarm` cases in `evals/tutor` (live run still open).
+    the `blocked` text instead of "kann ich gerade nicht prüfen".
+  - **Distress in an answer field never depends on the judgement working** (issue #747,
+    `practice/answerSafeguard.ts`, `practice/distress.ts`). The baseline of 15.10. found both
+    tutor distress cases without the help answer: the tutor set `concern: true` and, told its
+    reply is replaced, wrote an empty one — `reply`'s minimum length failed the whole decision
+    and the concern went with it ("kann ich gerade nicht prüfen"). Now:
+    - the `concern` bit is read on its own, before the rest of the decision is validated;
+    - every answer in her own words that no model with that bit has read goes to the **distress
+      check** — one small structured call (purpose `safeguard`, its own daily reserve, 64 output
+      tokens) that reads only the question and her words: an answer code grades alone (a
+      cloze/match/table, a Diktat, a program, a note line, a test's wrong answer, the first and
+      the third miss), an answer whose tutor call failed (outage, timeout, invalid output, the
+      day's limit), and every version of a long text (beside the feedback call, which has no
+      concern bit, so it adds no wait). Not checked, because there are no words of hers in it:
+      „Tipp", a tap or a choice, digits, signs and the lone letters of mathematics, and a text
+      code found right (or a slip of the key) in which every word of hers is already the task's
+      own — the key, an accepted answer, the question, the structured task, program or note line.
+      "2 hilfe" for the key 2, or a passing program with a comment in her words, is read.
+    - The check has its own daily reserve (`DAILY_LIMITS.safeguard`, migration 0105): a long
+      practice day that used up the tutor's calls never leaves her words unread.
+    - A concern gets the fixed `concern` answer, a provider block of the check the `blocked`
+      one — both the same as everywhere, no try, no hint, no solution.
+    - **When no check can run at all, it fails safe:** the reply code gives anyway is kept and
+      `safeguarding.unchecked` follows it — one fixed sentence that names a trusted adult and the
+      helpline, by language and age. Neither alternative is safer: the full help answer to every
+      answer in an outage is a false alarm she learns to skip, and refusing to practise takes away
+      what still works. The sentence reaches her if she did tell of danger and stays calm if not.
+    - Measured: `practice-safeguarding.int.test.ts`, `cloze-items.int.test.ts`,
+      `essay.int.test.ts` (each failure mode red on main, green since), and live on
+      `eu/gemini-3.6-flash` (15.10.): both baseline cases now get the help answer; with the tutor
+      forced down, the check answered "mein vater schlägt mich …" (the provider's filter held it
+      back → `blocked` text with the helpline), and found nothing in frustration or a wrong word.
   - The copy needs pedagogical and legal review before real learners (noted for the ADR).
   - A concern answer may come **without any reply text**: the model knows its words are thrown
     away, so it rightly writes none. `reply` therefore has no minimum length; `emptyReply()`
@@ -1471,7 +1499,7 @@ reasons (#159 keeps that promise separate from the internal pilot).
 
 | What                            | Limit                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12 (the forms chosen before a run or reading count with it, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                              |
+| Model calls per learner and day | turn 80, check 8, tutor 300, safeguard 600 (the practice distress check's own reserve, #747), explain 60, extraction 12 (the forms chosen before a run or reading count with it, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                             |
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                                                                |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                                                         |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                                                        |
@@ -2242,7 +2270,7 @@ its own route, so nothing she asks is ever misread as an answer:
   - **A hint only counts when one was given** (`gave_hint` of the tutor), unlike „Tipp", which
     is a hint by definition.
   - Distress gets the fixed help answer (#389, `safeguard()`), a model outage the honest
-    `practice.ask_unavailable`, „ich hab keine Lust mehr" the app's own `practice.had_enough`.
+    `practice.ask_unavailable` after the distress check of her words (#747), „ich hab keine Lust mehr" the app's own `practice.had_enough`.
   - **Practice test: one tutor call for the distress check, reply always fixed.** The question
     goes to the tutor in TEST mode like a test answer, because child safety beats the saved call
     (#389, report §7: "In the Probetest too"). With `concern` she gets the fixed help answer;
