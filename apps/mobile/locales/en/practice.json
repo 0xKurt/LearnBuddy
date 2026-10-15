@@ -420,7 +420,9 @@
     "too_long": "That's more than fits in one answer. Photograph only your working for this task.",
     "down": "I can't read your photo right now. Type your working or try again in a moment.",
     "camera_blocked": "LearnBuddy isn't allowed to use the camera yet. You can allow it in Settings – or type your working.",
-    "camera_failed": "The camera didn't open. Try again or type your working."
+    "camera_failed": "The camera didn't open. Try again or type your working.",
+    "attach_title": "Attach your working",
+    "attach_line": "I read it and write it into your answer field. You check every line before you send."
   },
   "code": {
     "line": "Line {{n}}",
