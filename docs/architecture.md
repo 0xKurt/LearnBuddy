@@ -286,7 +286,8 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     timeout, invalid output after the repair round, the day's limit, a stale context, a bug, the
     roleplay's feedback call — goes through the same distress check (her message and the earlier
     ones that waited for its answer; in a scene it is told so). A concern gets the fixed concern
-    answer: her messages are answered (`done`, the disclosure marked `recall_block = 'concern'`),
+    answer: her messages are answered (`done`, every message the check read marked
+    `recall_block = 'concern'` — the disclosure may stand in an earlier one),
     a scene ends without feedback, and sending again replays that answer. A provider block of the
     check gets the fixed `blocked` answer. Nothing found: the turn fails as before ("send again").
     No check possible: it fails, and Buddy's fixed help line (`safeguarding.unchecked`) follows

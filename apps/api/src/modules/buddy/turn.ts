@@ -546,6 +546,8 @@ async function answerWithSafeguarding(
   learner: TurnLearner,
   message: ClaimedMessage,
   kind: 'blocked' | 'concern',
+  /** Her earlier messages the distress check read with this one: a disclosure in any of them. */
+  read: readonly string[] = [],
 ): Promise<TurnOutcome> {
   const now = deps.now();
   const answered = await deps.db.tx(async (tx) => {
@@ -564,6 +566,15 @@ async function answerWithSafeguarding(
           and b.status = 'processing' and b.claim_token is null and b.seq < me.seq`,
       [message.id],
     );
+    // The disclosure may stand in an earlier message the check read with hers (#761 review):
+    // every one of them is kept from later models, not only the one that triggered the turn.
+    if (kind === 'concern' && read.length > 0) {
+      await tx.query(
+        `update buddy_messages set recall_block = 'concern'
+          where id = any($1::uuid[]) and learner_id = $2 and recall_block is null`,
+        [read, learner.id],
+      );
+    }
     await tx.query(
       `insert into buddy_messages (learner_id, role, text, reply_to_id, created_at)
        values ($1, 'buddy', $2, $3, $4)`,
@@ -596,11 +607,12 @@ export async function failHerTurn(
   message: ClaimedMessage,
   code: string,
 ): Promise<TurnOutcome> {
-  const found = await distressCheck(deps, learner.id, await herWords(deps, message), {
+  const words = await herWords(deps, message);
+  const found = await distressCheck(deps, learner.id, words.text, {
     scene: (await contextProvider().turn.mode(deps.db, learner.id, deps.now())) !== null,
   });
   if (found === 'concern' || found === 'blocked') {
-    return answerWithSafeguarding(deps, learner, message, found);
+    return answerWithSafeguarding(deps, learner, message, found, words.earlier);
   }
   const outcome = await failTurn(deps, message, code);
   if (found === 'unchecked' && outcome.status === 'failed') {
@@ -619,15 +631,22 @@ export async function failHerTurn(
 }
 
 /** Her words this turn answers: her message and the earlier ones that waited for its answer. */
-async function herWords(deps: Deps, message: ClaimedMessage): Promise<string> {
-  const earlier = await deps.db.query<{ text: string }>(
-    `select b.text from buddy_messages b join buddy_messages me on me.id = $1
+async function herWords(
+  deps: Deps,
+  message: ClaimedMessage,
+): Promise<{ text: string; earlier: string[] }> {
+  const earlier = await deps.db.query<{ id: string; text: string }>(
+    `select b.id, b.text from buddy_messages b join buddy_messages me on me.id = $1
       where b.learner_id = me.learner_id and b.role = 'learner' and b.seq < me.seq
         and b.status = 'processing' and b.claim_token is null and b.recall_block is null
       order by b.seq desc limit 10`,
     [message.id],
   );
-  return [...earlier.map((m) => m.text).reverse(), message.text].join('\n');
+  const ordered = [...earlier].reverse();
+  return {
+    text: [...ordered.map((m) => m.text), message.text].join('\n'),
+    earlier: ordered.map((m) => m.id),
+  };
 }
 
 async function failTurn(deps: Deps, message: ClaimedMessage, code: string): Promise<TurnOutcome> {

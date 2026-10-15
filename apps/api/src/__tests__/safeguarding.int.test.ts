@@ -485,6 +485,33 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     expect(await helpLines(l)).toEqual([t('de', 'safeguarding.concern')]);
   });
 
+  it('keeps every message the check read from later models, not only the last one', async () => {
+    // Review of #767: she wrote the disclosure, then quickly something else; the earlier message
+    // was released to wait for the newer turn's answer, and the check read both.
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    await env.db.query(
+      `insert into buddy_messages (learner_id, role, text, status, created_at)
+       values ($1, 'learner', $2, 'processing', $3)`,
+      [l.learnerId, DISCLOSURE, new Date(env.clock.now().getTime() - 5_000)],
+    );
+    env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'down') });
+    env.llm.script('safeguard', (req: LlmRequest) => {
+      expect(ScriptedGateway.textOf(req)).toContain(DISCLOSURE);
+      return { concern: true };
+    });
+    const res = await send(l, 'bist du noch da?');
+    expect(res.body.status).toBe('done');
+    const mine = await env.db.query<{ text: string; status: string; recall_block: string | null }>(
+      `select text, status, recall_block from buddy_messages
+        where learner_id = $1 and role = 'learner' order by seq`,
+      [l.learnerId],
+    );
+    expect(mine).toEqual([
+      { text: DISCLOSURE, status: 'done', recall_block: 'concern' },
+      { text: 'bist du noch da?', status: 'done', recall_block: 'concern' },
+    ]);
+  });
+
   it('reads her words when the day’s turns are used up', async () => {
     const l = await onboard(env, { relation: 'child', pin: '4711' });
     await env.db.query(
