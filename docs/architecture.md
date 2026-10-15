@@ -726,7 +726,10 @@ review moments `review_next_day`, `review_due`). Gates, cheapest first:
    right after the reading or the practice, not on the next scheduler run;
 4. nothing to work with → silence, no model call. With contact to the phone off or paused Buddy
    still looks and speaks in the app (ADR 0006); the daily routine look runs while an exam is
-   within 14 days. A routine look whose state the model already decided about within 48 hours
+   within 14 days, at the start of her preferred window plus an offset of her own (`routineAt`,
+   at most 30 minutes and half the window, from her id — K3 #680), and a scheduler run works on
+   three learners side by side (`CHECKS_AT_ONCE` in `tick.ts`), so the afternoon no longer queues
+   one learner behind the other. A routine look whose state the model already decided about within 48 hours
    (`lookedAtThisState`: its last check decision, wait or applied, and `context_version` exactly
    where that decision left it — one higher only if it wrote an action, a look back or a message
    that was not suppressed, read back from those rows) waits by code (F4-d, #656) — anything new

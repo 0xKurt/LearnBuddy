@@ -18,7 +18,7 @@
 // The same worker takes over the learner's interrupted conversation turns (turnRecovery.ts).
 
 import type { Deps } from '../../deps.js';
-import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
+import { addDays, localParts } from '../../lib/time.js';
 import { isMinor, type LearnerRow } from '../identity/model.js';
 import { claimJobs, enqueueJob, finishJob } from '../scheduler/jobs.js';
 import { decide } from './checkDecide.js';
@@ -29,7 +29,7 @@ import { sendAgreedReminder } from './checkReminder.js';
 import { triggerOf } from './checkTrigger.js';
 import { markHandled } from './events.js';
 import { occasions } from './occasions.js';
-import { testAhead } from './plan.js';
+import { routineAt, testAhead } from './plan.js';
 import type { SettingsRow } from './state.js';
 import { resumeTurns } from './turnRecovery.js';
 
@@ -139,7 +139,7 @@ async function ensureRoutine(deps: Deps, learnerId: string): Promise<void> {
   await enqueueJob(deps.db, {
     learnerId,
     kind: 'buddy_check',
-    runAt: zonedToInstant(next, s.preferred_start, tz),
+    runAt: routineAt(next, s, learnerId),
     dedupeKey: `routine:${learnerId}:${next}`,
     payload: { reason: 'routine' },
   });

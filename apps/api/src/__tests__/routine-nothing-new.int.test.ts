@@ -71,11 +71,11 @@ describe.skipIf(!dbReady)('routine looks without anything new (#656)', () => {
   });
   afterEach(() => env.closeChecked());
 
-  /** Every afternoon at 15:00 Berlin, for `days` days from Monday. */
+  /** Every afternoon at 15:45 Berlin (past every learner's offset, `routineAt`), for `days` days from Monday. */
   async function afternoons(days: number, between?: (day: number) => Promise<void>) {
     for (let d = 0; d < days; d++) {
       if (d > 0) await between?.(d);
-      env.clock.set(new Date(Date.UTC(2026, 8, 28 + d, 13, 0, 30)).toISOString());
+      env.clock.set(new Date(Date.UTC(2026, 8, 28 + d, 13, 45)).toISOString());
       await tick(env);
     }
   }
