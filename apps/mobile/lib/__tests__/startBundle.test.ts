@@ -30,6 +30,10 @@ const LATER: Record<string, string> = {
   [`${MATH}/figureNames.data.ts`]: 'useFigureNames',
   [`${MATH}/mapNames.data.ts`]: 'useFigureNames',
   [`${MATH}/schematics.data.ts`]: 'useFigureNames',
+  // What a photo she attaches needs (#716): the JPEG decoder of the quality check and the upload
+  // over the file system, with her first photo — the chat opens without them.
+  'apps/mobile/lib/photo/check.ts': 'the page check (lib/learning/register.tsx)',
+  'apps/mobile/lib/capture/put.ts': 'the page upload (lib/learning/register.tsx)',
 };
 
 /** The app's compiler options: its paths and the bundler's resolution. */

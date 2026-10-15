@@ -60,7 +60,7 @@ export async function preparePhoto(
           compress: 0.85,
           base64: true,
         });
-        if (copy.base64) problems = check.run(copy.base64, originalMinSide);
+        if (copy.base64) problems = await check.run(copy.base64, originalMinSide);
       }
     } catch {
       // The check is advice: without it the photo is simply taken as it is.
