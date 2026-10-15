@@ -76,10 +76,11 @@ describe.skipIf(!dbReady)('the trace of a model call (#652)', () => {
     );
     const calls = await traced(env, lena);
     expect(calls.map((c) => [c.decision_id, c.round, c.schema_variant])).toEqual([
-      [decision.id, 1, 'step'],
-      [decision.id, 2, 'step'],
+      // A new learner: nothing in STATE to correct, close, tick off or rename (#668).
+      [decision.id, 1, 'step, no memories,goals,steps,materials'],
+      [decision.id, 2, 'step, no memories,goals,steps,materials'],
       // After two lookup rounds the schema without lookups goes out (MAX_LOOKUP_STEPS).
-      [decision.id, 3, 'final'],
+      [decision.id, 3, 'final, no memories,goals,steps,materials'],
     ]);
     for (const c of calls) {
       expect(c).toMatchObject({ streamed: true, attempts: 1, outcome: 'ok' });

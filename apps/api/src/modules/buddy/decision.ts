@@ -59,9 +59,7 @@ const GoalRef = alias('g', 'goal');
 const GoalTarget = z
   .string()
   .regex(/^(g\d{1,3}|new)$/, 'must be a goal alias like g1, or "new"')
-  .describe(
-    'goal alias from STATE (g1), or "new" for the test planned with plan_exam earlier in this same answer',
-  );
+  .describe('g1 from STATE, or "new" = the test plan_exam made earlier in this answer');
 const StepRef = alias('st', 'step');
 /** A step from STATE, or the practice/step created earlier in the same answer. */
 const StepTarget = z
@@ -77,19 +75,13 @@ const StepTarget = z
  */
 const RepeatSchema = z
   .enum(['daily', 'weekdays', 'weekly', 'never'])
-  .describe(
-    'a reminder she wants again and again: daily, weekdays (Mon-Fri), weekly (same weekday). "never" ends a repetition she already has',
-  );
+  .describe('weekdays = Mon-Fri, weekly = same weekday; "never" ends a repetition she has');
 
 const MemoryRef = alias('m', 'memory');
 const MaterialRef = alias('sh', 'sheet');
 const SubjectRef = alias('f', 'subject');
 
-const Quote = z
-  .string()
-  .min(1)
-  .max(300)
-  .describe("the learner's exact words since your last answer, whole words as written");
+const Quote = z.string().min(1).max(300).describe('her exact words');
 
 // Days and durations as the learner described them; the server computes the date
 // (hard rule 2). The model sees ONE flat object per spec — a kind plus the fields
@@ -100,22 +92,12 @@ const flatField = <T extends z.ZodTypeAny>(t: T, what: string) =>
   t.nullable().optional().describe(what);
 
 const FlatDay = z.object({
-  kind: z
-    .enum(['date', 'in_days', 'weekday', 'unknown'])
-    .describe('A day as the learner described it; the server computes the date'),
-  date: flatField(
-    z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    'kind date: YYYY-MM-DD — only when the learner named a calendar date',
-  ),
-  days: flatField(
-    z.number().int().min(0).max(366),
-    'kind in_days: 0 = today, 1 = tomorrow, 14 = in two weeks',
-  ),
+  // The rule for choosing a kind stands once in the prompt (#667); here only the form.
+  kind: z.enum(['date', 'in_days', 'weekday', 'unknown']),
+  date: flatField(z.string().regex(/^\d{4}-\d{2}-\d{2}$/), 'YYYY-MM-DD'),
+  days: flatField(z.number().int().min(0).max(366), '0 = today'),
   weekday: flatField(z.number().int().min(1).max(7), 'kind weekday: 1 = Monday … 7 = Sunday'),
-  weeks_ahead: flatField(
-    z.number().int().min(0).max(8),
-    'kind weekday: 0 = next such weekday, 1 = the one after (see prompt)',
-  ),
+  weeks_ahead: flatField(z.number().int().min(0).max(8), '0 = the next such weekday'),
 });
 
 type DaySpecOut =
@@ -145,18 +127,13 @@ export const DaySpecSchema = FlatDay.transform((d, ctx): DaySpecOut => {
 });
 
 const FlatUntil = z.object({
-  kind: z
-    .enum(['end_of_day', 'end_of_week', 'through', 'unknown'])
-    .describe('How long a temporary condition lasts; the server computes the end'),
-  days: flatField(
-    z.number().int().min(0).max(60),
-    'kind end_of_day: 0 = until tonight, 1 = until end of tomorrow',
-  ),
+  kind: z.enum(['end_of_day', 'end_of_week', 'through', 'unknown']),
+  days: flatField(z.number().int().min(0).max(60), 'end_of_day: 0 = until tonight'),
   weeks_ahead: flatField(
     z.number().int().min(0).max(8),
     'kind end_of_week: 0 = until Sunday of this week',
   ),
-  day: flatField(DaySpecSchema, 'kind through: the last day it lasts'),
+  day: flatField(DaySpecSchema, 'through: the last day'),
 });
 
 type UntilSpecOut =
@@ -185,7 +162,7 @@ export const UntilSpecSchema = FlatUntil.transform((u, ctx): UntilSpecOut => {
 const LocalTimeSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
-  .describe('HH:MM, learner-local 24h time');
+  .describe('HH:MM, 24h');
 
 const Title = z.string().trim().min(1).max(80);
 
@@ -210,11 +187,8 @@ const MEMORY_ABOUT = [
 ] as const;
 export type MemoryAbout = (typeof MEMORY_ABOUT)[number];
 
-const About = z
-  .enum(MEMORY_ABOUT)
-  .describe(
-    'What this note and the words you quote are about, labelled honestly: learning = school, subjects, level, topics, learning goals, how they like to learn · availability = when they can or cannot practise, and until when, without the reason · everyday = ordinary life that is none of the others · health = their body or mind, illness, symptoms, eating, sleeping, an injury, a disability, treatment · family = trouble at home · harm = being hurt, bullied, threatened, or hurting themselves · identity = their religion, origin, politics or sexuality (the school subject is learning). The app keeps the first three and refuses the rest.',
-  );
+// What each label means stands once, in the prompt's safety rules (#667): it was here twice.
+const About = z.enum(MEMORY_ABOUT).describe('what the note and its quote are about');
 
 const remember = z.object({
   tool: z.literal('remember'),
@@ -222,7 +196,7 @@ const remember = z.object({
     about: About,
     kind: z
       .enum(['fact', 'preference', 'goal', 'constraint'])
-      .describe('constraint = temporary situation that ends (requires until)'),
+      .describe('constraint = temporary, with until'),
     statement: z
       .string()
       .trim()
@@ -232,11 +206,9 @@ const remember = z.object({
       // handball literal of issue #201 — on a surface that reaches the model in the same
       // request as the prompt (issue #213). The principle is the whole rule; `text.ts`
       // enforces it, and the prompt says it once in words.
-      .describe(
-        "Short third-person statement in the learner's language with only what her quote says — no day, time, place or detail she did not say, and nothing that only places it in the moment she is writing in",
-      ),
+      .describe('short, third person, in her language: only what her quote says'),
     quote: Quote,
-    until: UntilSpecSchema.nullable().describe('Required for kind=constraint, otherwise null'),
+    until: UntilSpecSchema.nullable().describe('kind constraint only, else null'),
   }),
 });
 
@@ -250,11 +222,11 @@ const correctMemory = z.object({
       .trim()
       .min(3)
       .max(200)
-      .describe('The corrected statement: what was known, changed only by what her quote says'),
+      .describe('what was known, changed only by what her quote says'),
     quote: Quote,
     until: UntilSpecSchema.nullable()
       .default(null)
-      .describe('Only for a temporary situation (constraint) whose end changed; null keeps it'),
+      .describe("a constraint's new end; null keeps it"),
   }),
 });
 
@@ -264,13 +236,8 @@ const forget = z.object({
     // "forget everything" is one wish, not sixty (issue #114): with an action cap of six per
     // answer, alias-by-alias ran out and the rest stayed silently. Forgetting is always a
     // reduction, so Buddy may do it (ADR 0006); each note keeps its own undo window.
-    memory: MemoryRef.nullable().describe('the note to forget; null only together with all=true'),
-    all: z
-      .boolean()
-      .default(false)
-      .describe(
-        'true only when she asks for everything you know about her to go, not a part of it',
-      ),
+    memory: MemoryRef.nullable().describe('null only with all'),
+    all: z.boolean().default(false).describe('she wants everything you know about her gone'),
     quote: Quote,
   }),
 });
@@ -363,16 +330,12 @@ const setLevel = z.object({
     level: z.enum(['school', 'university', 'adult']),
     school_year: SchoolYear.nullable()
       .default(null)
-      .describe(
-        'level school: the school year in her own school system, as she said it (never convert it yourself); null otherwise or when unknown',
-      ),
+      .describe('level school: her own school system, as she said it; never convert it'),
     grade: year(1, 13)
       .nullable()
       // Named the German school year until issue #213. The six systems above are named
       // together on purpose; this fallback named exactly one of them, to every learner.
-      .describe(
-        'Only when school_year cannot be given: the school year as a plain number, counted from the first year of school; else null',
-      ),
+      .describe('only when school_year cannot be given: years of school; else null'),
     quote: Quote,
   }),
 });
@@ -382,8 +345,8 @@ const planExam = z.object({
   args: z.object({
     // An example title in one language is an example for all five (issues #200, #213): what
     // the field is says it, and the language is the learner's, not the example's.
-    title: Title.describe("The test's title, in the learner's language"),
-    subject: z.string().trim().min(1).max(40).describe("Subject name in the learner's language"),
+    title: Title.describe('in her language'),
+    subject: z.string().trim().min(1).max(40).describe('in her language'),
     subject_kind: z.enum(SUBJECT_KINDS),
     day: DaySpecSchema,
     topics: z.array(z.string().trim().min(1).max(60)).max(8),
@@ -408,11 +371,8 @@ const closeGoal = z.object({
     goal: GoalRef,
     status: z
       .enum(['done', 'dropped'])
-      .describe('done = the test happened; dropped = no longer relevant'),
-    outcome: z
-      .enum(['good', 'ok', 'hard'])
-      .nullable()
-      .describe('How it went, if the learner said so'),
+      .describe('done = it happened; dropped = no longer relevant'),
+    outcome: z.enum(['good', 'ok', 'hard']).nullable().describe('if she said'),
     quote: Quote,
   }),
 });
@@ -429,32 +389,19 @@ const preparePractice = z.object({
     only_wrong: z
       .boolean()
       .optional()
-      .describe(
-        'true only when she asks for the questions that did not sit the last time they were asked. Then only those are chosen, never one not asked yet, and there may be fewer than the minutes suggest.',
-      ),
+      .describe('only the questions that did not sit last time (may be fewer)'),
     difficulty: DifficultyWishSchema.nullable()
       .optional()
-      .describe(
-        'When the learner asks for something harder or something easier: "harder" takes the harder half of her own questions for this, "easier" the easier half. null when she said nothing about it.',
-      ),
+      .describe('the harder or easier half of her questions; null unless she asked'),
     direction: VocabDirectionSchema.nullable()
       .optional()
       .describe(
-        'Vocabulary only, and only what she asked for: "recognise" shows the foreign word and asks what it means, "produce" shows it in her own language and asks for the foreign word. Either way only vocabulary is chosen; null for everything else.',
+        'vocabulary only: recognise = the foreign word is shown, produce = her own; null unless she asked',
       ),
     // Two sheets of the same subject used to be one pool, so asking for the vocabulary
     // could hand her the other sheet (issue #144).
-    sheet: MaterialRef.nullable()
-      .optional()
-      .describe(
-        'the one sheet the questions must come from, when she pointed at a sheet; null when she named no sheet.',
-      ),
-    vocabulary_only: z
-      .boolean()
-      .optional()
-      .describe(
-        'true when she asked for vocabulary and nothing else. Then only vocabulary is chosen, even from a subject whose other sheets are about something different. Leave it out when she asked for a subject or a topic in general.',
-      ),
+    sheet: MaterialRef.nullable().optional().describe('the one sheet she pointed at; else null'),
+    vocabulary_only: z.boolean().optional().describe('she asked for vocabulary and nothing else'),
     // Without these two, "minutes" was the only thing that could set the size — a guess
     // about how long she wants to sit, standing in for what she actually said (#145).
     question_count: z
@@ -464,15 +411,11 @@ const preparePractice = z.object({
       .max(500)
       .nullable()
       .optional()
-      .describe(
-        'the number of questions SHE named. null when she named none — then the minutes decide.',
-      ),
+      .describe('the number SHE named; else null (the minutes decide)'),
     all_of_them: z
       .boolean()
       .optional()
-      .describe(
-        'true when she asked for everything there is (a whole word list, the whole sheet); then the minutes do not limit it. Put no number in your reply: you cannot know it yet, the card says how many it became.',
-      ),
+      .describe('everything there is; your reply names no number, the card does'),
   }),
 });
 
@@ -498,32 +441,26 @@ const planStep = z.object({
       .nullable()
       // The German span that stood here as an example is restated by what her words DO
       // (issues #201, #213): a length of time from now instead of a point on the clock.
-      .describe(
-        'minutes from now, when she named a span from now instead of a clock time. The server computes day and time; leave day unknown and time null then',
-      ),
+      .describe('a span from now she named; then day unknown and time null'),
 
-    agreed: z
-      .boolean()
-      .describe('true only if the learner asked for / agreed to this time (a reminder)'),
+    agreed: z.boolean().describe('she asked for or agreed to this time'),
     /** Needs agreed=true and a time: Buddy's own idea is a suggestion, never a standing rule. */
     repeat: RepeatSchema.nullable(),
     // Same as in_minutes: the end she named can be a date or an event, and UntilSpec carries
     // both — so the field says that it is an end she named, not how an end sounds (#213).
     repeat_until: UntilSpecSchema.nullable().describe(
-      'only with repeat: the last day it should still come, when she named an end of her own; null = until she ends it',
+      'only with repeat: an end she named, else null',
     ),
-    quote: Quote.nullable().describe('Required when agreed=true'),
+    quote: Quote.nullable().describe('needed when agreed'),
     // Optional in parsing (older scripted answers have neither); the model sees both.
     subject: SubjectRef.nullable()
       .optional()
-      .describe(
-        'kind practice without a goal: the subject she wants to practise; null if it has no material yet',
-      ),
+      .describe('kind practice without a goal: its subject; null without material'),
     focus_topics: z
       .array(z.string().trim().min(1).max(60))
       .max(5)
       .optional()
-      .describe('kind practice: topics she named, in her words'),
+      .describe('kind practice: topics she named'),
   }),
 });
 
@@ -551,14 +488,12 @@ const requestMaterial = z.object({
     goal: GoalTarget.nullable(),
     // What it is for stays (the field name alone does not say it); the German example of what
     // a sheet is called does not (#213) — the app shows this title to the learner.
-    title: Title.describe("What to photograph, in the learner's language"),
+    title: Title.describe('what to photograph, in her language'),
     /**
      * A page that belongs to a sheet she already sent — the forgotten back, a page left out
      * (issue #118). Without it the page becomes a second sheet of its own.
      */
-    material: MaterialRef.nullable()
-      .optional()
-      .describe('the sheet this page belongs to, when it completes one she already sent'),
+    material: MaterialRef.nullable().optional().describe('the sheet this page completes'),
   }),
 });
 
@@ -576,7 +511,7 @@ const deleteItem = z.object({
       .trim()
       .min(3)
       .max(300)
-      .describe('the question as it stands on the sheet (from find_questions), word for word'),
+      .describe('word for word as on the sheet (find_questions)'),
     quote: Quote,
   }),
 });
@@ -586,18 +521,14 @@ const setContact = z.object({
   args: z.object({
     preferred_start: LocalTimeSchema.nullable(),
     preferred_end: LocalTimeSchema.nullable(),
-    quiet_start: LocalTimeSchema.nullable().describe(
-      'Evening start of the quiet hours: no messages at all from this time until the morning; only earlier than it is now',
-    ),
-    quiet_end: LocalTimeSchema.nullable().describe(
-      'Morning end of the quiet hours: nothing before this time. Only later than it is now — asking for quiet until later is less contact, and you may do that',
-    ),
+    quiet_start: LocalTimeSchema.nullable().describe('evening start of quiet hours; only earlier'),
+    quiet_end: LocalTimeSchema.nullable().describe('morning end of quiet hours; only later'),
     avoid_weekdays: z
       .array(z.number().int().min(1).max(7))
       .max(7)
       .nullable()
       .describe('Full new list of weekdays without messages (1 = Monday)'),
-    pause: UntilSpecSchema.nullable().describe('Nothing to the phone until then'),
+    pause: UntilSpecSchema.nullable().describe('nothing to the phone until then'),
     quote: Quote,
   }),
 });
@@ -612,7 +543,7 @@ const deleteMaterial = z.object({
   tool: z.literal('delete_material'),
   args: z.object({
     material: MaterialRef,
-    quote: Quote.describe('her words asking for it to go'),
+    quote: Quote,
   }),
 });
 // Both deletions PROPOSE (issue #151): the app puts a card in front of her with the name
@@ -622,7 +553,7 @@ const renameMaterialTool = z.object({
   tool: z.literal('rename_material'),
   args: z.object({
     material: MaterialRef,
-    title: Title.describe('the name she gave it, in her words'),
+    title: Title.describe('the name she gave it'),
     quote: Quote,
   }),
 });
@@ -633,15 +564,11 @@ const setVoice = z.object({
     speed: z
       .enum(['slower', 'faster', 'normal'])
       .nullable()
-      .describe(
-        'How you are read aloud: "sprich langsamer" → slower (one step each time she asks), "schneller" → faster, "wieder normal" → normal; null = unchanged',
-      ),
+      .describe('one step per wish; null = unchanged'),
     voice: z
       .enum(['other', ...VOICE_NAMES])
       .nullable()
-      .describe(
-        '"andere Stimme" → other (the next one); one of the named voices only if she chose it; null = unchanged',
-      ),
+      .describe('other = the next one; a named voice only if she chose it; null = unchanged'),
     quote: Quote,
   }),
 });
@@ -674,29 +601,24 @@ const offerLearning = z.object({
         'read',
         'essay',
       ])
-      .describe(
-        'questions on a topic · a vocabulary list · speaking practice · listening comprehension (she hears a text read aloud and answers questions about it; only when she asks to practise listening) · homework help · a practice test (no hints, results at the end) · spelling_dictation: the app reads words or sentences aloud and she types them (when she asks for a dictation or to practise writing/spelling her word list) · teach_back: open questions SHE answers by explaining in her own words, by voice or in writing, checked point by point (when she asks to be quizzed or questioned on a topic or sheet, or asks to explain something to you) · read: reading comprehension — you write a text at her level and questions about it (when she asks to practise reading or understanding texts and names no sheet of hers) · essay: she writes one long text — an essay, a discussion, a comment, an analysis or interpretation — and gets feedback per key point of its text type, never a grade (when she wants to practise writing such a text)',
-      ),
+      // What each kind is for stands once, in the prompt's "Learning now" (#667).
+      .describe('see "Learning now"'),
     text: z
       .string()
       .trim()
       .min(2)
       .max(600)
-      .describe(
-        "What to learn, in the learner's words (topic, the vocabulary they typed, or the homework task)",
-      ),
+      .describe('what to learn, in her words: topic, typed vocabulary or the task'),
     // Planned and offered in one answer, the test had no alias yet and the turn failed (#636).
     goal: GoalTarget.nullable()
       .default(null)
-      .describe(
-        'practice or test for a planned test — g1 from STATE, or "new" for the test planned with plan_exam earlier in this answer: the questions then stay within the sheets she photographed for it; otherwise null',
-      ),
+      .describe('practice or test for a planned test: g1 or "new"; else null'),
     // A Diktat of the words on one of her sheets (issue #242). Optional in parsing like the two
     // below: older scripted answers have none.
     sheet: MaterialRef.nullable()
       .optional()
       .describe(
-        'spelling_dictation: the sheet whose words she wants dictated — a word list she photographed; the words are then taken from that sheet, and "text" names it. teach_back: the sheet she wants to be questioned on. essay: the sheet with the writing task she wants to practise. null for every other kind, and when she typed or named the words or the topic.',
+        'spelling_dictation, teach_back or essay from one of her sheets: its alias, and text names it; else null',
       ),
     // What she asked for beyond the topic (issue #113), one field (#724): the level is a wish for
     // questions written on a topic, the direction one for vocabulary pairs — never both in one
@@ -708,36 +630,30 @@ const offerLearning = z.object({
       .nullable()
       .optional()
       .describe(
-        'Only what she asked for: "harder" / "easier" when she wants something harder or easier than she is getting (the new questions are written above or below her grade); for vocab only, "recognise" asks what the foreign word means, "produce" shows it in her own language and asks for the foreign word. null when she said nothing about it.',
+        'only her wish: harder or easier than her grade; vocab: recognise = the foreign word is shown, produce = her own; else null',
       ),
     // Issue #388: a practice test is offered once practice on it goes well (code decides,
     // `practice/readiness.ts`) — or when she asks for one, in her words, checked by code.
     asked: Quote.nullable()
       .optional()
-      .describe(
-        'test only: her words asking for a practice test, when she asked for one. null when the test is your idea — then the app offers it only once her practice on it is going well.',
-      ),
+      .describe('test only: her words asking for it; null when it is your idea'),
     // Issue #241: a clock only on her wish. The minutes are a value from a fixed list, never a
     // number of the model's own (rule 2), and her words asking for it are checked by code.
     time_limit: z
       .object({
-        minutes: z
-          .enum(TEST_MINUTE_CHOICES)
-          .describe('the minutes she named, else the nearest on this list; 45 when she named none'),
-        quote: Quote.describe('her words asking to sit it with time'),
+        minutes: z.enum(TEST_MINUTE_CHOICES).describe('hers, or the nearest; 45 if she named none'),
+        quote: Quote,
       })
       .nullable()
       .optional()
-      .describe(
-        'test only, and only when she herself asks to sit it with a time limit, as in a class test, or names a length. null otherwise — never a clock she did not ask for.',
-      ),
+      .describe('test only, when she asks for a time limit; else null'),
     // Issue #724: a kind of picture only on her wish, from a closed list; the run's form choice
     // takes it first. One property: the turn's schema sits at Vertex's budget (#627), so her
     // words are not quoted beside it.
     pictures: PictureWish.nullable()
       .optional()
       .describe(
-        'practice or test only, and only when she herself asks to see a kind of picture in the questions: the figure types that show it. null otherwise.',
+        'practice or test, when she asks to see a kind of picture: its figure types; else null',
       ),
   }),
 });
@@ -745,23 +661,17 @@ const offerLearning = z.object({
 const offerDrill = z.object({
   tool: z.literal('offer_drill'),
   args: z.object({
-    range: DrillRange.describe(
-      'plus_10 · plus_20 · minus_20 · plus_100 · minus_100 · times (the times tables) · divide (the tables backwards) · fractions (1/2 + 1/4, one family) · percent (25 % of 80)',
-    ),
+    range: DrillRange.describe('times = the times tables, divide = them backwards'),
     rows: z
       .array(DrillRow)
       .min(1)
       .max(10)
       .nullable()
       .default(null)
-      .describe(
-        'times/divide only: the rows she named (the 6 and 7 times tables → [6, 7]); null = all',
-      ),
+      .describe('times/divide: the rows she named; null = all'),
     carry: DrillCarry.nullable()
       .default(null)
-      .describe(
-        'plus/minus within 20 or 100 only, and only when she said it: with = crossing the ten, without = not; null = mixed',
-      ),
+      .describe('plus/minus 20 or 100, only if she said: with = crossing the ten; null = mixed'),
   }),
 });
 
@@ -771,7 +681,7 @@ const openArea = z.object({
     area: z
       .enum(['library', 'memory', 'settings', 'history', 'capture', 'practice'])
       .describe(
-        "library = her sheets and their questions · memory = what you know about her · settings = contact, language, parents' area · history = all earlier messages · capture = take a photo of a sheet · practice = the start of the practice you prepared that waits for her (the newest one), under your reply",
+        "library = her sheets · memory = what you know · settings = contact, language, parents' area · history = earlier messages · capture = a photo · practice = the start of the practice you prepared",
       ),
   }),
 });
@@ -785,29 +695,22 @@ const openArea = z.object({
 const startRoleplay = z.object({
   tool: z.literal('start_roleplay'),
   args: z.object({
-    language: RoleplayLanguage.describe(
-      'the language the roleplay is spoken in: the foreign language she wants to practise, never her own app language',
-    ),
-    scene: z
-      .string()
-      .trim()
-      .min(3)
-      .max(80)
-      .describe("where it plays, a few words in the learner's own language"),
+    language: RoleplayLanguage.describe('the foreign language she practises, never her own'),
+    scene: z.string().trim().min(3).max(80).describe('where it plays, a few words in her language'),
     role: z
       .string()
       .trim()
       .min(2)
       .max(40)
-      .describe("who you play in it, one to three words in the learner's own language"),
+      .describe('who you play, one to three words in her language'),
     points: z
       .array(z.string().trim().min(2).max(60))
       .min(3)
       .max(5)
       .describe(
-        "the role card: the things she has to manage in the conversation (to greet, to ask for the price…), each a short phrase in the learner's own language. From her photographed role card when she has one. The feedback afterwards is given on exactly these.",
+        'the role card: what she has to manage, short phrases in her language (from her card if any); the feedback is on these',
       ),
-    quote: Quote.describe('her words asking for the roleplay'),
+    quote: Quote,
   }),
 });
 
@@ -820,32 +723,22 @@ const startRoleplay = z.object({
 const planTalk = z.object({
   tool: z.literal('plan_talk'),
   args: z.object({
-    title: Title.describe("The talk's topic or title, in the learner's language"),
-    format: TalkFormat.describe(
-      'referat · gfs (a graded presentation that counts like a class test) · presentation · recital (a poem or text recited)',
-    ),
-    subject: z.string().trim().min(1).max(40).describe("Subject name in the learner's language"),
+    title: Title.describe('in her language'),
+    format: TalkFormat.describe('gfs = a graded presentation · recital = a poem or text recited'),
+    subject: z.string().trim().min(1).max(40).describe('in her language'),
     subject_kind: z.enum(SUBJECT_KINDS),
     day: DaySpecSchema.describe('the day of the talk'),
-    minutes: z
-      .number()
-      .int()
-      .min(1)
-      .max(45)
-      .nullable()
-      .describe('how long the talk must be, in minutes, only if she said so; else null'),
+    minutes: z.number().int().min(1).max(45).nullable().describe('only if she said; else null'),
     steps: z
       .array(
         z.object({
           stage: TalkStage,
-          day: DaySpecSchema.describe('the day this step should be done by'),
+          day: DaySpecSchema.describe('done by'),
         }),
       )
       .min(1)
       .max(5)
-      .describe(
-        'the steps still ahead, in order (topic → outline → sources → slides → rehearsal), each on a day before the talk; leave out what she has already done',
-      ),
+      .describe('the steps still ahead, in order, each before the talk'),
     quote: Quote,
   }),
 });
@@ -859,24 +752,20 @@ const offerRehearsal = z.object({
   args: z.object({
     kind: z
       .enum(['talk', 'read_aloud'])
-      .describe(
-        'talk: she rehearses her talk (up to 10 min) · read_aloud: she reads a given text aloud (up to 2 min)',
-      ),
-    goal: GoalRef.nullable().describe('talk: the planned talk (g1) from STATE; null otherwise'),
+      .describe('talk: up to 10 min · read_aloud: a given text, up to 2 min'),
+    goal: GoalRef.nullable().describe('talk: the planned talk; else null'),
     text: z
       .string()
       .trim()
       .max(2000)
       .nullable()
       .describe(
-        `read_aloud: the text she reads, exactly as she should read it — from her sheet, or one you write at her level (${READ_ALOUD_WORDS.min}–${READ_ALOUD_WORDS.max} words, no headings or lists). null for a talk`,
+        `read_aloud: the text as she reads it (${READ_ALOUD_WORDS.min}–${READ_ALOUD_WORDS.max} words, no headings or lists); null for a talk`,
       ),
     // Asked for the text on her sheet, he once wrote a different one (#636): code checks it.
     sheet: MaterialRef.nullable()
       .optional()
-      .describe(
-        'read_aloud from one of her sheets: its alias (sh1) — text is then a passage of that sheet word for word; null for a text you write or a talk',
-      ),
+      .describe('read_aloud from her sheet: its alias, text word for word from it; else null'),
   }),
 });
 

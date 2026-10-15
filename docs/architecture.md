@@ -402,8 +402,23 @@ resolvers — is in `modules/buddy/toolKit.ts`.
 `modules/buddy/registry.ts` (ADR 0005 stage 2) registers every act tool once: its call schema
 (`decision.ts`), the surfaces allowed to call it (`turn`, `check`), what it touches, whether it
 needs the learner's quote and can be undone; its handler comes from `tools.ts`. The model-facing
-action schemas and the tool catalogue in the prompt are generated from it; `runAct` checks the
+action schemas and the background check's tool catalogue are generated from it; `runAct` checks the
 surface again before running (a check can never run a turn-only tool — also unit-tested).
+
+**One description per thing** (KI-Audit F3 stage 1, #667): a tool's schema says what each field
+holds and in what form; the turn prompt says when and why it is used ("What to do when", "Learning
+now"). The turn has no catalogue of its own any more — it repeated the rules a third time. No issue
+number and no sample sentence reaches the model. **Calls are flat** (#726, `buddy/calls.ts`): the
+model writes `{ tool, ...args }`, code nests it to `{ tool, args }` before validating, so handlers,
+stored decisions and scripted answers keep their shape; the `args` wrapper cost one schema property
+per tool. **Only the tools that can apply are offered** (F3 stage 2, #668, `offeredTools`): a tool
+that needs a memory, a test, a step or a sheet to name (`needs` in the registry) goes out only when
+the turn's aliases have one — counted each round, since a lookup can name an older sheet. The
+system prompt stays one static block (the cached prefix); `llm_calls.schema_variant` names the
+offer (`step, no memories,steps`). Measured: the turn prompt 32 545 → 24 947 characters, the full
+step schema 43 216 → 29 768 characters and 269 → 242 properties, a learner with nothing yet 23 360
+characters and 181 properties; `evals/buddy` 64/65 as at the baseline (`docs/decisions/baseline-2026-10.md`),
+input per call ≈ 27 200 → 18 200 tokens.
 
 Every part of the app is reachable by asking: `open_area` (library, memory, settings, history,
 capture) changes nothing and shows a button in the conversation, like `offer_learning`.
@@ -412,7 +427,7 @@ picks the practice prepared last that still waits, and its `show_ready` card is 
 reply — "liegt schon bereit … mit einem Tippen" with nothing to tap was the defect. When nothing
 waits the call is refused and the words are repaired; once the practice is started or replaced the
 card shows no start (`ready`, decorated when the thread is served). A tool of its own did not fit:
-the turn step schema stands one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
+the turn step schema then stood one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
 "say where it is". He never says which task forms or pictures a practice will have: those are
 chosen when the run is built, after his answer; naming the parts of a picture the app shows is not
 a drawing (`learning/prompt.ts`).
@@ -972,7 +987,7 @@ minimal set. The run is told so in one line (`PICTURES`, a principle, no sample 
 turn's step schema stood at the budget (269) with #725, so `pictures` came with a fold:
 `offer_learning`'s `difficulty` and `direction` are one field `wish` (harder, easier, recognise,
 produce) — a level is a wish for questions on a topic, a direction one for vocabulary pairs, never
-both in one offer. The step schema stays at 269, with no room left: the next field needs another fold. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
+both in one offer. Flat calls (#726) brought the step schema to 242, and a test holds it at least 20 properties under the bound (`buddy/__tests__/offer.test.ts`). A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
 costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
 `llm_calls`) and no limit of its own: `callAhead` meters it with its run. **The run's allowance is
