@@ -238,7 +238,7 @@ async function listen(
       maxOutputTokens: offer.kind === 'talk' ? 8_192 : 2_048,
       temperature: 0,
       timeoutMs: offer.kind === 'talk' ? 120_000 : 45_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = Heard.safeParse(res.json);
     if (!parsed.success) throw new AppError('model_unavailable', 'Could not listen right now');

@@ -276,7 +276,7 @@ export async function runSummary(deps: Deps, job: JobRow): Promise<void> {
       maxOutputTokens: 600,
       temperature: 0.2,
       timeoutMs: 30_000,
-      thinkingBudget: 0,
+      thinking: 'off',
     });
     const parsed = Summary.safeParse(res.json);
     // Throwing means the job retries; after its last try the terminal effect writes the

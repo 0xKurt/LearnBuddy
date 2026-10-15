@@ -511,7 +511,7 @@ async function generateSet(
         // Prepared once, and everything later builds on it (keys, hints, worked
         // solutions): time to think. Measured on 3.6 Flash: about the same time and
         // cost, more careful content (docs/architecture.md §Speed).
-        thinkingBudget: 2048,
+        thinking: 'high',
         onPartial,
       },
       reservation,

@@ -31,6 +31,7 @@ function request(over: Partial<LlmRequest> = {}): LlmRequest {
     maxOutputTokens: 256,
     temperature: 0.3,
     timeoutMs: 30_000,
+    thinking: 'off',
     ...over,
   };
 }

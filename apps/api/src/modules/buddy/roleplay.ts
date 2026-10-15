@@ -423,7 +423,7 @@ export async function writeFeedback(
     maxOutputTokens: 1024,
     temperature: 0.2,
     timeoutMs: 30_000,
-    thinkingBudget: 512,
+    thinking: 'low',
   });
   const parsed = RoleplayFeedbackForModel.safeParse(result.json);
   if (!parsed.success) throw new LlmError('invalid_output', 'roleplay feedback did not validate');
