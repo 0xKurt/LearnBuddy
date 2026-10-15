@@ -93,7 +93,8 @@ async function roleplayRound(
       maxOutputTokens: 1024,
       temperature: 0.6,
       timeoutMs: 30_000,
-      thinking: 'low',
+      // A line she waits for in the role-play, like Buddy's own turn (#626): minimal, not a budget.
+      thinking: 'minimal',
     });
     meta.model = result.usage.model;
     raw = result.json;
