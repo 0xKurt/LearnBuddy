@@ -330,7 +330,7 @@ export function widest(full: JsonSchema): JsonSchema {
 }
 
 /** What the choosing call is told on top of the main call's system prompt (listed in `learning/schemas.ts`). */
-export const CHOOSER = `NOW ONLY CHOOSE, DO NOT WRITE THE TASK. Before the answer above is written, choose what it needs from the two lists of this answer's schema: "forms" — the task forms beyond plain questions (the structured kinds and the separate lists of tasks), and "figures" — the figure types its questions need drawn. Choose the fewest that serve this learner and this material well, the most needed first; an empty list when plain questions serve. What is not chosen cannot be used.`;
+export const CHOOSER = `NOW ONLY CHOOSE, DO NOT WRITE THE TASK. Before the answer is written, choose what it needs from the two lists of this answer's schema: "forms" — the task forms beyond plain questions (the structured kinds and the separate lists of tasks), and "figures" — the figure types its questions need drawn. Choose the fewest that serve this learner and this material well, the most needed first; an empty list when plain questions serve. What is not chosen cannot be used.`;
 
 /**
  * The schema the main call goes out with: `full` when it fits; otherwise narrowed to what a first,
@@ -353,6 +353,11 @@ export async function chooseForms(
      * and stay even when no choice could be made.
      */
     wished?: readonly string[];
+    /**
+     * What the choosing call reads instead of `system` (#669): a short catalogue of what `full`
+     * offers. Without it the choosing call reads the main call's whole prompt.
+     */
+    chooser?: (offer: { forms: string[]; figures: string[] }) => string;
   },
 ): Promise<Narrowed & { reservation: Reservation | null }> {
   // The bound of the gateway this call goes to (#646): another provider serves other sizes.
@@ -379,13 +384,19 @@ async function narrow(
   max: number,
 ): Promise<Narrowed> {
   const Choice = choiceFor(call.full);
+  const lead = call.chooser ? call.chooser(offered(call.full)) : call.system;
   try {
     // Metered with the call it belongs to (`callAhead`): her daily limit counts runs, not calls.
     const res = await callAhead(deps, reservation, {
       purpose: 'forms',
       tier: 'fast',
-      promptVersion: promptVersion(`forms-${call.purpose}`, CHOOSER, call.promptVersion),
-      system: `${call.system}\n\n${CHOOSER}`,
+      promptVersion: promptVersion(
+        `forms-${call.purpose}`,
+        CHOOSER,
+        ...(call.chooser ? [lead] : []),
+        call.promptVersion,
+      ),
+      system: `${lead}\n\n${CHOOSER}`,
       contents: call.contents,
       schema: toJsonSchema(Choice),
       maxOutputTokens: 300,

@@ -335,7 +335,7 @@ export async function roleplayMessages(
   return db.query<TranscriptRow>(
     `select id, role, text, status, failure_code, recall_block
        from buddy_messages
-      where learner_id = $1 and seq > $2::bigint
+      where learner_id = $1 and seq > $2::bigint and material_id is null
         and (role = 'buddy' or status in ('processing', 'done'))
       order by seq
       limit 80`,

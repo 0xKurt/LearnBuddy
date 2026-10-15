@@ -48,6 +48,8 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     env.llm.script('buddy_turn', {
       error: new LlmError('blocked', 'finish reason SAFETY', null, 'SAFETY'),
     });
+    // The distress check is held back too (#758): it fails safe, to the helpline.
+    env.llm.script('safeguard', { error: new LlmError('blocked', 'SAFETY', null, 'SAFETY') });
     const blocked = await send(l, DISCLOSURE);
     // Not a glitch to resend: answered, by code, with the helpline for her language.
     expect(blocked.body.status).toBe('done');
@@ -442,6 +444,196 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     expect(again.body.status).toBe('done');
     const home = await l.api.get<BuddyHome>('/buddy');
     expect(home.body.thread[0]).toMatchObject({ status: 'done', failure_code: null });
+  });
+
+  // ── #758: the safety filter cannot tell an insult from a disclosure; the distress check can ──
+
+  const INSULT = 'du bist voll dumm, du checkst echt gar nichts, du blöder bot';
+  const filterHolds = () =>
+    env.llm.script('buddy_turn', {
+      error: new LlmError('blocked', 'finish reason SAFETY', null, 'SAFETY'),
+    });
+  const lastReply = async (l: Learner) =>
+    (
+      await env.db.one<{ text: string }>(
+        `select text from buddy_messages where learner_id = $1 and role = 'buddy'
+          order by seq desc limit 1`,
+        [l.learnerId],
+      )
+    ).text;
+
+  it('an insult the filter holds back gets a calm fixed line, not the helpline', async () => {
+    // Live (15.10.): Vertex rates the streamed answer to an insult as harassment and blocks it;
+    // every one of 20 insults got the crisis text with 116 111.
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    filterHolds();
+    env.llm.script('safeguard', (req: LlmRequest) => {
+      expect(ScriptedGateway.textOf(req)).toContain(INSULT);
+      return { concern: false };
+    });
+    const res = await send(l, INSULT);
+    expect(res.body.status).toBe('done');
+    expect(await lastReply(l)).toBe(t('de', 'safeguarding.held'));
+    expect(await lastReply(l)).not.toContain('116 111');
+    // Her words are still never sent to the turn's model again.
+    const mine = await env.db.one<{ failure_code: string; recall_block: string }>(
+      `select failure_code, recall_block from buddy_messages where learner_id = $1 and role = 'learner'`,
+      [l.learnerId],
+    );
+    expect(mine).toEqual({ failure_code: 'blocked', recall_block: 'blocked' });
+  });
+
+  it('a disclosure the filter holds back gets the fixed concern answer', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    filterHolds();
+    env.llm.script('safeguard', { json: { concern: true } });
+    const res = await send(l, DISCLOSURE);
+    expect(res.body.status).toBe('done');
+    expect(await lastReply(l)).toBe(t('de', 'safeguarding.concern'));
+  });
+
+  it('a held-back turn whose check cannot run keeps the helpline (fails safe)', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    filterHolds();
+    env.llm.script('safeguard', { error: new LlmError('unavailable', 'down') });
+    const res = await send(l, INSULT);
+    expect(res.body.status).toBe('done');
+    expect(await lastReply(l)).toBe(t('de', 'safeguarding.blocked'));
+  });
+
+  it('a held-back turn whose check throws something else still ends in the helpline', async () => {
+    // Review of #781: the held-back path was a pure fixed-text path; a throw inside the check
+    // (a database error, a bug) must not turn it into a failed turn.
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    filterHolds();
+    env.llm.script('safeguard', { error: new Error('not a model error') as unknown as LlmError });
+    const res = await send(l, DISCLOSURE);
+    expect(res.body.status).toBe('done');
+    expect(await lastReply(l)).toBe(t('de', 'safeguarding.blocked'));
+  });
+
+  // ── #761: a failed turn never leaves her distress unread ───────────────────────────────────
+
+  const helpLines = async (l: Learner) =>
+    (
+      await env.db.query<{ text: string }>(
+        `select text from buddy_messages where learner_id = $1 and role = 'buddy' order by seq`,
+        [l.learnerId],
+      )
+    ).map((m) => m.text);
+
+  it.each([
+    ['an outage', [{ error: new LlmError('unavailable', 'down') }]],
+    ['a timeout', [{ error: new LlmError('timeout', 'slow') }]],
+    // Twice outside the schema: the repair round fails too (model_invalid).
+    ['invalid output', [{ json: { nonsense: true } }, { json: { nonsense: true } }]],
+  ] as const)('reads her message for distress when the turn fails with %s', async (_, failures) => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    env.llm.script('buddy_turn', ...failures);
+    env.llm.script('safeguard', { json: { concern: true } });
+    const res = await send(l, DISCLOSURE);
+    // Answered, by code, with the help answer — not "send again".
+    expect(res.body.status).toBe('done');
+    const thread = res.body.home.thread;
+    expect(thread.find((m) => m.role === 'learner')).toMatchObject({ status: 'done' });
+    expect(thread[thread.length - 1]).toMatchObject({
+      role: 'buddy',
+      text: t('de', 'safeguarding.concern'),
+    });
+    expect(ScriptedGateway.textOf(env.llm.callsFor('safeguard')[0]!)).toContain(DISCLOSURE);
+    // A disclosure is not shown to any model again (recall.ts).
+    const mine = await env.db.one<{ recall_block: string | null }>(
+      `select recall_block from buddy_messages where learner_id = $1 and role = 'learner'`,
+      [l.learnerId],
+    );
+    expect(mine.recall_block).toBe('concern');
+    // Sending it again replays the answer: no second turn, no second help answer.
+    const again = await send(l, DISCLOSURE, res.id);
+    expect(again.body.status).toBe('done');
+    expect(await helpLines(l)).toEqual([t('de', 'safeguarding.concern')]);
+  });
+
+  it('keeps every message the check read from later models, not only the last one', async () => {
+    // Review of #767: she wrote the disclosure, then quickly something else; the earlier message
+    // was released to wait for the newer turn's answer, and the check read both.
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    await env.db.query(
+      `insert into buddy_messages (learner_id, role, text, status, created_at)
+       values ($1, 'learner', $2, 'processing', $3)`,
+      [l.learnerId, DISCLOSURE, new Date(env.clock.now().getTime() - 5_000)],
+    );
+    env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'down') });
+    env.llm.script('safeguard', (req: LlmRequest) => {
+      expect(ScriptedGateway.textOf(req)).toContain(DISCLOSURE);
+      return { concern: true };
+    });
+    const res = await send(l, 'bist du noch da?');
+    expect(res.body.status).toBe('done');
+    const mine = await env.db.query<{ text: string; status: string; recall_block: string | null }>(
+      `select text, status, recall_block from buddy_messages
+        where learner_id = $1 and role = 'learner' order by seq`,
+      [l.learnerId],
+    );
+    expect(mine).toEqual([
+      { text: DISCLOSURE, status: 'done', recall_block: 'concern' },
+      { text: 'bist du noch da?', status: 'done', recall_block: 'concern' },
+    ]);
+  });
+
+  it('reads her words when the day’s turns are used up', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    await env.db.query(
+      `insert into usage_daily (learner_id, day, kind, calls) values ($1, '2026-09-28', 'buddy_turn', 80)`,
+      [l.learnerId],
+    );
+    env.llm.script('safeguard', { json: { concern: true } });
+    const res = await send(l, DISCLOSURE);
+    expect(res.body.status).toBe('done');
+    expect(await helpLines(l)).toEqual([t('de', 'safeguarding.concern')]);
+  });
+
+  it('a provider block of the check gets the fixed blocked answer', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'down') });
+    env.llm.script('safeguard', { error: new LlmError('blocked', 'SAFETY') });
+    const res = await send(l, DISCLOSURE);
+    expect(res.body.status).toBe('done');
+    expect(await helpLines(l)).toEqual([t('de', 'safeguarding.blocked')]);
+  });
+
+  it('nothing found: the turn fails as before and nothing is added', async () => {
+    const l = await onboard(env);
+    env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'down') });
+    const res = await send(l, 'Hallo Buddy');
+    expect(res.body).toMatchObject({ status: 'failed', error_code: 'model_unavailable' });
+    expect(await helpLines(l)).toEqual([]);
+    expect(env.llm.callsFor('safeguard')).toHaveLength(1);
+  });
+
+  it('no check possible: it fails, and the fixed help line follows her message once', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'down') });
+    env.llm.script('safeguard', { error: new LlmError('unavailable', 'down') });
+    const res = await send(l, DISCLOSURE);
+    // Still "send again": nothing was answered, and nobody pretends it was.
+    expect(res.body).toMatchObject({ status: 'failed', error_code: 'model_unavailable' });
+    expect(await helpLines(l)).toEqual([t('de', 'safeguarding.unchecked')]);
+    // She sends it again into the same outage: the line is not doubled.
+    env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'down') });
+    env.llm.script('safeguard', { error: new LlmError('timeout', 'slow') });
+    const again = await send(l, DISCLOSURE, res.id);
+    expect(again.body.status).toBe('failed');
+    expect(await helpLines(l)).toEqual([t('de', 'safeguarding.unchecked')]);
+    // Then the model is back: the help answer comes as in any concern turn.
+    env.llm.script('buddy_turn', {
+      json: { concern: true, reply: '', options: null, actions: [] },
+    });
+    const third = await send(l, DISCLOSURE, res.id);
+    expect(third.body.status).toBe('done');
+    expect(await helpLines(l)).toEqual([
+      t('de', 'safeguarding.unchecked'),
+      t('de', 'safeguarding.concern'),
+    ]);
   });
 
   it('a sheet the safety filter refuses to read fails for good, with no retry offered', async () => {

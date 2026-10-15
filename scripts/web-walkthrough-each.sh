@@ -11,6 +11,8 @@
 # LB_TEST_DATABASE_URL); the web export is built once and reused by every run.
 set -u
 cd "$(dirname "$0")/.."
+# Held for the whole loop; each web-walkthrough.sh run below then finds it taken.
+. scripts/test-lock.sh
 # One location per test (file:line); tests generated in a loop share theirs and run together.
 LOCATIONS=$(npx playwright test --list "$@" | sed -n 's/^  \([^ ]*\.spec\.ts:[0-9]*\):[0-9]* › .*/\1/p' | uniq)
 if [ -z "$LOCATIONS" ]; then

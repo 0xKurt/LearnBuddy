@@ -4,7 +4,7 @@
 // (`parseSetFor`). docs/architecture.md §Practice. The call itself is `generate.ts`.
 //
 // The structured forms a run can use and the rules the model is told about them stand here side
-// by side (`STRUCTURED_FORMS`, `STRUCTURED_RULES`): a new structured kind is one entry in each.
+// by side (`STRUCTURED_FORMS`, `STRUCTURED_RULE_OF`): a new structured kind is one entry in each.
 
 import {
   BarTask,
@@ -202,23 +202,29 @@ const STRUCTURED_FORMS = [
   'grid_draw',
 ] as const satisfies StructuredKind[];
 
+/** What the generator is told about each structured form, in the order of `GENERATE_SYSTEM`. */
+export const STRUCTURED_RULE_OF: Readonly<Record<StructuredKind, string>> = {
+  order: ORDER_RULES,
+  table_fill: TABLE_RULES,
+  match: MATCH_RULES,
+  cloze: CLOZE_RULES,
+  select_all: SELECT_RULES,
+  mark: MARK_RULES,
+  find_error: FIND_ERROR_RULES,
+  column_calc: COLUMN_RULES,
+  grid_draw: GRID_RULES,
+};
+
 /**
- * What the generator is told about the structured forms, one "- " line each, in the order of
- * `GENERATE_SYSTEM` (`generate.ts`).
+ * The structured forms' rules, one "- " line each: of the forms in `forms` (a run is told only
+ * the forms its schema offers, #669), or of all of them.
  */
-export const STRUCTURED_RULES = [
-  ORDER_RULES,
-  TABLE_RULES,
-  MATCH_RULES,
-  CLOZE_RULES,
-  SELECT_RULES,
-  MARK_RULES,
-  FIND_ERROR_RULES,
-  COLUMN_RULES,
-  GRID_RULES,
-]
-  .map((rule) => `- ${rule}`)
-  .join('\n');
+export function structuredRules(forms?: ReadonlySet<string>): string {
+  return (Object.keys(STRUCTURED_RULE_OF) as StructuredKind[])
+    .filter((k) => !forms || forms.has(k))
+    .map((k) => `- ${STRUCTURED_RULE_OF[k]}`)
+    .join('\n');
+}
 
 /** A profile with these item kinds and no list of its own. */
 function onlyItems(items: readonly ModelItemKind[]): SetProfile {

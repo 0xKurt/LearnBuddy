@@ -37,6 +37,12 @@ export type LlmPurpose =
   | 'buddy_turn'
   | 'buddy_check'
   | 'tutor'
+  /**
+   * Does what she wrote tell of danger to herself (#747,
+   * `buddy/distress.ts`), or in a chat or roleplay turn whose model call failed (#761)? Metered on its own (`DAILY_LIMITS.safeguard`), so ordinary practice
+   * never uses up the reserve her words need.
+   */
+  | 'safeguard'
   | 'explain'
   | 'extraction'
   /** Boxes of the teaching figures on a photographed page (concept images, issue #50). */

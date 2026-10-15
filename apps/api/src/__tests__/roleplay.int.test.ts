@@ -22,7 +22,8 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import type { LlmRequest } from '../llm/gateway.js';
+import { t } from '../i18n/index.js';
+import { LlmError, type LlmRequest } from '../llm/gateway.js';
 import { ROLEPLAY_FEEDBACK_SYSTEM, ROLEPLAY_SYSTEM } from '../modules/buddy/roleplay.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
@@ -345,6 +346,22 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
       ],
       better: [{ said: 'I am hungry', better: 'I would like something to eat.' }],
     });
+  });
+
+  // #761: the scene's model is down — her line is still read for distress.
+  it('a concern in a line whose model call fails ends the scene with the fixed caring reply', async () => {
+    const { l, id } = await started('Ola');
+    env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'down') });
+    env.llm.script('safeguard', (req: LlmRequest) => {
+      // The check knows it reads a line in a scene, not a message to Buddy.
+      expect(ScriptedGateway.textOf(req)).toContain('SCENE');
+      return { concern: true };
+    });
+    const res = await say(l, 'zuhause schlägt mich jemand');
+    expect(res.body.status).toBe('done');
+    expect(await turnsOf(id)).toMatchObject({ status: 'ended', ended_reason: 'concern' });
+    expect(res.body.home.thread.at(-1)!.text).toBe(t('de', 'safeguarding.concern'));
+    expect(res.body.home.thread.every((m) => m.roleplay_feedback === null)).toBe(true);
   });
 
   it('a concern ends the scene with the fixed caring reply and no feedback', async () => {

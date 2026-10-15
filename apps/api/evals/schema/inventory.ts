@@ -90,7 +90,10 @@ export function variants(): Variant[] {
         profile: `kind=${kind} + sheets (${SHEET_TOPICS.length} placeholder topics)`,
         tier: 'smart',
         promptVersion: generate.GENERATE_PROMPT_VERSION,
-        system: generate.GENERATE_SYSTEM,
+        // The rules of what the widest schema offers, as the run sends them (#669).
+        system: generate.generateSystem(
+          formChoice.offered(formChoice.widest(setProfiles.explainSchemaFor(kind, SHEET_TOPICS))),
+        ),
         schema: formChoice.widest(setProfiles.explainSchemaFor(kind, SHEET_TOPICS)),
         where: `practice/setProfiles.ts — explainSchemaFor('${kind}', sheets.topics)`,
       }),

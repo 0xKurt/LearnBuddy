@@ -607,12 +607,13 @@ describe.skipIf(!dbReady)('learning modes', () => {
         title: 'Unité 3',
         subject: { name: 'Französisch', kind: 'french' },
         items: [
+          // A French key: no capital shows which word is the article, so the tutor tells.
           item({
             kind: 'vocab',
-            prompt: 'le vélo',
-            answer: 'das Fahrrad',
-            prompt_lang: 'fr',
-            lang: 'de',
+            prompt: 'das Fahrrad',
+            answer: 'le vélo',
+            prompt_lang: 'de',
+            lang: 'fr',
             topic: 'Unité 3',
           }),
           item({
@@ -629,27 +630,27 @@ describe.skipIf(!dbReady)('learning modes', () => {
     const res = await l.api.post<SessionView>('/practice/topic', {
       client_request_id: randomUUID(),
       kind: 'vocab',
-      text: "le vélo – das Fahrrad, aller à l'école – zur Schule gehen",
+      text: "das Fahrrad – le vélo, aller à l'école – zur Schule gehen",
     });
     expect(res.status).toBe(201);
     const idOf = (prompt: string) => res.body.items.find((i) => i.item.prompt === prompt)!.item.id;
 
-    // The rules see THAT the first word is gone, never WHICH — "Fahrrad" forgot the
+    // The rules see THAT the first word is gone, never WHICH — "vélo" forgot the
     // article, "Schule gehen" lost the preposition that tells you where. Telling those
     // apart needs the language, not a list of articles per language (CLAUDE.md rule 3),
     // so the model judges and code holds it to its answer.
-    env.llm.script('tutor', tutor('Richtig — mit Artikel: das Fahrrad.', { verdict: 'correct' }));
-    const noArticle = await answer(l, res.body, idOf('le vélo'), 'Fahrrad');
+    env.llm.script('tutor', tutor('Richtig — mit Artikel: le vélo.', { verdict: 'correct' }));
+    const noArticle = await answer(l, res.body, idOf('das Fahrrad'), 'vélo');
     expect(noArticle.body.verdict).toBe('correct');
-    expect(noArticle.body.reply.text).toContain('das Fahrrad');
+    expect(noArticle.body.reply.text).toContain('le vélo');
     // The key keeps its article: the shortened form is not learned as an answer, or the
     // gender would quietly disappear from the question for good.
     const key = await env.db.one<{ answer: string; accepted_answers: string[] }>(
       `select answer, accepted_answers from items where id = $1`,
-      [idOf('le vélo')],
+      [idOf('das Fahrrad')],
     );
-    expect(key.answer).toBe('das Fahrrad');
-    expect(key.accepted_answers).not.toContain('Fahrrad');
+    expect(key.answer).toBe('le vélo');
+    expect(key.accepted_answers).not.toContain('vélo');
 
     // A missing word that carries meaning stays a near miss, and the reply says which.
     env.llm.script('tutor', tutor('Fast — es fehlt „zur".', { verdict: 'partially_correct' }));

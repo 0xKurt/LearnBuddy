@@ -13,7 +13,10 @@
 // `Ausnahmeliste-Zuwachs: #<issue> <reason>`. A prompt that shrank lowers its number to hold the
 // saving.
 //
-// Target, not yet held: Buddy's turn schema at 25 000 characters (KI-Audit F3). Today it is 43 216.
+// Buddy's turn: 32 545 prompt and 43 216 schema characters until F3 stage 1 (#667); one
+// description per thing and flat calls brought them to 24 947 and 29 768 (all tools offered;
+// a learner with nothing to name gets 23 360, #668). The audit's 25 000 for the schema holds for
+// that learner, not yet for the full offer.
 // requires live verification in Claude Code session (the budgets are offline; tokens need Vertex)
 
 import type { LlmPurpose } from '../../src/llm/gateway.js';
@@ -21,12 +24,14 @@ import type { LlmPurpose } from '../../src/llm/gateway.js';
 export type PromptBudget = { systemChars: number; schemaChars: number };
 
 export const PROMPT_BUDGETS: Partial<Record<LlmPurpose, PromptBudget>> = {
-  buddy_turn: { systemChars: 33_000, schemaChars: 43_500 },
-  buddy_check: { systemChars: 11_500, schemaChars: 7_500 },
-  explain: { systemChars: 38_000, schemaChars: 33_000 },
+  buddy_turn: { systemChars: 25_000, schemaChars: 30_000 },
+  buddy_check: { systemChars: 8_000, schemaChars: 5_500 },
+  explain: { systemChars: 18_000, schemaChars: 33_000 },
   forms: { systemChars: 42_500, schemaChars: 1_000 },
   extraction: { systemChars: 42_500, schemaChars: 36_000 },
   tutor: { systemChars: 8_500, schemaChars: 2_500 },
+  /** The distress check (#747): one bit, so it stays small. */
+  safeguard: { systemChars: 1_500, schemaChars: 1_000 },
   reexplain: { systemChars: 2_500, schemaChars: 6_500 },
   hints: { systemChars: 3_000, schemaChars: 3_000 },
   figures: { systemChars: 3_000, schemaChars: 1_000 },

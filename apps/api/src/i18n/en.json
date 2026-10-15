@@ -10,8 +10,12 @@
   "safeguarding": {
     "blocked": "I can't answer that here. If something is weighing on you or someone is hurting you, please talk to an adult you trust – or call Childline on 0800 1111 (free and confidential). I'm still here for you.",
     "concern": "Thank you for telling me – that matters, and you're not alone with it. Please talk to an adult you trust. You can also call Childline on 0800 1111 (free and confidential, you don't have to give your name). I'm still here for you.",
+    "held": "I can't answer that here. If you like, we'll just carry on with your learning.",
+    "held_adult": "I can't answer that here. If you like, we'll just carry on with your learning.",
     "blocked_adult": "I can't answer that here. If something is weighing on you, please talk to someone you trust. If you are in danger, call the emergency number 112.",
     "concern_adult": "Thank you for telling me – that matters. Please talk to someone you trust. If you are in danger, call the emergency number 112. I'm still here for you.",
+    "unchecked": "If something is weighing on you or someone is hurting you, please talk to an adult you trust – or call Childline on 0800 1111 (free and confidential).",
+    "unchecked_adult": "If something is weighing on you, please talk to someone you trust. If you are in danger, call the emergency number 112.",
     "also_asked": "I haven't forgotten what you asked about your learning – just tell me when you want us to look at it together.",
     "also_asked_adult": "I haven't forgotten what you asked about your learning – tell me when you want to look at it.",
     "held_back": "(A message the safety filter held back.)"
@@ -69,6 +73,7 @@
     "card_knew": "I knew it",
     "card_not_yet": "Not yet",
     "correct": "That's right – well done!",
+    "correct_article": "That's right – well done! With its article: {{answer}}.",
     "dictation": {
       "prompt_word": "Listen and write the word.",
       "prompt_sentence": "Listen and write the sentence.",
@@ -101,6 +106,7 @@
     "help_step": "Let's go step by step: what does the task give you, and what are you looking for?",
     "hint_request": "A hint, please",
     "missing_word": "Almost – a word is still missing. Take another look.",
+    "other_article": "Almost – the noun is right! Only the article in front of it isn't right yet.",
     "no_single_solution": "There isn't one right answer I could show you here: in a text like this, what counts is how you argue it. Tell me where you're stuck and we'll look at your text together.",
     "not_lowest": "Balanced correctly! Now reduce it – every number in front divides by {{factor}}.",
     "not_quite": "Not quite yet. Have another look at the question – or show the solution.",

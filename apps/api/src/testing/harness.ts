@@ -103,10 +103,12 @@ export async function createTestEnv(
   const adminDb = opts.connectAs ? createDb(database.url, { max: 2 }) : db;
   const clock = new TestClock(opts.start ?? '2026-09-28T08:00:00Z');
   // Background hints for new questions are answered with "none" unless a test scripts
-  // them; the concept-image pass finds no figures unless a test scripts boxes (issue #50).
+  // them; the concept-image pass finds no figures unless a test scripts boxes (issue #50). The
+  // practice distress check finds nothing unless a test scripts a concern or a failure (#747).
   const llm = new ScriptedGateway()
     .byDefault('hints', { json: { items: [] } })
-    .byDefault('figures', { json: { assets: [] } });
+    .byDefault('figures', { json: { assets: [] } })
+    .byDefault('safeguard', { json: { concern: false } });
   const push = new FakePush();
   const speech = new FakeSpeech();
   const auth = new FakeAuth(adminDb, clock.now);

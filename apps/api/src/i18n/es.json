@@ -10,8 +10,12 @@
   "safeguarding": {
     "blocked": "Aquí no puedo responder a eso. Si algo te preocupa o alguien te hace daño, habla con un adulto de confianza, o llama a la Fundación ANAR: 900 20 20 10 (gratis y confidencial). Sigo aquí para ti.",
     "concern": "Gracias por contármelo: es importante y no estás solo/a con esto. Habla con un adulto de confianza. También puedes llamar a la Fundación ANAR: 900 20 20 10 (gratis y confidencial, no hace falta que digas tu nombre). Sigo aquí para ti.",
+    "held": "Aquí no puedo responder a eso. Si quieres, seguimos aprendiendo.",
+    "held_adult": "Aquí no puedo responder a eso. Si quieres, seguimos aprendiendo.",
     "blocked_adult": "Aquí no puedo responder a eso. Si algo te preocupa, habla con alguien de confianza. Si estás en peligro, llama al 112.",
     "concern_adult": "Gracias por contármelo: es importante. Habla con alguien de confianza. Si estás en peligro, llama al 112. Sigo aquí para ti.",
+    "unchecked": "Si algo te preocupa o alguien te hace daño, habla con un adulto de confianza, o llama a la Fundación ANAR: 900 20 20 10 (gratis y confidencial).",
+    "unchecked_adult": "Si algo te preocupa, habla con alguien de confianza. Si estás en peligro, llama al 112.",
     "also_asked": "No he olvidado tu pregunta sobre lo que estás aprendiendo: dímelo cuando quieras y la vemos juntos/as.",
     "also_asked_adult": "No he olvidado tu pregunta sobre lo que estás aprendiendo: dímelo cuando quieras y la vemos.",
     "held_back": "(Un mensaje que el filtro de seguridad retuvo.)"
@@ -69,6 +73,7 @@
     "card_knew": "Lo sabía",
     "card_not_yet": "Todavía no",
     "correct": "¡Correcto, muy bien!",
+    "correct_article": "¡Correcto, muy bien! Con su artículo: {{answer}}.",
     "dictation": {
       "prompt_word": "Escucha y escribe la palabra.",
       "prompt_sentence": "Escucha y escribe la frase.",
@@ -101,6 +106,7 @@
     "help_step": "Vamos paso a paso: ¿qué datos te da el ejercicio y qué hay que buscar?",
     "hint_request": "Una pista, por favor",
     "missing_word": "Casi – todavía falta una palabra. Míralo otra vez.",
+    "other_article": "Casi – el sustantivo está bien. Solo el artículo de delante todavía no.",
     "no_single_solution": "Aquí no hay una única respuesta correcta que pueda mostrarte: en un texto así, lo que cuenta es cómo lo argumentas. Dime dónde te atascas y miramos tu texto juntos.",
     "not_lowest": "Bien ajustada. Ahora simplifícala – todos los números de delante se dividen por {{factor}}.",
     "not_quite": "Todavía no del todo. Vuelve a mirar la pregunta – o muestra la solución.",

@@ -19,6 +19,7 @@ import { randomUUID } from 'node:crypto';
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { t } from '../i18n/index.js';
 import { LlmError } from '../llm/gateway.js';
 import { essayItem } from '../modules/practice/essay.js';
 import { insertItems } from '../modules/practice/items.js';
@@ -332,6 +333,31 @@ describe.skipIf(!dbReady)('long texts: feedback per key point, no grade (#258)',
     const broken = await answer(s, essayId, ESSAY);
     expect(broken.body.verdict).toBeNull();
     expect(await row(s, essayId)).toEqual({ status: 'open', attempts: 0 });
+  });
+
+  // #747: the long-text feedback has no concern bit; the distress check reads the version beside it.
+  it('answers distress in her text with the fixed help answer instead of feedback', async () => {
+    const { s, essayId } = await practise();
+    const told = `${ESSAY}\nIch kann mich nicht konzentrieren, mein Vater schlägt mich jeden Abend.`;
+    env.llm.script('tutor', judged(ALL_MET, PLACES));
+    env.llm.script('safeguard', { json: { concern: true } });
+    const res = await answer(s, essayId, told);
+    expect(res.status).toBe(200);
+    expect(res.body.reply.text).toBe(t('de', 'safeguarding.concern'));
+    expect(res.body.reply.essay ?? null).toBeNull();
+    expect(res.body.verdict).toBe('not_an_attempt');
+    expect(await row(s, essayId)).toEqual({ status: 'open', attempts: 0 });
+    expect(JSON.stringify(env.llm.callsFor('safeguard')[0])).toContain('mein Vater schlägt mich');
+  });
+
+  it('adds the fixed help line when neither the feedback nor the check could read her text', async () => {
+    const { s, essayId } = await practise();
+    env.llm.script('tutor', { error: new LlmError('unavailable', 'down') });
+    env.llm.script('safeguard', { error: new LlmError('unavailable', 'down') });
+    const res = await answer(s, essayId, ESSAY);
+    expect(res.body.verdict).toBeNull();
+    expect(res.body.reply.text).toContain('nicht verloren');
+    expect(res.body.reply.text).toContain(t('de', 'safeguarding.unchecked'));
   });
 
   it('another learner’s session or question is a 404', async () => {
