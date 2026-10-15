@@ -420,7 +420,9 @@
     "too_long": "È più di quanto stia in una risposta. Fotografa solo il procedimento di questo esercizio.",
     "down": "Adesso non riesco a leggere la tua foto. Scrivi il tuo procedimento o riprova tra un momento.",
     "camera_blocked": "LearnBuddy non può ancora usare la fotocamera. Puoi permetterlo nelle Impostazioni – oppure scrivere il tuo procedimento.",
-    "camera_failed": "La fotocamera non si è aperta. Riprova o scrivi il tuo procedimento."
+    "camera_failed": "La fotocamera non si è aperta. Riprova o scrivi il tuo procedimento.",
+    "attach_title": "Allega il tuo procedimento",
+    "attach_line": "Lo leggo e lo scrivo nel tuo campo di risposta. Controlli ogni riga prima di inviare."
   },
   "code": {
     "line": "Riga {{n}}",

@@ -17,6 +17,7 @@ import { randomUUID } from 'node:crypto';
 import type { AnswerResponse, CodeTask, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { t } from '../i18n/index.js';
 import { LlmError } from '../llm/gateway.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -144,6 +145,22 @@ describe.skipIf(!dbReady)('Informatik: Programme und Abfragen', () => {
     expect(many.body.reply.text).toMatch(/3 Zeilen, gesucht sind 2/);
     const ok = await answer(session.id, query!, "select name from schueler where klasse='7a'");
     expect(ok.body.verdict).toBe('correct');
+  });
+
+  // Review of #764: a program that passes is still her own words — a comment is read for distress.
+  it('reads a passing program’s comment for distress and answers it with the fixed help', async () => {
+    const session = await prepare([WRITE]);
+    const write = session.items[0]!.item.id;
+    env.llm.script('safeguard', { json: { concern: true } });
+    const comment = '# zu hause schlägt mich mein vater';
+    const res = await answer(
+      session.id,
+      write,
+      `def verdoppeln(zahl):\n    ${comment}\n    return zahl + zahl`,
+    );
+    expect(res.body.reply.text).toBe(t('de', 'safeguarding.concern'));
+    expect(res.body.verdict).toBe('not_an_attempt');
+    expect(JSON.stringify(env.llm.callsFor('safeguard')[0])).toContain('schlägt mich');
   });
 
   it('keeps all eight code lines and grades the final runtime failure', async () => {

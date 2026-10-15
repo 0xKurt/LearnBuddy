@@ -266,6 +266,9 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
           `select id, role, text, status, failure_code, recall_block, reply_to_id, ask, outreach_id,
                   decision_id, created_at
              from buddy_messages where learner_id = $1
+              -- Her message for a sent sheet has no words (issue #632): the sheet itself is in
+              -- what the domain tells the model about her materials.
+              and material_id is null
             order by seq desc
             limit $2`,
           [learnerId, LIMITS.messages],

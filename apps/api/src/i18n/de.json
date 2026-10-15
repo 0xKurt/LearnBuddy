@@ -10,8 +10,12 @@
   "safeguarding": {
     "blocked": "Darauf kann ich hier nicht antworten. Wenn dich gerade etwas bedrückt oder dir jemand wehtut: Sprich bitte mit einem Erwachsenen, dem du vertraust – oder ruf die Nummer gegen Kummer an: 116 111 (kostenlos und anonym). Ich bin weiter für dich da.",
     "concern": "Danke, dass du mir das erzählst – das ist wichtig, und du bist damit nicht allein. Sprich bitte mit einem Erwachsenen, dem du vertraust. Du kannst auch die Nummer gegen Kummer anrufen: 116 111 (kostenlos und anonym, du musst deinen Namen nicht sagen). Ich bin weiter für dich da.",
+    "held": "Darauf kann ich hier nicht antworten. Wenn du magst, machen wir einfach beim Lernen weiter.",
+    "held_adult": "Darauf kann ich hier nicht antworten. Wenn du magst, machen wir einfach beim Lernen weiter.",
     "blocked_adult": "Darauf kann ich hier nicht antworten. Wenn dich gerade etwas bedrückt, sprich bitte mit jemandem, dem du vertraust. Wenn du in Gefahr bist, ruf den Notruf 112 an.",
     "concern_adult": "Danke, dass du mir das erzählst – das ist wichtig. Sprich bitte mit jemandem, dem du vertraust. Wenn du in Gefahr bist, ruf den Notruf 112 an. Ich bin weiter für dich da.",
+    "unchecked": "Falls dich gerade etwas bedrückt oder dir jemand wehtut: Sprich bitte mit einem Erwachsenen, dem du vertraust – oder ruf die Nummer gegen Kummer an: 116 111 (kostenlos und anonym).",
+    "unchecked_adult": "Falls dich gerade etwas bedrückt, sprich bitte mit jemandem, dem du vertraust. Wenn du in Gefahr bist, ruf den Notruf 112 an.",
     "also_asked": "Deine Frage zum Lernen habe ich nicht vergessen – sag mir einfach Bescheid, wenn wir sie uns zusammen ansehen sollen.",
     "also_asked_adult": "Deine Frage zum Lernen habe ich nicht vergessen – sag Bescheid, wenn wir sie uns ansehen sollen.",
     "held_back": "(Eine Nachricht, die der Schutzfilter zurückgehalten hat.)"
@@ -69,6 +73,7 @@
     "card_knew": "Wusste ich",
     "card_not_yet": "Noch nicht",
     "correct": "Stimmt – gut gemacht!",
+    "correct_article": "Stimmt – gut gemacht! Mit Artikel: {{answer}}.",
     "dictation": {
       "prompt_word": "Hör zu und schreib das Wort.",
       "prompt_sentence": "Hör zu und schreib den Satz.",
@@ -101,6 +106,7 @@
     "help_step": "Lass uns Schritt für Schritt schauen: Was ist in der Aufgabe gegeben, und was wird gesucht?",
     "hint_request": "Tipp, bitte",
     "missing_word": "Fast – da fehlt noch ein Wort. Schau nochmal genau hin.",
+    "other_article": "Fast – das Nomen stimmt! Nur der Artikel davor passt noch nicht.",
     "no_single_solution": "Hier gibt es nicht die eine Lösung, die ich dir zeigen könnte: bei so einem Text zählt, wie du es begründest. Sag mir, woran du hängst, dann schauen wir zusammen auf deinen Text.",
     "not_lowest": "Richtig ausgeglichen! Jetzt noch kürzen – alle Zahlen davor lassen sich durch {{factor}} teilen.",
     "not_quite": "Noch nicht ganz. Schau dir die Frage nochmal an – oder lass dir die Lösung zeigen.",

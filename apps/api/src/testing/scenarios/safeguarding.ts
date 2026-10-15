@@ -50,6 +50,16 @@ const roleplayConcern = (): unknown => ({
   reply: '',
 });
 
+/**
+ * The practice distress check (#747) on what she typed into an answer field: her sentence of
+ * distress is a concern, every other answer is not.
+ */
+export const practiceDistress = (req: LlmRequest): unknown => ({
+  concern: req.contents.some((m) =>
+    m.parts.some((p) => 'text' in p && /werde ich jeden tag gehauen/i.test(p.text)),
+  ),
+});
+
 export function scriptSafeguarding(): void {
   scriptTurns(
     { when: /werde ich jeden tag gehauen/i, answer: concern },

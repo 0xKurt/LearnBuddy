@@ -115,6 +115,9 @@ export const requireAccountAnyConsent: MiddlewareHandler<AppEnv> = async (c, nex
   await next();
 };
 
+/** Her presence is written at most this often (seconds; #671). */
+const PRESENCE_EVERY_S = 60;
+
 /**
  * Learner profile of the account. Also records presence and the device's
  * time zone (header x-timezone), which all of Buddy's timing depends on.
@@ -133,13 +136,22 @@ export const requireLearner: MiddlewareHandler<AppEnv> = async (c, next) => {
   // and a decision the model made in the old zone is stale instead of landing a day off
   // (audit M-48 timezone-header-no-context-bump). The bump goes through `bumpContext`, the one
   // door to the version (issue #315); a request in the zone already stored writes no more than
-  // its presence.
+  // its presence — and that at most once a minute (#671): every poll and every spoken sentence
+  // wrote the row her turns lock, and "in the app now" (modules/buddy/inApp.ts) looks at the
+  // last three minutes. The minute is counted on the app's clock (rule 7).
   const settings = await deps.db.one<{ timezone: string }>(
-    `insert into buddy_settings (learner_id, timezone, last_seen_at)
-       values ($1, coalesce($2, $4::text), $3)
-     on conflict (learner_id) do update set last_seen_at = $3
-     returning timezone`,
-    [learner.id, tz, now, DEFAULT_TIMEZONE],
+    `with seen as (
+       insert into buddy_settings (learner_id, timezone, last_seen_at)
+         values ($1, coalesce($2, $4::text), $3)
+       on conflict (learner_id) do update set last_seen_at = $3
+         where buddy_settings.last_seen_at is null
+            or buddy_settings.last_seen_at <= $3::timestamptz - make_interval(secs => $5)
+       returning timezone)
+     select timezone from seen
+     union all
+     select timezone from buddy_settings
+      where learner_id = $1 and not exists (select 1 from seen)`,
+    [learner.id, tz, now, DEFAULT_TIMEZONE, PRESENCE_EVERY_S],
   );
   let timezone = settings.timezone;
   if (tz !== null && tz !== timezone) {

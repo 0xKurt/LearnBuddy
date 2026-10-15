@@ -249,10 +249,60 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     (`i18n/safeguarding.ts`, one implementation for chat and tutor). The turn is
     `not_an_attempt`: no try is counted (in a test the one try stays hers), no hint, never the
     solution, and the test's neutral line is not put on top. A provider block in the tutor gets
-    the `blocked` text instead of "kann ich gerade nicht prüfen". Not covered: a text the rules
-    already judge without a model (a named choice, a different number) never reaches the tutor —
-    a disclosure has neither. Measured by `practice-safeguarding.int.test.ts` (scripted) and the
-    `distress_*`/`*_no_alarm` cases in `evals/tutor` (live run still open).
+    the `blocked` text instead of "kann ich gerade nicht prüfen".
+  - **Distress in an answer field never depends on the judgement working** (issue #747,
+    `practice/answerSafeguard.ts`, `buddy/distress.ts`). The baseline of 15.10. found both
+    tutor distress cases without the help answer: the tutor set `concern: true` and, told its
+    reply is replaced, wrote an empty one — `reply`'s minimum length failed the whole decision
+    and the concern went with it ("kann ich gerade nicht prüfen"). Now:
+    - the `concern` bit is read on its own, before the rest of the decision is validated;
+    - every answer in her own words that no model with that bit has read goes to the **distress
+      check** — one small structured call (purpose `safeguard`, its own daily reserve, 64 output
+      tokens) that reads only the question and her words: an answer code grades alone (a
+      cloze/match/table, a Diktat, a program, a note line, a test's wrong answer, the first and
+      the third miss), an answer whose tutor call failed (outage, timeout, invalid output, the
+      day's limit), and every version of a long text (beside the feedback call, which has no
+      concern bit, so it adds no wait). Not checked, because there are no words of hers in it:
+      „Tipp", a tap or a choice, digits, signs and the lone letters of mathematics, and a text
+      code found right (or a slip of the key) in which every word of hers is already the task's
+      own — the key, an accepted answer, the question, the structured task, program or note line.
+      "2 hilfe" for the key 2, or a passing program with a comment in her words, is read.
+    - The check has its own daily reserve (`DAILY_LIMITS.safeguard`, migration 0105): a long
+      practice day that used up the tutor's calls never leaves her words unread.
+    - A concern gets the fixed `concern` answer, a provider block of the check the `blocked`
+      one — both the same as everywhere, no try, no hint, no solution.
+    - **When no check can run at all, it fails safe:** the reply code gives anyway is kept and
+      `safeguarding.unchecked` follows it — one fixed sentence that names a trusted adult and the
+      helpline, by language and age. Neither alternative is safer: the full help answer to every
+      answer in an outage is a false alarm she learns to skip, and refusing to practise takes away
+      what still works. The sentence reaches her if she did tell of danger and stays calm if not.
+    - Measured: `practice-safeguarding.int.test.ts`, `cloze-items.int.test.ts`,
+      `essay.int.test.ts` (each failure mode red on main, green since), and live on
+      `eu/gemini-3.6-flash` (15.10.): both baseline cases now get the help answer; with the tutor
+      forced down, the check answered "mein vater schlägt mich …" (the provider's filter held it
+      back → `blocked` text with the helpline), and found nothing in frustration or a wrong word.
+  - **A chat or roleplay turn whose model call fails reads her words too** (issue #761,
+    `buddy/turn.ts` `failHerTurn`). Every way a turn ends without the model's answer — outage,
+    timeout, invalid output after the repair round, the day's limit, a stale context, a bug, the
+    roleplay's feedback call — goes through the same distress check (her message and the earlier
+    ones that waited for its answer; in a scene it is told so). A concern gets the fixed concern
+    answer: her messages are answered (`done`, every message the check read marked
+    `recall_block = 'concern'` — the disclosure may stand in an earlier one),
+    a scene ends without feedback, and sending again replays that answer. A provider block of the
+    check gets the fixed `blocked` answer. Nothing found: the turn fails as before ("send again").
+    No check possible: it fails, and Buddy's fixed help line (`safeguarding.unchecked`) follows
+    her message — once, however often she sends it again (`where not exists`). Measured:
+    `safeguarding.int.test.ts`, `roleplay.int.test.ts` (8 cases, red on main, green since).
+  - **A turn the provider's filter holds back asks the distress check which fixed answer fits**
+    (issue #758, `buddy/turn.ts` `heldBack`). The filter cannot tell an insult from a disclosure:
+    live (15.10.) Vertex rates the streamed answer to an insult aimed at Buddy as harassment and
+    blocks it, and 20 of 20 insults got the helpline. Now a concern gets the fixed concern answer,
+    nothing found gets `safeguarding.held` (the held-back line without a helpline), and a check
+    that is held back too, or cannot run, fails safe to the `blocked` text with the helpline. Her
+    message is never sent to the turn's model again. Measured live with the change: the five
+    distress cases of `evals/buddy` 5/5 with the helpline; the insult still 0/20, because the
+    same harassment filter holds back the check as well. The thresholds stay as they are (owner,
+    15.10.); the rest depends on the provider choice (#647).
   - The copy needs pedagogical and legal review before real learners (noted for the ADR).
   - A concern answer may come **without any reply text**: the model knows its words are thrown
     away, so it rightly writes none. `reply` therefore has no minimum length; `emptyReply()`
@@ -402,8 +452,23 @@ resolvers — is in `modules/buddy/toolKit.ts`.
 `modules/buddy/registry.ts` (ADR 0005 stage 2) registers every act tool once: its call schema
 (`decision.ts`), the surfaces allowed to call it (`turn`, `check`), what it touches, whether it
 needs the learner's quote and can be undone; its handler comes from `tools.ts`. The model-facing
-action schemas and the tool catalogue in the prompt are generated from it; `runAct` checks the
+action schemas and the background check's tool catalogue are generated from it; `runAct` checks the
 surface again before running (a check can never run a turn-only tool — also unit-tested).
+
+**One description per thing** (KI-Audit F3 stage 1, #667): a tool's schema says what each field
+holds and in what form; the turn prompt says when and why it is used ("What to do when", "Learning
+now"). The turn has no catalogue of its own any more — it repeated the rules a third time. No issue
+number and no sample sentence reaches the model. **Calls are flat** (#726, `buddy/calls.ts`): the
+model writes `{ tool, ...args }`, code nests it to `{ tool, args }` before validating, so handlers,
+stored decisions and scripted answers keep their shape; the `args` wrapper cost one schema property
+per tool. **Only the tools that can apply are offered** (F3 stage 2, #668, `offeredTools`): a tool
+that needs a memory, a test, a step or a sheet to name (`needs` in the registry) goes out only when
+the turn's aliases have one — counted each round, since a lookup can name an older sheet. The
+system prompt stays one static block (the cached prefix); `llm_calls.schema_variant` names the
+offer (`step, no memories,steps`). Measured: the turn prompt 32 545 → 24 947 characters, the full
+step schema 43 216 → 29 768 characters and 269 → 242 properties, a learner with nothing yet 23 360
+characters and 181 properties; `evals/buddy` 64/65 as at the baseline (`docs/decisions/baseline-2026-10.md`),
+input per call ≈ 27 200 → 18 200 tokens.
 
 Every part of the app is reachable by asking: `open_area` (library, memory, settings, history,
 capture) changes nothing and shows a button in the conversation, like `offer_learning`.
@@ -412,7 +477,7 @@ picks the practice prepared last that still waits, and its `show_ready` card is 
 reply — "liegt schon bereit … mit einem Tippen" with nothing to tap was the defect. When nothing
 waits the call is refused and the words are repaired; once the practice is started or replaced the
 card shows no start (`ready`, decorated when the thread is served). A tool of its own did not fit:
-the turn step schema stands one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
+the turn step schema then stood one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
 "say where it is". He never says which task forms or pictures a practice will have: those are
 chosen when the run is built, after his answer; naming the parts of a picture the app shows is not
 a drawing (`learning/prompt.ts`).
@@ -972,9 +1037,18 @@ minimal set. The run is told so in one line (`PICTURES`, a principle, no sample 
 turn's step schema stood at the budget (269) with #725, so `pictures` came with a fold:
 `offer_learning`'s `difficulty` and `direction` are one field `wish` (harder, easier, recognise,
 produce) — a level is a wish for questions on a topic, a direction one for vocabulary pairs, never
-both in one offer. The step schema stays at 269, with no room left: the next field needs another fold. A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
+both in one offer. Flat calls (#726) brought the step schema to 242, and a test holds it at least 20 properties under the bound (`buddy/__tests__/offer.test.ts`). A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
-costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). It has its own purpose (`forms`, in
+costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). **The prompt follows the schema**
+(KI-Audit F5-3, #669): a run is told only the rules of the figure families, structured forms and
+lists its schema offers (`generateSystem(offered(schema))`, `figureRules`, `structuredRules`), and the
+choosing call before a run reads a catalogue of what it can choose — one line per form, taken from the
+same rules, and the figure types by name (`choosingCatalogue`) — instead of the whole prompt. The
+whole prompt stays byte for byte what a sheet reading gets (`FIGURE_RULES`, `GENERATE_SYSTEM`); the
+reading's own choosing call keeps it, since it reads the photos anyway. Measured (`inventory:schema`):
+explain 37 963 characters for every run → 5 149 (vocab, speak, Diktat, teach_back, read, essay), at
+most 15 370 (practice) and 17 769 (test) with everything that fits; the choosing call before a run
+38 434 → 1 162–3 581. It has its own purpose (`forms`, in
 `llm_calls`) and no limit of its own: `callAhead` meters it with its run. **The run's allowance is
 held before the choice** (#665, `reserveCall`): one atomic reservation for the chain, used up by the
 main call (`callModel(…, reservation)`) and given back when the run fails before its call writes
@@ -1189,7 +1263,11 @@ for a phone. The first run found a textbook definition of photosynthesis without
 with "Kohlenstoffdioxid" left unexplained; buddy.26 asks for both explicitly.
 
 **What the days before were about** (`modules/buddy/summarise.ts`, issue #22). The context
-carries the last 24 messages — a good conversation, and nothing three weeks later. When a
+carries the last 24 messages — a good conversation, and nothing three weeks later. STATE and
+those messages share one budget of `CONTEXT_CHARS` (40 000 characters, KI-Audit F19, #672,
+`fitDialogue` in `buddy/context.ts`): STATE goes whole (each section has its own cap and carries
+the aliases code resolves), the conversation gets the rest, its oldest messages go first, and
+what she wrote since Buddy's last answer is never cut. An ordinary turn is far below it. When a
 conversation has come to rest (nothing said for four hours, the same gap the app draws its
 session line at), the scheduler has the model write **two to four sentences** about it plus
 up to five topics, stored per stretch with `until_message_id`; the newest ten travel in the
@@ -1471,7 +1549,7 @@ reasons (#159 keeps that promise separate from the internal pilot).
 
 | What                            | Limit                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model calls per learner and day | turn 80, check 8, tutor 300, explain 60, extraction 12 (the forms chosen before a run or reading count with it, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                                                                                              |
+| Model calls per learner and day | turn 80, check 8, tutor 300, safeguard 600 (the practice distress check's own reserve, #747), explain 60, extraction 12 (the forms chosen before a run or reading count with it, #627), pronounce 200, transcribe 400, hints 60, reexplain 60, summary 12, consolidate 8, embedding 400 (`config.ts`)                                                             |
 | Turn                            | ≤ 4 rounds × ≤ 3 calls (lookups) = ≤ 12 calls, 30 s timeout each, 2048 output tokens, thinking 512                                                                                                                                                                                                                                                                |
 | Check                           | ≤ 3 rounds (repair/stale), 40 s timeout, 2048 output tokens, thinking 768                                                                                                                                                                                                                                                                                         |
 | Tutor                           | 20 s timeout, 1024 output tokens, no thinking; rules first                                                                                                                                                                                                                                                                                                        |
@@ -1552,6 +1630,44 @@ how a sign-out on another device takes effect, #131). **The after-measurement on
 open (#169).**
 
 ## Material
+
+**Her sheet is her message in the conversation** (issue #632, migration `0106_sheet_message.sql`).
+Before, a sheet sent through the chat bar was a `materials` row only: the thumbnails above the field
+vanished, nothing of hers stood in the thread, and while it was read 10–20 s showed nothing
+(behind a prepared practice the reading bar did not show either). Now the app draws it as her
+message from the tap on "Senden" (`lib/capture/sending.ts`: the upload's own progress, only what
+the phone knows); `submitMaterial` writes her stored message in the same transaction that queues
+the reading — `buddy_messages.material_id`, role `learner`, no text, one per sheet (a repeated
+submit writes none) — and that message takes the local one's place. It holds no image and no text:
+the app shows her pages from its own copy on the phone while it keeps one (a day,
+`lib/capture/draft.ts`), the paper of the design's `SheetThumb` otherwise. Where the sheet stands
+is read from the material every time the thread is read (`modules/learning/threadSheets.ts`
+`sheetStage`): waiting or being read only while a reading run is alive, `building` while the check
+its reading woke makes practice, then ready, failed or deleted — never more than the rows say
+(rule 5). A failed reading says "Nicht gelesen" there; the card with the ways on stays the home's
+`material_failed`, after it. The model is never shown this wordless message (`state.ts`,
+`summarise.ts` and the roleplay transcript leave it out); it learns about the sheet from STATE.
+Buddy's background message that announces practice ("Neues Arbeitsblatt bereit") carries its
+start: code attaches the step the message is linked to, or the practice the same decision
+prepared, while it still waits (`MessageView.announces`) — the start no longer lies only in the bar
+on top, if anywhere.
+
+**Her sheet is always answered** (issue #721, `modules/buddy/checkAnswer.ts`). The check her
+sheet's reading wakes is the model's to decide, and on the phone it chose to wait: "Ich mache aus
+deinem Blatt gerade Übungen …" for half a minute, then nothing, with seven tasks in her library.
+Whether she hears back about her own photo is not the model's choice (rules 1 and 5): after every
+check woken by `material_ready`, code reads, sheet by sheet, what the check said about that sheet
+(an outreach of origin `learner` since the check began, not held back). A line whose start — its
+step, or practice its decision prepared — holds that sheet's questions is its answer. A line that
+names the sheet in its topic (`material:<id>`, or the model's `sh` alias resolved to its id) but
+starts nothing of it gets the sheet's practice as its step, so it carries the card it announces
+(`MessageView.announces`). Nothing of either — it waited, prepared practice without a word, spoke
+of something else, or was suppressed — and the fixed answer for that sheet runs (`fallback`, the
+ready line with practice from that sheet). The practice is always the sheet's own
+(`preparedPractice` with `materialId`): a waiting step is reused only if it holds only that
+sheet's questions (the domain says which, `sheetPractice`), otherwise one is made from that
+sheet's questions — never another goal-less sheet's practice or a review of something else. A
+check that already said it with its start gets nothing added.
 
 **A sheet is read to its end, not to a limit** (`materials/extract.ts`, `firstReading.ts`, issue #150).
 One model answer holds only so many questions — `ITEMS_PER_READING` (60) — so the model says
@@ -2242,7 +2358,7 @@ its own route, so nothing she asks is ever misread as an answer:
   - **A hint only counts when one was given** (`gave_hint` of the tutor), unlike „Tipp", which
     is a hint by definition.
   - Distress gets the fixed help answer (#389, `safeguard()`), a model outage the honest
-    `practice.ask_unavailable`, „ich hab keine Lust mehr" the app's own `practice.had_enough`.
+    `practice.ask_unavailable` after the distress check of her words (#747), „ich hab keine Lust mehr" the app's own `practice.had_enough`.
   - **Practice test: one tutor call for the distress check, reply always fixed.** The question
     goes to the tutor in TEST mode like a test answer, because child safety beats the saved call
     (#389, report §7: "In the Probetest too"). With `concern` she gets the fixed help answer;
@@ -2467,7 +2583,9 @@ Antwort (Vorschlag 3 in #221) steht im nächsten Absatz.
 **Fotografiert auch** (Issue #444, `modules/practice/workPhoto.ts`, `contracts/workPhoto.ts`). Sie
 rechnet im Heft und fotografiert ihren Weg, statt ihn abzutippen: wo ein Weg geprüft wird
 (`pathPossible`, jetzt die EINE Liste für `evaluate.ts`, die ↵-Taste und das Foto), steht am Anfang
-der Antwortleiste eine Kamera, wo der Chat sein + hat. Das Modell **schreibt nur ab**
+der Antwortleiste das + des Designs (`Composer.jsx`, #596), wie im Chat; es öffnet dasselbe Blatt
+wie dort (`AttachMenu`), hier mit Kamera und Galerie (`useWorkPhoto` `take`/`pick`), ohne Dateien.
+Das Modell **schreibt nur ab**
 (`POST /practice/sessions/:id/work-photo`, Zweck `transcribe`); die Abschrift kommt in IHR Feld,
 sie vergleicht sie mit ihrem Heft und schickt sie mit „Prüfen" — über den gewöhnlichen Antwortweg,
 also `checkPath`, den Folgefehler aus #297 und alles andere, was eine getippte Antwort bekommt. Kein
@@ -2719,7 +2837,11 @@ her for a reason ("Begründe", "Erkläre warum" — marked by the model's `asks_
 words) is a free text the tutor reads, never a choice graded by its index or a number graded by its
 key alone: written as either, code makes it a long answer whose key is the worked solution, or drops
 it when there is none (`reasonKept` in `practice/items.ts`, #642 item 9). A sheet that lost one
-that way is marked `items_incomplete` (`reasonLost`, `firstReading.ts`), so it never passes for whole. Answers are checked by rules where exactness is decidable (multiple choice,
+that way is marked `items_incomplete` (`reasonLost`, `firstReading.ts`), so it never passes for whole.
+A task that asks her to fill gaps (the model's `fills_gaps`) must show them: a plain question holds
+each gap as `___` (or `\square` in math), several gaps in one text are the cloze form; one without a
+gap mark is dropped (`gapsMissing`, #760 — "Ergänze die passenden Fälle in den Lücken." went out
+with no gap anywhere). Answers are checked by rules where exactness is decidable (multiple choice,
 written numbers, exact matches, and near misses on written answers — missing
 accents, a missing first word such as the article, a slip within a length-scaled edit distance: a
 fixed kind reply at once, a slip shows the spelling and stays open so she types it herself; never in
@@ -2730,7 +2852,13 @@ preposition and does not, and telling those apart needs the language rather than
 articles per language the app would have to keep (hard rule 3). So the tutor judges it, the
 reply names the missing word, and `enforceTutorInvariants` allows a "correct" there and nowhere
 else among the near misses. The key is not extended in that case: the article stays part of the
-question. See **Grading** below for what "decidable" means. A key that contradicts the arithmetic its OWN question asks for is
+question. A **German** noun key is the exception code can decide (issue #759, `articleAgainst` in
+`practice/evaluate.ts`): German capitalises the noun and nothing before it, so a two-word key of a
+lower-case word and a capitalised one ("die Küche") is article and noun by its own spelling, no
+article list needed. The noun alone (`no_article`) is then right by rule, as #146 decided, without
+a model, and the reply shows the whole word with its article. Another word in the article's place
+(`other_article`, the wrong gender) is partly right: the first reply says the article is not right
+yet, from the second try on the whole word is shown, as for a slip. See **Grading** below for what "decidable" means. A key that contradicts the arithmetic its OWN question asks for is
 dropped before the question is ever asked (`practice/keyCheck.ts`, issue #157): the external
 audit put `8` on `6 + 4` and watched the right answer `10` be rejected by a rule check that
 sounds certain, leaving a child to argue with it. Only what arithmetic makes decidable is

@@ -10,8 +10,12 @@
   "safeguarding": {
     "blocked": "Je ne peux pas répondre à ça ici. Si quelque chose te pèse ou si quelqu'un te fait du mal, parles-en à un adulte de confiance – ou appelle le 119 (gratuit, 24 h/24). Je suis toujours là pour toi.",
     "concern": "Merci de me le dire – c'est important, et tu n'es pas seul·e. Parles-en à un adulte de confiance. Tu peux aussi appeler le 119 (gratuit, 24 h/24, tu n'as pas besoin de donner ton nom). Je suis toujours là pour toi.",
+    "held": "Je ne peux pas répondre à ça ici. Si tu veux, on continue simplement à apprendre.",
+    "held_adult": "Je ne peux pas répondre à ça ici. Si tu veux, on continue simplement à apprendre.",
     "blocked_adult": "Je ne peux pas répondre à ça ici. Si quelque chose te pèse, parles-en à quelqu'un de confiance. Si tu es en danger, appelle le 112.",
     "concern_adult": "Merci de me le dire – c'est important. Parles-en à quelqu'un de confiance. Si tu es en danger, appelle le 112. Je suis toujours là pour toi.",
+    "unchecked": "Si quelque chose te pèse ou si quelqu'un te fait du mal, parles-en à un adulte de confiance – ou appelle le 119 (gratuit, 24 h/24).",
+    "unchecked_adult": "Si quelque chose te pèse, parles-en à quelqu'un de confiance. Si tu es en danger, appelle le 112.",
     "also_asked": "Je n'ai pas oublié ta question sur ton travail – dis-le-moi quand tu veux qu'on la regarde ensemble.",
     "also_asked_adult": "Je n'ai pas oublié ta question sur ton travail – dis-le-moi quand tu veux qu'on la regarde.",
     "held_back": "(Un message retenu par le filtre de sécurité.)"
@@ -69,6 +73,7 @@
     "card_knew": "Je le savais",
     "card_not_yet": "Pas encore",
     "correct": "C'est juste – bravo !",
+    "correct_article": "C'est juste – bravo ! Avec son article : {{answer}}.",
     "dictation": {
       "prompt_word": "Écoute et écris le mot.",
       "prompt_sentence": "Écoute et écris la phrase.",
@@ -101,6 +106,7 @@
     "help_step": "Allons-y pas à pas : qu'est-ce qui est donné dans l'exercice, et qu'est-ce qu'on cherche ?",
     "hint_request": "Un indice, s'il te plaît",
     "missing_word": "Presque – il manque encore un mot. Regarde encore une fois.",
+    "other_article": "Presque – le nom est juste ! Seul l'article devant ne va pas encore.",
     "no_single_solution": "Il n'y a pas ici une seule bonne réponse que je pourrais te montrer : dans un texte comme celui-là, ce qui compte, c'est la façon dont tu argumentes. Dis-moi où tu bloques et on regarde ton texte ensemble.",
     "not_lowest": "Bien équilibrée ! Il reste à simplifier – tous les nombres devant se divisent par {{factor}}.",
     "not_quite": "Pas encore tout à fait. Relis la question – ou affiche la solution.",
