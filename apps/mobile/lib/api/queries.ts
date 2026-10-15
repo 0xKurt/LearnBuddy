@@ -17,7 +17,7 @@ import { currentSession } from '../auth/session.js';
 import { useOnScreen } from '../screenFocus.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
-import { writeHome } from './homeCache.js';
+import { refreshProfileIfChanged, writeHome } from './homeCache.js';
 import { keys } from './keys.js';
 import { followResumeCard } from './sessionCache.js';
 import { getHome, getMe, getMemory, getSession, getSettings } from './endpoints.js';
@@ -91,6 +91,8 @@ export const homeFollowers = registry<string, (home: BuddyHome) => void>('Starts
 /** The home from the server, and what it carries into the other caches. */
 async function loadHome(): Promise<BuddyHome> {
   const home = await getHome();
+  // A turn that finished while she waited (a poll brings its home): her profile too (#671).
+  refreshProfileIfChanged(queryClient, home, queryClient.getQueryData<BuddyHome>(keys.home));
   for (const follow of homeFollowers.values()) follow(home);
   return home;
 }
