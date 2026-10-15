@@ -182,6 +182,28 @@ den langsamsten Schritt verdoppelt. Beide Hooks nehmen jetzt dieselbe volle Suit
   allein und den ganzen Weg in einem Wegwerf-Repository: Stempel, Push, Merge, Amend, Dateien
   außerhalb des Index, ein anderer Lauf, eine kaputte Datei und ein zweiter Worktree.
 
+## Maschinenlast: eine Suite, wenige Worker (Maschinen-Sperre)
+
+Am 15.10.2026 fror der Mac des Owners ein (Load 252, Swap voll, 16 Postgres-Server, 7 parallele
+Vitest-Läufe mit bis zu 11 Workern, 18 verwaiste Worker), weil parallele Agenten-Läufe sich nichts
+voneinander wussten. Das Repository erzwingt jetzt vernünftige Last selbst, ohne Kosten in der CI:
+
+- **Worker-Deckel:** jede Vitest-Konfiguration (`apps/api`, `apps/mobile` samt
+  `vitest.components.config.ts`, `packages/*`) liest `LB_TEST_MAX_WORKERS` über
+  `tools/vitest-workers.mjs` (`maxWorkers`, `minWorkers` = 1). Ohne die Variable bleibt Vitests
+  Standard, also in der CI unverändert.
+- **Maschinen-Sperre:** `scripts/test-lock.sh` (von pre-commit, pre-push und
+  `scripts/web-walkthrough*.sh` per `.` eingebunden) nimmt `~/.local/share/learnbuddy-agents/test.lock`
+  per `mkdir`, wartet in einer Schleife mit Meldung, übernimmt eine Sperre mit totem Prozess und
+  gibt sie in einem `trap … EXIT INT TERM` frei, der zuerst alle Kindprozesse beendet (keine
+  verwaisten Worker). Außerhalb der CI (`CI` leer) setzt das Skript `LB_TEST_MAX_WORKERS=2`.
+  Hält der Aufrufer die Sperre schon selbst, setzt er `LB_TEST_LOCK_HELD=1`; dann ist das Einbinden
+  ein No-op und ein verschachtelter Hook wartet nie auf seinen Aufrufer. In der CI wird nichts
+  gesperrt.
+- **Eine Datenbank:** Integrationstests nehmen den erreichbaren `LB_TEST_DATABASE_URL` (jede
+  Datei bekommt ihre eigene Wegwerf-Datenbank aus einer Vorlage). Kein Skript startet einen
+  eigenen Server daneben; `scripts/pg-up.sh` startet keinen Cluster, wenn die URL schon antwortet.
+
 ## Wenn ein Wächter rot ist
 
 - **Kopie (jscpd):** Die Meldung nennt beide Stellen mit Zeilen. Extrahieren, sodass es genau

@@ -15,6 +15,14 @@ export LB_REQUIRE_TEST_DB=1
 LB_FULL_SUITE='pnpm -r --parallel test'
 LB_GREEN_TREE=tools/guards/green-tree.mjs
 
+# One test run per machine, at most LB_TEST_MAX_WORKERS (default 2 outside CI) workers, and
+# every process the hook started dies with it (scripts/test-lock.sh, docs/engineering-guards.md
+# §Machine resources). A no-op when the lock is already held (LB_TEST_LOCK_HELD=1) or in CI.
+take_test_lock() {
+  # shellcheck disable=SC1091
+  . "$(dirname "$0")/../scripts/test-lock.sh"
+}
+
 tests_failed() {
   echo "✗ tests failed. If the API reports 'LB_REQUIRE_TEST_DB=1 but no Postgres', start a" >&2
   echo "  Postgres 16 (or set LB_TEST_DATABASE_URL) — see README.md §Develop." >&2
@@ -23,6 +31,7 @@ tests_failed() {
 
 # The full suite. When it is green, the tree it ran on is recorded.
 full_suite() {
+  take_test_lock
   if [ ! -f "$LB_GREEN_TREE" ]; then
     $LB_FULL_SUITE
     return
