@@ -4,8 +4,16 @@
 import type { Deps } from '../../deps.js';
 import { retryJob, type JobRow } from '../scheduler/jobs.js';
 
-/** She counts as in the app when she used it this recently. */
-const IN_APP_WINDOW_MS = 3 * 60_000;
+/**
+ * Her presence is written at most this often (http/context.ts, #671): a request within the
+ * minute after the last write leaves `last_seen_at` where it was.
+ */
+export const PRESENCE_EVERY_S = 60;
+/**
+ * She counts as in the app when she used it this recently: three minutes after her last request,
+ * and the presence written for it can be up to one write interval older than that request.
+ */
+const IN_APP_WINDOW_MS = 3 * 60_000 + PRESENCE_EVERY_S * 1000;
 /** How long an unasked look waits while she is there. */
 const IN_APP_DEFER_MS = 20 * 60_000;
 
