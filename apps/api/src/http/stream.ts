@@ -4,6 +4,7 @@
 // call answers with plain JSON. Speaking, transcribing and the chat all stream through here
 // (#311: three copies of this block before).
 
+import { STREAM_KEEPALIVE_MS } from '@learnbuddy/shared-types/contracts';
 import type { Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 
@@ -31,17 +32,26 @@ export function streamed(
   const timeline = c.get('timeline');
   return streamSSE(c, async (stream) => {
     timeline.mark('start');
+    let sent = Promise.resolve();
+    // A comment line while the work runs: the app ends a stream that stays silent for
+    // STREAM_IDLE_MS (#662), and a model call may think longer than that before its first word.
+    const keepalive = setInterval(() => {
+      sent = sent.then(() => stream.write(': keepalive\n\n')).then(() => undefined);
+    }, STREAM_KEEPALIVE_MS);
     try {
-      let sent = Promise.resolve();
       const result = await run((data) => {
         sent = sent
           .then(() => stream.writeSSE({ event, data: JSON.stringify(data) }))
           .then(() => timeline.mark('first'));
       });
+      clearInterval(keepalive);
       await sent;
       await stream.writeSSE({ event: 'done', data: JSON.stringify(result) });
       timeline.mark('done');
     } catch (err) {
+      clearInterval(keepalive);
+      // Whatever is still being written goes out whole first, so no line is cut in two.
+      await sent.catch(() => undefined);
       await stream.writeSSE({
         event: 'error',
         data: JSON.stringify({ code: isAppError(err) ? err.code : 'internal' }),

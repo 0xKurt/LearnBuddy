@@ -10,6 +10,7 @@ import { expect, test } from '@playwright/test';
 
 import { freshEmail, homePositions, signUpMia, worksheetJpeg } from './coreLoop';
 import { overflows, partHeight, settle, shot } from './fit';
+import { expectSeen } from './seen';
 
 test('core loop · plan: a test, a photo → practice prepared by Buddy', async ({ page }) => {
   const email = freshEmail('plan');
@@ -20,13 +21,14 @@ test('core loop · plan: a test, a photo → practice prepared by Buddy', async 
     .getByLabel('Schreib Buddy …')
     .fill('Ich schreibe am Freitag eine Mathearbeit über Brüche.');
   await page.getByRole('button', { name: 'Senden' }).click();
-  await expect(
+  // Seen, not only visible (#738): Buddy's new line, the receipt and the card on top.
+  await expectSeen(
     page.getByText('Super, dann bereiten wir uns bis Freitag zusammen vor.', { exact: false }),
-  ).toBeVisible();
-  await expect(page.getByText(/Eingetragen: Mathearbeit Brüche am/)).toBeVisible();
+  );
+  await expectSeen(page.getByText(/Eingetragen: Mathearbeit Brüche am/));
   // One card on top (the photo). Messages were answered in the setup, so the conversation does
   // not ask about them again (issue #518).
-  await expect(page.getByText('Schick mir ein Foto')).toBeVisible();
+  await expectSeen(page.getByText('Schick mir ein Foto'));
   await expect(page.getByText('Darf ich dir Benachrichtigungen aufs Handy schicken?')).toHaveCount(
     0,
   );

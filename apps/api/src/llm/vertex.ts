@@ -16,6 +16,7 @@ import {
   GoogleGenAI,
   HarmBlockThreshold,
   HarmCategory,
+  MediaModality,
   ThinkingLevel,
   type GenerateContentResponse,
   type SafetySetting,
@@ -33,7 +34,7 @@ import {
   TRUNCATED,
 } from './gateway.js';
 import { repairJsonStrings } from './latex.js';
-import { costMicros } from './pricing.js';
+import { costMicros, VERTEX_EU_PRICES } from './pricing.js';
 import { generateWithRetries } from './retry.js';
 
 // Children use the app: strict on sexual content, medium elsewhere.
@@ -80,13 +81,23 @@ export function usageOf(
   // cost_micros stays the full price and this is the number that shows the saving, not
   // a discount we assume (rule 5, docs/architecture.md §Speed).
   const cachedTokens = meta?.cachedContentTokenCount ?? 0;
+  // Audio input is billed apart on some models (3.1 Flash-Lite: twice the text price, #648):
+  // the provider's modality split of the prompt says how much of it was audio.
+  const audioInputTokens = (meta?.promptTokensDetails ?? [])
+    .filter((d) => d.modality === MediaModality.AUDIO)
+    .reduce((n, d) => n + (d.tokenCount ?? 0), 0);
   return {
     model,
     inputTokens,
     outputTokens,
     thoughtTokens,
     cachedTokens,
-    costMicros: costMicros(model, inputTokens, outputTokens, thoughtTokens),
+    costMicros: costMicros(VERTEX_EU_PRICES, model, {
+      inputTokens,
+      audioInputTokens,
+      outputTokens,
+      thoughtTokens,
+    }),
     latencyMs,
   };
 }

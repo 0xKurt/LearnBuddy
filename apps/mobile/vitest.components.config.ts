@@ -123,6 +123,15 @@ export default defineConfig({
     include: ['components/**/__tests__/*.test.tsx'],
     globals: false,
     setupFiles: ['./testing/components.setup.ts'],
+    // A screen test renders the whole app in React's development build and asks for roles over
+    // react-native-web's DOM: 0.4–1 s of CPU for the longer ones, measured (#707) — no fake
+    // timers, no animation loop, no stylesheet that grows between tests. Vitest's 5 s default
+    // is wall-clock, so a starved worker (the pre-push suite runs api and mobile in parallel,
+    // next to other jobs on the machine) failed ProfileSetup and SettingsRows at 377 ms of CPU
+    // and 6.3 s of wall time (reproduced by stopping the worker for 6 s mid-test). The same
+    // budget as apps/api/vitest.config.ts: a genuinely hung test still fails.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
     // `__DEV__: false` makes lib/env.ts read this as a release build, and a release build
     // refuses to start unconfigured rather than quietly talking to localhost with a fake key
     // (p2-uf-prod-build-silent-localhost-fallback). So it is configured — at the local stack,

@@ -44,6 +44,14 @@ export const APP_REQUEST_HEADERS = [
 ] as const;
 export type AppRequestHeader = (typeof APP_REQUEST_HEADERS)[number];
 
+/**
+ * How long a streamed answer may stay silent (#662, docs/architecture.md §Speed): the API sends
+ * a comment line at least every `STREAM_KEEPALIVE_MS` while its work runs, so the app can take
+ * `STREAM_IDLE_MS` of silence as a dead connection instead of waiting for it forever.
+ */
+export const STREAM_KEEPALIVE_MS = 10_000;
+export const STREAM_IDLE_MS = 20_000;
+
 export const AppLocale = z.enum(['de', 'en', 'fr', 'es', 'it']);
 export type AppLocale = z.infer<typeof AppLocale>;
 

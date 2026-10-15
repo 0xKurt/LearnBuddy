@@ -1297,6 +1297,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   the web the walkthrough reads it into `test-results/web/perf.jsonl` (first measurement:
   sending a message reacts in 0 ms, so the wait she called "hängt" is not in that render).
   Budgets come after the numbers, not before.
+- **No call waits forever** (#662, audit F14-a; `apps/mobile/lib/api/watchdog.ts`): a JSON call
+  ends after 15 s without an answer (`wait: 'long'` — a call that waits for the model or a full
+  export — after 150 s, above the API's own longest model budget) as `network` with reason
+  `timeout`; a streamed call ends after `STREAM_IDLE_MS` (20 s) without a byte as `stream_lost`,
+  and `http/stream.ts` sends a `: keepalive` comment every `STREAM_KEEPALIVE_MS` (10 s) while its
+  work runs, so only a dead line is that quiet. Both are `network` failures, so the existing
+  idempotent resend paths (`sendWhenOnline`, `turnIds`) carry them; her own "Stopp" stays
+  `aborted`.
 - **Buddy's replies stream** (`POST /buddy/messages` with `Accept: text/event-stream`;
   `ReplyStreamEvent`, `modules/buddy/stream.ts`): the model writes its answer in the order
   lookups → actions → reply (`TurnDecisionForModel`), so when the reply starts code already knows
@@ -1463,9 +1471,13 @@ made them small so the last one uploads fast; silent tails are not sent), so 600
 more than 2½ hours of nonstop talking within one hour, and 400 pieces a day is over an hour
 and a half of nonstop dictation on the recording path alone — the device path counts nothing.
 
-Pricing used for cost records: `apps/api/src/llm/pricing.ts` (Vertex list prices read 2026-09-25;
-gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens until 2026-12-31, twice that
-from 2027; output includes thinking). Note: Gemini 3.x bills the response schema as input tokens
+Pricing used for cost records: one price table per gateway (`apps/api/src/llm/pricing.ts`,
+`VERTEX_EU_PRICES`, read 2026-10-14, issue #648); a new gateway brings its own table from its
+provider's price page. gemini-3.6-flash via `eu` $0.825 input / $4.125 output per 1M tokens net —
+the introductory price comes as a 50 % credit on the $1.65 / $8.25 invoice until 2026-12-31, and
+3.6 is switched off on 2026-11-19; output includes thinking; audio input on 3.1 Flash-Lite is
+$0.55, twice its text price, read from the provider's per-modality token split; an unknown model
+counts at the table's highest figures, so a record is a ceiling, never an undercount. Note: Gemini 3.x bills the response schema as input tokens
 (Buddy's turn schema ≈ 9 400 → 8 500 tokens after flattening day/duration specs into one object
 each and moving repeated descriptions into the prompt; `$ref`/`$defs` do not help, Gemini expands
 them before billing — measured 2026-09-26), 2.5 did not. Tokens scale with schema text; the
