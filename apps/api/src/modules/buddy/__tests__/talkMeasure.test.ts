@@ -8,6 +8,7 @@ import {
   compareReading,
   countFillers,
   quoteInTranscript,
+  sheetWords,
   talkStructure,
   wordsOf,
   wordsPerMinute,
@@ -84,6 +85,24 @@ describe('a rehearsal talk', () => {
     expect(quoteInTranscript('Ich komme jetzt zum Schluss', t)).toBe(false);
     // Part of a word is not a quote.
     expect(quoteInTranscript('kan', 'Vulkane')).toBe(false);
+  });
+
+  // #726: a sheet's read text keeps the line breaks of the print.
+  it('finds a passage on a sheet whose words were hyphenated at a line end or left as ligatures', () => {
+    const sheet =
+      'Am Samstag gingen wir auf den Mar-\nkt und kauften fri\u00ADsches Obst.\nDie Nord-\nSee war ﬂach.';
+    expect(quoteInTranscript('gingen wir auf den Markt und kauften frisches Obst', sheet)).toBe(
+      false,
+    );
+    const read = sheetWords(sheet);
+    expect(quoteInTranscript('gingen wir auf den Markt und kauften frisches Obst', read)).toBe(
+      true,
+    );
+    // A capital after the break is a compound: its hyphen stays.
+    expect(read).toContain('Nord-');
+    expect(quoteInTranscript('See war flach', read)).toBe(true);
+    // Words that are not on the sheet still are not.
+    expect(quoteInTranscript('auf den Markt und kauften Brot', read)).toBe(false);
   });
 
   it('marks a part heard only with a quote from the transcript, never missing by default', () => {
