@@ -136,10 +136,20 @@ export async function planConsolidations(deps: Deps): Promise<number> {
                 and (m.valid_until is null or m.valid_until > $1)) >= $2
         and not exists (select 1 from jobs j
                          where j.learner_id = l.id and j.kind = 'consolidate_memories'
-                           and j.status in ('queued','running'))
+                           and (j.status in ('queued','running') or j.run_at > $5))
         and ${consentCurrentSql('l.id', 3)}
+      order by l.id
       limit 50`,
-    [now, CONSOLIDATE_AT, deps.config.CONSENT_VERSION, DEFAULT_TIMEZONE],
+    [
+      now,
+      CONSOLIDATE_AT,
+      deps.config.CONSENT_VERSION,
+      DEFAULT_TIMEZONE,
+      // One run a day is planned (the key is the local day): a learner who had hers within the
+      // last day is not picked again, so she no longer takes a place of the 50 for nothing and
+      // every learner past the threshold gets her turn (F7, #659).
+      new Date(now.getTime() - 24 * 3_600_000),
+    ],
   );
   let planned = 0;
   for (const l of learners) {
