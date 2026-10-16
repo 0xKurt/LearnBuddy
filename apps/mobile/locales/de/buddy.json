@@ -304,6 +304,7 @@
     "empty_title": "Noch keine Unterhaltung",
     "empty_body": "Was du mit Buddy besprichst, findest du später hier wieder.",
     "typing": "Buddy schreibt …",
+    "slow": "Das dauert gerade länger als sonst.",
     "failed": "Nicht angekommen",
     "resend": "Nochmal senden",
     "load_more": "Ältere Nachrichten",

@@ -304,6 +304,7 @@
     "empty_title": "No conversation yet",
     "empty_body": "What you and Buddy talk about will show up here later.",
     "typing": "Buddy is typing …",
+    "slow": "This is taking longer than usual.",
     "failed": "Didn't arrive",
     "resend": "Send again",
     "load_more": "Older messages",
