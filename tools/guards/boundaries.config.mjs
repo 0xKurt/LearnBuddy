@@ -33,6 +33,11 @@ export const DOMAIN = [
   '^apps/mobile/lib/api/library(Cache|Queries)\\.ts$',
   // Maths, figures and the school sciences.
   '^packages/shared-math/',
+  // Contracts (cut 7): the learning domain's API shapes — practice, worksheets, talks, drills,
+  // figures and every task form — and its part of Buddy's conversation and home
+  // (buddyLearning.ts). The generic ones are common, identity, voice and buddy.ts, which
+  // builds the conversation and home from what a domain adds (`buddyContracts`).
+  '^packages/shared-types/src/contracts/(learning|buddyLearning|drill|talk|figure|staff|code|tree|periodic|solid|diagram|circuit|map|schematic|bars|grid|structured|rubric|essay|listen|reading|taskParts|notation|dictation|workPhoto)\\.ts$',
 ];
 
 /**
@@ -66,12 +71,18 @@ export const ROOTS = [
   'apps/mobile/app',
   'apps/mobile/components',
   'apps/mobile/lib',
+  'packages/shared-types/src/contracts',
 ];
 
-/** Not generic code: tests, the test harness, the API's evals and scripts. */
+/**
+ * Not generic code: tests, the test harness, the API's evals and scripts — and the contracts'
+ * barrel, which assembles the app's contracts from the generic ones and the domain's, the way
+ * the two register.ts seams assemble the apps.
+ */
 export const NOT_GENERIC = [
   '(/__tests__/|\\.test\\.tsx?$|/testing/)',
   '^apps/api/(evals|scripts)/',
+  '^packages/shared-types/src/contracts/index\\.ts$',
 ];
 
 /** @param {string} file repository path @returns {boolean} generic Buddy code, not domain nor test */
@@ -86,7 +97,10 @@ export default {
       comment:
         'Generic Buddy code imports the learning domain (issue #107). Invert it: the domain registers itself into the core.',
       severity: 'error',
-      from: { path: '^apps/(api/src|mobile)/', pathNot: [...DOMAIN, ...NOT_GENERIC] },
+      from: {
+        path: '^(apps/(api/src|mobile)|packages/shared-types/src/contracts)/',
+        pathNot: [...DOMAIN, ...NOT_GENERIC],
+      },
       to: { path: DOMAIN },
     },
   ],
