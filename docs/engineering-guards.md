@@ -196,7 +196,13 @@ voneinander wussten. Das Repository erzwingt jetzt vernünftige Last selbst, ohn
   `scripts/web-walkthrough*.sh` per `.` eingebunden) nimmt `~/.local/share/learnbuddy-agents/test.lock`
   per `mkdir`, wartet in einer Schleife mit Meldung, übernimmt eine Sperre mit totem Prozess und
   gibt sie in einem `trap … EXIT INT TERM` frei, der zuerst alle Kindprozesse beendet (keine
-  verwaisten Worker). Außerhalb der CI (`CI` leer) setzt das Skript `LB_TEST_MAX_WORKERS=2`.
+  verwaisten Worker). Die Übernahme ist atomar (#791): ein Wartender übernimmt nur unter einem
+  eigenen Schutzverzeichnis (`test.lock.takeover`, ebenfalls per `mkdir`) und nur, wenn die Sperre
+  noch dieselbe tote pid trägt, die er gesehen hat. Eine Sperre, die ein anderer Wartender
+  inzwischen übernommen hat, bleibt stehen. Eine Sperre ohne `pid`-Datei (Abbruch zwischen `mkdir`
+  und Schreiben) gilt als verwaist, sobald sie älter als `LB_TEST_LOCK_STALE_MINUTES` ist (Standard
+  90, über die mtime). Wer die Sperre von Hand nimmt, schreibt deshalb `echo $$ > test.lock/pid`
+  dazu; sonst schützt ihn nur diese Frist. Außerhalb der CI (`CI` leer) setzt das Skript `LB_TEST_MAX_WORKERS=2`.
   Hält der Aufrufer die Sperre schon selbst, setzt er `LB_TEST_LOCK_HELD=1`; dann ist das Einbinden
   ein No-op und ein verschachtelter Hook wartet nie auf seinen Aufrufer. In der CI wird nichts
   gesperrt.
@@ -207,6 +213,18 @@ voneinander wussten. Das Repository erzwingt jetzt vernünftige Last selbst, ohn
 - **Eine Datenbank:** Integrationstests nehmen den erreichbaren `LB_TEST_DATABASE_URL` (jede
   Datei bekommt ihre eigene Wegwerf-Datenbank aus einer Vorlage). Kein Skript startet einen
   eigenen Server daneben; `scripts/pg-up.sh` startet keinen Cluster, wenn die URL schon antwortet.
+  Host und Port liest `scripts/pg-url.sh` aus jeder URL-Form (mit oder ohne Benutzer, Passwort,
+  Port, Datenbank, Parameter; IPv6 in Klammern; #791).
+- **Push und lange Suite:** die pre-push-Suite läuft minutenlang. Die SSH-Verbindung zu GitHub
+  ist dabei schon offen und schweigt; GitHub schließt sie, und `git push` endet direkt nach
+  „pre-push gate green“ mit Exit 141 (SIGPIPE, #791, zweimal belegt). Abhilfe je Klon, nicht
+  global: `git config core.sshCommand "ssh -o ServerAliveInterval=30"` (README §Develop), oder
+  für einen einzelnen Push `GIT_SSH_COMMAND='ssh -o ServerAliveInterval=30' git push`.
+- **Tests:** `tools/guards/machine-lock.test.mjs` (Teil von `pnpm guards`) prüft:
+  - die Übernahme einer verwaisten Sperre, aber nie einer, die inzwischen ein Lebender hält;
+  - zwei Wartende, die nacheinander drankommen;
+  - eine Sperre ohne `pid`, alt und jung;
+  - jede URL-Form.
 
 ## Wenn ein Wächter rot ist
 
