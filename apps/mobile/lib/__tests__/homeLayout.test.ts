@@ -201,9 +201,15 @@ describe('home layout (user feedback #6, issue #17)', () => {
     expect(homeLayout({ now: capture, decision: null, working: 'material' }).working).toBe(
       'thread',
     );
+  });
+
+  it('announces no look at her finished practice it may not follow up (issue #845)', () => {
+    // Device 16.10.: "Ich schaue mir an, wie deine Übung lief …" stood while the check ran, then
+    // went with nothing after it — the check may rightly decide to say nothing. The result card
+    // already tells what she did; the home still follows closely (`working` drives the poll).
     expect(homeLayout({ now: null, decision: null, working: 'session' })).toMatchObject({
       bar: null,
-      working: 'thread',
+      working: null,
     });
   });
 });

@@ -373,8 +373,7 @@
     "on_at": "on {{day}} at {{time}}"
   },
   "working": {
-    "material": "I'm turning your worksheet into practice …",
-    "session": "I'm looking at how your practice went …"
+    "material": "I'm turning your worksheet into practice …"
   },
   "roleplay": {
     "label": "Roleplay",

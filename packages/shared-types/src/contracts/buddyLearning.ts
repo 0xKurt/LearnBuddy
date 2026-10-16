@@ -420,7 +420,9 @@ const learning = buddyContracts({
     notice: HomeNotice.nullable().catch(null),
     /**
      * Buddy is working on something the learner is waiting for right now: what to do with the
-     * photos they just sent ('material') or the practice they just finished ('session').
+     * photos they just sent ('material') or the practice they just finished ('session'). The app
+     * says so only for 'material'; 'session' keeps it following the home closely, unannounced,
+     * since that look may rightly end in nothing (issue #845).
      */
     working: z.enum(['material', 'session']).nullable().catch(null),
     /**
