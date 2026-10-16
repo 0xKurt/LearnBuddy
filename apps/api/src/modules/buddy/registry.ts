@@ -54,6 +54,16 @@ export type ActSpec = {
    * turn of a learner who has none. Absent: always offered.
    */
   needs?: Fact;
+  /**
+   * Its card offers something to start (a practice, a part of the app); it is not something done,
+   * so the home's list of what Buddy did leaves it out (home.ts `doneOf`).
+   */
+  offer?: true;
+  /**
+   * Its result names the practice it prepared (`step_id`): what the check said in answer to a
+   * sheet starts that practice (checkAnswer.ts).
+   */
+  prepares?: true;
 };
 
 /** What a tool can need STATE to name (counted from the turn's aliases, `turnFacts`). */
@@ -168,6 +178,7 @@ export const ACT_TOOLS = {
     needsQuote: false,
     undoable: false,
     does: 'a button that opens a part of the app, or the start of a practice you prepared',
+    offer: true,
   },
 } satisfies Record<string, ActSpec> as unknown as { [K in ToolName]: ActSpec };
 
@@ -191,6 +202,11 @@ export function registerActTools(entries: readonly ActToolEntry[]): void {
     (ACT_TOOLS as Record<string, ActSpec>)[e.name] = e.spec;
   }
   built.clear();
+}
+
+/** The tools with this flag in their spec (`offer`, `prepares`), in registry order. */
+export function toolsWith(flag: 'offer' | 'prepares'): ToolName[] {
+  return (Object.keys(ACT_TOOLS) as ToolName[]).filter((n) => ACT_TOOLS[n][flag] === true);
 }
 
 /** Tool names a surface may call, in registry order. */

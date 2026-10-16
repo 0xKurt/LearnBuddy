@@ -25,12 +25,10 @@ import {
 } from './lookback.js';
 import { withLookups } from './lookups.js';
 import { buddyPrompt, repairMessage, schemaErrors } from './prompts.js';
+import { contextProvider } from './provider.js';
 import { checkDecisionSchema } from './registry.js';
 import { type BuddyState, loadBuddyState } from './state.js';
 import { pushAvailable } from './turn.js';
-
-/** Wake-ups that follow directly from something the learner did. */
-const LEARNER_TRIGGERED = new Set(['material_ready', 'session_finished']);
 
 function describeTriggers(state: BuddyState, triggers: Trigger[], today: string): string {
   const lines = ['TRIGGERS (why you are checking now):'];
@@ -51,27 +49,12 @@ function describeTriggers(state: BuddyState, triggers: Trigger[], today: string)
             : '- an exam just happened.',
         );
         break;
-      case 'material_ready': {
-        const m = state.materials.find((x) => x.id === t.materialId);
-        lines.push(
-          `- new material is ready: "${m?.title ?? 'worksheet'}" with ${m?.item_count ?? 0} questions.`,
-        );
-        break;
-      }
-      case 'session_finished': {
-        const s = state.sessions.find((x) => x.id === t.sessionId);
-        lines.push(
-          s
-            ? `- the learner just finished practice: ${s.answered}/${s.total} answered, ${s.first_try} right first try${s.shaky_topics.length ? `, shaky: ${s.shaky_topics.join(', ')}` : ''}.`
-            : '- the learner just finished practice.',
-        );
-        break;
-      }
       case 'checkin_requested':
         lines.push(`- you planned to look again: ${String(t.job.payload.note ?? '')}`);
         break;
       default:
-        lines.push('- routine check.');
+        // A domain's reason says itself (a sheet read, a practice finished: provider.ts).
+        lines.push(contextProvider().check.describe(state, t) ?? '- routine check.');
     }
   }
   // Wake-ups that piled up (e.g. after a scheduler outage) say the same thing once.
@@ -136,7 +119,9 @@ export async function decide(
   // The learner is using the app: don't start something unasked, look again
   // later. What follows from their own action (the photos they just sent, the
   // practice they just finished) is what they are waiting for: do it now.
-  const answersLearner = triggers.some((t) => LEARNER_TRIGGERED.has(t.reason));
+  const answersLearner = triggers.some((t) =>
+    contextProvider().check.learnerTriggered.has(t.reason),
+  );
   if (
     !answersLearner &&
     (await deferredWhileInApp(
@@ -180,7 +165,11 @@ export async function decide(
     return 'wait';
   };
   // With contact to the phone off, a routine look still speaks in the app (ADR 0006).
-  if (state.totals.activeGoals === 0 && state.totals.items === 0 && state.totals.openSteps === 0)
+  if (
+    state.totals.activeGoals === 0 &&
+    !contextProvider().check.somethingToWorkWith(state) &&
+    state.totals.openSteps === 0
+  )
     return waitByCode('nothing to work with', 'nothing_to_work_with');
 
   // A routine look with nothing new since Buddy's last look (F4-d, #656): the model was asked

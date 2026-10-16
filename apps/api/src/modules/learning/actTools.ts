@@ -331,6 +331,7 @@ export const LEARNING_ACT_TOOLS: readonly (ActToolEntry & { name: keyof DomainAc
       needsQuote: false,
       undoable: true,
       does: 'prepare practice from her questions, for a test, topic or sheet',
+      prepares: true,
     },
   },
   {
@@ -399,6 +400,7 @@ export const LEARNING_ACT_TOOLS: readonly (ActToolEntry & { name: keyof DomainAc
       needsQuote: false,
       undoable: false,
       does: 'a button that starts learning now (kinds below)',
+      offer: true,
     },
   },
   {
@@ -411,6 +413,7 @@ export const LEARNING_ACT_TOOLS: readonly (ActToolEntry & { name: keyof DomainAc
       needsQuote: false,
       undoable: false,
       does: 'a button that starts a quick mental-arithmetic round',
+      offer: true,
     },
   },
   {
@@ -423,6 +426,7 @@ export const LEARNING_ACT_TOOLS: readonly (ActToolEntry & { name: keyof DomainAc
       needsQuote: true,
       undoable: false,
       does: 'start a roleplay in a foreign language',
+      offer: true,
     },
   },
   {
@@ -447,6 +451,7 @@ export const LEARNING_ACT_TOOLS: readonly (ActToolEntry & { name: keyof DomainAc
       needsQuote: false,
       undoable: false,
       does: 'a card that records her talk rehearsal or her reading aloud, and measures it',
+      offer: true,
     },
   },
 ];

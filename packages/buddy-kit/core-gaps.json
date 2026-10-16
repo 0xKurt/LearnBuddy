@@ -1,11 +1,5 @@
 {
   "apps/api/src/config.ts: TS2305": 1,
-  "apps/api/src/modules/buddy/checkDecide.ts: TS2339": 3,
-  "apps/api/src/modules/buddy/checkDecide.ts: TS7006": 2,
-  "apps/api/src/modules/buddy/home.ts: TS2305": 1,
-  "apps/api/src/modules/buddy/home.ts: TS2339": 4,
-  "apps/api/src/modules/buddy/home.ts: TS2367": 2,
-  "apps/api/src/modules/buddy/home.ts: TS2698": 1,
   "apps/api/src/modules/buddy/prompts.ts: TS2305": 1,
   "apps/api/src/modules/buddy/registry.ts: TS2339": 1,
   "apps/api/src/modules/buddy/toolKit.ts: TS2339": 2,

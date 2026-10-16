@@ -272,6 +272,20 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
       Aufrufe der Lern-API stehen in `lib/api/learningEndpoints.ts`. In `endpoints.ts` bleiben
       nur die sechs, die generischer Code noch ruft (Anhänge, Outbox, Sitzungs-Cache). Danach
       zeigt die Kopie **117 Fehler in 48 Paaren**.
+    - **Nachgezogen am 16.10. (API):** Der Kern nennt keine Werkzeuge der Domain mehr in SQL.
+      Zwei Merkmale im Werkzeug-Register (`ActSpec`, `toolsWith`) ersetzen die Namenslisten:
+      `offer` (ein Angebot zum Starten, kein Erledigtes; die Liste "Erledigt" der Startseite
+      lässt es aus) und `prepares` (das Ergebnis nennt die vorbereitete Übung;
+      `checkAnswer.ts`). Der Provider bekommt dazu drei Teile:
+      - `home.pollAfter`: das Abfragetempo der App;
+      - im `dressThread` der Domain: wo ein Lösch-Vorschlag steht (`confirm_delete`);
+      - `check`: die Weckgründe der Domain samt TRIGGERS-Zeile, und ob ihr Teil des Zustands
+        etwas zu tun gibt.
+
+      Danach zeigt die Kopie **104 Fehler in 42 Paaren**. Im API-Kern bleiben `config.ts`
+      (`ItemKind`), `prompts.ts` (`MATH_NOTATION_SHORT`), `registry.ts` `turnFacts` und
+      `toolKit.ts` (`subjects`, `materials`).
+
     - **Der Wächter:** `packages/buddy-kit/core-gaps.json` listet jeden dieser Reste, je Datei
       und Fehlercode. `pnpm core-check` (CI, Job `check`) baut die Kopie, installiert sie und
       typecheckt sie. Neu oder mehr ist rot: der Kern erreicht die Domain wieder. Weniger ist
