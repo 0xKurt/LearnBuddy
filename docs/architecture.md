@@ -2982,6 +2982,9 @@ eigenen Worte bestätigen und keine exakte Angabe überstimmen.
   (`threadRoom` `reads`), nimmt sie den ganzen Platz, steht ab ihrer ersten Zeile (`ThreadBox`
   `readFrom`) und wird nach unten gescrollt. Ihre Frage zur Aufgabe (#402) steht im Gespräch
   wörtlich, nicht als „Fassung".
+- **Zu lange Zitate.** Ein Zitat über `RUBRIC_QUOTE_MAX` (160) wird vor der Prüfung an einem Wort
+  gekürzt (`clipQuote`): sein Anfang ist noch ihr Wortlaut an derselben Stelle. Vorher warf ein
+  einziges zu langes Zitat (ein ganzer gelungener Absatz als Beleg) die ganze Rückmeldung weg.
 
 **Offen**: Eval-Satz (≥ 20 Texte je Textsorte, Übereinstimmung mit einer Lehrkraft) vor dem
 Live-Gang — wie bei #211 gibt es keinen Korpus. Ein Modellurteil kann keinen Punkt ohne ihre eigenen

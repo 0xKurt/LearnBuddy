@@ -251,6 +251,27 @@ describe.skipIf(!dbReady)('long texts: feedback per key point, no grade (#258)',
     expect(JSON.stringify(res.body)).not.toContain('Metaphern');
   });
 
+  it('keeps the feedback when a quote runs past what is kept: its start is still her words', async () => {
+    // A probe of the essay eval (#258): the model quoted a whole good paragraph as the proof of a
+    // key point, and that one quote over 160 characters threw the whole feedback away.
+    const { s, essayId } = await practise();
+    const whole = ESSAY.split('\n')[1]!.slice(0, 400);
+    env.llm.script(
+      'tutor',
+      judged(
+        [ALL_MET[0]!, { element: 'r2', met: true, quote: whole }, ...ALL_MET.slice(2)],
+        [PLACES[0]!, { quote: whole, better: 'Kürz das.' }, PLACES[2]!],
+      ),
+    );
+    const res = await answer(s, essayId, ESSAY);
+    const f = res.body.reply.essay!;
+    expect(f.points.map((p) => p.state)).toEqual(['met', 'met', 'met', 'met', 'met']);
+    expect(whole.startsWith(f.points[1]!.quote!)).toBe(true);
+    expect(f.points[1]!.quote!.length).toBeLessThanOrEqual(160);
+    expect(f.places).toHaveLength(3);
+    expect(await row(s, essayId)).toEqual({ status: 'open', attempts: 1 });
+  });
+
   it('stores and judges a text of well over 4000 characters (migration 0099)', async () => {
     const { s, essayId } = await practise();
     // Until 0099 the turn's text was held at 4000 characters: an essay of ~600 words and more

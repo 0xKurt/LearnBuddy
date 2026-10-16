@@ -252,6 +252,35 @@ function essayContext(
   ].join('\n');
 }
 
+/**
+ * A quote longer than the server keeps, cut at a word to its first `RUBRIC_QUOTE_MAX` characters.
+ * The start of her words is still her words, in the same place, so the check finds it where it
+ * would have found the whole (the introduction still in the first paragraph). A probe of the essay
+ * eval (#258) found the model quoting a whole good paragraph as the proof of a key point, and that
+ * one quote failed the schema and threw away the whole feedback, for the best texts first.
+ */
+function clipQuote(quote: string): string {
+  if (quote.length <= RUBRIC_QUOTE_MAX) return quote;
+  const cut = quote.slice(0, RUBRIC_QUOTE_MAX);
+  const word = cut.lastIndexOf(' ');
+  return (word > RUBRIC_QUOTE_MAX / 2 ? cut.slice(0, word) : cut).trim();
+}
+
+/** The model's answer with every quote of an element and of a place clipped (`clipQuote`). */
+function clipQuotes(json: unknown): unknown {
+  if (typeof json !== 'object' || json === null || Array.isArray(json)) return json;
+  const clip = (list: unknown): unknown =>
+    Array.isArray(list)
+      ? list.map((e: unknown) =>
+          typeof e === 'object' && e !== null && 'quote' in e && typeof e.quote === 'string'
+            ? { ...e, quote: clipQuote(e.quote) }
+            : e,
+        )
+      : list;
+  const o: Record<string, unknown> = { ...json };
+  return { ...o, elements: clip(o.elements), places: clip(o.places) };
+}
+
 // ─────────────── prüfen ───────────────
 
 /**
@@ -382,7 +411,7 @@ export async function judgeEssay(
       timeoutMs: 45_000,
       thinking: 'off',
     });
-    const parsed = EssayDecision.safeParse(res.json);
+    const parsed = EssayDecision.safeParse(clipQuotes(res.json));
     if (!parsed.success) return unavailable;
     decision = parsed.data;
   } catch (err) {
