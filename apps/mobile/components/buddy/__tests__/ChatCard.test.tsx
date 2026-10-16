@@ -222,6 +222,19 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
     expect(screen.getByText('Mit Bild')).toBeTruthy();
   });
 
+  it('an offer whose run she started and left says "Weitermachen", not "Los geht\'s" (#643)', () => {
+    // Device 17.10.: "Wortarten Nomen im Satz · Los geht's" stood for a run she had left at
+    // question 2 — the tap did resume it, but the card read like a fresh start.
+    renderInApp(
+      <OfferCard
+        actionId="a1"
+        offer={{ ...OFFER, running_session_id: '00000000-0000-4000-8000-0000000000dd' }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: "Los geht's" })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Weitermachen' })).toBeTruthy();
+  });
+
   it('an offer she already worked through reads as done and opens its result (issue #630)', () => {
     // The device: "Brüche addieren – Los geht's" stood above "Geschafft! 7 Fragen" of that run.
     renderInApp(

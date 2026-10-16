@@ -42,6 +42,7 @@ export function OfferCard({
   // Its open run is what the bar on top continues: the one control stays there (#846).
   const onBar = useBarPractice();
   const onTop = offer.running_session_id !== null && onBar.session === offer.running_session_id;
+  const resumes = offer.running_session_id;
   const preparing = state.status === 'preparing';
   // The server already knows this one cannot start: writing its questions was refused while
   // she was still reading Buddy's reply (issue #196). Then there is no button to offer — she
@@ -116,15 +117,19 @@ export function OfferCard({
         dead || onTop
           ? null
           : {
+              // A run she started and left goes on where she stopped (#643): the same word as
+              // the bar and the practice card, never a fresh-looking start.
               label: preparing
                 ? t('learn:topic.preparing')
                 : state.status === 'failed'
                   ? t('common:actions.retry')
-                  : t('learn:topic.submit'),
+                  : resumes
+                    ? t('buddy:now.resume_cta')
+                    : t('learn:topic.submit'),
               busy: preparing,
               variant: quietVariant(quiet),
               accessibilityHint: `${label}: ${offer.text}`,
-              onPress: () => void go(),
+              onPress: () => (resumes ? router.push(`/practice/${resumes}`) : void go()),
             }
       }
     />
