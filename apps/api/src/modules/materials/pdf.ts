@@ -4,15 +4,13 @@
 // limit holds for PDFs exactly as it does for photos, and places each file's pages in
 // the material's page numbering.
 
+import { MAX_PDF_MB } from '@learnbuddy/shared-types/contracts';
 import { PDFDocument } from 'pdf-lib';
 
 /** A material has at most 20 pages, photos and PDF pages together (like 20 photos). */
 export const MAX_PAGES = 20;
-/**
- * All PDFs of one material together: they travel inline to the model with the photos,
- * and the model call has an inline size limit. A 20-page scanned worksheet is ~5 MB.
- */
-export const MAX_PDF_BYTES = 15 * 1024 * 1024;
+/** All PDFs of one material together (`MAX_PDF_MB`: they travel inline with the photos). */
+export const MAX_PDF_BYTES = MAX_PDF_MB * 1024 * 1024;
 
 export const PDF_MIME = 'application/pdf';
 

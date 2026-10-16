@@ -219,6 +219,14 @@ export const UnclearSpot = z.object({
 });
 export type UnclearSpot = z.infer<typeof UnclearSpot>;
 
+/**
+ * All PDFs of one sheet together, in MB (issue #688, KI-Audit K17). They travel inline to the
+ * model with the sheet's photos, and a request carries at most 20 MB inline, base64 included
+ * (`GatewayProfile.maxInlineBytes`): 8 MB are about 10.7 MB as sent, which leaves the rest of the
+ * request for the photos of the same sheet. A 20-page scanned worksheet is about 5 MB.
+ */
+export const MAX_PDF_MB = 8;
+
 export const CreateMaterialRequest = z.object({
   client_request_id: Uuid,
   /**

@@ -8,6 +8,7 @@
 // misses a page — and what the pages are for travels as their `link`. What it draws is
 // components/buddy/ComposerPages.tsx; what happens once they are sent is the bar's (`onSent`).
 
+import { MAX_PDF_MB } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
@@ -41,7 +42,7 @@ import { drafts } from './draftStorage.js';
 import { useFileDrop } from './drop.js';
 import { ownCopy, sizeOf } from './fileCopy.js';
 import { openCamera } from './camera.js';
-import { MAX_PDF_MB, sortIncoming, type IncomingFile } from './files.js';
+import { sortIncoming, type IncomingFile } from './files.js';
 import { useLiveAttachments } from './live.js';
 import { useSendingSheet } from './sending.js';
 import { takeIncoming } from './incoming.js';
