@@ -16,10 +16,13 @@ concurrency:
 
 jobs:
   check:
-    name: typecheck + lint + test
+    # The gates that look at the code: types, lint and the engineering guards, the app bundle, the
+    # Ausnahmelisten, the fresh base, the starter kit. The tests run in their own jobs beside it
+    # (test-api, test-app): together they took 9.5–12 of this job's 15 minutes.
+    name: typecheck + lint + guards
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # The API's integration tests run against a real Postgres (never mocked).
+    # The guards' own tests read the test database's URL (tools/guards, #791).
     services:
       postgres:
         image: postgres:16
@@ -82,9 +85,6 @@ jobs:
         # The PR's own head, not the merge commit GitHub checks out (that contains main always).
         run: node tools/guards/fresh-base.mjs origin/${{ github.base_ref }} ${{ github.event.pull_request.head.sha }}
 
-      - name: Test
-        run: pnpm test
-
       - name: Starter kit (create-buddy → typecheck)
         # Every change here can break a new Buddy app (issue #107: the kit rotted once while
         # LearnBuddy moved on). The reference buddy is made from scratch, installed from the
@@ -93,6 +93,53 @@ jobs:
         # infrastructure. A new app has no create-buddy of its own: there the step is skipped.
         if: hashFiles('packages/buddy-kit/src/cli/create-buddy.ts') != ''
         run: pnpm create-buddy "$RUNNER_TEMP/reference-buddy" --config packages/buddy-kit/reference.config.json --verify=typecheck
+
+  test-api:
+    # The API's tests, its integration tests against a real Postgres (never mocked). About 4.5
+    # minutes, as long as test-app beside it (first split run, 17.10.).
+    name: test (API, real Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      LB_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      LB_REQUIRE_TEST_DB: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Test
+        run: pnpm -F @learnbuddy/api test
+
+  test-app:
+    # Every other workspace's tests: the app (components and lib), the contracts, maths, the kit.
+    name: test (app and packages)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Test
+        run: pnpm -r --parallel --filter '!@learnbuddy/api' test
 
   core:
     # The generic core by construction, without the learning domain (issue #107): copied,
