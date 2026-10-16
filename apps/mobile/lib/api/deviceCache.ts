@@ -10,6 +10,7 @@
 
 import { BuddyHome, MeResponse } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
+import { slot } from '../registry.js';
 
 /** Bumped when the stored shape changes: an older copy is simply not used. */
 const CACHE_VERSION = 1;
@@ -26,16 +27,19 @@ const Stored = z.object({
 });
 export type Stored = z.infer<typeof Stored>;
 
+/**
+ * What of a domain's part of the home claims "now" and is not kept (the learning domain: the card
+ * on top, the notice, what Buddy is working on).
+ */
+export const unsettled = slot<(home: BuddyHome) => BuddyHome>('Startseite behalten');
+
 /** The home as it may be kept: the settled conversation only, nothing that claims "now". */
 export function settledHome(home: BuddyHome): BuddyHome {
   return {
-    ...home,
-    now: null,
-    notice: null,
+    ...(unsettled.get()?.(home) ?? home),
     decision: null,
     done: [],
     next: [],
-    working: null,
     thread: home.thread.filter((m) => m.status !== 'processing'),
   };
 }

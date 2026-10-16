@@ -23,7 +23,14 @@ import { formatDay, localDateOf } from '../../lib/time.js';
 import { Appear, Rise } from '../lb/Motion.js';
 import { PressArea } from '../lb/PressArea.js';
 import { deliveryText, describeAction } from './describe.js';
-import { actionCard, hasCard, messageCard, messageExtra, readAlong } from './extensions.js';
+import {
+  actionCard,
+  hasCard,
+  messageCard,
+  messageExtra,
+  readAlong,
+  undoneReceipt,
+} from './extensions.js';
 import type { MenuMessage } from './MessageMenu.js';
 import { RichText } from './RichText.js';
 import {
@@ -161,9 +168,7 @@ export const MessageRow = memo(function MessageRow({
   const spoken = `${mine ? t('thread.you') : t('thread.buddy')}: ${say(markdownPlain(m.text, { spoken: true }))}`;
   /** What a step that was taken back reads like now. */
   const undoneText = (a: Action): string =>
-    a.summary.tool === 'request_material'
-      ? t('action.request_material_undone', { title: a.summary.title })
-      : `${describeAction(a.summary)} – ${t('done.undone')}`;
+    undoneReceipt(a.summary) ?? `${describeAction(a.summary)} – ${t('done.undone')}`;
   // A message a domain draws itself: the feedback after a roleplay or what a rehearsal
   // measured, as the "So lief's" list (issues #264, #384). The text stays for reading
   // aloud and copying.

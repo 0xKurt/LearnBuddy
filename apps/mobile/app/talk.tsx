@@ -33,13 +33,12 @@ import { useTranslation } from 'react-i18next';
 import { Linking, Platform, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { roleplayLabel, useEndRoleplay } from '../components/buddy/RoleplayLive.js';
 import { Btn } from '../components/lb/Btn.js';
 import { IconBtn } from '../components/lb/IconBtn.js';
 import { Glow } from '../components/lb/Glow.js';
 import { talkLine, type TalkReply } from '../components/voice/talkLine.js';
 import type { OrbMode } from '../components/voice/TalkOrb.js';
-import { carriesCard, roleIn, talkTail } from '../components/voice/talkScene.js';
+import { carriesCard, sceneOf, talkTail, useEndScene } from '../components/voice/talkScene.js';
 import { TalkStage } from '../components/voice/TalkStage.js';
 import { TalkTail } from '../components/voice/TalkTail.js';
 import { VoiceRow } from '../components/voice/VoiceRow.js';
@@ -81,6 +80,7 @@ import { TYPE } from '../lib/theme/type.js';
 import { SPACE, TOUCH, bottomRoom } from '../lib/theme/space.js';
 import { attachInChat } from '../lib/capture/attachRequest.js';
 import { pageHandler } from '../lib/capture/pages.js';
+import { homeTop } from '../lib/homeLayout.js';
 
 type Phase = TalkPhase;
 
@@ -108,11 +108,11 @@ export default function TalkScreen() {
   const [middle, setMiddle] = useState<number | null>(null);
   const open = useRef(true);
 
-  // While a roleplay runs (issue #244) she speaks its language, and the mic listens in it.
-  const roleplayLang = useHome().data?.roleplay?.language ?? null;
+  // While a scene runs (a roleplay, issue #244) she speaks its language, and the mic listens in it.
+  const sceneLang = sceneOf(useHome().data)?.language ?? null;
   const voice = useVoiceInput({
     purpose: 'message',
-    lang: roleplayLang,
+    lang: sceneLang,
     untilPause: true,
     onText: (text) => void answer(text),
   });
@@ -254,7 +254,7 @@ export default function TalkScreen() {
         tapped('first_audio');
         // A line in a roleplay is read in the roleplay's language; once it has ended, the
         // feedback (the newest message then) is read in hers again (issue #244).
-        void speak(r.text, res.home.roleplay?.language ?? currentLocale(), {
+        void speak(r.text, sceneOf(res.home)?.language ?? currentLocale(), {
           transform: (sentence) => spokenText(sentence, say),
           onEnd: (why) => {
             spokenEnd = why;
@@ -404,7 +404,7 @@ export default function TalkScreen() {
 
   // Her photo is being read (she showed Buddy something): said here too.
   const home = useHome();
-  const reading = home.data?.now?.type === 'material_processing';
+  const reading = home.data ? (homeTop.get()?.reading(home.data) ?? false) : false;
 
   const listening = phase === 'listening' && voice.state === 'recording';
   // Opened to talk, before the first listen has started: getting ready, not paused (#644).
@@ -415,10 +415,10 @@ export default function TalkScreen() {
   // The same thread as the chat, seen from here: its newest messages as the chat's
   // own bubbles (issue #18) — where there is something to tap or to look at, or a scene runs.
   const thread = home.data?.thread ?? [];
-  const roleplay = home.data?.roleplay ?? null;
-  const tail = talkTail(thread, roleplay?.id ?? null);
-  const role = roleplay ? roleIn(thread, roleplay.id) : null;
-  const threaded = roleplay !== null || carriesCard(thread[thread.length - 1]);
+  const scene = sceneOf(home.data);
+  const tail = talkTail(thread, scene?.starts ?? null);
+  const role = scene?.role ?? null;
+  const threaded = scene !== null || carriesCard(thread[thread.length - 1]);
   // Her words as her own bubble: the live transcript while she speaks, then what she
   // said until the server's thread carries the message.
   const confirmed = pending !== null && thread.some((m) => m.client_message_id === pending.id);
@@ -471,10 +471,10 @@ export default function TalkScreen() {
 
   // "Gespräch beenden" in a spoken roleplay (Extra.jsx:204): the scene ends, and she is back in
   // the chat, where the feedback stands as its card.
-  const scene = useEndRoleplay(roleplay?.id ?? null);
+  const ending = useEndScene(scene?.id ?? null);
   async function endScene(): Promise<void> {
     haptic.tap();
-    if (await scene.end()) leave();
+    if (await ending.end()) leave();
   }
 
   return (
@@ -507,11 +507,11 @@ export default function TalkScreen() {
         />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1} style={TYPE.title}>
-            {roleplay?.scene || t('buddy:talk.title')}
+            {scene?.title || t('buddy:talk.title')}
           </Text>
-          {roleplay ? (
+          {scene ? (
             <Text numberOfLines={1} style={TYPE.headerMeta}>
-              {roleplayLabel(t, roleplay.language)}
+              {scene.label(t)}
             </Text>
           ) : null}
         </View>
@@ -523,7 +523,7 @@ export default function TalkScreen() {
           flex: 1,
           // A scene's stage is pinned and only its lines move under it (Extra.jsx:186–195);
           // otherwise the stage stands in the middle (Talk.jsx:24).
-          justifyContent: roleplay ? 'flex-start' : 'center',
+          justifyContent: scene ? 'flex-start' : 'center',
           // The tail brings its own room for the fade at its top edge (TalkTail).
           gap: threaded ? TALK.tailGap : SPACE.xl,
         }}
@@ -536,7 +536,7 @@ export default function TalkScreen() {
             phase === 'speaking' ? { onPress: interrupt, label: t('buddy:talk.interrupt') } : null
           }
           role={role}
-          live={roleplay !== null}
+          live={scene !== null}
           status={status}
           line={line}
           keepRoom={!threaded}
@@ -598,13 +598,13 @@ export default function TalkScreen() {
         </AppearText>
       ) : null}
 
-      {roleplay ? (
+      {scene ? (
         <View style={{ alignItems: 'center', paddingBottom: SPACE.xs }}>
           {/* The paper button: the microphone below is this screen's one filled action. */}
           <Btn
             variant="secondary"
             center
-            busy={scene.busy}
+            busy={ending.busy}
             onPress={() => void endScene()}
             accessibilityHint={t('buddy:roleplay.end_hint')}
           >

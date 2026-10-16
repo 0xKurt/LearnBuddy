@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import type { MutableRefObject } from 'react';
 
 import { startPractice } from '../../lib/api/learningEndpoints.js';
-import { seedSession } from '../../lib/api/queries.js';
+import { seedSession } from '../../lib/api/sessionQueries.js';
 import { useMaterialAct } from '../../lib/api/useMaterialAct.js';
 
 export function useStartMaterial(shared?: MutableRefObject<boolean>) {

@@ -1,6 +1,14 @@
 // The home's poll (#686, #671): pure, so it is tested without the app around it.
 
-import { pollAfterMs, type BuddyHome } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
+
+import { slot } from '../registry.js';
+
+/**
+ * The pace from the home itself, for an API that does not send `poll_after_ms` yet: the domain's
+ * rule (the learning domain's `pollAfterMs`, the server's own); null: nothing in progress.
+ */
+export const pollRule = slot<(h: BuddyHome) => number | null>('Abfragetempo');
 
 /** Nothing in progress: the home asks once a minute. */
 const IDLE_MS = 60_000;
@@ -22,7 +30,8 @@ export function homePollMs(
   random: () => number = Math.random,
 ): number | false {
   if (!h) return false;
-  const ms = (h.poll_after_ms !== undefined ? h.poll_after_ms : pollAfterMs(h)) ?? IDLE_MS;
+  const ms =
+    (h.poll_after_ms !== undefined ? h.poll_after_ms : (pollRule.get()?.(h) ?? null)) ?? IDLE_MS;
   return staggered(ms, random);
 }
 

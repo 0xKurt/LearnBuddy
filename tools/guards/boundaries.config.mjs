@@ -32,7 +32,7 @@ export const DOMAIN = [
   '^apps/mobile/lib/capture/materialUpload\\.ts$',
   '^apps/mobile/lib/buddy/(rehearsal|readingStages)\\.ts$',
   // Its calls to the API (her sheets, practice, the rehearsal) and its caches.
-  '^apps/mobile/lib/api/(library(Cache|Queries)|learningEndpoints)\\.ts$',
+  '^apps/mobile/lib/api/(library(Cache|Queries)|learningEndpoints|session(Cache|Queries))\\.ts$',
   // Maths, figures and the school sciences.
   '^packages/shared-math/',
   // Contracts (cut 7): the learning domain's API shapes — practice, worksheets, talks, drills,

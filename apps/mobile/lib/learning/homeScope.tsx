@@ -9,7 +9,7 @@
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { createContext, useContext, type ReactNode } from 'react';
 
-import { usePrefetchSession } from '../api/queries.js';
+import { usePrefetchSession } from '../api/sessionQueries.js';
 import { useOnPhone } from '../buddy/useHomePhotos.js';
 import { drafts } from '../capture/draftStorage.js';
 

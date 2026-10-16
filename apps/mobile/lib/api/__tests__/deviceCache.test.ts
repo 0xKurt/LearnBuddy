@@ -1,7 +1,11 @@
 import { BuddyHome, MeResponse } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { cacheKey, fromStored, settledHome, toStored } from '../deviceCache.js';
+import { unsettledHome } from '../../learning/keptHome.js';
+import { cacheKey, fromStored, settledHome, toStored, unsettled } from '../deviceCache.js';
+
+// What of the home claims "now" is the learning domain's to say (issue #107), as at app start.
+unsettled.fill(unsettledHome);
 
 const LENA = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';

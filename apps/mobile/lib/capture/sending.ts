@@ -8,7 +8,7 @@
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { create } from 'zustand';
 
-import type { SendProgress } from './pages.js';
+import { pageHandler, type SendProgress } from './pages.js';
 
 export type SendingSheet = {
   requestId: string;
@@ -57,7 +57,13 @@ export function useSendingInThread(
   thread: readonly MessageView[] | undefined,
 ): SendingSheet | null {
   const sheet = useSendingSheet((s) => s.sheet);
-  const stored = new Set((thread ?? []).flatMap((m) => (m.sheet ? [m.sheet.material_id] : [])));
+  const sentIn = pageHandler.get()?.sentIn;
+  const stored = new Set(
+    (thread ?? []).flatMap((m) => {
+      const id = sentIn?.(m) ?? null;
+      return id !== null ? [id] : [];
+    }),
+  );
   // The send ends it once the home is refreshed (lib/capture/useAttachments.ts); until then her
   // stored message, already there, is the one drawn.
   return sendingShown(sheet, stored);

@@ -3,7 +3,6 @@
 // retain their strong takeaway typography. Actual status/copy comes from callers.
 // Only the first few legacy cards stagger; screen rows remain immediate.
 
-import type { SessionItemView } from '@learnbuddy/shared-types/contracts';
 import type { Palette } from '../../lib/theme/palettes.js';
 import { useState, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -21,12 +20,15 @@ import { Card } from './Card.js';
 import { Icon, type IconName } from './Icon.js';
 import { Rise } from './Motion.js';
 
+/** The states a result row draws, as the server carries them; others draw by `right`. */
+type ResultState = 'open' | 'correct' | 'revealed' | 'skipped' | 'missed';
+
 export type ResultRow = {
   key: string;
   /** It went right: the mint card with a ✓. */
   right: boolean;
-  /** Factual session state, when the row represents a practice question. */
-  status?: SessionItemView['status'];
+  /** Factual state, when the row is a question of a run (a practice's `SessionItemView`). */
+  status?: ResultState;
   /** The state in a word: at the row's right end ("Richtig"), on a card's top line ("Geschafft"). */
   label: string;
   /** What it was about: the question, the task on her role card. */

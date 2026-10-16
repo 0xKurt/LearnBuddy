@@ -4,7 +4,12 @@
 import type { ActionView, MessageView } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { roleIn, talkTail } from '../talkScene.js';
+import { roleIn, startsRoleplay } from '../../learn/talkScene.js';
+import { talkTail as tailOf } from '../talkScene.js';
+
+// The tail with the learning domain's roleplay as the running scene (issue #244).
+const talkTail = (thread: MessageView[], roleplayId: string | null) =>
+  tailOf(thread, roleplayId === null ? null : startsRoleplay(roleplayId));
 
 const SCENE = '11111111-1111-4111-8111-111111111111';
 const AT = '2026-10-13T08:00:00.000Z';

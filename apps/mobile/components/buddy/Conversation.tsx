@@ -27,7 +27,6 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { CHAT } from '../../lib/theme/chat.js';
 import { AreaCard } from './AreaCard.js';
-import { ConfirmCard } from './ConfirmCard.js';
 import { describeAction, onlyInApp } from './describe.js';
 import { addActionCard, loudCard, type Quiet } from './extensions.js';
 import { dayBreaks } from '../../lib/time.js';
@@ -47,11 +46,9 @@ import { UndoSheet } from './UndoSheet.js';
 
 import { SPACE } from '../../lib/theme/space.js';
 
-// The core's own cards; a domain adds its offers, its roleplay and its rehearsal the same way
-// (components/buddy/extensions.ts, lib/learning/register.tsx).
+// The core's own card; a domain adds its offers, its roleplay, its rehearsal and the deletion it
+// asks her to confirm the same way (components/buddy/extensions.ts, lib/learning/register.tsx).
 addActionCard('open_area', (s) => <AreaCard area={s.area} />);
-// Nothing is deleted until she answers this (issue #151).
-addActionCard('confirm_delete', (s) => <ConfirmCard confirm={s} />);
 
 /** One empty set for "nothing is carried on top": a fresh one each render is a new prop. */
 const EMPTY_IDS: ReadonlySet<string> = new Set();

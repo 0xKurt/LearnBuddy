@@ -28,6 +28,10 @@ import {
 } from '../../buddy/extensions.js';
 import { homeNoticeSlot } from '../../buddy/HomeNotices.js';
 import { homeBar } from '../../buddy/HomeTop.js';
+import { talkScene } from '../../voice/talkScene.js';
+import { answerSender } from '../../../lib/api/outboxSync.js';
+import { pollRule } from '../../../lib/api/homePoll.js';
+import { unsettled } from '../../../lib/api/deviceCache.js';
 import { greetingNews } from '../../../lib/buddy/useSessionStart.js';
 import { InlineText, inlineNotation } from '../../lb/InlineText.js';
 import { TYPE } from '../../../lib/theme/type.js';
@@ -44,6 +48,7 @@ describe('the learning domain fills every place of the core (issue #107)', () =>
       'offer_drill',
       'start_roleplay',
       'offer_rehearsal',
+      'confirm_delete',
     ]);
   });
 
@@ -82,6 +87,10 @@ describe('the learning domain fills every place of the core (issue #107)', () =>
     greetingAction,
     greetingNews,
     introMark,
+    talkScene,
+    answerSender,
+    pollRule,
+    unsettled,
     startMenu,
     notation,
     inlineNotation,

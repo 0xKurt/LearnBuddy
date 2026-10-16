@@ -3,11 +3,7 @@
 // into the browser. Photos go through the same preparation and check as camera photos; a
 // PDF is sent as it is (the API counts its pages and the model reads it).
 
-import { MAX_PDF_MB } from '@learnbuddy/shared-types/contracts';
-
 const PDF_MIME = 'application/pdf';
-/** All PDFs of one sheet together, as the API takes them (the contract's `MAX_PDF_MB`). */
-const MAX_PDF_BYTES = MAX_PDF_MB * 1024 * 1024;
 
 /** One incoming file, whatever brought it. */
 export type IncomingFile = {
@@ -39,10 +35,12 @@ export function displayName(f: IncomingFile): string {
 
 /**
  * Sorts incoming files: what can be taken (in the order they came) and how many could not
- * (another file type). PDFs over the size limit together are left out, largest last.
+ * (another file type). PDFs over the size limit together (`maxPdfMb`, as the receiver takes
+ * them: lib/capture/pages.ts) are left out, largest last.
  */
 export function sortIncoming(
   files: readonly IncomingFile[],
+  maxPdfMb: number,
   pdfBytesSoFar = 0,
 ): {
   take: Array<IncomingFile & { kind: 'pdf' | 'image' }>;
@@ -53,6 +51,7 @@ export function sortIncoming(
   let unsupported = 0;
   let tooLarge = 0;
   let pdfBytes = pdfBytesSoFar;
+  const maxPdfBytes = maxPdfMb * 1024 * 1024;
   for (const f of files) {
     const kind = fileKind(f);
     if (!kind) {
@@ -61,7 +60,7 @@ export function sortIncoming(
     }
     if (kind === 'pdf') {
       const size = f.size ?? 0;
-      if (pdfBytes + size > MAX_PDF_BYTES) {
+      if (pdfBytes + size > maxPdfBytes) {
         tooLarge += 1;
         continue;
       }

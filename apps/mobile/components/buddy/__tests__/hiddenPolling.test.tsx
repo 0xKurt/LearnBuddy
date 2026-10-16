@@ -19,6 +19,10 @@ vi.mock('../../../lib/api/endpoints.js', async (load) => ({
 }));
 
 const { queryClient, useHome, keys } = await import('../../../lib/api/queries.js');
+const { pollRule } = await import('../../../lib/api/homePoll.js');
+const { pollAfterMs } = await import('@learnbuddy/shared-types/contracts');
+// The pace from the home itself is the learning domain's rule (issue #107), as at app start.
+pollRule.fill(pollAfterMs);
 
 /** A home while Buddy is working: it asks again every 3 s. */
 function busyHome() {

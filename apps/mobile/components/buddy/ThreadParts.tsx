@@ -28,6 +28,7 @@ import { Chip } from '../lb/Chip.js';
 import { Icon, type IconName } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
 import { ThreadOrb } from './ThreadOrb.js';
+import { isDatedTool } from './extensions.js';
 
 /** Where what hangs under Buddy's line starts: under its text, past the orb's column. */
 export const UNDER_LINE = { paddingLeft: CHAT.orb.indent } as const;
@@ -46,13 +47,14 @@ export function BuddyLine({ orb, children }: { orb: boolean; children: ReactNode
 const DATED: ReadonlySet<ActionSummary['tool']> = new Set([
   'plan_exam',
   'plan_step',
-  'plan_talk',
   'schedule_check',
 ]);
 
 export function receiptIcon(tools: readonly ActionSummary['tool'][], undone: boolean): IconName {
   if (undone) return 'close';
-  return tools.length > 0 && tools.every((tool) => DATED.has(tool)) ? 'calendar' : 'check';
+  return tools.length > 0 && tools.every((tool) => DATED.has(tool) || isDatedTool(tool))
+    ? 'calendar'
+    : 'check';
 }
 
 /** The factual receipt of a turn; choosing what to take back lives in the undo sheet. */

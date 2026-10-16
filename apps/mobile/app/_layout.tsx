@@ -23,9 +23,8 @@ import { SplashHandoff } from '../components/lb/SplashHandoff.js';
 import { toast, ToastHost } from '../components/lb/Toast.js';
 import { clearAdminToken, installAdminAutoClear } from '../lib/admin.js';
 import { ApiError } from '../lib/api/client.js';
-import { postAnswer } from '../lib/api/endpoints.js';
 import { refreshSettings } from '../lib/api/homeCache.js';
-import { flushOutbox, outboxBelongsTo } from '../lib/api/outboxSync.js';
+import { answerSender, flushOutbox, outboxBelongsTo } from '../lib/api/outboxSync.js';
 import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
@@ -68,7 +67,10 @@ registerLearning();
 
 /** Answers kept on the device (closed app, lost connection): send them now. */
 async function sendKeptAnswers(): Promise<void> {
-  const done = await flushOutbox(postAnswer, (sessionId) => {
+  // The domain sends what it kept (lib/learning/register.tsx); without one nothing is kept.
+  const send = answerSender.get();
+  if (!send) return;
+  const done = await flushOutbox(send, (sessionId) => {
     void queryClient.invalidateQueries({ queryKey: keys.session(sessionId) });
     void queryClient.invalidateQueries({ queryKey: keys.home });
   }).catch(() => null);

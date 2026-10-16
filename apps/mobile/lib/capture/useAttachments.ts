@@ -8,7 +8,6 @@
 // misses a page — and what the pages are for travels as their `link`. What it draws is
 // components/buddy/ComposerPages.tsx; what happens once they are sent is the bar's (`onSent`).
 
-import { MAX_PDF_MB } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
@@ -303,9 +302,10 @@ export function useAttachments({ droppable, onSent }: Options) {
       return;
     }
     const sized = files.map((f) => (f.size === null ? { ...f, size: sizeOf(f.uri) } : f));
-    const { take, unsupported, tooLarge } = sortIncoming(sized);
+    const maxPdfMb = pageHandler.get()?.maxPdfMb ?? 0;
+    const { take, unsupported, tooLarge } = sortIncoming(sized, maxPdfMb);
     if (unsupported > 0) toast.show(t('capture:files.unsupported', { count: unsupported }));
-    if (tooLarge > 0) toast.show(t('capture:files.too_large', { max: MAX_PDF_MB }), 'error');
+    if (tooLarge > 0) toast.show(t('capture:files.too_large', { max: maxPdfMb }), 'error');
     const { entries, overLimit } = filesToTake(take, room);
     if (overLimit) toast.show(t('capture:limit', { max: MAX_PHOTOS }));
     if (entries.length > 0) await addEntries(entries);
