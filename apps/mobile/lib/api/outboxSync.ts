@@ -77,6 +77,15 @@ export function flushOutbox(
   return flush();
 }
 
+// Whose kept answers these are, once lib/localWork.ts proved it at this sign-in (#822 review):
+// until then nothing is sent, so a previous person's answers never go out under her account.
+let adoptedBy: string | null = null;
+
+/** The kept answers are this person's (adopted), or nobody's to send (null). */
+export function outboxBelongsTo(userId: string | null): void {
+  adoptedBy = userId;
+}
+
 let latest: {
   send: (sessionId: string, body: AnswerRequest) => Promise<AnswerResponse>;
   onSent: (sessionId: string) => void;
@@ -84,7 +93,7 @@ let latest: {
 
 const flush = oneRunAndAnother(async (): Promise<PassResult> => {
   const how = latest;
-  if (!how || !onlineManager.isOnline()) return { sent: 0, refused: 0 };
+  if (!how || adoptedBy === null || !onlineManager.isOnline()) return { sent: 0, refused: 0 };
   const list = (await serial(load)).filter((e) => !live.has(e.body.client_turn_id));
   return sendInOrder(
     list,

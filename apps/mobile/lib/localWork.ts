@@ -6,15 +6,21 @@
 // p2-signout-wipes-unsent-answers-and-photos-without-warning).
 import { localDataOnSignIn } from './auth/localData.js';
 import { localOwner, setLocalOwner } from './auth/session.js';
-import { clearOutbox, hasKeptAnswers } from './api/outboxSync.js';
+import { clearOutbox, hasKeptAnswers, outboxBelongsTo } from './api/outboxSync.js';
 import { drafts } from './capture/draftStorage.js';
 import { clearDrafts } from './drafts.js';
 
-/** Signed in (start or sign-in): another person's leftovers go, hers stay. */
+/**
+ * Signed in (start or sign-in): another person's leftovers go, hers stay. Only then may her kept
+ * answers be sent; when whose they are cannot be read, they stay untouched and unsent, and the
+ * next start asks again (#822 review).
+ */
 export async function adoptLocalWork(userId: string): Promise<void> {
+  outboxBelongsTo(null);
   const owner = await localOwner();
   if (localDataOnSignIn(owner, userId) === 'wipe') await discardLocalWork();
   if (owner !== userId) await setLocalOwner(userId);
+  outboxBelongsTo(userId);
 }
 
 /** Something not sent yet: answers waiting or photos in a draft. */
@@ -32,6 +38,7 @@ async function discardLocalWork(): Promise<void> {
 
 /** A deliberate sign-out: nothing of hers stays for the next person. */
 export async function releaseLocalWork(): Promise<void> {
+  outboxBelongsTo(null);
   await discardLocalWork();
   await setLocalOwner(null);
 }

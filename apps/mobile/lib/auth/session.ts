@@ -121,12 +121,9 @@ export async function clearSession(ended: SessionEnd): Promise<void> {
 // they are deleted only when a different user signs in (a shared phone).
 const OWNER_KEY = 'lb.local_owner';
 
+/** Whose work is on the phone; a read that fails throws — it is not "nobody's" (#822 review). */
 export async function localOwner(): Promise<string | null> {
-  try {
-    return await read(OWNER_KEY);
-  } catch {
-    return null;
-  }
+  return read(OWNER_KEY);
 }
 
 export async function setLocalOwner(userId: string | null): Promise<void> {
