@@ -5,6 +5,7 @@ export * from './identity.js';
 export * from './voice.js';
 export * from './talk.js';
 export * from './buddy.js';
+export * from './buddyLearning.js';
 export * from './staff.js';
 export * from './code.js';
 export * from './tree.js';
