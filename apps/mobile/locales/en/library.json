@@ -39,7 +39,8 @@
     "budget_exhausted": "I can't read any more sheets today. It'll work again tomorrow.",
     "blocked": "The safety filter won't let this sheet through. Reading it again won't help – just type the questions.",
     "form_not_practicable": "I could read the sheet just fine – I just can't practise this kind of task with you. Ask me about it: I'll talk you through the steps.",
-    "nothing_marked": "I found nothing on the test marked as wrong – so there's nothing to practise. If something is marked in red after all, take the photo again."
+    "nothing_marked": "I found nothing on the test marked as wrong – so there's nothing to practise. If something is marked in red after all, take the photo again.",
+    "too_large": "Too many large photos at once – send the sheet in two parts."
   },
   "source": {
     "corrected_test": "From your corrected test: new tasks on what was marked – with other numbers and words.",

@@ -44,6 +44,12 @@ export const MaterialFailure = z.enum([
    * the one above, and its photos go at once — they show a grade.
    */
   'nothing_marked',
+  /**
+   * Its photos and PDFs together are more than one reading can carry to the model (#688): too
+   * many large photos at once. The same files read again change nothing, so this is final; she
+   * sends the sheet in two parts.
+   */
+  'too_large',
 ]);
 export type MaterialFailure = z.infer<typeof MaterialFailure>;
 
@@ -56,6 +62,7 @@ export const FINAL_FAILURES: ReadonlySet<MaterialFailure> = new Set<MaterialFail
   'blocked',
   'form_not_practicable',
   'nothing_marked',
+  'too_large',
 ]);
 
 /**
@@ -222,7 +229,7 @@ export type UnclearSpot = z.infer<typeof UnclearSpot>;
 /**
  * All PDFs of one sheet together, in MB (issue #688, KI-Audit K17). They travel inline to the
  * model with the sheet's photos, and a request carries at most 20 MB inline, base64 included
- * (`GatewayProfile.maxInlineBytes`): 8 MB are about 10.7 MB as sent, which leaves the rest of the
+ * (`GatewayProfile.maxInlineBytes`): 8 MB (8 MiB) are about 11.2 MB as sent, which leaves the rest of the
  * request for the photos of the same sheet. A 20-page scanned worksheet is about 5 MB.
  */
 export const MAX_PDF_MB = 8;

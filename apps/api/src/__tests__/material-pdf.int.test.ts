@@ -11,6 +11,7 @@ import type { MaterialView } from '@learnbuddy/shared-types/contracts';
 import { PDFDocument } from 'pdf-lib';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { VERTEX_PROFILE } from '../llm/vertex.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -181,6 +182,23 @@ describe.skipIf(!dbReady)('worksheets as PDF', () => {
     );
     expect(purge.run_at.toISOString()).toBe('2026-09-28T14:00:00.000Z');
     expect(env.llm.callsFor('extraction')).toHaveLength(0);
+  });
+
+  // Photos have no byte cap of their own: a sheet whose files together are more than the gateway
+  // takes inline is refused before the reading is sent (#688) — and says what to do, finally,
+  // instead of a "Nochmal lesen" that would send the same files again.
+  it('tells her to send a sheet of too many large photos in two parts', async () => {
+    env.llm.profile = { ...VERTEX_PROFILE, maxInlineBytes: 4_000 };
+    const created = await reserve(lena, ['image/jpeg', 'image/jpeg']);
+    for (const u of created.uploads) env.storage.put(u.path, new Uint8Array(2_000).fill(0xff));
+    expect((await lena.api.post(`/materials/${created.material.id}/submit`)).status).toBe(202);
+    await env.flushBackground();
+
+    const view = (await lena.api.get<MaterialView>(`/materials/${created.material.id}`)).body;
+    expect(view).toMatchObject({ status: 'failed', failure_reason: 'too_large' });
+    expect(env.llm.callsFor('extraction')).toHaveLength(0);
+    // Final: reading the same files again is refused, not tried.
+    expect((await lena.api.post(`/materials/${created.material.id}/retry`)).status).toBe(409);
   });
 
   it('a file that is not a PDF, or PDFs past 8 MB (too large for the model call, #688), are refused', async () => {

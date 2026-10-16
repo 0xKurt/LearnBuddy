@@ -1253,10 +1253,22 @@ each of those calls is a separate, stateless task that needs its input. Decided 
   right that the rules did not know still enters `accepted_answers`, now with a row in
   `learned_answers` (the turn, the tutor's prompt version, provisional); disputing the
   question's judgement takes those answers back out of the key (`retractLearned`).
-- **The day list of `## Now` — kept.** Once per Buddy request (`buddy_turn`, `buddy_check`):
-  471 characters, ≈ 353 text tokens. Grouping the dates by month ("2026-10: +0 Fri 02, …")
-  carries the same days in 312 characters / ≈ 188 tokens, but it changes what the model reads
-  to resolve a DaySpec (rule 2), so it waits for a DaySpec eval on Vertex before it ships.
+- **The day list of `## Now` — kept, measured** (#687, KI-Audit K16). Once per Buddy request
+  (`buddy_turn`, `buddy_check`): 471 characters, ≈ 353 text tokens. Grouping the dates by month
+  ("2026-10: +0 Fri 02, …") carries the same days in 312 characters. That changes what the model
+  reads to resolve a DaySpec (rule 2), so it was measured live with the DaySpec cases of
+  `evals/buddy`: twelve cases, among them five added for it (`de_exam_in_ten_days`,
+  `de_exam_in_three_weeks`, `de_reminder_friday_next_week`, `de_exam_weekday_over_new_year`,
+  `de_exam_date_in_january`).
+  - Grouped list: 35 of 36 runs right. Once, "Am Montag" on 30.12. became Tuesday 2027-01-05
+    instead of Monday 2027-01-04; that case was right in 7 of 8 runs.
+  - Current list: 13 of 13 runs of the new cases right. The other seven were green in the full
+    round of 15.10.
+  - The saving per call: 18 232 → 18 077 input tokens (155, 0.85 %), and the same cost to the
+    tenth of a cent per call ($0.0160 vs $0.0159).
+
+  A wrong exam date costs her more than that, so the list stays as it is. The cases stay in
+  `evals/buddy` for the next change to the list (≈ $0.016 per run, 3.6 Flash, 16.10.2026).
 
 `src/__tests__/request-duplication.int.test.ts` plays the journey of one photographed sheet
 (`src/testing/request-flow.ts`: reading, figures, background check, a practice test from it,
@@ -2031,7 +2043,12 @@ with the sheet's photos, and a request carries at most 20 MB inline as sent (bas
 for 3 bytes): until #688 (KI-Audit K17) the cap was 15 MB, which is 20 MB as sent before a single
 photo — such a sheet was a certain provider error. 8 MB are about 11.2 MB as sent and leave more
 than a third of the request for its photos (`llm/__tests__/profile.test.ts`); what still does not
-fit is refused by the gateway profile before it is sent (§Model calls). A Storage outage while counting is
+fit is refused by the gateway profile before it is sent (§Model calls). Too many large photos are
+an example: photos have no byte cap of their own. The reading then ends as `too_large`
+(migration `0112_material_too_large.sql`, `LlmError.tooLarge`). The sheet is final (in
+`FINAL_FAILURES`), so there is no "Nochmal lesen", which would send the same files again; she
+reads "zu viele große Fotos auf einmal — schick das Blatt in zwei Teilen", and Buddy is told the
+same (`material-pdf.int.test.ts`). A Storage outage while counting is
 503 `storage_unavailable` as for photos. PDFs are not photo-checked on the phone (the check is for
 light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
 scanned school PDF (the tests script the model).
