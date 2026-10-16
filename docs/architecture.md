@@ -6694,6 +6694,19 @@ filled twice throws (in development Fast Refresh replaces it instead);
 - Not covered by automated tests: the live model's judgement quality, real push delivery to
   devices, Supabase Auth/Storage themselves, pg_cron firing and pg_net sending on a hosted
   project.
+- Vercel builds `main` only (issue #638, CLAUDE.md "How we work" 4). Until then only `claude/**`
+  was switched off, and every push to any other branch (`fix/**`, `perf/**`, `codex/**`, a
+  worktree branch) built a paid preview: 69 build hours, $14.69 (owner, 14.10.2026). Now
+  `apps/api/vercel.json` does two things:
+  - it sets `git.deploymentEnabled` to `{"main": true, "**": false}`. These are minimatch globs.
+    A branch no rule names would deploy, and a branch matching several rules deploys if one of
+    them is `true`. So `main` deploys and every other branch does not;
+  - its `ignoreCommand` exits 0 (skip the build) for every `$VERCEL_GIT_COMMIT_REF` except `main`.
+
+  `src/__tests__/vercel-branches.test.ts` reads both as Vercel does, for `main` and eight other
+  branch shapes. A branch cut before this landed keeps the old `vercel.json` until it is rebased
+  on `main`.
+
 - Deploy checks (`apps/api/scripts/deploy-check.ts`): Vercel's own builder detection, the
   database's TLS and region, that the app keys can execute nothing and every table has RLS —
   and that **every migration on disk is applied** before new code goes live. The last one was

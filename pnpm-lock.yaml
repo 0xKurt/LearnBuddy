@@ -141,6 +141,9 @@ importers:
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2
+      minimatch:
+        specifier: 10.2.5
+        version: 10.2.5
       tsx:
         specifier: ^4.19.2
         version: 4.21.1
