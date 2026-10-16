@@ -164,6 +164,7 @@
     "ready_title": "Exercices prêts : {{title}}",
     "ready_body_one": "{{count}} exercice · env. {{minutes}} min",
     "ready_body_other": "{{count}} exercices · env. {{minutes}} min",
+    "ready_closed": "N'est plus ouvert",
     "ready_focus": "Surtout : {{topics}}",
     "ready_for_exam": "Pour « {{exam}} » {{when}}",
     "ready_cta_short": "S'entraîner",

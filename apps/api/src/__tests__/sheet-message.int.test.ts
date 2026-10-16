@@ -235,9 +235,10 @@ describe.skipIf(!dbReady)('her sheet as her message in the conversation (issue #
     const stepId = home.now?.type === 'practice_ready' ? home.now.step_id : null;
     expect(messages[ready]?.announces).toMatchObject({ step_id: stepId, question_count: 3 });
 
-    // Started: nothing waits any more, so the card has nothing to start.
+    // Started: nothing waits any more, so the card has nothing to start …
     expect((await lena.api.post(`/buddy/steps/${stepId}/start`)).status).toBe(200);
     const after = (await thread(lena)).find((m) => m.outreach?.kind === 'result');
-    expect(after?.announces ?? null).toBeNull();
+    // Started: the card stays and says she is on it, no second start (issue #844).
+    expect(after?.announces?.outcome).toMatchObject({ state: 'running' });
   });
 });

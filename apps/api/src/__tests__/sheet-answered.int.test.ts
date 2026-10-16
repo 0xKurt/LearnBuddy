@@ -188,6 +188,24 @@ describe.skipIf(!dbReady)('every sheet she sends is answered (issue #721)', () =
     expect(after[0]?.text).toBe('Deine Fragen zu „Brüche erweitern“ sind fertig (2 Stück).');
   });
 
+  it('keeps the start card under its line once she started it, saying where it went (issue #844)', async () => {
+    env.llm.script('buddy_check', WAIT);
+    await sendSheet(env, lena);
+    const before = (await answer(lena)).after[0]?.announces;
+    expect(before).toMatchObject({ outcome: null });
+    const started = await lena.api.post<{ session_id: string }>(
+      `/buddy/steps/${before!.step_id}/start`,
+      {},
+    );
+    expect(started.status).toBe(200);
+    const { after } = await answer(lena);
+    expect(after).toHaveLength(1);
+    expect(after[0]?.announces).toMatchObject({
+      step_id: before!.step_id,
+      outcome: { state: 'running', session_id: started.body.session_id, left: 3 },
+    });
+  });
+
   it('gives the check’s own line the start it left out', async () => {
     env.llm.script('buddy_check', {
       json: { disposition: 'act', reason: 'tell', actions: [], outreach: OUTREACH(null) },

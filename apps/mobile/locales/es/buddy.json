@@ -164,6 +164,7 @@
     "ready_title": "Práctica lista: {{title}}",
     "ready_body_one": "{{count}} ejercicio · unos {{minutes}} min",
     "ready_body_other": "{{count}} ejercicios · unos {{minutes}} min",
+    "ready_closed": "Ya no está abierta",
     "ready_focus": "Sobre todo: {{topics}}",
     "ready_for_exam": "Para “{{exam}}” {{when}}",
     "ready_cta_short": "Practicar",
