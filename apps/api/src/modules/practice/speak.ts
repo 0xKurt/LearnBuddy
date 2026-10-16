@@ -460,6 +460,16 @@ export async function speakWord(
     });
 
   const day = await learnerDay(deps.db, learner.id, now);
+  const minor = isMinor(learner, now);
+  /** The fixed help answer in place of a judgement: nothing judged, her words not shown back. */
+  const helpAlone = (kind: 'concern' | 'blocked'): SpeakWordResponse => ({
+    audible: false,
+    ok: false,
+    heard: '',
+    tip: null,
+    help: safeguardingText(learner.locale, minor, kind),
+  });
+  let j: z.infer<typeof WordJudgement>;
   try {
     const res = await callModel(deps, learner.id, day, {
       purpose: 'pronounce',
@@ -485,17 +495,29 @@ export async function speakWord(
     });
     const parsed = WordJudgement.safeParse(res.json);
     if (!parsed.success) throw new AppError('model_unavailable', 'Could not listen right now');
-    const j = parsed.data;
-    return {
-      audible: j.audible,
-      ok: j.audible && j.ok,
-      heard: j.audible ? j.heard : '',
-      tip: j.audible && !j.ok ? j.tip?.trim() || null : null,
-    };
+    j = parsed.data;
   } catch (err) {
     if (isAppError(err)) throw err;
+    // The provider's filter held back what she said: the fixed answer, as for the sentence (#785).
+    if (err instanceof LlmError && err.kind === 'blocked') return helpAlone('blocked');
     throw new AppError('model_unavailable', 'Could not listen right now');
   }
+
+  // Her words are shown back on her screen, so they are read for distress like a sentence take
+  // when they hold a word the sentence does not (#785, CLAUDE.md rule 18). Nothing is stored.
+  const heard = j.audible ? j.heard : '';
+  const found = saysMoreThan(heard, [item.prompt])
+    ? await distressCheck(deps, learner.id, heard, { question: item.prompt })
+    : 'clear';
+  if (found === 'concern' || found === 'blocked') return helpAlone(found);
+  return {
+    audible: j.audible,
+    ok: j.audible && j.ok,
+    heard,
+    tip: j.audible && !j.ok ? j.tip?.trim() || null : null,
+    // No check could read her words: the fixed help line follows the judgement (#747, #765).
+    help: found === 'unchecked' ? safeguardingText(learner.locale, minor, 'unchecked') : null,
+  };
 }
 
 /** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */

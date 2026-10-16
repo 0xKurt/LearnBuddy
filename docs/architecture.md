@@ -311,10 +311,14 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     words stay in her turns. No check possible: the judgement stands and the fixed help line
     follows the reply — on every take nobody could read, as on every written answer nobody could
     read: each one is a new thing she said, and the line is what reaches her if that one told of
-    danger. A take of only the sentence asks nothing. **Known gap (#785):** practising one tapped
-    word (`speak-word`) is not checked, and it shows her words (`heard`, up to 60 characters)
-    back on her screen in an answer that has no slot for a help text; it stores nothing.
-    Measured: `speak-distress.int.test.ts` (3 cases red on main, green since).
+    danger. A take of only the sentence asks nothing. Practising one tapped word (`speak-word`,
+    #785) is read the same way, because it shows her words (`heard`) back on her screen; it
+    stores nothing, so the answer carries the fixed text in `SpeakWordResponse.help`. A concern
+    or a held-back take: `help` alone, `audible` false, no judgement and her words not shown
+    (the sheet shows the text in place of the tip). No check possible: the judgement stands and
+    `help` is the fixed help line under it. Measured: `speak-distress.int.test.ts` (3 sentence
+    cases red on main, green since #784; 4 word cases red before #785, green since) and
+    `WordSheet.lifetime.test.tsx` (the sheet, 2 cases).
   - The copy needs pedagogical and legal review before real learners (noted for the ADR).
   - A concern answer may come **without any reply text**: the model knows its words are thrown
     away, so it rightly writes none. `reply` therefore has no minimum length; `emptyReply()`
