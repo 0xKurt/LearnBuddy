@@ -63,8 +63,16 @@ export type ReadingComparison = {
  * The text aligned with what she said, word by word (Levenshtein over words, ties preferring a
  * match, then a substitution). A number in the text matches whatever single word she said in its
  * place: "1990" may be transcribed in words, and how a year is spoken is not a reading error.
+ *
+ * `cut`: the transcript is only the first part of what she read (#681). The text then ends where
+ * the transcript does — at the cheapest point — and no word after it counts as skipped: nobody
+ * knows whether she read it.
  */
-export function compareReading(text: string, transcript: string): ReadingComparison {
+export function compareReading(
+  text: string,
+  transcript: string,
+  { cut = false }: { cut?: boolean } = {},
+): ReadingComparison {
   const want = wordsOf(text);
   const heard = wordsOf(transcript);
   const a = want.map(fold);
@@ -90,6 +98,10 @@ export function compareReading(text: string, transcript: string): ReadingCompari
   let correct = 0;
   let i = n;
   let j = m;
+  if (cut) {
+    // The cheapest end of the text for all she said; on a tie the later one (more words matched).
+    for (let k = n - 1; k >= 0; k--) if (cost[k]![m]! < cost[i]![m]!) i = k;
+  }
   while (i > 0 || j > 0) {
     const here = cost[i]![j]!;
     if (i > 0 && j > 0 && same(i - 1, j - 1) && here === cost[i - 1]![j - 1]!) {

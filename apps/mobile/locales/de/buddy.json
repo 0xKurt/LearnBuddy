@@ -418,6 +418,8 @@
       },
       "pace": "Tempo",
       "pace_text": "{{wpm}} Wörter pro Minute",
+      "pace_unknown": "Nicht gemessen",
+      "partial": "Nur der erste Teil deiner Aufnahme ist aufgeschrieben – die Zahlen gelten für diesen Teil.",
       "fillers": "Pausenlaute",
       "fillers_text_one": "Einmal „äh“ oder „ähm“",
       "fillers_text_other": "{{count}}-mal „äh“ oder „ähm“",

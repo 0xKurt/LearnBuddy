@@ -14,13 +14,23 @@ import { ModeResult, type ModeRow } from './RoleplayModeResult.js';
 
 export function RehearsalResult({ rehearsal: r }: { rehearsal: RehearsalView }) {
   const { t } = useTranslation(['buddy', 'practice']);
-  const pace: ModeRow = {
-    key: 'pace',
-    right: true,
-    label: t('buddy:rehearse.result.pace'),
-    text: t('buddy:rehearse.result.pace_text', { wpm: r.words_per_minute }),
-    detail: null,
-  };
+  // Only the first part was written down (#681): its pace is not known, and the card says why.
+  const pace: ModeRow =
+    r.words_per_minute === null
+      ? {
+          key: 'pace',
+          right: false,
+          label: t('buddy:rehearse.result.pace'),
+          text: t('buddy:rehearse.result.pace_unknown'),
+          detail: r.partial ? t('buddy:rehearse.result.partial') : null,
+        }
+      : {
+          key: 'pace',
+          right: true,
+          label: t('buddy:rehearse.result.pace'),
+          text: t('buddy:rehearse.result.pace_text', { wpm: r.words_per_minute }),
+          detail: null,
+        };
   const rows: ModeRow[] =
     r.kind === 'read_aloud'
       ? readRows(r, pace, t)

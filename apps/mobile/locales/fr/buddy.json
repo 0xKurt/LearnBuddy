@@ -418,6 +418,8 @@
       },
       "pace": "Rythme",
       "pace_text": "{{wpm}} mots par minute",
+      "pace_unknown": "Non mesuré",
+      "partial": "Seule la première partie de ton enregistrement a été écrite – les chiffres valent pour cette partie.",
       "fillers": "Sons d’hésitation",
       "fillers_text_one": "Une fois « euh »",
       "fillers_text_other": "{{count}} fois « euh »",

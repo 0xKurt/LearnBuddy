@@ -603,7 +603,8 @@
       "no_fillers": "I heard no hesitation sounds like “um”.",
       "read": "You read {{wpm}} words per minute correctly.",
       "read_all": "Every word was there just as you read it.",
-      "read_words": "Have another look at these words: {{words}}."
+      "read_words": "Have another look at these words: {{words}}.",
+      "partial": "I could only write down the first part of your recording – the numbers are for that part."
     },
     "no_speech": "I didn't hear any speech in the recording. Try again, a little closer to the microphone."
   }

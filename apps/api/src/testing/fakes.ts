@@ -106,7 +106,14 @@ export type ScriptedAnswer =
        */
       pauseAfter?: { key: string; n: number; until: Promise<void> };
     }
-  | { error: LlmError }
+  | {
+      error: LlmError;
+      /**
+       * A streamed answer that broke off (#681): the text as far as the model wrote it, handed to
+       * `onPartial` before the error — e.g. a transcript cut at the output token limit.
+       */
+      written?: string;
+    }
   | ((req: LlmRequest) => unknown | Promise<unknown>);
 
 /**
@@ -298,8 +305,10 @@ export class ScriptedGateway implements LlmGateway {
         this.scriptErrors.push(err instanceof Error ? err.message : String(err));
         throw err;
       }
-    } else if ('error' in answer) throw answer.error;
-    else json = answer.json;
+    } else if ('error' in answer) {
+      if (answer.written !== undefined) req.onPartial?.(answer.written);
+      throw answer.error;
+    } else json = answer.json;
     // Streaming: the answer as the model would write it, in a few pieces.
     if (req.onPartial) {
       const text = JSON.stringify(json);
