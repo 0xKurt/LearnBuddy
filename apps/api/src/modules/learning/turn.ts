@@ -205,9 +205,13 @@ export async function roleplayMode(db: Db, learnerId: string, now: Date): Promis
     : null;
 }
 
+/** How long a homework task she has not solved keeps the chat from solving it (#670). */
+const HOMEWORK_GUARD_DAYS = 14;
+
 /**
- * While she has homework open in a help session, a chat reply that states the solution of
- * an open task is refused — unless she wrote that solution herself (then Buddy may confirm).
+ * While she has homework open in a help session — or homework of the last 14 days she has not
+ * solved, session or not (#670) — a chat reply that states the solution of such a task is
+ * refused, unless she wrote that solution herself (then Buddy may confirm).
  */
 export async function homeworkLeak(
   deps: Deps,
@@ -222,12 +226,22 @@ export async function homeworkLeak(
     unit: string | null;
     tolerance: number | null;
   }>(
+    // Open in her help session, or — with no session open (#670, KI-Audit F13) — a task of her
+    // homework from the last HOMEWORK_GUARD_DAYS she has not solved: the chat must not do it
+    // for her just because the help session was closed or never opened.
     `select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance
        from practice_sessions ps
        join session_items si on si.session_id = ps.id and si.status = 'open'
        join items i on i.id = si.item_id
-      where ps.learner_id = $1 and ps.mode = 'help' and ps.status = 'active'`,
-    [learnerId],
+      where ps.learner_id = $1 and ps.mode = 'help' and ps.status = 'active'
+     union
+     select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance
+       from items i
+      where i.learner_id = $1 and i.origin = 'homework' and i.archived_at is null
+        and i.created_at >= $2
+        and not exists (select 1 from session_items si
+                         where si.item_id = i.id and si.status in ('correct', 'revealed'))`,
+    [learnerId, new Date(deps.now().getTime() - HOMEWORK_GUARD_DAYS * 86_400_000)],
   );
   const hers = learnerWords.join('\n');
   // Every key of the task, not only the first (#227 B7): an accepted answer given away is the

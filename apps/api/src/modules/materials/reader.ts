@@ -143,8 +143,9 @@ export async function sheetReader(
         maxOutputTokens: opts.homework ? 8_000 : 12_000,
         temperature: 0.3,
         timeoutMs: 120_000,
-        // Read once in the background: time to think (see generate.ts).
-        thinking: 'high',
+        // No thinking (#670, docs/decisions/thinking-2026-10.md): the same sheets read with a 2048
+        // budget had no fewer findings, and thought tokens come before the first question.
+        thinking: 'off',
         // Which set went out, in `llm_calls` (#652): the whole schema, a choice, or the fallback.
         trace: { schemaVariant: chosen.how },
       },

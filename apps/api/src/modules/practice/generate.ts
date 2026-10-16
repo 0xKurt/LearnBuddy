@@ -539,10 +539,10 @@ async function generateSet(
         // A streamed run must be finished inside the window the run waits for it, or it would
         // still be writing after the run stopped saying "more is coming" (issue #220).
         timeoutMs: onPartial ? REST_WINDOW_MS : 60_000,
-        // Prepared once, and everything later builds on it (keys, hints, worked
-        // solutions): time to think. Measured on 3.6 Flash: about the same time and
-        // cost, more careful content (docs/architecture.md §Speed).
-        thinking: 'high',
+        // No thinking (#670, docs/decisions/thinking-2026-10.md): measured on 3.6 Flash, a 2048
+        // budget gave no more careful questions (26/28 vs 31/31 without finding) and its
+        // thought tokens delay the first question she sees.
+        thinking: 'off',
         onPartial,
         // Which set went out, in `llm_calls` (#652): the whole schema, a choice, or the fallback.
         trace: { schemaVariant: narrowed.how },
