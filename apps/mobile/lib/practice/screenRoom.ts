@@ -20,6 +20,7 @@ import type { View } from 'react-native';
 
 import { answerFolds, formDensity } from '../keyboard.js';
 import { useFigureSizing } from '../math/figureSizing.js';
+import { useSettled } from '../useSettled.js';
 import { useVisibleHeight } from '../useVisibleHeight.js';
 import { boardKeeps, newestReply, readsThrough, threadRoom, type Room } from './threadRoom.js';
 import { MIN_FIGURE_SCALE } from '../math/figureScale.js';
@@ -59,27 +60,33 @@ export function useScreenRoom() {
   /** Her question's field has the focus (`AskRoute`): with the keyboard up the answer folds. */
   const [asking, setAsking] = useState(false);
   const seen = useVisibleHeight();
-  /** The conversation's box and the free room after the answer and tutor feedback (issue #286, `threadCap`). */
-  const [threadBox, setThreadBox] = useState(0);
-  const [freeSpace, setFreeSpace] = useState(0);
+  /**
+   * The conversation's box and the free room after the answer and tutor feedback (issue #286,
+   * `threadCap`). Every measured size of the room converges or is held (`useSettled`, #720).
+   */
+  const [threadBox, setThreadBox] = useSettled(0, 'threadBox');
+  const [freeSpace, setFreeSpace] = useSettled(0, 'freeSpace');
   const threadRef = useRef<View>(null);
   const freeRef = useRef<View>(null);
-  const thread = useMemo<RoomPart>(() => ({ ref: threadRef, onHeight: setThreadBox }), []);
-  const free = useMemo<RoomPart>(() => ({ ref: freeRef, onHeight: setFreeSpace }), []);
+  const thread = useMemo<RoomPart>(
+    () => ({ ref: threadRef, onHeight: setThreadBox }),
+    [setThreadBox],
+  );
+  const free = useMemo<RoomPart>(() => ({ ref: freeRef, onHeight: setFreeSpace }), [setFreeSpace]);
   const [turnTops, setTurnTops] = useState<Readonly<Record<string, number>>>({});
   /** Where the conversation's parts start — the help chips, a card under the replies (#403). */
   const [partTops, setPartTops] = useState<readonly number[]>([]);
-  const [threadNeed, setThreadNeed] = useState(0);
-  const [questionContentHeight, setQuestionContentHeight] = useState(0);
+  const [threadNeed, setThreadNeed] = useSettled(0, 'threadNeed');
+  const [questionContentHeight, setQuestionContentHeight] = useSettled(0, 'questionContent');
   /** The question card as laid out, and its own height before it grew (issue #96). */
-  const [cardHeight, setCardHeight] = useState(0);
+  const [cardHeight, setCardHeight] = useSettled(0, 'cardHeight');
   const [natural, setNatural] = useState<{ key: string; height: number } | null>(null);
   /** The structured board's height as laid out; null until it has been (issue #232). */
-  const [surfaceHeight, setSurfaceHeight] = useState<number | null>(null);
+  const [surfaceHeight, setSurfaceHeight] = useSettled<number | null>(null, 'surfaceHeight');
   /** The column's height and where its content ends: what runs past is `overrun`. */
-  const [column, setColumn] = useState(0);
-  const [columnEnd, setColumnEnd] = useState(0);
-  const [columnTop, setColumnTop] = useState(0);
+  const [column, setColumn] = useSettled(0, 'column');
+  const [columnEnd, setColumnEnd] = useSettled(0, 'columnEnd');
+  const [columnTop, setColumnTop] = useSettled(0, 'columnTop');
   const columnRef = useRef<View>(null);
   /** The column's end mark: where its content ends, below the bar. */
   const endRef = useRef<View>(null);

@@ -8,6 +8,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 
+import { settler } from '../useSettled.js';
+
 export type StackPiece = {
   key: string;
   /** Where it starts in the column. */
@@ -26,9 +28,13 @@ export function useStackTops(
   onTops: ((pieces: readonly StackPiece[]) => void) | undefined,
 ) {
   const [heights, setHeights] = useState<Readonly<Record<string, number>>>({});
+  // A piece's height places the pieces under it: each converges or is held (`settler`, #720).
+  const settlers = useRef<Record<string, (h: number | null, at: number) => boolean>>({});
   const onHeight = useCallback(
     (key: string) => (e: LayoutChangeEvent) => {
       const h = Math.round(e.nativeEvent.layout.height);
+      const accept = (settlers.current[key] ??= settler<number | null>(null, `stack:${key}`));
+      if (!accept(h, Date.now())) return;
       setHeights((all) => (all[key] === h ? all : { ...all, [key]: h }));
     },
     [],
