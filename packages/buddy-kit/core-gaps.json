@@ -1,8 +1,5 @@
 {
   "apps/api/src/config.ts: TS2305": 1,
-  "apps/api/src/modules/buddy/prompts.ts: TS2305": 1,
-  "apps/api/src/modules/buddy/registry.ts: TS2339": 1,
-  "apps/api/src/modules/buddy/toolKit.ts: TS2339": 2,
   "apps/mobile/app/buddy.tsx: TS2339": 2,
   "apps/mobile/app/talk.tsx: TS2339": 4,
   "apps/mobile/components/buddy/ConfirmCard.tsx: TS2339": 8,

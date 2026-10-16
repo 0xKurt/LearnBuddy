@@ -15,7 +15,6 @@ import { loadStandingOffers } from '../learning/state.js';
 import { holdsWordPairs, normalizeForMatch } from '../buddy/text.js';
 import {
   activeGoalOf,
-  materialOf,
   ToolRejection,
   type ToolContext,
   type ToolOutcome,
@@ -24,6 +23,7 @@ import {
 import { titleOf } from './drill.js';
 import { fromLearnerText } from './generate.js';
 import { practiceGoesWell } from './readiness.js';
+import { materialOf } from '../learning/aliases.js';
 
 export async function runOfferLearning(
   action: ActionOf<'offer_learning'>,

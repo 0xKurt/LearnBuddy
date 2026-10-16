@@ -13,13 +13,13 @@ import type { ActionOf } from './decision.js';
 import type { StepRow } from './state.js';
 import {
   activeGoalOf,
-  materialOf,
   subjectOf,
   today,
   type ToolContext,
   type ToolOutcome,
   ToolRejection,
 } from './toolKit.js';
+import { materialOf } from '../learning/aliases.js';
 
 /**
  * She has questions for this, but none that fit what she asked for (issue #113). The reason
