@@ -22,8 +22,10 @@ export const ENV = {
   /**
    * A build that is handed around internally and never reaches a store (issue #130).
    * Set ONLY in `eas.json` under `build.preview.env`, where `distribution` is `internal`.
-   * It buys exactly one thing: the app starts without the two legal URLs — and says so on
-   * the screen where they would have been. It buys nothing else, and `production` ignores it.
+   * It buys exactly two things: the app starts without the two legal URLs — and says so on
+   * the screen where they would have been — and its tap and request spans go to the phone's log
+   * (lib/perf.ts, #649: the owner's measurement runs on a preview build). Nothing else, and
+   * `production` ignores it.
    */
   INTERNAL_BUILD: process.env.EXPO_PUBLIC_INTERNAL_BUILD === '1',
   /**

@@ -34,6 +34,7 @@ import {
 import { deviceRate, NaturalGate, type SpeechFailure } from './readAloud.js';
 import { pickVoice, SPEECH_RATE, voiceLocale } from './voice.js';
 import { voiceStore } from './voiceState.js';
+import { reacted, tapped } from '../perf.js';
 
 export type { ListenEnd } from './pipeline.js';
 
@@ -122,6 +123,8 @@ export type SpeakOptions = {
 /** Ends whatever is being read and starts a new reading of `lang`. */
 function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
   for (const listener of [...startListeners]) listener();
+  // From asking to read aloud to the first sound (#649); a new reading starts the span anew.
+  tapped('tts_first');
   const previous = current;
   if (previous) {
     previous.stop('stopped');
@@ -157,7 +160,10 @@ function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
     release: releaseAudio,
     play: (uri, on) =>
       playAudio(uri, {
-        onStart: on.start,
+        onStart: () => {
+          reacted('tts_first');
+          on.start();
+        },
         onProgress: on.progress,
         onEnd: (why) => {
           // The player failed: the phone reads this sentence, and the next ones for a minute.
