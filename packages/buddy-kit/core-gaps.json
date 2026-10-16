@@ -2,8 +2,6 @@
   "apps/api/src/config.ts: TS2305": 1,
   "apps/api/src/modules/buddy/checkDecide.ts: TS2339": 3,
   "apps/api/src/modules/buddy/checkDecide.ts: TS7006": 2,
-  "apps/api/src/modules/buddy/decision.ts: TS2305": 10,
-  "apps/api/src/modules/buddy/decision.ts: TS2769": 1,
   "apps/api/src/modules/buddy/home.ts: TS2305": 1,
   "apps/api/src/modules/buddy/home.ts: TS2339": 4,
   "apps/api/src/modules/buddy/home.ts: TS2367": 2,
