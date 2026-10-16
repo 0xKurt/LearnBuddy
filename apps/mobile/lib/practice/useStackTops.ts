@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 
-import { settler } from '../useSettled.js';
+import { settler, type Settler } from '../useSettled.js';
 
 export type StackPiece = {
   key: string;
@@ -29,13 +29,20 @@ export function useStackTops(
 ) {
   const [heights, setHeights] = useState<Readonly<Record<string, number>>>({});
   // A piece's height places the pieces under it: each converges or is held (`settler`, #720).
-  const settlers = useRef<Record<string, (h: number | null, at: number) => boolean>>({});
+  const settlers = useRef<Record<string, Settler<number | null>>>({});
+  useEffect(() => {
+    const all = settlers.current;
+    return () => Object.values(all).forEach((s) => s.dispose());
+  }, []);
   const onHeight = useCallback(
     (key: string) => (e: LayoutChangeEvent) => {
       const h = Math.round(e.nativeEvent.layout.height);
-      const accept = (settlers.current[key] ??= settler<number | null>(null, `stack:${key}`));
-      if (!accept(h, Date.now())) return;
-      setHeights((all) => (all[key] === h ? all : { ...all, [key]: h }));
+      const take = (next: number | null) => {
+        if (next === null) return;
+        setHeights((all) => (all[key] === next ? all : { ...all, [key]: next }));
+      };
+      const guard = (settlers.current[key] ??= settler<number | null>(null, `stack:${key}`, take));
+      if (guard.accept(h, Date.now())) take(h);
     },
     [],
   );
