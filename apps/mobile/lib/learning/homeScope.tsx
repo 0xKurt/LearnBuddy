@@ -7,7 +7,9 @@
 // - the practice to go on with, loaded while its card is on screen (gaps.md #2).
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
+
+import type { HomeLayout } from '../homeLayout.js';
 
 import { usePrefetchSession } from '../api/sessionQueries.js';
 import { useOnPhone } from '../buddy/useHomePhotos.js';
@@ -60,10 +62,53 @@ type HomeThumbs = ReturnType<typeof useThumbs>;
 const NONE: HomeThumbs = { page: null, unclear: null, reading: NO_THUMBS, failed: null };
 const Thumbs = createContext<HomeThumbs>(NONE);
 
+/**
+ * The practice the bar on top starts or continues right now, while it is shown (issue #846): its
+ * prepared step, or its open run. A card in the thread for the same practice then leaves that one
+ * control to the bar — "Jetzt üben" above and "Los geht's" below were two for one thing (rule 19).
+ */
+export type BarPractice = { step: string | null; session: string | null };
+const NOTHING_ON_BAR: BarPractice = { step: null, session: null };
+const OnBar = createContext<BarPractice>(NOTHING_ON_BAR);
+
+export function barPractice(h: BuddyHome | undefined, layout: HomeLayout | undefined): BarPractice {
+  const now = h?.now;
+  if (!now || !layout) return NOTHING_ON_BAR;
+  if (layout.bar === 'ready' && now.type === 'practice_ready')
+    return { step: now.step_id, session: null };
+  if (layout.bar === 'next' && now.type === 'practice_result' && now.next)
+    return { step: now.next.step_id, session: null };
+  if (layout.bar === 'resume' && now.type === 'resume_practice')
+    return { step: null, session: now.session_id };
+  return NOTHING_ON_BAR;
+}
+
 /** Around the whole home screen, from its first frame. */
-export function LearningHome({ h, children }: { h: BuddyHome | undefined; children: ReactNode }) {
+export function LearningHome({
+  h,
+  layout,
+  children,
+}: {
+  h: BuddyHome | undefined;
+  layout?: HomeLayout;
+  children: ReactNode;
+}) {
   usePrefetchSession(h?.now);
-  return <Thumbs.Provider value={useThumbs(h)}>{children}</Thumbs.Provider>;
+  const onBar = barPractice(h, layout);
+  const value = useMemo(
+    () => ({ step: onBar.step, session: onBar.session }),
+    [onBar.step, onBar.session],
+  );
+  return (
+    <Thumbs.Provider value={useThumbs(h)}>
+      <OnBar.Provider value={value}>{children}</OnBar.Provider>
+    </Thumbs.Provider>
+  );
+}
+
+/** What the bar on top starts or continues now (`BarPractice`). */
+export function useBarPractice(): BarPractice {
+  return useContext(OnBar);
 }
 
 /** What `LearningHome` found for this home's pages. */

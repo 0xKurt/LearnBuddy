@@ -9,6 +9,7 @@ import type { TFunction } from 'i18next';
 import type { ComponentType, ReactNode } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 
+import type { HomeLayout } from '../../lib/homeLayout.js';
 import { registry, slot } from '../../lib/registry.js';
 import type { StartItem } from '../lb/MenuSheet.js';
 
@@ -209,8 +210,14 @@ export const greetingAction =
  * What a domain keeps around the whole home screen while it is shown, from its first frame (the
  * learning domain: her sheets' pages and the practice to go on with, lib/learning/homeScope.tsx).
  */
-export const homeScope =
-  slot<ComponentType<{ h: BuddyHome | undefined; children: ReactNode }>>('Rahmen der Startseite');
+export const homeScope = slot<
+  ComponentType<{
+    h: BuddyHome | undefined;
+    /** What the screen shows on top and in the thread, once the home is loaded (#846). */
+    layout?: HomeLayout;
+    children: ReactNode;
+  }>
+>('Rahmen der Startseite');
 
 /** Actual subject cards in the open Profile editor; absent without a learning domain. */
 export const profileSubjects =

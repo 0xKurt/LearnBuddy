@@ -164,6 +164,8 @@ describe.skipIf(!dbReady)('the home tells what happened, at its moment (issue #6
     );
     expect(actionsOf(await home(l)).find((a) => a.id === offered.id)!.summary).toMatchObject({
       finished_session_id: null,
+      // The bar may continue it: the card knows which run, to leave that control to it (#846).
+      running_session_id: open.id,
     });
 
     // Finished: the card says so and opens that run, no "Los geht's" any more.
@@ -173,6 +175,7 @@ describe.skipIf(!dbReady)('the home tells what happened, at its moment (issue #6
     );
     expect(actionsOf(await home(l)).find((a) => a.id === offered.id)!.summary).toMatchObject({
       finished_session_id: open.id,
+      running_session_id: null,
     });
 
     // Another learner's run with the same request id is not hers to finish (tenant isolation).

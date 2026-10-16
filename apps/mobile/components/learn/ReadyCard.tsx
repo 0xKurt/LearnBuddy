@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { startStep } from '../../lib/api/learningEndpoints.js';
 import { seedSession } from '../../lib/api/sessionQueries.js';
 import { useHomeAct } from '../../lib/buddy/useHomeAct.js';
+import { useBarPractice } from '../../lib/learning/homeScope.js';
 import { PracticeReady } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';
 import { FinishedOffer } from './FinishedOffer.js';
@@ -30,6 +31,8 @@ type Ready = Pick<
 export function ReadyCard({ ready, quiet = 'primary' }: { ready: Ready; quiet?: Quiet }) {
   const { t } = useTranslation(['learn', 'buddy']);
   const { busy, act } = useHomeAct();
+  // The bar on top starts or continues this very practice: the one control stays there (#846).
+  const onBar = useBarPractice();
   const label = t(`learn:${KIND_LABEL.practice}`);
   const outcome = ready.outcome;
   if (outcome?.state === 'done')
@@ -40,12 +43,16 @@ export function ReadyCard({ ready, quiet = 'primary' }: { ready: Ready; quiet?: 
         label={label}
         title={ready.title}
         detail={t('buddy:now.resume_body_untitled', { count: outcome.left })}
-        start={{
-          label: t('buddy:now.resume_cta'),
-          variant: quietVariant(quiet),
-          accessibilityHint: `${label}: ${ready.title}`,
-          onPress: () => router.push(`/practice/${outcome.session_id}`),
-        }}
+        start={
+          onBar.session === outcome.session_id
+            ? null
+            : {
+                label: t('buddy:now.resume_cta'),
+                variant: quietVariant(quiet),
+                accessibilityHint: `${label}: ${ready.title}`,
+                onPress: () => router.push(`/practice/${outcome.session_id}`),
+              }
+        }
       />
     );
   if (outcome?.state === 'closed')
@@ -65,18 +72,22 @@ export function ReadyCard({ ready, quiet = 'primary' }: { ready: Ready; quiet?: 
         count: ready.question_count,
         minutes: ready.est_minutes,
       })}
-      start={{
-        label: t('learn:topic.submit'),
-        busy,
-        variant: quietVariant(quiet),
-        accessibilityHint: `${label}: ${ready.title}`,
-        onPress: () =>
-          void act(async () => {
-            const { session_id, session } = await startStep(ready.step_id);
-            if (session) seedSession(session);
-            router.push(`/practice/${session_id}`);
-          }),
-      }}
+      start={
+        onBar.step === ready.step_id
+          ? null
+          : {
+              label: t('learn:topic.submit'),
+              busy,
+              variant: quietVariant(quiet),
+              accessibilityHint: `${label}: ${ready.title}`,
+              onPress: () =>
+                void act(async () => {
+                  const { session_id, session } = await startStep(ready.step_id);
+                  if (session) seedSession(session);
+                  router.push(`/practice/${session_id}`);
+                }),
+            }
+      }
     />
   );
 }

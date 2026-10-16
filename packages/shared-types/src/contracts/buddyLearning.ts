@@ -167,6 +167,12 @@ const LEARNING_ACTIONS = [
      * from an older server.
      */
     finished_session_id: Uuid.nullable().default(null),
+    /**
+     * The run this offer started that is still open (issue #846): the bar on top then says
+     * "Weitermachen" for it, and the card leaves that one control to the bar. Decorated like
+     * `finished_session_id`; null while none runs.
+     */
+    running_session_id: Uuid.nullable().default(null),
   }),
   /**
    * Buddy offers a Kopfrechnen round (issue #243): one range from a closed list, and for the

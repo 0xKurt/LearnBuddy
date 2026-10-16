@@ -522,7 +522,10 @@ reply — "liegt schon bereit … mit einem Tippen" with nothing to tap was the 
 waits the call is refused and the words are repaired; once the practice is started or replaced the
 card shows no start (`ready`, decorated when the thread is served) and stays in the history in its
 end state (`outcome`, issue #844): running with "Weitermachen", done with "Geschafft! · Ansehen",
-or "Nicht mehr offen" (`modules/learning/practiceOutcome.ts`). A tool of its own did not fit:
+or "Nicht mehr offen" (`modules/learning/practiceOutcome.ts`). One control per practice on the
+screen (issue #846, rule 19): while the bar on top starts or continues a practice, its card in the
+thread — `show_ready`, `announces`, or an offer whose open run it is (`running_session_id`) —
+keeps its words and leaves the button to the bar (`useBarPractice`, `lib/learning/homeScope.tsx`). A tool of its own did not fit:
 the turn step schema then stood one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
 "say where it is". He never says which task forms or pictures a practice will have: those are
 chosen when the run is built, after his answer; naming the parts of a picture the app shows is not

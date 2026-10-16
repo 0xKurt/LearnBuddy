@@ -73,7 +73,7 @@ import { useHomeSend } from '../lib/buddy/useHomeSend.js';
 import { useSessionStart } from '../lib/buddy/useSessionStart.js';
 import { useThreadFollow } from '../lib/buddy/useThreadFollow.js';
 import { useClosedCard } from '../lib/homeCard.js';
-import { homeLayout, homeTop, topKey } from '../lib/homeLayout.js';
+import { homeLayout, homeTop, topKey, type HomeLayout } from '../lib/homeLayout.js';
 import { askAttach } from '../lib/capture/attachRequest.js';
 import { useSendingInThread } from '../lib/capture/sending.js';
 import { SPACE } from '../lib/theme/space.js';
@@ -91,7 +91,11 @@ export default function BuddyScreen() {
   // What a domain keeps around the whole screen from its first frame (its sheets' pages): the
   // same element in both returns below, so loading and loaded are one instance.
   const Scope = homeScope.get() ?? Unscoped;
-  const scoped = (screen: ReactNode) => <Scope h={home.data}>{screen}</Scope>;
+  const scoped = (screen: ReactNode, layout?: HomeLayout) => (
+    <Scope h={home.data} layout={layout}>
+      {screen}
+    </Scope>
+  );
   // The KAV adjusts only while this screen is focused: keyboard events fired on a
   // screen pushed above (practice) otherwise leave a stale gap under the composer
   // after coming back (user screenshot 2026-09-28: composer floating mid-screen).
@@ -357,6 +361,7 @@ export default function BuddyScreen() {
         canStart={pending === null}
       />
     </SafeAreaView>,
+    layout,
   );
 }
 

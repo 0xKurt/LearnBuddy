@@ -33,6 +33,7 @@ const OFFER: Extract<ActionSummary, { tool: 'offer_learning' }> = {
   minutes: 10,
   startable: true,
   finished_session_id: null,
+  running_session_id: null,
 };
 
 /** What a text declares for itself: jsdom's cascade lets react-native-web's reset win over it. */
