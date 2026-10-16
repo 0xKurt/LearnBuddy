@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 
 import { newId } from '../../lib/api/client.js';
-import { sendRehearsal } from '../../lib/api/endpoints.js';
+import { sendRehearsal } from '../../lib/api/learningEndpoints.js';
 import { setHome } from '../../lib/api/queries.js';
 import { useThreadRecording } from '../../lib/buddy/headState.js';
 import { sentDuration } from '../../lib/buddy/rehearsal.js';

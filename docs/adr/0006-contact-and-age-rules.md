@@ -67,7 +67,7 @@ or after one unanswered message, is not the product.
 
 ## Consequences
 
-- With push off (the default), Buddy may write several times a day in the thread. The topic
+- With push off (the default until 15.10.2026, ADR 0004 §Amendment), Buddy may write several times a day in the thread. The topic
   dedupe and the relevance bar are what keep it from repeating itself.
 - "Schreib mir weniger" has no count to lower. Buddy pauses the phone, moves the quiet hours
   earlier, narrows the window or rules out days, or asks which of these she wants.

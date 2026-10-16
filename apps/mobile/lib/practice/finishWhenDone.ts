@@ -10,7 +10,7 @@ import type { SessionView } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 
 import { toast } from '../../components/lb/Toast.js';
-import { finishSession } from '../api/endpoints.js';
+import { finishSession } from '../api/learningEndpoints.js';
 import { keys, queryClient } from '../api/queries.js';
 import { messageFor } from '../errors.js';
 

@@ -11,7 +11,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { startDrill } from '../../lib/api/endpoints.js';
+import { startDrill } from '../../lib/api/learningEndpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { PracticeReady } from '../buddy/ChatCard.js';

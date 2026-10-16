@@ -33,7 +33,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
 import { announce } from '../../lib/announce.js';
-import { recordCard } from '../../lib/api/endpoints.js';
+import { recordCard } from '../../lib/api/learningEndpoints.js';
 import { useDraft } from '../../lib/drafts.js';
 import { practiceHeadState } from '../../lib/buddy/headState.js';
 import { haptic } from '../../lib/haptics.js';

@@ -2998,9 +2998,26 @@ eigenen Worte bestätigen und keine exakte Angabe überstimmen.
   gekürzt (`clipQuote`): sein Anfang ist noch ihr Wortlaut an derselben Stelle. Vorher warf ein
   einziges zu langes Zitat (ein ganzer gelungener Absatz als Beleg) die ganze Rückmeldung weg.
 
-**Offen**: Eval-Satz (≥ 20 Texte je Textsorte, Übereinstimmung mit einer Lehrkraft) vor dem
-Live-Gang — wie bei #211 gibt es keinen Korpus. Ein Modellurteil kann keinen Punkt ohne ihre eigenen
-Worte am richtigen Platz bestätigen und keine Note erzeugen.
+**Eval** (`apps/api/evals/essay`, `npx tsx evals/essay/run.ts` in `apps/api`): 74 eigens
+geschriebene Texte (25 Stellungnahmen, 25 Erörterungen, 24 Analysen dreier eigens geschriebener
+Texte), kein Schülertext. Jeder Text ist aus Absätzen zusammengesetzt, die einen Kernpunkt klar
+erfüllen oder klar nicht; je Kernpunkt steht die Erwartung des Set-Autors. Der Lauf geht durch die
+echte API mit dem Produktionsmodell (`llmGateway`), der Bericht (`ESSAY_OUT`) zeigt je Text
+Erwartung, Buddys Urteil mit Beleg, die drei Stellen und eine leere Spalte für die Lehrkraft.
+Gemessen am 16.10.2026, je ein Lauf, mit dem Kürzen zu langer Zitate (#827):
+
+- ohne Schluss-Regel: 283/295 Kernpunkte wie erwartet, 11 fälschlich erfüllt (9 davon ein Schluss
+  ohne eigene Position), 1 fälschlich offen;
+- mit der Regel im Prompt (ein Schluss zählt nur mit ihrer eigenen Position im letzten Absatz):
+  290/295, 5 fälschlich erfüllt (2 beim Schluss), 0 fälschlich offen.
+
+In beiden Läufen bekam jeder Text eine Rückmeldung, und kein Thema löste die Hilfe-Antwort aus.
+Ein Lauf kostet etwa 0,23 USD.
+
+**Offen**: Die Übereinstimmung mit einer **Lehrkraft** ist erst belegt, wenn eine Lehrkraft die
+Spalte des Berichts ausgefüllt hat, für mindestens 20 Texte je Textsorte. Die Erwartungen oben sind
+die des Set-Autors, und echte Schülertexte fehlen. Ein Modellurteil kann keinen Punkt ohne ihre
+eigenen Worte am richtigen Platz bestätigen und keine Note erzeugen.
 
 `modules/practice/`. A session is a fixed set of questions chosen up front (due → new → rest,
 focus topics; one sheet or vocabulary only when she asked for that, issue #144). A task that asks
@@ -6566,8 +6583,7 @@ event and the screen is proven only on the phone (screenshot owed in #289).
 
 ### Crash reports (issue #36)
 
-Off unless the app is built with `EXPO_PUBLIC_SENTRY_DSN` — the same shape as
-`PUSH_BACKEND=disabled` on the API side: without it `Sentry.init` is never called and nothing
+Off unless the app is built with `EXPO_PUBLIC_SENTRY_DSN`: without it `Sentry.init` is never called and nothing
 leaves the phone. Where it is on, two things are enforced in code, not in a setting.
 **EU ingest:** a DSN whose host is not `*.ingest.de.sentry.io` throws while `lib/env.ts`
 loads, so the app refuses to start rather than report to another region — deliberately not

@@ -7,7 +7,8 @@ import { ProfileLibrarySubjects } from '../../components/library/ProfileLibraryS
 import { DrillOfferCard } from '../../components/learn/DrillOfferCard.js';
 import { OfferCard } from '../../components/learn/OfferCard.js';
 import { ReadyCard } from '../../components/learn/ReadyCard.js';
-import { ResultNotice } from '../../components/learn/ResultNotice.js';
+import { learningNotices } from '../../components/learn/HomeNotices.js';
+import { addLearningReceipts } from '../../components/learn/receipts.js';
 import { SentSheet } from '../../components/learn/SentSheet.js';
 import { LearnStartSheets } from '../../components/learn/StartSheets.js';
 import { startItems } from '../../components/learn/startItems.js';
@@ -23,25 +24,27 @@ import {
   readAlong,
   profileSubjects,
   readingSteps,
-  resultNotice,
   startMenu,
   workingOn,
 } from '../../components/buddy/extensions.js';
+import { homeNoticeSlot } from '../../components/buddy/HomeNotices.js';
 import { PhotoCheckCard } from '../../components/capture/PhotoCheckCard.js';
 import { inlineNotation, type InlineTextProps } from '../../components/lb/InlineText.js';
 import { MathText } from '../../components/math/MathText.js';
 import { useSayMath } from '../../components/math/useSpokenMath.js';
 import { newId } from '../api/client.js';
-import { createMaterial, getLibrary, submitMaterial } from '../api/endpoints.js';
+import { createMaterial, getLibrary, submitMaterial } from '../api/learningEndpoints.js';
 import { followHome } from '../api/libraryCache.js';
 import { homeFollowers, keys, menuPreloads, queryClient } from '../api/queries.js';
 import { readingView } from '../buddy/readingStages.js';
+import { homeTop } from '../homeLayout.js';
 import { notation } from '../buddy/notation.js';
 import { MaterialUpload, type UploadDeps } from '../capture/materialUpload.js';
 import { pageHandler, type PageHandler } from '../capture/pages.js';
 import { mathSpans } from '../math/parse.js';
 import { ANALYSIS_WIDTH } from '../photo/quality.js';
 import { sayNotation } from '../speech/say.js';
+import { learningTop } from './homeLayout.js';
 
 /** The real outside world of a send: the two API calls, the native PUT, fresh request ids. */
 // What a photo she attaches needs loads with her first photo, not with the start (#716): the
@@ -84,6 +87,8 @@ export function registerLearning(): void {
   addActionCard('offer_rehearsal', (offer, on) => (
     <RehearseCard actionId={on.actionId} offer={offer} quiet={on.quiet} />
   ));
+  // What Buddy did with her practice, her sheets and her talks: one line each.
+  addLearningReceipts();
   // In place of a bubble: the feedback after a roleplay (issue #384), then what a rehearsal
   // measured (issue #264) — the "So lief's" list the Probetest ends with.
   messageCards.add('roleplay_feedback', (m) =>
@@ -108,8 +113,10 @@ export function registerLearning(): void {
   inlineNotation.fill(RunningMath);
   sayNotation.fill(useSayMath);
 
-  // ── The home: the finished practice, a sheet being read, the ways to start.
-  resultNotice.fill(ResultNotice);
+  // ── The home: its bar on top, what it tells in the conversation (a sheet Buddy could not
+  // read, the finished practice, "Buddy is working"), a sheet being read, the ways to start.
+  homeTop.fill(learningTop);
+  homeNoticeSlot.fill(learningNotices);
   readingSteps.fill(readingView);
   startMenu.fill({ items: startItems, Sheets: LearnStartSheets });
   // The library list that still shows a sheet being read follows the home (live finding 3).

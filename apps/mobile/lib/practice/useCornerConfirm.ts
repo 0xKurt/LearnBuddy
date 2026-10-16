@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { toast } from '../../components/lb/Toast.js';
-import { disputeVerdict, flagItem } from '../api/endpoints.js';
+import { disputeVerdict, flagItem } from '../api/learningEndpoints.js';
 import type { RunOne } from './useOneCall.js';
 
 /** Which of the two the corner offers (`QuestionCorner`); also the i18n group of its words. */

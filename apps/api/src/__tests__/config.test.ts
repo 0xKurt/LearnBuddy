@@ -86,6 +86,21 @@ describe('database region', () => {
     expect(bootWarnings(on)).toEqual([]);
   });
 
+  it('has push on by default, and says at boot when it is switched off (#677)', () => {
+    // The owner closed the legal review on 15.10.2026; each learner still decides in code.
+    const on = loadConfig({ ...base, DATABASE_URL: FRANKFURT, DATABASE_CA_CERT: 'PEM' });
+    expect(on.PUSH_BACKEND).toBe('expo');
+    expect(bootWarnings(on)).toEqual([]);
+    // Off, every message Buddy sends waits in the app: correct, but never silent.
+    const off = loadConfig({
+      ...base,
+      DATABASE_URL: FRANKFURT,
+      DATABASE_CA_CERT: 'PEM',
+      PUSH_BACKEND: 'disabled',
+    });
+    expect(bootWarnings(off)).toEqual([expect.stringMatching(/PUSH_BACKEND/)]);
+  });
+
   it('reads the forms switched off, and refuses a name that is no form (#296)', () => {
     const config = { ...base, DATABASE_URL: FRANKFURT };
     expect([...loadConfig(config).FORMS_OFF]).toEqual([]);

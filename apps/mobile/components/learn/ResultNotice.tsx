@@ -1,5 +1,5 @@
 // The finished practice, told at the end of the conversation on Buddy's home (components/buddy/
-// HomeNotices.tsx `resultNotice`, issue #107): the same true, kind words as the summary — never a
+// components/learn/HomeNotices.tsx, issue #107): the same true, kind words as the summary — never a
 // hit rate (feedback #1). The full view stays one tap away; what is ready next is the bar's job.
 
 import type { NowCard } from '@learnbuddy/shared-types/contracts';

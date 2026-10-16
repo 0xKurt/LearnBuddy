@@ -4,7 +4,7 @@
 import { router } from 'expo-router';
 import type { MutableRefObject } from 'react';
 
-import { startPractice } from '../../lib/api/endpoints.js';
+import { startPractice } from '../../lib/api/learningEndpoints.js';
 import { seedSession } from '../../lib/api/queries.js';
 import { useMaterialAct } from '../../lib/api/useMaterialAct.js';
 

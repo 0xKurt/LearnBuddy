@@ -25,7 +25,7 @@ import { Text, View } from 'react-native';
 import { announce } from '../../lib/announce.js';
 import { useDraft } from '../../lib/drafts.js';
 import { newId } from '../../lib/api/client.js';
-import { answerDrill, startDrill } from '../../lib/api/endpoints.js';
+import { answerDrill, startDrill } from '../../lib/api/learningEndpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { practiceHeadState } from '../../lib/buddy/headState.js';
