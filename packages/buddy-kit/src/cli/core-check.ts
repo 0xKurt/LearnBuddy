@@ -1,0 +1,142 @@
+// pnpm core-check: does the generic core build without the learning domain? (issue #107, cut 10)
+//
+// Makes the core copy by construction (create-buddy --core) in a temporary directory, installs
+// it and typechecks every package. Each error in production code is counted per file and code
+// and compared with packages/buddy-kit/core-gaps.json, the gaps that are left: a new one is red
+// (the core reaches the domain again), and so is one that went away while the list still names
+// it — the list says exactly what is left, and only gets shorter. Errors in tests, the harness,
+// evals and scripts are counted for the report only: those that test the domain go with it.
+//
+//   pnpm core-check            # CI (check.yml), a few minutes
+//   pnpm core-check --write    # after fixing gaps: writes the list anew (never to add one)
+
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import { parseConfig } from '../config.js';
+import { isSupport } from '../core.js';
+import { createBuddy } from '../create.js';
+
+const REPO = fileURLToPath(new URL('../../../../', import.meta.url));
+const GAPS = join(REPO, 'packages/buddy-kit/core-gaps.json');
+const PACKAGES = ['packages/shared-types', 'apps/api', 'apps/mobile'];
+
+/** Production-code errors of a tsc run as "file: TScode" with their count; support errors apart. */
+export function countErrors(
+  output: string,
+  pkg: string,
+): { gaps: Record<string, number>; support: number } {
+  const gaps: Record<string, number> = {};
+  let support = 0;
+  for (const line of output.split('\n')) {
+    const m = /^(.+?)\(\d+,\d+\): error (TS\d+):/.exec(line);
+    if (!m) continue;
+    const file = `${pkg}/${m[1]!.replace(/^\.\//, '')}`;
+    if (isSupport(file)) {
+      support++;
+      continue;
+    }
+    const key = `${file}: ${m[2]}`;
+    gaps[key] = (gaps[key] ?? 0) + 1;
+  }
+  return { gaps, support };
+}
+
+/** What differs from the list: new or grown gaps, and gaps the list still names that are gone. */
+export function compareGaps(
+  now: Record<string, number>,
+  listed: Record<string, number>,
+): { grown: string[]; gone: string[] } {
+  const keys = new Set([...Object.keys(now), ...Object.keys(listed)]);
+  const grown: string[] = [];
+  const gone: string[] = [];
+  for (const k of [...keys].sort()) {
+    const a = now[k] ?? 0;
+    const b = listed[k] ?? 0;
+    if (a > b) grown.push(`${k} (${b} → ${a})`);
+    else if (a < b) gone.push(`${k} (${b} → ${a})`);
+  }
+  return { grown, gone };
+}
+
+async function main(): Promise<void> {
+  const write = process.argv.includes('--write');
+  const target = join(mkdtempSync(join(tmpdir(), 'core-check-')), 'core');
+  try {
+    const files = execFileSync('git', ['ls-files', '-z'], { cwd: REPO, encoding: 'utf8' })
+      .split('\0')
+      .filter(Boolean);
+    const { DOMAIN } = (await import(
+      pathToFileURL(join(REPO, 'tools/guards/boundaries.config.mjs')).href
+    )) as { DOMAIN: string[] };
+    const config = parseConfig(
+      JSON.parse(readFileSync(join(REPO, 'packages/buddy-kit/reference.config.json'), 'utf8')),
+    );
+    const report = createBuddy({
+      sourceRoot: REPO,
+      targetRoot: target,
+      files,
+      config,
+      domain: DOMAIN,
+      core: true,
+    });
+    console.log(
+      `core copy: ${report.copied} files, ${report.core?.domain ?? 0} of the domain and ${report.core?.support.length ?? 0} tests/evals/scripts that need it left out`,
+    );
+    const install = spawnSync('pnpm', ['install', '--prefer-offline', '--no-frozen-lockfile'], {
+      cwd: target,
+      stdio: 'inherit',
+    });
+    if (install.status !== 0) throw new Error('pnpm install failed in the core copy');
+
+    const gaps: Record<string, number> = {};
+    let support = 0;
+    for (const pkg of PACKAGES) {
+      const run = spawnSync(
+        process.execPath,
+        [
+          join(target, 'node_modules/typescript/bin/tsc'),
+          '--noEmit',
+          '--pretty',
+          'false',
+          '-p',
+          '.',
+        ],
+        { cwd: join(target, pkg), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
+      );
+      const counted = countErrors(`${run.stdout}${run.stderr}`, pkg);
+      Object.assign(gaps, counted.gaps);
+      support += counted.support;
+    }
+    const total = Object.values(gaps).reduce((s, n) => s + n, 0);
+    console.log(
+      `core typecheck: ${total} errors in production code (${Object.keys(gaps).length} file/code pairs), ${support} in tests and evals`,
+    );
+    if (write) {
+      writeFileSync(GAPS, `${JSON.stringify(gaps, Object.keys(gaps).sort(), 2)}\n`);
+      console.log(`written: ${GAPS}`);
+      return;
+    }
+    const listed = JSON.parse(readFileSync(GAPS, 'utf8')) as Record<string, number>;
+    const { grown, gone } = compareGaps(gaps, listed);
+    if (grown.length > 0) {
+      console.error(
+        `✗ the core reaches the learning domain in new places (the domain registers itself into the core; boundaries.config.mjs):\n  ${grown.join('\n  ')}`,
+      );
+    }
+    if (gone.length > 0) {
+      console.error(
+        `✗ gaps closed — take them off packages/buddy-kit/core-gaps.json (pnpm core-check --write):\n  ${gone.join('\n  ')}`,
+      );
+    }
+    if (grown.length > 0 || gone.length > 0) process.exitCode = 1;
+    else console.log('✓ the core builds without the domain, apart from the gaps listed');
+  } finally {
+    rmSync(join(target, '..'), { recursive: true, force: true });
+  }
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) await main();

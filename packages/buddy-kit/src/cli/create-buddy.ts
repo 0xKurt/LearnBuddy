@@ -19,11 +19,13 @@ const USAGE = `pnpm create-buddy <target-dir> --name "Fit Buddy" --bundle-id com
   [--id fitbuddy] [--scheme fitbuddy] [--repo owner/fitbuddy]
   [--audience adults-only|minors-with-guardian] [--locales de,en] [--default-locale de]
   [--capabilities ${CAPABILITIES.join(',')}] [--vertex-location europe-west4]
-  [--git] [--verify | --verify=typecheck]
+  [--core] [--git] [--verify | --verify=typecheck]
 pnpm create-buddy <target-dir> --config <buddy.config.json> [--git] [--verify…]
 Without a terminal every required value must be given as a flag (or in --config).
 --git: own repository on main with a first commit. --verify: install, typecheck, lint, test in
-the new project; --verify=typecheck: install, typecheck and provision --dry-run (CI).`;
+the new project; --verify=typecheck: install, typecheck and provision --dry-run (CI).
+--core: without the learning domain — the generic core by construction (issue #107). Its
+lockfile is written anew (pnpm install without --frozen-lockfile).`;
 
 const VALUED = [
   'config',
@@ -39,6 +41,10 @@ const VALUED = [
   'vertex-location',
 ] as const;
 type Valued = (typeof VALUED)[number];
+
+/** A core copy dropped workspace packages, so its lockfile is written anew on install. */
+const coreInstall = (cmd: readonly string[]) =>
+  cmd[0] === 'install' ? ['install', '--prefer-offline', '--no-frozen-lockfile'] : [...cmd];
 
 const GATES = {
   all: [['install', '--frozen-lockfile', '--prefer-offline'], ['typecheck'], ['lint'], ['test']],
@@ -134,6 +140,7 @@ async function main(): Promise<void> {
     files,
     config,
     domain: DOMAIN,
+    core: args.flags.has('core'),
   });
   console.log(
     `✓ ${config.identity.name} in ${target}: ${report.copied} Dateien kopiert, ${report.skipped.length} ausgelassen, ${report.rewritten.length} mit neuer Identität.`,
@@ -145,8 +152,14 @@ async function main(): Promise<void> {
     );
   }
   console.log('✓ keine Verbindung zur Infrastruktur der Quelle');
-  const domain = report.domain.reduce((s, d) => s + d.files, 0);
-  console.log(`  Lern-Domain noch in ${domain} Dateien — BUDDY-SETUP.md §2.`);
+  if (report.core) {
+    console.log(
+      `✓ nur der Kern: ${report.core.domain} Dateien der Lern-Domain ausgelassen, dazu ${report.core.support.length} Tests, Evals und Skripte, die sie brauchen`,
+    );
+  } else {
+    const domain = report.domain.reduce((s, d) => s + d.files, 0);
+    console.log(`  Lern-Domain noch in ${domain} Dateien — BUDDY-SETUP.md §2.`);
+  }
 
   if (args.flags.has('git')) {
     git(['init', '-q', '-b', 'main'], target);
@@ -159,9 +172,10 @@ async function main(): Promise<void> {
     if (which !== 'all' && which !== 'typecheck')
       throw new KitError(`--verify takes nothing or "typecheck", not "${which}"`);
     // Integration tests need the local Postgres (LB_TEST_DATABASE_URL) exactly like here.
-    for (const cmd of GATES[which]) {
+    for (const gate of GATES[which]) {
+      const cmd = report.core ? coreInstall(gate) : [...gate];
       console.log(`→ pnpm ${cmd.join(' ')}`);
-      const run = spawnSync('pnpm', [...cmd], { cwd: target, stdio: 'inherit' });
+      const run = spawnSync('pnpm', cmd, { cwd: target, stdio: 'inherit' });
       if (run.status !== 0) throw new KitError(`pnpm ${cmd.join(' ')} failed in ${target}`);
     }
     console.log(`✓ ${GATES[which].map((c) => c[0]).join(', ')} grün im neuen Projekt`);

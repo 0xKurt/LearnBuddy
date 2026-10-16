@@ -10,10 +10,10 @@
 //   the source's own files, so a new tie of the source is caught, not missed;
 // - writes buddy.config.json, docs/legal/processors.md and BUDDY-SETUP.md (the checklist).
 //
-// What it does NOT do yet: leave the learning domain out. The generic core still imports it
-// (tools/guards/boundaries.mjs measures how much); once the cuts of #107 are through, the copy
-// takes the generic core by construction. Until then the report counts what of the domain is in
-// the copy, so that work stays visible instead of hidden behind a renamed home screen.
+// With `core` (create-buddy --core, issue #107 cut 10) the copy takes the generic core by
+// construction: the learning domain stays out and its two seams register nothing (core.ts).
+// Without it the copy keeps the domain, and the report counts what of it is in the copy, so that
+// work stays visible instead of hidden behind a renamed home screen.
 
 import {
   chmodSync,
@@ -27,6 +27,15 @@ import {
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { checklistMarkdown } from './checklist.js';
+import {
+  CONTRACTS_BARREL,
+  CORE_ASSEMBLY,
+  CORE_ASSEMBLY_TEXT,
+  CORE_SEAMS,
+  coreBarrel,
+  corePackageJson,
+  supportReachingGaps,
+} from './core.js';
 import { type BuddyConfig, KitError } from './config.js';
 import { processorsMarkdown } from './processors.js';
 import { REWRITES, rewriteEverywhere } from './rewrite.js';
@@ -64,6 +73,11 @@ export const KIT_ONLY = [
   'packages/buddy-kit/src/cli/create-buddy.ts',
   'packages/buddy-kit/src/__tests__/create.test.ts',
   'packages/buddy-kit/src/__tests__/create-cli.test.ts',
+  // The core copy and its check (issue #107, cut 10) make further apps from this tree too.
+  'packages/buddy-kit/core-gaps.json',
+  'packages/buddy-kit/src/core.ts',
+  'packages/buddy-kit/src/cli/core-check.ts',
+  'packages/buddy-kit/src/__tests__/core.test.ts',
 ];
 const EXCLUDED_PATTERN = /\.(jks|keystore|p8|p12|key|mobileprovision)$|(^|\/)\.env(\.|$)/;
 
@@ -84,6 +98,8 @@ export type CreateReport = {
   domain: Array<{ pattern: string; files: number }>;
   /** Files that still say "LearnBuddy", most first (the extraction that is left). */
   leftovers: Array<{ file: string; count: number }>;
+  /** `core`: files of the domain left out, and tests, evals or scripts that reach them. */
+  core: { domain: number; support: string[] } | null;
 };
 
 /** Text files are rewritten and scanned; binaries are copied as they are. */
@@ -98,6 +114,8 @@ export function createBuddy(opts: {
   config: BuddyConfig;
   /** The domain patterns (tools/guards/boundaries.config.mjs `DOMAIN`), for the report. */
   domain?: readonly string[];
+  /** Leave the domain out: the generic core by construction (core.ts). Needs `domain`. */
+  core?: boolean;
 }): CreateReport {
   const source = resolve(opts.sourceRoot);
   const target = resolve(opts.targetRoot);
@@ -115,10 +133,24 @@ export function createBuddy(opts: {
     links: [],
     domain: [],
     leftovers: [],
+    core: null,
   };
+  const domain = (opts.domain ?? []).map((p) => new RegExp(p));
+  if (opts.core && domain.length === 0) throw new KitError('--core needs the domain patterns');
+  const ofDomain = (f: string) => opts.core === true && domain.some((r) => r.test(f));
+  // The core copy: the domain stays out, then every test, eval or script that reaches it.
+  const support = opts.core
+    ? supportReachingGaps(source, [
+        ...opts.files.filter((f) => isCopied(f) && !ofDomain(f)),
+        ...Object.keys(CORE_SEAMS),
+        CORE_ASSEMBLY,
+      ])
+    : [];
+  const leftOut = new Set(support);
+  if (opts.core) report.core = { domain: opts.files.filter(ofDomain).length, support };
   const copied: string[] = [];
   for (const file of opts.files) {
-    if (!isCopied(file)) {
+    if (!isCopied(file) || ofDomain(file) || leftOut.has(file)) {
       report.skipped.push(file);
       continue;
     }
@@ -143,6 +175,24 @@ export function createBuddy(opts: {
     chmodSync(to, statSync(from).mode); // hooks and scripts stay executable
     copied.push(file);
     report.copied++;
+  }
+  if (opts.core) {
+    const written: Array<[string, string]> = [
+      ...Object.entries(CORE_SEAMS),
+      [CORE_ASSEMBLY, CORE_ASSEMBLY_TEXT],
+    ];
+    for (const [file, text] of written) {
+      mkdirSync(dirname(join(target, file)), { recursive: true });
+      writeFileSync(join(target, file), text);
+      copied.push(file);
+    }
+    const present = new Set(copied);
+    const barrel = join(target, CONTRACTS_BARREL);
+    writeFileSync(barrel, coreBarrel(readFileSync(barrel, 'utf8'), present));
+    for (const file of copied.filter((f) => f.endsWith('package.json'))) {
+      const at = join(target, file);
+      writeFileSync(at, corePackageJson(readFileSync(at, 'utf8'), present));
+    }
   }
   writeFileSync(join(target, 'buddy.config.json'), `${JSON.stringify(opts.config, null, 2)}\n`);
   mkdirSync(join(target, 'docs/legal'), { recursive: true });
