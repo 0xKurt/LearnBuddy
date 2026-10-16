@@ -133,9 +133,9 @@ buddyRoutes.post('/messages', async (c) => {
   // Streamed: Buddy's reply while it is written, then the same result as above.
   return streamed(c, 'reply', async (emit) =>
     result(
-      await run((round, p) => {
+      await run((round, p, applied) => {
         const event: ReplyStreamEvent = { round, ...p };
-        emit(event);
+        emit(event, applied);
       }),
     ),
   );

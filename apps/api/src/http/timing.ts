@@ -16,11 +16,13 @@
 import { costLine, type RequestCost } from '../lib/requestCost.js';
 
 /** auth: the sign-in service vouched for the token · start: the work began · first: the first
- *  progress event was written · done / error: the stream ended with its result or a failure. */
+ *  progress event was written · applied: Buddy's answer was stored and its reply sent (#685), so
+ *  `done - applied` is what the home costs an answer that changed something · done / error: the
+ *  stream ended with its result or a failure. */
 /** A request that took this long writes its [timing] line even without a model call. */
 export const SLOW_REQUEST_MS = 1000;
 
-type Milestone = 'auth' | 'start' | 'first' | 'done' | 'error';
+export type Milestone = 'auth' | 'start' | 'first' | 'applied' | 'done' | 'error';
 
 export class Timeline {
   private readonly started: number;
