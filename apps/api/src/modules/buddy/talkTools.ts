@@ -10,7 +10,6 @@ import { findOrCreateSubject } from '../learning/state.js';
 import { quoteInTranscript, sheetWords, wordsOf } from './talkMeasure.js';
 import {
   goalOf,
-  materialOf,
   requireQuote,
   resolveFutureDay,
   today,
@@ -18,6 +17,7 @@ import {
   type ToolOutcome,
   ToolRejection,
 } from './toolKit.js';
+import { materialOf } from '../learning/aliases.js';
 
 /**
  * A talk with a day and the steps before it. The model names the stages and their days; code

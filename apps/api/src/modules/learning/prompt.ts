@@ -3,7 +3,7 @@
 // the lookups (buddy/prompts.ts), byte for byte where they stood when they were written there
 // (pinned by buddy/__tests__/prompt-pin.test.ts).
 
-import { NotPracticableForm } from '@learnbuddy/shared-types/contracts';
+import { MATH_NOTATION_SHORT, NotPracticableForm } from '@learnbuddy/shared-types/contracts';
 
 import { MAX_PAGES, MAX_PDF_BYTES } from '../materials/pdf.js';
 import { PHOTO_RETENTION_DAYS } from '../materials/purge.js';
@@ -83,3 +83,6 @@ ${NOT_PRACTICABLE}`;
 
 /** Its rules in the turn prompt (the context provider's `turnRules`). */
 export const LEARNING_TURN_RULES = MATERIAL;
+
+/** Its line under "How you talk" (buddy/prompts.ts STYLE): how a formula is written in the chat. */
+export const LEARNING_STYLE_RULES = `- Formulas in an explanation: ${MATH_NOTATION_SHORT}`;

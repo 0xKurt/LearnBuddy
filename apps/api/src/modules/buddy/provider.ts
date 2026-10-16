@@ -65,11 +65,15 @@ type StateContext = {
   ): StateRender;
   /** Its rules for the model, between the core's tool rules and the lookups (prompts.ts). */
   turnRules: string;
+  /** Its lines under "How you talk" (prompts.ts STYLE), one per line; '' for none. */
+  styleRules: string;
 };
 
 /** The categories a goal may belong to (a school subject, say): goals keep only the id. */
 type Subjects = {
   names(db: Db, learnerId: string, ids: readonly string[]): Promise<Map<string, string>>;
+  /** The id of the category an alias of this STATE names (`f1`), or null when it names none. */
+  ofAlias(aliases: Aliases, alias: string): string | null;
   findOrCreate(
     db: Db,
     learnerId: string,
