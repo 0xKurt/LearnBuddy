@@ -103,6 +103,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0110_speech_calls',
   '0111_rehearsal_partial',
   '0112_material_too_large',
+  '0113_domain_foreign_keys',
 ];
 
 /**
