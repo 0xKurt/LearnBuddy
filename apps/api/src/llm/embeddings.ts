@@ -13,7 +13,15 @@ export const EMBED_DIMENSIONS = 768;
 /** Passages are stored with one task type, queries with the other (asymmetric retrieval). */
 type EmbedTask = 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY';
 
-export type EmbedRequest = { task: EmbedTask; texts: string[] };
+export type EmbedRequest = {
+  task: EmbedTask;
+  texts: string[];
+  /**
+   * The most the call may take, retries included (#673). A query embedding sits in front of Buddy's
+   * turn and is only one of three search lists: past this it is dropped, never waited for.
+   */
+  timeoutMs?: number;
+};
 
 type EmbedUsage = {
   model: string;

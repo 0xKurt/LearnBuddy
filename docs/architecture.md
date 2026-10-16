@@ -1509,6 +1509,9 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   during a roleplay (her line is no question about her sheets), and no turn ends before the
   look-ahead does. Expected: 50–75 ms less before the model starts (the reads it now overlaps,
   ~2.6–3.9 ms each between fra1 and the database); the phone measurement is still open (#169).
+  Inside the look-up (#673): the query embedding starts beside the full-text and trigram lists
+  instead of after them, is skipped when none of her passages is embedded yet, and is given up
+  after 800 ms (`QUERY_EMBED_TIMEOUT_MS`) — the other two lists then carry the search.
 - **The pronunciation judgement streams** (`POST /practice/sessions/:id/speak` with
   `Accept: text/event-stream`; `SpeakStreamEvent`, issue #8): the model writes `heard` before
   the word list, so the words colour one by one instead of the card sitting still for seconds.
