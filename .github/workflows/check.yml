@@ -95,8 +95,8 @@ jobs:
         run: pnpm create-buddy "$RUNNER_TEMP/reference-buddy" --config packages/buddy-kit/reference.config.json --verify=typecheck
 
   test-api:
-    # The API's tests, its integration tests against a real Postgres (never mocked) — most of
-    # what `pnpm test` took (about 7 of its 8 minutes).
+    # The API's tests, its integration tests against a real Postgres (never mocked). About 4.5
+    # minutes, as long as test-app beside it (first split run, 17.10.).
     name: test (API, real Postgres)
     runs-on: ubuntu-latest
     timeout-minutes: 15
