@@ -8,6 +8,9 @@ const IDLE_MS = 60_000;
 /** Every phone waits a little more or less, so a hundred of them never ask in the same second. */
 const STAGGER = 0.15;
 
+/** No poll comes sooner than this, whatever it was told (#818 review). */
+const MIN_POLL_MS = 1000;
+
 /**
  * How often the home asks while she sees it: the pace the server sent (`poll_after_ms`, #671),
  * or — from an API that does not send it yet — the same rule here (`pollAfterMs`: a sheet being
@@ -25,5 +28,5 @@ export function homePollMs(
 
 /** `ms` spread by ±15 %: the same for every poll the app runs (home, session, library). */
 export function staggered(ms: number, random: () => number = Math.random): number {
-  return Math.round(ms * (1 - STAGGER + random() * 2 * STAGGER));
+  return Math.max(MIN_POLL_MS, Math.round(ms * (1 - STAGGER + random() * 2 * STAGGER)));
 }

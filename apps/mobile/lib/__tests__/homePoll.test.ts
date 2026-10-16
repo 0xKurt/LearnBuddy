@@ -1,10 +1,10 @@
 // How often the home asks while she sees it (#686, #671): the pace the server sends, or the same
 // rule here for an older API — spread so that many phones never ask in the same second.
 
-import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
+import { BuddyHome as BuddyHomeSchema, type BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { homePollMs } from '../api/homePoll.js';
+import { homePollMs, staggered } from '../api/homePoll.js';
 
 const home = (over: Partial<BuddyHome>): BuddyHome =>
   ({ working: null, thread: [], now: null, ...over }) as unknown as BuddyHome;
@@ -41,5 +41,19 @@ describe('home poll (#686, #671)', () => {
     const h = home({ poll_after_ms: 3000 });
     expect(homePollMs(h, () => 0)).toBe(2550);
     expect(homePollMs(h, () => 0.999999)).toBe(3450);
+  });
+
+  it('never polls sooner than a second, whatever it is told (#818)', () => {
+    expect(staggered(10, () => 0)).toBe(1000);
+    expect(staggered(1500, () => 0)).toBe(1275);
+  });
+
+  it('does not take a pace outside 1 s–2 min from the server: the app rule applies', () => {
+    const parsed = (v: unknown) =>
+      BuddyHomeSchema.shape.poll_after_ms.parse(v) as number | null | undefined;
+    expect(parsed(1)).toBeUndefined();
+    expect(parsed(500_000)).toBeUndefined();
+    expect(parsed(1500)).toBe(1500);
+    expect(parsed(null)).toBeNull();
   });
 });

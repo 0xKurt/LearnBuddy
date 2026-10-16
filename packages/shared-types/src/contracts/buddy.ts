@@ -657,7 +657,8 @@ export const BuddyHome = z.object({
    * says it, so the pace can change without an app release. Null: nothing in progress (the app
    * asks once a minute). Absent from an older API: the app decides by `pollAfterMs` itself.
    */
-  poll_after_ms: z.number().int().positive().nullable().optional().catch(undefined),
+  // Bounded (#818 review): a value outside 1 s–2 min is not taken; the app then uses its own rule.
+  poll_after_ms: z.number().int().min(1000).max(120_000).nullable().optional().catch(undefined),
 });
 
 /**
