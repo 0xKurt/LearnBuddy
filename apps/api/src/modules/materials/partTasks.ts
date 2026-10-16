@@ -19,7 +19,6 @@ import {
   TASK_PART_LETTERS,
   TASK_STEM_MAX,
   TASK_STEM_MIN,
-  type ItemKind,
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
@@ -147,7 +146,7 @@ function asTask(read: SheetPartTask): PartTaskDraft | null {
  */
 export function sheetPartTaskItems(
   read: SheetPartTask,
-  opts: { locale: string; off: ReadonlySet<ItemKind> },
+  opts: { locale: string; off: ReadonlySet<string> },
 ): StoredItem[] {
   const task = asTask(read);
   const whole = task ? partTaskItems(task, { locale: opts.locale, help: read.parts }) : [];

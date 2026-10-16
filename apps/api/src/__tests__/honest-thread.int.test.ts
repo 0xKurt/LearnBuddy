@@ -237,6 +237,41 @@ describe.skipIf(!dbReady)('the home tells what happened, at its moment (issue #6
     ).toMatchObject({ outcome: { state: 'done', session_id: started.body.session_id } });
   });
 
+  it('starting one waiting practice closes another of the same questions (issue #841)', async () => {
+    // Device 16.10.: the bar started "Vokabeln Unité 3"; a second waiting practice of the same
+    // six questions kept its "6 Aufgaben · Los geht's" card and opened question 1 again, a second
+    // run beside the first.
+    const l = await onboard(env, { relation: 'child', name: 'Testkind', birthDate: '2014-02-10' });
+    const a = await item(env, l);
+    const b = await item(env, l);
+    const c = await item(env, l);
+    const waiting = async (items: string[]) =>
+      (
+        await env.db.one<{ id: string }>(
+          `insert into buddy_steps (learner_id, kind, title, state, planned_date, payload, prepared_at)
+           values ($1, 'practice', 'Vokabeln Unité 3', 'prepared', '2026-10-14', $2, $3) returning id`,
+          [l.learnerId, { item_ids: items, est_minutes: 2 }, env.clock.now()],
+        )
+      ).id;
+    const first = await waiting([a, b]);
+    const same = await waiting([b, a]);
+    const part = await waiting([a]);
+    const more = await waiting([a, b, c]);
+    const started = await l.api.post<{ session_id: string }>(`/buddy/steps/${first}/start`, {});
+    expect(started.status).toBe(200);
+    const states = await env.db.query<{ id: string; state: string }>(
+      `select id, state from buddy_steps where id = any($1::uuid[])`,
+      [[same, part, more]],
+    );
+    const stateOf = (id: string) => states.find((s) => s.id === id)?.state;
+    // Nothing of these is left to do once her run holds all of it …
+    expect(stateOf(same)).toBe('cancelled');
+    expect(stateOf(part)).toBe('cancelled');
+    // … but a practice with a question her run does not have still waits.
+    expect(stateOf(more)).toBe('prepared');
+    expect((await l.api.post(`/buddy/steps/${same}/start`, {})).status).toBe(409);
+  });
+
   it('refuses to point at practice when none waits, and the words are repaired', async () => {
     const l = await onboard(env, { relation: 'child', name: 'Testkind', birthDate: '2014-02-10' });
     // A practice step that is only planned for later: nothing to start now.

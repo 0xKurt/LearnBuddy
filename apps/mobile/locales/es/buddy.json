@@ -374,8 +374,7 @@
     "on_at": "el {{day}} a las {{time}}"
   },
   "working": {
-    "material": "Estoy convirtiendo tu ficha en ejercicios…",
-    "session": "Estoy viendo cómo te ha ido la práctica…"
+    "material": "Estoy convirtiendo tu ficha en ejercicios…"
   },
   "roleplay": {
     "label": "Juego de rol",

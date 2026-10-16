@@ -374,8 +374,7 @@
     "on_at": "{{day}} alle {{time}}"
   },
   "working": {
-    "material": "Sto trasformando la tua scheda in esercizi…",
-    "session": "Sto guardando com'è andata con gli esercizi…"
+    "material": "Sto trasformando la tua scheda in esercizi…"
   },
   "roleplay": {
     "label": "Gioco di ruolo",

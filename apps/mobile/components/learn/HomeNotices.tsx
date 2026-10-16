@@ -60,10 +60,7 @@ export const learningNotices: DomainNotices = {
     ].filter((n) => n !== null);
   },
   // "Buddy is working", said once: in the reading bar when it says the same thing, else here.
-  after: ({ h, layout }) =>
-    layout.working === 'thread' && h.working ? (
-      <WorkingNote key="working" what={h.working} />
-    ) : null,
+  after: ({ layout }) => (layout.working === 'thread' ? <WorkingNote key="working" /> : null),
 };
 
 /** What every notice Buddy asks about gets: how its taps run. Its photo the home found. */
