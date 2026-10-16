@@ -1504,7 +1504,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   building and sending the home costs it. Route pattern and numbers only.
   Next to the phone's `lb-perf` line of the same minute it splits the device's wait into the way
   there and back, the sign-in check, the server and the model; `llm_calls` adds when the model
-  call started (`created_at − latency_ms`).
+  call started (`created_at − latency_ms`). The phone's side (#649, `lib/perf.ts`): every JSON
+  request writes `[lb-perf] api <METHOD> <route> <ms> headers=… server=<Server-Timing>` (ids as
+  `:id`), and the marks `talk_open` (tap on Talk → the mic listens), `transcribe` (end of a
+  dictation → its words in the field), `tts_first` (asking to read aloud → first sound), `hint`
+  and `photo_ready` (a photo handed over → its page on the sheet) join the tap spans. They log in
+  development, in a release-JS measurement run and in preview builds (`EXPO_PUBLIC_INTERNAL_BUILD`, set in
+  the `preview` profile), never in a store build; the browser build can read `Server-Timing`
+  (CORS `exposeHeaders`).
 - **Every answer says where its time went** (issue #626, `lib/requestCost.ts`): each request
   carries one meter (AsyncLocalStorage) that the database seam (`lib/db.ts`, every round trip,
   connect, begin and commit included) and the model seam (`llm/call.ts`, generate and embed,

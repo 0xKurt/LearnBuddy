@@ -21,6 +21,8 @@ export function appCors(opts: {
     origin: (origin) => (opts.allowOrigin(origin) ? origin : null),
     allowMethods: CORS_METHODS,
     allowHeaders: [...APP_REQUEST_HEADERS, ...(opts.extraHeaders ?? [])],
+    // The server's share of the wait (http/timing.ts): a browser build reads it too (#649).
+    exposeHeaders: ['Server-Timing'],
     maxAge: opts.maxAge ?? 86_400,
   });
 }

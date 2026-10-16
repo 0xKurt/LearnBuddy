@@ -28,6 +28,7 @@
 
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
+import { tapped } from '../lib/perf.js';
 import { useShown } from '../lib/perfShown.js';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -341,6 +342,8 @@ export default function BuddyScreen() {
           onTalk={() => {
             // The recogniser binds its service while Talk opens, not after (#644).
             warmRecognition(voiceLocale(currentLocale()));
+            // Talk opened until the mic listens (#649), on the phone in lb-perf.
+            tapped('talk_open');
             router.push('/talk');
           }}
           onTyping={setTyping}

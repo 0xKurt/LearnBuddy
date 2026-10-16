@@ -56,6 +56,7 @@ import {
   type UploadFile,
 } from './pages.js';
 import { preparePhoto } from './prepare.js';
+import { reacted, tapped } from '../perf.js';
 
 function uploadLink(l: DraftLink): PageLink {
   return { stepId: l.stepId, goalId: l.goalId, purpose: l.purpose, completes: l.completes };
@@ -253,6 +254,8 @@ export function useAttachments({ droppable, onSent }: Options) {
     for (const [i, entry] of entries.entries()) {
       const source = entry.uri;
       setPreparing({ current: i + 1, total: entries.length });
+      // From a photo handed over to its page on the sheet (#649): scaling, checks, the copy.
+      tapped('photo_ready');
       try {
         const prepared = entry.pdf
           ? { uri: await ownCopy(source, 'pdf'), problems: [] }
@@ -270,6 +273,7 @@ export function useAttachments({ droppable, onSent }: Options) {
         setPages((prev) =>
           withPageAdded(prev, { uri: photo.uri, problems: photo.problems, pdf: pdfName }, standsIn),
         );
+        reacted('photo_ready');
         if (standsIn) void drafts.drop([standsIn]);
         // A retake changes what is already reserved: that reservation is given up and the
         // pages start again. A new page only extends it.

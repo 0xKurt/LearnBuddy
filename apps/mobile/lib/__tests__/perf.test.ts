@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { dropped, measured, reacted, tapped } from '../perf.js';
+import { dropped, measured, reacted, requested, routeOf, tapped } from '../perf.js';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -59,5 +59,25 @@ describe('perf spans', () => {
       vi.unstubAllEnvs();
       log.mockRestore();
     }
+  });
+
+  it('a request is one span split where the app sees it, with the server’s own share (#649)', () => {
+    requested('POST', '/practice/sessions/0c6f9a52-3a1e-4f43-9d2b-8a4a9c0f1e77/answer?x=1', {
+      headersMs: 180,
+      totalMs: 210,
+      server: 'auth;dur=12, done;dur=95',
+    });
+    expect(last()).toEqual({
+      action: 'api POST /practice/sessions/:id/answer',
+      ms: 210,
+      detail: 'headers=180 server=auth;dur=12, done;dur=95',
+    });
+  });
+
+  it('names a route by its pattern, never by her ids', () => {
+    expect(routeOf('/materials/0C6F9A52-3A1E-4F43-9D2B-8A4A9C0F1E77/pages')).toBe(
+      '/materials/:id/pages',
+    );
+    expect(routeOf('/buddy')).toBe('/buddy');
   });
 });

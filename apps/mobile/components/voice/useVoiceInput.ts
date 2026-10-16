@@ -38,6 +38,7 @@ import { transcriptContext, transcriptLang } from '../../lib/speech/spoken.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { DEVICE_DICTATION_MS, MIN_AUDIO_BASE64, voiceLocale } from '../../lib/speech/voice.js';
 import { toast } from '../lb/Toast.js';
+import { dropped, reacted, tapped } from '../../lib/perf.js';
 
 type VoicePurpose = TranscribeRequest['purpose'];
 
@@ -115,6 +116,8 @@ export function useVoiceInput({
   function deliver(text: string): void {
     announce(text);
     latest.current.onText(text);
+    // From the end of her dictation to its words in the field (#649).
+    reacted('transcribe');
   }
 
   /**
@@ -265,7 +268,10 @@ export function useVoiceInput({
     if (!listening.current) pause.reset();
   }, [pauseEnds, state, pause]);
   function onLevel(level: number, now: number): void {
-    if (listening.current && pause.observe(level, now)) void rec.stop();
+    if (listening.current && pause.observe(level, now)) {
+      tapped('transcribe');
+      void rec.stop();
+    }
   }
 
   async function begin(): Promise<void> {
@@ -285,6 +291,7 @@ export function useVoiceInput({
 
   function toggle(): void {
     if (state === 'recording') {
+      tapped('transcribe');
       if (onDevice) device.stop();
       else void rec.stop();
       return;
@@ -302,6 +309,7 @@ export function useVoiceInput({
   }
 
   function cancel(): void {
+    dropped('transcribe');
     guard.cancel();
     setChoosing(false);
     setHeard('');

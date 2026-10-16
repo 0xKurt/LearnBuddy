@@ -11,6 +11,7 @@ import { adminToken } from '../admin.js';
 import { currentSession, type Session } from '../auth/session.js';
 import { refreshSession } from '../auth/supabase.js';
 import { ENV } from '../env.js';
+import { requested } from '../perf.js';
 import { deviceTimeZone } from '../time.js';
 import { ApiError } from './apiError.js';
 import { SseReader, type SseEvent } from './sse.js';
@@ -118,9 +119,18 @@ export async function request<S extends ZodTypeAny>(
   opts: { body?: unknown; schema?: S; wait?: Wait } = {},
 ): Promise<unknown> {
   const wd = new Watchdog(WAIT_MS[opts.wait ?? 'quick'], timedOut);
+  // A stopwatch for this request (#649): measured, never sent anywhere (lib/perf.ts).
+  const started = Date.now();
   try {
     const res = await authorised(method, path, opts.body, 'application/json', wd);
-    return await readJson(res, method, path, opts.schema, wd);
+    const headersMs = Date.now() - started;
+    const out = await readJson(res, method, path, opts.schema, wd);
+    requested(method, path, {
+      headersMs,
+      totalMs: Date.now() - started,
+      server: res.headers.get('server-timing'),
+    });
+    return out;
   } finally {
     wd.stop();
   }

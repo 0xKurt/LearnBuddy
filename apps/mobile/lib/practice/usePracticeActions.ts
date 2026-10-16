@@ -30,7 +30,7 @@ import {
 } from '../api/endpoints.js';
 import { keys, queryClient, seedSession, storeTurn } from '../api/queries.js';
 import { haptic } from '../haptics.js';
-import { reacted } from '../perf.js';
+import { reacted, tapped } from '../perf.js';
 import { leftAfterSend } from './essay.js';
 import type { Pending } from './questionView.js';
 import type { PracticeDrafts } from './usePracticeDrafts.js';
@@ -169,9 +169,11 @@ export function usePracticeActions({ id, pin, drafts, voice }: Deps) {
       return act(async () => {
         haptic.tap();
         pin(itemId);
+        tapped('hint');
         const res = await hintItem(id, itemId);
         await store(res.session);
         replied(res, itemId);
+        reacted('hint');
       });
     },
 
