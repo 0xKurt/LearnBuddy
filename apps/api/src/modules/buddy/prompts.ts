@@ -14,10 +14,9 @@ import { contextProvider } from './provider.js';
 import type { ToolName } from './decision.js';
 import {
   actToolsPrompt,
-  CheckDecisionForModel,
+  checkDecisionForModel,
   offerVariant,
   turnDecisionForModel,
-  TurnDecisionForModel,
 } from './registry.js';
 
 // No example in here is a phrase in one language that the model is meant to WRITE. An English
@@ -230,13 +229,13 @@ ${actToolsPrompt('check')}
 ${lookupsPrompt('check')}
 
 Answer with the JSON object described by the schema: lookups (usually empty), disposition, reason, actions, outreach, look_back.`;
-  const turnSchema = toJsonSchema(TurnDecisionForModel);
+  const turnSchema = toJsonSchema(turnDecisionForModel());
   const turnStepSchema = toJsonSchema(
-    z.object({ lookups: lookupsField() }).extend(TurnDecisionForModel.shape),
+    z.object({ lookups: lookupsField() }).extend(turnDecisionForModel().shape),
   );
-  const checkSchema = toJsonSchema(CheckDecisionForModel);
+  const checkSchema = toJsonSchema(checkDecisionForModel());
   const checkStepSchema = toJsonSchema(
-    z.object({ lookups: lookupsField() }).extend(CheckDecisionForModel.shape),
+    z.object({ lookups: lookupsField() }).extend(checkDecisionForModel().shape),
   );
   built = {
     turnSystem,

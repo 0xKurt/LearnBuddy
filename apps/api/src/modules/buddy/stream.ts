@@ -12,7 +12,7 @@
 
 import { repairLatexEscapes } from '../../llm/latex.js';
 import { partialString } from '../../llm/partial.js';
-import { ACT_TOOLS, REPLY_MAX, TurnActionSchema } from './registry.js';
+import { ACT_TOOLS, REPLY_MAX, turnActionSchema } from './registry.js';
 
 export type ReplyProgress = {
   /** The reply as far as it is written. */
@@ -101,7 +101,7 @@ function changesNothing(raw: string, aliases: ReadonlySet<string>): boolean {
     if (typeof tool !== 'string' || !(tool in ACT_TOOLS)) return false;
     const spec = ACT_TOOLS[tool as keyof typeof ACT_TOOLS];
     if (!spec.touches.every((t) => t === 'nothing')) return false;
-    const parsed = TurnActionSchema.safeParse(a);
+    const parsed = turnActionSchema().safeParse(a);
     if (!parsed.success) return false;
     return aliasesIn(parsed.data.args).every((x) => aliases.has(x));
   });

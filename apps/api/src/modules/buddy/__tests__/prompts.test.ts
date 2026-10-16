@@ -33,7 +33,7 @@ import { SchoolYear } from '../decision.js';
 import { lookupsField } from '../lookups.js';
 import { registerLearning } from '../../learning/register.js';
 import { buddyPrompt } from '../prompts.js';
-import { CheckDecision, TurnDecisionForModel } from '../registry.js';
+import { checkDecisionSchema, turnDecisionForModel } from '../registry.js';
 
 // The prompt is built from what the learning domain registers (issue #107).
 registerLearning();
@@ -209,8 +209,11 @@ describe('the system prompt is written for no one language', () => {
  */
 const SCHEMAS: ReadonlyArray<readonly [string, string]> = [
   ['turn, lookup round (buddyPrompt().turnStepSchema)', JSON.stringify(TURN_STEP_SCHEMA)],
-  ['turn, final round (TurnDecisionForModel)', JSON.stringify(toJsonSchema(TurnDecisionForModel))],
-  ['background check (CheckDecision)', JSON.stringify(toJsonSchema(CheckDecision))],
+  [
+    'turn, final round (TurnDecisionForModel)',
+    JSON.stringify(toJsonSchema(turnDecisionForModel())),
+  ],
+  ['background check (CheckDecision)', JSON.stringify(toJsonSchema(checkDecisionSchema()))],
   // The composition checkDecide.ts actually sends, not only its two pieces (issue #213).
   [
     'background check, lookup round (buddyPrompt().checkStepSchema)',

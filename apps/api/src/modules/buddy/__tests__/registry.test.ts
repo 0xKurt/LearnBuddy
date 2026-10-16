@@ -1,16 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
+import { registerLearning } from '../../learning/register.js';
 import { ACT_SCHEMAS } from '../decision.js';
 import {
   ACT_TOOLS,
   actToolsPrompt,
   askedButActed,
-  CheckActionSchema,
+  checkActionSchema,
   toolsFor,
-  TurnActionSchema,
+  turnActionSchema,
 } from '../registry.js';
 
 describe('act tool registry', () => {
+  // The learning domain's tools join the core's at start-up (issue #107, cut 7b).
+  beforeAll(() => registerLearning());
+
   it('registers every act tool exactly once', () => {
     expect(Object.keys(ACT_TOOLS).sort()).toEqual(Object.keys(ACT_SCHEMAS).sort());
   });
@@ -36,9 +40,9 @@ describe('act tool registry', () => {
         until: null,
       },
     };
-    expect(TurnActionSchema.safeParse(remember).success).toBe(true);
+    expect(turnActionSchema().safeParse(remember).success).toBe(true);
     // The check schema has no remember at all.
-    expect(CheckActionSchema.safeParse(remember).success).toBe(false);
+    expect(checkActionSchema().safeParse(remember).success).toBe(false);
   });
 
   it('generates the prompt catalogue per surface', () => {
