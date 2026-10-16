@@ -209,7 +209,9 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: "Los geht's" })).toBeNull();
-    expect(screen.getByText('Geschafft!')).toBeTruthy();
+    // "Geschafft!" is the result card's word, said once (#625): the offer carries the fact.
+    expect(screen.queryByText('Geschafft!')).toBeNull();
+    expect(screen.getByText('Geübt')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
   });
 
@@ -254,7 +256,7 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
       <ReadyCard ready={{ ...base, outcome: { state: 'done', session_id: run } }} />,
     );
     expect(screen.getByText('Arbeitsblatt Brüche')).toBeTruthy();
-    expect(screen.getByText('Geschafft!')).toBeTruthy();
+    expect(screen.getByText('Geübt')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
     view.unmount();
     renderInApp(<ReadyCard ready={{ ...base, outcome: { state: 'closed' } }} />);
@@ -287,7 +289,8 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: "Los geht's" })).toBeNull();
-    expect(screen.getByText('Geschafft!')).toBeTruthy();
+    expect(screen.queryByText('Geschafft!')).toBeNull();
+    expect(screen.getByText('Geübt')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
   });
 
