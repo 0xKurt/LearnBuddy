@@ -256,7 +256,7 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
       <ReadyCard ready={{ ...base, outcome: { state: 'done', session_id: run } }} />,
     );
     expect(screen.getByText('Arbeitsblatt Brüche')).toBeTruthy();
-    expect(screen.getByText('Geschafft!')).toBeTruthy();
+    expect(screen.getByText('Geübt')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
     view.unmount();
     renderInApp(<ReadyCard ready={{ ...base, outcome: { state: 'closed' } }} />);
