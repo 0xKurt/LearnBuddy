@@ -10,6 +10,9 @@ import { exam, foreignDayWord, germanLeak, must, onSheet, type Case } from './ca
 
 export type { Case, Outcome } from './caseChecks.js';
 
+/** The end of her day in the French case's clock (Paris): what ends by then outlasts nothing. */
+const TONIGHT = new Date('2026-09-28T22:00:00Z');
+
 export const CASES: Case[] = [
   {
     id: 'de_exam_weekday',
@@ -795,19 +798,20 @@ export const CASES: Case[] = [
     message: "J'ai entraînement de handball tout à l'heure, je réviserai après.",
     check: (o) => {
       const german = germanLeak(o.reply ?? '', 'fr');
-      const invented = o.memories.filter((m) =>
-        /tout à l'heure|bientôt|\d|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|chaque|tous les/i.test(
-          m.statement,
-        ),
+      // Her own moment word is wrong only in what outlasts the moment (#794): a constraint that
+      // ends tonight (her day ends 22:00 UTC) may say "tout à l'heure"; an invented day or rhythm never.
+      const day = /\d|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|chaque|tous les/i;
+      const lasts = (m: { valid_until: Date | null }) => !m.valid_until || m.valid_until > TONIGHT;
+      const invented = o.memories.filter((m) => day.test(m.statement));
+      const moment = o.memories.filter(
+        (m) => lasts(m) && /tout à l'heure|bientôt/i.test(m.statement),
       );
       return [
         ...must(o.status === 'done', `answered (status ${o.status}, ${o.errorCode ?? '-'})`),
         // Keeping nothing is a fair answer to one occurrence; keeping a day, a time or a rhythm
         // she did not name is not.
-        ...must(
-          invented.length === 0,
-          `a memory carrying the moment or an invented rhythm: ${JSON.stringify(invented)}`,
-        ),
+        ...must(invented.length === 0, `an invented day or rhythm: ${JSON.stringify(invented)}`),
+        ...must(moment.length === 0, `the moment kept past tonight: ${JSON.stringify(moment)}`),
         // An unagreed suggestion of his own is allowed; an AGREED reminder is not, because she
         // asked for none — agreed=true needs her own words.
         ...must(
