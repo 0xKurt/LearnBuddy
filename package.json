@@ -19,6 +19,7 @@
     "test:coverage": "pnpm -r test:coverage",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && sh scripts/web-walkthrough.sh",
     "create-buddy": "tsx packages/buddy-kit/src/cli/create-buddy.ts",
+    "core-check": "tsx packages/buddy-kit/src/cli/core-check.ts",
     "provision": "tsx packages/buddy-kit/src/cli/provision.ts",
     "build": "pnpm -r --parallel build",
     "prepare": "husky",

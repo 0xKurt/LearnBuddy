@@ -220,11 +220,26 @@ voneinander wussten. Das Repository erzwingt jetzt vernünftige Last selbst, ohn
   „pre-push gate green“ mit Exit 141 (SIGPIPE, #791, zweimal belegt). Abhilfe je Klon, nicht
   global: `git config core.sshCommand "ssh -o ServerAliveInterval=30"` (README §Develop), oder
   für einen einzelnen Push `GIT_SSH_COMMAND='ssh -o ServerAliveInterval=30' git push`.
+- **Einstellungen der Maschine für Agenten:** manche Agenten-Shells können keine Variable vor
+  einen Befehl setzen (`VAR=… git commit`), und ein `export` überlebt den Aufruf nicht. Ihre Hooks
+  fielen dann auf die Standard-URL `127.0.0.1:5432` und Node 26 zurück. `scripts/test-lock.sh`
+  liest deshalb außerhalb der CI die Datei `~/.local/share/learnbuddy-agents/env` (anderer Ort:
+  `LB_AGENT_ENV`), Zeilen `KEY=VALUE`, und nimmt genau zwei Schlüssel:
+  - `LB_TEST_DATABASE_URL`, nur wenn die Variable leer ist;
+  - `PATH_PREFIX`, ein Verzeichnis, das vorn an `PATH` kommt (Node 22), außer es steht schon vorn.
+
+  Jede andere Zeile wird übergangen. Ein Wert wird so genommen, wie er dasteht, nie ausgeführt.
+  Die Datei gehört der Maschine, nicht dem Repository; ohne sie bleibt alles wie zuvor. Weil der
+  pre-push-Hook seinen Stempel (§Pre-Push) vor dem Einbinden prüft, sieht er dort noch das alte
+  Node und lässt die Suite im Zweifel laufen. Das kostet einen Lauf, nie einen falschen Stempel.
+
 - **Tests:** `tools/guards/machine-lock.test.mjs` (Teil von `pnpm guards`) prüft:
   - die Übernahme einer verwaisten Sperre, aber nie einer, die inzwischen ein Lebender hält;
   - zwei Wartende, die nacheinander drankommen;
   - eine Sperre ohne `pid`, alt und jung;
-  - jede URL-Form.
+  - jede URL-Form;
+  - die Einstellungen der Maschine: nur die zwei Schlüssel, eine gesetzte URL bleibt, nichts wird
+    ausgeführt, ohne Datei wie zuvor.
 
 ## Wenn ein Wächter rot ist
 
