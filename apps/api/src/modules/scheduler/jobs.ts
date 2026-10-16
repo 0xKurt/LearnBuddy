@@ -89,8 +89,16 @@ export async function enqueueJob(db: Db, job: NewJob): Promise<string | null> {
   return row?.id ?? null;
 }
 
-/** Return expired leases to the queue (or park them as failed after max attempts). */
-export async function recoverExpiredLeases(db: Db, now: Date): Promise<number> {
+/**
+ * Return expired leases to the queue (or park them as failed after max attempts). `persistent`:
+ * the kinds never parked — the core's and every domain's erasure (scheduler/registry.ts
+ * `persistentKinds`); a dead worker's erasure goes back to the queue whatever its attempts.
+ */
+export async function recoverExpiredLeases(
+  db: Db,
+  now: Date,
+  persistent: readonly JobKind[],
+): Promise<number> {
   const rows = await db.query(
     `update jobs
         set status = case when attempts >= max_attempts and not (kind = any($2::text[]))
@@ -102,7 +110,7 @@ export async function recoverExpiredLeases(db: Db, now: Date): Promise<number> {
                                then $1::timestamptz else null end
       where status = 'running' and lease_until < $1
       returning id`,
-    [now, PERSISTENT_KINDS],
+    [now, persistent],
   );
   return rows.length;
 }

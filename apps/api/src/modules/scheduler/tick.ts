@@ -20,7 +20,7 @@ import {
 import { planSummaries, runSummary } from '../buddy/summarise.js';
 import { planConsolidations, runConsolidation } from '../buddy/consolidate.js';
 import { purgeSpeechCache } from '../voice/speech.js';
-import { jobKinds, tickWork, type JobHandler, isPersistent } from './registry.js';
+import { jobKinds, tickWork, type JobHandler, isPersistent, persistentKinds } from './registry.js';
 import { handleParkedJobs } from './terminal.js';
 import {
   CANARY_TIMEOUT_MS,
@@ -155,7 +155,7 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
   });
 
   await guard('recover', async () => {
-    stats.recovered = await recoverExpiredLeases(deps.db, deps.now());
+    stats.recovered = await recoverExpiredLeases(deps.db, deps.now(), persistentKinds());
     stats.stalledTurns = await queueStalledTurns(deps);
     // What the domain's own jobs left stuck when they gave up (registry.ts).
     for (const w of tickWork()) if (w.recover) await w.recover(deps);

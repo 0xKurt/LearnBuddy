@@ -63,7 +63,12 @@ export function tickWork(): readonly TickWork[] {
   return work;
 }
 
+/** The kinds retried until done instead of parked: the core's and every registered erasure. */
+export function persistentKinds(): JobKind[] {
+  return [...PERSISTENT_KINDS, ...kinds.filter((k) => k.persistent).map((k) => k.kind)];
+}
+
 /** Whether a job of this kind is retried until done instead of parked (an erasure). */
 export function isPersistent(kind: JobKind): boolean {
-  return PERSISTENT_KINDS.includes(kind) || kinds.some((k) => k.kind === kind && k.persistent);
+  return persistentKinds().includes(kind);
 }
