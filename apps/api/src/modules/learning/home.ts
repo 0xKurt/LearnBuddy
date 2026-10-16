@@ -529,12 +529,19 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
   // The offers she already worked through (issue #630; a Kopfrechnen round too, #643): the run an
   // offer started carries the offer's action id as its request id, so the card can say it is done
   // instead of "Los geht's".
-  const finished = await finishedRuns(
+  const finished = await offerRuns(
     db,
     learnerId,
     page.actions
       .filter((a) => a.result.tool === 'offer_learning' || a.result.tool === 'offer_drill')
       .map((a) => a.id),
+    'finished',
+  );
+  const running = await offerRuns(
+    db,
+    learnerId,
+    page.actions.filter((a) => a.result.tool === 'offer_learning').map((a) => a.id),
+    'active',
   );
   // The practice Buddy showed again (issue #630): its start while it still waits, and where it
   // went once she started it — the card stays in the history (issue #844).
@@ -579,6 +586,9 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       // Done: the card reads as done and opens what came of it (issues #630, #643).
       if ((s.tool === 'offer_learning' || s.tool === 'offer_drill') && finished.has(actionId))
         return { ...s, finished_session_id: finished.get(actionId) ?? null };
+      // Still open: the bar may say "Weitermachen" for it, the card then leaves it there (#846).
+      if (s.tool === 'offer_learning' && running.has(actionId))
+        return { ...s, running_session_id: running.get(actionId) ?? null };
       if (s.tool === 'show_ready') {
         const outcome = outcomes.get(s.step_id) ?? null;
         return { ...s, ready: outcome === null, outcome };
@@ -595,22 +605,23 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
 }
 
 /**
- * The finished run each of these offers started, by the offer's action id (issue #630). Only a
- * run she finished counts — one she left open still resumes from its card. The newest wins when
- * an offer was started twice.
+ * The run each of these offers started in `status`, by the offer's action id: the finished one
+ * (issue #630) — one she left open still resumes from its card — or the open one the bar may
+ * continue (issue #846). The newest wins when an offer was started twice.
  */
-async function finishedRuns(
+async function offerRuns(
   db: Db,
   learnerId: string,
   offerIds: readonly string[],
+  status: 'finished' | 'active',
 ): Promise<Map<string, string>> {
   if (offerIds.length === 0) return new Map();
   const rows = await db.query<{ request: string; id: string }>(
     `select distinct on (client_request_id) client_request_id::text as request, id
        from practice_sessions
-      where learner_id = $1 and client_request_id = any($2::uuid[]) and status = 'finished'
-      order by client_request_id, finished_at desc nulls last`,
-    [learnerId, offerIds],
+      where learner_id = $1 and client_request_id = any($2::uuid[]) and status = $3
+      order by client_request_id, coalesce(finished_at, started_at) desc nulls last`,
+    [learnerId, offerIds, status],
   );
   return new Map(rows.map((r) => [r.request, r.id]));
 }

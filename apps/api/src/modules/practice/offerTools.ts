@@ -177,6 +177,7 @@ export async function runOfferLearning(
       startable: true,
       // Nothing started yet; the thread says so once its run is finished (issue #630).
       finished_session_id: null,
+      running_session_id: null,
     },
     undo: null,
   };
