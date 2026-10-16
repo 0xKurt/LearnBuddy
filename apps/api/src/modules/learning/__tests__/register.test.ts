@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { routePlugins } from '../../../http/plugins.js';
+import { ACT_SCHEMAS } from '../../buddy/decision.js';
 import { lookupNames, registerLookups } from '../../buddy/lookups.js';
 import {
   contextProvider,
@@ -38,9 +39,11 @@ const DOMAIN_TOOLS = [
 const DOMAIN_LOOKUPS = ['search_material', 'practice_history', 'find_questions'];
 
 describe('the learning domain in the core', () => {
-  it('leaves exactly its own tools without code, and offers no lookup, until it registers', () => {
-    // Module state is per test file: nothing has registered yet.
-    expect([...missingActHandlers()].sort()).toEqual([...DOMAIN_TOOLS].sort());
+  it('offers none of its tools and no lookup until it registers', () => {
+    // Module state is per test file: nothing has registered yet. Since cut 7b the core does not
+    // declare the domain's tools at all, so none of them is offered, and none waits for code.
+    expect(missingActHandlers()).toEqual([]);
+    for (const tool of DOMAIN_TOOLS) expect(tool in ACT_SCHEMAS).toBe(false);
     expect(lookupNames()).toEqual([]);
     expect(() => actHandler('prepare_practice')).toThrow(/no handler/);
     expect(hasContextProvider()).toBe(false);

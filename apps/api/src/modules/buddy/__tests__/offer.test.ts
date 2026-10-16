@@ -12,7 +12,7 @@ import { MAX_SCHEMA_PROPERTIES, schemaProperties } from '../../../llm/schemaBudg
 import { registerLearning } from '../../learning/register.js';
 import { nestCall } from '../calls.js';
 import { buddyPrompt, turnSchemasFor } from '../prompts.js';
-import { offeredTools, toolsFor, TurnActionSchema, type ToolFacts } from '../registry.js';
+import { offeredTools, toolsFor, turnActionSchema, type ToolFacts } from '../registry.js';
 
 registerLearning();
 
@@ -45,7 +45,7 @@ describe('the calls the model writes', () => {
       tool: 'mark_step_done',
       args: { step: 'st1', quote: 'schon gemacht' },
     });
-    const parsed = TurnActionSchema.safeParse(flat);
+    const parsed = turnActionSchema().safeParse(flat);
     expect(parsed.success && parsed.data).toEqual({
       tool: 'mark_step_done',
       args: { step: 'st1', quote: 'schon gemacht' },
@@ -55,7 +55,7 @@ describe('the calls the model writes', () => {
   it('still take the nested shape every stored decision and scripted answer has', () => {
     const nested = { tool: 'mark_step_done', args: { step: 'st1', quote: 'schon gemacht' } };
     expect(nestCall(nested)).toBe(nested);
-    expect(TurnActionSchema.safeParse(nested).success).toBe(true);
+    expect(turnActionSchema().safeParse(nested).success).toBe(true);
   });
 });
 
