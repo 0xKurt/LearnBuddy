@@ -49,6 +49,8 @@ const LEARNER_TABLES = [
   'buddy_session_summaries',
   'usage_daily',
   'llm_calls',
+  // What reading aloud cost (#682): numbers only, hers like her model calls.
+  'speech_calls',
 ] as const;
 
 export async function exportAccount(db: Db, accountId: string): Promise<Record<string, unknown>> {
@@ -187,6 +189,8 @@ const CORE_CONTENT = [
   'buddy_goals',
   'usage_daily',
   'llm_calls',
+  // What reading aloud cost (#682): numbers only, hers like her model calls.
+  'speech_calls',
   'push_tokens',
   'jobs',
 ] as const;

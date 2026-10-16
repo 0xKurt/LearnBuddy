@@ -1512,6 +1512,9 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   during a roleplay (her line is no question about her sheets), and no turn ends before the
   look-ahead does. Expected: 50–75 ms less before the model starts (the reads it now overlaps,
   ~2.6–3.9 ms each between fra1 and the database); the phone measurement is still open (#169).
+  Inside the look-up (#673): the query embedding starts beside the full-text and trigram lists
+  instead of after them, is skipped when none of her passages is embedded yet, and is given up
+  after 800 ms (`QUERY_EMBED_TIMEOUT_MS`) — the other two lists then carry the search.
 - **The pronunciation judgement streams** (`POST /practice/sessions/:id/speak` with
   `Accept: text/event-stream`; `SpeakStreamEvent`, issue #8): the model writes `heard` before
   the word list, so the words colour one by one instead of the card sitting still for seconds.
@@ -5629,7 +5632,10 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`readsIn`, `speech/gateway.ts` — the same test a listening text and a Diktat use). Without it
   the setup leaves the voice step out and the settings leave the group out; nothing is guessed
   from a sample that happened to sound like the phone. Audio is
-  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). The app
+  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). Every sentence
+  asked for is counted in `speech_calls` (#682): outcome (made, her cache, the shared sample cache,
+  error), characters, latency and the gateway's list-price cost (`microsPerCharacter`), never the
+  text; TTS characters per day are one query on it. The app
   (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
   sentence with the phone's voice (`expo-speech`) when the server says no (off, budget, language,
   error) or is unreachable — never silence. `useBuddyVoice()` (`lib/speech/voiceState.ts`)

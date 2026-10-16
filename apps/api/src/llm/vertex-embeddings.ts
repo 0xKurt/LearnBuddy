@@ -53,7 +53,13 @@ export class VertexEmbeddings implements EmbeddingGateway {
         response = await this.clientFor(location).models.embedContent({
           model,
           contents: batch,
-          config: { taskType: req.task, outputDimensionality: EMBED_DIMENSIONS },
+          config: {
+            taskType: req.task,
+            outputDimensionality: EMBED_DIMENSIONS,
+            ...(req.timeoutMs !== undefined
+              ? { abortSignal: AbortSignal.timeout(req.timeoutMs) }
+              : {}),
+          },
         });
       } catch (err) {
         if (err instanceof LlmError) throw err;
