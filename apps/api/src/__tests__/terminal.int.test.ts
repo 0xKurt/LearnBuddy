@@ -58,6 +58,25 @@ describe.skipIf(!dbReady)('terminal states and honest outages', () => {
     await env.close();
   });
 
+  it('never parks an erasure whose worker died, whoever registered it (docs/privacy.md)', async () => {
+    // A worker that died mid-run leaves its lease to expire, at its last attempt. The core's
+    // account deletion and the learning domain's purges are erasures: back to the queue, never
+    // parked — a privacy promise does not expire after three tries.
+    for (const kind of ['purge_photos', 'purge_content', 'delete_account'] as const) {
+      await dyingJob(env, {
+        learnerId: null,
+        kind,
+        key: `dying:${kind}`,
+        payload: { material_id: '00000000-0000-4000-8000-00000000dead' },
+      });
+    }
+    await runTick(env.deps);
+    const parked = await env.db.query<{ kind: string }>(
+      `select kind from jobs where dedupe_key like 'dying:%' and status = 'failed'`,
+    );
+    expect(parked).toEqual([]);
+  });
+
   it('a parked job of every kind has its defined effect', async () => {
     const l = await onboard(env);
     // A countdown check the day before a test.

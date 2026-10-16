@@ -75,7 +75,13 @@ describe('her sheet in the thread (issue #632)', () => {
         id: '77777777-7777-4777-8777-777777777777',
         role: 'buddy',
         text: 'Neues Arbeitsblatt bereit.',
-        announces: { step_id: STEP, title: 'Hauptstädte', question_count: 3, est_minutes: 4 },
+        announces: {
+          step_id: STEP,
+          title: 'Hauptstädte',
+          question_count: 3,
+          est_minutes: 4,
+          outcome: null,
+        },
         created_at: '2026-10-14T14:01:00.000Z',
       },
     ]);

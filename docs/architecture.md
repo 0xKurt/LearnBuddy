@@ -520,7 +520,9 @@ Practice he prepared that already waits is pointed to with `open_area` `practice
 picks the practice prepared last that still waits, and its `show_ready` card is the start under his
 reply — "liegt schon bereit … mit einem Tippen" with nothing to tap was the defect. When nothing
 waits the call is refused and the words are repaired; once the practice is started or replaced the
-card shows no start (`ready`, decorated when the thread is served). A tool of its own did not fit:
+card shows no start (`ready`, decorated when the thread is served) and stays in the history in its
+end state (`outcome`, issue #844): running with "Weitermachen", done with "Geschafft! · Ansehen",
+or "Nicht mehr offen" (`modules/learning/practiceOutcome.ts`). A tool of its own did not fit:
 the turn step schema then stood one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
 "say where it is". He never says which task forms or pictures a practice will have: those are
 chosen when the run is built, after his answer; naming the parts of a picture the app shows is not
@@ -1777,8 +1779,8 @@ its reading woke makes practice, then ready, failed or deleted — never more th
 `summarise.ts` and the roleplay transcript leave it out); it learns about the sheet from STATE.
 Buddy's background message that announces practice ("Neues Arbeitsblatt bereit") carries its
 start: code attaches the step the message is linked to, or the practice the same decision
-prepared, while it still waits (`MessageView.announces`) — the start no longer lies only in the bar
-on top, if anywhere.
+prepared (`MessageView.announces`) — the start no longer lies only in the bar on top, if anywhere.
+Once started the card stays under the message with the same `outcome` as above (issue #844).
 
 **Her sheet is always answered** (issue #721, `modules/buddy/checkAnswer.ts`). The check her
 sheet's reading wakes is the model's to decide, and on the phone it chose to wait: "Ich mache aus

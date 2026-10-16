@@ -112,6 +112,7 @@ describe('which card’s start is the filled one', () => {
         question_count: 7,
         est_minutes: 6,
         ready: false,
+        outcome: { state: 'closed' },
       },
     };
     expect(loudCard([...thread, said(6, [gone])], 'primary')).toBe(newest.id);

@@ -9,7 +9,6 @@
 import {
   BarTask,
   CodeTask,
-  type ItemKind,
   MAX_LISTEN_QUESTIONS,
   StaffTask,
   type StartTopicRequest,
@@ -311,7 +310,7 @@ export const FALLBACK_PROFILE: SetProfile = {
 };
 
 /** No form switched off: what a caller without a configuration gets. */
-const ALL_ON: ReadonlySet<ItemKind> = new Set();
+const ALL_ON: ReadonlySet<string> = new Set();
 
 /**
  * A profile with the forms switched off in this environment taken out (issue #296,
@@ -321,7 +320,7 @@ const ALL_ON: ReadonlySet<ItemKind> = new Set();
  */
 function profileFor(
   kind: StartTopicRequest['kind'] | null,
-  off: ReadonlySet<ItemKind> = ALL_ON,
+  off: ReadonlySet<string> = ALL_ON,
 ): SetProfile {
   const profile = kind === null ? FALLBACK_PROFILE : SET_PROFILES[kind];
   if (off.size === 0) return profile;
@@ -383,7 +382,7 @@ function partTaskSchemaFor(profile: SetProfile) {
 function narrowed(
   kind: StartTopicRequest['kind'] | null,
   topics: [string, ...string[]] | null,
-  off: ReadonlySet<ItemKind>,
+  off: ReadonlySet<string>,
 ) {
   const profile = profileFor(kind, off);
   return {
@@ -404,7 +403,7 @@ const NOTHING = z.never();
 export function setSchemaForModel(
   kind: StartTopicRequest['kind'] | null,
   topics: [string, ...string[]] | null,
-  off: ReadonlySet<ItemKind> = ALL_ON,
+  off: ReadonlySet<string> = ALL_ON,
 ) {
   const { profile, item, structured, partTask } = narrowed(kind, topics, off);
   // Without an open part (a test has no long answer) the model is not shown key points either.
@@ -445,7 +444,7 @@ export function setSchemaForModel(
 export function parseSetFor(
   kind: StartTopicRequest['kind'],
   topics: [string, ...string[]] | null,
-  off: ReadonlySet<ItemKind> = ALL_ON,
+  off: ReadonlySet<string> = ALL_ON,
 ) {
   const { item, structured, partTask, profile } = narrowed(kind, topics, off);
   return GeneratedSet.extend({
@@ -492,7 +491,7 @@ export const GENERATED_SCHEMA = toJsonSchema(setSchemaForModel(null, null));
 export function explainSchemaFor(
   kind: StartTopicRequest['kind'],
   topics: [string, ...string[]] | null,
-  off: ReadonlySet<ItemKind> = ALL_ON,
+  off: ReadonlySet<string> = ALL_ON,
 ): JsonSchema {
   return toJsonSchema(setSchemaForModel(kind, topics, off));
 }

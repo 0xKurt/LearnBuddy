@@ -9,6 +9,7 @@ import type { AnnouncedPractice, SheetMessage } from '@learnbuddy/shared-types/c
 import type { Db } from '../../lib/db.js';
 import type { ThreadPage } from '../buddy/provider.js';
 import { minutesFor } from '../practice/selection.js';
+import { practiceOutcomes } from './practiceOutcome.js';
 
 type Stage = SheetMessage['stage'];
 
@@ -80,7 +81,8 @@ export async function sheetMessages(
  * (issue #632): "Neues Arbeitsblatt bereit … jederzeit eine kleine Übung dazu starten" stood with
  * nothing to tap — the check had prepared the practice, and its start lay only in the bar on top,
  * if at all. Code picks it, never the words: the step the message is linked to, or the practice
- * the same decision prepared. Started, done or replaced since: nothing to start, no card.
+ * the same decision prepared. Started, done or replaced since, the card stays and says so
+ * (`outcome`, issue #844) — what stood in the conversation does not vanish from it.
  */
 export async function announcedPractice(
   db: Db,
@@ -107,18 +109,21 @@ export async function announcedPractice(
   }
   const all = [...new Set([...candidates.values()].flat())];
   if (all.length === 0) return new Map();
-  const waiting = await db.query<{
+  const found = await db.query<{
     id: string;
     title: string;
     payload: { item_ids?: string[]; est_minutes?: number };
   }>(
     `select id, title, payload from buddy_steps
-      where learner_id = $1 and id = any($2::uuid[]) and kind = 'practice' and state = 'prepared'`,
+      where learner_id = $1 and id = any($2::uuid[]) and kind = 'practice'`,
     [learnerId, all],
   );
+  const outcomes = await practiceOutcomes(db, learnerId, all);
   const out = new Map<string, AnnouncedPractice>();
   for (const [messageId, steps] of candidates) {
-    const step = steps.map((id) => waiting.find((w) => w.id === id)).find((w) => w !== undefined);
+    // The one still waiting first; else the first it named, in its end state.
+    const named = steps.flatMap((id) => found.filter((w) => w.id === id));
+    const step = named.find((w) => outcomes.get(w.id) === null) ?? named[0];
     if (!step) continue;
     const count = step.payload.item_ids?.length ?? 0;
     out.set(messageId, {
@@ -126,6 +131,7 @@ export async function announcedPractice(
       title: step.title,
       question_count: count,
       est_minutes: step.payload.est_minutes ?? minutesFor(count),
+      outcome: outcomes.get(step.id) ?? null,
     });
   }
   return out;

@@ -23,6 +23,7 @@ import { rehearsalsOf } from '../buddy/rehearse.js';
 import { activeRoleplay, roleplayFeedbacks, roleplayStatuses } from '../buddy/roleplay.js';
 import type { BuddyState, StepRow } from '../buddy/state.js';
 import { resumable } from '../practice/lifecycle.js';
+import { practiceOutcomes } from './practiceOutcome.js';
 import { announcedPractice, sheetMessages } from './threadSheets.js';
 
 const UPLOAD_WINDOW_MS = 10 * 60_000;
@@ -535,8 +536,9 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       .filter((a) => a.result.tool === 'offer_learning' || a.result.tool === 'offer_drill')
       .map((a) => a.id),
   );
-  // The practice Buddy showed again (issue #630): its start only while it still waits.
-  const stillReady = await stepsStillPrepared(
+  // The practice Buddy showed again (issue #630): its start while it still waits, and where it
+  // went once she started it — the card stays in the history (issue #844).
+  const outcomes = await practiceOutcomes(
     db,
     learnerId,
     page.actions.flatMap((a) => (a.result.tool === 'show_ready' ? [a.result.step_id] : [])),
@@ -577,7 +579,10 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       // Done: the card reads as done and opens what came of it (issues #630, #643).
       if ((s.tool === 'offer_learning' || s.tool === 'offer_drill') && finished.has(actionId))
         return { ...s, finished_session_id: finished.get(actionId) ?? null };
-      if (s.tool === 'show_ready') return { ...s, ready: stillReady.has(s.step_id) };
+      if (s.tool === 'show_ready') {
+        const outcome = outcomes.get(s.step_id) ?? null;
+        return { ...s, ready: outcome === null, outcome };
+      }
       return s;
     },
     message: (m: ThreadPage['messages'][number]) => ({
@@ -608,19 +613,4 @@ async function finishedRuns(
     [learnerId, offerIds],
   );
   return new Map(rows.map((r) => [r.request, r.id]));
-}
-
-/** Which of these steps are prepared practice that still waits for her (issue #630). */
-async function stepsStillPrepared(
-  db: Db,
-  learnerId: string,
-  stepIds: readonly string[],
-): Promise<Set<string>> {
-  if (stepIds.length === 0) return new Set();
-  const rows = await db.query<{ id: string }>(
-    `select id from buddy_steps
-      where learner_id = $1 and id = any($2::uuid[]) and kind = 'practice' and state = 'prepared'`,
-    [learnerId, stepIds],
-  );
-  return new Set(rows.map((r) => r.id));
 }
