@@ -7,6 +7,8 @@
 //   2. A lock without a `pid` file (a run killed between `mkdir` and writing it) is stale once it
 //      is older than LB_TEST_LOCK_STALE_MINUTES — and is waited for while it is younger.
 //   3. scripts/pg-url.sh reads host and port from every URL form the tests are given.
+//   4. The machine's agent settings ($LB_AGENT_ENV): only LB_TEST_DATABASE_URL (when unset) and
+//      PATH_PREFIX are taken from it, and a value is never run.
 
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
@@ -176,4 +178,77 @@ describe('the shared database URL is read in every form (#791)', () => {
       assert.equal(r.stdout.toString().trim(), want, r.stderr.toString());
     });
   }
+});
+
+describe("the machine's agent settings reach every hook (§Maschinenlast)", () => {
+  /** A settings file with `lines`, a directory to put first on PATH, and this case's lock. */
+  function settings(lines) {
+    const { dir, lock } = scratch();
+    const bin = join(dir, 'node22', 'bin');
+    mkdirSync(bin, { recursive: true });
+    const file = join(dir, 'env');
+    writeFileSync(file, lines(bin, dir).join('\n'));
+    return { dir, lock, bin, file };
+  }
+  const show = 'echo "url=$LB_TEST_DATABASE_URL"; echo "path=$PATH"';
+
+  it('sets the test database and puts the Node directory first; no other key is taken', async () => {
+    const { dir, lock, bin, file } = settings((bin, dir) => [
+      '# shared Postgres',
+      'LB_TEST_DATABASE_URL=postgres://postgres@127.0.0.1:54316/postgres',
+      `PATH_PREFIX=${bin}`,
+      `NODE_OPTIONS=--require=${join(dir, 'evil.js')}`,
+      'LB_TEST_LOCK_HELD=1',
+      `EVIL=$(touch ${join(dir, 'ran')})`,
+      'no equals sign here',
+    ]);
+    try {
+      const r = await withLock(lock, `${show}; echo "opts=$NODE_OPTIONS"`, {
+        LB_AGENT_ENV: file,
+        LB_TEST_DATABASE_URL: '',
+        NODE_OPTIONS: '',
+      });
+      assert.equal(r.code, 0, r.out);
+      assert.match(r.out, /url=postgres:\/\/postgres@127\.0\.0\.1:54316\/postgres\n/);
+      assert.ok(r.out.includes(`path=${bin}:`), r.out);
+      assert.match(r.out, /opts=\n/);
+      assert.match(r.out, /acquired/, 'LB_TEST_LOCK_HELD from the file is ignored');
+      assert.ok(!existsSync(join(dir, 'ran')), 'a value is never run');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('never overrides a database URL that is set, nor puts the directory first twice', async () => {
+    const { dir, lock, bin, file } = settings((bin) => [
+      'LB_TEST_DATABASE_URL=postgres://postgres@127.0.0.1:54316/postgres',
+      `PATH_PREFIX=${bin}`,
+    ]);
+    try {
+      const r = await withLock(lock, show, {
+        LB_AGENT_ENV: file,
+        LB_TEST_DATABASE_URL: 'postgres://mine@127.0.0.1:5999/x',
+        PATH: `${bin}:${process.env.PATH}`,
+      });
+      assert.equal(r.code, 0, r.out);
+      assert.match(r.out, /url=postgres:\/\/mine@127\.0\.0\.1:5999\/x\n/);
+      assert.ok(r.out.includes(`path=${bin}:${process.env.PATH}\n`), r.out);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('runs as before without the file', async () => {
+    const { dir, lock } = scratch();
+    try {
+      const r = await withLock(lock, show, {
+        LB_AGENT_ENV: join(dir, 'missing'),
+        LB_TEST_DATABASE_URL: '',
+      });
+      assert.equal(r.code, 0, r.out);
+      assert.match(r.out, /url=\n/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
