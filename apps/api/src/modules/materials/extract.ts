@@ -298,19 +298,31 @@ Write ONLY the ones that are still missing, in the order they stand on the sheet
 }
 
 /**
- * Appended when the LEARNER has settled a spot this reading could not (issue #164 point 1). It is
+ * Appended when the LEARNER has settled spots this reading could not (issue #164 point 1). It is
  * the same continued reading as `moreRules` — the same photos, the questions that already exist
- * listed so nothing is written twice — with one fact added that was not on the photo: what she
- * says is printed there. Her word is the only reason this question may now be written at all, so
- * it is stated as hers and the reading is told to write that task and nothing else.
+ * listed so nothing is written twice — with one fact per spot added that was not on the photo:
+ * what she says is printed there. Her word is the only reason these questions may now be written
+ * at all, so it is stated as hers and the reading is told to write those tasks and nothing else.
+ * The spots of one sheet she settled together are read together (#683, KI-Audit K10); one spot
+ * keeps the wording it always had.
  */
-export function clarifiedRules(spot: { task: string; about: string; answer: string }): string {
-  return `ONE TASK, now settled. For this task you reported that you could not settle something, so no question was written for it:
-- task as printed: ${spot.task}
-- what was unsettled: ${spot.about}
-- what the LEARNER says is printed there: ${spot.answer}
+export function clarifiedRules(
+  spots: ReadonlyArray<{ task: string; about: string; answer: string }>,
+): string {
+  const facts = (s: { task: string; about: string; answer: string }, lead: string) =>
+    `${lead}task as printed: ${s.task}
+- what was unsettled: ${s.about}
+- what the LEARNER says is printed there: ${s.answer}`;
+  if (spots.length === 1) {
+    return `ONE TASK, now settled. For this task you reported that you could not settle something, so no question was written for it:
+${facts(spots[0]!, '- ')}
 
 She is holding the sheet; take her reading as the fact and write the question(s) for THAT task now, with her reading in place of the unsettled part. Write nothing for any other task, and name nothing in unclear for this task again. If her reading still does not make this task into a question you can ask, return no items at all rather than a question built on a guess.`;
+  }
+  return `${spots.length} TASKS, now settled. For each of these tasks you reported that you could not settle something, so no question was written for it:
+${spots.map((s, i) => facts(s, `${i + 1}. `)).join('\n')}
+
+She is holding the sheet; take each of her readings as the fact and write the question(s) for EACH of these tasks now, with her reading in place of its unsettled part. Write nothing for any other task, and name nothing in unclear for these tasks again. If her reading still does not make one of them into a question you can ask, write nothing for that one rather than a question built on a guess.`;
 }
 
 /**

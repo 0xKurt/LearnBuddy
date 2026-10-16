@@ -359,6 +359,100 @@ describe.skipIf(!dbReady)('a spot that could not be read', () => {
     expect(await prompts(lena, m.id)).toEqual(['2 + 3', '4 + 5', '6 + 7']);
   });
 
+  // Every clarification was a full reading of all the sheet's photos — up to six per sheet (#683,
+  // KI-Audit K10). The answers of one sheet are read together: a reading takes every answered spot
+  // of the sheet, and an answer given while one runs waits for it and is read with what came
+  // meanwhile. What each spot got stays its own.
+  const THREE = [
+    { page: 1, task: TASK, about: ABOUT, readings: ['12', '17'] },
+    { page: 1, task: '5) 2 + ? = 9', about: 'die zweite Zahl', readings: ['7', '4'] },
+    { page: 1, task: '6) ?3 + 1 = ?', about: 'die erste Ziffer', readings: ['43', '83'] },
+  ];
+  const clarifyCalls = (env: TestEnv) =>
+    env.llm.callsFor('extraction').filter((c) => c.system.includes('LEARNER says'));
+  const answer = (m: { id: string }, spot: string, reading: string) =>
+    lena.api.post(`/materials/${m.id}/unclear`, { spot, reading });
+
+  it('reads three answers given together in one reading, and credits each spot its own', async () => {
+    const m = await send(env, lena, sheet({ unclear: THREE }));
+    // The reading writes two of the three; the third still is no question.
+    env.llm.script('extraction', {
+      json: sheet({
+        items: [sum(17, 5), sum(2, 7)],
+        unclear: [],
+        pages: [{ page: 1, read: 'all', problem: null }],
+      }),
+    });
+    env.holdBackground();
+    expect((await answer(m, 'u1', 'r2')).status).toBe(202);
+    expect((await answer(m, 'u2', 'r1')).status).toBe(202);
+    expect((await answer(m, 'u3', 'r1')).status).toBe(202);
+    await env.flushBackground();
+
+    expect(clarifyCalls(env)).toHaveLength(1);
+    const told = clarifyCalls(env)[0]!.system;
+    for (const said of [
+      'what the LEARNER says is printed there: 17',
+      'what the LEARNER says is printed there: 7',
+      'what the LEARNER says is printed there: 43',
+    ])
+      expect(told).toContain(said);
+    expect(await prompts(lena, m.id)).toEqual(['2 + 3', '4 + 5', '6 + 7', '17 + 5', '2 + 7']);
+    // The spot whose reading no new question holds is said to have got nothing (rule 5).
+    expect(await spots(env, lena.learnerId)).toEqual([
+      { ref: 'u1', status: 'read', answer: '17', items_added: 1 },
+      { ref: 'u2', status: 'read', answer: '7', items_added: 1 },
+      { ref: 'u3', status: 'read', answer: '43', items_added: 0 },
+    ]);
+  });
+
+  it('lets an answer given while the sheet is being read wait, and reads it with the next', async () => {
+    const m = await send(env, lena, sheet({ unclear: THREE }));
+    env.llm.script(
+      'extraction',
+      // While the first answer is read, she answers the other two.
+      async () => {
+        expect((await answer(m, 'u2', 'r1')).status).toBe(202);
+        expect((await answer(m, 'u3', 'r1')).status).toBe(202);
+        return sheet({
+          items: [sum(17, 5)],
+          unclear: [],
+          pages: [{ page: 1, read: 'all', problem: null }],
+        });
+      },
+      {
+        json: sheet({
+          items: [sum(2, 7), sum(43, 1)],
+          unclear: [],
+          pages: [{ page: 1, read: 'all', problem: null }],
+        }),
+      },
+    );
+    expect((await answer(m, 'u1', 'r2')).status).toBe(202);
+    await env.flushBackground();
+
+    // Three answers, two readings: the second took both answers that came during the first.
+    expect(clarifyCalls(env)).toHaveLength(2);
+    expect(clarifyCalls(env)[0]!.system).not.toContain('LEARNER says is printed there: 7');
+    expect(clarifyCalls(env)[1]!.system).toContain('LEARNER says is printed there: 7');
+    expect(clarifyCalls(env)[1]!.system).toContain('LEARNER says is printed there: 43');
+    expect(await prompts(lena, m.id)).toEqual([
+      '2 + 3',
+      '4 + 5',
+      '6 + 7',
+      '17 + 5',
+      '2 + 7',
+      '43 + 1',
+    ]);
+    expect((await spots(env, lena.learnerId)).map((s) => [s.ref, s.status, s.items_added])).toEqual(
+      [
+        ['u1', 'read', 1],
+        ['u2', 'read', 1],
+        ['u3', 'read', 1],
+      ],
+    );
+  });
+
   it('does not spend one of her three readings of the sheet', async () => {
     const m = await send(env, lena, sheet());
     env.llm.script('extraction', {
