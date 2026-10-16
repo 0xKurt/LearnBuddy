@@ -149,6 +149,36 @@ describe.skipIf(!dbReady)('the picture she asks for (#724)', () => {
     expect(both).toEqual([false, true]);
   });
 
+  it('keeps the home asking while the offer is prepared, so its picture line arrives (#859)', async () => {
+    // Device 17.10.: "Mit Bild" stood only after her first tap — the run was ready in the
+    // background, but nothing was in progress for the home, so it was not asked again.
+    const poll = async () =>
+      (await l.api.get<{ poll_after_ms: number | null }>('/buddy')).body.poll_after_ms;
+    env.holdBackground();
+    env.llm.script('buddy_turn', { json: turn({ actions: [offer({ pictures: ['fraction'] })] }) });
+    env.llm.scriptChoice({ json: { forms: [], figures: [] } });
+    env.llm.script('explain', { json: SET });
+    await say('Ich will Brüche addieren mit Kreisbildern üben');
+    // Being prepared: asked again soon.
+    expect(await poll()).toBe(3000);
+    await env.flushBackground();
+    // Prepared: the line is there, nothing left to wait for.
+    expect(await poll()).toBeNull();
+  });
+
+  it('stops asking for an offer whose preparation never came (#859)', async () => {
+    env.holdBackground();
+    env.llm.script('buddy_turn', { json: turn({ actions: [offer({ pictures: ['fraction'] })] }) });
+    // It runs only once the test ends: until then it never came.
+    env.llm.scriptChoice({ json: { forms: [], figures: [] } });
+    env.llm.script('explain', { json: SET });
+    await say('Ich will Brüche addieren mit Kreisbildern üben');
+    env.clock.advance(3 * 60_000);
+    expect(
+      (await l.api.get<{ poll_after_ms: number | null }>('/buddy')).body.poll_after_ms,
+    ).toBeNull();
+  });
+
   it('keeps the wished types when no choice can be made', async () => {
     env.llm.scriptChoice({ error: new LlmError('unavailable', 'provider down') });
     env.llm.script('explain', { json: SET });

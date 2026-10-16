@@ -99,7 +99,7 @@ async function homeFrom(
     system,
     context_version: state.settings.context_version,
     // The app's pace while something is in progress (#671): the server's to set.
-    poll_after_ms: provider.pollAfter(domain, thread.messages),
+    poll_after_ms: provider.pollAfter(domain, thread.messages, now),
   };
 }
 

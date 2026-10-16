@@ -152,7 +152,8 @@ type Home = {
   /** How soon the app should ask again while something is in progress (#671); null: nothing is. */
   pollAfter(
     screen: Omit<BuddyHome, CoreHomeKey>,
-    thread: ReadonlyArray<{ status: string }>,
+    thread: ReadonlyArray<MessageView>,
+    now: Date,
   ): number | null;
   thread(db: Db, learnerId: string, page: ThreadPage, now: Date): Promise<ThreadDress>;
 };
