@@ -304,6 +304,7 @@
     "empty_title": "Pas encore de conversation",
     "empty_body": "Ce dont tu parles avec Buddy se retrouvera ici plus tard.",
     "typing": "Buddy écrit…",
+    "slow": "Ça prend plus de temps que d’habitude.",
     "failed": "Pas arrivé",
     "resend": "Renvoyer",
     "load_more": "Messages plus anciens",

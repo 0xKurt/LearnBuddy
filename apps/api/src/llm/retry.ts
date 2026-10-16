@@ -132,6 +132,8 @@ export async function generateWithRetries(
     : req;
   let attemptsDone = 0;
   for (;;) {
+    // The caller stopped waiting (#684): no attempt starts, none is repeated.
+    if (req.signal?.aborted) throw new LlmError('cancelled', 'the caller stopped waiting');
     const left = deadline - waits.elapsedMs();
     try {
       const result = await attempt(watched, Math.max(Math.round(left), 0));
@@ -139,6 +141,11 @@ export async function generateWithRetries(
       return { ...result, attempts: attemptsDone + 1 };
     } catch (err) {
       attemptsDone++;
+      if (req.signal?.aborted) {
+        const cancelled = new LlmError('cancelled', 'the caller stopped waiting');
+        cancelled.attempts = attemptsDone;
+        throw cancelled;
+      }
       if (err instanceof LlmError) err.attempts = attemptsDone;
       if (handedOut || attemptsDone >= attemptsFor(err)) throw err;
       const pause = retryPauseMs(attemptsDone, waits.random);

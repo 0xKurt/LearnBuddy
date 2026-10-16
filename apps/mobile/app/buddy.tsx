@@ -30,7 +30,7 @@ import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { tapped } from '../lib/perf.js';
 import { useShown } from '../lib/perfShown.js';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -105,6 +105,10 @@ export default function BuddyScreen() {
   /** She is writing or dictating a message (the Composer says so): the head's orb listens. */
   const [typing, setTyping] = useState(false);
   const [attached, setAttached] = useState(false);
+  // The recogniser's service, languages and permission answer are made ready while she sees the
+  // home, not only on her tap on Talk (#686, KI-Audit E-F9): the first listen no longer waits for
+  // them. Process-wide and quiet (no dialog), so once per start of the app is enough.
+  useEffect(() => warmRecognition(voiceLocale(currentLocale())), []);
   const recording = useThreadRecording((s) => s.on);
   const thread = home.data?.thread;
   const newestReply = thread ? newestBuddyId(thread) : null;

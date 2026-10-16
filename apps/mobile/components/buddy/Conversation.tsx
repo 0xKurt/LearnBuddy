@@ -310,7 +310,13 @@ export function Conversation({
         </Entrance>
       ) : null}
       {thinking ? (
-        <ReplyTail live={live} typing={showTyping} label={t('thread.typing')} enters={enters} />
+        <ReplyTail
+          live={live}
+          typing={showTyping}
+          label={t('thread.typing')}
+          slow={t('thread.slow')}
+          enters={enters}
+        />
       ) : null}
       <UndoSheet
         error={

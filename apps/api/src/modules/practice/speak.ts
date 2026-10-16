@@ -205,6 +205,15 @@ export function judgementFault(
   return null;
 }
 
+/**
+ * The judgements running in this instance, by her turn (#684): a recording sent again after its
+ * stream dropped joins the run still going instead of paying the model a second time. Across
+ * instances the unique turn index still keeps one result.
+ */
+const running = new Map<string, { result: Promise<AnswerResponse>; signal?: AbortSignal }>();
+
+const cancelled = (err: unknown) => err instanceof LlmError && err.kind === 'cancelled';
+
 export async function speakItem(
   deps: Deps,
   learner: PracticeLearner,
@@ -212,9 +221,38 @@ export async function speakItem(
   input: SpeakRequest,
   /** Called while the model writes its judgement (SSE); absent for the plain JSON call. */
   onProgress?: (event: SpeakStreamEvent) => void,
+  /** The stream's: aborted when she is gone, and the model call with it (#684). */
+  signal?: AbortSignal,
 ): Promise<AnswerResponse> {
   const replayed = await replayTurn(deps, learner.id, sessionId, input.client_turn_id);
   if (replayed) return replayed;
+  const key = `${learner.id}:${sessionId}:${input.client_turn_id}`;
+  const other = running.get(key);
+  if (other && !other.signal?.aborted) {
+    try {
+      return await other.result;
+    } catch (err) {
+      // That run was stopped with its stream: this one judges her recording itself.
+      if (!cancelled(err)) throw err;
+    }
+  }
+  const result = judgeSpoken(deps, learner, sessionId, input, onProgress, signal);
+  running.set(key, { result, ...(signal ? { signal } : {}) });
+  try {
+    return await result;
+  } finally {
+    if (running.get(key)?.result === result) running.delete(key);
+  }
+}
+
+async function judgeSpoken(
+  deps: Deps,
+  learner: PracticeLearner,
+  sessionId: string,
+  input: SpeakRequest,
+  onProgress: ((event: SpeakStreamEvent) => void) | undefined,
+  signal: AbortSignal | undefined,
+): Promise<AnswerResponse> {
   const now = deps.now();
   const { mode, item } = await spokenItem(deps, learner.id, sessionId, input.item_id);
   if (item.status !== 'open') throw new AppError('conflict', 'This question is already closed');
@@ -259,6 +297,7 @@ export async function speakItem(
       // Measured live (evals/speak/run.ts, 3 runs each): twice as fast, and the
       // wrong word was caught 3/3 instead of 2/3 (docs/buddy/02-verifikation.md).
       thinking: 'off',
+      ...(signal ? { signal } : {}),
     });
     const parsed = Judgement.safeParse(res.json);
     if (!parsed.success || judgementFault(item.prompt, parsed.data) !== null)
@@ -266,6 +305,8 @@ export async function speakItem(
     judged = parsed.data;
   } catch (err) {
     if (isAppError(err)) throw err;
+    // Stopped with its stream (#684): nobody reads this run's answer; a joined resend runs again.
+    if (cancelled(err)) throw err;
     // The provider's filter held back what she said: the fixed answer, as in every free text (#765).
     if (err instanceof LlmError && err.kind === 'blocked') {
       return helpTake(deps, learner, sessionId, item.id, input.client_turn_id, 'blocked', '');
