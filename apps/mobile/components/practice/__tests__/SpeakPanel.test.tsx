@@ -68,7 +68,7 @@ vi.mock('../../../lib/speech/listen.js', () => ({
   stop: outside.stop,
 }));
 
-vi.mock('../../../lib/api/endpoints.js', async (importOriginal) => {
+vi.mock('../../../lib/api/learningEndpoints.js', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return { ...actual, speakItem: outside.speakItem };
 });

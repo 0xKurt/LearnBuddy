@@ -20,7 +20,7 @@
 import type { HeardTones } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 
-import { listenToItem } from '../../lib/api/endpoints.js';
+import { listenToItem } from '../../lib/api/learningEndpoints.js';
 import { playLine, stopNotes } from '../../lib/music/play.js';
 import { speak, stop as stopSpeaking } from '../../lib/speech/listen.js';
 import { audioUri, releaseAudio } from '../../lib/speech/naturalAudio.js';

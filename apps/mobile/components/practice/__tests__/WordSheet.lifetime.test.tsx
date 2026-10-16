@@ -17,7 +17,7 @@ const recorder = vi.hoisted(() => ({
   cancel: vi.fn(),
   onRecorded: null as ((recording: Recording) => void) | null,
 }));
-vi.mock('../../../lib/api/endpoints.js', async (original) => ({
+vi.mock('../../../lib/api/learningEndpoints.js', async (original) => ({
   ...(await original<Record<string, unknown>>()),
   speakWord: outside.speakWord,
 }));

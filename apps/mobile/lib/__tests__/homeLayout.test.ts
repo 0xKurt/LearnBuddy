@@ -1,9 +1,38 @@
-import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
+import { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { followsEnd, homeLayout, topKey } from '../homeLayout.js';
+import { followsEnd, homeLayout as layoutOf, homeTop, topKey as keyOf } from '../homeLayout.js';
+import { learningTop } from '../learning/homeLayout.js';
+
+// The bar on top is the learning domain's (issue #107), filled as at app start.
+homeTop.fill(learningTop);
 
 type Parts = Pick<BuddyHome, 'now' | 'decision' | 'working'>;
+type System = Partial<BuddyHome['system']>;
+
+const BASE = BuddyHome.parse({
+  learner: { id: '11111111-1111-4111-8111-111111111111', name: 'Lena', is_minor: true },
+  now: null,
+  notice: null,
+  decision: null,
+  done: [],
+  next: [],
+  thread: [],
+  thread_has_more: false,
+  system: { model: true, push: 'active', contact_enabled: false, scheduler: 'ok' },
+  working: null,
+  context_version: 1,
+  practiced_today: false,
+});
+/** Her home with these parts (the rest as on a quiet day). */
+const home = (parts: Partial<Parts> & { system?: System }): BuddyHome => ({
+  ...BASE,
+  ...parts,
+  system: { ...BASE.system, ...parts.system },
+});
+const homeLayout = (h: Parts, closed?: string | null, greetingTells?: string | null) =>
+  layoutOf(home(h), closed, greetingTells);
+const topKey = (h: Pick<BuddyHome, 'now'> & { system?: System }) => keyOf(home(h));
 
 const capture: NonNullable<BuddyHome['now']> = {
   type: 'capture_needed',

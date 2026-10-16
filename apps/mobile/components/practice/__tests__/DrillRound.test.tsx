@@ -17,7 +17,7 @@ const rgb = (hex: string): string =>
   `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
 
 const answerDrill = vi.fn();
-vi.mock('../../../lib/api/endpoints.js', async (orig) => ({
+vi.mock('../../../lib/api/learningEndpoints.js', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   answerDrill: (...args: unknown[]) => answerDrill(...args) as Promise<SessionView>,
 }));

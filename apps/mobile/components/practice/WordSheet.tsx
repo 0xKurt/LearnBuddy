@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { BusyIndicator } from '../lb/BusyIndicator.js';
-import { speakWord } from '../../lib/api/endpoints.js';
+import { speakWord } from '../../lib/api/learningEndpoints.js';
 import { messageFor } from '../../lib/errors.js';
 import { useRecording, type Recording } from '../../lib/speech/record.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';

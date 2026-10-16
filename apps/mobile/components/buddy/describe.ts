@@ -13,6 +13,7 @@ import {
   formatTime,
   formatWeekday,
 } from '../../lib/time.js';
+import { receipts } from './extensions.js';
 
 const t = (key: string, vars?: Record<string, string | number>) => i18n.t(`buddy:${key}`, vars);
 
@@ -49,6 +50,14 @@ export function onlyInApp(a: ActionSummary, opts: { contactOn?: boolean } = {}):
 
 /** What Buddy did, as one sentence. Nothing is inferred; everything comes from the record. */
 export function describeAction(a: ActionSummary): string {
+  // A domain's tool (issue #107): its receipt line, or '' where its card in the chat says it, in
+  // the conversation and in History alike (components/buddy/extensions.ts). A buddy without
+  // that domain never gets these tools.
+  return coreLine(a) ?? receipts.get(a.tool)?.(a) ?? '';
+}
+
+/** The generic tools' receipt lines; null for a domain's tool. */
+function coreLine(a: ActionSummary): string | null {
   const locale = i18n.language;
   switch (a.tool) {
     case 'remember':
@@ -82,12 +91,6 @@ export function describeAction(a: ActionSummary): string {
       return t(a.status === 'done' ? 'action.close_goal_done' : 'action.close_goal_dropped', {
         title: a.title,
       });
-    case 'prepare_practice':
-      return t('action.prepare_practice', {
-        title: a.title,
-        count: a.question_count,
-        minutes: a.est_minutes,
-      });
     case 'plan_step':
       // A standing arrangement is what she agreed to — the card says the rhythm, not the one
       // date it happens to start on (issue #112).
@@ -116,11 +119,6 @@ export function describeAction(a: ActionSummary): string {
       });
     case 'mark_step_done':
       return t('action.mark_step_done', { title: a.title });
-    case 'request_material':
-      // A page that joins a sheet is not a new sheet, and the card says which it is (#118).
-      return t(a.material_id ? 'action.request_material_page' : 'action.request_material', {
-        title: a.title,
-      });
     case 'set_contact': {
       if (a.paused_until) {
         return t('action.set_contact_pause', { date: formatLastDay(a.paused_until, locale) });
@@ -142,43 +140,17 @@ export function describeAction(a: ActionSummary): string {
     }
     case 'open_area':
       return t('action.open_area', { what: t(`area.${a.area}`) });
-    case 'show_ready':
-      return t('action.show_ready', { title: a.title });
     case 'set_voice':
       return t('action.set_voice', {
         voice: t(`voice.name.${a.voice}`),
         speed: t(`voice.speed.${SPEED_KEY[a.speed + 2] ?? 'normal'}`),
       });
-    case 'delete_material':
-      // A sheet she never named has no title to show her (issue #111).
-      return a.title
-        ? t('action.delete_material', { title: a.title })
-        : t('action.delete_material_untitled');
-    case 'plan_talk':
-      // The talk and its steps, each with its day; the steps' names are the app's (issue #264).
-      return t('action.plan_talk', {
-        title: a.title,
-        day: formatDay(a.due_date, locale),
-        steps: a.steps
-          .map((s) => `${t(`rehearse.stage.${s.stage}`)} ${formatDayShort(s.date, locale)}`)
-          .join(' · '),
-      });
-    case 'confirm_delete':
-      // The card says it; the chip list would only repeat the question she is looking at.
-      return '';
-    case 'rename_material':
-      return t('action.rename_material', { title: a.title });
-    case 'delete_item':
-      return t('action.delete_item', { question: a.question });
     case 'schedule_check':
       return t('action.schedule_check', {
         when: whenText(isoDate(a.at), formatTime(a.at, locale)),
       });
     default:
-      // A domain's offer, roleplay or rehearsal (issue #107): its card in the chat says it, in
-      // the conversation and in History alike (components/buddy/extensions.ts), so there is
-      // no receipt line to word. A buddy without that domain never gets these tools.
-      return '';
+      return null;
   }
 }
 

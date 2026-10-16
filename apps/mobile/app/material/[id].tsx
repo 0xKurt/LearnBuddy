@@ -32,7 +32,7 @@ import { Sheet, SHEET_TEXT } from '../../components/lb/Sheet.js';
 import { toast } from '../../components/lb/Toast.js';
 import { MathText } from '../../components/math/MathText.js';
 import { ApiError } from '../../lib/api/client.js';
-import { deleteMaterialItem, renameMaterial } from '../../lib/api/endpoints.js';
+import { deleteMaterialItem, renameMaterial } from '../../lib/api/learningEndpoints.js';
 import { useMaterialItems } from '../../lib/api/libraryQueries.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';

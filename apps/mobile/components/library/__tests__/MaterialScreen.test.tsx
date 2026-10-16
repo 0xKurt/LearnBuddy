@@ -1,5 +1,5 @@
 import type * as RouterModule from 'expo-router';
-import type * as Endpoints from '../../../lib/api/endpoints.js';
+import type * as Endpoints from '../../../lib/api/learningEndpoints.js';
 import { MaterialItemView, type MaterialItemsView } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -28,7 +28,7 @@ vi.mock('../../../lib/api/libraryQueries.js', () => ({
     refetch: seam.refetch,
   }),
 }));
-vi.mock('../../../lib/api/endpoints.js', async (load) => ({
+vi.mock('../../../lib/api/learningEndpoints.js', async (load) => ({
   ...(await load<typeof Endpoints>()),
   deleteMaterialItem: seam.remove,
   startPractice: seam.start,

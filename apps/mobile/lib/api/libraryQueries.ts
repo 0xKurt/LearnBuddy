@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { getLibrary, getMaterialItems } from './endpoints.js';
+import { getLibrary, getMaterialItems } from './learningEndpoints.js';
 import { followMaterial, libraryPollMs } from './libraryCache.js';
 import { useOnScreen } from '../screenFocus.js';
 import { keys, queryClient } from './queries.js';

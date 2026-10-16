@@ -27,7 +27,7 @@ import {
   keepForLater,
   revealItem,
   startCardPass,
-} from '../api/endpoints.js';
+} from '../api/learningEndpoints.js';
 import { keys, queryClient, seedSession, storeTurn } from '../api/queries.js';
 import { haptic } from '../haptics.js';
 import { reacted, tapped } from '../perf.js';

@@ -1,6 +1,8 @@
 import { CHAT } from './theme/chat.js';
 // What goes where on Buddy's home (docs/architecture.md §Home, user feedback #6,
-// CLAUDE.md rule 16, docs/UX-PRINCIPLES.md §31–32, issue #17). Pure, so the rules are tested:
+// CLAUDE.md rule 16, docs/UX-PRINCIPLES.md §31–32, issue #17). Pure, so the rules are tested.
+// The bar on top and what it takes from the conversation are the learning domain's
+// (lib/learning/homeLayout.ts, registered as `homeTop`, issue #107); the rules:
 // - on top at most one slim bar (SlimBar.tsx, hard size contract: ≤ ~64 pt collapsed) —
 //   the thing to act on now: a practice to go on with, one that is ready, the photo Buddy
 //   waits for, the sheet being read — or, after a result, the practice prepared next;
@@ -28,6 +30,8 @@ import { CHAT } from './theme/chat.js';
 // close it on this phone; it stays closed until what it says changes (topKey).
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
+
+import { slot } from './registry.js';
 
 export type HomeLayout = {
   /**
@@ -65,8 +69,30 @@ export type HomeLayout = {
   preparedIn: 'bar' | 'thread';
 };
 
-type TopParts = Pick<BuddyHome, 'now'> & {
-  system?: Pick<BuddyHome['system'], 'model' | 'scheduler'>;
+/** What a domain's part of the home sets: the bar on top and its notices (all but the decision). */
+export type HomeTopLayout = Omit<HomeLayout, 'decisionInline'>;
+
+/**
+ * The bar on top and what the conversation then leaves out, from what a domain adds to the home
+ * (issue #107): the learning domain fills it once at app start (lib/learning/register.tsx). Without
+ * it nothing lies on top and the conversation says everything.
+ */
+export type HomeTop = {
+  /** What the bar on top says, part of `topKey`; null when there is no bar. */
+  bar(h: BuddyHome): object | null;
+  /** The layout of the domain's part; `hidden`: she closed this bar on this phone. */
+  layout(h: BuddyHome, hidden: boolean, greetingTells: string | null): HomeTopLayout;
+};
+
+export const homeTop = slot<HomeTop>('Leiste oben');
+
+const NOTHING_ON_TOP: HomeTopLayout = {
+  bar: null,
+  failed: false,
+  result: false,
+  working: null,
+  photoAsk: 'thread',
+  preparedIn: 'thread',
 };
 
 /**
@@ -75,26 +101,18 @@ type TopParts = Pick<BuddyHome, 'now'> & {
  * bar saying something new, is shown again. Decisions and thread notices are conversation,
  * not part of this key.
  */
-export function topKey(h: TopParts): string | null {
-  const now = h.now;
-  const bar =
-    now === null || now.type === 'material_failed'
-      ? null
-      : now.type === 'practice_result'
-        ? now.next
-          ? { next: now.next }
-          : null
-        : { now };
+export function topKey(h: BuddyHome): string | null {
+  const bar = homeTop.get()?.bar(h) ?? null;
   const notes = [
-    h.system && !h.system.model ? 'model' : null,
-    h.system?.scheduler === 'stale' ? 'scheduler' : null,
+    !h.system.model ? 'model' : null,
+    h.system.scheduler === 'stale' ? 'scheduler' : null,
   ].filter((n) => n !== null);
   if (!bar && notes.length === 0) return null;
   return JSON.stringify({ bar, notes });
 }
 
 export function homeLayout(
-  h: Pick<BuddyHome, 'now' | 'decision' | 'working'> & TopParts,
+  h: BuddyHome,
   /** The topKey she closed on this phone, if any. */
   closed: string | null = null,
   /**
@@ -107,33 +125,15 @@ export function homeLayout(
 ): HomeLayout {
   const key = topKey(h);
   const hidden = key !== null && key === closed;
-  const now = h.now;
-  const bar =
-    hidden || now === null
-      ? null
-      : now.type === 'resume_practice'
-        ? 'resume'
-        : now.type === 'practice_ready'
-          ? 'ready'
-          : now.type === 'capture_needed'
-            ? 'capture'
-            : now.type === 'material_processing'
-              ? 'reading'
-              : now.type === 'practice_result' && now.next
-                ? 'next'
-                : null;
-  // "Ich lese dein Blatt …" already says Buddy is on the photos (one bar, not two notes).
-  const inBar = bar === 'reading' && h.working === 'material';
+  const top = homeTop.get()?.layout(h, hidden, greetingTells) ?? NOTHING_ON_TOP;
   return {
-    bar,
-    failed: now?.type === 'material_failed',
-    // Keyed on the session, not on "a greeting exists": a practice she finished AFTER the
-    // greeting was written still gets its own card.
-    result: now?.type === 'practice_result' && now.session_id !== greetingTells,
+    bar: top.bar,
+    failed: top.failed,
+    result: top.result,
     decisionInline: h.decision !== null,
-    working: h.working === null ? null : inBar ? 'bar' : 'thread',
-    photoAsk: bar === 'capture' ? 'bar' : 'thread',
-    preparedIn: bar === 'ready' || bar === 'next' ? 'bar' : 'thread',
+    working: top.working,
+    photoAsk: top.photoAsk,
+    preparedIn: top.preparedIn,
   };
 }
 
