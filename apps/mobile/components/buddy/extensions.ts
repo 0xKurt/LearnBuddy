@@ -1,16 +1,10 @@
 // What a domain adds to Buddy's chat and home (issue #107): the cards its actions bring into the
 // conversation and the receipt lines of the others, the message that stands in place of a bubble, the line that follows Buddy's
-// voice, the line on top of the thread, the stages of a sheet being read, and the ways to start in the ⋯ menu. The core draws all of these places
+// voice, the line on top of the thread, and the ways to start in the ⋯ menu. The core draws all of these places
 // and works with each of them empty; the learning domain fills them once at app start
 // (lib/learning/register.tsx). The core never imports the domain.
 
-import type {
-  ActionSummary,
-  BuddyHome,
-  MessageView,
-  NowCard,
-  ReadingStage,
-} from '@learnbuddy/shared-types/contracts';
+import type { ActionSummary, BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import type { TFunction } from 'i18next';
 import type { ComponentType, ReactNode } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
@@ -153,22 +147,6 @@ export function quietVariant(quiet: Quiet): 'secondary' | 'primary' {
   return quiet === 'soft' ? 'secondary' : 'primary';
 }
 
-export type StepState = 'done' | 'active' | 'todo';
-
-/** What the bar says while Buddy reads a sheet: a title, a line and its steps (i18n keys). */
-export type ReadingView = {
-  stage: ReadingStage;
-  title: { key: string; count?: number };
-  body: { key: string; count?: number };
-  steps: { key: 'sent' | 'read' | 'build'; state: StepState }[];
-};
-
-/** The reading's stages for the bar on top (components/buddy/SlimBar ReadingBar). */
-export const readingSteps =
-  slot<
-    (card: Extract<NowCard, { type: 'material_processing' }>, preparing: boolean) => ReadingView
-  >('Lese-Stufen');
-
 /**
  * The ways to start in the start sheet and the sheets they open. `open` names one of the domain's
  * own sheets; the start sheet closes first (two modals in one frame do not come up on iOS).
@@ -183,6 +161,13 @@ export type StartMenu = {
 };
 
 export const startMenu = slot<StartMenu>('Start-Menü');
+
+/**
+ * What a domain keeps around the whole home screen while it is shown, from its first frame (the
+ * learning domain: the pages of her sheets its cards show, lib/learning/homePhotos.tsx).
+ */
+export const homeScope =
+  slot<ComponentType<{ h: BuddyHome | undefined; children: ReactNode }>>('Rahmen der Startseite');
 
 /** Actual subject cards in the open Profile editor; absent without a learning domain. */
 export const profileSubjects =

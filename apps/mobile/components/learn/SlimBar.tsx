@@ -30,8 +30,8 @@ import { Card } from '../lb/Card.js';
 import { Icon } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
 import { PhotoThumb, ZoomablePhoto } from '../lb/ZoomViewer.js';
-import { whenText } from './describe.js';
-import { readingSteps, type ReadingView, type StepState } from './extensions.js';
+import { readingView, type ReadingView, type StepState } from '../../lib/buddy/readingStages.js';
+import { whenText } from '../buddy/describe.js';
 
 type Processing = Extract<NowCard, { type: 'material_processing' }>;
 type Ready = Extract<NowCard, { type: 'practice_ready' }>;
@@ -187,10 +187,7 @@ export function ReadingBar({
   const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'capture']);
   const thumb = pages[0] ?? null;
-  // The stages are the domain's that reads sheets (components/buddy/extensions.ts).
-  const stages = readingSteps.get();
-  if (!stages) return null;
-  const view = stages(card, preparing);
+  const view = readingView(card, preparing);
   const title = t(
     view.title.key,
     view.title.count !== undefined ? { count: view.title.count } : {},

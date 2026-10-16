@@ -18,13 +18,14 @@ import {
   messageCards,
   messageExtras,
   readAlong,
+  homeScope,
   profileSubjects,
-  readingSteps,
   receipts,
   startMenu,
   workingOn,
 } from '../../buddy/extensions.js';
 import { homeNoticeSlot } from '../../buddy/HomeNotices.js';
+import { homeBar } from '../../buddy/HomeTop.js';
 import { InlineText, inlineNotation } from '../../lb/InlineText.js';
 import { TYPE } from '../../../lib/theme/type.js';
 import { renderInApp } from '../../../testing/render.js';
@@ -73,7 +74,8 @@ describe('the learning domain fills every place of the core (issue #107)', () =>
     workingOn,
     homeTop,
     homeNoticeSlot,
-    readingSteps,
+    homeBar,
+    homeScope,
     startMenu,
     notation,
     inlineNotation,

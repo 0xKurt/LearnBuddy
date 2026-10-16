@@ -30,7 +30,7 @@ import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { tapped } from '../lib/perf.js';
 import { useShown } from '../lib/perfShown.js';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,6 +44,7 @@ import { HomeIntro } from '../components/buddy/HomeIntro.js';
 import { homeNotices, ResultView } from '../components/buddy/HomeNotices.js';
 import { HomeThread } from '../components/buddy/HomeThread.js';
 import { HomeTop } from '../components/buddy/HomeTop.js';
+import { homeScope } from '../components/buddy/extensions.js';
 import { SendingSheetBubble } from '../components/buddy/SheetBubble.js';
 import { StartSheets } from '../components/buddy/StartSheets.js';
 import { Btn } from '../components/lb/Btn.js';
@@ -72,7 +73,7 @@ import { useHomeSend } from '../lib/buddy/useHomeSend.js';
 import { useSessionStart } from '../lib/buddy/useSessionStart.js';
 import { useThreadFollow } from '../lib/buddy/useThreadFollow.js';
 import { useClosedCard } from '../lib/homeCard.js';
-import { homeLayout, topKey } from '../lib/homeLayout.js';
+import { homeLayout, homeTop, topKey } from '../lib/homeLayout.js';
 import { askAttach } from '../lib/capture/attachRequest.js';
 import { useSendingInThread } from '../lib/capture/sending.js';
 import { SPACE } from '../lib/theme/space.js';
@@ -88,7 +89,11 @@ export default function BuddyScreen() {
   // A practice to go on with is loaded while its card is on screen (gaps.md #2).
   usePrefetchSession(home.data?.now);
   const { busy, act } = useHomeAct();
-  const { left, thumbs } = useHomePhotos(home.data);
+  const { left } = useHomePhotos();
+  // What a domain keeps around the whole screen from its first frame (its sheets' pages): the
+  // same element in both returns below, so loading and loaded are one instance.
+  const Scope = homeScope.get() ?? Unscoped;
+  const scoped = (screen: ReactNode) => <Scope h={home.data}>{screen}</Scope>;
   // The KAV adjusts only while this screen is focused: keyboard events fired on a
   // screen pushed above (practice) otherwise leave a stale gap under the composer
   // after coming back (user screenshot 2026-09-28: composer floating mid-screen).
@@ -134,7 +139,7 @@ export default function BuddyScreen() {
   // A failed background refresh keeps what is on screen (audit M-71); the error screen is
   // only for a home that never loaded.
   if (home.isPending || (home.isError && !home.data)) {
-    return (
+    return scoped(
       <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
         <Glow />
         {/* The head is there before the home is (design ui_kits/app/Extra.jsx `SystemState`):
@@ -150,7 +155,7 @@ export default function BuddyScreen() {
           />
         )}
         <HeaderMenu visible={menuOpen} onClose={() => setMenuOpen(false)} />
-      </SafeAreaView>
+      </SafeAreaView>,
     );
   }
 
@@ -164,7 +169,6 @@ export default function BuddyScreen() {
     h,
     layout,
     left,
-    thumbs,
     busy,
     quiet,
     act,
@@ -228,7 +232,7 @@ export default function BuddyScreen() {
   const talking = messages.length > 0 || shownPending !== null || notices.length > 0;
   const refetch = () => void home.refetch();
 
-  return (
+  return scoped(
     <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: palette.bg }}>
       <Glow />
       <KeyboardSafe style={{ flex: 1 }} enabled={focusedScreen}>
@@ -244,7 +248,7 @@ export default function BuddyScreen() {
             working: h.thread.some((m) => m.role === 'learner' && m.status === 'processing'),
             streaming: live !== null,
             // Buddy is reading a sheet she sent (design ui_kits/app/Flows.jsx `ChatState`).
-            reading: h.now?.type === 'material_processing',
+            reading: homeTop.get()?.reading(h) ?? false,
             // She is writing or dictating in the Composer: Buddy leans in.
             typing,
             // Her talk is being recorded on the rehearsal card.
@@ -262,7 +266,6 @@ export default function BuddyScreen() {
             openCard={openCard}
             busy={busy}
             act={act}
-            readingPages={thumbs.reading}
             captureUndo={captureUndo}
             onClose={closeCard}
             onHeight={setCardHeight}
@@ -358,6 +361,11 @@ export default function BuddyScreen() {
         send={(text) => void send(text)}
         canStart={pending === null}
       />
-    </SafeAreaView>
+    </SafeAreaView>,
   );
+}
+
+/** No domain around the home: the screen as it is. */
+function Unscoped({ children }: { children: ReactNode }) {
+  return <>{children}</>;
 }

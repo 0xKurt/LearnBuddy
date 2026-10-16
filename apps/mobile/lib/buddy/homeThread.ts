@@ -3,8 +3,11 @@
 
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 
-import type { HomeLayout } from '../homeLayout.js';
+import { homeTop, type HomeLayout } from '../homeLayout.js';
 import type { SessionStart } from './useSessionStart.js';
+
+/** Nothing on top says anything instead of the conversation (no domain, or nothing carried). */
+const NOTHING_CARRIED = { asks: () => false, names: () => false };
 
 /** The newest messages the home shows; the rest is in the history. */
 export const VISIBLE_MESSAGES = 6;
@@ -85,45 +88,24 @@ export function threadOnScreen(
   h: BuddyHome,
   layout: HomeLayout,
 ): { messages: MessageView[]; captureUndo: Action | null; carriedOnTop: Set<string> } {
-  const captureNow = layout.photoAsk === 'bar' && h.now?.type === 'capture_needed' ? h.now : null;
-  const asksInBar = (a: Action): boolean =>
-    captureNow !== null &&
-    a.summary.tool === 'request_material' &&
-    a.status === 'applied' &&
-    (captureNow.step_id !== null
-      ? a.summary.step_id === captureNow.step_id
-      : a.summary.title === captureNow.title);
-  const captureUndo = captureNow
-    ? ([...h.thread]
-        .reverse()
-        .flatMap((m) => m.actions)
-        .find((a) => asksInBar(a) && a.undoable) ?? null)
-    : null;
+  // What the bar says instead is the domain's to know (lib/homeLayout.ts `carried`).
+  const carried = homeTop.get()?.carried(h, layout) ?? NOTHING_CARRIED;
+  const asksInBar = carried.asks;
+  const captureUndo =
+    [...h.thread]
+      .reverse()
+      .flatMap((m) => m.actions)
+      .find((a) => asksInBar(a) && a.undoable) ?? null;
   const messages = h.thread
     .slice(-VISIBLE_MESSAGES)
     .map((m) =>
       m.actions.some(asksInBar) ? { ...m, actions: m.actions.filter((a) => !asksInBar(a)) } : m,
     );
-  const preparedOnBar =
-    layout.preparedIn === 'bar'
-      ? h.now?.type === 'practice_ready'
-        ? h.now.step_id
-        : h.now?.type === 'practice_result'
-          ? (h.now.next?.step_id ?? null)
-          : null
-      : null;
   const carriedOnTop = new Set(
-    preparedOnBar === null
-      ? []
-      : messages
-          .flatMap((m) => m.actions)
-          .filter(
-            (a) =>
-              a.summary.tool === 'prepare_practice' &&
-              a.summary.step_id === preparedOnBar &&
-              a.status === 'applied',
-          )
-          .map((a) => a.id),
+    messages
+      .flatMap((m) => m.actions)
+      .filter(carried.names)
+      .map((a) => a.id),
   );
   return { messages, captureUndo, carriedOnTop };
 }

@@ -3,9 +3,9 @@
 // waits for, the sheet being read, or after a result the practice prepared next — and what the
 // conversation then leaves out, so each thing is said once (issues #17, #94, #195, #204).
 
-import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 
-import type { HomeTop, HomeTopLayout } from '../homeLayout.js';
+import type { HomeLayout, HomeTop, HomeTopLayout } from '../homeLayout.js';
 
 /** What the bar on top says (part of the key she closes it by), or null when there is none. */
 function bar(h: Pick<BuddyHome, 'now'>): object | null {
@@ -53,4 +53,43 @@ function layout(
   };
 }
 
-export const learningTop: HomeTop = { bar, layout };
+type Action = MessageView['actions'][number];
+
+/**
+ * "Schick mir ein Foto" is said once (issue #94, `photoAsk`): while the capture bar asks for this
+ * photo, its word-for-word "Ich warte auf dein Foto" receipt leaves the conversation. The practice
+ * on top is told once (issue #204, `preparedIn`): the bar names it with its question count and
+ * minutes, word for word what the "Vorbereitet: …" receipt says.
+ */
+function carried(h: Pick<BuddyHome, 'now'>, l: Pick<HomeLayout, 'photoAsk' | 'preparedIn'>) {
+  const captureNow = l.photoAsk === 'bar' && h.now?.type === 'capture_needed' ? h.now : null;
+  const preparedOnBar =
+    l.preparedIn === 'bar'
+      ? h.now?.type === 'practice_ready'
+        ? h.now.step_id
+        : h.now?.type === 'practice_result'
+          ? (h.now.next?.step_id ?? null)
+          : null
+      : null;
+  return {
+    asks: (a: Action): boolean =>
+      captureNow !== null &&
+      a.summary.tool === 'request_material' &&
+      a.status === 'applied' &&
+      (captureNow.step_id !== null
+        ? a.summary.step_id === captureNow.step_id
+        : a.summary.title === captureNow.title),
+    names: (a: Action): boolean =>
+      preparedOnBar !== null &&
+      a.summary.tool === 'prepare_practice' &&
+      a.summary.step_id === preparedOnBar &&
+      a.status === 'applied',
+  };
+}
+
+export const learningTop: HomeTop = {
+  bar,
+  layout,
+  carried,
+  reading: (h) => h.now?.type === 'material_processing',
+};

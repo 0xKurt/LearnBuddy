@@ -296,6 +296,20 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
       Domain anmeldet (`server.ts`, `api/index.ts`). Eine Domain-Konfiguration braucht also eine
       andere Start-Reihenfolge; das ist ein eigener Schritt, zusammen mit dem Start ohne Domain.
 
+    - **Nachgezogen am 16.10. (App, die Leiste oben):** Die schmale Leiste oben ist jetzt die der
+      Domain:
+      - `homeBar` in `components/buddy/HomeTop.tsx`, gefüllt mit `components/learn/HomeBar.tsx`;
+      - `SlimBar.tsx` liegt in `components/learn/` und liest die Lese-Stufen direkt, der Platz
+        `readingSteps` entfällt;
+      - was die Leiste statt des Gesprächs sagt (`homeTop.carried`) und ob Buddy gerade liest
+        (`homeTop.reading`);
+      - die Fotos ihrer Blätter sucht die Domain für die ganze Startseite ab dem ersten Bild
+        (`homeScope`, `lib/learning/homePhotos.tsx`); ihre Karten lesen, was gefunden ist. Der
+        Kern behält nur die liegen gebliebenen Seiten;
+      - `failedTitle.ts` und `startStep` gehören der Domain.
+
+      Danach zeigt die Kopie **72 Fehler in 33 Paaren**.
+
     - **Der Wächter:** `packages/buddy-kit/core-gaps.json` listet jeden dieser Reste, je Datei
       und Fehlercode. `pnpm core-check` (CI, Job `check`) baut die Kopie, installiert sie und
       typecheckt sie. Neu oder mehr ist rot: der Kern erreicht die Domain wieder. Weniger ist

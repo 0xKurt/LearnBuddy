@@ -22,12 +22,14 @@ import {
   messageCards,
   messageExtras,
   readAlong,
+  homeScope,
   profileSubjects,
-  readingSteps,
   startMenu,
   workingOn,
 } from '../../components/buddy/extensions.js';
 import { homeNoticeSlot } from '../../components/buddy/HomeNotices.js';
+import { homeBar } from '../../components/buddy/HomeTop.js';
+import { HomeBar } from '../../components/learn/HomeBar.js';
 import { PhotoCheckCard } from '../../components/capture/PhotoCheckCard.js';
 import { inlineNotation, type InlineTextProps } from '../../components/lb/InlineText.js';
 import { MathText } from '../../components/math/MathText.js';
@@ -36,8 +38,8 @@ import { newId } from '../api/client.js';
 import { createMaterial, getLibrary, submitMaterial } from '../api/learningEndpoints.js';
 import { followHome } from '../api/libraryCache.js';
 import { homeFollowers, keys, menuPreloads, queryClient } from '../api/queries.js';
-import { readingView } from '../buddy/readingStages.js';
 import { homeTop } from '../homeLayout.js';
+import { HomePhotos } from './homePhotos.js';
 import { notation } from '../buddy/notation.js';
 import { MaterialUpload, type UploadDeps } from '../capture/materialUpload.js';
 import { pageHandler, type PageHandler } from '../capture/pages.js';
@@ -116,8 +118,10 @@ export function registerLearning(): void {
   // ── The home: its bar on top, what it tells in the conversation (a sheet Buddy could not
   // read, the finished practice, "Buddy is working"), a sheet being read, the ways to start.
   homeTop.fill(learningTop);
+  homeBar.fill(HomeBar);
+  // Her sheets' pages, looked up for the whole home from its first frame.
+  homeScope.fill(HomePhotos);
   homeNoticeSlot.fill(learningNotices);
-  readingSteps.fill(readingView);
   startMenu.fill({ items: startItems, Sheets: LearnStartSheets });
   // The library list that still shows a sheet being read follows the home (live finding 3).
   homeFollowers.add('library', (home) => followHome(queryClient, home));
