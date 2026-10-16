@@ -183,7 +183,7 @@ describe.skipIf(!dbReady)('worksheets as PDF', () => {
     expect(env.llm.callsFor('extraction')).toHaveLength(0);
   });
 
-  it('a file that is not a PDF, or PDFs too large for the model call, are refused', async () => {
+  it('a file that is not a PDF, or PDFs past 8 MB (too large for the model call, #688), are refused', async () => {
     const broken = await reserve(lena, ['application/pdf']);
     env.storage.put(broken.uploads[0]!.path, new TextEncoder().encode('%PDF-1.7 kaputt'));
     const a = await lena.api.post<{ error: { details: Record<string, unknown> } }>(
@@ -193,12 +193,12 @@ describe.skipIf(!dbReady)('worksheets as PDF', () => {
     expect(a.body.error.details).toMatchObject({ reason: 'file_unreadable', position: 0 });
 
     const big = await reserve(lena, ['application/pdf']);
-    env.storage.put(big.uploads[0]!.path, new Uint8Array(15 * 1024 * 1024 + 1));
+    env.storage.put(big.uploads[0]!.path, new Uint8Array(8 * 1024 * 1024 + 1));
     const b = await lena.api.post<{ error: { details: Record<string, unknown> } }>(
       `/materials/${big.material.id}/submit`,
     );
     expect(b.status).toBe(422);
-    expect(b.body.error.details).toMatchObject({ reason: 'file_too_large', max_mb: 15 });
+    expect(b.body.error.details).toMatchObject({ reason: 'file_too_large', max_mb: 8 });
 
     // Other files are a new material: the refused one blocks nothing.
     const again = await lena.api.post<Created>('/materials', {

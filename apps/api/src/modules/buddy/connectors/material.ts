@@ -126,6 +126,20 @@ export async function searchMaterials(
   return hits;
 }
 
+/**
+ * `first` while `beside` already runs (#673). `beside` is only an extra list: when it fails it is
+ * absent (null), and when `first` throws, a later failure of `beside` is still caught — never an
+ * unhandled rejection that could take the function down.
+ */
+export async function besideEachOther<A, B>(
+  first: () => Promise<A>,
+  beside: Promise<B | null>,
+): Promise<[A, B | null]> {
+  const settled = beside.catch(() => null);
+  const a = await first();
+  return [a, await settled];
+}
+
 /** The three candidate lists, fused; null when the query holds nothing searchable. */
 async function gather(
   deps: SearchDeps,
@@ -133,11 +147,16 @@ async function gather(
   timezone: string,
   query: string,
 ): Promise<Gathered | null> {
-  const lexical = await lexicalLists(deps, learnerId, timezone, query);
-  if (lexical === null) return null;
+  // Nothing searchable in her words: no list runs, and no embedding is paid for.
+  if (prefixQuery(query) === null) return null;
   const raw = query.trim().slice(0, 200);
-  // List 3 — meaning over passage embeddings, when the schema and the budget allow.
-  const vectorList = await vectorCandidates(deps, learnerId, timezone, raw);
+  // List 3 — meaning over passage embeddings, when the schema and the budget allow. Started beside
+  // the lexical lists, not after them (#673): the embedding is the longest wait before the model.
+  const [lexical, vectorList] = await besideEachOther(
+    () => lexicalLists(deps, learnerId, timezone, query),
+    vectorCandidates(deps, learnerId, timezone, raw),
+  );
+  if (lexical === null) return null;
   return {
     fused: fuseRrf(lexical.fts, lexical.trgm, vectorList ?? []),
     headlines: lexical.headlines,
@@ -273,6 +292,22 @@ async function newestMaterials(
 }
 
 /**
+ * How long the query embedding may take before the search goes on without it (#673). Measured
+ * 174–396 ms, p50 270 (docs/architecture.md §Speed); past 800 ms something is wrong, and the
+ * full-text and trigram lists carry the search.
+ */
+const QUERY_EMBED_TIMEOUT_MS = 800;
+
+/** Whether any passage of hers has its embedding (only asked where the column exists). */
+async function hasEmbeddedPassages(db: SearchDeps['db'], learnerId: string): Promise<boolean> {
+  const row = await db.maybeOne(
+    `select 1 as one from material_passages where learner_id = $1 and embedding is not null limit 1`,
+    [learnerId],
+  );
+  return row !== null;
+}
+
+/**
  * The vector list, or null when it cannot run here (no pgvector column, no model,
  * no budget, provider down). Degrading is silent by design: the other lists carry
  * the search, and the embedding call is already recorded by callEmbedding.
@@ -284,12 +319,15 @@ async function vectorCandidates(
   raw: string,
 ): Promise<Candidate[] | null> {
   if (!deps.embeddings.available || !(await materialEmbeddingsReady(deps.db))) return null;
+  // Nothing of hers is embedded yet: no query embedding to pay for and wait on (#673, A-F6).
+  if (!(await hasEmbeddedPassages(deps.db, learnerId))) return null;
   let queryVector: number[];
   try {
     const day = localParts(deps.now(), timezone).date;
     const res = await callEmbedding({ db: deps.db, embeddings: deps.embeddings }, learnerId, day, {
       task: 'RETRIEVAL_QUERY',
       texts: [raw],
+      timeoutMs: QUERY_EMBED_TIMEOUT_MS,
     });
     const v = res.vectors[0];
     if (!v) return null;

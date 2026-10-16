@@ -38,6 +38,11 @@ export type GatewayProfile = {
   name: string;
   /** The media a request may carry; a part of another kind is refused before it is sent. */
   media: ReadonlySet<MediaKind>;
+  /**
+   * The most bytes of media one request may carry inline, as sent (base64): past it the provider
+   * answers with an error for certain, so the request is refused before it is sent (#688).
+   */
+  maxInlineBytes: number;
   structuredOutput: {
     keywords: ReadonlySet<SchemaKeyword>;
     /**
@@ -72,6 +77,14 @@ export function unsupportedMedia(profile: GatewayProfile, req: LlmRequest): Medi
       if (kind !== null && !profile.media.has(kind)) kinds.add(kind);
     }
   return [...kinds];
+}
+
+/** The bytes of media `req` carries inline, as sent (the base64 text of every media part). */
+export function inlineBytesOf(req: LlmRequest): number {
+  let bytes = 0;
+  for (const m of req.contents)
+    for (const p of m.parts) if ('inlineData' in p) bytes += p.inlineData.data.length;
+  return bytes;
 }
 
 /** Every keyword a schema uses, over all its nodes. */
