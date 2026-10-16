@@ -267,7 +267,7 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
   });
 
   it('Buddy at work: the status card with the busy mark, no second orb (Flows.jsx:151)', () => {
-    renderInApp(<WorkingNote what="material" />);
+    renderInApp(<WorkingNote />);
     expect(styleOf(frameOf('Ich mache aus deinem Blatt gerade Übungen …')).paddingTop).toBe('16px');
     expect(screen.queryByTestId('thread-orb')).toBeNull();
   });

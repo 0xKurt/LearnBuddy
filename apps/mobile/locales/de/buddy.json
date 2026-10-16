@@ -373,8 +373,7 @@
     "on_at": "am {{day}} um {{time}}"
   },
   "working": {
-    "material": "Ich mache aus deinem Blatt gerade Übungen …",
-    "session": "Ich schaue mir an, wie deine Übung lief …"
+    "material": "Ich mache aus deinem Blatt gerade Übungen …"
   },
   "roleplay": {
     "label": "Rollenspiel",
