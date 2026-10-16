@@ -14,6 +14,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { currentSession } from '../auth/session.js';
+import { homePollMs } from './homePoll.js';
 import { useOnScreen } from '../screenFocus.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
@@ -117,15 +118,7 @@ export const useHome = () =>
     queryKey: keys.home,
     queryFn: loadHome,
     subscribed: useOnScreen(),
-    refetchInterval: (q) => {
-      const h = q.state.data;
-      if (!h) return false;
-      const busy =
-        h.working !== null ||
-        h.thread.some((m) => m.status === 'processing') ||
-        h.now?.type === 'material_processing';
-      return busy ? 3000 : 60_000;
-    },
+    refetchInterval: (q) => homePollMs(q.state.data),
   });
 
 /**

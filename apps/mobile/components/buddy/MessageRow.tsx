@@ -37,6 +37,7 @@ import {
 } from './ThreadParts.js';
 import { TypingBubble } from './TypingBubble.js';
 import { useReveal } from './useReveal.js';
+import { useAfterDelay } from '../../lib/useAfterDelay.js';
 /** A card of Buddy's takes the thread's whole width. */
 const CARD_WIDTH = { width: CHAT.cardWidth };
 
@@ -379,6 +380,7 @@ export const ReplyTail = memo(function ReplyTail({
   live,
   typing,
   label,
+  slow,
   enters,
 }: {
   /** What arrived of the reply so far (only for an answer that changes nothing). */
@@ -386,10 +388,13 @@ export const ReplyTail = memo(function ReplyTail({
   /** The dots may show (Talk hides them while she still speaks). */
   typing: boolean;
   label: string;
+  /** Said once the dots have stood for SLOW_TURN_MS (#686): longer than a turn usually takes. */
+  slow: string;
   enters: boolean;
 }) {
   const { palette } = useTheme();
   const shown = useReveal(live ? closedStream(live) : null);
+  const late = useAfterDelay(typing && !shown, SLOW_TURN_MS);
   if (shown)
     return (
       <Entrance animate={enters} index={0}>
@@ -400,9 +405,25 @@ export const ReplyTail = memo(function ReplyTail({
         </BuddyLine>
       </Entrance>
     );
-  // Buddy is thinking: his mini orb and the dots (the text is for screen readers).
+  // Buddy is thinking: his mini orb and the dots (the text is for screen readers). A wait longer
+  // than usual says so in his own line, until the reply's first words replace it.
+  if (typing && late)
+    return (
+      <BuddyLine orb>
+        <View accessibilityLiveRegion="polite">
+          <RichText text={slow} style={[TYPE.body, { color: palette.ink }]} />
+        </View>
+      </BuddyLine>
+    );
   return typing ? <TypingBubble label={label} /> : null;
 });
+
+/**
+ * How long Buddy may think before the chat says it takes longer (#686, KI-Audit E-F11): about
+ * three times the measured p90 of his first words (2.4 s, `docs/decisions/baseline-2026-10.md`),
+ * far below the three minutes after which a turn counts as stalled.
+ */
+const SLOW_TURN_MS = 20_000;
 
 /** Her bubble stands alone at the right; Buddy's line gets his orb's column. */
 function Line({ orb, children }: { orb: boolean | null; children: ReactNode }) {
