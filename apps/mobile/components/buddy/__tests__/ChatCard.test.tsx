@@ -20,7 +20,7 @@ import { ReadyCard } from '../../learn/ReadyCard.js';
 import { AreaCard } from '../AreaCard.js';
 import { ChatCard, PracticeReady } from '../ChatCard.js';
 import { DecisionCard } from '../DecisionCard.js';
-import { WorkingNote } from '../WorkingNote.js';
+import { WorkingNote } from '../../learn/WorkingNote.js';
 
 const OFFER: Extract<ActionSummary, { tool: 'offer_learning' }> = {
   tool: 'offer_learning',

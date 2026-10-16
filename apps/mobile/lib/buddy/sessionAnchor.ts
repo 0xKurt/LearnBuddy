@@ -14,8 +14,6 @@
 //
 // Pure (unit-tested); the screen renders what these say.
 
-import type { NowCard } from '@learnbuddy/shared-types/contracts';
-
 /** How long a break has to be before the next opening starts a new page. */
 export const SESSION_GAP_MS = 4 * 60 * 60 * 1000;
 
@@ -104,78 +102,23 @@ export type Greeting = {
 };
 
 /**
- * Which sentence Buddy opens this visit with (issue #195).
- *
- * The owner's own app in the promo footage: „Hi, Lienne!" and directly under it a card
- * „Done! You answered 6 questions." — „Was für ne tolle conversation". She had just worked
- * through six questions and was greeted as if nothing had happened, then handed a log entry.
- *
- * So the greeting looks at what the home already carries. The practice she just finished is
- * in the same payload as the thread (`NowCard` 'practice_result', server-side only within
- * 30 minutes of finishing it, `modules/buddy/home.ts`), so this costs **no round trip and no
- * model call** — the reason opening the app is instant and works offline stays untouched
- * (this is not variant B of issue #104).
- *
- * What may be said is exactly what the summary may say (`lib/practice/summaryLine.ts`,
- * CLAUDE.md rule 5): how many she answered is a fact about what she did; "alles gleich beim
- * ersten Mal" only when that is true of the **whole** round, and never for a test, where no
- * answer was judged in front of her. Six questions with four wrong get the plain sentence —
- * praise she can see through is worse than none.
- *
- * Never a count of due or missed work (CLAUDE.md rule 6): the only number here is her own
- * finished work.
+ * Which sentence Buddy opens this visit with (issue #195): what a domain has to tell about what she
+ * just did (`news`, lib/buddy/useSessionStart.ts `greetingNews` — the learning domain's finished
+ * practice, lib/learning/greeting.ts), or the plain hello with its wording for the part of the day.
  */
-export function sessionGreeting(
-  part: DayPart,
-  variant: number,
-  now: NowCard | null,
-  /** When the last message before this greeting was written; null = there is none. */
-  lastMessageAt: string | null = null,
-): Greeting {
-  // Nothing just happened (or a session she left without answering): the plain hello, with
-  // its wording for the part of the day.
-  if (
-    now?.type !== 'practice_result' ||
-    now.result.answered <= 0 ||
-    !justBefore(now, lastMessageAt)
-  )
-    return { key: `session.${part}.${variant}`, tells: null };
-  const { answered, first_try: firstTry } = now.result;
-  const shape =
-    now.mode === 'help'
-      ? // Homework: what she solved herself, the one thing help mode claims.
-        'help'
-      : now.mode !== 'test' && firstTry === answered
-        ? 'all_first'
-        : 'practice';
-  // One wording per shape, not three per part of the day: the repetition issue #129 was
-  // about is a greeting she reads every day, and this one belongs to a single event that
-  // stands for half an hour. Four times the copy for that is not a trade worth making.
-  return { key: `session.after.${shape}`, count: answered, tells: now.session_id };
+export function sessionGreeting(part: DayPart, variant: number, news: Greeting | null): Greeting {
+  return news ?? { key: `session.${part}.${variant}`, tells: null };
 }
 
-/**
- * Whether the finished practice is what she did last, so "gerade" is true (issue #630). The
- * greeting stands under the last message; a practice finished BEFORE that message is older than
- * what was said since — the owner's device: „Hey Testkind – 7 Fragen hast du gerade beantwortet"
- * under her own later „Lass uns das Arbeitsblatt üben", read as Buddy's answer to it. That result
- * keeps its own card at its own moment in the thread (`placeByTime`). A home without the moment
- * (an older server) claims nothing (CLAUDE.md rule 5).
- */
-function justBefore(
-  now: Extract<NowCard, { type: 'practice_result' }>,
-  lastMessageAt: string | null,
-): boolean {
-  if (!now.finished_at) return false;
-  return lastMessageAt === null || Date.parse(now.finished_at) >= Date.parse(lastMessageAt);
-}
+/** What a domain tells in the greeting, for the moment the greeting stands after. */
+export type GreetingNews = (since: string | null) => Greeting | null;
 
 /** A greeting as this opening holds it, with what it still needs to know. */
 export type GreetingState = Greeting & {
   /** Kept so the refinement below reads no clock a second time. */
   part: DayPart;
   variant: number;
-  /** When the message it stands under was written (`justBefore`). */
+  /** When the message it stands under was written (what a domain's news is measured from). */
   since: string | null;
   /**
    * The sentence was composed from the copy of the home kept on the device, which carries no
@@ -193,12 +136,12 @@ export type GreetingState = Greeting & {
 export function openGreeting(
   part: DayPart,
   variant: number,
-  now: NowCard | null,
+  news: GreetingNews,
   confirmed: boolean,
   since: string | null = null,
 ): GreetingState {
   return {
-    ...sessionGreeting(part, variant, now, since),
+    ...sessionGreeting(part, variant, news(since)),
     part,
     variant,
     since,
@@ -218,11 +161,11 @@ export function openGreeting(
  */
 export function refineGreeting(
   current: GreetingState,
-  now: NowCard | null,
+  news: GreetingNews,
   stillLast: boolean,
 ): GreetingState {
   if (!current.pending) return current;
-  const next = sessionGreeting(current.part, current.variant, now, current.since);
+  const next = sessionGreeting(current.part, current.variant, news(current.since));
   if (next.tells === null || !stillLast) return { ...current, pending: false };
   return {
     ...next,

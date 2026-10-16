@@ -2,8 +2,12 @@ import { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { registerLearning } from '../../../lib/learning/register.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { HomeIntro } from '../HomeIntro.js';
+
+// The app as it runs: the learning domain adds its "Heute geübt" mark (issue #107).
+registerLearning();
 
 const home = BuddyHome.parse({
   learner: { id: '11111111-1111-4111-8111-111111111111', name: 'Lena', is_minor: true },

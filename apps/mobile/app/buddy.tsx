@@ -41,10 +41,10 @@ import { DecisionCard } from '../components/buddy/DecisionCard.js';
 import { Header } from '../components/buddy/Header.js';
 import { HeaderMenu } from '../components/lb/HeaderMenu.js';
 import { HomeIntro } from '../components/buddy/HomeIntro.js';
-import { homeNotices, ResultView } from '../components/buddy/HomeNotices.js';
+import { homeNotices } from '../components/buddy/HomeNotices.js';
 import { HomeThread } from '../components/buddy/HomeThread.js';
 import { HomeTop } from '../components/buddy/HomeTop.js';
-import { homeScope } from '../components/buddy/extensions.js';
+import { greetingAction, homeScope } from '../components/buddy/extensions.js';
 import { SendingSheetBubble } from '../components/buddy/SheetBubble.js';
 import { StartSheets } from '../components/buddy/StartSheets.js';
 import { Btn } from '../components/lb/Btn.js';
@@ -56,7 +56,7 @@ import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { useAnnounce } from '../lib/announce.js';
 import { newId } from '../lib/api/client.js';
 import { answerContactOptIn, reportOutcome, undoAction } from '../lib/api/endpoints.js';
-import { useHome, usePrefetchSession } from '../lib/api/queries.js';
+import { useHome } from '../lib/api/queries.js';
 import { headState, useThreadRecording } from '../lib/buddy/headState.js';
 import {
   greetingOnScreen,
@@ -86,8 +86,6 @@ export default function BuddyScreen() {
   const { palette } = useTheme();
   const { t } = useTranslation(['buddy', 'common']);
   const home = useHome();
-  // A practice to go on with is loaded while its card is on screen (gaps.md #2).
-  usePrefetchSession(home.data?.now);
   const { busy, act } = useHomeAct();
   const { left } = useHomePhotos();
   // What a domain keeps around the whole screen from its first frame (its sheets' pages): the
@@ -297,13 +295,10 @@ export default function BuddyScreen() {
                     afterMessageId: sessionStart.afterMessageId,
                     text: sessionStart.text,
                     // What the greeting itself offers: the practice it just named, in full.
-                    action: greeting.result ? (
-                      <ResultView
-                        sessionId={greeting.result.session_id}
-                        busy={busy}
-                        quiet={quiet}
-                      />
-                    ) : null,
+                    action:
+                      greeting.shown && sessionStart.tells !== null
+                        ? (greetingAction.get()?.(h, sessionStart.tells, { busy, quiet }) ?? null)
+                        : null,
                   }
                 }
                 sessionRoom={sessionRoom}

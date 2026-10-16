@@ -134,7 +134,7 @@ export function messageExtra(m: MessageView, quiet: Quiet): ReactNode[] {
 export const readAlong =
   slot<ComponentType<{ text: string; style: StyleProp<TextStyle> }>>('Mitlesen');
 
-/** What takes the line on top of the thread before her focus (a running roleplay); else null. */
+/** The line on top of the thread (a running roleplay, else her focus); null: none. */
 export const workingOn = slot<(h: BuddyHome) => ReactNode>('Zeile über dem Gespräch');
 
 // ─────────────── the home ───────────────
@@ -162,9 +162,21 @@ export type StartMenu = {
 
 export const startMenu = slot<StartMenu>('Start-Menü');
 
+/** A domain's quiet mark beside the first visit's greeting ("Heute geübt ✓"); null: none. */
+export const introMark = slot<(h: BuddyHome) => ReactNode>('Zeichen beim Gruß');
+
+/**
+ * What the greeting itself offers about what it told (`tells`, lib/buddy/sessionAnchor.ts): the
+ * learning domain's way into the practice it just named (issue #195). Null: nothing.
+ */
+export const greetingAction =
+  slot<(h: BuddyHome, tells: string, on: { busy: boolean; quiet: Quiet }) => ReactNode>(
+    'Begrüßungs-Karte',
+  );
+
 /**
  * What a domain keeps around the whole home screen while it is shown, from its first frame (the
- * learning domain: the pages of her sheets its cards show, lib/learning/homePhotos.tsx).
+ * learning domain: her sheets' pages and the practice to go on with, lib/learning/homeScope.tsx).
  */
 export const homeScope =
   slot<ComponentType<{ h: BuddyHome | undefined; children: ReactNode }>>('Rahmen der Startseite');

@@ -6,7 +6,6 @@
 // on top when there is one (`quiet`): then the card's main action is the paper one.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
-import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -130,36 +129,6 @@ function DraftNotice({
         onPress: () => askAttach({ open: null, resume: true }),
       }}
       secondary={{ label: t('capture:draft.discard'), onPress: left.letGo }}
-    />
-  );
-}
-
-/**
- * The finished practice with Buddy's greeting that names it: the thread's one card
- * (ui_kits/app/Flows.jsx `after`), with "Ansehen" into the full view. No detail — the greeting
- * above it has said how it went, and the card does not say it again (issue #195).
- */
-export function ResultView({
-  sessionId,
-  busy,
-  quiet,
-}: {
-  sessionId: string;
-  busy: boolean;
-  quiet: Quiet;
-}) {
-  const { t } = useTranslation('buddy');
-  return (
-    <ChatCard
-      tone="accent"
-      icon="check"
-      title={t('buddy:now.result_title')}
-      primary={{
-        label: t('buddy:now.result_view'),
-        variant: quietVariant(quiet),
-        disabled: busy,
-        onPress: () => router.push(`/practice/${sessionId}`),
-      }}
     />
   );
 }
