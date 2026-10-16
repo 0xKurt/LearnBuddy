@@ -6077,7 +6077,11 @@ the quiet "Heute geübt ✓" beside the greeting — never a count, never missed
 The home is read in one repeatable-read transaction (one snapshot): a job that commits while
 it is read (a page joining the homework session) shows either before or after, never an old
 card next to "nothing working" — the app polls closely only while something is working
-(`home-snapshot.int.test.ts`).
+(`home-snapshot.int.test.ts`). How closely is the server's to say (#671): `poll_after_ms` —
+1500 while a sheet is read, 3000 while Buddy works or a turn is in flight, null otherwise (the app
+then asks once a minute), from `pollAfterMs` in the contracts, which an app on an older API uses
+itself. Every poll of the app (home, session, library) is spread by ±15 % so phones do not ask in
+step.
 
 **The app shows it Buddy-first (simplicity is the first rule).** `app/buddy.tsx` puts the screen
 together from parts with one job each (issue #311): what is drawn in `components/buddy/HomeTop`

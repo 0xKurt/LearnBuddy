@@ -14,7 +14,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { currentSession } from '../auth/session.js';
-import { homePollMs } from './homePoll.js';
+import { homePollMs, staggered } from './homePoll.js';
 import { useOnScreen } from '../screenFocus.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
@@ -156,7 +156,7 @@ export const usePracticeSession = (id: string) =>
   useQuery({
     queryKey: keys.session(id),
     queryFn: () => getSession(id),
-    refetchInterval: (q) => (q.state.data?.preparing ? 1500 : false),
+    refetchInterval: (q) => (q.state.data?.preparing ? staggered(1500) : false),
   });
 
 /** A session the server just started (and returned): its first question shows at once. */

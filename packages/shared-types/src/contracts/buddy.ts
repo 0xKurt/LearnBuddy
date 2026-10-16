@@ -652,7 +652,27 @@ export const BuddyHome = z.object({
   roleplay: RoleplayNow.nullable().catch(null),
   /** Context version the home was built from (debugging and stale checks). */
   context_version: z.number().int(),
+  /**
+   * When to ask again, in ms, while something is in progress (#671, KI-Audit F14): the server
+   * says it, so the pace can change without an app release. Null: nothing in progress (the app
+   * asks once a minute). Absent from an older API: the app decides by `pollAfterMs` itself.
+   */
+  // Bounded (#818 review): a value outside 1 s–2 min is not taken; the app then uses its own rule.
+  poll_after_ms: z.number().int().min(1000).max(120_000).nullable().optional().catch(undefined),
 });
+
+/**
+ * How soon a home with this state should be asked again (#671, #686): a sheet being read every
+ * 1.5 s, Buddy at work or a turn in flight every 3 s, otherwise null (nothing in progress). One
+ * rule for the server that sends it and the app that falls back on it.
+ */
+export function pollAfterMs(
+  home: Pick<BuddyHome, 'now' | 'working'> & { thread: ReadonlyArray<{ status: string }> },
+): number | null {
+  if (home.now?.type === 'material_processing') return 1500;
+  if (home.working !== null || home.thread.some((m) => m.status === 'processing')) return 3000;
+  return null;
+}
 export type BuddyHome = z.infer<typeof BuddyHome>;
 
 /** POST /buddy/roleplays/:id/end — her tap on "end"; the feedback stands in the thread of `home`. */
