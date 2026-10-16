@@ -88,6 +88,7 @@ import { useDraftSelect } from '../../lib/drafts.js';
 import { usePracticeDrafts } from '../../lib/practice/usePracticeDrafts.js';
 import { usePracticeVoice } from '../../lib/practice/usePracticeVoice.js';
 import { backToBuddy, useSessionEnd } from '../../lib/practice/useSessionEnd.js';
+import { PRACTICE } from '../../lib/theme/practice.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useShown } from '../../lib/perfShown.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
@@ -489,7 +490,7 @@ export default function PracticeScreen() {
                       keyboardShouldPersistTaps="handled"
                       contentContainerStyle={{
                         paddingHorizontal: SPACE.lg,
-                        paddingTop: SPACE.xs,
+                        paddingTop: PRACTICE.questionColumn.paddingTop,
                         gap: SPACE.md,
                       }}
                       onContentSizeChange={(_, h) =>

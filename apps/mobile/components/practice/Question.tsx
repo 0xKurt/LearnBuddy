@@ -273,6 +273,8 @@ export function QuestionCard({
   const figureRoom =
     grown && headHeight > 0 ? cardMin - 2 * pad - headHeight - FIGURE_GAP - frameChrome : 0;
   const figureMax = figureRoom > (figureMaxHeight ?? 0) ? figureRoom : figureMaxHeight;
+  const spare = useContext(PictureRoom);
+  const inCardFolded = useTypingFold(typing, spare !== null && spare < 0);
   const card = (
     <PresentationCard
       testID="question-card"
@@ -360,8 +362,9 @@ export function QuestionCard({
                 : { marginTop: FIGURE_GAP }
             }
           >
-            {/* While she types the drawing folds to one line (issue #379). */}
-            <QuestionFigure figure={inCard} maxHeight={figureMax} folded={typing} />
+            {/* While she types it folds to one line only where the room cannot hold it (#379,
+                #642): folded with room to spare, the diagram she answers about was gone. */}
+            <QuestionFigure figure={inCard} maxHeight={figureMax} folded={inCardFolded} />
           </View>
         ) : null}
         {image && imageKey && !compactFeedback ? (
@@ -414,17 +417,29 @@ const QuestionPicture = memo(function QuestionPicture({
 }) {
   const maxHeight = usePictureCap(sizeKey, most, 1);
   const spare = useContext(PictureRoom);
-  const [folded, setFolded] = useState(false);
-  const cramped =
-    typing && spare !== null && spare < 0 && maxHeight <= Math.round(most * MIN_FIGURE_SCALE);
-  if (cramped && !folded) setFolded(true);
-  if (!typing && folded) setFolded(false);
+  const folded = useTypingFold(
+    typing,
+    spare !== null && spare < 0 && maxHeight <= Math.round(most * MIN_FIGURE_SCALE),
+  );
   return (
     <View testID="question-picture" style={{ marginTop: PRACTICE.ordinaryBody.gap }}>
-      <QuestionFigure figure={figure} maxHeight={maxHeight} folded={folded || cramped} />
+      <QuestionFigure figure={figure} maxHeight={maxHeight} folded={folded} />
     </View>
   );
 });
+
+/**
+ * Whether a drawing stands folded to one line while she types (#379, #642): only once the room
+ * cannot hold it (`cramped`), and then folded until the keyboard goes — unfolded into the room its
+ * fold freed, it would take that room once more and fold again.
+ */
+function useTypingFold(typing: boolean, cramped: boolean): boolean {
+  const [folded, setFolded] = useState(false);
+  const now = typing && cramped;
+  if (now && !folded) setFolded(true);
+  if (!typing && folded) setFolded(false);
+  return typing && (folded || now);
+}
 
 /**
  * The letters of a task in parts, the current one in the accent: where she is, never how many are
