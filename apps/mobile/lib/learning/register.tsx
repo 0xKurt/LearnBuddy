@@ -22,7 +22,9 @@ import {
   messageCards,
   messageExtras,
   readAlong,
+  greetingAction,
   homeScope,
+  introMark,
   profileSubjects,
   startMenu,
   workingOn,
@@ -39,7 +41,12 @@ import { createMaterial, getLibrary, submitMaterial } from '../api/learningEndpo
 import { followHome } from '../api/libraryCache.js';
 import { homeFollowers, keys, menuPreloads, queryClient } from '../api/queries.js';
 import { homeTop } from '../homeLayout.js';
-import { HomePhotos } from './homePhotos.js';
+import { LearningHome } from './homeScope.js';
+import { practiceGreeting } from './greeting.js';
+import { greetingNews } from '../buddy/useSessionStart.js';
+import { greetingResult } from '../../components/learn/GreetingResult.js';
+import { FocusLine } from '../../components/learn/FocusLine.js';
+import { PracticedToday } from '../../components/learn/PracticedToday.js';
 import { notation } from '../buddy/notation.js';
 import { MaterialUpload, type UploadDeps } from '../capture/materialUpload.js';
 import { pageHandler, type PageHandler } from '../capture/pages.js';
@@ -108,7 +115,17 @@ export function registerLearning(): void {
   readAlong.fill(ReadAlongBubble);
   profileSubjects.fill(ProfileLibrarySubjects);
   // A running roleplay takes the line on top of the thread: its way out stays in reach (#244).
-  workingOn.fill((h) => (h.roleplay ? <RoleplayStrip roleplay={h.roleplay} /> : null));
+  // A running roleplay takes the line on top of the thread (its way out stays in reach, #244),
+  // else what she is working on (#160).
+  workingOn.fill((h) =>
+    h.roleplay ? (
+      <RoleplayStrip roleplay={h.roleplay} />
+    ) : h.focus ? (
+      <FocusLine focus={h.focus} />
+    ) : null,
+  );
+  // "Heute geübt ✓" beside the first visit's greeting.
+  introMark.fill((h) => (h.practiced_today ? <PracticedToday /> : null));
 
   // ── Text: $…$ math, drawn (MathText), kept whole by Markdown and said in words.
   notation.fill(mathSpans);
@@ -119,8 +136,11 @@ export function registerLearning(): void {
   // read, the finished practice, "Buddy is working"), a sheet being read, the ways to start.
   homeTop.fill(learningTop);
   homeBar.fill(HomeBar);
-  // Her sheets' pages, looked up for the whole home from its first frame.
-  homeScope.fill(HomePhotos);
+  // Her sheets' pages and the practice to go on with, for the whole home from its first frame.
+  homeScope.fill(LearningHome);
+  // The greeting names the practice she just finished, with the way into it (issue #195).
+  greetingNews.fill((h, since) => practiceGreeting(h.now, since));
+  greetingAction.fill(greetingResult);
   homeNoticeSlot.fill(learningNotices);
   startMenu.fill({ items: startItems, Sheets: LearnStartSheets });
   // The library list that still shows a sheet being read follows the home (live finding 3).

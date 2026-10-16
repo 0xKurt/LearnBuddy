@@ -5,6 +5,7 @@ import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { slot } from '../registry.js';
 import { takeColdStart } from './appStart.js';
 import {
   dayPart,
@@ -13,8 +14,16 @@ import {
   refineGreeting,
   startsNewSession,
   type Greeting,
+  type GreetingNews,
   type GreetingState,
 } from './sessionAnchor.js';
+
+/**
+ * What a domain has to tell in the greeting about what she just did, from this home (the learning
+ * domain: the practice she finished, lib/learning/greeting.ts). Without one, the plain hello.
+ */
+export const greetingNews =
+  slot<(h: BuddyHome, since: string | null) => Greeting | null>('Begrüßung');
 
 /** Buddy's greeting of this visit: under which message it stands, and what it says. */
 export type SessionStart = GreetingState & { afterMessageId: string; text: string };
@@ -73,7 +82,7 @@ export function useSessionStart(home: {
       const g = openGreeting(
         dayPart(now.getHours()),
         greetingVariant(now.getHours() * 60 + now.getMinutes()),
-        h.now,
+        newsOf(h),
         homeConfirmed,
         // "gerade" only for a practice finished after the last message (issue #630).
         lastMessage.created_at,
@@ -87,7 +96,7 @@ export function useSessionStart(home: {
     // server's first home brings it and the greeting takes it up, in the same bubble.
     const g = refineGreeting(
       sessionStart.current,
-      h.now,
+      newsOf(h),
       sessionStart.current.afterMessageId === h.thread[h.thread.length - 1]?.id,
     );
     sessionStart.current = {
@@ -97,4 +106,10 @@ export function useSessionStart(home: {
     };
   }
   return sessionStart.current;
+}
+
+/** What the registered domain tells in the greeting about this home; nothing without one. */
+function newsOf(h: BuddyHome): GreetingNews {
+  const news = greetingNews.get();
+  return (since) => (news ? news(h, since) : null);
 }

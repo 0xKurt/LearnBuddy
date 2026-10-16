@@ -11,14 +11,14 @@ import { useTranslation } from 'react-i18next';
 import { clarifyUnclear } from '../../lib/api/endpoints.js';
 import { acceptMissingPages, retryMaterial } from '../../lib/api/learningEndpoints.js';
 import { failedTitleKey } from '../../lib/learning/failedTitle.js';
-import { useHomeThumbs } from '../../lib/learning/homePhotos.js';
+import { useHomeThumbs } from '../../lib/learning/homeScope.js';
 import { askAttach } from '../../lib/capture/attachRequest.js';
 import { CardChoices, ChatCard, type CardAction } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';
 import type { AndReload, DomainNotices } from '../buddy/HomeNotices.js';
-import { WorkingNote } from '../buddy/WorkingNote.js';
 import { Btn } from '../lb/Btn.js';
 import { ResultNotice } from './ResultNotice.js';
+import { WorkingNote } from './WorkingNote.js';
 
 type Notice = NonNullable<BuddyHome['notice']>;
 type Now = NonNullable<BuddyHome['now']>;

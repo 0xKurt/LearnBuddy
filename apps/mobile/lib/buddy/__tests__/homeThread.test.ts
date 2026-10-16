@@ -127,7 +127,6 @@ describe("Buddy's greeting on screen (issue #195)", () => {
   it('stands under its message and carries the practice it names', () => {
     const g = greetingOnScreen(home({ thread: [message('m1')], now }), start);
     expect(g.shown).toBe(true);
-    expect(g.result?.session_id).toBe(SESSION);
   });
 
   it('gives the result its card back once its message scrolled out of the window', () => {
@@ -135,13 +134,12 @@ describe("Buddy's greeting on screen (issue #195)", () => {
       message('m1'),
       ...Array.from({ length: VISIBLE_MESSAGES }, (_, i) => message(`n${i}`)),
     ];
-    expect(greetingOnScreen(home({ thread, now }), start)).toEqual({ shown: false, result: null });
+    expect(greetingOnScreen(home({ thread, now }), start)).toEqual({ shown: false });
   });
 
   it('is nothing without a greeting', () => {
     expect(greetingOnScreen(home({ thread: [message('m1')], now }), null)).toEqual({
       shown: false,
-      result: null,
     });
   });
 });

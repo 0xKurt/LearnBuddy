@@ -11,14 +11,13 @@ import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
 
-import { RADIUS } from '../../lib/theme/radius.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { HOME } from '../../lib/theme/home.js';
 import { ListGroup, Row } from '../lb/ListGroup.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Icon } from '../lb/Icon.js';
 import { whenText } from './describe.js';
+import { introMark } from './extensions.js';
 
 type Props = {
   h: BuddyHome;
@@ -64,7 +63,8 @@ export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto, pages = f
             })}
           </Text>
         ) : null}
-        {h.practiced_today ? <PracticedToday label={t('buddy:practiced_today')} /> : null}
+        {/* A domain's quiet mark beside the greeting (the learning domain: "Heute geübt ✓"). */}
+        {introMark.get()?.(h) ?? null}
         {/* First visit: one sentence. */}
         <Text style={[TYPE.body, { color: palette.ink2 }]}>{t('buddy:intro.body')}</Text>
       </View>
@@ -84,29 +84,5 @@ export function HomeIntro({ h, refreshing, onRefresh, onSend, onPhoto, pages = f
         />
       </ListGroup>
     </ScrollView>
-  );
-}
-
-/** The quiet "Heute geübt ✓" beside the greeting: a mark of what she did, never a number. */
-function PracticedToday({ label }: { label: string }) {
-  const { palette } = useTheme();
-  return (
-    <View
-      accessible
-      accessibilityLabel={label}
-      style={{
-        flexDirection: 'row',
-        alignSelf: 'flex-start',
-        alignItems: 'center',
-        gap: SPACE.xs,
-        paddingHorizontal: HOME.practiced.horizontal,
-        paddingVertical: HOME.practiced.vertical,
-        borderRadius: RADIUS.round,
-        backgroundColor: palette.mint,
-      }}
-    >
-      <Icon name="check" size={HOME.practiced.icon} color={palette.successText} />
-      <Text style={[TYPE.label, { color: palette.successText }]}>{label}</Text>
-    </View>
   );
 }

@@ -18,7 +18,9 @@ import {
   messageCards,
   messageExtras,
   readAlong,
+  greetingAction,
   homeScope,
+  introMark,
   profileSubjects,
   receipts,
   startMenu,
@@ -26,6 +28,7 @@ import {
 } from '../../buddy/extensions.js';
 import { homeNoticeSlot } from '../../buddy/HomeNotices.js';
 import { homeBar } from '../../buddy/HomeTop.js';
+import { greetingNews } from '../../../lib/buddy/useSessionStart.js';
 import { InlineText, inlineNotation } from '../../lb/InlineText.js';
 import { TYPE } from '../../../lib/theme/type.js';
 import { renderInApp } from '../../../testing/render.js';
@@ -76,6 +79,9 @@ describe('the learning domain fills every place of the core (issue #107)', () =>
     homeNoticeSlot,
     homeBar,
     homeScope,
+    greetingAction,
+    greetingNews,
+    introMark,
     startMenu,
     notation,
     inlineNotation,

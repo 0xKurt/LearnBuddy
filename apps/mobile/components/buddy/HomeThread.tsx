@@ -3,7 +3,6 @@
 // its fade under the head, and "↓ Neue Antwort" when Buddy answered meanwhile.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
-import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, RefreshControl, ScrollView, View } from 'react-native';
@@ -15,10 +14,8 @@ import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { RADIUS } from '../../lib/theme/radius.js';
 import { CHAT } from '../../lib/theme/chat.js';
-import { TYPE } from '../../lib/theme/type.js';
 import { Btn } from '../lb/Btn.js';
 import { TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
-import { TextLink } from '../lb/TextLink.js';
 import { workingOn } from './extensions.js';
 import { SeenScope, useSeenOutreach } from './SeenOutreach.js';
 
@@ -50,17 +47,19 @@ export function HomeThread({
   const underCard = cardHeight > 0 ? cardHeight + SPACE.sm : 0;
   // Which of Buddy's messages she has really seen (#805): what the card on top hides is not seen.
   const seen = useSeenOutreach(follow.scroll, underCard - threadTop);
+  // The line on top of the thread is a domain's (components/buddy/extensions.ts `workingOn`).
+  const line = workingOn.get()?.(h) ?? null;
   return (
     <>
       {/* What she is working on, in her own words (issue #160). One line, and only when there
           is something — an empty slot waiting to be filled would be a dashboard (rule 16).
           Tapping opens the sheet it is about. */}
       <View
-        style={{ paddingHorizontal: SPACE.lg, paddingBottom: h.focus || h.roleplay ? SPACE.xs : 0 }}
+        style={{ paddingHorizontal: SPACE.lg, paddingBottom: line ? SPACE.xs : 0 }}
         // Where the conversation starts (for its fade-out under the head).
         onLayout={(e) => setThreadTop(e.nativeEvent.layout.height)}
       >
-        <WorkingOn h={h} />
+        {line}
       </View>
       <ScrollView
         ref={follow.scroll}
@@ -115,28 +114,6 @@ export function HomeThread({
       <TopEdgeFade top={Math.max(threadTop, cardHeight)} />
       {pill ? <NewReplyPill onPress={follow.toEnd} /> : null}
     </>
-  );
-}
-
-/**
- * A domain's line takes it first — a running roleplay, whose way out stays in reach (#244;
- * components/buddy/extensions.ts). Else her focus.
- */
-function WorkingOn({ h }: { h: BuddyHome }) {
-  const { palette } = useTheme();
-  const { t } = useTranslation('buddy');
-  const own = workingOn.get()?.(h);
-  if (own) return own;
-  if (!h.focus) return null;
-  const materialId = h.focus.material_id;
-  return (
-    <TextLink
-      accessibilityLabel={t('buddy:focus.label', { what: h.focus.text })}
-      onPress={materialId ? () => router.push(`/material/${materialId}`) : undefined}
-      style={[TYPE.small, { color: palette.ink3, textAlign: 'center' }]}
-    >
-      {h.focus.text}
-    </TextLink>
   );
 }
 

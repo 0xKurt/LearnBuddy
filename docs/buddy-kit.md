@@ -304,11 +304,22 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
       - was die Leiste statt des Gesprächs sagt (`homeTop.carried`) und ob Buddy gerade liest
         (`homeTop.reading`);
       - die Fotos ihrer Blätter sucht die Domain für die ganze Startseite ab dem ersten Bild
-        (`homeScope`, `lib/learning/homePhotos.tsx`); ihre Karten lesen, was gefunden ist. Der
+        (`homeScope`, `lib/learning/homeScope.tsx`); ihre Karten lesen, was gefunden ist. Der
         Kern behält nur die liegen gebliebenen Seiten;
       - `failedTitle.ts` und `startStep` gehören der Domain.
 
       Danach zeigt die Kopie **72 Fehler in 33 Paaren**.
+
+    - **Nachgezogen am 16.10. (App, Gruß und Startseite):**
+      - Was der Gruß über die eben beendete Übung sagt, gibt die Domain (`greetingNews`,
+        `lib/learning/greeting.ts`). Der Kern kennt nur noch das Hallo nach Tageszeit.
+      - Den Weg in diese Übung gibt `greetingAction` (`components/learn/GreetingResult.tsx`).
+      - Die Zeile über dem Gespräch (Rollenspiel, sonst ihr Fokus) füllt `workingOn`.
+      - "Heute geübt ✓" füllt `introMark`.
+      - „Buddy arbeitet" (`WorkingNote`) gehört der Domain.
+      - Die laufende Übung lädt `homeScope` vor.
+
+      Danach zeigt die Kopie **56 Fehler in 26 Paaren**.
 
     - **Der Wächter:** `packages/buddy-kit/core-gaps.json` listet jeden dieser Reste, je Datei
       und Fehlercode. `pnpm core-check` (CI, Job `check`) baut die Kopie, installiert sie und

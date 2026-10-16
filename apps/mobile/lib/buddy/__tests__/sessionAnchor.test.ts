@@ -5,16 +5,38 @@ import type { NowCard } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { summaryLines } from '../../practice/summaryLine.js';
+import { practiceGreeting } from '../../learning/greeting.js';
 import {
   dayPart,
   greetingRoom,
   greetingVariant,
-  openGreeting,
-  refineGreeting,
+  openGreeting as openWith,
+  refineGreeting as refineWith,
   SESSION_GAP_MS,
-  sessionGreeting,
+  sessionGreeting as greetWith,
   startsNewSession,
+  type DayPart,
+  type GreetingState,
 } from '../sessionAnchor.js';
+
+// The greeting with the learning domain's news about her practice, as the app registers it
+// (lib/learning/register.tsx, issue #107).
+const news = (now: NowCard | null) => (since: string | null) => practiceGreeting(now, since);
+const sessionGreeting = (
+  part: DayPart,
+  variant: number,
+  now: NowCard | null,
+  since?: string | null,
+) => greetWith(part, variant, practiceGreeting(now, since ?? null));
+const openGreeting = (
+  part: DayPart,
+  variant: number,
+  now: NowCard | null,
+  confirmed: boolean,
+  since?: string | null,
+) => openWith(part, variant, news(now), confirmed, since ?? null);
+const refineGreeting = (current: GreetingState, now: NowCard | null, stillLast: boolean) =>
+  refineWith(current, news(now), stillLast);
 
 const at = (iso: string) => new Date(iso);
 const SESSION = '00000000-0000-4000-8000-000000000001';

@@ -7,7 +7,7 @@ import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 
 import { useAnnounce } from '../../lib/announce.js';
-import { ChatCard } from './ChatCard.js';
+import { ChatCard } from '../buddy/ChatCard.js';
 
 export function WorkingNote({ what }: { what: NonNullable<BuddyHome['working']> }) {
   const { t } = useTranslation('buddy');

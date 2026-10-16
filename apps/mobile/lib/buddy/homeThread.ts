@@ -13,24 +13,20 @@ const NOTHING_CARRIED = { asks: () => false, names: () => false };
 export const VISIBLE_MESSAGES = 6;
 
 type Action = MessageView['actions'][number];
-type PracticeResult = Extract<NonNullable<BuddyHome['now']>, { type: 'practice_result' }>;
 
 /**
- * Where Buddy's greeting stands, and the finished practice it names (issue #195). It is drawn
- * under its message, so it only stands where that message is still in the part of the
- * conversation the screen shows; once it has scrolled out of that window the result it told
- * about needs its card back. `result`: the way into the full view then rides with the greeting's
- * sentence instead of standing in a card repeating it.
+ * Whether Buddy's greeting stands on screen (issue #195). It is drawn under its message, so it
+ * only stands where that message is still in the part of the conversation the screen shows; once
+ * it has scrolled out of that window what it told about needs its own card back. While it stands,
+ * the way into what it told rides with its sentence (`greetingAction`, components/buddy/
+ * extensions.ts) instead of a card repeating it.
  */
-export function greetingOnScreen(
-  h: BuddyHome,
-  start: SessionStart | null,
-): { shown: boolean; result: PracticeResult | null } {
-  const shown =
-    start !== null && h.thread.slice(-VISIBLE_MESSAGES).some((m) => m.id === start.afterMessageId);
-  const result =
-    shown && h.now?.type === 'practice_result' && h.now.session_id === start?.tells ? h.now : null;
-  return { shown, result };
+export function greetingOnScreen(h: BuddyHome, start: SessionStart | null): { shown: boolean } {
+  return {
+    shown:
+      start !== null &&
+      h.thread.slice(-VISIBLE_MESSAGES).some((m) => m.id === start.afterMessageId),
+  };
 }
 
 /** Something told in the conversation, with the moment it belongs to (null: it is about now). */
