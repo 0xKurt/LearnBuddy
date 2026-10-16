@@ -339,6 +339,16 @@ export async function startFromStep(
       `update buddy_steps set state = 'in_progress', version = version + 1 where id = $1`,
       [stepId],
     );
+    // Another waiting practice her run holds all of is done by this one (issue #841): its card
+    // kept "6 Aufgaben · Los geht's" and started the same questions again beside this run. Only
+    // unagreed ones — a practice she agreed to stays hers to start (as in prepare_practice).
+    await tx.query(
+      `update buddy_steps set state = 'cancelled', version = version + 1, finished_at = $4
+        where learner_id = $1 and id <> $2 and kind = 'practice' and state = 'prepared'
+          and not agreed and jsonb_array_length(coalesce(payload -> 'item_ids', '[]')) > 0
+          and (payload -> 'item_ids') <@ $3::jsonb`,
+      [learnerId, stepId, JSON.stringify(itemIds), now],
+    );
     await bumpContext(tx, learnerId);
     return id;
   });
