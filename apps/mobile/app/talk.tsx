@@ -310,6 +310,7 @@ export default function TalkScreen() {
         // Open measurements die with the visit; nothing later may complete them.
         dropped('relisten');
         dropped('first_audio');
+        dropped('talk_open');
         stopSpeaking();
         // What she was saying is dropped, not sent: a turn started now would be ignored and
         // leave the screen stuck in "thinking" (talk-stuck-thinking-on-blur). A turn already
@@ -330,7 +331,10 @@ export default function TalkScreen() {
     const was = lastVoiceState.current;
     lastVoiceState.current = voice.state;
     // The mic really listens again: the `relisten` span ends here (issue #41).
-    if (voice.state === 'recording') reacted('relisten');
+    if (voice.state === 'recording') {
+      reacted('relisten');
+      reacted('talk_open');
+    }
     if (phase !== 'listening' || voice.state !== 'idle') return;
     if (voice.hint || voice.denied || was === 'transcribing') {
       dropped('relisten'); // It never listened: her tap from here on is her own time.

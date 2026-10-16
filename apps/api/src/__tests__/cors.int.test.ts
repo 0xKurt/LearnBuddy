@@ -93,5 +93,10 @@ describe.skipIf(!dbReady)('CORS for the web build', () => {
     });
     expect(me.headers.get('access-control-allow-origin')).toBe(WEB);
     expect(me.status).toBe(200);
+    // The browser build reads the server's share of the wait (#649): exposed, and sent.
+    expect(me.headers.get('access-control-expose-headers')?.toLowerCase()).toContain(
+      'server-timing',
+    );
+    expect(me.headers.get('server-timing')).toMatch(/done;dur=\d+/);
   });
 });
