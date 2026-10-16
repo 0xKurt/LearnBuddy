@@ -1,0 +1,69 @@
+// A Buddy without the learning domain (create-buddy --core, issue #107): written in the place of
+// apps/api/src/modules/learning/register.ts. A domain of this Buddy registers itself here: its
+// tools, lookups, context, routes and jobs. Without one, the core gets the context of a Buddy
+// that knows only its own state — memories, goals, steps, contact — so `createApp` starts.
+//
+// Typechecked only in the core copy (pnpm core-check), where the domain's augmentations of the
+// state, the aliases and the undo kinds are absent.
+
+import { registerContextProvider, type ContextProvider } from '../buddy/provider.js';
+
+/** The context of a Buddy with no domain: nothing added to its state, its STATE or its home. */
+const NO_DOMAIN: ContextProvider = {
+  state: {
+    load: async () => ({ totals: {} }),
+    level: (learner) =>
+      learner.level === 'unknown'
+        ? 'unknown (ask when it matters for the next step)'
+        : learner.level,
+    noAliases: () => ({}),
+    topicKeyAliases: {},
+    sections: [],
+    render: () => ({
+      goalSuffix: () => '',
+      goalLines: () => ({ before: [], after: [] }),
+      stepExtra: () => '',
+      sections: () => ({}),
+    }),
+    turnRules: '',
+    styleRules: '',
+  },
+  subjects: {
+    names: async () => new Map(),
+    ofAlias: () => null,
+    // Goals of this Buddy belong to no category.
+    findOrCreate: async () => null,
+  },
+  home: {
+    screen: async () => ({}),
+    lastActed: async () => null,
+    // Buddy is writing a reply she waits for: asked again every 3 s, as with a domain.
+    pollAfter: (_screen, thread) => (thread.some((m) => m.status === 'processing') ? 3000 : null),
+    thread: async () => ({ summary: (_id, s) => s, message: () => ({}) }),
+  },
+  turn: {
+    mode: async () => null,
+    lookAhead: async () => null,
+    checkReply: async () => [],
+    applied: () => undefined,
+    concern: async () => undefined,
+  },
+  check: {
+    learnerTriggered: new Set(),
+    describe: () => null,
+    somethingToWorkWith: () => false,
+  },
+  lookBack: async () => null,
+  readySheet: async () => null,
+  sheetPractice: async () => ({ some: new Set(), only: new Set() }),
+  undo: { applies: async () => false, run: async () => false },
+};
+
+let registered = false;
+
+/** Registers the core's own context; a second call changes nothing. */
+export function registerLearning(): void {
+  if (registered) return;
+  registered = true;
+  registerContextProvider(NO_DOMAIN);
+}

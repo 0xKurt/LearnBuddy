@@ -2,8 +2,6 @@
 // A clarification (#164) or a reading run again is its own job: it chose again from the same
 // photos, one model call more for the same answer. docs/architecture.md §Schema budget.
 
-import type { ItemKind } from '@learnbuddy/shared-types/contracts';
-
 import type { Db } from '../../lib/db.js';
 import type { Keep } from '../practice/formChoice.js';
 
@@ -13,7 +11,7 @@ type Stored = { key: string; forms: string[]; figures: string[] };
  * Under what a stored choice holds: the reading's prompt version (its schema is part of it) and
  * the forms switched off here. Either changing makes the choice stale, and it is made anew.
  */
-export function choiceKey(promptVersion: string, off: ReadonlySet<ItemKind>): string {
+export function choiceKey(promptVersion: string, off: ReadonlySet<string>): string {
   return `${promptVersion}|${[...off].sort().join(',')}`;
 }
 

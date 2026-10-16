@@ -4,7 +4,7 @@
 // docs/architecture.md §Background work.
 
 import type { Deps } from '../../deps.js';
-import { JOB_KINDS, type JobKind, type JobRow } from './jobs.js';
+import { CORE_JOB_KINDS, PERSISTENT_KINDS, type JobKind, type JobRow } from './jobs.js';
 
 export type JobHandler = (deps: Deps, job: JobRow) => Promise<void>;
 
@@ -16,7 +16,13 @@ export type JobHandler = (deps: Deps, job: JobRow) => Promise<void>;
  */
 type JobLane = 'waiting' | 'erasure';
 
-type JobKindSpec = { kind: JobKind; lane: JobLane; run: JobHandler };
+type JobKindSpec = {
+  kind: JobKind;
+  lane: JobLane;
+  run: JobHandler;
+  /** An erasure: never parked, retried with backoff until done (jobs.ts `PERSISTENT_KINDS`). */
+  persistent?: true;
+};
 
 /** What a domain adds to one run. Each part is optional; parts run in registration order. */
 type TickWork = {
@@ -28,14 +34,7 @@ type TickWork = {
   sweep?: { key: string; run: (deps: Deps) => Promise<number> };
 };
 
-/** The kinds the core runs itself (buddy/check.ts, the tick, identity/privacy.ts). */
-const CORE_KINDS: readonly JobKind[] = [
-  'buddy_check',
-  'buddy_turn',
-  'delete_account',
-  'summarise_session',
-  'consolidate_memories',
-];
+const CORE_KINDS: readonly JobKind[] = CORE_JOB_KINDS;
 
 const kinds: JobKindSpec[] = [];
 const work: TickWork[] = [];
@@ -64,7 +63,12 @@ export function tickWork(): readonly TickWork[] {
   return work;
 }
 
-/** Job kinds nobody runs: neither the core nor a registration. Start-up refuses them (app.ts). */
-export function missingJobKinds(): JobKind[] {
-  return JOB_KINDS.filter((k) => !CORE_KINDS.includes(k) && !kinds.some((s) => s.kind === k));
+/** The kinds retried until done instead of parked: the core's and every registered erasure. */
+export function persistentKinds(): JobKind[] {
+  return [...PERSISTENT_KINDS, ...kinds.filter((k) => k.persistent).map((k) => k.kind)];
+}
+
+/** Whether a job of this kind is retried until done instead of parked (an erasure). */
+export function isPersistent(kind: JobKind): boolean {
+  return persistentKinds().includes(kind);
 }

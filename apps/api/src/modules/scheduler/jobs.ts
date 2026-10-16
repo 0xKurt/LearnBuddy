@@ -8,28 +8,35 @@
 
 import type { Db } from '../../lib/db.js';
 
-export const JOB_KINDS = [
-  'extract_material',
+/** The kinds the core runs itself (buddy/check.ts, the tick, identity/privacy.ts). */
+export const CORE_JOB_KINDS = [
   'buddy_check',
   'buddy_turn',
-  'purge_photos',
-  'purge_content',
   'delete_account',
   'summarise_session',
   'consolidate_memories',
 ] as const;
-export type JobKind = (typeof JOB_KINDS)[number];
+export type CoreJobKind = (typeof CORE_JOB_KINDS)[number];
+
+/**
+ * The kinds a domain owns (issue #107): it declares them by augmenting this interface (the
+ * learning domain: modules/learning/register.ts) and runs them through `registerJobKinds`.
+ * Exported for that augmentation (`declare module`), which knip does not count as a use.
+ *
+ * @public
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- filled by the domain's augmentation
+export interface DomainJobKinds {}
+
+export type JobKind = CoreJobKind | keyof DomainJobKinds;
 
 /**
  * Erasure jobs are never parked: a privacy promise does not expire after three tries.
  * They retry with backoff until done, record why they wait (`last_error`), and /health
- * reports them once overdue (docs/privacy.md §Export and deletion).
+ * reports them once overdue (docs/privacy.md §Export and deletion). A domain's erasure kinds
+ * are persistent too (scheduler/registry.ts `isPersistent`).
  */
-export const PERSISTENT_KINDS: readonly JobKind[] = [
-  'purge_photos',
-  'purge_content',
-  'delete_account',
-];
+export const PERSISTENT_KINDS: readonly JobKind[] = ['delete_account'];
 
 /** Backoff of a persistent job after `attempts` failed runs: 1, 2, 4 … minutes, at most 6 h. */
 export function backoffMs(attempts: number): number {
@@ -82,8 +89,16 @@ export async function enqueueJob(db: Db, job: NewJob): Promise<string | null> {
   return row?.id ?? null;
 }
 
-/** Return expired leases to the queue (or park them as failed after max attempts). */
-export async function recoverExpiredLeases(db: Db, now: Date): Promise<number> {
+/**
+ * Return expired leases to the queue (or park them as failed after max attempts). `persistent`:
+ * the kinds never parked — the core's and every domain's erasure (scheduler/registry.ts
+ * `persistentKinds`); a dead worker's erasure goes back to the queue whatever its attempts.
+ */
+export async function recoverExpiredLeases(
+  db: Db,
+  now: Date,
+  persistent: readonly JobKind[],
+): Promise<number> {
   const rows = await db.query(
     `update jobs
         set status = case when attempts >= max_attempts and not (kind = any($2::text[]))
@@ -95,7 +110,7 @@ export async function recoverExpiredLeases(db: Db, now: Date): Promise<number> {
                                then $1::timestamptz else null end
       where status = 'running' and lease_until < $1
       returning id`,
-    [now, PERSISTENT_KINDS],
+    [now, persistent],
   );
   return rows.length;
 }

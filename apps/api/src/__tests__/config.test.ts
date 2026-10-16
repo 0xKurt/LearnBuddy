@@ -3,8 +3,16 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { bootWarnings, databaseRegionWarning, databaseTlsIssue, loadConfig } from '../config.js';
+import {
+  bootWarnings,
+  checkConfig,
+  configCheck,
+  databaseRegionWarning,
+  databaseTlsIssue,
+  loadConfig,
+} from '../config.js';
 import { connectionOptions, isLocalDatabaseHost } from '../lib/db.js';
+import { formsOffIssues } from '../modules/learning/config.js';
 
 const base = {
   SUPABASE_URL: 'https://abcdefgh.supabase.co',
@@ -108,8 +116,14 @@ describe('database region', () => {
       'grid_draw',
       'find_error',
     ]);
-    // A typo would switch nothing off while the operator believes it did: boot stops instead.
-    expect(() => loadConfig({ ...config, FORMS_OFF: 'grid_drwa' })).toThrow(/FORMS_OFF/);
+    // A typo would switch nothing off while the operator believes it did: boot stops instead —
+    // the learning domain knows its forms and checks them when it registers (issue #107).
+    const typo = loadConfig({ ...config, FORMS_OFF: 'grid_drwa' });
+    configCheck(formsOffIssues);
+    expect(() => checkConfig(typo)).toThrow(
+      /^Invalid configuration: FORMS_OFF: FORMS_OFF: unknown form in "grid_drwa" \(expected /,
+    );
+    expect(() => checkConfig(loadConfig({ ...config, FORMS_OFF: 'grid_draw' }))).not.toThrow();
   });
 
   it('points at the missing CA certificate for a remote database', () => {
