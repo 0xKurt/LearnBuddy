@@ -27,9 +27,13 @@ import { VertexGateway } from '../../src/llm/vertex.js';
 import { BlockAudit } from './blockaudit.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
-import { CASES, type Outcome } from './cases.js';
+import { CASES as BASE_CASES, type Outcome } from './cases.js';
+import { DAY_CASES } from './dayCases.js';
 import { judgeRuns, runsFor } from './repeat.js';
 import { bumpContext } from '../../src/modules/buddy/plan.js';
+
+/** Every case: the turns, and the DaySpec cases of the day list (#687). */
+const CASES = [...BASE_CASES, ...DAY_CASES];
 
 // Buddy's prompt is built from what the learning domain registers (issue #107).
 registerLearning();

@@ -9,7 +9,13 @@ import type { Db } from '../lib/db.js';
 import { AppError } from '../lib/errors.js';
 import { timedModel } from '../lib/requestCost.js';
 import type { EmbeddingGateway, EmbedRequest, EmbedResult } from './embeddings.js';
-import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
+import {
+  LlmError,
+  TOO_LARGE,
+  type LlmGateway,
+  type LlmRequest,
+  type LlmResult,
+} from './gateway.js';
 import { inlineBytesOf, unsupportedMedia } from './profile.js';
 
 export type ModelDeps = {
@@ -41,6 +47,8 @@ function generate(llm: LlmGateway, req: LlmRequest): Promise<LlmResult> {
       new LlmError(
         'refused',
         `${llm.profile.name} takes ${llm.profile.maxInlineBytes} bytes inline, this request carries ${inline}`,
+        null,
+        TOO_LARGE,
       ),
     );
   return llm.generate(req);

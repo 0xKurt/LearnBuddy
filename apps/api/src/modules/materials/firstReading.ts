@@ -176,6 +176,9 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
     // An outage, or cut off twice: try again later; after the last run she gets an honest
     // failed card with "Nochmal lesen" (rule 5), never silence.
+    // More photos at once than one reading can carry (#688): refused before it was sent, and
+    // the same files would be refused again. She is told to send it in two parts.
+    if (err instanceof LlmError && err.tooLarge) return fail(deps, job, materialId, 'too_large');
     if (err instanceof LlmError && err.retryable)
       return retryTransient(deps, job, materialId, err.truncated ? 'truncated' : err.kind);
     // The provider's safety filter refused this sheet: reading it again gives the same

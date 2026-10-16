@@ -39,7 +39,8 @@
     "budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
     "blocked": "El filtro de seguridad no deja pasar esta ficha. Volver a leerla no servirá: escribe las preguntas.",
     "form_not_practicable": "He podido leer la ficha sin problema: solo que este tipo de ejercicio no lo puedo practicar contigo. Pregúntame y te explico los pasos.",
-    "nothing_marked": "No he encontrado nada marcado como incorrecto en el examen, así que no hay nada que repasar. Si al final hay algo marcado en rojo, vuelve a hacerle una foto."
+    "nothing_marked": "No he encontrado nada marcado como incorrecto en el examen, así que no hay nada que repasar. Si al final hay algo marcado en rojo, vuelve a hacerle una foto.",
+    "too_large": "Demasiadas fotos grandes a la vez: envía la ficha en dos partes."
   },
   "source": {
     "corrected_test": "De tu examen corregido: ejercicios nuevos sobre lo que estaba marcado, con otros números y otras palabras.",
