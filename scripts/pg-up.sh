@@ -5,11 +5,11 @@
 # A reachable LB_TEST_DATABASE_URL (the machine's one shared server) is used as given: no
 # second server is started next to it (docs/engineering-guards.md §Machine resources).
 if [ -n "${LB_TEST_DATABASE_URL:-}" ]; then
-  hostport="${LB_TEST_DATABASE_URL#*@}"
-  hostport="${hostport%%/*}"
-  host="${hostport%%:*}"
-  port="${hostport##*:}"
-  [ "$port" = "$hostport" ] && port=5432
+  # Host and port read from every URL form (#791): user and password optional, port optional.
+  . "$(dirname "$0")/pg-url.sh"
+  set -- $(lb_pg_host_port "$LB_TEST_DATABASE_URL")
+  host="$1"
+  port="$2"
   if command -v nc >/dev/null 2>&1 && nc -z "$host" "$port" >/dev/null 2>&1; then
     exit 0
   fi

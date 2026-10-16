@@ -23,6 +23,14 @@ pnpm install
 pnpm typecheck && pnpm lint && pnpm test
 ```
 
+A push runs the full suite in the pre-push hook for a few minutes. Meanwhile the SSH connection
+to GitHub sits idle and may be dropped (exit 141 right after "pre-push gate green", #791). Keep it
+alive, for this clone only:
+
+```bash
+git config core.sshCommand "ssh -o ServerAliveInterval=30"
+```
+
 API integration tests run against a real Postgres 16 on `127.0.0.1:5432` (user/password
 `postgres`, or set `LB_TEST_DATABASE_URL`); each test file gets its own throwaway database built
 from the real migrations. Those databases are always UTF8 with

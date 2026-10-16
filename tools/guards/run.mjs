@@ -19,6 +19,10 @@ const GUARDS = [
     'Pre-Push-Stempel (#455)',
     ['--test', '--test-reporter=dot', join('tools', 'guards', 'green-tree.test.mjs')],
   ],
+  [
+    'Maschinen-Sperre und Datenbank-URL (#791)',
+    ['--test', '--test-reporter=dot', join('tools', 'guards', 'machine-lock.test.mjs')],
+  ],
   ['Kopien (jscpd)', [join('tools', 'guards', 'clones.mjs')]],
   ['Toter Code (knip)', [join('tools', 'guards', 'knip.mjs')]],
   ['Grenzen generisch → Domain (#107)', [join('tools', 'guards', 'boundaries.mjs')]],
