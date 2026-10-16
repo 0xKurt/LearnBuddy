@@ -145,13 +145,13 @@
   {
     "datei": "skeleton.png",
     "abbildung": "skeleton",
-    "titel": "Skeleton 1 -- Smart-Servier.png",
-    "autor": "Laboratoires Servier",
-    "lizenz": "CC BY-SA 3.0",
-    "lizenzUrl": "https://creativecommons.org/licenses/by-sa/3.0",
-    "quelle": "https://commons.wikimedia.org/wiki/File:Skeleton_1_--_Smart-Servier.png",
-    "bearbeitet": "ja: zugeschnitten, auf 900 px skaliert, Hintergrund transparent",
-    "namensnennung": "„Skeleton 1 -- Smart-Servier\" von Laboratoires Servier, CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0), Quelle: https://commons.wikimedia.org/wiki/File:Skeleton_1_--_Smart-Servier.png – bearbeitet."
+    "titel": "Human skeleton front - no labels.svg",
+    "autor": "Mikael Häggström",
+    "lizenz": "Public domain",
+    "lizenzUrl": "",
+    "quelle": "https://commons.wikimedia.org/wiki/File:Human_skeleton_front_-_no_labels.svg",
+    "bearbeitet": "ja: ohne Hintergrund gerendert, auf 900 px Höhe skaliert, auf 643 px Breite mittig gesetzt, Farbpalette reduziert (packages/shared-math/scripts/figures.mjs)",
+    "namensnennung": "„Human skeleton front - no labels\" von Mikael Häggström, gemeinfrei, Quelle: https://commons.wikimedia.org/wiki/File:Human_skeleton_front_-_no_labels.svg – bearbeitet."
   },
   {
     "datei": "organs.png",

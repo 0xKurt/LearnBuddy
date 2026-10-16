@@ -561,3 +561,21 @@ Nothing of this was looked at in the running app.
 - `packages/shared-math` loses the drawings (about 2 000 lines) and keeps the circuit's.
 - The lens, the pupil, the stigma and the stamen "drawn large" (#462) are no special case any
   more: `eye_front` is a crop of the eye's image, `flower_section` the flower's image.
+
+## Amendment 2026-10-16: images in the public domain, their anchors measured (#820)
+
+The owner wants no licence risk ("Ich will kein Risiko", #491): only public-domain or CC0
+pictures. An image whose source file names its parts can replace a CC BY-SA one under the same
+file name, its anchors measured by a generator instead of placed by eye:
+
+- **Skeleton:** `skeleton.png` is Mikael Häggström's "Human skeleton front - no labels.svg"
+  (Wikimedia Commons, public domain), rendered by `packages/shared-math/scripts/figures.mjs`.
+  - Every bone group of that file is a named layer.
+  - The script renders each part's groups alone. A part's anchor is a pixel of its own bone that
+    the whole picture draws unchanged, so no other bone lies on it.
+  - Its number stands in its column at the anchor's height.
+  - The tap set is unchanged: only the skull has an area.
+  - The old → new list in the table above describes the Servier image and is history.
+- The frame (300 × 420), the part ids and their names are unchanged, so stored questions keep
+  working. The picture is still shown unchanged on the light paper card in every look
+  (decision 1).
