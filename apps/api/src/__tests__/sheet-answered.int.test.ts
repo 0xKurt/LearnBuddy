@@ -169,6 +169,25 @@ describe.skipIf(!dbReady)('every sheet she sends is answered (issue #721)', () =
     expect(after[0]?.announces).toMatchObject({ step_id: steps[0] });
   });
 
+  it('names in its line the title and size of the practice its start opens (issue #840)', async () => {
+    // Device 16.10.: "Deine Fragen zu „Herz u. Kreislauf" sind fertig (14 Stück)" above a card
+    // "Biologie · 4 Aufgaben" — the line counted the sheet, the card the practice the check made.
+    env.llm.script('buddy_check', {
+      json: {
+        disposition: 'act',
+        reason: 'prepare',
+        actions: [{ ...PREPARE, args: { ...PREPARE.args, question_count: 2 } }],
+        outreach: null,
+      },
+    });
+    await sendSheet(env, lena);
+    const { after } = await answer(lena);
+    expect(after).toHaveLength(1);
+    const card = after[0]?.announces;
+    expect(card).toMatchObject({ title: 'Brüche erweitern', question_count: 2 });
+    expect(after[0]?.text).toBe('Deine Fragen zu „Brüche erweitern“ sind fertig (2 Stück).');
+  });
+
   it('gives the check’s own line the start it left out', async () => {
     env.llm.script('buddy_check', {
       json: { disposition: 'act', reason: 'tell', actions: [], outreach: OUTREACH(null) },
