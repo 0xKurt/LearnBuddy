@@ -14,6 +14,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { chosenFor, offered } from '../modules/practice/formChoice.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import {
@@ -238,6 +239,33 @@ describe.skipIf(!dbReady)('a spot that could not be read', () => {
     expect(again.status).toBe(409);
     expect(again.body).toMatchObject({ error: { details: { reason: 'no_longer_open' } } });
     expect(await prompts(lena, m.id)).toHaveLength(4);
+  });
+
+  it('reads her clarification with the choice of forms the sheet already made (#657)', async () => {
+    const m = await send(env, lena, sheet());
+    const choosing = () => env.llm.choices.filter((c) => chosenFor(c) === 'extraction');
+    expect(choosing()).toHaveLength(1);
+    const kept = await env.db.one<{ form_choice: { forms: string[]; figures: string[] } | null }>(
+      `select form_choice from materials where id = $1`,
+      [m.id],
+    );
+    expect(kept.form_choice).not.toBeNull();
+    env.llm.script('extraction', {
+      json: sheet({
+        items: [sum(17, 5)],
+        unclear: [],
+        pages: [{ page: 1, read: 'all', problem: null }],
+      }),
+    });
+    expect(
+      (await lena.api.post(`/materials/${m.id}/unclear`, { spot: 'u1', reading: 'r2' })).status,
+    ).toBe(202);
+    await env.flushBackground();
+    // No second choosing call with the same photos, and the same schema as the first reading.
+    expect(choosing()).toHaveLength(1);
+    const [first, clarify] = env.llm.callsFor('extraction');
+    expect(offered(clarify!.schema)).toEqual(offered(first!.schema));
+    expect(await prompts(lena, m.id)).toContain('17 + 5');
   });
 
   it('costs the sheet nothing when she ignores it: the ask expires and never comes back', async () => {

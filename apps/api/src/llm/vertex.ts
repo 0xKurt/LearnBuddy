@@ -159,12 +159,23 @@ export function modelFor(config: Config, req: Pick<LlmRequest, 'purpose' | 'tier
 }
 
 /**
+ * Models that take only a thinking level, never a budget (#647, Vertex docs read 14.10.2026, KI-Audit
+ * F §2): from Gemini 3.8 Flash and Gemini 4 a budget can be refused with 400 INVALID_ARGUMENT, and
+ * 3.8 has no MINIMAL ("will return an API validation error") and no way to switch thinking off —
+ * LOW is its least. Every level goes out as LOW (measured #647, `docs/decisions/provider-2026-10.md`):
+ * at the old budget's levels, MEDIUM/HIGH, a sheet reading took 68-86 s and ~10k thought tokens
+ * instead of 16-19 s, and the practice run timed out; LOW kept the content judge's findings level.
+ */
+const levelsOnly = (model: string): boolean => /^gemini-(3\.8|[4-9])/.test(model);
+
+/**
  * A neutral thinking level as Vertex takes it (#646). `minimal` is Gemini 3's own level: a budget
  * is only a hint there, and Buddy's turn at 512 was measured thinking up to 885 tokens, the first
  * byte waiting for every one of them (#626). The others are the budgets the call sites sent before
  * the contract was neutral, so the wire stays as it was: off 0, low 512, medium 1024, high 2048.
  */
-function thinkingConfigOf(thinking: Thinking) {
+function thinkingConfigOf(thinking: Thinking, model: string) {
+  if (levelsOnly(model)) return { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } };
   switch (thinking) {
     case 'minimal':
       return { thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } };
@@ -198,7 +209,7 @@ export function paramsFor(req: LlmRequest, model: string, timeoutMs: number) {
       responseMimeType: 'application/json',
       responseJsonSchema: req.schema,
       safetySettings: SAFETY,
-      ...thinkingConfigOf(req.thinking),
+      ...thinkingConfigOf(req.thinking, model),
       // Not req.timeoutMs: that is the budget for the whole call including retries, and
       // this attempt only gets what is left of it (retry.ts).
       abortSignal: AbortSignal.timeout(timeoutMs),

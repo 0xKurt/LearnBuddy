@@ -429,11 +429,15 @@ describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
     });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     const [call] = env.llm.callsFor('explain');
-    expect(call?.schema).toEqual(sentFor(explainSchemaFor('test', ['Brüche']), EVERYTHING));
+    // The profile is an unbound test's: the sheets narrow the topics, not the forms it offers.
+    // Which of them this run uses is the sheet's own questions' (#657): one short question, so
+    // the plain set — read off the sheet, without a choosing call.
+    expect(call?.schema).toEqual(sentFor(explainSchemaFor('test', ['Brüche']), {}));
     expect(JSON.stringify(call?.schema)).toContain('"enum":["Brüche"]');
     expect(Object.keys(call?.schema?.properties ?? {})).not.toContain('bars');
-    // The same forms as an unbound test: the sheets narrow the topics, not the forms.
-    const want = BEFORE_D2.test;
-    expect(await formsOf(res.body.id)).toEqual({ ...want, kinds: [...want.kinds].sort() });
+    expect(env.llm.choices).toHaveLength(0);
+    const kept = await formsOf(res.body.id);
+    expect(kept).toMatchObject({ bar: false, staff: false, listen: false });
+    expect(kept.kinds.every((k) => BEFORE_D2.test.kinds.includes(k))).toBe(true);
   });
 });
