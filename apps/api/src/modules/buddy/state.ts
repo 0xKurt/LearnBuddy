@@ -219,26 +219,45 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
   // The fence first (CLAUDE.md rule 4): the version is read before the data it guards, so it can
   // only be older than what follows — a write in between makes the fence refuse, never pass, a
   // decision on old data. On the pool every read is its own snapshot.
-  const settings = await loadSettings(db, learnerId);
+  // Her counts come with it in the same statement (#712: one round trip less in every snapshot);
+  // read with the fence, they can only be as old as the version that guards them.
+  const counted = await db.maybeOne<
+    SettingsRow & { t_goals: number; t_steps: number; t_memories: number }
+  >(
+    `select s.*,
+            (select count(*) from buddy_goals where learner_id = $1 and status = 'active')::int as t_goals,
+            (select count(*) from buddy_steps where learner_id = $1
+                and state in ('planned','prepared','in_progress'))::int as t_steps,
+            (select count(*) from buddy_memories where learner_id = $1 and status = 'active'
+                and (valid_until is null or valid_until > $2))::int as t_memories
+       from buddy_settings s where s.learner_id = $1`,
+    [learnerId, now],
+  );
+  const { t_goals, t_steps, t_memories, ...settingsRow } = counted ?? {
+    ...(await loadSettings(db, learnerId)),
+    t_goals: 0,
+    t_steps: 0,
+    t_memories: 0,
+  };
+  const settings: SettingsRow = settingsRow;
   // The data reads do not depend on one another: on the pool they go out side by side (#637: the
   // chat turn waited for ~17 round trips here, one after the other). Inside a transaction the
   // one client still takes them in order, so a snapshot stays a snapshot.
-  const [goals, steps, memories, messages, summaries, domainState, outreach, totals] =
-    await Promise.all([
-      db
-        .query<Omit<GoalRow, 'subject_name'>>(
-          `select g.id, g.kind, g.title, g.subject_id, g.due_date, g.topics,
+  const [goals, steps, memories, messages, summaries, domainState, outreach] = await Promise.all([
+    db
+      .query<Omit<GoalRow, 'subject_name'>>(
+        `select g.id, g.kind, g.title, g.subject_id, g.due_date, g.topics,
                   g.status, g.outcome, g.version, g.created_at, g.closed_at, g.talk_minutes
              from buddy_goals g
             where g.learner_id = $1
               and (g.status = 'active' or g.closed_at > $2::timestamptz - interval '14 days')
             order by (g.status = 'active') desc, g.due_date nulls last, g.created_at, g.seq
             limit $3`,
-          [learnerId, now, LIMITS.goals],
-        )
-        .then((rows) => withSubjectNames(db, learnerId, rows)),
-      db.query<StepRow>(
-        `select id, goal_id, kind, title, state, planned_date, planned_time, agreed, payload, evidence,
+        [learnerId, now, LIMITS.goals],
+      )
+      .then((rows) => withSubjectNames(db, learnerId, rows)),
+    db.query<StepRow>(
+      `select id, goal_id, kind, title, state, planned_date, planned_time, agreed, payload, evidence,
                 done_source, version, created_at, finished_at,
                 -- Declared on StepRow since #112 and never selected, so st.repeat was
                 -- undefined at run time and Buddy forgot every rhythm the moment the chat
@@ -251,19 +270,19 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
                  or finished_at > $2::timestamptz - interval '7 days')
           order by (state in ('planned','prepared','in_progress')) desc, planned_date nulls last, created_at, seq
           limit $3`,
-        [learnerId, now, LIMITS.steps],
-      ),
-      db.query<MemoryRow>(
-        `select id, kind, statement, source, quote, valid_until, version, created_at
+      [learnerId, now, LIMITS.steps],
+    ),
+    db.query<MemoryRow>(
+      `select id, kind, statement, source, quote, valid_until, version, created_at
            from buddy_memories
           where learner_id = $1 and status = 'active' and (valid_until is null or valid_until > $2)
           order by created_at, seq
           limit $3`,
-        [learnerId, now, LIMITS.memories + 1],
-      ),
-      db
-        .query<MessageRow>(
-          `select id, role, text, status, failure_code, recall_block, reply_to_id, ask, outreach_id,
+      [learnerId, now, LIMITS.memories + 1],
+    ),
+    db
+      .query<MessageRow>(
+        `select id, role, text, status, failure_code, recall_block, reply_to_id, ask, outreach_id,
                   decision_id, created_at
              from buddy_messages where learner_id = $1
               -- Her message for a sent sheet has no words (issue #632): the sheet itself is in
@@ -271,39 +290,31 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
               and material_id is null
             order by seq desc
             limit $2`,
-          [learnerId, LIMITS.messages],
-        )
-        .then((rows) => rows.reverse()),
-      // What the days before were about: cheap tokens where a longer message list would be
-      // expensive and still lose the shape of a day (issue #22, modules/buddy/summarise.ts).
-      db
-        .query<DaySummaryRow>(
-          `select to_char(day, 'YYYY-MM-DD') as day, summary, topics from buddy_session_summaries
+        [learnerId, LIMITS.messages],
+      )
+      .then((rows) => rows.reverse()),
+    // What the days before were about: cheap tokens where a longer message list would be
+    // expensive and still lose the shape of a day (issue #22, modules/buddy/summarise.ts).
+    db
+      .query<DaySummaryRow>(
+        `select to_char(day, 'YYYY-MM-DD') as day, summary, topics from buddy_session_summaries
             where learner_id = $1 and summary <> '—'
             order by ended_at desc
             limit $2`,
-          [learnerId, LIMITS.summaries],
-        )
-        .then((rows) => rows.reverse()),
-      // What the domain knows about her.
-      provider.state.load(db, learnerId, now),
-      db.query<OutreachRow>(
-        `select id, kind, origin, topic_key, title, body, why, status, send_at, sent_at, opened_at,
+        [learnerId, LIMITS.summaries],
+      )
+      .then((rows) => rows.reverse()),
+    // What the domain knows about her.
+    provider.state.load(db, learnerId, now),
+    db.query<OutreachRow>(
+      `select id, kind, origin, topic_key, title, body, why, status, send_at, sent_at, opened_at,
                 responded_at, response, goal_id, step_id, created_at
            from buddy_outreach
           where learner_id = $1 and created_at > $2::timestamptz - make_interval(days => $3)
           order by created_at desc, seq desc`,
-        [learnerId, now, LIMITS.outreachDays],
-      ),
-      db.one<{ goals: number; steps: number; memories: number }>(
-        `select
-           (select count(*) from buddy_goals where learner_id = $1 and status = 'active')::int as goals,
-           (select count(*) from buddy_steps where learner_id = $1 and state in ('planned','prepared','in_progress'))::int as steps,
-           (select count(*) from buddy_memories where learner_id = $1 and status = 'active'
-              and (valid_until is null or valid_until > $2))::int as memories`,
-        [learnerId, now],
-      ),
-    ]);
+      [learnerId, now, LIMITS.outreachDays],
+    ),
+  ]);
   const { totals: domainTotals, ...domain } = domainState;
 
   return {
@@ -316,9 +327,9 @@ export async function loadBuddyState(db: Db, learnerId: string, now: Date): Prom
     ...domain,
     outreach,
     totals: {
-      activeGoals: totals.goals,
-      openSteps: totals.steps,
-      memories: totals.memories,
+      activeGoals: t_goals,
+      openSteps: t_steps,
+      memories: t_memories,
       ...domainTotals,
     },
   };
