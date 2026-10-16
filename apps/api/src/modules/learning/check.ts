@@ -7,6 +7,8 @@ import type { BuddyState } from '../buddy/state.js';
 
 /** Wake-ups that follow directly from something the learner did. */
 const LEARNER_TRIGGERED: ReadonlySet<string> = new Set(['material_ready', 'session_finished']);
+/** Those with a fixed answer of their own: her sheet's ready line and start (`checkFallback`). */
+const FIXED_ANSWER: ReadonlySet<string> = new Set(['material_ready']);
 
 function describe(state: BuddyState, t: Trigger): string | null {
   switch (t.reason) {
@@ -27,6 +29,7 @@ function describe(state: BuddyState, t: Trigger): string | null {
 
 export const learningCheck = {
   learnerTriggered: LEARNER_TRIGGERED,
+  fixedAnswer: FIXED_ANSWER,
   describe,
   somethingToWorkWith: (state: BuddyState) => state.totals.items > 0,
 };

@@ -10,6 +10,7 @@ import {
   pollAfterMs,
   type ActionSummary,
   type BuddyHome,
+  type MessageView,
   type NowCard,
   type PreparedPractice,
 } from '@learnbuddy/shared-types/contracts';
@@ -468,9 +469,10 @@ export async function lastActed(db: Db, learnerId: string): Promise<Date | null>
  */
 export function pollAfter(
   screen: Pick<BuddyHome, 'now' | 'working'>,
-  thread: ReadonlyArray<{ status: string }>,
+  thread: ReadonlyArray<MessageView>,
+  now: Date,
 ): number | null {
-  return pollAfterMs({ now: screen.now, working: screen.working, thread });
+  return pollAfterMs({ now: screen.now, working: screen.working, thread }, now);
 }
 
 type PendingStatus = 'open' | 'confirmed' | 'declined' | 'expired' | 'superseded';
