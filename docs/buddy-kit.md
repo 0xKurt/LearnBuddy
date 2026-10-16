@@ -18,7 +18,9 @@
 >   Kits halten `provision` an Env-Namen, Migrationen, Cron-Job, Vault-Secrets und Region fest;
 >   `pnpm guards` zählt jeden Import aus generischem Code in die Lern-Domain (nur weniger erlaubt).
 >
-> **Nicht gebaut:** die Lern-Domain herauslösen (§6 des Issues; gemessen unten, „Modulgrenzen“),
+> **Nicht gebaut:** die Lern-Domain ganz herauslösen. `--core` lässt sie weg, und
+> `pnpm core-check` zählt, was dann noch nicht baut (§6 des Issues, „Modulgrenzen“ unten).
+> Außerdem nicht gebaut:
 > die Kern-Pakete (Option B), Aufrufe an die Management-APIs von Supabase, Vercel, Expo, Google
 > Cloud — für sie gibt es hier keine Konten, und eine Automatisierung, die nie gegen die echte API
 > lief, wäre eine Behauptung (CLAUDE.md Regel 5).
@@ -142,7 +144,8 @@ Gemessen am 10.10. auf `f314c0f` mit dependency-cruiser 18.4.0 (MIT). Was Domain
   `app/_layout.tsx → lib/learning/register.tsx`; der Wächter zählt 2.
 - Verträge 0 (Schnitt 7).
 - SQL auf Domain-Tabellen 0.
-- Fremdschlüssel Kern → Domain weiter 8 (Schnitt 9).
+- Fremdschlüssel Kern → Domain: 9, alle als `domain_…` benannt (Schnitt 9, Migration 0113).
+- Kern ohne Domain gebaut: `pnpm core-check` zählt die Typfehler, die übrig sind (Schnitt 10, unten).
 
 Reihenfolge der Schnitte (je ein eigener, kleiner Branch, ohne Verhaltensänderung): Stimm-Verträge
 aus `learning.ts` lösen → Tools, Lookups und Angebote melden sich an → Domain-Routen →
@@ -234,9 +237,39 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    - **Der Wächter** sieht jetzt auch die Verträge; der Barrel ist Naht wie die zwei
      `register.ts`. `buddy.ts → learning/drill/talk/figure`: 4 → 0, Importe gesamt: 6 → 2
      (die zwei Nähte).
-   - **Noch offen:** die Schemas und Beschreibungen der Domain-Werkzeuge, die das Modell sieht
-     (`decision.ts`, `registry.ts` in der API). Sie gehen in den Prompt-Hash ein und ziehen als
-     eigener Schritt um, mit `prompt-pin.test.ts` als Beleg, dass der Prompt byte-gleich bleibt.
+   - **Schnitt 7b (#825):** Auch die Schemas, Specs und Plätze der zehn Domain-Werkzeuge, die
+     das Modell sieht, liegen jetzt bei der Domain (`modules/learning/actTools.ts`). Sie melden
+     sich mit `registerActTools` an, jedes vor dem Kern-Werkzeug, vor dem es immer stand.
+     `prompt-pin.test.ts` belegt: der Prompt ist byte-gleich.
+9. **Die Fremdschlüssel der Domain (Schnitt 9, Migration 0113).** Neun Spalten von Kern-Tabellen
+   zeigen auf Domain-Tabellen. Ihre Constraints heißen jetzt `domain_…`. Spalten, Ziele und ON
+   DELETE sind unverändert (`domain-foreign-keys.int.test.ts` liest den echten Katalog).
+10. **Der Kern durch Konstruktion (Schnitt 10)** (`packages/buddy-kit/src/core.ts`,
+    `pnpm create-buddy … --core`, `pnpm core-check`):
+    - **Was die Kopie mit `--core` weglässt und schreibt:** Die Dateien der Lern-Domain
+      (`DOMAIN`) bleiben draußen. Die beiden Nähte entstehen neu und melden nichts an. Der
+      Barrel der Verträge verliert die Domain-Exporte und bekommt `buddyCore.ts`
+      (`buddyContracts` ohne Domain). Abhängigkeiten auf Workspace-Pakete, die draußen
+      blieben (`@learnbuddy/shared-math`), fallen aus der `package.json`. Tests, Harness, Evals
+      und Skripte, die die Domain erreichen, auch über einen anderen, bleiben ebenfalls draußen.
+    - **Gemessen am 16.10.:** 655 Dateien der Domain bleiben draußen, dazu 282 Tests, Evals und
+      Skripte. Der Typecheck der Kopie zeigt **204 Fehler im Produktionscode, in 58
+      Datei/Code-Paaren**, und 68 in Tests. Sie kommen fast alle über den Barrel: generische
+      Dateien, die Domain-Namen aus `@learnbuddy/shared-types/contracts` nehmen (den Barrel zählt
+      der Import-Wächter nicht), und Felder, die die Domain per Augmentation hinzufügt (`now`,
+      `working`, `materials` …). Die größten:
+      - App: `lib/api/endpoints.ts` 26, `components/buddy/describe.ts` 22,
+        `lib/homeLayout.ts` 25, `components/buddy/HomeNotices.tsx` 18;
+      - API: `buddy/home.ts` 8, `buddy/checkDecide.ts` 5 (`buddy/decision.ts` war bei 11 und ist mit
+        7b auf 0 gefallen; der Wächter hat das gemeldet).
+    - **Der Wächter:** `packages/buddy-kit/core-gaps.json` listet jeden dieser Reste, je Datei
+      und Fehlercode. `pnpm core-check` (CI, Job `check`) baut die Kopie, installiert sie und
+      typecheckt sie. Neu oder mehr ist rot: der Kern erreicht die Domain wieder. Weniger ist
+      auch rot, bis die Liste nachgezogen ist (`pnpm core-check --write`). So wird die Liste nur
+      kürzer.
+    - **Noch nicht:** Die Datenbank der Kopie ist die der Quelle, Lern-Tabellen eingeschlossen.
+      Eine Kern-Basis-Migration ist ein eigener Schritt. Der Kern startet ohne Domain auch noch
+      nicht: `createApp` verlangt einen Kontext-Provider.
 
 ## Die API-Datenbankrolle
 

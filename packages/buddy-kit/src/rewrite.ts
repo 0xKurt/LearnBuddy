@@ -110,7 +110,7 @@ const easJson: Rewrite = (text) => {
 };
 
 /** The scripts that only make new apps; a new app does not make further apps from itself. */
-const KIT_ONLY_SCRIPTS = ['create-buddy'];
+const KIT_ONLY_SCRIPTS = ['create-buddy', 'core-check'];
 
 /** The root package.json: the app's own name, without the generator. */
 const packageJson: Rewrite = (text, config) => {
