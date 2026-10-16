@@ -25,7 +25,7 @@ import { clearAdminToken, installAdminAutoClear } from '../lib/admin.js';
 import { ApiError } from '../lib/api/client.js';
 import { postAnswer } from '../lib/api/endpoints.js';
 import { refreshSettings } from '../lib/api/homeCache.js';
-import { flushOutbox } from '../lib/api/outboxSync.js';
+import { flushOutbox, outboxBelongsTo } from '../lib/api/outboxSync.js';
 import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
@@ -148,11 +148,12 @@ export default function RootLayout() {
         userRef.current = s?.user_id ?? null;
         // Her last conversation at once; it refreshes in the background (gaps.md #2).
         if (s) {
-          await restoreHers(s.user_id, { restoreCache, adoptLocalWork });
+          const adopted = await restoreHers(s.user_id, { restoreCache, adoptLocalWork });
           // An already-restored Me Query need not emit another success event on browser Back.
           const locale = learnerLocaleOf(keys.me, queryClient.getQueryData(keys.me));
           if (locale) applyLocale(locale);
-          sendHers();
+          // Whose leftovers these are could not be read: they stay, unsent, until the next start.
+          if (adopted) sendHers();
         } else void retryPendingRelease().catch(() => undefined);
       })
       .finally(() => {
@@ -174,9 +175,7 @@ export default function RootLayout() {
         if (userRef.current === s.user_id) return;
         userRef.current = s.user_id;
         // Someone else's leftovers go; hers (after an expired session) are sent now.
-        void adoptLocalWork(s.user_id)
-          .catch(() => undefined)
-          .then(sendHers);
+        void adoptLocalWork(s.user_id).then(sendHers, () => undefined);
         // A deep link that waited for the sign-in goes on now, on top of the gate.
         const route = pendingRoute.current;
         if (route && readyRef.current) {
@@ -190,6 +189,8 @@ export default function RootLayout() {
       }
       clearAdminToken();
       clearIncoming();
+      // Signed out: no kept answer goes out until the next sign-in proves whose it is.
+      outboxBelongsTo(null);
       // The next person must never be pushed into the previous user's route
       // (review 28.09.: the guard can capture transient paths mid-sign-out).
       pendingRoute.current = null;

@@ -76,18 +76,22 @@ describe('her part of the start, once she is signed in', () => {
     expect(done).toBe(true);
   });
 
-  it('starts even when one of the two cannot be read', async () => {
+  it('starts even when one of the two cannot be read, and says whether the work is hers', async () => {
+    const failing = () => Promise.reject(new Error('storage'));
+    const fine = () => Promise.resolve();
     await expect(
-      restoreHers('u1', {
-        restoreCache: () => Promise.reject(new Error('storage')),
-        adoptLocalWork: () => Promise.reject(new Error('storage')),
-      }),
-    ).resolves.toBeUndefined();
+      restoreHers('u1', { restoreCache: failing, adoptLocalWork: failing }),
+    ).resolves.toBe(false);
+    await expect(restoreHers('u1', { restoreCache: failing, adoptLocalWork: fine })).resolves.toBe(
+      true,
+    );
   });
 
   it('is how the start reads them: no read of hers waits for another', () => {
     const layout = readFileSync(join(__dirname, '../../app/_layout.tsx'), 'utf8');
     expect(layout).toContain('restoreHers(s.user_id, { restoreCache, adoptLocalWork })');
     expect(layout).not.toMatch(/await restoreCache\(/);
+    // Her leftovers go out only once they are proven hers (#822 review).
+    expect(layout).toContain('if (adopted) sendHers();');
   });
 });
