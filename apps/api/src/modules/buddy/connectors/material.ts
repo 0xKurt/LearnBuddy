@@ -126,6 +126,20 @@ export async function searchMaterials(
   return hits;
 }
 
+/**
+ * `first` while `beside` already runs (#673). `beside` is only an extra list: when it fails it is
+ * absent (null), and when `first` throws, a later failure of `beside` is still caught — never an
+ * unhandled rejection that could take the function down.
+ */
+export async function besideEachOther<A, B>(
+  first: () => Promise<A>,
+  beside: Promise<B | null>,
+): Promise<[A, B | null]> {
+  const settled = beside.catch(() => null);
+  const a = await first();
+  return [a, await settled];
+}
+
 /** The three candidate lists, fused; null when the query holds nothing searchable. */
 async function gather(
   deps: SearchDeps,
@@ -138,9 +152,10 @@ async function gather(
   const raw = query.trim().slice(0, 200);
   // List 3 — meaning over passage embeddings, when the schema and the budget allow. Started beside
   // the lexical lists, not after them (#673): the embedding is the longest wait before the model.
-  const vector = vectorCandidates(deps, learnerId, timezone, raw);
-  const lexical = await lexicalLists(deps, learnerId, timezone, query);
-  const vectorList = await vector;
+  const [lexical, vectorList] = await besideEachOther(
+    () => lexicalLists(deps, learnerId, timezone, query),
+    vectorCandidates(deps, learnerId, timezone, raw),
+  );
   if (lexical === null) return null;
   return {
     fused: fuseRrf(lexical.fts, lexical.trgm, vectorList ?? []),
