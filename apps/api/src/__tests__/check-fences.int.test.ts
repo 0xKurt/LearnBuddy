@@ -12,6 +12,7 @@ import { randomUUID } from 'node:crypto';
 import type { MaterialView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { bumpContext } from '../modules/buddy/plan.js';
 import { findOrCreateSubject } from '../modules/learning/state.js';
 import { enqueueJob } from '../modules/scheduler/jobs.js';
 import { testDatabaseAvailable } from '../testing/database.js';
@@ -247,5 +248,53 @@ describe.skipIf(!dbReady)('fences of the background work (#663)', () => {
       created.body.material.id,
     ]);
     expect(m.status).toBe('ready');
+  });
+
+  it('#850: her finished practice promises no fixed answer it does not have when Buddy is out-run', async () => {
+    // checkDecide gave a check that woke on her finished practice "still its fixed answer" once
+    // three attempts went stale — but the fixed fallbacks have none for a finished practice: it
+    // wrote a "fallback (stale)" decision that answered nothing. Her result card and greeting are
+    // the fixed answer; the check ends as stale, like any other.
+    env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
+    const l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
+    await goal(env, l, 'active');
+    const s = await env.db.one<{ id: string }>(
+      `insert into practice_sessions (learner_id, mode, status, title, started_at, last_activity_at, finished_at)
+       values ($1, 'practice', 'finished', 'Brüche', $2, $2, $2) returning id`,
+      [l.learnerId, env.clock.now()],
+    );
+    // She keeps chatting while Buddy decides: every answer is stale by the time it lands.
+    env.llm.byDefault('buddy_check', async () => {
+      await bumpContext(env.db, l.learnerId);
+      return {
+        disposition: 'act',
+        reason: 'tell',
+        actions: [],
+        outreach: {
+          kind: 'result',
+          topic_key: 'practice:done',
+          title: 'Deine Übung',
+          body: 'Gut geübt heute.',
+          why: 'Sie hat gerade geübt.',
+          relevance: 0.8,
+          expires_in_hours: 12,
+          goal: null,
+          step: null,
+        },
+      };
+    });
+    await check(env, l, { reason: 'session_finished', session_id: s.id });
+    await tick(env);
+    const job = await env.db.one<{ status: string; result: { outcome: string } }>(
+      `select status, result from jobs
+        where learner_id = $1 and kind = 'buddy_check' and dedupe_key like 'test:%'`,
+      [l.learnerId],
+    );
+    expect(job.result.outcome).toBe('stale');
+    const fallbacks = await env.db.query(
+      `select 1 from buddy_decisions where learner_id = $1 and reason like 'fallback%'`,
+      [l.learnerId],
+    );
+    expect(fallbacks).toHaveLength(0);
   });
 });

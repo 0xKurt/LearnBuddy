@@ -394,9 +394,10 @@ export async function decide(
     }
     // stale → loop with fresh state
   }
-  // She kept chatting while Buddy tried three times: what she is waiting for (her photos,
-  // her practice) still gets its fixed answer (audit p2-check-stale-exhaustion-drops-reaction).
-  if (answersLearner) {
+  // She kept chatting while Buddy tried three times: what she is waiting for still gets its
+  // fixed answer where there is one — her photos (audit p2-check-stale-exhaustion-drops-reaction).
+  // A finished practice has none: its result card and the greeting say it already (#850).
+  if (triggers.some((t) => contextProvider().check.fixedAnswer.has(t.reason))) {
     await fallback(deps, learner, triggers, 'stale', lease);
     return 'fallback:stale';
   }
