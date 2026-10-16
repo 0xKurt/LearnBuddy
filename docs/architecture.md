@@ -1473,7 +1473,9 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
 - **The way to the first word is logged** (issue #447, `http/timing.ts`): every streamed call
   writes one line, `[timing] POST /v1/buddy/messages auth=… start=… first=… done=…` —
   milliseconds since the request reached the API until the sign-in service vouched for the
-  token, the work began, the first event and the result left. Route pattern and numbers only.
+  token, the work began, the first event and the result left. An answer that changed something
+  adds `applied=…` (#685): it was stored and its reply sent then, so `done − applied` is what
+  building and sending the home costs it. Route pattern and numbers only.
   Next to the phone's `lb-perf` line of the same minute it splits the device's wait into the way
   there and back, the sign-in check, the server and the model; `llm_calls` adds when the model
   call started (`created_at − latency_ms`).

@@ -69,7 +69,8 @@ export type TurnLearner = Pick<
  * Buddy's reply while it is being written: `round` counts the model calls of this
  * turn (a lookup or a repair starts a new one, whose reply replaces the last).
  */
-export type OnReply = (round: number, progress: ReplyProgress) => void;
+/** `applied`: the reply of an answer that was just stored (rule 5), not a draft being written. */
+export type OnReply = (round: number, progress: ReplyProgress, applied?: 'applied') => void;
 
 /** Entry point for POST /buddy/messages. */
 export async function receiveLearnerMessage(
@@ -430,7 +431,7 @@ async function decideTurn(
       // something no longer waits for the home to be built, sent and read by the phone before
       // its first sound. The fixed help answer is not streamed (rule 18): it arrives whole.
       if (result.replyMessageId && !parsed.data.concern && streamedWhole !== round)
-        onReply?.(round, { text: reply.text, speakable: true, done: true });
+        onReply?.(round, { text: reply.text, speakable: true, done: true }, 'applied');
       // What Buddy just offered is prepared while she reads his reply (issue #48).
       hooks.applied(deps, learner.id, result.actions);
       return { status: 'done', errorCode: null };
