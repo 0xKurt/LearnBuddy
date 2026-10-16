@@ -94,6 +94,14 @@ jobs:
         if: hashFiles('packages/buddy-kit/src/cli/create-buddy.ts') != ''
         run: pnpm create-buddy "$RUNNER_TEMP/reference-buddy" --config packages/buddy-kit/reference.config.json --verify=typecheck
 
+      - name: Starter kit core (create-buddy --core → typecheck against core-gaps.json)
+        # The generic core by construction, without the learning domain (issue #107, cut 10):
+        # copied, installed and typechecked. Every error left in production code is listed in
+        # packages/buddy-kit/core-gaps.json; a new one is red (the core reaches the domain again),
+        # and so is a closed one the list still names, so the list only gets shorter.
+        if: hashFiles('packages/buddy-kit/src/cli/core-check.ts') != ''
+        run: pnpm core-check
+
   deploy-check:
     name: deploy config (Vercel detector)
     runs-on: ubuntu-latest
