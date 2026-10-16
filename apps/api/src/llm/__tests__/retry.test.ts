@@ -165,6 +165,24 @@ describe('a throttled call inside the caller’s budget', () => {
     expect((err as LlmError).attempts).toBe(3);
   });
 
+  it('never repeats a call the caller stopped waiting for (#684)', async () => {
+    const f = fakeWaits();
+    const gone = new AbortController();
+    let calls = 0;
+    const err = await generateWithRetries(
+      request({ signal: gone.signal }),
+      async () => {
+        calls++;
+        gone.abort();
+        throw new LlmError('rate_limited', 'provider rate limit');
+      },
+      f.waits,
+    ).catch((e: unknown) => e);
+    expect((err as LlmError).kind).toBe('cancelled');
+    expect(calls).toBe(1);
+    expect(f.slept).toEqual([]);
+  });
+
   it('never spends more than the timeout the caller asked for', async () => {
     const f = fakeWaits({ random: 1 });
     let calls = 0;

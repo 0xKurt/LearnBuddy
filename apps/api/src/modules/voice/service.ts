@@ -59,6 +59,8 @@ export async function transcribe(
   input: TranscribeRequest,
   /** Called with the words as they arrive; only for showing, never for deciding. */
   onProgress?: (event: TranscribeStreamEvent) => void,
+  /** The stream's: aborted when she is gone, and the model call with it (#684). */
+  signal?: AbortSignal,
 ): Promise<{ text: string }> {
   const now = deps.now();
   const day = await learnerDay(deps.db, learner.id, now);
@@ -107,6 +109,7 @@ export async function transcribe(
       temperature: 0,
       timeoutMs: 20_000,
       thinking: 'off',
+      ...(signal ? { signal } : {}),
     });
     const parsed = Transcript.safeParse(res.json);
     if (!parsed.success) throw new AppError('model_unavailable', 'Could not listen right now');

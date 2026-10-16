@@ -211,8 +211,11 @@ export function paramsFor(req: LlmRequest, model: string, timeoutMs: number) {
       safetySettings: SAFETY,
       ...thinkingConfigOf(req.thinking, model),
       // Not req.timeoutMs: that is the budget for the whole call including retries, and
-      // this attempt only gets what is left of it (retry.ts).
-      abortSignal: AbortSignal.timeout(timeoutMs),
+      // this attempt only gets what is left of it (retry.ts). The caller's own signal (#684)
+      // ends it too.
+      abortSignal: req.signal
+        ? AbortSignal.any([AbortSignal.timeout(timeoutMs), req.signal])
+        : AbortSignal.timeout(timeoutMs),
     },
   };
 }

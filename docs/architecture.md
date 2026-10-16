@@ -1515,7 +1515,11 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   Only words it has finished writing are sent (`partialArray` in `llm/partial.ts` returns
   complete elements only — a word must never flash green and turn amber two characters later),
   and nothing counts as judged until the `done` event carries the stored `AnswerResponse`
-  (rule 5). Without the header the same call answers with plain JSON.
+  (rule 5). Without the header the same call answers with plain JSON. When the phone goes away
+  mid-stream, the judgement and the dictation stop their model call with it (#684,
+  `LlmRequest.signal`, recorded as `cancelled`; never retried); a recording sent again while its
+  judgement still runs in the same instance joins that run — one model call, one result. Buddy's
+  chat turn is not stopped this way: a dropped stream is not "Stopp", and the answer still lands.
 - **Writing down what she said streams too** (`POST /voice/transcribe` with
   `Accept: text/event-stream`; `TranscribeStreamEvent`, issue #9): on the dictation path — a
   phone without on-device recognition, or a language it cannot do — the words appear while the

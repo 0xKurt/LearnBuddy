@@ -146,6 +146,17 @@ function sizeOf(base64: string): string {
   return '';
 }
 
+/** A scripted answer ends like a real provider's when the caller's signal aborts (#684). */
+function untilCancelled<T>(answer: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
+  if (!signal) return answer;
+  return new Promise<T>((resolve, reject) => {
+    const cancel = () => reject(new LlmError('cancelled', 'the caller stopped waiting'));
+    if (signal.aborted) return cancel();
+    signal.addEventListener('abort', cancel, { once: true });
+    answer.then(resolve, reject).finally(() => signal.removeEventListener('abort', cancel));
+  });
+}
+
 /**
  * The model in tests. Every call must be scripted: an unscripted call is
  * recorded in `unexpected` and fails like an unavailable model, so tests see
@@ -300,8 +311,10 @@ export class ScriptedGateway implements LlmGateway {
     let json: unknown;
     if (typeof answer === 'function') {
       try {
-        json = await answer(req);
+        json = await untilCancelled(Promise.resolve(answer(req)), req.signal);
       } catch (err) {
+        // The caller stopped waiting (#684): the provider's answer, not a broken script.
+        if (err instanceof LlmError && err.kind === 'cancelled') throw err;
         this.scriptErrors.push(err instanceof Error ? err.message : String(err));
         throw err;
       }

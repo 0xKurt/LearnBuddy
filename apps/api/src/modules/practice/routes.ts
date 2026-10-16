@@ -276,5 +276,8 @@ practiceRoutes.post('/sessions/:id/speak', async (c) => {
   const learner = c.get('learner');
   const deps = depsOf(c);
   if (!wantsStream(c)) return c.json(await speakItem(deps, learner, sessionId, input));
-  return streamed(c, 'progress', (emit) => speakItem(deps, learner, sessionId, input, emit));
+  // A judgement nobody waits for is stopped with its stream (#684); a resend runs it once.
+  return streamed(c, 'progress', (emit, signal) =>
+    speakItem(deps, learner, sessionId, input, emit, signal),
+  );
 });
