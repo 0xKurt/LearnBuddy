@@ -1418,6 +1418,27 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   late (p50 61 ms). Buddy's moon therefore steps only while its screen is on top and the app is in
   front (`lib/screenFocus.ts` `useOnScreen`, `lib/buddy/useMoon.ts`); under another screen it holds
   where it is and goes on from there. Practice idle over the chat: frame p50 105 → 57 ms.
+- **Transform and opacity skip the commit** (issue #710): `apps/mobile/package.json` sets
+  Reanimated's static flag `ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS`, so transform, opacity,
+  zIndex, colours and radii go straight to the views instead of through a shadow-tree commit (the
+  ~40 % of the main thread `simpleperf` put into `ShadowTree::commit`). Layout props (`left`,
+  `width`, …) still commit. It is read at native build time, so it takes effect with the next
+  build. `lib/__tests__/nativeConfig.test.ts` checks that the installed Reanimated knows the flag.
+  Not measured yet: CPU and frame p50 before and after on the POCO X3.
+- **Window chrome that only a native build changes** (issues #194, #177), held in
+  `lib/__tests__/nativeConfig.test.ts`:
+  - The native start screen has a `dark` variant (`expo-splash-screen` in `app.json`):
+    `assets/splash-icon-dark.png` is the same picture baked opaque on `pastellDark.bg` `#191627`,
+    as the light one is on `#faf7fd`. Opaque, because MIUI composites alpha wrongly
+    (`scripts/brand/render-icons.mjs`). It follows the system's day and night; it cannot know the
+    app's own theme choice, which `SplashHandoff` paints next. On iOS the dark variant stays
+    off as long as `app.json` sets `"userInterfaceStyle": "light"` (`expo config` says so). That
+    switch also decides the system's own controls there, so it is not changed for the splash.
+  - Every sheet is a `Modal`, a window of its own on Android, which `expo-navigation-bar` does
+    not reach. `plugins/withModalNavigationBar.js` writes React Native's `Theme.FullScreenDialog`
+    again (its five items unchanged) for API 29+. The navigation bar becomes transparent, its
+    contrast scrim goes off, and its icons follow day and night. With `navigationBarTranslucent`
+    the sheet's own surface fills the bar instead of the light scrim measured on 01.10.
 - **Output tokens ARE the wait, and thinking tokens count as output** (issues #219/#220, measured
   02.10., `docs/speed-audit.md` §Ausgabe-Tokens): roughly a 1 s floor plus 250–300 written tokens a
   second. So the only way to shorten a wait is to need fewer tokens before the learner can start —

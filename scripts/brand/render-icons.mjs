@@ -13,6 +13,8 @@ import { chromium } from '@playwright/test';
 const out = resolve(process.argv[2] ?? 'apps/mobile/assets');
 
 const BG = '#faf7fd';
+/** The night page colour (lib/theme/palettes.ts, `pastellDark.bg`), for the dark splash (#194). */
+const NIGHT_BG = '#191627';
 const VIOLET = '#6a48d7';
 
 /** The soft pastel light (blue · lilac · pink) behind the orb, as in components/lb/Glow.tsx. */
@@ -239,6 +241,15 @@ const FILES = [
     body: orb(...SPLASH) + moon(...SPLASH, BOOST),
     opaque: true,
   },
+  // The same picture baked on the night page colour (#194): expo-splash-screen's `dark` variant
+  // shows it on a dark window, so no light square stands in the middle of a dark start.
+  {
+    name: 'splash-icon-dark.png',
+    size: 1024,
+    body: orb(...SPLASH) + moon(...SPLASH, BOOST),
+    opaque: true,
+    bg: NIGHT_BG,
+  },
   // Web: no halo, no glow (they would blur at 48 px); the moon a little larger to read.
   {
     name: 'favicon.png',
@@ -260,7 +271,7 @@ await mkdir(out, { recursive: true });
 for (const f of FILES) {
   await page.setViewportSize({ width: f.size, height: f.size });
   await page.setContent(
-    `<html><body style="margin:0;background:${f.opaque ? BG : 'transparent'}">${svg(
+    `<html><body style="margin:0;background:${f.opaque ? (f.bg ?? BG) : 'transparent'}">${svg(
       f.size,
       f.body,
     )}</body></html>`,
