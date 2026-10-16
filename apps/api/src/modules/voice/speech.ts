@@ -93,20 +93,27 @@ export async function synthesizeSpeech(
     latencyMs?: number;
     errorKind?: string;
   }) =>
-    deps.db.query(
-      `insert into speech_calls (learner_id, outcome, characters, latency_ms, cost_micros, error_kind,
+    deps.db
+      .query(
+        `insert into speech_calls (learner_id, outcome, characters, latency_ms, cost_micros, error_kind,
                                  created_at)
        values ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        who.learnerId,
-        row.outcome,
-        text.length,
-        row.latencyMs ?? 0,
-        row.outcome === 'ok' ? text.length * deps.speech.microsPerCharacter : 0,
-        row.errorKind ?? null,
-        now,
-      ],
-    );
+        [
+          who.learnerId,
+          row.outcome,
+          text.length,
+          row.latencyMs ?? 0,
+          row.outcome === 'ok' ? text.length * deps.speech.microsPerCharacter : 0,
+          row.errorKind ?? null,
+          now,
+        ],
+      )
+      // Bookkeeping never costs her the sentence: a failed count is logged, the audio still goes out.
+      .catch((err: unknown) => {
+        console.warn('[voice] speech count not recorded', {
+          error: err instanceof Error ? err.message.slice(0, 200) : 'unknown',
+        });
+      });
   if (cached) {
     await count({ outcome: shared ? 'shared' : 'cached' });
     return answer(cached.mime, cached.audio);

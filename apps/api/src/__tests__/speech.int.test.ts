@@ -12,7 +12,7 @@ import type {
   SendMessageResponse,
   SpeechResponse,
 } from '@learnbuddy/shared-types/contracts';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POLICIES } from '../lib/limits.js';
 import { runTick } from '../modules/scheduler/tick.js';
@@ -141,6 +141,23 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
       `select count(*)::text as n from speech_cache_shared`,
     );
     expect(Number(shared.n)).toBe(1);
+  });
+
+  it('reads the sentence even when its count cannot be written (#682)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    // The real table made unwritable for this one request: the bookkeeping fails, she does not.
+    await env.db.query(`alter table speech_calls rename to speech_calls_away`);
+    try {
+      const res = await speech({ text: 'Super gemacht!', locale: 'de-DE' });
+      expect(res.status).toBe(200);
+      expect(res.body.audio_base64.length).toBeGreaterThan(0);
+      expect(warn.mock.calls.some((c) => String(c[0]).includes('speech count not recorded'))).toBe(
+        true,
+      );
+    } finally {
+      await env.db.query(`alter table speech_calls_away rename to speech_calls`);
+      warn.mockRestore();
+    }
   });
 
   it('counts every sentence asked for, with its characters and list-price cost, never its text (#682)', async () => {
