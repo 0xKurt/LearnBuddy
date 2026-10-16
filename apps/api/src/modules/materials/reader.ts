@@ -9,6 +9,7 @@ import { callModel } from '../../llm/call.js';
 import type { LlmMessage, LlmPart, LlmResult } from '../../llm/gateway.js';
 import { curriculumBlock } from '../curriculum/state.js';
 import { availableLine, chooseForms, keptAndLost } from '../practice/formChoice.js';
+import { choiceKey, storeChoice, storedChoice } from './formMemory.js';
 import { ageOn } from '../identity/model.js';
 import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM, LEAN_RULES } from './extract.js';
 import {
@@ -52,7 +53,13 @@ type Reader = (
 export async function sheetReader(
   deps: Deps,
   learnerId: string,
-  opts: { homework: boolean; parts: LlmPart[]; now: Date },
+  opts: {
+    homework: boolean;
+    parts: LlmPart[];
+    now: Date;
+    /** The photographed material: its stored choice of forms is used and kept (F5-2, #657). */
+    materialId?: string;
+  },
 ): Promise<{ learner: ReadingLearner; timezone: string; read: Reader }> {
   const learner = await deps.db.one<ReadingLearner>(
     `select id, locale, level, grade, birth_date, curriculum_region from learners where id = $1`,
@@ -89,14 +96,31 @@ export async function sheetReader(
   // The forms and figures this sheet needs, chosen once for every reading of it: the whole
   // schema is past what Vertex serves (#627, `practice/formChoice.ts`).
   let narrowed: ReturnType<typeof chooseForms> | null = null;
-  const read: Reader = async (lean, extra) => {
-    narrowed ??= chooseForms(deps, learner.id, day, {
+  // A reading of this sheet chose before (a clarification, a reading run again): that choice
+  // stands, no second choosing call with the same photos (F5-2, #657). A choice the model made
+  // is kept for the next one; one that failed (`fallback`) is not.
+  const key = choiceKey(version, deps.config.FORMS_OFF);
+  const choose: () => ReturnType<typeof chooseForms> = async () => {
+    const known = opts.materialId ? await storedChoice(deps.db, opts.materialId, key) : null;
+    const chosen = await chooseForms(deps, learner.id, day, {
       purpose: 'extraction',
       promptVersion: version,
       system,
       contents,
       full: opts.homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
+      known,
     });
+    if (
+      opts.materialId &&
+      !known &&
+      chosen.keep &&
+      (chosen.how === 'chosen' || chosen.how === 'minimal')
+    )
+      await storeChoice(deps.db, opts.materialId, key, chosen.keep);
+    return chosen;
+  };
+  const read: Reader = async (lean, extra) => {
+    narrowed ??= choose();
     const chosen = await narrowed;
     const { schema, keep } = chosen;
     const line = availableLine(chosen);

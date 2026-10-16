@@ -89,6 +89,7 @@ export async function runClarifiedReading(deps: Deps, job: JobRow, spotId: strin
     homework,
     parts: loaded.parts,
     now,
+    materialId: spot.material_id,
   });
   // Everything the sheet already asks, so the reading adds the one task and repeats nothing.
   const existing = await deps.db.query<{ prompt: string }>(
