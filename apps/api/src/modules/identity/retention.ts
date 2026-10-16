@@ -158,5 +158,12 @@ export async function purgeDecisionContent(deps: Deps): Promise<number> {
       returning id`,
     [callCutoff],
   );
-  return cleared.length + calls.length;
+  // The voice's counts (#682) are bookkeeping like the call log, kept as long.
+  const spoken = await deps.db.query<{ id: string }>(
+    `delete from speech_calls
+      where id in (select id from speech_calls where created_at < $1 limit 1000)
+      returning id`,
+    [callCutoff],
+  );
+  return cleared.length + calls.length + spoken.length;
 }

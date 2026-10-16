@@ -1786,13 +1786,39 @@ offered her — never on free text a model would have to interpret, and never on
 suspected. The answer then starts **one more reading of the same photos**: the continued-reading
 machinery of #150 (`moreRules` with every prompt the sheet already has, dedupe by normalised
 prompt) with `clarifiedRules` added, which states her reading as hers and asks for that task and
-nothing else. It runs under the same `extract_material` job kind, keyed `clarify:<spot>`, and is
+nothing else. It runs under the same `extract_material` job kind, keyed `clarify:<spot>` (several answers of a sheet are read together, below), and is
 excluded from the three readings `retryMaterial` counts — her own answer may never be the reason
 "Nochmal lesen" is refused. What came of it is recorded (`items_added`): 0 means the question still
 could not be written, and STATE tells Buddy to say that plainly and thank her, rather than letting
 her answer disappear (rule 5). STATE carries all three states (asked / answered / written nothing)
 with the task as printed, so Buddy can ask it in his own words — and is told never to pick a
 reading himself.
+
+**The answers of one sheet are read together** (issue #683, KI-Audit K10,
+`materials/clarifyTogether.ts`). Every clarification was a full reading of all the sheet's photos,
+and a sheet asks about up to six spots, which she answers a few seconds apart: each answer started
+a reading of its own beside the others. Now one clarified reading of a sheet runs at a time. Its
+job takes the sheet (`takeSheet`: an advisory lock per sheet, then the job's payload marks it as
+the sheet's running reading). It reads every spot of the sheet she has answered by then on the
+same photos, with `clarifiedRules` listing them all. A single spot keeps its old wording word for
+word. An answer given while that reading runs gets a job that waits: it goes back to the queue
+until the running reading's lease. When the running reading ends, `releaseWaiting` makes the
+waiting jobs due and runs them at once. They then read whatever else came in meanwhile, together;
+a waiting job whose spot is already read ends without a model call. The final transaction closes
+only the spots still answered, and it dedupes the new questions against what the sheet asks _in
+that transaction_, so nothing stands twice. What each spot got stays its own (`creditOf`):
+
+- a spot gets the new questions that hold her reading as a whole token (the reading was told to
+  put her reading in place of the unsettled part);
+- it also gets every new question that holds no spot's reading;
+- so `items_added` is 0 only when no new question holds its reading and every new one holds
+  another spot's.
+
+Measured: `material-unclear.int.test.ts`. Three answers given before a reading starts cost one
+reading instead of three. Three answers where two come while the first is being read cost two
+instead of three. Both cases were red before. Not measured live: how often she really answers
+during a running reading. There is no artificial wait before the first reading: she should not
+wait longer for her first answer to be read.
 
 **A corrected class test and the notebook entry of the day** (issue #259, #224 Baustein QUELLE,
 `materials/sources.ts`, migration `0093_material_sources.sql`). Two pages a learner brings that are
@@ -5594,7 +5620,10 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`readsIn`, `speech/gateway.ts` — the same test a listening text and a Diktat use). Without it
   the setup leaves the voice step out and the settings leave the group out; nothing is guessed
   from a sample that happened to sound like the phone. Audio is
-  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). The app
+  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). Every sentence
+  asked for is counted in `speech_calls` (#682): outcome (made, her cache, the shared sample cache,
+  error), characters, latency and the gateway's list-price cost (`microsPerCharacter`), never the
+  text; TTS characters per day are one query on it. The app
   (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
   sentence with the phone's voice (`expo-speech`) when the server says no (off, budget, language,
   error) or is unreachable — never silence. `useBuddyVoice()` (`lib/speech/voiceState.ts`)

@@ -8,7 +8,9 @@ import { LlmError } from '../../llm/gateway.js';
 import { StorageError } from '../../storage/gateway.js';
 import { bumpContext } from '../buddy/plan.js';
 import { insertItems, samePrompt } from '../practice/items.js';
+import { runWaitingJobNow } from '../scheduler/tick.js';
 import { backoffMs, finishJob, retryJob, type JobRow } from '../scheduler/jobs.js';
+import { creditOf, releaseWaiting, takeSheet } from './clarifyTogether.js';
 import { clarifiedRules, moreRules } from './extract.js';
 import { intoHelpSession } from './helpSession.js';
 import { loadPhotos } from './photos.js';
@@ -19,8 +21,12 @@ import { ReadingParse } from './sources.js';
 import type { UnclearSpotRow } from './unclear.js';
 import type { MaterialRow } from './view.js';
 
+type TakenSpot = { id: string; task: string; about: string; answer: string };
+
 /**
  * One more reading of the same photos, now that SHE has settled the spot (issue #164 point 1).
+ * Every other spot of the sheet she has answered by then is read with it (#683,
+ * `clarifyTogether.ts`); a reading of the sheet that still runs is waited for.
  *
  * The sheet never leaves `ready` for this: everything else on it has been practicable since its
  * first reading, and a clarification may not take that away. What comes back is merged exactly
@@ -72,16 +78,50 @@ export async function runClarifiedReading(deps: Deps, job: JobRow, spotId: strin
     return;
   }
 
+  // One reading of the sheet at a time: this one waits for the one that runs, and is then read
+  // with whatever else she answered meanwhile.
+  const taken = await deps.db.tx(async (tx) => {
+    if (!(await holdsLease(tx, job))) return null;
+    const busy = await takeSheet(tx, job, spot.sheet_id, deps.now());
+    if (busy) {
+      await retryJob(tx, job, {
+        runAt: busy.busyUntil,
+        error: 'sheet_being_read',
+        countAttempt: false,
+        now: deps.now(),
+      });
+      return null;
+    }
+    // Her answered spots of this sheet on the same photos (pages added later are read from
+    // their own); the others are read by their own jobs.
+    const answered = await tx.query<TakenSpot>(
+      `select id, task, about, answer from material_unclear_spots
+        where sheet_id = $1 and material_id = $2 and status = 'answered' and answer is not null
+        order by seq`,
+      [spot.sheet_id, spot.material_id],
+    );
+    // Read meanwhile by the reading this one waited for.
+    if (answered.length === 0) {
+      await finishJob(tx, job, deps.now(), {
+        status: 'done',
+        result: { outcome: 'nothing_to_do' },
+      });
+      return null;
+    }
+    return answered;
+  });
+  if (!taken) return;
+
   let loaded;
   try {
     loaded = await loadPhotos(deps, spot.material_id);
   } catch (err) {
-    if (err instanceof StorageError) return retryClarification(deps, job, spot, 'storage');
+    if (err instanceof StorageError) return retryClarification(deps, job, spot, taken, 'storage');
     throw err;
   }
   if (loaded.missing !== null || loaded.parts.length === 0)
-    return retryClarification(deps, job, spot, 'photos_missing');
-  if (!deps.llm.available) return retryClarification(deps, job, spot, 'model_unavailable');
+    return retryClarification(deps, job, spot, taken, 'photos_missing');
+  if (!deps.llm.available) return retryClarification(deps, job, spot, taken, 'model_unavailable');
 
   const now = deps.now();
   const homework = spot.purpose === 'homework';
@@ -91,52 +131,45 @@ export async function runClarifiedReading(deps: Deps, job: JobRow, spotId: strin
     now,
     materialId: spot.material_id,
   });
-  // Everything the sheet already asks, so the reading adds the one task and repeats nothing.
-  const existing = await deps.db.query<{ prompt: string }>(
-    `select prompt from items where material_id = $1 and learner_id = $2 and archived_at is null
-      order by seq`,
-    [spot.sheet_id, spot.learner_id],
-  );
-  const known = new Set(existing.map((e) => samePrompt(e.prompt)));
+  // Everything the sheet already asks, so the reading adds the settled tasks and repeats nothing.
+  const existing = await sheetPrompts(deps.db, spot.sheet_id, spot.learner_id);
   let parsed;
   try {
-    const res = await read(
-      false,
-      `${moreRules(existing.map((e) => e.prompt))}\n\n${clarifiedRules({
-        task: spot.task,
-        about: spot.about,
-        answer: spot.answer,
-      })}`,
-    );
+    const res = await read(false, `${moreRules(existing)}\n\n${clarifiedRules(taken)}`);
     parsed = ReadingParse.safeParse(res.json);
   } catch (err) {
     // An outage, a budget that is used up for today, an answer cut off: try again while this
     // job has a run left. After that the question stays unwritten and says so.
     if (isAppError(err) && err.code === 'budget_exhausted')
-      return retryClarification(deps, job, spot, 'budget_exhausted');
-    if (err instanceof LlmError) return retryClarification(deps, job, spot, err.kind);
+      return retryClarification(deps, job, spot, taken, 'budget_exhausted');
+    if (err instanceof LlmError) return retryClarification(deps, job, spot, taken, err.kind);
     throw err;
   }
   const forms = { locale: learner.locale, off: deps.config.FORMS_OFF };
-  const fresh = parsed.success ? addedQuestions(parsed.data, known, forms) : [];
 
-  await deps.db.tx(async (tx) => {
+  const waiting = await deps.db.tx(async (tx) => {
     // A run past its lease writes nothing (extraction-status-writes-unfenced).
     if (!(await holdsLease(tx, job))) return;
     // Still hers, still there, still answered: the sheet could have been deleted while the
     // model was reading.
-    const current = await tx.maybeOne<{ status: UnclearSpotRow['status'] }>(
-      `select s.status from material_unclear_spots s join materials m on m.id = s.sheet_id
-        where s.id = $1 and m.archived_at is null and m.status = 'ready' for update of s`,
-      [spot.id],
+    const still = await tx.query<{ id: string }>(
+      `select s.id from material_unclear_spots s join materials m on m.id = s.sheet_id
+        where s.id = any($1::uuid[]) and s.status = 'answered'
+          and m.archived_at is null and m.status = 'ready'
+        for update of s`,
+      [taken.map((t) => t.id)],
     );
-    if (!current || current.status !== 'answered') {
+    const open = taken.filter((t) => still.some((r) => r.id === t.id));
+    if (open.length === 0) {
       await finishJob(tx, job, deps.now(), {
         status: 'done',
         result: { outcome: 'nothing_to_do' },
       });
-      return;
+      return releaseWaiting(tx, spot.sheet_id, deps.now());
     }
+    // What the sheet asks now, read in this transaction: nothing stands twice.
+    const known = new Set((await sheetPrompts(tx, spot.sheet_id, spot.learner_id)).map(samePrompt));
+    const fresh = parsed.success ? addedQuestions(parsed.data, known, forms) : [];
     const itemIds = await insertItems(
       tx,
       {
@@ -158,12 +191,27 @@ export async function runClarifiedReading(deps: Deps, job: JobRow, spotId: strin
         joinOpen: true,
       });
     }
-    await closeSpot(tx, spot.id, spot.learner_id, itemIds.length, deps.now());
+    const credit = creditOf(open, fresh);
+    for (const t of open)
+      await closeSpot(tx, t.id, spot.learner_id, credit.get(t.id) ?? 0, deps.now());
     await finishJob(tx, job, deps.now(), {
       status: 'done',
-      result: { outcome: 'clarified', items: itemIds.length },
+      result: { outcome: 'clarified', items: itemIds.length, spots: open.length },
     });
+    return releaseWaiting(tx, spot.sheet_id, deps.now());
   });
+  // An answer that waited for this reading is read now, not at the next tick.
+  if (waiting) deps.background(() => runWaitingJobNow(deps, spot.learner_id));
+}
+
+/** The prompts the sheet asks already, in its order. */
+async function sheetPrompts(db: Db, sheetId: string, learnerId: string): Promise<string[]> {
+  const rows = await db.query<{ prompt: string }>(
+    `select prompt from items where material_id = $1 and learner_id = $2 and archived_at is null
+      order by seq`,
+    [sheetId, learnerId],
+  );
+  return rows.map((r) => r.prompt);
 }
 
 /** The spot is done with: what came of her answer, and Buddy's picture of the sheet changed. */
@@ -191,6 +239,7 @@ async function retryClarification(
   deps: Deps,
   job: JobRow,
   spot: UnclearSpotRow,
+  taken: readonly TakenSpot[],
   error: string,
 ): Promise<void> {
   const now = deps.now();
@@ -205,9 +254,11 @@ async function retryClarification(
     });
     return;
   }
-  await deps.db.tx(async (tx) => {
-    if (!(await holdsLease(tx, job))) return;
-    await closeSpot(tx, spot.id, spot.learner_id, 0, now);
+  const waiting = await deps.db.tx(async (tx) => {
+    if (!(await holdsLease(tx, job))) return false;
+    for (const t of taken) await closeSpot(tx, t.id, spot.learner_id, 0, now);
     await finishJob(tx, job, now, { status: 'done', result: { outcome: 'not_written', error } });
+    return releaseWaiting(tx, spot.sheet_id, now);
   });
+  if (waiting) deps.background(() => runWaitingJobNow(deps, spot.learner_id));
 }

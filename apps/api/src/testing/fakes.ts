@@ -632,6 +632,8 @@ const MAIN_LOCALE: Record<string, string> = {
 
 export class FakeSpeech implements SpeechGateway {
   readonly available = true;
+  /** Chirp 3: HD's list price, so a test reads the cost a real sentence records (#682). */
+  readonly microsPerCharacter = 30;
   readonly calls: SpeechInput[] = [];
   private failures: SpeechError[] = [];
   /** Languages this provider does not read (`lacks`), like a real one missing a voice. */
