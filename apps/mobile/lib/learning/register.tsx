@@ -38,15 +38,23 @@ import { homeFollowers, keys, menuPreloads, queryClient } from '../api/queries.j
 import { readingView } from '../buddy/readingStages.js';
 import { notation } from '../buddy/notation.js';
 import { MaterialUpload, type UploadDeps } from '../capture/materialUpload.js';
-import { pageHandler } from '../capture/pages.js';
-import { putPhoto } from '../capture/put.js';
+import { pageHandler, type PageHandler } from '../capture/pages.js';
 import { mathSpans } from '../math/parse.js';
-import { checkPhoto } from '../photo/check.js';
 import { ANALYSIS_WIDTH } from '../photo/quality.js';
 import { sayNotation } from '../speech/say.js';
 
 /** The real outside world of a send: the two API calls, the native PUT, fresh request ids. */
-const SEND: UploadDeps = { createMaterial, submitMaterial, putPhoto, newId };
+// What a photo she attaches needs loads with her first photo, not with the start (#716): the
+// upload over the file system and the quality check's JPEG decoder (lib/__tests__/startBundle).
+const SEND: UploadDeps = {
+  createMaterial,
+  submitMaterial,
+  putPhoto: async (localUri, uploadUrl, contentType) =>
+    (await import('../capture/put.js')).putPhoto(localUri, uploadUrl, contentType),
+  newId,
+};
+const checkPhoto: PageHandler['check']['run'] = async (smallJpegBase64, originalMinSide) =>
+  (await import('../photo/check.js')).checkPhoto(smallJpegBase64, originalMinSide);
 
 /**
  * A run of model text — Buddy's reply, a caption, a result row — is running text: its fractions

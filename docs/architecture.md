@@ -726,7 +726,10 @@ review moments `review_next_day`, `review_due`). Gates, cheapest first:
    right after the reading or the practice, not on the next scheduler run;
 4. nothing to work with → silence, no model call. With contact to the phone off or paused Buddy
    still looks and speaks in the app (ADR 0006); the daily routine look runs while an exam is
-   within 14 days. A routine look whose state the model already decided about within 48 hours
+   within 14 days, at the start of her preferred window plus an offset of her own (`routineAt`,
+   at most 30 minutes and half the window, from her id — K3 #680), and a scheduler run works on
+   three learners side by side (`CHECKS_AT_ONCE` in `tick.ts`), so the afternoon no longer queues
+   one learner behind the other. A routine look whose state the model already decided about within 48 hours
    (`lookedAtThisState`: its last check decision, wait or applied, and `context_version` exactly
    where that decision left it — one higher only if it wrote an action, a look back or a message
    that was not suppressed, read back from those rows) waits by code (F4-d, #656) — anything new
@@ -1288,7 +1291,11 @@ carries the last 24 messages — a good conversation, and nothing three weeks la
 those messages share one budget of `CONTEXT_CHARS` (40 000 characters, KI-Audit F19, #672,
 `fitDialogue` in `buddy/context.ts`): STATE goes whole (each section has its own cap and carries
 the aliases code resolves), the conversation gets the rest, its oldest messages go first, and
-what she wrote since Buddy's last answer is never cut. An ordinary turn is far below it. When a
+what she wrote since Buddy's last answer is never cut. An ordinary turn is far below it. Each
+earlier conversation says how long ago it was, counted by code (`(about 3 weeks ago)`, weeks from
+a week on, issue #783): asked about "three weeks ago", Buddy had two dates to count back from and
+told her of a talk she gave two weeks ago as if it were three. And answer chips belong to a
+question: a reply without a question mark carries none (`optionsFor`, `buddy/registry.ts`). When a
 conversation has come to rest (nothing said for four hours, the same gap the app draws its
 session line at), the scheduler has the model write **two to four sentences** about it plus
 up to five topics, stored per stretch with `until_message_id`; the newest ten travel in the

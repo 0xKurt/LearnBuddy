@@ -416,6 +416,16 @@ export function emptyReply(d: { concern: boolean; reply: string }): string[] {
   return ['reply: write your answer to the learner (empty is only for a concern answer)'];
 }
 
+/**
+ * Options are possible answers to the question the reply asks (the prompt's rule, issue #783): a
+ * reply that asks none carries none, so code drops them rather than show answer chips under a
+ * statement. A question is read by its mark — every app language writes one with "?" (Spanish
+ * opens it with "¿") — so no word of the reply is read (CLAUDE.md rule 3).
+ */
+export function optionsFor(reply: string, options: string[] | null): string[] | null {
+  return options && /[?¿？]/.test(reply) ? options : null;
+}
+
 /** Actions that remove something she had (a test, something you knew, a planned step). */
 function removesSomething(a: AnyAction): boolean {
   switch (a.tool) {

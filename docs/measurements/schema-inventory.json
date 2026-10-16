@@ -1,7 +1,7 @@
 {
  "issue": "#281",
- "commit": "5654cd76f14cf4c0c577ce21410b1e222d438b32",
- "commitDate": "2026-10-15T15:51:39+02:00",
+ "commit": "ee04698c9d7cc02be90665cfbb7fca9521d1dfe7",
+ "commitDate": "2026-10-15T18:32:19+02:00",
  "dirty": true,
  "sdk": "@google/genai 2.25.0",
  "zod": "3.25.76",
@@ -34,24 +34,24 @@
    "profile": "step (lookups allowed; every first call of a turn)",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "buddy.202e79b3",
+   "promptVersion": "buddy.b8c05aac",
    "where": "buddy/prompts.ts (buddyPrompt), sent by turn.ts — final ? turnSchema : turnStepSchema",
    "system": {
-    "chars": 24947,
-    "sha256": "3b63b0fbe71cc6f9bffdba3a10c8d20eb413aa2f003e976c3f32fcff8a64fe7e",
+    "chars": 24934,
+    "sha256": "39c6ccea4c516a21159525263676af2e93d979db56350825530973444adf87f2",
     "textTokens": null
    },
    "schema": {
-    "chars": 29768,
-    "sha256": "f4ae80c6222f2f572b8d8b6b0f7d7e76c650bf21c11cfc123656aa9292ebfb38",
+    "chars": 29776,
+    "sha256": "c60bfa8d2a6442a0b504bd241ce19f07d2984ae80f8184bfa8c281eda97ba226",
     "textTokens": null,
     "shape": {
-     "chars": 29768,
+     "chars": 29776,
      "nodes": 395,
      "maxDepth": 10,
      "objects": 51,
      "properties": 242,
-     "optionalFields": 78,
+     "optionalFields": 77,
      "anyOfNodes": 110,
      "nullableAnyOf": 107,
      "unions": 3,
@@ -71,7 +71,7 @@
      {
       "key": "lookups",
       "chars": 717,
-      "share": 0.024086267132491266,
+      "share": 0.024079795808704996,
       "descriptions": {
        "count": 1,
        "textChars": 132,
@@ -81,7 +81,7 @@
      {
       "key": "concern",
       "chars": 244,
-      "share": 0.00819672131147541,
+      "share": 0.008194519075765717,
       "descriptions": {
        "count": 1,
        "textChars": 207,
@@ -91,7 +91,7 @@
      {
       "key": "also_asked",
       "chars": 126,
-      "share": 0.004232733136253696,
+      "share": 0.0042315959161741,
       "descriptions": {
        "count": 1,
        "textChars": 91,
@@ -100,8 +100,8 @@
      },
      {
       "key": "actions",
-      "chars": 28047,
-      "share": 0.9421862402579951,
+      "chars": 28055,
+      "share": 0.9422017732401935,
       "descriptions": {
        "count": 236,
        "textChars": 6602,
@@ -111,7 +111,7 @@
      {
       "key": "reply",
       "chars": 94,
-      "share": 0.0031577532921257725,
+      "share": 0.00315690488984417,
       "descriptions": {
        "count": 1,
        "textChars": 60,
@@ -121,7 +121,7 @@
      {
       "key": "options",
       "chars": 172,
-      "share": 0.005778016662187584,
+      "share": 0.005776464266523375,
       "descriptions": {
        "count": 2,
        "textChars": 68,
@@ -131,7 +131,7 @@
      {
       "key": "asks_permission",
       "chars": 129,
-      "share": 0.004333512496640688,
+      "share": 0.004332348199892531,
       "descriptions": {
        "count": 1,
        "textChars": 94,
@@ -284,12 +284,12 @@
       0
      ],
      "shape": {
-      "chars": 27988,
+      "chars": 27996,
       "nodes": 374,
       "maxDepth": 8,
       "objects": 47,
       "properties": 229,
-      "optionalFields": 78,
+      "optionalFields": 77,
       "anyOfNodes": 107,
       "nullableAnyOf": 105,
       "unions": 2,
@@ -906,14 +906,14 @@
       },
       {
        "tag": "offer_rehearsal",
-       "sha256": "9b5fb46d7a8b9211c6eab563ebe440eb90659e09f38a3601e0f4249d562f8f42",
+       "sha256": "6beaaa407699731545d19b65a904ef1d1a1026984b99037dc2507c5dbed3a282",
        "shape": {
-        "chars": 788,
+        "chars": 796,
         "nodes": 9,
         "maxDepth": 3,
         "objects": 1,
         "properties": 5,
-        "optionalFields": 1,
+        "optionalFields": 0,
         "anyOfNodes": 3,
         "nullableAnyOf": 3,
         "unions": 0,
@@ -1132,24 +1132,24 @@
    "profile": "final (after MAX_LOOKUP_STEPS)",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "buddy.202e79b3",
+   "promptVersion": "buddy.b8c05aac",
    "where": "buddy/turn.ts",
    "system": {
-    "chars": 24947,
-    "sha256": "3b63b0fbe71cc6f9bffdba3a10c8d20eb413aa2f003e976c3f32fcff8a64fe7e",
+    "chars": 24934,
+    "sha256": "39c6ccea4c516a21159525263676af2e93d979db56350825530973444adf87f2",
     "textTokens": null
    },
    "schema": {
-    "chars": 29030,
-    "sha256": "bbced6c850165ae5bd78c9cfdb548a08508ceeafd745abd89c50dd1426e77f76",
+    "chars": 29038,
+    "sha256": "08d5860d3d31dcc6db2800865479e74822c602674562f2ca1b2360d10cf5571f",
     "textTokens": null,
     "shape": {
-     "chars": 29030,
+     "chars": 29038,
      "nodes": 383,
      "maxDepth": 10,
      "objects": 48,
      "properties": 235,
-     "optionalFields": 78,
+     "optionalFields": 77,
      "anyOfNodes": 108,
      "nullableAnyOf": 106,
      "unions": 2,
@@ -1169,7 +1169,7 @@
      {
       "key": "concern",
       "chars": 244,
-      "share": 0.008405098174302445,
+      "share": 0.008402782560782423,
       "descriptions": {
        "count": 1,
        "textChars": 207,
@@ -1179,7 +1179,7 @@
      {
       "key": "also_asked",
       "chars": 126,
-      "share": 0.004340337581811919,
+      "share": 0.00433914181417453,
       "descriptions": {
        "count": 1,
        "textChars": 91,
@@ -1188,8 +1188,8 @@
      },
      {
       "key": "actions",
-      "chars": 28047,
-      "share": 0.966138477437134,
+      "chars": 28055,
+      "share": 0.9661478063227495,
       "descriptions": {
        "count": 236,
        "textChars": 6602,
@@ -1199,7 +1199,7 @@
      {
       "key": "reply",
       "chars": 94,
-      "share": 0.003238029624526352,
+      "share": 0.0032371375439079826,
       "descriptions": {
        "count": 1,
        "textChars": 60,
@@ -1209,7 +1209,7 @@
      {
       "key": "options",
       "chars": 172,
-      "share": 0.00592490527040992,
+      "share": 0.005923272952682692,
       "descriptions": {
        "count": 2,
        "textChars": 68,
@@ -1219,7 +1219,7 @@
      {
       "key": "asks_permission",
       "chars": 129,
-      "share": 0.004443678952807441,
+      "share": 0.004442454714512018,
       "descriptions": {
        "count": 1,
        "textChars": 94,
@@ -1260,12 +1260,12 @@
       0
      ],
      "shape": {
-      "chars": 27988,
+      "chars": 27996,
       "nodes": 374,
       "maxDepth": 8,
       "objects": 47,
       "properties": 229,
-      "optionalFields": 78,
+      "optionalFields": 77,
       "anyOfNodes": 107,
       "nullableAnyOf": 105,
       "unions": 2,
@@ -1882,14 +1882,14 @@
       },
       {
        "tag": "offer_rehearsal",
-       "sha256": "9b5fb46d7a8b9211c6eab563ebe440eb90659e09f38a3601e0f4249d562f8f42",
+       "sha256": "6beaaa407699731545d19b65a904ef1d1a1026984b99037dc2507c5dbed3a282",
        "shape": {
-        "chars": 788,
+        "chars": 796,
         "nodes": 9,
         "maxDepth": 3,
         "objects": 1,
         "properties": 5,
-        "optionalFields": 1,
+        "optionalFields": 0,
         "anyOfNodes": 3,
         "nullableAnyOf": 3,
         "unions": 0,
@@ -2108,7 +2108,7 @@
    "profile": "step",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "buddy.202e79b3",
+   "promptVersion": "buddy.b8c05aac",
    "where": "buddy/check.ts — final ? CHECK_SCHEMA : CHECK_STEP_SCHEMA",
    "system": {
     "chars": 7517,
@@ -2436,7 +2436,7 @@
    "profile": "final",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "buddy.202e79b3",
+   "promptVersion": "buddy.b8c05aac",
    "where": "buddy/check.ts",
    "system": {
     "chars": 7517,
