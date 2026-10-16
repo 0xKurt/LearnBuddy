@@ -34,7 +34,7 @@ import {
   emptyReply,
   offeredTools,
   optionsFor,
-  TurnDecision,
+  turnDecisionSchema,
   turnFacts,
 } from './registry.js';
 import { recallText } from './recall.js';
@@ -378,7 +378,7 @@ async function decideTurn(
       return callFailed(deps, learner, message, record, err);
     }
 
-    const parsed = TurnDecision.safeParse(raw);
+    const parsed = turnDecisionSchema().safeParse(raw);
     if (!parsed.success) {
       const errors = schemaErrors(parsed.error);
       await record('rejected', errors);

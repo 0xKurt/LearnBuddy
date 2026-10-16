@@ -25,6 +25,7 @@ import { registerSentSchemas } from '../buddy/schemas.js';
 import { endForConcern, runStartRoleplay } from '../buddy/roleplay.js';
 import { registerStepStarter } from '../buddy/stepStart.js';
 import { runOfferRehearsal, runPlanTalk } from '../buddy/talkTools.js';
+import { registerActTools } from '../buddy/registry.js';
 import { registerActHandlers } from '../buddy/tools.js';
 import { purgeContent, purgePhotos, sweepForgottenPhotos } from '../materials/purge.js';
 import { runExtraction } from '../materials/reading.js';
@@ -40,6 +41,7 @@ import { registerPrivacyTables } from '../identity/privacyTables.js';
 import { registerJobKinds, registerTickWork } from '../scheduler/registry.js';
 import { LEARNING_SECTIONS, levelOf, renderLearning } from './context.js';
 import { dressThread, lastActed, learningHome } from './home.js';
+import { LEARNING_ACT_TOOLS } from './actTools.js';
 import { LEARNING_LOOKUPS } from './lookups.js';
 import { findLearningLookBack } from './lookback.js';
 import { LEARNING_PRIVACY_TABLES } from './privacy.js';
@@ -98,7 +100,9 @@ export function registerLearning(): void {
 
   // The practice that waits, when Buddy points to it (open_area practice, issue #630).
   registerWaitingStart(runShowReady);
-  // What Buddy can do in the conversation: practice, sheets, talks, roleplays.
+  // What Buddy can do in the conversation: practice, sheets, talks, roleplays — the tools as the
+  // model reads them, each at its place among the core's (cut 7b), and their code.
+  registerActTools(LEARNING_ACT_TOOLS);
   registerActHandlers({
     prepare_practice: runPreparePractice,
     request_material: runRequestMaterial,

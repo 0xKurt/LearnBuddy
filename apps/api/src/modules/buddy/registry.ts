@@ -13,7 +13,13 @@ import { z } from 'zod';
 
 import { flatUnion, nestCall } from './calls.js';
 import type { Aliases } from './context.js';
-import { ACT_SCHEMAS, Outreach, type ActionOf, type AnyAction, type ToolName } from './decision.js';
+import {
+  ACT_SCHEMAS,
+  Outreach,
+  placeActSchema,
+  type AnyAction,
+  type ToolName,
+} from './decision.js';
 import type { Surface } from './lookups.js';
 import { ToolRejection, type ToolContext, type ToolOutcome } from './toolKit.js';
 import { actHandler, missingActHandlers } from './tools.js';
@@ -33,7 +39,7 @@ type Touches =
   | 'roleplay'
   | 'nothing';
 
-type ActSpec = {
+export type ActSpec = {
   surfaces: readonly Surface[];
   touches: readonly Touches[];
   /** The learner's own words must justify it (quote checked in code). */
@@ -57,7 +63,8 @@ export type ToolFacts = Record<Fact, number>;
 const TURN: readonly Surface[] = ['turn'];
 const BOTH: readonly Surface[] = ['turn', 'check'];
 
-export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
+/** What each act tool may do; a domain's join at start-up (`registerActTools`). */
+export const ACT_TOOLS = {
   remember: {
     surfaces: TURN,
     touches: ['memory'],
@@ -111,13 +118,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     undoable: true,
     does: 'close a test as done (with outcome) or drop it (gN)',
   },
-  prepare_practice: {
-    surfaces: BOTH,
-    touches: ['practice', 'steps'],
-    needsQuote: false,
-    undoable: true,
-    does: 'prepare practice from her questions, for a test, topic or sheet',
-  },
   plan_step: {
     surfaces: TURN,
     touches: ['steps'],
@@ -141,42 +141,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     undoable: true,
     does: 'mark a step done (stN)',
   },
-  request_material: {
-    surfaces: BOTH,
-    touches: ['steps'],
-    needsQuote: false,
-    undoable: true,
-    does: 'ask for a photo of a sheet, or of a page missing from one',
-  },
-  delete_material: {
-    // Only in the conversation: requireQuote does not apply to a check, and Buddy must never
-    // reach for one of her sheets on his own initiative (issue #111).
-    surfaces: TURN,
-    needs: 'materials',
-    touches: ['material'],
-    needsQuote: true,
-    // archiveMaterial erases the photos and the transcript right away — nothing to put back.
-    undoable: false,
-    does: 'propose deleting one of her sheets with its questions',
-  },
-  rename_material: {
-    surfaces: TURN,
-    needs: 'materials',
-    touches: ['material'],
-    needsQuote: true,
-    undoable: true,
-    does: 'give one of her sheets the name she asked for',
-  },
-  delete_item: {
-    // Same reasons as delete_material: only in the conversation, only on her words, and
-    // nothing comes back — its text, solution and her answers are erased (issue #120).
-    surfaces: TURN,
-    needs: 'materials',
-    touches: ['material'],
-    needsQuote: true,
-    undoable: false,
-    does: 'propose taking one question off a sheet',
-  },
   set_contact: {
     surfaces: TURN,
     touches: ['settings'],
@@ -198,20 +162,6 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     undoable: true,
     does: 'look again later (1 hour – 21 days)',
   },
-  offer_learning: {
-    surfaces: TURN,
-    touches: ['nothing'],
-    needsQuote: false,
-    undoable: false,
-    does: 'a button that starts learning now (kinds below)',
-  },
-  offer_drill: {
-    surfaces: TURN,
-    touches: ['nothing'],
-    needsQuote: false,
-    undoable: false,
-    does: 'a button that starts a quick mental-arithmetic round',
-  },
   open_area: {
     surfaces: TURN,
     touches: ['nothing'],
@@ -219,42 +169,48 @@ export const ACT_TOOLS: { [K in ToolName]: ActSpec } = {
     undoable: false,
     does: 'a button that opens a part of the app, or the start of a practice you prepared',
   },
-  start_roleplay: {
-    surfaces: TURN,
-    touches: ['roleplay'],
-    needsQuote: true,
-    undoable: false,
-    does: 'start a roleplay in a foreign language',
-  },
-  plan_talk: {
-    surfaces: TURN,
-    touches: ['goals', 'steps'],
-    needsQuote: true,
-    undoable: true,
-    does: 'plan a talk with its day and the steps before it',
-  },
-  offer_rehearsal: {
-    surfaces: TURN,
-    touches: ['nothing'],
-    needsQuote: false,
-    undoable: false,
-    does: 'a card that records her talk rehearsal or her reading aloud, and measures it',
-  },
+} satisfies Record<string, ActSpec> as unknown as { [K in ToolName]: ActSpec };
+
+/** One act tool a domain adds: its call schema, what it may do, and the core tool it stands before. */
+export type ActToolEntry = {
+  name: string;
+  schema: z.ZodTypeAny;
+  spec: ActSpec;
+  /** The core tool it stands before in the order the model reads; null: at the end. */
+  before: ToolName | null;
 };
 
-const NAMES = Object.keys(ACT_SCHEMAS) as ToolName[];
+/**
+ * A domain's act tools join the registry (issue #107, cut 7b): each at its place, so the schema
+ * the model reads, and the prompt's hash, are what they were. Their handlers register separately
+ * (`registerActHandlers`, tools.ts). Registering again changes nothing.
+ */
+export function registerActTools(entries: readonly ActToolEntry[]): void {
+  for (const e of entries) {
+    placeActSchema(e.name, e.schema, e.before);
+    (ACT_TOOLS as Record<string, ActSpec>)[e.name] = e.spec;
+  }
+  built.clear();
+}
 
 /** Tool names a surface may call, in registry order. */
 export function toolsFor(surface: Surface): ToolName[] {
-  return NAMES.filter((n) => ACT_TOOLS[n].surfaces.includes(surface));
+  return (Object.keys(ACT_SCHEMAS) as ToolName[]).filter((n) =>
+    ACT_TOOLS[n].surfaces.includes(surface),
+  );
 }
 
-type KeysFor<S extends Surface> = {
-  [K in ToolName]: S extends (typeof ACT_TOOLS)[K]['surfaces'][number] ? K : never;
-}[ToolName];
-// Surfaces are declared as readonly Surface[] (not literal tuples), so the static
-// types stay the full union; the runtime schema below is what limits a surface.
-export type TurnAction = ActionOf<KeysFor<'turn'>>;
+/**
+ * The schemas built from the registry are built on first use, after a domain registered its tools
+ * at start-up, and again after a later registration.
+ */
+const built = new Map<string, unknown>();
+function once<T>(key: string, make: () => T): () => T {
+  return () => {
+    if (!built.has(key)) built.set(key, make());
+    return built.get(key) as T;
+  };
+}
 
 type Option = (typeof ACT_SCHEMAS)[ToolName];
 
@@ -266,8 +222,8 @@ function unionFor(surface: Surface) {
   return z.preprocess(nestCall, z.discriminatedUnion('tool', [first, second, ...rest]));
 }
 
-export const TurnActionSchema = unionFor('turn');
-export const CheckActionSchema = unionFor('check');
+export const turnActionSchema = once('turn actions', () => unionFor('turn'));
+export const checkActionSchema = once('check actions', () => unionFor('check'));
 
 /** What the model is offered: these tools, each call flat (calls.ts, #726). */
 function modelUnionOf(tools: readonly ToolName[]) {
@@ -326,51 +282,48 @@ const AlsoAsked = z
     'only read when concern is true: the same message also asks for something about her learning',
   );
 
-export const TurnDecision = z.object({
-  // Lenient when parsing (older scripted answers have no such field); the model must write it.
-  //
-  // It carried no description at all until issue #225, so everything this bit means stood in
-  // the system prompt while the model wrote the bit here — and measured over six runs it set it
-  // on a plain insult about one time in six, which hands a child who was only rude a crisis
-  // helpline and throws the real answer away. The description says both sides, because the one
-  // without the other is what went wrong (the schema reaches the model in the same request and
-  // is the larger of the two static blocks — see #213).
-  concern: z
-    .boolean()
-    .default(false)
-    .describe(
-      'true only when the learner tells of DANGER to herself: being hurt, bullied, abused or threatened, thinking of hurting herself, harming her own body, feeling unsafe or hopeless. The app then replaces your reply with a fixed caring message and a helpline. NOT true for an insult, a provocation, rudeness towards you, ordinary school stress, or a hard turn in her life she is only telling you about while naming no danger — setting it there throws your answer away and hands her a crisis number instead of an answer.',
-    ),
-  also_asked: z.boolean().default(false),
-  // No minimum length: a safeguarding answer is written by code, so the model rightly
-  // leaves the reply empty then (its own text would be thrown away). Everything else
-  // must carry a reply — enforced by emptyReply(), so an empty text is repaired with a
-  // clear reason instead of failing the turn (a child in distress would get an error).
-  reply: z
-    .string()
-    .trim()
-    .max(REPLY_MAX)
-    .describe(
-      "Your answer to the learner, in their language. Never claim a change you don't make in actions. Leave it empty only when concern is true — the app then answers with its own fixed text.",
-    ),
-  options: z
-    .array(z.string().trim().min(1).max(40))
-    .min(2)
-    .max(4)
-    .nullable()
-    .describe('Short tappable answers if you asked a question, else null'),
-  actions: z.array(TurnActionSchema).max(6),
-  // Lenient when parsing (older scripted answers have no such field); the model must write it.
-  asks_permission: z.boolean().default(false),
-});
-export type TurnDecision = {
-  concern: boolean;
-  also_asked: boolean;
-  reply: string;
-  options: string[] | null;
-  actions: TurnAction[];
-  asks_permission: boolean;
-};
+const Options = z
+  .array(z.string().trim().min(1).max(40))
+  .min(2)
+  .max(4)
+  .nullable()
+  .describe('Short tappable answers if you asked a question, else null');
+
+/** What code validates a turn's answer with. */
+export const turnDecisionSchema = once('turn decision', () =>
+  z.object({
+    // Lenient when parsing (older scripted answers have no such field); the model must write it.
+    //
+    // It carried no description at all until issue #225, so everything this bit means stood in
+    // the system prompt while the model wrote the bit here — and measured over six runs it set it
+    // on a plain insult about one time in six, which hands a child who was only rude a crisis
+    // helpline and throws the real answer away. The description says both sides, because the one
+    // without the other is what went wrong (the schema reaches the model in the same request and
+    // is the larger of the two static blocks — see #213).
+    concern: z
+      .boolean()
+      .default(false)
+      .describe(
+        'true only when the learner tells of DANGER to herself: being hurt, bullied, abused or threatened, thinking of hurting herself, harming her own body, feeling unsafe or hopeless. The app then replaces your reply with a fixed caring message and a helpline. NOT true for an insult, a provocation, rudeness towards you, ordinary school stress, or a hard turn in her life she is only telling you about while naming no danger — setting it there throws your answer away and hands her a crisis number instead of an answer.',
+      ),
+    also_asked: z.boolean().default(false),
+    // No minimum length: a safeguarding answer is written by code, so the model rightly
+    // leaves the reply empty then (its own text would be thrown away). Everything else
+    // must carry a reply — enforced by emptyReply(), so an empty text is repaired with a
+    // clear reason instead of failing the turn (a child in distress would get an error).
+    reply: z
+      .string()
+      .trim()
+      .max(REPLY_MAX)
+      .describe(
+        "Your answer to the learner, in their language. Never claim a change you don't make in actions. Leave it empty only when concern is true — the app then answers with its own fixed text.",
+      ),
+    options: Options,
+    actions: z.array(turnActionSchema()).max(6),
+    // Lenient when parsing (older scripted answers have no such field); the model must write it.
+    asks_permission: z.boolean().default(false),
+  }),
+);
 
 /**
  * What the model answers with: asks_permission is required there, and actions come
@@ -392,7 +345,7 @@ export function turnDecisionForModel(tools: readonly ToolName[] = toolsFor('turn
       .trim()
       .max(REPLY_MAX)
       .describe('your answer in her language; empty only when concern is true'),
-    options: TurnDecision.shape.options,
+    options: Options,
     asks_permission: z
       .boolean()
       // A German sample question stood in here until issue #213 — in the response schema, which
@@ -403,9 +356,6 @@ export function turnDecisionForModel(tools: readonly ToolName[] = toolsFor('turn
       ),
   });
 }
-
-/** The turn as the model sees it with every tool: what the inventory and the tests read. */
-export const TurnDecisionForModel = turnDecisionForModel();
 
 /**
  * Code-enforced: only a safeguarding answer may come without a reply (its text is
@@ -435,12 +385,8 @@ function removesSomething(a: AnyAction): boolean {
       return true;
     case 'update_step':
       return a.args.state !== null;
-    case 'delete_material':
-    case 'delete_item':
-      // Since issue #151 these only PROPOSE: the app puts a card in front of her and her
-      // tap decides. Asking in the reply while proposing is now exactly right — it was
-      // this guard that made the live eval's correct answer fail (buddy.44 run).
-      return false;
+    // A domain's deletions only PROPOSE (issue #151): the app puts a card in front of her and
+    // her tap decides, so asking in the reply while proposing is exactly right.
     default:
       return false;
   }
@@ -463,34 +409,44 @@ export function askedButActed(d: {
     );
 }
 
-export const CheckDecision = z.object({
-  disposition: z.enum(['act', 'wait']),
-  reason: z.string().trim().min(1).max(300).describe('Short audit note (not shown to the learner)'),
-  actions: z.array(CheckActionSchema).max(3),
-  outreach: Outreach.nullable(),
-  /** Looking back (lookback.ts): only about the fact the server offered, only in the app. */
-  look_back: z
-    .object({
-      fact: z
-        .string()
-        .regex(/^p\d{1,2}$/, 'must be the LOOK BACK alias, e.g. p1')
-        .describe('The LOOK BACK fact alias from the triggers (p1)'),
-      text: z
-        .string()
-        .trim()
-        .min(2)
-        .max(200)
-        .describe("One short, warm sentence in the learner's language, shown in the chat"),
-    })
-    .nullable()
-    .optional()
-    .describe('Only when a LOOK BACK fact is offered and it fits; otherwise null'),
-});
+/** What code validates a background check's answer with. */
+export const checkDecisionSchema = once('check decision', () =>
+  z.object({
+    disposition: z.enum(['act', 'wait']),
+    reason: z
+      .string()
+      .trim()
+      .min(1)
+      .max(300)
+      .describe('Short audit note (not shown to the learner)'),
+    actions: z.array(checkActionSchema()).max(3),
+    outreach: Outreach.nullable(),
+    /** Looking back (lookback.ts): only about the fact the server offered, only in the app. */
+    look_back: z
+      .object({
+        fact: z
+          .string()
+          .regex(/^p\d{1,2}$/, 'must be the LOOK BACK alias, e.g. p1')
+          .describe('The LOOK BACK fact alias from the triggers (p1)'),
+        text: z
+          .string()
+          .trim()
+          .min(2)
+          .max(200)
+          .describe("One short, warm sentence in the learner's language, shown in the chat"),
+      })
+      .nullable()
+      .optional()
+      .describe('Only when a LOOK BACK fact is offered and it fits; otherwise null'),
+  }),
+);
 
 /** What the check's model is offered: the same decision, its calls flat (calls.ts). */
-export const CheckDecisionForModel = CheckDecision.extend({
-  actions: z.array(modelUnionOf(toolsFor('check'))).max(3),
-});
+export const checkDecisionForModel = once('check decision for the model', () =>
+  checkDecisionSchema().extend({
+    actions: z.array(modelUnionOf(toolsFor('check'))).max(3),
+  }),
+);
 
 /** The catalogue of act tools for the prompt, generated from the registry. */
 export function actToolsPrompt(surface: Surface): string {

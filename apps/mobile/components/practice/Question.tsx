@@ -13,6 +13,7 @@ import { FIGURE_CHROME, figureChrome, MIN_FIGURE_SCALE } from '../../lib/math/fi
 import { useDrawingNatural } from '../../lib/math/figureSizing.js';
 import { fillableAnswer } from '../../lib/math/prompt.js';
 import { formDensity } from '../../lib/keyboard.js';
+import { useSettled } from '../../lib/useSettled.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { QUESTION } from '../../lib/theme/question.js';
 import { PROGRESS_BAR_MIN, SPACE } from '../../lib/theme/space.js';
@@ -239,8 +240,9 @@ export function QuestionCard({
   const meta =
     !inRun && !compactFeedback && !typing && (fromBuddy || Boolean(shownTopic) || part !== null);
   const { t } = useTranslation('practice');
-  // What the header row and the prompt keep for themselves; the rest is the figure's.
-  const [headHeight, setHeadHeight] = useState(0);
+  // What the header row and the prompt keep for themselves; the rest is the figure's. Measured and
+  // laid out from, so it converges or is held (`useSettled`, #720).
+  const [headHeight, setHeadHeight] = useSettled(0, 'questionHead');
   const filled = fillableAnswer(prompt, answer);
   // A labelled picture that is an image stands under the card, a card of its own (`standsAlone`).
   const picture = figure && standsAlone(figure) ? figure : null;

@@ -25,7 +25,7 @@ import {
 } from './lookback.js';
 import { withLookups } from './lookups.js';
 import { buddyPrompt, repairMessage, schemaErrors } from './prompts.js';
-import { CheckDecision } from './registry.js';
+import { checkDecisionSchema } from './registry.js';
 import { type BuddyState, loadBuddyState } from './state.js';
 import { pushAvailable } from './turn.js';
 
@@ -313,7 +313,7 @@ export async function decide(
       return `fallback:${why}`;
     }
 
-    const parsed = CheckDecision.safeParse(raw);
+    const parsed = checkDecisionSchema().safeParse(raw);
     const semantic = parsed.success
       ? [
           ...(parsed.data.disposition === 'wait' &&

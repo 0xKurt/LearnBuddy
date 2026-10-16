@@ -1,9 +1,14 @@
 import { TEST_MINUTES, TestMinutes } from '@learnbuddy/shared-types/contracts';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
-import { ACT_SCHEMAS, TEST_MINUTE_CHOICES } from '../decision.js';
+import { registerLearning } from '../../learning/register.js';
+import { ACT_SCHEMAS } from '../decision.js';
+import { TEST_MINUTE_CHOICES } from '../../learning/actTools.js';
 
 describe('the minutes of a test with time (issue #241)', () => {
+  // The learning domain's tools join the core's at start-up (issue #107, cut 7b).
+  beforeAll(() => registerLearning());
+
   it('offers the model exactly the list the server accepts', () => {
     expect(TEST_MINUTE_CHOICES.map(Number)).toEqual([...TEST_MINUTES]);
     for (const m of TEST_MINUTE_CHOICES)

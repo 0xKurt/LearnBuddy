@@ -487,6 +487,18 @@ needs the learner's quote and can be undone; its handler comes from `tools.ts`. 
 action schemas and the background check's tool catalogue are generated from it; `runAct` checks the
 surface again before running (a check can never run a turn-only tool — also unit-tested).
 
+**The domain's act tools join at start-up** (issue #107, cut 7b). The core declares only its
+fourteen tools (`CORE_ACT_SCHEMAS`, `remember` … `open_area`). The learning domain declares its ten
+(practice, sheets, drills, roleplay, talk, rehearsal) in `modules/learning/actTools.ts`: their call
+schemas, what each may do (`ActSpec`), and the core tool each stands before. Their types reach the
+core by augmenting `DomainActSchemas`. `registerActTools` (from `learning/register.ts`) puts each
+one at its place, because the order is part of the schema the model reads and of the prompt's
+hash. The validating and model-facing schemas are built on first use after that
+(`turnActionSchema()`, `turnDecisionSchema()`, `checkDecisionSchema()`, `turnDecisionForModel()`,
+`checkDecisionForModel()`), and again after a later registration. Prompt, schemas and prompt
+version stay byte-identical (`__tests__/prompt-pin.test.ts`); `__tests__/coreTools.test.ts` holds
+both the core's own list and the full order after registration.
+
 **One description per thing** (KI-Audit F3 stage 1, #667): a tool's schema says what each field
 holds and in what form; the turn prompt says when and why it is used ("What to do when", "Learning
 now"). The turn has no catalogue of its own any more — it repeated the rules a third time. No issue
