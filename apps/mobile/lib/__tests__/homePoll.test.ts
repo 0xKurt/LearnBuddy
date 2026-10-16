@@ -1,5 +1,5 @@
-// How often the home asks while she sees it (#686, KI-Audit D-F13): a sheet being read every
-// 1.5 s, like a practice being prepared — at 3 s its "read" showed up to 3 s late.
+// How often the home asks while she sees it (#686, #671): the pace the server sends, or the same
+// rule here for an older API — spread so that many phones never ask in the same second.
 
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
@@ -8,20 +8,38 @@ import { homePollMs } from '../api/homePoll.js';
 
 const home = (over: Partial<BuddyHome>): BuddyHome =>
   ({ working: null, thread: [], now: null, ...over }) as unknown as BuddyHome;
+const middle = () => 0.5;
 
-describe('home poll (#686)', () => {
-  it('asks every 1.5 s while a sheet is being read', () => {
-    expect(homePollMs(home({ now: { type: 'material_processing' } as BuddyHome['now'] }))).toBe(
-      1500,
-    );
+describe('home poll (#686, #671)', () => {
+  it('follows the pace the server sent', () => {
+    expect(homePollMs(home({ poll_after_ms: 2000 }), middle)).toBe(2000);
+    // Nothing in progress, says the server: once a minute — whatever the app would have guessed.
+    expect(
+      homePollMs(
+        home({ poll_after_ms: null, working: 'material' as BuddyHome['working'] }),
+        middle,
+      ),
+    ).toBe(60_000);
   });
 
-  it('asks every 3 s while Buddy works or a turn is in flight, else once a minute', () => {
-    expect(homePollMs(home({ working: 'material' as BuddyHome['working'] }))).toBe(3000);
+  it('decides itself with an API that does not send it yet', () => {
     expect(
-      homePollMs(home({ thread: [{ status: 'processing' }] as unknown as BuddyHome['thread'] })),
+      homePollMs(home({ now: { type: 'material_processing' } as BuddyHome['now'] }), middle),
+    ).toBe(1500);
+    expect(homePollMs(home({ working: 'material' as BuddyHome['working'] }), middle)).toBe(3000);
+    expect(
+      homePollMs(
+        home({ thread: [{ status: 'processing' }] as unknown as BuddyHome['thread'] }),
+        middle,
+      ),
     ).toBe(3000);
-    expect(homePollMs(home({}))).toBe(60_000);
+    expect(homePollMs(home({}), middle)).toBe(60_000);
     expect(homePollMs(undefined)).toBe(false);
+  });
+
+  it('spreads every pace by ±15 %, so polls do not fall into step', () => {
+    const h = home({ poll_after_ms: 3000 });
+    expect(homePollMs(h, () => 0)).toBe(2550);
+    expect(homePollMs(h, () => 0.999999)).toBe(3450);
   });
 });

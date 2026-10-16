@@ -6,6 +6,7 @@ import type { BuddyHome, LibraryView, MaterialView } from '@learnbuddy/shared-ty
 import type { QueryClient } from '@tanstack/react-query';
 
 import { keys } from './keys.js';
+import { staggered } from './homePoll.js';
 
 // An upload given up on ("unvollständig") is not being read: it is not followed.
 const reading = (m: MaterialView) => m.status === 'queued' || m.status === 'processing';
@@ -20,8 +21,11 @@ export function libraryReading(view: LibraryView | undefined): boolean {
 }
 
 /** How often the list is fetched again: often while a sheet is being read, else not by itself. */
-export function libraryPollMs(view: LibraryView | undefined): number | false {
-  return libraryReading(view) ? 2500 : false;
+export function libraryPollMs(
+  view: LibraryView | undefined,
+  random: () => number = Math.random,
+): number | false {
+  return libraryReading(view) ? staggered(2500, random) : false;
 }
 
 /**

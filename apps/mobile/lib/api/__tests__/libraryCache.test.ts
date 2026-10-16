@@ -32,8 +32,9 @@ const library = (...unsorted: MaterialView[]): LibraryView => ({ subjects: [], u
 
 describe('"Mein Stoff" follows a sheet being read (live finding 3)', () => {
   it('is fetched often while a sheet is read, not by itself otherwise', () => {
-    expect(libraryPollMs(library(material()))).toBe(2500);
-    expect(libraryPollMs(library(material({ status: 'queued' })))).toBe(2500);
+    // Every 2.5 s, spread by ±15 % like every poll (#671).
+    expect(libraryPollMs(library(material()), () => 0.5)).toBe(2500);
+    expect(libraryPollMs(library(material({ status: 'queued' })), () => 0)).toBe(2125);
     expect(libraryPollMs(library(material({ status: 'ready' })))).toBe(false);
     // An upload given up on is not being read.
     expect(libraryPollMs(library(material({ status: 'awaiting_upload' })))).toBe(false);

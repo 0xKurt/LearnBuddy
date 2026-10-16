@@ -100,6 +100,8 @@ describe.skipIf(!dbReady)('reading stages on the home card', () => {
       pages: 2,
       found: null,
     });
+    // The server sets the app's pace while she waits for the reading (#671).
+    expect((await lena.api.get<BuddyHome>('/buddy')).body.poll_after_ms).toBe(1500);
     const stamped = await env.db.one<{ read_stage: string; read_stage_at: Date }>(
       `select read_stage, read_stage_at from materials where id = $1`,
       [m.material.id],
@@ -136,6 +138,8 @@ describe.skipIf(!dbReady)('reading stages on the home card', () => {
     const after = (await lena.api.get<BuddyHome>('/buddy')).body;
     expect(after.now?.type).not.toBe('material_processing');
     expect(after.working).toBeNull();
+    // Nothing in progress any more: no fast pace.
+    expect(after.poll_after_ms).toBeNull();
   });
 
   it('stamps what the reading wrote with the time it was done, not when it started (#653)', async () => {

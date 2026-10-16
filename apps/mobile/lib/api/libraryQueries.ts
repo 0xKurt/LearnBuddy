@@ -9,6 +9,7 @@ import { getLibrary, getMaterialItems } from './endpoints.js';
 import { followMaterial, libraryPollMs } from './libraryCache.js';
 import { useOnScreen } from '../screenFocus.js';
 import { keys, queryClient } from './queries.js';
+import { staggered } from './homePoll.js';
 
 /**
  * Follows a sheet being read (live finding 3): fetched often while one is, and on every visit —
@@ -35,6 +36,6 @@ export const useMaterialItems = (id: string) =>
     },
     refetchInterval: (q) =>
       q.state.data && ['queued', 'processing'].includes(q.state.data.material.status)
-        ? 3000
+        ? staggered(3000)
         : false,
   });

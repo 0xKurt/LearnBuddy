@@ -13,6 +13,7 @@ import type {
   OutreachView,
   UpcomingItem,
 } from '@learnbuddy/shared-types/contracts';
+import { pollAfterMs } from '@learnbuddy/shared-types/contracts';
 
 import { DAILY_LIMITS } from '../../config.js';
 import type { Deps } from '../../deps.js';
@@ -96,6 +97,12 @@ async function homeFrom(
     thread_has_more: thread.hasMore,
     system,
     context_version: state.settings.context_version,
+    // The app's pace while something is in progress (#671): the server's to set.
+    poll_after_ms: pollAfterMs({
+      now: domain.now,
+      working: domain.working,
+      thread: thread.messages,
+    }),
   };
 }
 
