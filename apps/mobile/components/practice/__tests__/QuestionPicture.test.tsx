@@ -82,6 +82,48 @@ describe('a labelled picture next to its question', () => {
     expect(screen.queryByTestId('figure-folded')).toBeNull();
   });
 
+  it('a drawing in the card stays drawn while she types and the room holds it (#642 item 2)', () => {
+    // Device 16.10.: the flow diagram "Lücke A im Diagramm des Körperkreislaufs" folded to
+    // "Abbildung · Ansehen" while she typed, over ~600 px of empty room.
+    const card = (spare: number | null, visible = 440) => {
+      Object.assign(seen, { window: visible, visible });
+      return (
+        <PictureRoom.Provider value={spare}>
+          <QuestionCard prompt="Was steht in Lücke A?" topic={null} figure={drawing} />
+        </PictureRoom.Provider>
+      );
+    };
+    const view = renderInApp(card(240));
+    expect(screen.queryByTestId('figure-folded')).toBeNull();
+    // Past the room: it folds, and stays folded while she types …
+    view.rerender(card(-30));
+    expect(screen.getByTestId('figure-folded')).toBeTruthy();
+    view.rerender(card(200));
+    expect(screen.getByTestId('figure-folded')).toBeTruthy();
+    // … and stands drawn again once the keyboard goes.
+    view.rerender(card(200, 740));
+    expect(screen.queryByTestId('figure-folded')).toBeNull();
+  });
+
+  it('keeps the drawing itself while folded, so it never stands empty when it unfolds (#642 item 1)', () => {
+    // Device 16.10.: after "Prüfen" the keyboard went, the drawing came back as a new one and
+    // its frame stood empty while it sized itself again.
+    const card = (spare: number, visible: number) => {
+      Object.assign(seen, { window: visible, visible });
+      return (
+        <PictureRoom.Provider value={spare}>
+          <QuestionCard prompt="Was steht in Lücke A?" topic={null} figure={drawing} />
+        </PictureRoom.Provider>
+      );
+    };
+    const view = renderInApp(card(-30, 440));
+    expect(screen.getByTestId('figure-folded')).toBeTruthy();
+    const kept = screen.getByTestId('figure-drawing');
+    view.rerender(card(200, 740));
+    expect(screen.queryByTestId('figure-folded')).toBeNull();
+    expect(screen.getByTestId('figure-drawing')).toBe(kept);
+  });
+
   it('is not drawn under a question that stepped back to its closed line', () => {
     show(picture, 740, true);
     expect(screen.queryByTestId('question-picture')).toBeNull();

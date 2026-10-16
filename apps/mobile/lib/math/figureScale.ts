@@ -101,7 +101,9 @@ export function leastFigureScale(
   width: number,
   chrome = FIGURE_CHROME,
 ): number {
-  if (figure.type === 'table') return 1;
+  // A box diagram neither: its boxes keep their text size, so narrower it only grew taller — and
+  // past what `diagramLayout` can place it drew nothing, an empty frame (#642).
+  if (figure.type === 'table' || figure.type === 'diagram') return 1;
   const room = width - chrome;
   if (!isChart(figure) || figure.type === 'pie_chart' || room <= 0) return MIN_FIGURE_SCALE;
   return Math.min(1, Math.max(MIN_FIGURE_SCALE, (CHART_WIDTH + 0.5) / room));
