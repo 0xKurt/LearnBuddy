@@ -9,6 +9,8 @@ export default defineConfig({
     // Evals run live and are not tests, but their pure tooling (the run comparison,
     // issue #80) is proven like any other unit under evals/**/__tests__.
     include: ['src/**/*.test.ts', 'evals/**/*.test.ts'],
+    // The learning domain's part of the fakes (its form choice, #627); a core copy writes it empty.
+    setupFiles: ['./src/testing/domain.ts'],
     globals: false,
     // Integration tests run on a real Postgres (CLAUDE.md rule 8) that all files share:
     // template copies, database create/drop and the advisory lock wait on real IO, and on

@@ -21,23 +21,19 @@ import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../
 import { privacyTables } from '../../identity/privacyTables.js';
 import { isPersistent, jobKinds, tickWork } from '../../scheduler/registry.js';
 import { actHandler, missingActHandlers, registerActHandlers } from '../../buddy/tools.js';
+import { LEARNING_ACT_TOOLS } from '../actTools.js';
 import { LEARNING_LOOKUPS } from '../lookups.js';
 import { registerLearning } from '../register.js';
 
-/** The tools and lookups that are the learning domain's, not every Buddy's. */
-const DOMAIN_TOOLS = [
-  'prepare_practice',
-  'request_material',
-  'delete_material',
-  'rename_material',
-  'delete_item',
-  'offer_learning',
-  'offer_drill',
-  'start_roleplay',
-  'plan_talk',
-  'offer_rehearsal',
-] as const;
+/**
+ * The tools and lookups that are the learning domain's, not every Buddy's: the guard's list
+ * (tools/guards/boundaries.config.mjs, read at run time like DOMAIN_TABLES below), which also
+ * tells a core copy which tests are the domain's.
+ */
+const BOUNDARIES = '../../../../../../tools/guards/boundaries.config.mjs';
+const guard = (await import(BOUNDARIES)) as { DOMAIN_TOOLS: string[]; DOMAIN_ROUTES: string[] };
 const DOMAIN_LOOKUPS = ['search_material', 'practice_history', 'find_questions'];
+const DOMAIN_TOOLS = guard.DOMAIN_TOOLS.filter((t) => !DOMAIN_LOOKUPS.includes(t));
 
 describe('the learning domain in the core', () => {
   it('offers none of its tools and no lookup until it registers', () => {
@@ -57,7 +53,10 @@ describe('the learning domain in the core', () => {
     registerLearning();
     registerLearning();
     expect(withoutCode()).toEqual([]);
-    for (const tool of DOMAIN_TOOLS) expect(typeof actHandler(tool)).toBe('function');
+    for (const tool of DOMAIN_TOOLS)
+      expect(typeof actHandler(tool as Parameters<typeof actHandler>[0])).toBe('function');
+    // The guard's list is exactly the tools it registers.
+    expect(LEARNING_ACT_TOOLS.map((t) => t.name).sort()).toEqual([...DOMAIN_TOOLS].sort());
     // Its lookups, in the order the prompt lists them, each with its code.
     expect(lookupNames()).toEqual(DOMAIN_LOOKUPS);
     expect(hasContextProvider()).toBe(true);
@@ -91,6 +90,12 @@ describe('the learning domain in the core', () => {
       p.routes.routes.map((r) => `${r.method} ${p.base}${r.path === '/' ? '' : r.path}`),
     );
     expect(routePlugins().map((p) => p.base)).toEqual(['/practice', '/materials', '/buddy']);
+    // Every route it mounts lies under a path the guard knows as the domain's (DOMAIN_ROUTES).
+    for (const route of mounted)
+      expect(
+        guard.DOMAIN_ROUTES.some((p) => route.split(' ')[1]?.startsWith(p)),
+        route,
+      ).toBe(true);
     // The taps that left buddy/routes.ts, and a route of each module, are there.
     expect(mounted).toEqual(
       expect.arrayContaining([

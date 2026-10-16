@@ -8,7 +8,15 @@ import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { compareGaps, countErrors } from '../cli/core-check.js';
-import { CONTRACTS_BARREL, coreBarrel, corePackageJson, supportReachingGaps } from '../core.js';
+import { coreMigrationList, isMigration } from '../baseline.js';
+import {
+  CONTRACTS_BARREL,
+  coreBarrel,
+  corePackageJson,
+  DOMAIN_MARK,
+  namesDomain,
+  supportReachingGaps,
+} from '../core.js';
 import { tmp } from './helpers.js';
 
 describe('the core copy (#107, cut 10)', () => {
@@ -106,5 +114,31 @@ describe('the core copy (#107, cut 10)', () => {
       'c.ts: TS2305 (0 → 1)',
     ]);
     expect(compareGaps({ 'a.ts: TS2305': 2 }, listed).gone).toEqual(['b.ts: TS2339 (1 → 0)']);
+  });
+
+  it('tells a spec of the domain by what it names, where no import tells it', () => {
+    const signals = { tables: ['materials'], tools: ['prepare_practice'], routes: ['/practice'] };
+    expect(namesDomain('await l.api.post(`/practice/sessions/${id}/finish`, {})', signals)).toBe(
+      true,
+    );
+    expect(namesDomain("env.llm.script('buddy_turn', { tool: 'prepare_practice' })", signals)).toBe(
+      true,
+    );
+    expect(namesDomain('select id from materials where learner_id = $1', signals)).toBe(true);
+    expect(namesDomain(`// ${DOMAIN_MARK}: its foreign keys`, signals)).toBe(true);
+    // The core's own: another route, a word in a sentence, a table of the core.
+    expect(namesDomain("await l.api.post('/buddy/messages', body)", signals)).toBe(false);
+    expect(namesDomain('// her materials stay out of the core', signals)).toBe(false);
+    expect(namesDomain('select * from buddy_goals', signals)).toBe(false);
+  });
+
+  it('gives a core copy its one baseline in place of the migrations', () => {
+    expect(isMigration('infra/supabase/migrations/0042_scan.sql')).toBe(true);
+    expect(isMigration('infra/supabase/migrations/README.md')).toBe(false);
+    const list =
+      "export const EXPECTED_MIGRATIONS: readonly string[] = [\n  '0001_baseline',\n  '0002_scheduler',\n];\n";
+    expect(coreMigrationList(list)).toBe(
+      "export const EXPECTED_MIGRATIONS: readonly string[] = ['0001_baseline'];\n",
+    );
   });
 });

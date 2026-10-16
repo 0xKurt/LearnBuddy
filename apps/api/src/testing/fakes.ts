@@ -27,7 +27,6 @@ import { answerUpTo } from '../llm/partial.js';
 import type { GatewayProfile } from '../llm/profile.js';
 import { withinBudget } from '../llm/schemaBudget.js';
 import { VERTEX_PROFILE } from '../llm/vertex.js';
-import { chosenFor, fitted, isChoosing, offered, usedBy } from '../modules/practice/formChoice.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
 import type { SpeechAudio, SpeechError, SpeechGateway, SpeechInput } from '../speech/gateway.js';
 import {
@@ -36,6 +35,7 @@ import {
   type StorageGateway,
   type UploadTarget,
 } from '../storage/gateway.js';
+import { fakeChooser, type FakeChooser } from './chooser.js';
 
 /** The only clock in tests; the API never reads Date.now() for decisions. */
 export class TestClock {
@@ -65,10 +65,11 @@ export class TestClock {
  * whole one when it fits, else the narrowing to what the answer uses.
  */
 export function sentFor(full: JsonSchema, answer: unknown): JsonSchema {
-  if (withinBudget(full)) return full;
-  const can = offered(full);
-  const used = usedBy(answer);
-  return fitted(full, {
+  const c = fakeChooser();
+  if (!c || withinBudget(full)) return full;
+  const can = c.offered(full);
+  const used = c.usedBy(answer);
+  return c.fitted(full, {
     forms: used.forms.filter((f) => can.forms.includes(f)),
     figures: used.figures.filter((f) => can.figures.includes(f)),
   }).schema;
@@ -249,7 +250,7 @@ export class ScriptedGateway implements LlmGateway {
     return this;
   }
 
-  private async defaultChoice(req: LlmRequest): Promise<unknown> {
+  private async defaultChoice(req: LlmRequest, c: FakeChooser): Promise<unknown> {
     const enumOf = (key: string): string[] => {
       const props = req.schema.properties;
       const list = props && typeof props === 'object' && !Array.isArray(props) ? props[key] : null;
@@ -260,13 +261,13 @@ export class ScriptedGateway implements LlmGateway {
     };
     const offered = { forms: enumOf('forms'), figures: enumOf('figures') };
     const of = (answer: unknown) => {
-      const used = usedBy(answer);
+      const used = c.usedBy(answer);
       return {
         forms: used.forms.filter((f) => offered.forms.includes(f)),
         figures: used.figures.filter((f) => offered.figures.includes(f)),
       };
     };
-    const main = chosenFor(req);
+    const main = c.chosenFor(req);
     const next = main ? (this.queues.get(main)?.[0] ?? this.defaults.get(main)) : undefined;
     if (next && typeof next !== 'function' && 'json' in next) return of(next.json);
     // A scripted function is read ahead by asking it once more: most return a fixed answer. One
@@ -287,11 +288,12 @@ export class ScriptedGateway implements LlmGateway {
   }
 
   async generate(req: LlmRequest): Promise<LlmResult> {
-    if (isChoosing(req)) {
+    const c = fakeChooser();
+    if (c?.isChoosing(req)) {
       this.choices.push(req);
       const answer = this.choiceQueue.shift();
       const json = !answer
-        ? await this.defaultChoice(req)
+        ? await this.defaultChoice(req, c)
         : typeof answer === 'function'
           ? await answer(req)
           : 'error' in answer

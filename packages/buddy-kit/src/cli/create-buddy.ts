@@ -12,6 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CAPABILITIES, KIT_LOCALES, KitError, parseConfig, type BuddyConfig } from '../config.js';
 import { createBuddy } from '../create.js';
 import { parseArgs } from './args.js';
+import { signalsOf, type Guard } from '../core.js';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -133,14 +134,15 @@ async function main(): Promise<void> {
     .split('\0')
     .filter(Boolean);
   const boundaries = pathToFileURL(join(REPO, 'tools/guards/boundaries.config.mjs')).href;
-  const { DOMAIN } = (await import(boundaries)) as { DOMAIN: string[] };
+  const guard = (await import(boundaries)) as Guard;
   const report = createBuddy({
     sourceRoot: REPO,
     targetRoot: target,
     files,
     config,
-    domain: DOMAIN,
+    domain: guard.DOMAIN,
     core: args.flags.has('core'),
+    signals: signalsOf(guard),
   });
   console.log(
     `✓ ${config.identity.name} in ${target}: ${report.copied} Dateien kopiert, ${report.skipped.length} ausgelassen, ${report.rewritten.length} mit neuer Identität.`,
