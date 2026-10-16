@@ -5,6 +5,7 @@
 // photos for blur and light (lib/photo/), given once at app start (lib/learning/register.tsx).
 // Without one, nothing can be attached. Pure (Node tests).
 
+import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import type { ComponentType } from 'react';
 
 import { slot } from '../registry.js';
@@ -83,6 +84,10 @@ export type PhotoReviewProps = {
 export type PageHandler = {
   /** Starts one set's send. */
   start(files: readonly UploadFile[], link: PageLink, requestId?: string): PageUpload;
+  /** All PDFs of one set together, in MB, as the receiver takes them. */
+  maxPdfMb: number;
+  /** The set a stored message of hers holds (its id), or null: the sending bubble then goes. */
+  sentIn(m: MessageView): string | null;
   check: {
     /** How wide the small copy the check looks at is. */
     width: number;

@@ -127,7 +127,8 @@ describe('roleplay and rehearsal (Modes.jsx:20–66)', () => {
   });
 
   it('ends a spoken scene on the conversation screen, the same way the chat’s strip does', () => {
-    expect(code('app/talk.tsx')).toMatch(/useEndRoleplay\(roleplay\?\.id \?\? null\)/);
+    expect(code('app/talk.tsx')).toMatch(/useEndScene\(scene\?\.id \?\? null\)/);
+    expect(code('components/learn/talkScene.ts')).toMatch(/useEnd: useEndRoleplay/);
     expect(code('components/buddy/RoleplayCard.tsx')).toMatch(/useEndRoleplay\(roleplay\.id\)/);
   });
 

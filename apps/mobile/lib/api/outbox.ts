@@ -7,9 +7,16 @@
 // they are deleted when someone else signs in or an adult signs out on purpose
 // (lib/localWork.ts; another account never sends them). Pure queue logic here (Node-testable); storage in outboxStorage*.ts.
 
-import type { AnswerRequest } from '@learnbuddy/shared-types/contracts';
+/**
+ * A kept answer as the outbox reads it: the turn it is (sent again with the same id) and the
+ * question it answers. The rest travels as it was kept — a domain's answer (the learning
+ * domain's `AnswerRequest`, lib/api/learningEndpoints.ts `answerItem`).
+ */
+export type KeptAnswer = { client_turn_id: string; item_id: string } & Readonly<
+  Record<string, unknown>
+>;
 
-export type OutboxEntry = { sessionId: string; body: AnswerRequest; savedAt: string };
+export type OutboxEntry = { sessionId: string; body: KeptAnswer; savedAt: string };
 
 /** Kept at most: a day's worth of answers is plenty; older ones are stale. */
 export const OUTBOX_MAX = 50;

@@ -1,3 +1,4 @@
+import { MAX_PDF_MB } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { clearIncoming, handIn, takeIncoming } from '../incoming.js';
@@ -41,12 +42,15 @@ describe('files handed in', () => {
   it('leaves out PDFs over the size limit together and counts what was left out', () => {
     // Each under the 8 MB of all PDFs together (#688), both together over it.
     const big = 5 * 1024 * 1024;
-    const r = sortIncoming([
-      f('a.pdf', 'application/pdf', big),
-      f('b.docx', null),
-      f('c.jpg', 'image/jpeg'),
-      f('d.pdf', 'application/pdf', big),
-    ]);
+    const r = sortIncoming(
+      [
+        f('a.pdf', 'application/pdf', big),
+        f('b.docx', null),
+        f('c.jpg', 'image/jpeg'),
+        f('d.pdf', 'application/pdf', big),
+      ],
+      MAX_PDF_MB,
+    );
     expect(r.take.map((x) => [x.uri, x.kind])).toEqual([
       ['a.pdf', 'pdf'],
       ['c.jpg', 'image'],

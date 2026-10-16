@@ -1,10 +1,17 @@
 // How often the home asks while she sees it (#686, #671): the pace the server sends, or the same
 // rule here for an older API — spread so that many phones never ask in the same second.
 
-import { BuddyHome as BuddyHomeSchema, type BuddyHome } from '@learnbuddy/shared-types/contracts';
+import {
+  BuddyHome as BuddyHomeSchema,
+  pollAfterMs,
+  type BuddyHome,
+} from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { homePollMs, staggered } from '../api/homePoll.js';
+import { homePollMs, pollRule, staggered } from '../api/homePoll.js';
+
+// The rule for an older API is the learning domain's (issue #107), filled as at app start.
+pollRule.fill(pollAfterMs);
 
 const home = (over: Partial<BuddyHome>): BuddyHome =>
   ({ working: null, thread: [], now: null, ...over }) as unknown as BuddyHome;

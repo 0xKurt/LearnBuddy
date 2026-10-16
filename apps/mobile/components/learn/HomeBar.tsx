@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 
 import { skipStep, undoAction } from '../../lib/api/endpoints.js';
 import { startStep } from '../../lib/api/learningEndpoints.js';
-import { seedSession } from '../../lib/api/queries.js';
+import { seedSession } from '../../lib/api/sessionQueries.js';
 import { askAttach } from '../../lib/capture/attachRequest.js';
 import { useHomeThumbs } from '../../lib/learning/homeScope.js';
 import type { BarProps } from '../buddy/HomeTop.js';

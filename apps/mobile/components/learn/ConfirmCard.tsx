@@ -25,7 +25,7 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
 import { toast } from '../lb/Toast.js';
-import { CardChoices, CardDone, ChatCard } from './ChatCard.js';
+import { CardChoices, CardDone, ChatCard } from '../buddy/ChatCard.js';
 
 type Confirm = Extract<ActionSummary, { tool: 'confirm_delete' }>;
 

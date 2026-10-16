@@ -5,6 +5,7 @@
 import {
   AnswerResponse,
   CreateMaterialResponse,
+  EndRoleplayResponse,
   KeepForLaterResponse,
   LibraryView,
   ListenAudioResponse,
@@ -32,13 +33,20 @@ import {
 import type { z } from 'zod';
 
 import { newId, request, streamRequest } from './client.js';
-import { noConnection, postAnswer } from './endpoints.js';
+import { noConnection } from './endpoints.js';
 import { dropAnswer, keepAnswer, resultOf, sendingLive } from './outboxSync.js';
 import { turnIds } from './turnIds.js';
 import { sendWhenOnline } from './whenOnline.js';
 
 // ─────────────── material ───────────────
 
+/**
+ * Her answer to one spot Buddy could not read (issue #164): the reading she picks by the alias
+ * the server issued, or null for "weiß ich nicht". The question for that task is then written
+ * from her reading; nothing is guessed from the picture.
+ */
+export const clarifyUnclear = (id: string, spot: string, reading: string | null) =>
+  request('POST', `/materials/${id}/unclear`, { body: { spot, reading }, schema: MaterialView });
 export const getLibrary = () => request('GET', '/materials', { schema: LibraryView });
 /** The request as sent: fields with a server default (purpose) may be left out. */
 export const createMaterial = (body: z.input<typeof CreateMaterialRequest>) =>
@@ -60,6 +68,16 @@ export const deleteMaterialItem = (materialId: string, itemId: string) =>
   request('DELETE', `/materials/${materialId}/items/${itemId}`);
 
 // ─────────────── practice ───────────────
+
+export const getSession = (id: string) =>
+  request('GET', `/practice/sessions/${id}`, { schema: SessionView });
+/** The plain request (the outbox resends with it; same client_turn_id → recorded once). */
+export const postAnswer = (id: string, body: AnswerRequest) =>
+  request('POST', `/practice/sessions/${id}/answer`, {
+    body,
+    schema: AnswerResponse,
+    wait: 'long',
+  });
 
 export const startPractice = (body: StartPracticeRequest) =>
   request('POST', '/practice/sessions', { body, schema: SessionView, wait: 'long' });
@@ -310,7 +328,15 @@ export const answerDrill = (sessionId: string, itemId: string, text: string) =>
 export const finishSession = (id: string) =>
   request('POST', `/practice/sessions/${id}/finish`, { schema: SessionView, wait: 'long' });
 
-// ─────────────── buddy's prepared steps and the rehearsal ───────────────
+// ─────────────── buddy's prepared steps, the roleplay and the rehearsal ───────────────
+
+/** Her tap on "end" under a running roleplay: the feedback lands in the thread (issue #244). */
+export const endRoleplay = (roleplayId: string) =>
+  request('POST', `/buddy/roleplays/${roleplayId}/end`, {
+    body: {},
+    schema: EndRoleplayResponse,
+    wait: 'long',
+  });
 
 /** A prepared practice step, started: the session it opened, with its first question. */
 export const startStep = (stepId: string) =>

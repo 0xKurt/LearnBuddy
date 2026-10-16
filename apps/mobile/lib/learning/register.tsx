@@ -3,6 +3,8 @@
 // without it; it never imports the domain. Every place filled here is checked by
 // components/learn/__tests__/register.test.tsx: none missing, none filled twice.
 
+import { MAX_PDF_MB, pollAfterMs, type AnswerRequest } from '@learnbuddy/shared-types/contracts';
+
 import { ProfileLibrarySubjects } from '../../components/library/ProfileLibrarySubjects.js';
 import { DrillOfferCard } from '../../components/learn/DrillOfferCard.js';
 import { OfferCard } from '../../components/learn/OfferCard.js';
@@ -39,12 +41,19 @@ import { useSayMath } from '../../components/math/useSpokenMath.js';
 import { newId } from '../api/client.js';
 import { createMaterial, getLibrary, submitMaterial } from '../api/learningEndpoints.js';
 import { followHome } from '../api/libraryCache.js';
+import { postAnswer } from '../api/learningEndpoints.js';
+import { answerSender } from '../api/outboxSync.js';
+import { unsettled } from '../api/deviceCache.js';
+import { pollRule } from '../api/homePoll.js';
 import { homeFollowers, keys, menuPreloads, queryClient } from '../api/queries.js';
 import { homeTop } from '../homeLayout.js';
 import { LearningHome } from './homeScope.js';
 import { practiceGreeting } from './greeting.js';
 import { greetingNews } from '../buddy/useSessionStart.js';
 import { greetingResult } from '../../components/learn/GreetingResult.js';
+import { ConfirmCard } from '../../components/learn/ConfirmCard.js';
+import { roleplayScene } from '../../components/learn/talkScene.js';
+import { talkScene } from '../../components/voice/talkScene.js';
 import { FocusLine } from '../../components/learn/FocusLine.js';
 import { PracticedToday } from '../../components/learn/PracticedToday.js';
 import { notation } from '../buddy/notation.js';
@@ -54,6 +63,7 @@ import { mathSpans } from '../math/parse.js';
 import { ANALYSIS_WIDTH } from '../photo/quality.js';
 import { sayNotation } from '../speech/say.js';
 import { learningTop } from './homeLayout.js';
+import { unsettledHome } from './keptHome.js';
 
 /** The real outside world of a send: the two API calls, the native PUT, fresh request ids. */
 // What a photo she attaches needs loads with her first photo, not with the start (#716): the
@@ -79,23 +89,39 @@ function RunningMath(props: InlineTextProps) {
 
 export function registerLearning(): void {
   // ── The chat: Buddy's offers to start something, always shown, one tap starts it …
-  addActionCard('offer_learning', (offer, on) => (
-    <OfferCard actionId={on.actionId} offer={offer} spoken={on.spoken} quiet={on.quiet} />
-  ));
+  addActionCard(
+    'offer_learning',
+    (offer, on) => (
+      <OfferCard actionId={on.actionId} offer={offer} spoken={on.spoken} quiet={on.quiet} />
+    ),
+    // Startable until the server refused it or she finished what it started.
+    (offer) => offer.startable !== false && offer.finished_session_id === null,
+  );
   // … practice he prepared that waits for her, when his words point to it (issue #630) …
-  addActionCard('show_ready', (ready, on) => <ReadyCard ready={ready} quiet={on.quiet} />);
+  addActionCard(
+    'show_ready',
+    (ready, on) => <ReadyCard ready={ready} quiet={on.quiet} />,
+    // Practice shown again that was started or replaced since draws no card (#630).
+    (ready) => ready.ready,
+  );
   // … a Kopfrechnen round (issue #243): the same card, code writes the tasks …
-  addActionCard('offer_drill', (offer, on) => (
-    <DrillOfferCard actionId={on.actionId} offer={offer} quiet={on.quiet} />
-  ));
+  addActionCard(
+    'offer_drill',
+    (offer, on) => <DrillOfferCard actionId={on.actionId} offer={offer} quiet={on.quiet} />,
+    (offer) => offer.finished_session_id === null,
+  );
   // … the role card: the scene, her tasks and the way out (issue #244) …
-  addActionCard('start_roleplay', (roleplay, on) => (
-    <RoleplayCard roleplay={roleplay} quiet={on.quiet} />
-  ));
+  addActionCard(
+    'start_roleplay',
+    (roleplay, on) => <RoleplayCard roleplay={roleplay} quiet={on.quiet} />,
+    (roleplay) => roleplay.status === 'active',
+  );
   // … and a rehearsal talk or reading aloud, recorded on the card itself (issue #264).
   addActionCard('offer_rehearsal', (offer, on) => (
     <RehearseCard actionId={on.actionId} offer={offer} quiet={on.quiet} />
   ));
+  // … the deletion Buddy proposes: nothing goes until she answers it here (issue #151) …
+  addActionCard('confirm_delete', (confirm) => <ConfirmCard confirm={confirm} />);
   // What Buddy did with her practice, her sheets and her talks: one line each.
   addLearningReceipts();
   // In place of a bubble: the feedback after a roleplay (issue #384), then what a rehearsal
@@ -127,6 +153,9 @@ export function registerLearning(): void {
   // "Heute geübt ✓" beside the first visit's greeting.
   introMark.fill((h) => (h.practiced_today ? <PracticedToday /> : null));
 
+  // A running roleplay is the conversation screen's scene: its name, language and end (#244).
+  talkScene.fill(roleplayScene);
+
   // ── Text: $…$ math, drawn (MathText), kept whole by Markdown and said in words.
   notation.fill(mathSpans);
   inlineNotation.fill(RunningMath);
@@ -150,9 +179,21 @@ export function registerLearning(): void {
     void queryClient.prefetchQuery({ queryKey: keys.library, queryFn: getLibrary });
   });
 
+  // ── The home: its pace from an older API (the server's own rule), and what is not kept of it
+  // on the phone — nothing that claims "now" (lib/api/deviceCache.ts, CLAUDE.md rule 5).
+  pollRule.fill(pollAfterMs);
+  unsettled.fill(unsettledHome);
+
+  // ── Her answers kept on the device go out again through the practice's own request: what
+  // was kept is what `answerItem` kept, an AnswerRequest (lib/api/outbox.ts `KeptAnswer`).
+  answerSender.fill((sessionId, body) => postAnswer(sessionId, body as AnswerRequest));
+
   // ── Pages she attaches: sent as a sheet to read, photos checked for blur, light and tilt.
   pageHandler.fill({
     start: (files, link, requestId) => new MaterialUpload(SEND, files, link, requestId),
+    maxPdfMb: MAX_PDF_MB,
+    // Her sheet, stored as her message (issue #632).
+    sentIn: (m) => m.sheet?.material_id ?? null,
     check: { width: ANALYSIS_WIDTH, run: checkPhoto, Review: PhotoCheckCard },
   });
 }

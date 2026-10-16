@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { startStep } from '../../lib/api/learningEndpoints.js';
-import { seedSession } from '../../lib/api/queries.js';
+import { seedSession } from '../../lib/api/sessionQueries.js';
 import { useHomeAct } from '../../lib/buddy/useHomeAct.js';
 import { PracticeReady } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';

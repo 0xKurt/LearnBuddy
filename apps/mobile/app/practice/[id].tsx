@@ -72,7 +72,7 @@ import { AnswerFlow } from '../../components/practice/AnswerShell.js';
 import { QuestionTools } from '../../components/practice/QuestionTools.js';
 import { useSpeakPhase } from '../../components/practice/SpeakPanel.js';
 import { isRetryable } from '../../lib/api/apiError.js';
-import { usePracticeSession } from '../../lib/api/queries.js';
+import { usePracticeSession } from '../../lib/api/sessionQueries.js';
 import { practiceHeadState } from '../../lib/buddy/headState.js';
 import { messageFor } from '../../lib/errors.js';
 import { isForeign } from '../../lib/i18n/index.js';

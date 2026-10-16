@@ -6,7 +6,7 @@ import type { RoleplayLanguage } from '@learnbuddy/shared-types/contracts';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 
-import { endRoleplay } from '../../lib/api/endpoints.js';
+import { endRoleplay } from '../../lib/api/learningEndpoints.js';
 import { setHome } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { toast } from '../lb/Toast.js';

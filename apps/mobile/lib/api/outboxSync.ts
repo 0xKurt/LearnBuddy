@@ -1,11 +1,19 @@
 // Runs the outbox (lib/api/outbox.ts): keep an answer before sending, drop it
 // once the API has it, and send what is left on start and when back online.
-import type { AnswerRequest, AnswerResponse } from '@learnbuddy/shared-types/contracts';
 import { onlineManager } from '@tanstack/react-query';
+
+import { slot } from '../registry.js';
 
 import { ApiError } from './client.js';
 import { oneRunAndAnother, sendInOrder, type PassResult } from './flush.js';
-import { failureOf, parseOutbox, withEntry, without, type SendResult } from './outbox.js';
+import {
+  failureOf,
+  parseOutbox,
+  withEntry,
+  without,
+  type KeptAnswer,
+  type SendResult,
+} from './outbox.js';
 import { readOutbox, writeOutbox } from './outboxStorage.js';
 
 // One writer at a time, so two answers saved at once never overwrite each other.
@@ -20,7 +28,11 @@ async function load() {
   return parseOutbox(await readOutbox(), new Date());
 }
 
-export function keepAnswer(sessionId: string, body: AnswerRequest): Promise<void> {
+/** How a kept answer is sent again: the domain's plain request (lib/learning/register.tsx). */
+export const answerSender =
+  slot<(sessionId: string, body: KeptAnswer) => Promise<unknown>>('Antworten senden');
+
+export function keepAnswer(sessionId: string, body: KeptAnswer): Promise<void> {
   return serial(async () => {
     const list = withEntry(await load(), { sessionId, body, savedAt: new Date().toISOString() });
     await writeOutbox(JSON.stringify(list));
@@ -70,7 +82,7 @@ export async function sendingLive<T>(clientTurnId: string, fn: () => Promise<T>)
  * (question closed, session ended — dropped, and the app says so).
  */
 export function flushOutbox(
-  send: (sessionId: string, body: AnswerRequest) => Promise<AnswerResponse>,
+  send: (sessionId: string, body: KeptAnswer) => Promise<unknown>,
   onSent: (sessionId: string) => void,
 ): Promise<PassResult> {
   latest = { send, onSent };
@@ -87,7 +99,7 @@ export function outboxBelongsTo(userId: string | null): void {
 }
 
 let latest: {
-  send: (sessionId: string, body: AnswerRequest) => Promise<AnswerResponse>;
+  send: (sessionId: string, body: KeptAnswer) => Promise<unknown>;
   onSent: (sessionId: string) => void;
 } | null = null;
 

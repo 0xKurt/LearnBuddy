@@ -36,9 +36,20 @@ function isTool<K extends Tool>(summary: ActionSummary, tool: K): summary is Sum
   return summary.tool === tool;
 }
 
-/** The tool's card in the chat (once per tool). */
-export function addActionCard<K extends Tool>(tool: K, card: ActionCard<K>): void {
+/** Whether a card's start can still be tapped, from its record (`loudCard`); absent: it can. */
+const startables = registry<Tool, (summary: ActionSummary) => boolean>('Start einer Karte');
+
+/**
+ * The tool's card in the chat (once per tool). `startable`: whether its start can still be
+ * tapped — not refused by the server, not over (`loudCard`); without it, always.
+ */
+export function addActionCard<K extends Tool>(
+  tool: K,
+  card: ActionCard<K>,
+  startable?: (summary: SummaryOf<K>) => boolean,
+): void {
   actionCards.add(tool, (summary, on) => (isTool(summary, tool) ? card(summary, on) : null));
+  if (startable) startables.add(tool, (summary) => isTool(summary, tool) && startable(summary));
 }
 
 /** Whether this tool has a card (then it is no receipt line). */
@@ -60,9 +71,34 @@ export type Receipt<K extends Tool> = (summary: SummaryOf<K>) => string;
 
 export const receipts = registry<Tool, Receipt<Tool>>('Quittungen');
 
-/** The tool's receipt line (once per tool). */
-export function addReceipt<K extends Tool>(tool: K, line: Receipt<K>): void {
+/** A receipt line taken back, where it says more than "… – rückgängig gemacht". */
+const undoneReceipts = registry<Tool, Receipt<Tool>>('Quittungen, zurückgenommen');
+/** The tools that put something into her calendar: their receipt carries the calendar. */
+const datedTools = registry<Tool, true>('Quittungen mit Datum');
+
+/**
+ * The tool's receipt line (once per tool). `undone`: its line once taken back; `dated`: it puts
+ * something into her calendar (components/buddy/ThreadParts.tsx `receiptIcon`).
+ */
+export function addReceipt<K extends Tool>(
+  tool: K,
+  line: Receipt<K>,
+  more: { undone?: Receipt<K>; dated?: true } = {},
+): void {
   receipts.add(tool, (summary) => (isTool(summary, tool) ? line(summary) : ''));
+  const { undone, dated } = more;
+  if (undone) undoneReceipts.add(tool, (summary) => (isTool(summary, tool) ? undone(summary) : ''));
+  if (dated) datedTools.add(tool, true);
+}
+
+/** A domain's line for a taken-back receipt of this tool, or null: the generic one. */
+export function undoneReceipt(summary: ActionSummary): string | null {
+  return undoneReceipts.get(summary.tool)?.(summary) ?? null;
+}
+
+/** Whether a domain's tool puts something into her calendar. */
+export function isDatedTool(tool: Tool): boolean {
+  return datedTools.get(tool) === true;
 }
 
 /** The card one of Buddy's actions brings into the chat; null where a receipt says it. */
@@ -91,12 +127,7 @@ export function loudCard(messages: readonly MessageView[], quiet: Quiet): string
 /** A card with a start she can still tap: not taken back, refused by the server, or over. */
 function startable(a: Action): boolean {
   if (a.status === 'undone' || !hasCard(a.summary.tool)) return false;
-  if (a.summary.tool === 'offer_learning')
-    return a.summary.startable !== false && a.summary.finished_session_id === null;
-  if (a.summary.tool === 'offer_drill') return a.summary.finished_session_id === null;
-  // Practice shown again that was started or replaced since draws no card (#630).
-  if (a.summary.tool === 'show_ready') return a.summary.ready;
-  return a.summary.tool !== 'start_roleplay' || a.summary.status === 'active';
+  return startables.get(a.summary.tool)?.(a.summary) ?? true;
 }
 
 /** A message a domain draws itself, in place of its bubble (the text stays for reading aloud). */

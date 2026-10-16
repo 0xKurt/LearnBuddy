@@ -321,6 +321,27 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
 
       Danach zeigt die Kopie **56 Fehler in 26 Paaren**.
 
+    - **Nachgezogen am 16.10. (App, Gespräch und Gesprächs-Bildschirm):**
+      - Die Bestätigungskarte zum Löschen (`ConfirmCard`) meldet die Domain an, ebenso, ob eine
+        Karte noch startbar ist (`addActionCard` mit `startable`).
+      - Die Quittung einer zurückgenommenen Aktion und ob ein Werkzeug in ihren Kalender schreibt,
+        gibt `addReceipt` (`undone`, `dated`).
+      - Die laufende Szene auf dem Gesprächs-Bildschirm ist die der Domain (`talkScene`: Name,
+        Sprache, Rolle, Startkarte, Ende; `components/learn/talkScene.ts`).
+      - `ResultList` nennt die Zustände selbst.
+
+      - Die Datenschicht:
+        - Die Lern-Aufrufe der API stehen in `learningEndpoints.ts`; die Übungsläufe im Cache
+          stehen in `sessionQueries.ts` und `sessionCache.ts`, beide jetzt `DOMAIN`.
+        - Die Outbox kennt nur noch eine aufbewahrte Antwort (`KeptAnswer`); gesendet wird sie
+          über `answerSender`.
+        - Das Tempo für eine ältere API kommt aus `pollRule`.
+        - Was die Startseite auf dem Gerät nicht behält, sagt `unsettled`.
+        - PDF-Grenze und „ihr gesendetes Blatt" stehen im `pageHandler`.
+
+      Danach zeigt die Kopie **1 Fehler** (`apps/api/src/config.ts`, `FORMS_OFF`). **Die App
+      baut ohne die Lern-Domain.**
+
     - **Der Wächter:** `packages/buddy-kit/core-gaps.json` listet jeden dieser Reste, je Datei
       und Fehlercode. `pnpm core-check` (CI, Job `check`) baut die Kopie, installiert sie und
       typecheckt sie. Neu oder mehr ist rot: der Kern erreicht die Domain wieder. Weniger ist

@@ -4,13 +4,10 @@
 
 import {
   AdminSessionResponse,
-  AnswerResponse,
   BuddyHome,
   BuddySettingsView,
   DeletionResponse,
-  EndRoleplayResponse,
   LearnerView,
-  MaterialView,
   MemoryList,
   MessageView,
   tolerantArray,
@@ -19,11 +16,9 @@ import {
   OutreachActionResponse,
   ReplyStreamEvent,
   SendMessageResponse,
-  SessionView,
   SpeechResponse,
   TranscribeResponse,
   TranscribeStreamEvent,
-  type AnswerRequest,
   type AppLocale,
   type CreateLearnerRequest,
   type SpeechRequest,
@@ -146,14 +141,6 @@ export const answerConfirmation = (pendingId: string, confirm: boolean) =>
     wait: 'long',
   });
 
-/** Her tap on "end" under a running roleplay: the feedback lands in the thread (issue #244). */
-export const endRoleplay = (roleplayId: string) =>
-  request('POST', `/buddy/roleplays/${roleplayId}/end`, {
-    body: {},
-    schema: EndRoleplayResponse,
-    wait: 'long',
-  });
-
 export const reportOutcome = (goalId: string, outcome: 'good' | 'ok' | 'hard') =>
   request('POST', `/buddy/goals/${goalId}/outcome`, { body: { outcome }, schema: BuddyHome });
 
@@ -194,28 +181,10 @@ export const claimPushDevice = (deviceId: string) =>
 export const releasePushDevice = (deviceId: string) =>
   request('POST', '/push-devices/release', { body: { device_id: deviceId } });
 
-// ─────────────── material and practice the core still calls ───────────────
-// Her pages sent through the chat (lib/capture/useAttachments.ts), the answers the outbox sends
-// again (app/_layout.tsx) and the session the cache loads (queries.ts): core gaps of #107
-// (packages/buddy-kit/core-gaps.json) until those register through the domain too.
+// ─────────────── her pages ───────────────
+// A sheet she sent through the chat and takes back (lib/capture/useAttachments.ts).
 
-/**
- * Her answer to one spot Buddy could not read (issue #164): the reading she picks by the alias
- * the server issued, or null for "weiß ich nicht". The question for that task is then written
- * from her reading; nothing is guessed from the picture.
- */
-export const clarifyUnclear = (id: string, spot: string, reading: string | null) =>
-  request('POST', `/materials/${id}/unclear`, { body: { spot, reading }, schema: MaterialView });
 export const deleteMaterial = (id: string) => request('DELETE', `/materials/${id}`);
-export const getSession = (id: string) =>
-  request('GET', `/practice/sessions/${id}`, { schema: SessionView });
-/** The plain request (the outbox resends with it; same client_turn_id → recorded once). */
-export const postAnswer = (id: string, body: AnswerRequest) =>
-  request('POST', `/practice/sessions/${id}/answer`, {
-    body,
-    schema: AnswerResponse,
-    wait: 'long',
-  });
 
 // ─────────────── voice ───────────────
 

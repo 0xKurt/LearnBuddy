@@ -25,7 +25,7 @@ import { EndButton } from '../lb/EndButton.js';
 import { Icon } from '../lb/Icon.js';
 import { ChatCard } from './ChatCard.js';
 import { quietVariant, type Quiet } from './extensions.js';
-import { roleplayLabel, useEndRoleplay } from './RoleplayLive.js';
+import { roleplayLabel, useEndRoleplay } from '../learn/RoleplayLive.js';
 
 type Roleplay = Extract<ActionSummary, { tool: 'start_roleplay' }>;
 

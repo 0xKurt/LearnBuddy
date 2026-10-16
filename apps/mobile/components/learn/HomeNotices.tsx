@@ -8,7 +8,7 @@
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { useTranslation } from 'react-i18next';
 
-import { clarifyUnclear } from '../../lib/api/endpoints.js';
+import { clarifyUnclear } from '../../lib/api/learningEndpoints.js';
 import { acceptMissingPages, retryMaterial } from '../../lib/api/learningEndpoints.js';
 import { failedTitleKey } from '../../lib/learning/failedTitle.js';
 import { useHomeThumbs } from '../../lib/learning/homeScope.js';

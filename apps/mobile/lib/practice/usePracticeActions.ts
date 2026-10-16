@@ -28,7 +28,8 @@ import {
   revealItem,
   startCardPass,
 } from '../api/learningEndpoints.js';
-import { keys, queryClient, seedSession, storeTurn } from '../api/queries.js';
+import { keys, queryClient } from '../api/queries.js';
+import { seedSession, storeTurn } from '../api/sessionQueries.js';
 import { haptic } from '../haptics.js';
 import { reacted, tapped } from '../perf.js';
 import { leftAfterSend } from './essay.js';
