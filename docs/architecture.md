@@ -6566,8 +6566,7 @@ event and the screen is proven only on the phone (screenshot owed in #289).
 
 ### Crash reports (issue #36)
 
-Off unless the app is built with `EXPO_PUBLIC_SENTRY_DSN` — the same shape as
-`PUSH_BACKEND=disabled` on the API side: without it `Sentry.init` is never called and nothing
+Off unless the app is built with `EXPO_PUBLIC_SENTRY_DSN`: without it `Sentry.init` is never called and nothing
 leaves the phone. Where it is on, two things are enforced in code, not in a setting.
 **EU ingest:** a DSN whose host is not `*.ingest.de.sentry.io` throws while `lib/env.ts`
 loads, so the app refuses to start rather than report to another region — deliberately not

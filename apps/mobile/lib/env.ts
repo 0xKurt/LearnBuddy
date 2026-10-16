@@ -15,7 +15,7 @@ export const ENV = {
   SUPPORT_EMAIL: process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? '',
   /**
    * Sentry DSN for crash reports (issue #36). Empty — the default — keeps crash reporting
-   * off entirely, like `PUSH_BACKEND=disabled` on the API side. Only Sentry's EU ingest is
+   * off entirely. Only Sentry's EU ingest is
    * accepted; see below and docs/privacy.md §Processors.
    */
   SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',

@@ -152,8 +152,13 @@ const Config = z
         }
         return new Set(kinds.data);
       }),
-    /** Push via Expo is off until legal review (ADR 0004 §4). */
-    PUSH_BACKEND: z.enum(['expo', 'disabled']).default('disabled'),
+    /**
+     * Push via Expo (ADR 0004 §4, amendment 2026-10-15): the owner closed the legal review on
+     * 15.10.2026 (#677). Whether a message may reach her phone is still decided per learner in
+     * code (opt-in, the parents' PIN under 16, quiet hours: `policy.ts`). `disabled` is the
+     * operator's switch and is named at boot (`bootWarnings`).
+     */
+    PUSH_BACKEND: z.enum(['expo', 'disabled']).default('expo'),
     EXPO_ACCESS_TOKEN: z.string().optional(),
   })
   .superRefine((c, ctx) => {
@@ -270,6 +275,13 @@ export function bootWarnings(c: Config): string[] {
   if (c.SPEECH_BACKEND !== 'google') {
     warnings.push(
       "SPEECH_BACKEND is not 'google': Buddy has no natural voice, so every reply is read with the phone's own",
+    );
+  }
+  // Push off means nothing Buddy sends reaches her phone, even with contact on: it all waits in
+  // the app (#677). Correct, but never silent.
+  if (c.PUSH_BACKEND !== 'expo') {
+    warnings.push(
+      "PUSH_BACKEND is not 'expo': no message reaches the phone, everything Buddy sends waits in the app",
     );
   }
   return warnings;

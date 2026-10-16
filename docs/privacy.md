@@ -328,10 +328,11 @@ Familienkreis hinaus.
   could quote something the learner typed; the scrubber cannot see the difference. **Legal
   review before enabling:** the data processing agreement with Functional Software Inc. (Sentry)
   and confirmation that the EU region keeps processing and storage in EU member states.
-- **Expo push service** (optional): off unless `PUSH_BACKEND=expo`. It adds a US subprocessor and
-  sends notification titles and bodies via Apple/Google. Texts are written without scores or
-  personal details, but they are about the learner's tests. **legal review required before
-  enabling.** Without push, Buddy shows everything in the app.
+- **Expo push service**: on (`PUSH_BACKEND=expo`, the default since the owner closed the legal
+  review on 15.10.2026, #677; ADR 0004 §Amendment). It adds a US subprocessor and sends
+  notification titles and bodies via Apple/Google. Texts are fixed sentences without scores or
+  personal details. Each learner still opts in (the setting and the OS permission; the parents'
+  PIN for any loosening under 16), and `PUSH_BACKEND=disabled` keeps everything in the app.
 
 ## Contact outside the app
 

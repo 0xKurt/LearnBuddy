@@ -2,9 +2,29 @@
 // own name. `APP_VARIANT=development` comes from eas.json (development profile) — without
 // it this file passes app.json through untouched, so `expo start`, the preview and
 // production builds see exactly the static config.
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 const DEV = process.env.APP_VARIANT === 'development';
+const DEV_ID = 'com.learnbuddy.app.dev';
+
+type FirebaseFile = {
+  client?: { client_info?: { android_client_info?: { package_name?: string } } }[];
+};
+
+/** Whether a google-services.json carries an Android client for this application id. */
+function hasFirebaseClient(file: string, applicationId: string): boolean {
+  try {
+    const json = JSON.parse(readFileSync(file, 'utf8')) as FirebaseFile;
+    return (json.client ?? []).some(
+      (c) => c.client_info?.android_client_info?.package_name === applicationId,
+    );
+  } catch {
+    return false;
+  }
+}
 
 // Where the build should upload its source maps. Build-time only (never EXPO_PUBLIC_*, so
 // nothing of it lands in the bundle) and set by the owner in EAS; empty is the normal
@@ -29,24 +49,27 @@ function withSentry(base: ExpoConfig): ExpoConfig {
   return { ...base, plugins: [...(base.plugins ?? []), sentry] };
 }
 
-export default ({ config }: ConfigContext): ExpoConfig => {
+export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   const base = withSentry(config as ExpoConfig);
   if (!DEV) return base;
+  const firebase = base.android?.googleServicesFile;
   return {
     ...base,
     name: 'LearnBuddy Dev',
     android: {
       ...base.android,
-      package: 'com.learnbuddy.app.dev',
-      // google-services.json has no client for the .dev package and the FCM Gradle plugin
-      // fails the build over it. Push in dev builds comes back once Firebase has an Android
-      // app "com.learnbuddy.app.dev" and the downloaded file carries both clients
-      // (lib/push.ts already treats a device without push as "not possible", never a crash).
-      googleServicesFile: undefined,
+      package: DEV_ID,
+      // The FCM Gradle plugin fails the build when google-services.json has no client for the
+      // .dev package, and without FCM the dev client gets no push token (#677). The file is
+      // kept once Firebase has an Android app "com.learnbuddy.app.dev" and the downloaded file
+      // carries both clients; until then it is left out (lib/push.ts treats a device without
+      // push as "not possible", never a crash).
+      googleServicesFile:
+        firebase && hasFirebaseClient(join(projectRoot, firebase), DEV_ID) ? firebase : undefined,
     },
     ios: {
       ...base.ios,
-      bundleIdentifier: 'com.learnbuddy.app.dev',
+      bundleIdentifier: DEV_ID,
     },
   };
 };
