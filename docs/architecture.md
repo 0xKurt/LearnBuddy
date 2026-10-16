@@ -1533,7 +1533,9 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   (rule 5). Without the header the same call answers with plain JSON. When the phone goes away
   mid-stream, the judgement and the dictation stop their model call with it (#684,
   `LlmRequest.signal`, recorded as `cancelled`; never retried); a recording sent again while its
-  judgement still runs in the same instance joins that run — one model call, one result. Buddy's
+  judgement still runs in the same instance joins that run — one model call, one result. The join
+  is per server instance: across instances the unique turn index still keeps one stored result,
+  but the model may be paid twice. Buddy's
   chat turn is not stopped this way: a dropped stream is not "Stopp", and the answer still lands.
 - **Writing down what she said streams too** (`POST /voice/transcribe` with
   `Accept: text/event-stream`; `TranscribeStreamEvent`, issue #9): on the dictation path — a
