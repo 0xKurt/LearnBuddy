@@ -2,7 +2,7 @@
 // p2-closed-contracts-break-old-apps-on-additive-api-change).
 import { describe, expect, it } from 'vitest';
 
-import { BuddyHome } from '../buddy.js';
+import { BuddyHome } from '../buddyLearning.js';
 import { ItemView } from '../learning.js';
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
