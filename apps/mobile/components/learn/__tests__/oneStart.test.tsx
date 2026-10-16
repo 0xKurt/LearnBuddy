@@ -39,6 +39,7 @@ const OFFER: Extract<ActionSummary, { tool: 'offer_learning' }> = {
   startable: true,
   finished_session_id: null,
   running_session_id: RUN,
+  pictures_shown: null,
 };
 
 const LAYOUT: HomeLayout = {

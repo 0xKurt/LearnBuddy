@@ -34,6 +34,7 @@ const OFFER: Extract<ActionSummary, { tool: 'offer_learning' }> = {
   startable: true,
   finished_session_id: null,
   running_session_id: null,
+  pictures_shown: null,
 };
 
 /** What a text declares for itself: jsdom's cascade lets react-native-web's reset win over it. */
@@ -199,6 +200,26 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
     expect(
       screen.getByText('Damit kann ich leider nichts vorbereiten – probier ein Schulthema.'),
     ).toBeTruthy();
+  });
+
+  it('an offer with a picture wish says whether its run has one, from the run (issue #842)', () => {
+    // Device 16.10.: Buddy announced "Beschriftungen und Abbildungen" for a run of one diagram;
+    // the probe of 17.10. found a run with none. The card's line is the run's, not his words.
+    const view = renderInApp(
+      <OfferCard
+        actionId="a1"
+        offer={{ ...OFFER, figures: ['schematic'], pictures_shown: false }}
+      />,
+    );
+    expect(screen.getByText('Diesmal ohne Bild')).toBeTruthy();
+    view.unmount();
+    renderInApp(
+      <OfferCard
+        actionId="a1"
+        offer={{ ...OFFER, figures: ['schematic'], pictures_shown: true }}
+      />,
+    );
+    expect(screen.getByText('Mit Bild')).toBeTruthy();
   });
 
   it('an offer she already worked through reads as done and opens its result (issue #630)', () => {

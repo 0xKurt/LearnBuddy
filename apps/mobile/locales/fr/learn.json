@@ -73,6 +73,8 @@
     "preparing": "Buddy prépare …",
     "preparing_hint": "Ça prend quelques secondes.",
     "not_usable": "Je ne peux rien préparer avec ça, désolé – essaie un sujet d'école.",
+    "with_picture": "Avec une image",
+    "without_picture": "Sans image cette fois",
     "minutes_one": "avec {{count}} minute",
     "minutes_other": "avec {{count}} minutes"
   },

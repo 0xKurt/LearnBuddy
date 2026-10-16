@@ -1102,7 +1102,11 @@ run still starts. **Her wish comes first** (#724): a kind of picture she asks fo
 structured output — Buddy's `offer_learning` `pictures` (figure types from the closed list,
 practice and test only, refused on any other kind), the offer's `figures`, `POST /practice/topic`
 `figures` — and `chooseForms` puts those types before anything the choice ranks, also in the
-minimal set. The run is told so in one line (`PICTURES`, a principle, no sample question). Before,
+minimal set. The run is told so in one line (`PICTURES`, a principle, no sample question). A
+picture of the body, a plant or an organ is asked as `schematic` — the library's labelled picture
+whose parts code checks — and a free `diagram` only for a flow the library has none of (#842: the
+heart came as a model-drawn flow, once biologically wrong). Whether the prepared run shows a
+picture is the offer card's line (`pictures_shown`, read from its questions), not Buddy's words. Before,
 "mit Kreisbildern" lived only in the offer's free text and the run came without a picture. The
 turn's step schema stood at the budget (269) with #725, so `pictures` came with a fold:
 `offer_learning`'s `difficulty` and `direction` are one field `wish` (harder, easier, recognise,

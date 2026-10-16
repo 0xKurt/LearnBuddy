@@ -107,6 +107,48 @@ describe.skipIf(!dbReady)('the picture she asks for (#724)', () => {
     expect(row.figure?.type).toBe('fraction');
   });
 
+  it('says on the card whether the prepared run has a picture, from the set itself (#842)', async () => {
+    // Device 16.10. and the probe of 17.10.: Buddy wrote "mit Abbildungen" in 4 of 5 replies, and
+    // one run then held none. The words are the model's; the card's line is code's, read from
+    // the questions the offer prepared — so a claim the set does not keep never stands alone.
+    const card = async () =>
+      (
+        await l.api.get<{
+          thread: Array<{ actions: Array<{ summary: Record<string, unknown> }> }>;
+        }>('/buddy')
+      ).body.thread
+        .flatMap((m) => m.actions)
+        .find((a) => a.summary.tool === 'offer_learning')!.summary;
+    env.llm.script('buddy_turn', { json: turn({ actions: [offer({ pictures: ['fraction'] })] }) });
+    env.llm.scriptChoice({ json: { forms: [], figures: [] } });
+    env.llm.script('explain', {
+      json: {
+        ...SET,
+        items: [{ ...SET.items[0]!, figure: null, prompt: 'Was ist 1/4 + 1/4?', answer: '1/2' }],
+      },
+    });
+    await say('Ich will Brüche addieren mit Kreisbildern üben');
+    await env.flushBackground();
+    expect(await card()).toMatchObject({ figures: ['fraction'], pictures_shown: false });
+
+    env.llm.script('buddy_turn', {
+      json: turn({ actions: [offer({ text: 'Brüche kürzen', pictures: ['fraction'] })] }),
+    });
+    env.llm.scriptChoice({ json: { forms: [], figures: [] } });
+    env.llm.script('explain', { json: SET });
+    await say('Und Brüche kürzen, auch mit Kreisbildern');
+    await env.flushBackground();
+    const both = (
+      await l.api.get<{ thread: Array<{ actions: Array<{ summary: Record<string, unknown> }> }> }>(
+        '/buddy',
+      )
+    ).body.thread
+      .flatMap((m) => m.actions)
+      .filter((a) => a.summary.tool === 'offer_learning')
+      .map((a) => a.summary.pictures_shown);
+    expect(both).toEqual([false, true]);
+  });
+
   it('keeps the wished types when no choice can be made', async () => {
     env.llm.scriptChoice({ error: new LlmError('unavailable', 'provider down') });
     env.llm.script('explain', { json: SET });
