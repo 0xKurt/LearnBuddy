@@ -86,12 +86,12 @@ describe('the licences of the pictures', () => {
     const count = (licence: string) => FIGURE_LICENCES.filter((l) => l.licence === licence).length;
     const names = [...new Set(FIGURE_LICENCES.map((l) => l.licence))];
     expect(Object.fromEntries(names.map((name) => [name, count(name)]))).toEqual({
-      'Public domain': 20,
+      'Public domain': 21,
       CC0: 15,
       'CC BY 2.5': 1,
       'CC BY 3.0': 2,
       'CC BY 4.0': 31,
-      'CC BY-SA 3.0': 7,
+      'CC BY-SA 3.0': 6,
       'CC BY-SA 4.0': 1,
     });
   });
@@ -118,7 +118,7 @@ describe('the licences of the pictures', () => {
         { kind: 'source', url: s.quelle },
       ]);
     });
-    // Everything but the 20 works in the public domain.
-    expect(withDeed).toBe(57);
+    // Everything but the 21 works in the public domain (the skeleton since #820).
+    expect(withDeed).toBe(56);
   });
 });
