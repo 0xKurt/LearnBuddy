@@ -16,6 +16,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 
 import { parseConfig } from '../config.js';
 import { BASELINE, compareBaseline, generateBaseline } from '../baseline.js';
@@ -159,19 +160,30 @@ async function main(): Promise<void> {
         LB_TEST_DATABASE_URL: admin,
         LB_REQUIRE_TEST_DB: '1',
         LB_TEST_MAX_WORKERS: process.env.LB_TEST_MAX_WORKERS ?? '2',
+        // Plain text, so the summary below can be read (CI forces colour otherwise).
+        NO_COLOR: '1',
+        FORCE_COLOR: '0',
       },
     });
+    const run = stripVTControlCharacters(`${tests.stdout}${tests.stderr}`);
+    // How many ran, read from vitest's summary: a run that ran none proves nothing.
+    const ran = /Tests\s+(\d+) passed[^\n]*/.exec(run);
+    if (tests.status === 0 && (!ran || Number(ran[1]) === 0)) {
+      console.error(`✗ the core's tests ran none on its own database:\n${run.slice(-4000)}`);
+      process.exitCode = 1;
+      return;
+    }
     if (tests.status !== 0) {
       const log = join(tmpdir(), 'core-check-tests.log');
-      writeFileSync(log, `${tests.stdout}${tests.stderr}`);
-      const failed = [...new Set(tests.stdout.match(/^ FAIL {2}\S+/gm) ?? [])];
+      writeFileSync(log, run);
+      const failed = [...new Set(run.match(/^ FAIL {2}\S+/gm) ?? [])];
       console.error(
         `✗ the core's tests fail on its own database (the whole run: ${log}):\n  ${failed.join('\n  ')}`,
       );
       process.exitCode = 1;
       return;
     }
-    console.log(`core tests: ${/Tests\s+(\d+ passed[^\n]*)/.exec(tests.stdout)?.[1] ?? 'passed'}`);
+    console.log(`core tests: ${ran?.[0].replace(/^Tests\s+/, '') ?? ''}`);
     const total = Object.values(gaps).reduce((s, n) => s + n, 0);
     console.log(
       `core typecheck: ${total} errors in production code (${Object.keys(gaps).length} file/code pairs), ${support} in tests and evals`,
