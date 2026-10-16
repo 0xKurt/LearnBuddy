@@ -332,6 +332,31 @@ describe('module boundaries: generic Buddy code never imports the learning domai
       done();
     }
   });
+
+  it("finds a generic contract that names the domain's contracts, but not the barrel that assembles both (cut 7)", () => {
+    const { repo, write, done } = playground();
+    try {
+      const contracts = 'packages/shared-types/src/contracts';
+      write(`${contracts}/learning.ts`, 'export const SessionView = 1;\n');
+      write(
+        `${contracts}/buddy.ts`,
+        "import { SessionView } from './learning.js';\nexport const BuddyHome = SessionView;\n",
+      );
+      write(
+        `${contracts}/buddyLearning.ts`,
+        "import { BuddyHome } from './buddy.js';\nexport const Home = BuddyHome;\n",
+      );
+      write(
+        `${contracts}/index.ts`,
+        "export * from './buddy.js';\nexport * from './buddyLearning.js';\nexport * from './learning.js';\n",
+      );
+      assert.deepEqual(findBoundaryEdges(repo), [
+        'packages/shared-types/src/contracts/buddy.ts -> packages/shared-types/src/contracts/learning.ts',
+      ]);
+    } finally {
+      done();
+    }
+  });
 });
 
 describe('domain tables in generic SQL (#107 §6: ein Test, nicht nur Lint)', () => {

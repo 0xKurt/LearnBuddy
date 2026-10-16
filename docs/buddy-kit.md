@@ -136,6 +136,14 @@ Gemessen am 10.10. auf `f314c0f` mit dependency-cruiser 18.4.0 (MIT). Was Domain
 | SQL auf Domain-Tabellen                         | 11 generische Dateien, ≈ 75 Abfragen (`buddy/state` 24, `identity/privacy` 21, `buddy/home` 9, …); gemessen seit Schnitt 5 (`domain-sql.mjs`): 76 in 9                                     |
 | Fremdschlüssel Kern → Domain                    | 8 (`buddy_goals`/`buddy_lookbacks` → `subjects`, `buddy_pending_actions` → `materials`/`items`, `buddy_focus` → `materials`/`subjects`, `buddy_messages` → `buddy_roleplays`/`rehearsals`) |
 
+**Heute (16.10.)**, nach den Schnitten unten:
+
+- Importe API 1 und App 1: die zwei Nähte `app.ts → learning/register.ts` und
+  `app/_layout.tsx → lib/learning/register.tsx`; der Wächter zählt 2.
+- Verträge 0 (Schnitt 7).
+- SQL auf Domain-Tabellen 0.
+- Fremdschlüssel Kern → Domain weiter 8 (Schnitt 9).
+
 Reihenfolge der Schnitte (je ein eigener, kleiner Branch, ohne Verhaltensänderung): Stimm-Verträge
 aus `learning.ts` lösen → Tools, Lookups und Angebote melden sich an → Domain-Routen →
 Job-Arten und Anlässe → Kontext, Zustand, Home und Prompt als Provider → Export/Löschung über
@@ -210,6 +218,25 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
    hält die angemeldeten Tabellen und `DOMAIN_TABLES` des SQL-Wächters gleich. SQL im Kern auf
    Domain-Tabellen: 24 → 0. Importe: unverändert 2 (die Kante `privacy.ts → materials/purge.ts`
    war schon mit Schnitt 4 weg).
+8. **Karten-Union erweiterbar (Schnitt 7, Verträge)** (`contracts/buddy.ts`, `contracts/buddyLearning.ts`):
+   - **Der Kern:** `buddy.ts` nennt keinen Domain-Vertrag mehr. Es baut Gespräch und Startseite
+     mit `buddyContracts({ actions, message, home })` aus dem, was eine Domain hinzufügt. Selbst
+     trägt es nur die generischen Werkzeug-Karten (`remember` … `open_area`, `CORE_ACTIONS`),
+     die Zustellung, die Ziele, die Entscheidungen, die Erinnerungen und die Einstellungen.
+   - **Die Lern-Domain:** `buddyLearning.ts` trägt ihre zwölf Werkzeug-Karten (Übung, Blätter,
+     Kopfrechnen, Rollenspiel, Vortrag, Löschbestätigung, „bereit"). Dazu ihre Felder an einer
+     Nachricht (Rollenspiel-Rückmeldung, Probevortrag, Blatt, angekündigte Übung) und an der
+     Startseite (`now`, `notice`, `working`, `practiced_today`, `focus`, `roleplay`) sowie ihre
+     Antworten. Daraus setzt sie die Verträge der App zusammen: `ActionSummary`, `MessageView`,
+     `BuddyHome`, `SendMessageResponse`.
+   - **Der Barrel `contracts/index.ts`** gibt beide aus, darum ändert sich in API und App kein
+     Import. Ein Buddy ohne Domain übergibt `{ actions: [], message: {}, home: {} }`.
+   - **Der Wächter** sieht jetzt auch die Verträge; der Barrel ist Naht wie die zwei
+     `register.ts`. `buddy.ts → learning/drill/talk/figure`: 4 → 0, Importe gesamt: 6 → 2
+     (die zwei Nähte).
+   - **Noch offen:** die Schemas und Beschreibungen der Domain-Werkzeuge, die das Modell sieht
+     (`decision.ts`, `registry.ts` in der API). Sie gehen in den Prompt-Hash ein und ziehen als
+     eigener Schritt um, mit `prompt-pin.test.ts` als Beleg, dass der Prompt byte-gleich bleibt.
 
 ## Die API-Datenbankrolle
 
