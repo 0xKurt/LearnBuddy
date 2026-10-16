@@ -74,6 +74,7 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     parts: loaded.parts,
     // The day and her age the reading is told: when it starts.
     now: deps.now(),
+    materialId,
   });
 
   // Without a model nothing can read the photos: say so at once, not after minutes of futile

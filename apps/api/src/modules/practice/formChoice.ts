@@ -358,6 +358,12 @@ export async function chooseForms(
      * offers. Without it the choosing call reads the main call's whole prompt.
      */
     chooser?: (offer: { forms: string[]; figures: string[] }) => string;
+    /**
+     * The choice, already known — read by code from the questions the run is made from
+     * (`formSources.ts`), or stored for the sheet by an earlier reading (F5, #657). Then no
+     * choosing call is made; only names `full` offers count.
+     */
+    known?: { forms: readonly string[]; figures: readonly string[] } | null;
   },
 ): Promise<Narrowed & { reservation: Reservation | null }> {
   // The bound of the gateway this call goes to (#646): another provider serves other sizes.
@@ -366,10 +372,12 @@ export async function chooseForms(
     return { schema: call.full, keep: null, how: 'whole', reservation: null };
   // Before the choosing call, never after it: a run her limit refuses costs no choice (#665).
   const reservation = await reserveCall(deps, learnerId, localDay, call.purpose);
-  const narrowed = await narrow(deps, reservation, call, max);
+  const narrowed = call.known
+    ? fromKnown(call, call.known, max)
+    : await narrow(deps, reservation, call, max);
   // Which set the main call goes out with, for the function log (#665): no prompt, no answer.
   console.info(
-    `[forms] ${call.purpose}: ${narrowed.how}` +
+    `[forms] ${call.purpose}: ${narrowed.how}${call.known ? ' (known)' : ''}` +
       (narrowed.keep
         ? ` forms=${[...narrowed.keep.forms].join(',') || '-'} figures=${[...narrowed.keep.figures].join(',') || '-'}`
         : ''),
@@ -427,6 +435,26 @@ async function narrow(
     ...fitted(call.full, { forms: [], figures: withWished([], call) }, max),
     how: 'fallback',
   };
+}
+
+/** The set a known choice gives `full`: only what it offers, and her wished figures first. */
+function fromKnown(
+  call: Parameters<typeof chooseForms>[3],
+  known: { forms: readonly string[]; figures: readonly string[] },
+  max: number,
+): Narrowed {
+  const can = offered(call.full);
+  return fitted(
+    call.full,
+    {
+      forms: known.forms.filter((f) => can.forms.includes(f)),
+      figures: withWished(
+        known.figures.filter((f) => can.figures.includes(f)),
+        call,
+      ),
+    },
+    max,
+  );
 }
 
 /** What she asked to see first (#724) — only types this schema has — then the rest, once each. */

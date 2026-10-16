@@ -43,6 +43,7 @@ import {
   offered,
   type Keep,
 } from './formChoice.js';
+import { formsOfSession, formsOfSheets, type KnownForms } from './formSources.js';
 import { choosingCatalogue } from './choosingCatalogue.js';
 import { runOfRequest } from './lifecycle.js';
 import { homeLandLine } from './mapCheck.js';
@@ -411,6 +412,11 @@ type Ground = {
   pattern: Awaited<ReturnType<typeof patternOf>>;
   /** A Diktat's list (issue #242), or null for every other kind. */
   dictation: DictationSource | null;
+  /**
+   * The forms and figures of the questions this run is made from — her read sheets, or the run
+   * she wants more of — when code can read them all (F5-1, #657): then no choosing call.
+   */
+  known: KnownForms | null;
 };
 
 /**
@@ -439,7 +445,7 @@ async function generateSet(
     onMainStart?: (at: Date) => void;
   } = {},
 ): Promise<GeneratedSet> {
-  const { level, timezone, sheets, pattern, dictation } = ground;
+  const { level, timezone, sheets, pattern, dictation, known } = ground;
   // The forms switched off in this environment are neither shown nor kept (#296).
   const off = deps.config.FORMS_OFF;
   const parseSet = parseSetFor(input.kind, sheets?.topics ?? null, off);
@@ -506,6 +512,7 @@ async function generateSet(
       contents,
       full: explainSchemaFor(input.kind, sheets?.topics ?? null, off),
       wished: wishedFigures(input),
+      known,
       chooser: choosingCatalogue,
     });
     reservation = narrowed.reservation;
@@ -774,6 +781,11 @@ async function prepareTopic(
     // More of the same: what she just did grounds the new questions (issue #58).
     pattern: sheets ? null : await patternOf(deps, learner.id, input.from_session_id),
     dictation,
+    known: sheets
+      ? await formsOfSheets(deps.db, learner.id, sheets.goalId)
+      : input.from_session_id
+        ? await formsOfSession(deps.db, learner.id, input.from_session_id)
+        : null,
   };
   /**
    * A practice run may start on its first questions while the rest of the answer is still being
