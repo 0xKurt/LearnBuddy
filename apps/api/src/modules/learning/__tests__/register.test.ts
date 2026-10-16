@@ -5,7 +5,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { checkConfig, type Config } from '../../../config.js';
+import { Hono } from 'hono';
+
+import type { AppEnv } from '../../../http/context.js';
 import { routePlugins } from '../../../http/plugins.js';
+import { mountBuddy } from '../../buddy/routes.js';
+import { pushDeviceRoutes } from '../../devices/routes.js';
+import { identityRoutes } from '../../identity/routes.js';
+import { voiceRoutes } from '../../voice/routes.js';
 import { ACT_SCHEMAS } from '../../buddy/decision.js';
 import { lookupNames, registerLookups } from '../../buddy/lookups.js';
 import {
@@ -96,6 +103,13 @@ describe('the learning domain in the core', () => {
         guard.DOMAIN_ROUTES.some((p) => route.split(' ')[1]?.startsWith(p)),
         route,
       ).toBe(true);
+    // …and every path the guard knows as the domain's is one it mounts: a prefix wider than its
+    // routes would leave the core's own specs out of a core copy unseen (packages/buddy-kit).
+    for (const prefix of guard.DOMAIN_ROUTES)
+      expect(
+        mounted.some((r) => r.split(' ')[1]?.startsWith(prefix)),
+        prefix,
+      ).toBe(true);
     // The taps that left buddy/routes.ts, and a route of each module, are there.
     expect(mounted).toEqual(
       expect.arrayContaining([
@@ -108,6 +122,23 @@ describe('the learning domain in the core', () => {
       ]),
     );
     expect(startsSteps()).toBe(true);
+  });
+
+  it('names no path of the core as its own (DOMAIN_ROUTES stay exactly its routes)', () => {
+    // A prefix that also covers a route of the core would leave the core's own specs out of a
+    // core copy unseen (packages/buddy-kit/src/core.ts `namesDomain`).
+    const core = new Hono<AppEnv>();
+    core.route('/', identityRoutes);
+    core.route('/', pushDeviceRoutes);
+    mountBuddy(core, '/buddy');
+    core.route('/voice', voiceRoutes);
+    const paths = core.routes.map((r) => r.path);
+    expect(paths.length).toBeGreaterThan(10);
+    for (const prefix of guard.DOMAIN_ROUTES)
+      expect(
+        paths.filter((p) => p === prefix || p.startsWith(`${prefix}/`)),
+        prefix,
+      ).toEqual([]);
   });
 
   it('checks its forms in the configuration before the app serves (FORMS_OFF, #296)', () => {

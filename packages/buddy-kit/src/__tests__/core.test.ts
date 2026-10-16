@@ -117,7 +117,14 @@ describe('the core copy (#107, cut 10)', () => {
   });
 
   it('tells a spec of the domain by what it names, where no import tells it', () => {
-    const signals = { tables: ['materials'], tools: ['prepare_practice'], routes: ['/practice'] };
+    const signals = {
+      tables: ['materials'],
+      tools: ['prepare_practice'],
+      routes: ['/practice', '/buddy/steps/:id/start'],
+    };
+    // A route with a parameter is its own: the domain's start, not the core's skip beside it.
+    expect(namesDomain('api.post(`/buddy/steps/${step}/start`)', signals)).toBe(true);
+    expect(namesDomain('api.post(`/buddy/steps/${step}/skip`)', signals)).toBe(false);
     expect(namesDomain('await l.api.post(`/practice/sessions/${id}/finish`, {})', signals)).toBe(
       true,
     );

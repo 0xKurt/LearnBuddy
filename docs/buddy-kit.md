@@ -343,8 +343,10 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
       baut ohne die Lern-Domain.**
 
     - **Der Wächter:** `packages/buddy-kit/core-gaps.json` listet jeden dieser Reste, je Datei
-      und Fehlercode. `pnpm core-check` (CI, Job `check`) baut die Kopie, installiert sie und
-      typecheckt sie. Neu oder mehr ist rot: der Kern erreicht die Domain wieder. Weniger ist
+      und Fehlercode. `pnpm core-check` baut die Kopie, installiert sie und typecheckt sie. In CI
+      läuft es im eigenen Job `core`, parallel zu `check`, mit eigenem Postgres 16 und
+      `postgresql-client-16`. Er läuft nur, wenn ein PR etwas ändert, woraus die Kopie besteht:
+      Kit, API, App-Code, Verträge, Domain-Listen des Wächters, Migrationen. Neu oder mehr ist rot: der Kern erreicht die Domain wieder. Weniger ist
       auch rot, bis die Liste nachgezogen ist (`pnpm core-check --write`). So wird die Liste nur
       kürzer.
     - **Der Kern startet ohne Domain (16.10.):**

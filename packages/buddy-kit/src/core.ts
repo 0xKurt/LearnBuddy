@@ -164,7 +164,9 @@ export const DOMAIN_MARK = '@buddy-kit domain';
 export function namesDomain(text: string, signals: DomainSignals): boolean {
   if (text.includes(DOMAIN_MARK)) return true;
   const any = (xs: readonly string[]) => xs.map(escaped).join('|');
-  const route = new RegExp(`['"\`](/v1)?(${any(signals.routes)})(/|['"\`?])`);
+  // A route's `:id` stands for whatever the spec puts there (`${id}`, a literal uuid).
+  const paths = signals.routes.map((r) => escaped(r).replace(/:[a-z_]+/gi, '[^/\'"`]+')).join('|');
+  const route = new RegExp(`['"\`](/v1)?(${paths})(/|['"\`?])`);
   const tool = new RegExp(`['"\`](${any(signals.tools)})['"\`]`);
   const table = new RegExp(
     `\\b(from|into|update|join|table)\\s+(public\\.)?(${any(signals.tables)})\\b`,

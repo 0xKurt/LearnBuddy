@@ -95,7 +95,7 @@ export const DOMAIN_ROUTES = [
   '/materials',
   '/buddy/roleplays',
   '/buddy/rehearsals',
-  '/buddy/steps',
+  '/buddy/steps/:id/start',
   '/buddy/confirmations',
 ];
 
