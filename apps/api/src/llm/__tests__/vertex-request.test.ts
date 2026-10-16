@@ -103,6 +103,26 @@ describe('the request Vertex receives (issue #283)', () => {
     expect(config.thinkingConfig).toEqual(wire);
   });
 
+  // 3.8 Flash and Gemini 4 take a level only: no budget (400 INVALID_ARGUMENT), no MINIMAL, and
+  // LOW is the least there is. MEDIUM and HIGH thought for minutes on a sheet (#647): all go LOW.
+  it.each([
+    ['gemini-3.8-flash', 'off', 'LOW'],
+    ['gemini-3.8-flash', 'minimal', 'LOW'],
+    ['gemini-3.8-flash', 'low', 'LOW'],
+    ['gemini-3.8-flash', 'medium', 'LOW'],
+    ['gemini-3.8-flash', 'high', 'LOW'],
+    ['gemini-4-argon', 'high', 'LOW'],
+  ] as const)(
+    'sends %s thinking %s as level %s, never a budget',
+    async (model, thinking, level) => {
+      const { body } = await wireBody(
+        paramsFor({ ...request(TURN_STEP_SCHEMA), thinking }, model, 5_000),
+      );
+      const config = body.generationConfig as Record<string, unknown>;
+      expect(config.thinkingConfig).toEqual({ thinkingLevel: level });
+    },
+  );
+
   it('canary: the SDK still drops responseFormat — re-check #283 when this fails', async () => {
     const params = paramsFor(request(TURN_STEP_SCHEMA), 'gemini-3.6-flash', 5_000);
     const { body } = await wireBody({

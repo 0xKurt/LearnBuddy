@@ -1,0 +1,7 @@
+{
+  "issue": "#783",
+  "reason": "Three eval cases passed while their answers made no sense to a parent; each gets the check that catches it, next to the case it belongs to (9 counted lines). The case file sat exactly at its measure on main.",
+  "maxLines": {
+    "apps/api/evals/buddy/cases.ts": 1119
+  }
+}

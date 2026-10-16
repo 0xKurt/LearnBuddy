@@ -107,6 +107,21 @@ function spokenDay(date: string, today: string, locale: string): string {
   }).format(new Date(Date.UTC(y!, m! - 1, day!)));
 }
 
+/**
+ * How long ago an earlier conversation was, counted by code (rule 2, issue #783): asked about
+ * "three weeks ago", Buddy had to work out from two dates which day she meant, and told her of a
+ * talk she gave two weeks ago as if it were three. Weeks from a week on, so no count of days is
+ * put in front of him to repeat at her (rule 6).
+ */
+function agoLabel(date: string, today: string): string {
+  const d = daysBetween(date, today);
+  if (d <= 0) return 'today';
+  if (d === 1) return 'yesterday';
+  if (d < 7) return `${d} days ago`;
+  const weeks = Math.round(d / 7);
+  return `about ${weeks} week${weeks === 1 ? '' : 's'} ago`;
+}
+
 function fmtDay(date: string, today: string, locale: string): string {
   const d = daysBetween(today, date);
   const rel =
@@ -260,7 +275,7 @@ export function buildContext(
     summariesBlock.push('## Earlier conversations (oldest first)');
     for (const s of state.summaries) {
       const about = s.topics.length ? ` [${s.topics.slice(0, 5).join(', ')}]` : '';
-      summariesBlock.push(`- ${s.day}${about}: ${s.summary}`);
+      summariesBlock.push(`- ${s.day} (${agoLabel(s.day, today)})${about}: ${s.summary}`);
     }
   }
 

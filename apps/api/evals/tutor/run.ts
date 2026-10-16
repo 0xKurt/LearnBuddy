@@ -29,13 +29,13 @@ const config = loadConfig({
 });
 const real = new VertexGateway(config);
 const scripted = new ScriptedGateway();
-const gateway = {
+const gateway: LlmGateway = {
   available: true,
   // The form choice reads the gateway's bound since #755; without it every case failed with 503.
   profile: real.profile,
   generate: (req: LlmRequest) =>
     req.purpose === 'explain' ? scripted.generate(req) : real.generate(req),
-} as LlmGateway;
+};
 const env = await createTestEnv({ start: '2026-09-28T13:30:00Z', gateway });
 const l = await onboard(env, {
   relation: 'child',
