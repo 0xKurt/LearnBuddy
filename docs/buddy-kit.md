@@ -262,6 +262,16 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
         `lib/homeLayout.ts` 25, `components/buddy/HomeNotices.tsx` 18;
       - API: `buddy/home.ts` 8, `buddy/checkDecide.ts` 5 (`buddy/decision.ts` war bei 11 und ist mit
         7b auf 0 gefallen; der Wächter hat das gemeldet).
+    - **Nachgezogen am 16.10. (App):** Die vier größten App-Reste melden sich jetzt über die Naht
+      an (`lib/learning/register.tsx`). Die Leiste oben und was das Gespräch dann weglässt, kommt
+      aus `homeTop` (`lib/homeLayout.ts`, die Regeln in `lib/learning/homeLayout.ts`). Was Buddy
+      am Ende des Gesprächs sagt, kommt aus `homeNoticeSlot` (`components/buddy/HomeNotices.tsx`,
+      die Karten in `components/learn/HomeNotices.tsx`; die Ergebnis-Notiz braucht damit keinen
+      eigenen Platz mehr). Die Quittungszeilen der Lern-Werkzeuge kommen aus `receipts`
+      (`components/buddy/extensions.ts`, die Zeilen in `components/learn/receipts.ts`). Die
+      Aufrufe der Lern-API stehen in `lib/api/learningEndpoints.ts`. In `endpoints.ts` bleiben
+      nur die sechs, die generischer Code noch ruft (Anhänge, Outbox, Sitzungs-Cache). Danach
+      zeigt die Kopie **117 Fehler in 48 Paaren**.
     - **Der Wächter:** `packages/buddy-kit/core-gaps.json` listet jeden dieser Reste, je Datei
       und Fehlercode. `pnpm core-check` (CI, Job `check`) baut die Kopie, installiert sie und
       typecheckt sie. Neu oder mehr ist rot: der Kern erreicht die Domain wieder. Weniger ist

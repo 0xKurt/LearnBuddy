@@ -28,7 +28,7 @@ import { Linking, Platform, Text, View, type TextStyle } from 'react-native';
 
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
 import { newId } from '../../lib/api/client.js';
-import { speakItem } from '../../lib/api/endpoints.js';
+import { speakItem } from '../../lib/api/learningEndpoints.js';
 import { useOnline } from '../../lib/api/queries.js';
 import { WaitAborted } from '../../lib/api/whenOnline.js';
 import { messageFor } from '../../lib/errors.js';

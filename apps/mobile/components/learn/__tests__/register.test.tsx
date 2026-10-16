@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { homeFollowers } from '../../../lib/api/queries.js';
+import { homeTop } from '../../../lib/homeLayout.js';
 import { notation } from '../../../lib/buddy/notation.js';
 import { pageHandler } from '../../../lib/capture/pages.js';
 import { registerLearning } from '../../../lib/learning/register.js';
@@ -19,10 +20,11 @@ import {
   readAlong,
   profileSubjects,
   readingSteps,
-  resultNotice,
+  receipts,
   startMenu,
   workingOn,
 } from '../../buddy/extensions.js';
+import { homeNoticeSlot } from '../../buddy/HomeNotices.js';
 import { InlineText, inlineNotation } from '../../lb/InlineText.js';
 import { TYPE } from '../../../lib/theme/type.js';
 import { renderInApp } from '../../../testing/render.js';
@@ -38,6 +40,18 @@ describe('the learning domain fills every place of the core (issue #107)', () =>
       'offer_drill',
       'start_roleplay',
       'offer_rehearsal',
+    ]);
+  });
+
+  it('words a receipt line for what Buddy did with her practice, her sheets and her talks', () => {
+    expect(receipts.keys()).toEqual([
+      'prepare_practice',
+      'request_material',
+      'show_ready',
+      'delete_material',
+      'plan_talk',
+      'rename_material',
+      'delete_item',
     ]);
   });
 
@@ -57,7 +71,8 @@ describe('the learning domain fills every place of the core (issue #107)', () =>
     readAlong,
     profileSubjects,
     workingOn,
-    resultNotice,
+    homeTop,
+    homeNoticeSlot,
     readingSteps,
     startMenu,
     notation,

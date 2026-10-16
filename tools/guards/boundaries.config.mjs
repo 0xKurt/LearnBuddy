@@ -25,12 +25,14 @@ export const DOMAIN = [
   '^apps/mobile/components/buddy/(RehearseCard|RehearsalResult|RoleplayCard|RoleplayResult|ReadAlongBubble)\\.tsx$',
   '^apps/mobile/components/capture/PhotoCheckCard\\.tsx$',
   '^apps/mobile/lib/(practice|math|music|photo)/',
-  // The one place the domain gives the app's core what it adds (lib/learning/register.tsx):
-  // app/_layout.tsx calls it once, the seam's only import of the domain.
+  // The one place the domain gives the app's core what it adds (lib/learning/register.tsx) and
+  // the rules it gives there (the home's bar on top): app/_layout.tsx calls it once, the seam's
+  // only import of the domain.
   '^apps/mobile/lib/learning/',
   '^apps/mobile/lib/capture/materialUpload\\.ts$',
   '^apps/mobile/lib/buddy/(rehearsal|readingStages)\\.ts$',
-  '^apps/mobile/lib/api/library(Cache|Queries)\\.ts$',
+  // Its calls to the API (her sheets, practice, the rehearsal) and its caches.
+  '^apps/mobile/lib/api/(library(Cache|Queries)|learningEndpoints)\\.ts$',
   // Maths, figures and the school sciences.
   '^packages/shared-math/',
   // Contracts (cut 7): the learning domain's API shapes — practice, worksheets, talks, drills,

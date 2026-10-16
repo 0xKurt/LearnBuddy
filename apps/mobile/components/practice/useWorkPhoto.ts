@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ApiError, isOutdated } from '../../lib/api/apiError.js';
-import { readWorkPhoto } from '../../lib/api/endpoints.js';
+import { readWorkPhoto } from '../../lib/api/learningEndpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { openCamera } from '../../lib/capture/camera.js';
 import { preparePhoto } from '../../lib/capture/prepare.js';

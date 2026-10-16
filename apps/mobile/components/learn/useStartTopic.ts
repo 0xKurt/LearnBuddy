@@ -21,7 +21,7 @@ import type {
 import { useRef, useState } from 'react';
 
 import { ApiError, newId } from '../../lib/api/client.js';
-import { startTopic } from '../../lib/api/endpoints.js';
+import { startTopic } from '../../lib/api/learningEndpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
 import { useMounted } from '../../lib/useMounted.js';

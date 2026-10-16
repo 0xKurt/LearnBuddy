@@ -42,7 +42,7 @@ type Played = { uri: string; onStart: () => void; onEnd: End; stopped: number };
 const played: Played[] = [];
 const released: string[] = [];
 const asked: Array<{ slow: boolean; answer: (ok: boolean) => void }> = [];
-vi.mock('../../../lib/api/endpoints.js', () => ({
+vi.mock('../../../lib/api/learningEndpoints.js', () => ({
   listenToItem: (_session: string, body: { item_id: string; slow?: boolean }) =>
     new Promise((resolve, reject) =>
       asked.push({

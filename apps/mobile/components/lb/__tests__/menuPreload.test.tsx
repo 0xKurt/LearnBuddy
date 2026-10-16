@@ -9,6 +9,7 @@ import { act } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import * as endpoints from '../../../lib/api/endpoints.js';
+import * as learning from '../../../lib/api/learningEndpoints.js';
 import { keys, queryClient } from '../../../lib/api/queries.js';
 import { registerLearning } from '../../../lib/learning/register.js';
 import { renderInApp } from '../../../testing/render.js';
@@ -28,7 +29,7 @@ beforeEach(() => {
   onlineManager.setOnline(true);
   vi.spyOn(endpoints, 'getSettings').mockImplementation(never);
   vi.spyOn(endpoints, 'getMe').mockImplementation(never);
-  vi.spyOn(endpoints, 'getLibrary').mockImplementation(never);
+  vi.spyOn(learning, 'getLibrary').mockImplementation(never);
 });
 afterEach(() => {
   queryClient.clear();
@@ -39,13 +40,13 @@ it('loads the settings, her profile and her library when the menu opens, not bef
   const view = renderInApp(<HeaderMenu visible={false} onClose={() => undefined} />);
   await act(async () => {});
   expect(endpoints.getSettings).not.toHaveBeenCalled();
-  expect(endpoints.getLibrary).not.toHaveBeenCalled();
+  expect(learning.getLibrary).not.toHaveBeenCalled();
 
   view.rerender(<HeaderMenu visible onClose={() => undefined} />);
   await act(async () => {});
   expect(endpoints.getSettings).toHaveBeenCalledTimes(1);
   expect(endpoints.getMe).toHaveBeenCalledTimes(1);
-  expect(endpoints.getLibrary).toHaveBeenCalledTimes(1);
+  expect(learning.getLibrary).toHaveBeenCalledTimes(1);
 });
 
 it('asks nothing again for what is already fresh', async () => {
@@ -57,6 +58,6 @@ it('asks nothing again for what is already fresh', async () => {
   await act(async () => {});
   // Each asked once over both openings: the second finds the first one's answer (or request).
   expect(endpoints.getSettings).not.toHaveBeenCalled();
-  expect(endpoints.getLibrary).toHaveBeenCalledTimes(1);
+  expect(learning.getLibrary).toHaveBeenCalledTimes(1);
   expect(endpoints.getMe).toHaveBeenCalledTimes(1);
 });

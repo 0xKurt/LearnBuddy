@@ -1,7 +1,6 @@
 // What a domain adds to Buddy's chat and home (issue #107): the cards its actions bring into the
-// conversation, the message that stands in place of a bubble, the line that follows Buddy's
-// voice, the line on top of the thread, the finished practice among the notices, the stages of
-// a sheet being read, and the ways to start in the ⋯ menu. The core draws all of these places
+// conversation and the receipt lines of the others, the message that stands in place of a bubble, the line that follows Buddy's
+// voice, the line on top of the thread, the stages of a sheet being read, and the ways to start in the ⋯ menu. The core draws all of these places
 // and works with each of them empty; the learning domain fills them once at app start
 // (lib/learning/register.tsx). The core never imports the domain.
 
@@ -56,6 +55,20 @@ export function hasCard(tool: Tool): boolean {
 /** The tools that have a card, in the order they were given. */
 export function cardTools(): Tool[] {
   return actionCards.keys();
+}
+
+/**
+ * What one of a domain's actions says as a receipt line, in the conversation and in History
+ * (components/buddy/describe.ts `describeAction`): one sentence from the record, nothing
+ * inferred. '' where its card says it.
+ */
+export type Receipt<K extends Tool> = (summary: SummaryOf<K>) => string;
+
+export const receipts = registry<Tool, Receipt<Tool>>('Quittungen');
+
+/** The tool's receipt line (once per tool). */
+export function addReceipt<K extends Tool>(tool: K, line: Receipt<K>): void {
+  receipts.add(tool, (summary) => (isTool(summary, tool) ? line(summary) : ''));
 }
 
 /** The card one of Buddy's actions brings into the chat; null where a receipt says it. */
@@ -139,15 +152,6 @@ export const workingOn = slot<(h: BuddyHome) => ReactNode>('Zeile über dem Gesp
 export function quietVariant(quiet: Quiet): 'secondary' | 'primary' {
   return quiet === 'soft' ? 'secondary' : 'primary';
 }
-
-/** The finished practice, told at the end of the conversation (components/buddy/HomeNotices). */
-export const resultNotice = slot<
-  ComponentType<{
-    now: Extract<NowCard, { type: 'practice_result' }>;
-    busy: boolean;
-    quiet: Quiet;
-  }>
->('Ergebnis-Notiz');
 
 export type StepState = 'done' | 'active' | 'todo';
 
