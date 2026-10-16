@@ -603,7 +603,8 @@
       "no_fillers": "Pausenlaute wie „äh“ habe ich keine gehört.",
       "read": "Du hast {{wpm}} Wörter pro Minute richtig gelesen.",
       "read_all": "Jedes Wort stand so da, wie du es gelesen hast.",
-      "read_words": "Diese Wörter schau dir noch einmal an: {{words}}."
+      "read_words": "Diese Wörter schau dir noch einmal an: {{words}}.",
+      "partial": "Aufgeschrieben habe ich nur den ersten Teil deiner Aufnahme – die Zahlen gelten für diesen Teil."
     },
     "no_speech": "Ich habe in der Aufnahme keine Sprache gehört. Versuch es noch einmal, etwas näher am Mikrofon."
   }

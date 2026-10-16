@@ -418,6 +418,8 @@
       },
       "pace": "Ritmo",
       "pace_text": "{{wpm}} parole al minuto",
+      "pace_unknown": "Non misurato",
+      "partial": "È stata scritta solo la prima parte della tua registrazione: i numeri valgono per quella parte.",
       "fillers": "Suoni di esitazione",
       "fillers_text_one": "Una volta «ehm»",
       "fillers_text_other": "{{count}} volte «ehm»",

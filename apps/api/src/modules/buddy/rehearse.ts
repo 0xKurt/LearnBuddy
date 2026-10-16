@@ -30,8 +30,9 @@ import { AppError, isAppError } from '../../lib/errors.js';
 import { learnerDay } from '../../lib/zone.js';
 import { t } from '../../i18n/index.js';
 import { callModel } from '../../llm/call.js';
-import { recordingPart } from '../../llm/gateway.js';
+import { LlmError, recordingPart } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
+import { partialString } from '../../llm/partial.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 import { bumpContext, lockContext } from './plan.js';
 import {
@@ -56,10 +57,16 @@ const PartSchema = z.object({
     ),
 });
 
+/**
+ * The most of a transcript that is measured. Above what the talk's output limit (8 192 tokens)
+ * can carry, so a whole answer is never cut; the bound only keeps a runaway one in check (#681).
+ */
+const TRANSCRIPT_MAX = 40_000;
+
 /** What the model returns. Parsed leniently where a broken part must not cost the transcript. */
 const Heard = z.object({
   heard_speech: z.boolean(),
-  transcript: z.string().max(16_000),
+  transcript: z.string(),
   parts: z
     .preprocess(
       (v) => (Array.isArray(v) ? v.filter((p) => PartSchema.safeParse(p).success) : v),
@@ -152,16 +159,17 @@ type RehearsalRow = {
   duration_ms: number;
   target_ms: number | null;
   words: number;
-  words_per_minute: number;
+  words_per_minute: number | null;
   fillers: number | null;
   skipped: string[];
   misread: string[];
   structure: TalkPartView[] | null;
+  partial: boolean;
   created_at: Date;
 };
 
 const REHEARSAL_COLUMNS = `id, kind, step_id, duration_ms, target_ms, words, words_per_minute,
-             fillers, skipped, misread, structure, created_at`;
+             fillers, skipped, misread, structure, partial, created_at`;
 
 function rehearsalViewOf(r: RehearsalRow): RehearsalView {
   return {
@@ -175,6 +183,7 @@ function rehearsalViewOf(r: RehearsalRow): RehearsalView {
     skipped: r.skipped,
     misread: r.misread,
     structure: r.structure,
+    partial: r.partial,
     step_done: r.step_id !== null,
     created_at: r.created_at.toISOString(),
   };
@@ -191,10 +200,17 @@ function clock(seconds: number): string {
  * length only against the length she was given. The card under it shows the same in detail.
  */
 function rehearsalText(locale: string, r: RehearsalView): string {
+  // A partial measurement says so first; a pace it does not know, it does not name (#681).
+  const partial = r.partial ? [t(locale, 'talk.result.partial')] : [];
+  const pace = (key: 'pace' | 'read') =>
+    r.words_per_minute === null
+      ? []
+      : [t(locale, `talk.result.${key}`, { wpm: r.words_per_minute })];
   if (r.kind === 'read_aloud') {
     const words = [...new Set([...r.skipped, ...r.misread])];
     return [
-      t(locale, 'talk.result.read', { wpm: r.words_per_minute }),
+      ...partial,
+      ...pace('read'),
       words.length === 0
         ? t(locale, 'talk.result.read_all')
         : t(locale, 'talk.result.read_words', { words: words.slice(0, 8).join(', ') }),
@@ -202,14 +218,38 @@ function rehearsalText(locale: string, r: RehearsalView): string {
   }
   const duration = clock(r.duration_s);
   return [
+    ...partial,
     r.target_s === null
       ? t(locale, 'talk.result.talk', { duration })
       : t(locale, 'talk.result.talk_target', { duration, target: clock(r.target_s) }),
-    t(locale, 'talk.result.pace', { wpm: r.words_per_minute }),
+    ...pace('pace'),
     r.fillers === 0
       ? t(locale, 'talk.result.no_fillers')
       : t(locale, 'talk.result.fillers', { count: r.fillers ?? 0 }),
   ].join(' ');
+}
+
+/** What was heard: the model's answer, and whether its transcript is only the first part. */
+type Listened = z.infer<typeof Heard> & { partial: boolean };
+
+/** Up to the last whole word within `max` characters: a word the cut broke is not hers. */
+function upToLastWord(text: string, max: number): string {
+  const head = text.slice(0, max + 1);
+  const end = head.search(/\s\S*$/u);
+  return (end > 0 ? head.slice(0, end) : '').trimEnd();
+}
+
+/**
+ * The transcript as far as an answer cut off at the output limit wrote it (#681), or null when
+ * there is none. Its parts come after it in the answer and so were never written.
+ */
+function writtenBeforeCut(raw: string): Listened | null {
+  const written = partialString(raw, 'transcript');
+  if (!written) return null;
+  const transcript = written.done ? written.text : upToLastWord(written.text, written.text.length);
+  return transcript.trim() === ''
+    ? null
+    : { heard_speech: true, transcript, parts: [], partial: true };
 }
 
 /** The one model call: what was said, and for a talk its parts with quotes. */
@@ -218,8 +258,11 @@ async function listen(
   learner: { id: string; locale: string },
   offer: Offer,
   input: RehearseRequest,
-): Promise<z.infer<typeof Heard>> {
+): Promise<Listened> {
   const day = await learnerDay(deps.db, learner.id, deps.now());
+  // The answer as far as it is written: if it breaks off at the output limit, the transcript
+  // written until then is still hers to measure (#681).
+  let raw = '';
   try {
     const res = await callModel(deps, learner.id, day, {
       // Speech recognition, budgeted with every other recording (DAILY_LIMITS.transcribe).
@@ -239,12 +282,24 @@ async function listen(
       temperature: 0,
       timeoutMs: offer.kind === 'talk' ? 120_000 : 45_000,
       thinking: 'off',
+      onPartial: (text: string) => {
+        raw = text;
+      },
     });
     const parsed = Heard.safeParse(res.json);
     if (!parsed.success) throw new AppError('model_unavailable', 'Could not listen right now');
-    return parsed.data;
+    const whole = parsed.data.transcript.length <= TRANSCRIPT_MAX;
+    return {
+      ...parsed.data,
+      transcript: whole
+        ? parsed.data.transcript
+        : upToLastWord(parsed.data.transcript, TRANSCRIPT_MAX),
+      partial: !whole,
+    };
   } catch (err) {
     if (isAppError(err)) throw err;
+    const cut = err instanceof LlmError && err.truncated ? writtenBeforeCut(raw) : null;
+    if (cut) return cut;
     throw new AppError('model_unavailable', 'Could not listen right now');
   }
 }
@@ -276,14 +331,18 @@ export async function rehearse(
       reason: 'no_speech',
     });
   }
-  const reading = offer.kind === 'read_aloud' ? compareReading(offer.text ?? '', transcript) : null;
+  const reading =
+    offer.kind === 'read_aloud'
+      ? compareReading(offer.text ?? '', transcript, { cut: heard.partial })
+      : null;
   // Reading aloud is paced by the words of the text read right (words correct per minute); a talk
   // by everything said, filler sounds aside.
   const words = reading ? reading.correct : spoken.length;
   const targetMs = offer.minutes ? offer.minutes * 60_000 : null;
   const measured = {
     words,
-    wpm: wordsPerMinute(words, input.duration_ms),
+    // Of a part, the share of the recording it covers is unknown, and so is the pace.
+    wpm: heard.partial ? null : wordsPerMinute(words, input.duration_ms),
     fillers: offer.kind === 'talk' ? countFillers(transcript) : null,
     skipped: reading ? reading.skipped.slice(0, 20) : [],
     misread: reading ? reading.misread.slice(0, 20) : [],
@@ -309,8 +368,8 @@ export async function rehearse(
     const row = await tx.maybeOne<RehearsalRow>(
       `insert into rehearsals (learner_id, client_request_id, action_id, kind, goal_id, step_id,
                                duration_ms, target_ms, words, words_per_minute, fillers, skipped,
-                               misread, structure, created_at)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                               misread, structure, partial, created_at)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
        on conflict (learner_id, client_request_id) do nothing
        returning ${REHEARSAL_COLUMNS}`,
       [
@@ -328,6 +387,7 @@ export async function rehearse(
         JSON.stringify(measured.skipped),
         JSON.stringify(measured.misread),
         measured.structure ? JSON.stringify(measured.structure) : null,
+        heard.partial,
         now,
       ],
     );

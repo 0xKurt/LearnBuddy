@@ -5926,6 +5926,21 @@ own (CLAUDE.md rule 16).
   (`buddy_messages.rehearsal_id`, `MessageView.rehearsal`), its words written by code from the
   numbers; the app shows it as the one result card (`RehearsalResult` on
   `RoleplayModeResult.tsx`): what fits with a tick, the rest in the box for next time. No score, no grade.
+- **A transcript that breaks off costs only what did not fit** (issue #681, KI-Audit K7, migration
+  `0111_rehearsal_partial.sql`). Until then a transcript over 16 000 characters, or an answer cut
+  at the output limit (8 192 tokens for a talk), cost the whole recording with a 503, and the
+  recording is not kept. Now a fast ten-minute talk (about 17 000 characters) is measured whole:
+  the transcript has no bound below what the output limit can carry, and only a runaway one is cut
+  at 40 000 characters at a word. When the answer breaks off, the call streams (`onPartial`, which
+  works with any gateway), and the transcript written until then is measured (`partialString`,
+  without the word the cut broke). Such a measurement is `partial`: Buddy's message says that only
+  the first part was written down and that the numbers are for that part. Nothing past it is
+  claimed. The pace is unknown, because nobody knows what share of the recording the part covers,
+  so `words_per_minute` is null and the card says "Nicht gemessen". A part of the talk whose quote
+  lies past the cut stays `unknown`, and parts the cut answer never reached are `unknown`. When
+  reading aloud, the text ends where the transcript does (`compareReading` with `cut`), so no word
+  after it counts as skipped. A cut answer with no transcript is still a 503 and leaves nothing.
+  Measured: `talks.int.test.ts` (4 cases red on main, green since) and `Rehearsal.test.tsx`.
 - **Privacy**: the recording lives in the request's memory only, the transcript is never stored;
   `rehearsals` keeps the numbers and the given text's words (docs/privacy.md, docs/dpia.md R14). The
   same recording sent twice is one rehearsal; another learner's card is 404; no speech is 422 and

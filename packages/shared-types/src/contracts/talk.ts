@@ -74,7 +74,16 @@ export const RehearsalView = z.object({
   /** The length she was asked for (a talk with a known length), else null. */
   target_s: z.number().int().nullable(),
   words: z.number().int(),
-  words_per_minute: z.number().int(),
+  /**
+   * Null when only the first part of the recording was written down (`partial`): how much of the
+   * recording that part covers is not known, so neither is the pace.
+   */
+  words_per_minute: z.number().int().nullable(),
+  /**
+   * Only the first part of the recording was written down (the answer broke off at its limit,
+   * #681): the numbers are that part's, and nothing past it is claimed.
+   */
+  partial: z.boolean(),
   /** Talk: how many hesitation sounds ("äh", "ähm") the transcript marks. Null for reading aloud. */
   fillers: z.number().int().nullable(),
   /** Reading aloud: words of the text she left out, in text order (at most 20). */

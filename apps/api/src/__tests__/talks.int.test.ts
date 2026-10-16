@@ -286,6 +286,152 @@ describe.skipIf(!dbReady)('talks, rehearsals and reading aloud', () => {
     );
   });
 
+  // A long transcript, or an answer cut at the token limit, costs only what did not fit (#681):
+  // a fast ten-minute talk is measured whole; what was written before a cut is measured and marked
+  // partial, and nothing past it is claimed — no pace (the share of the recording it covers is
+  // unknown), no word skipped after it.
+  const opening = 'Heute {äh} erzähle ich euch etwas über Vulkane.';
+  const longTalk = (n: number) =>
+    `${opening} ${'Lava fließt den Berg hinab. '.repeat(n)}Danke fürs Zuhören.`;
+  const longParts = [
+    { part: 'opening', present: true, quote: 'Heute erzähle ich euch etwas über Vulkane' },
+    { part: 'closing', present: true, quote: 'Danke fürs Zuhören' },
+  ];
+  async function talkCard(l: Learner) {
+    env.llm.script('buddy_turn', { json: turn({ actions: [TALK_PLAN] }) });
+    await say(l, 'Ich halte in zwei Wochen ein Referat über Vulkane, 5 Minuten.');
+    return offer(
+      l,
+      { kind: 'talk', goal: 'g1', text: null, sheet: null },
+      'Kann ich mein Referat einmal üben?',
+    );
+  }
+
+  it('measures a fast ten-minute talk of 17 000 characters whole', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Finn', birthDate: '2012-03-01' });
+    const rehearsal = await talkCard(l);
+    const transcript = longTalk(610);
+    expect(transcript.length).toBeGreaterThan(17_000);
+    env.llm.script('transcribe', {
+      json: { heard_speech: true, transcript, parts: longParts },
+    });
+    const res = await record(l, rehearsal.id, 600_000);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.rehearsal).toMatchObject({
+      kind: 'talk',
+      partial: false,
+      duration_s: 600,
+      words: 3_060,
+      words_per_minute: 306,
+      fillers: 1,
+      structure: [
+        { part: 'opening', status: 'heard' },
+        { part: 'main', status: 'unknown' },
+        { part: 'closing', status: 'heard' },
+      ],
+      step_done: true,
+    });
+  });
+
+  it('measures a transcript past its bound up to the bound, as partial', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Fiona', birthDate: '2012-03-01' });
+    const rehearsal = await talkCard(l);
+    env.llm.script('transcribe', {
+      json: { heard_speech: true, transcript: longTalk(1_500), parts: longParts },
+    });
+    const res = await record(l, rehearsal.id, 600_000);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.rehearsal).toMatchObject({
+      partial: true,
+      words_per_minute: null,
+      fillers: 1,
+      structure: [
+        { part: 'opening', status: 'heard' },
+        { part: 'main', status: 'unknown' },
+        // Its quote lies past what was kept: not confirmed.
+        { part: 'closing', status: 'unknown' },
+      ],
+      step_done: true,
+    });
+    expect(res.body.home.thread.find((m) => m.rehearsal)?.text).toBe(
+      'Aufgeschrieben habe ich nur den ersten Teil deiner Aufnahme – die Zahlen gelten für diesen Teil. Dein Probevortrag dauerte 10:00 Minuten – vorgesehen sind 5:00. Einen Pausenlaut wie „äh“ habe ich gehört.',
+    );
+  });
+
+  it('measures what was written before the answer was cut at the token limit', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Gesa', birthDate: '2012-03-01' });
+    const rehearsal = await offer(
+      l,
+      { kind: 'talk', goal: null, text: null, sheet: null },
+      'Ich möchte einen Vortrag üben.',
+    );
+    env.llm.script('transcribe', {
+      error: new LlmError('invalid_output', 'output truncated', null, 'MAX_TOKENS'),
+      written:
+        '{"heard_speech": true, "transcript": "Heute {äh} erzähle ich euch etwas über Vulkane. Ein Vulkan ist ein Ber',
+    });
+    const res = await record(l, rehearsal.id, 120_000);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    // The word broken off by the cut is not counted.
+    expect(res.body.rehearsal).toMatchObject({
+      partial: true,
+      words: 11,
+      words_per_minute: null,
+      fillers: 1,
+      structure: [
+        { part: 'opening', status: 'unknown' },
+        { part: 'main', status: 'unknown' },
+        { part: 'closing', status: 'unknown' },
+      ],
+    });
+  });
+
+  it('names no word as skipped past the point a cut reading reached', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Hanna', birthDate: '2016-03-01' });
+    const reading = await offer(
+      l,
+      { kind: 'read_aloud', goal: null, text: READ_PASSAGE, sheet: null },
+      'Ich möchte vorlesen üben.',
+    );
+    env.llm.script('transcribe', {
+      error: new LlmError('invalid_output', 'output truncated', null, 'MAX_TOKENS'),
+      written:
+        '{"heard_speech": true, "transcript": "Der kleine Fuchs lief am Morgen durch das Wald. Er such',
+    });
+    const res = await record(l, reading.id, 30_000);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.rehearsal).toMatchObject({
+      kind: 'read_aloud',
+      partial: true,
+      words: 9,
+      words_per_minute: null,
+      skipped: [],
+      misread: ['den'],
+    });
+    expect(res.body.home.thread.find((m) => m.rehearsal)?.text).toBe(
+      'Aufgeschrieben habe ich nur den ersten Teil deiner Aufnahme – die Zahlen gelten für diesen Teil. Diese Wörter schau dir noch einmal an: den.',
+    );
+  });
+
+  it('still stores nothing when a cut answer holds no transcript', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Ivo', birthDate: '2016-03-01' });
+    const reading = await offer(
+      l,
+      { kind: 'read_aloud', goal: null, text: READ_PASSAGE, sheet: null },
+      'Ich möchte vorlesen üben.',
+    );
+    env.llm.script('transcribe', {
+      error: new LlmError('invalid_output', 'output truncated', null, 'MAX_TOKENS'),
+      written: '{"heard_speech": true, "transcr',
+    });
+    expect((await record(l, reading.id, 30_000)).status).toBe(503);
+    const kept = await env.db.one<{ n: number }>(
+      `select count(*)::int as n from rehearsals where learner_id = $1`,
+      [l.learnerId],
+    );
+    expect(kept.n).toBe(0);
+  });
+
   it('takes a passage "from her sheet" only as it stands on the sheet (#636)', async () => {
     const l = await onboard(env, { relation: 'child', name: 'Ida', birthDate: '2013-03-01' });
     const sheet =

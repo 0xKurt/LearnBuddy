@@ -418,6 +418,8 @@
       },
       "pace": "Ritmo",
       "pace_text": "{{wpm}} palabras por minuto",
+      "pace_unknown": "Sin medir",
+      "partial": "Solo se escribió la primera parte de tu grabación: los números son de esa parte.",
       "fillers": "Sonidos de duda",
       "fillers_text_one": "Una vez «eh»",
       "fillers_text_other": "{{count}} veces «eh»",
