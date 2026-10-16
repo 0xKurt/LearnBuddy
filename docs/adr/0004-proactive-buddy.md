@@ -1,6 +1,7 @@
 # ADR 0004 — Proactive Buddy: one surface in front, explicit modules behind
 
-- Status: accepted; backend implemented and verified with real-Postgres tests, app rebuild in progress
+- Status: accepted; backend implemented and verified with real-Postgres tests, app rebuild in progress;
+  amended 2026-10-15 (§Amendment: push is on)
 - Date: 2026-09-25
 - Diverges from: docs/legacy/01-product.md §Notifications ("local notifications only — no push
   servers"), §Features (home = subject grid, credits), docs/legacy/03-data-model.md and docs/legacy/04-api.md
@@ -64,6 +65,7 @@ compare-and-set) need transactions. No new services.
 `send_uncertain` is never resent; `in_app` when there is no push channel or the learner is in
 the app; only the app can record "opened". Push goes through Expo (US subprocessor) and is
 **disabled** (`PUSH_BACKEND=disabled`) until legal review; Buddy then works in the app only.
+_Amended 2026-10-15 (§Amendment): the review is done, push is on._
 
 ### 5. Structured tutor
 
@@ -100,4 +102,17 @@ reset --linked`, or a new project), apply the new migrations, set the Vault secr
 - Real-Postgres integration tests replace the previous mocked-database tests.
 - Model cost is bounded per learner and day and recorded per call; no credits.
 - Open: live-model evaluation of Buddy's judgement (scripted tests verify the machinery, not the
-  model), push on real devices, legal review of Expo push.
+  model), push on real devices. (The legal review of Expo push is done, §Amendment.)
+
+## Amendment 2026-10-15 — push is on
+
+The owner closed the legal review of Expo push on 15.10.2026: "mit Push ist alles super" (issue
+#677, decision 4 in #697). `PUSH_BACKEND` defaults to `expo` (`apps/api/src/config.ts`); `disabled`
+stays as the operator's switch and is announced at boot (`bootWarnings`), because with it every
+message silently waits in the app. Nothing else changes: whether a message may reach her phone is
+still decided per learner in code — opt-in (the setting and the OS permission), the parents' PIN
+for any loosening under 16 (ADR 0006), quiet hours, pause, window and days checked when planning
+and again when sending (`modules/buddy/policy.ts`, `delivery.ts`); lock-screen texts are fixed
+sentences without scores or personal details (`i18n push.*`); delivery is claimed only from
+Expo's receipts. Push reaching a real device is still unproven: the audit of 14.10. found no push token, and the
+dev client gets none until Firebase knows its package (`apps/mobile/app.config.ts`).

@@ -5,13 +5,21 @@ import { bootWarnings, type Config } from './config.js';
 import type { Deps } from './deps.js';
 import { createDb, type PgDb } from './lib/db.js';
 import { DisabledEmbeddings } from './llm/embeddings.js';
-import { DisabledGateway } from './llm/gateway.js';
+import { DisabledGateway, type LlmGateway } from './llm/gateway.js';
 import { VertexEmbeddings } from './llm/vertex-embeddings.js';
 import { VertexGateway } from './llm/vertex.js';
 import { DisabledPush, ExpoPush } from './push/transport.js';
 import { DisabledSpeech } from './speech/gateway.js';
 import { GoogleSpeech } from './speech/google.js';
 import { SupabaseStorage } from './storage/gateway.js';
+
+/**
+ * The model the app talks to, whichever provider `LLM_BACKEND` names: production and the live
+ * evals take it from here, so a change of provider is made in one place.
+ */
+export function llmGateway(config: Config): LlmGateway {
+  return config.LLM_BACKEND === 'vertex' ? new VertexGateway(config) : new DisabledGateway();
+}
 
 export function productionDeps(
   config: Config,
@@ -28,7 +36,7 @@ export function productionDeps(
     now: () => new Date(),
     auth: new SupabaseAuthVerifier(config),
     storage: new SupabaseStorage(config),
-    llm: config.LLM_BACKEND === 'vertex' ? new VertexGateway(config) : new DisabledGateway(),
+    llm: llmGateway(config),
     embeddings:
       config.LLM_BACKEND === 'vertex' ? new VertexEmbeddings(config) : new DisabledEmbeddings(),
     push:

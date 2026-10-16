@@ -18,7 +18,43 @@
 # took the lock by hand and exported this) makes it a no-op, so a nested call never waits on
 # its parent. It is not an executable: it sets a trap in the shell that sources it.
 
+# The machine's own settings for agents whose shell cannot set variables in front of a command
+# (docs/engineering-guards.md §Maschinenlast): KEY=VALUE lines in $LB_AGENT_ENV (default
+# ~/.local/share/learnbuddy-agents/env), read outside CI. Only two keys count, every other line is
+# ignored, and a value is taken as written, never run:
+#   - LB_TEST_DATABASE_URL: the shared test Postgres, only when the variable is unset;
+#   - PATH_PREFIX: a directory put first on PATH (Node 22), unless it already stands first.
+lb_agent_env() {
+  lb_env_file="${LB_AGENT_ENV:-$HOME/.local/share/learnbuddy-agents/env}"
+  [ -f "$lb_env_file" ] || return 0
+  while IFS= read -r lb_env_line || [ -n "$lb_env_line" ]; do
+    lb_env_key="${lb_env_line%%=*}"
+    [ "$lb_env_key" = "$lb_env_line" ] && continue
+    lb_env_value="${lb_env_line#*=}"
+    case "$lb_env_key" in
+      LB_TEST_DATABASE_URL)
+        if [ -z "${LB_TEST_DATABASE_URL:-}" ] && [ -n "$lb_env_value" ]; then
+          LB_TEST_DATABASE_URL="$lb_env_value"
+          export LB_TEST_DATABASE_URL
+        fi
+        ;;
+      PATH_PREFIX)
+        case "$PATH" in
+          "$lb_env_value" | "$lb_env_value":*) ;;
+          *)
+            if [ -d "$lb_env_value" ]; then
+              PATH="$lb_env_value:$PATH"
+              export PATH
+            fi
+            ;;
+        esac
+        ;;
+    esac
+  done < "$lb_env_file"
+}
+
 if [ -z "${CI:-}" ]; then
+  lb_agent_env
   LB_TEST_MAX_WORKERS="${LB_TEST_MAX_WORKERS:-2}"
   VITEST_MAX_WORKERS="$LB_TEST_MAX_WORKERS"
   export LB_TEST_MAX_WORKERS VITEST_MAX_WORKERS
