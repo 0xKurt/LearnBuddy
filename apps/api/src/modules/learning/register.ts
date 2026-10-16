@@ -46,7 +46,7 @@ import { learningCheck } from './check.js';
 import { LEARNING_LOOKUPS } from './lookups.js';
 import { findLearningLookBack } from './lookback.js';
 import { LEARNING_PRIVACY_TABLES } from './privacy.js';
-import { LEARNING_TURN_RULES } from './prompt.js';
+import { LEARNING_STYLE_RULES, LEARNING_TURN_RULES } from './prompt.js';
 import { learningSchemas } from './schemas.js';
 import { learningBuddyRoutes } from './routes.js';
 import {
@@ -72,8 +72,13 @@ const LEARNING: ContextProvider = {
     sections: LEARNING_SECTIONS,
     render: renderLearning,
     turnRules: LEARNING_TURN_RULES,
+    styleRules: LEARNING_STYLE_RULES,
   },
-  subjects: { names: subjectNames, findOrCreate: findOrCreateSubject },
+  subjects: {
+    names: subjectNames,
+    ofAlias: (aliases, alias) => aliases.subjects.get(alias)?.id ?? null,
+    findOrCreate: findOrCreateSubject,
+  },
   home: { screen: learningHome, lastActed, pollAfter, thread: dressThread },
   turn: {
     mode: roleplayMode,

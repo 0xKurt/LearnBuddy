@@ -282,9 +282,19 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
       - `check`: die Weckgründe der Domain samt TRIGGERS-Zeile, und ob ihr Teil des Zustands
         etwas zu tun gibt.
 
-      Danach zeigt die Kopie **104 Fehler in 42 Paaren**. Im API-Kern bleiben `config.ts`
-      (`ItemKind`), `prompts.ts` (`MATH_NOTATION_SHORT`), `registry.ts` `turnFacts` und
-      `toolKit.ts` (`subjects`, `materials`).
+      Danach zeigt die Kopie **104 Fehler in 42 Paaren**.
+
+    - **Nachgezogen am 16.10. (API, klein):**
+      - Die Formel-Zeile unter "How you talk" gibt die Domain (`state.styleRules`). Der Prompt
+        bleibt Byte für Byte gleich (Prompt-Pin).
+      - Den Alias eines Fachs löst `subjects.ofAlias` des Providers auf.
+      - `materialOf` steht in `learning/aliases.ts`.
+      - `turnFacts` zählt jede Alias-Karte, die der Domain eingeschlossen.
+
+      Danach zeigt die Kopie **100 Fehler in 39 Paaren**. Im API-Kern bleibt nur `config.ts`
+      (`FORMS_OFF` prüft gegen `ItemKind`). Die Konfiguration wird gelesen, bevor sich die
+      Domain anmeldet (`server.ts`, `api/index.ts`). Eine Domain-Konfiguration braucht also eine
+      andere Start-Reihenfolge; das ist ein eigener Schritt, zusammen mit dem Start ohne Domain.
 
     - **Der Wächter:** `packages/buddy-kit/core-gaps.json` listet jeden dieser Reste, je Datei
       und Fehlercode. `pnpm core-check` (CI, Job `check`) baut die Kopie, installiert sie und

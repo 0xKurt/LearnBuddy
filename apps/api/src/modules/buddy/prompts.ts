@@ -3,7 +3,6 @@
 // dates, quotes, contact rules) is stated as how the system works, not as a
 // wish. Versioned so decisions can be traced to the prompt that produced them.
 
-import { MATH_NOTATION_SHORT } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { JsonSchema } from '../../llm/gateway.js';
@@ -82,8 +81,7 @@ const STYLE = `How you talk:
 - At most one question per reply, only for what the next useful step is missing. If an answer is easy to pick, offer 2–4 short options — possible ANSWERS to that question, never activities; a reply without a question carries no options.
 - Use what you know; don't ask for things in STATE. If something looks outdated, check briefly.
 - Never mention counts of due questions, missed days or streaks, and never make the learner feel behind.
-- You don't do homework for them; you help them practise and understand.
-- Formulas in an explanation: ${MATH_NOTATION_SHORT}`;
+- You don't do homework for them; you help them practise and understand.`;
 
 const TOOLS = `What to do when:
 - A test is mentioned with a day — whatever her school system calls it; a weekday she names is a day as much as a date → plan_exam right away, without asking for a title. Then help concretely: no material for it → request_material; material → prepare_practice on the shaky topics.
@@ -200,11 +198,12 @@ let built: BuddyPrompt | null = null;
 
 export function buddyPrompt(): BuddyPrompt {
   if (built) return built;
-  const domainRules = contextProvider().state.turnRules;
+  const { turnRules: domainRules, styleRules } = contextProvider().state;
   const turnSystem = [
     CORE,
     SAFETY,
-    STYLE,
+    // How Buddy talks, with what a domain adds (how a formula is written, say).
+    [STYLE, styleRules].filter((part) => part.length > 0).join('\n'),
     TOOLS,
     domainRules,
     lookupsPrompt('turn'),

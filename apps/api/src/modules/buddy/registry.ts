@@ -12,7 +12,7 @@
 import { z } from 'zod';
 
 import { flatUnion, nestCall } from './calls.js';
-import type { Aliases } from './context.js';
+import type { Aliases, DomainAliases } from './context.js';
 import {
   ACT_SCHEMAS,
   Outreach,
@@ -66,9 +66,13 @@ export type ActSpec = {
   prepares?: true;
 };
 
-/** What a tool can need STATE to name (counted from the turn's aliases, `turnFacts`). */
-type Fact = 'memories' | 'goals' | 'steps' | 'materials';
-export type ToolFacts = Record<Fact, number>;
+/**
+ * What a tool can need STATE to name (counted from the turn's aliases, `turnFacts`): the core's
+ * memories, goals and steps, and what a domain numbers (its `DomainAliases`, sheets say).
+ */
+type CoreFact = 'memories' | 'goals' | 'steps';
+type Fact = CoreFact | keyof DomainAliases;
+export type ToolFacts = Record<CoreFact, number> & Partial<Record<keyof DomainAliases, number>>;
 
 const TURN: readonly Surface[] = ['turn'];
 const BOTH: readonly Surface[] = ['turn', 'check'];
@@ -250,18 +254,22 @@ function modelUnionOf(tools: readonly ToolName[]) {
 export function offeredTools(facts?: ToolFacts): ToolName[] {
   return toolsFor('turn').filter((n) => {
     const need = ACT_TOOLS[n].needs;
-    return !facts || !need || facts[need] > 0;
+    return !facts || !need || (facts[need] ?? 0) > 0;
   });
 }
 
 /** What the turn's STATE names, counted from its aliases (they grow when a lookup finds a sheet). */
 export function turnFacts(aliases: Aliases): ToolFacts {
-  return {
+  const facts: Record<string, number> = {
     memories: aliases.memories.size,
     goals: aliases.goals.size,
     steps: aliases.steps.size,
-    materials: aliases.materials.size,
   };
+  // A domain's aliases count the same way: each map, by its name.
+  for (const [name, map] of Object.entries(aliases)) {
+    if (!(name in facts) && map instanceof Map) facts[name] = map.size;
+  }
+  return facts as ToolFacts;
 }
 
 /**

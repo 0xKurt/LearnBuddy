@@ -8,13 +8,13 @@ import { normalizeForMatch } from './text.js';
 import {
   activeGoalOf,
   type DomainUndo,
-  materialOf,
   requireQuote,
   today,
   type ToolContext,
   type ToolOutcome,
   ToolRejection,
 } from './toolKit.js';
+import { materialOf } from '../learning/aliases.js';
 
 export async function runRequestMaterial(
   action: ActionOf<'request_material'>,

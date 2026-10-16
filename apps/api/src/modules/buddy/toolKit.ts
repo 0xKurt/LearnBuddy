@@ -17,6 +17,7 @@ import {
 } from '../../lib/time.js';
 import type { Aliases } from './context.js';
 import { type MemoryAbout } from './decision.js';
+import { contextProvider } from './provider.js';
 import {
   type GoalRow,
   type MemoryRow,
@@ -337,9 +338,10 @@ export async function quotedGoal(
 /** The subject an action names, resolved from her own aliases; none when it names none. */
 export function subjectOf(ctx: ToolContext, alias: string | null | undefined): string | null {
   if (!alias) return null;
-  const subject = ctx.aliases.subjects.get(alias);
+  // The categories are the domain's (a school subject, say: provider.ts `subjects`).
+  const subject = contextProvider().subjects.ofAlias(ctx.aliases, alias);
   if (!subject) throw new ToolRejection(`unknown subject ${alias}`);
-  return subject.id;
+  return subject;
 }
 
 export async function currentStep(ctx: ToolContext, alias: string): Promise<StepRow> {
@@ -353,14 +355,4 @@ export async function currentStep(ctx: ToolContext, alias: string): Promise<Step
       `step ${alias} is gone since STATE was written — leave this action out and answer her without it`,
     );
   return row;
-}
-
-/** The sheet she named, from this learner's aliases only. */
-export function materialOf(ctx: ToolContext, alias: string) {
-  const m = ctx.aliases.materials.get(alias);
-  if (!m)
-    throw new ToolRejection(
-      `there is no sheet ${alias} — STATE lists her sheets. Leave this action out instead of picking another`,
-    );
-  return m;
 }
