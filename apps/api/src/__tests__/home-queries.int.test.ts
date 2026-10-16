@@ -21,7 +21,7 @@ describe.skipIf(!dbReady)('the home’s round trips', () => {
   });
   afterAll(async () => env.close());
 
-  it('reads a plain home in at most 35 statements', async () => {
+  it('reads a plain home in at most 33 statements', async () => {
     const res = await env.app.request('/v1/buddy', {
       headers: { authorization: `Bearer ${l.token}` },
     });
@@ -29,8 +29,9 @@ describe.skipIf(!dbReady)('the home’s round trips', () => {
     const queries = Number(
       /db;dur=\d+;desc="(\d+) queries"/.exec(res.headers.get('server-timing') ?? '')?.[1],
     );
-    // 39 before #712: the system status took four statements, what is working two.
-    expect(queries).toBeLessThanOrEqual(35);
+    // 39 before #712: the system status took four statements, what is working two. 35 before
+    // its second step: her counts now come with the fence and with her focus (two fewer).
+    expect(queries).toBeLessThanOrEqual(33);
   });
 
   /** One remembered fact with its undoable action, as a turn of Buddy's would leave it. */

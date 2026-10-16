@@ -437,16 +437,30 @@ async function loadSessions(db: Db, learnerId: string): Promise<SessionBrief[]> 
 export async function loadLearningState(db: Db, learnerId: string, now: Date) {
   // What she is working on (issue #160). Joined to its own rows, so a sheet she deleted or
   // a goal she closed does not leave a line that points at nothing.
-  const focus = db.maybeOne<FocusRow>(
-    `select f.material_id, m.title as material_title,
+  // Her counts ride along with the focus (#712): one statement for both, also when she has no
+  // focus (the counts are the row, the focus columns are then empty).
+  const focusAndTotals = db.one<
+    { [K in keyof FocusRow]: FocusRow[K] | null } & {
+      has_focus: boolean;
+      t_items: number;
+      t_materials: number;
+    }
+  >(
+    `select (f.learner_id is not null) as has_focus,
+            f.material_id, m.title as material_title,
             f.subject_id, s.name as subject_name,
             f.goal_id, g.title as goal_title,
-            f.vocabulary_only, f.direction, f.said, f.updated_at
-       from buddy_focus f
+            f.vocabulary_only, f.direction, f.said, f.updated_at,
+            (select count(*) from items where learner_id = $1 and archived_at is null
+                                            and origin <> 'homework')::int as t_items,
+            (select count(*) from materials where learner_id = $1 and archived_at is null
+                                             and merged_into is null
+                                             and (status <> 'awaiting_upload' or send_requested_at is not null))::int as t_materials
+       from (select 1) one
+       left join buddy_focus f on f.learner_id = $1
        left join materials m on m.id = f.material_id and m.archived_at is null
        left join subjects s on s.id = f.subject_id
-       left join buddy_goals g on g.id = f.goal_id and g.status = 'active'
-      where f.learner_id = $1`,
+       left join buddy_goals g on g.id = f.goal_id and g.status = 'active'`,
     [learnerId],
   );
 
@@ -487,28 +501,20 @@ export async function loadLearningState(db: Db, learnerId: string, now: Date) {
   // What she kept for after a practice that is over (issue #391).
   const later = loadLaterNotes(db, learnerId, now);
 
-  const totals = db.one<{ items: number; materials: number }>(
-    `select
-       (select count(*) from items where learner_id = $1 and archived_at is null
-                                           and origin <> 'homework')::int as items,
-       (select count(*) from materials where learner_id = $1 and archived_at is null
-                                            and merged_into is null
-                                            and (status <> 'awaiting_upload' or send_requested_at is not null))::int as materials`,
-    [learnerId],
-  );
-
   // Started together above, awaited together here: on the pool the reads go out side by side
   // (#637); inside a transaction the one client takes them in order.
-  const [f, sub, top, mat, ses, sta, lat, tot] = await Promise.all([
-    focus,
+  const [ft, sub, top, mat, ses, sta, lat] = await Promise.all([
+    focusAndTotals,
     subjects,
     topics,
     materials,
     sessions,
     standing,
     later,
-    totals,
   ]);
+  const { has_focus, t_items, t_materials, ...focusColumns } = ft;
+  const f = has_focus ? (focusColumns as FocusRow) : null;
+  const tot = { items: t_items, materials: t_materials };
   return {
     subjects: sub,
     topics: top,
