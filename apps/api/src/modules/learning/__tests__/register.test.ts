@@ -5,7 +5,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { checkConfig, type Config } from '../../../config.js';
+import { Hono } from 'hono';
+
+import type { AppEnv } from '../../../http/context.js';
 import { routePlugins } from '../../../http/plugins.js';
+import { mountBuddy } from '../../buddy/routes.js';
+import { pushDeviceRoutes } from '../../devices/routes.js';
+import { identityRoutes } from '../../identity/routes.js';
+import { voiceRoutes } from '../../voice/routes.js';
 import { ACT_SCHEMAS } from '../../buddy/decision.js';
 import { lookupNames, registerLookups } from '../../buddy/lookups.js';
 import {
@@ -21,23 +28,19 @@ import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../
 import { privacyTables } from '../../identity/privacyTables.js';
 import { isPersistent, jobKinds, tickWork } from '../../scheduler/registry.js';
 import { actHandler, missingActHandlers, registerActHandlers } from '../../buddy/tools.js';
+import { LEARNING_ACT_TOOLS } from '../actTools.js';
 import { LEARNING_LOOKUPS } from '../lookups.js';
 import { registerLearning } from '../register.js';
 
-/** The tools and lookups that are the learning domain's, not every Buddy's. */
-const DOMAIN_TOOLS = [
-  'prepare_practice',
-  'request_material',
-  'delete_material',
-  'rename_material',
-  'delete_item',
-  'offer_learning',
-  'offer_drill',
-  'start_roleplay',
-  'plan_talk',
-  'offer_rehearsal',
-] as const;
+/**
+ * The tools and lookups that are the learning domain's, not every Buddy's: the guard's list
+ * (tools/guards/boundaries.config.mjs, read at run time like DOMAIN_TABLES below), which also
+ * tells a core copy which tests are the domain's.
+ */
+const BOUNDARIES = '../../../../../../tools/guards/boundaries.config.mjs';
+const guard = (await import(BOUNDARIES)) as { DOMAIN_TOOLS: string[]; DOMAIN_ROUTES: string[] };
 const DOMAIN_LOOKUPS = ['search_material', 'practice_history', 'find_questions'];
+const DOMAIN_TOOLS = guard.DOMAIN_TOOLS.filter((t) => !DOMAIN_LOOKUPS.includes(t));
 
 describe('the learning domain in the core', () => {
   it('offers none of its tools and no lookup until it registers', () => {
@@ -57,7 +60,10 @@ describe('the learning domain in the core', () => {
     registerLearning();
     registerLearning();
     expect(withoutCode()).toEqual([]);
-    for (const tool of DOMAIN_TOOLS) expect(typeof actHandler(tool)).toBe('function');
+    for (const tool of DOMAIN_TOOLS)
+      expect(typeof actHandler(tool as Parameters<typeof actHandler>[0])).toBe('function');
+    // The guard's list is exactly the tools it registers.
+    expect(LEARNING_ACT_TOOLS.map((t) => t.name).sort()).toEqual([...DOMAIN_TOOLS].sort());
     // Its lookups, in the order the prompt lists them, each with its code.
     expect(lookupNames()).toEqual(DOMAIN_LOOKUPS);
     expect(hasContextProvider()).toBe(true);
@@ -91,6 +97,19 @@ describe('the learning domain in the core', () => {
       p.routes.routes.map((r) => `${r.method} ${p.base}${r.path === '/' ? '' : r.path}`),
     );
     expect(routePlugins().map((p) => p.base)).toEqual(['/practice', '/materials', '/buddy']);
+    // Every route it mounts lies under a path the guard knows as the domain's (DOMAIN_ROUTES).
+    for (const route of mounted)
+      expect(
+        guard.DOMAIN_ROUTES.some((p) => route.split(' ')[1]?.startsWith(p)),
+        route,
+      ).toBe(true);
+    // …and every path the guard knows as the domain's is one it mounts: a prefix wider than its
+    // routes would leave the core's own specs out of a core copy unseen (packages/buddy-kit).
+    for (const prefix of guard.DOMAIN_ROUTES)
+      expect(
+        mounted.some((r) => r.split(' ')[1]?.startsWith(prefix)),
+        prefix,
+      ).toBe(true);
     // The taps that left buddy/routes.ts, and a route of each module, are there.
     expect(mounted).toEqual(
       expect.arrayContaining([
@@ -103,6 +122,23 @@ describe('the learning domain in the core', () => {
       ]),
     );
     expect(startsSteps()).toBe(true);
+  });
+
+  it('names no path of the core as its own (DOMAIN_ROUTES stay exactly its routes)', () => {
+    // A prefix that also covers a route of the core would leave the core's own specs out of a
+    // core copy unseen (packages/buddy-kit/src/core.ts `namesDomain`).
+    const core = new Hono<AppEnv>();
+    core.route('/', identityRoutes);
+    core.route('/', pushDeviceRoutes);
+    mountBuddy(core, '/buddy');
+    core.route('/voice', voiceRoutes);
+    const paths = core.routes.map((r) => r.path);
+    expect(paths.length).toBeGreaterThan(10);
+    for (const prefix of guard.DOMAIN_ROUTES)
+      expect(
+        paths.filter((p) => p === prefix || p.startsWith(`${prefix}/`)),
+        prefix,
+      ).toEqual([]);
   });
 
   it('checks its forms in the configuration before the app serves (FORMS_OFF, #296)', () => {

@@ -238,7 +238,9 @@ type Option = (typeof ACT_SCHEMAS)[ToolName];
 function unionFor(surface: Surface) {
   const options = toolsFor(surface).map((n): Option => ACT_SCHEMAS[n]);
   const [first, second, ...rest] = options;
-  if (!first || !second) throw new Error(`surface ${surface} needs at least two act tools`);
+  if (!first) throw new Error(`surface ${surface} has no act tool`);
+  // One tool (a background check without a domain's: only schedule_check, issue #107).
+  if (!second) return z.preprocess(nestCall, first);
   return z.preprocess(nestCall, z.discriminatedUnion('tool', [first, second, ...rest]));
 }
 

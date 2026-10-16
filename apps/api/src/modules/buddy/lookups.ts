@@ -77,6 +77,13 @@ const MAX_RESULT_CHARS = 6000;
 
 /** The `lookups` field of a step answer; empty = answer now. Built from what is registered. */
 export function lookupsField() {
+  // A Buddy whose domain registered none (issue #107): the field stays, always empty — the
+  // decisions keep their order, and no tool is offered that nothing runs.
+  if (registry.length === 0)
+    return z
+      .array(z.object({}).strict())
+      .max(0)
+      .describe('Always empty: there is nothing to look up.');
   // Offered flat, like the act tools (calls.ts, #726).
   const offered = flatUnion(
     registry.map((l) => z.object({ tool: z.literal(l.name), args: l.args })),
@@ -94,6 +101,8 @@ export function lookupsPrompt(surface: Surface): string {
   const lines = registry
     .filter((l) => l.surfaces.includes(surface))
     .map((l) => `- ${l.name}: ${l.description}`);
+  // Nothing to look up (a Buddy without a domain's lookups): no section.
+  if (lines.length === 0) return '';
   return `LOOKUPS (read-only; they change nothing):
 ${lines.join('\n')}
 - STATE is a summary. When the answer depends on what a worksheet says, on how earlier practice went, or on which questions exist, look it up first instead of guessing — at most ${MAX_LOOKUP_STEPS} rounds, ${MAX_LOOKUPS_PER_STEP} lookups each. Don't look up what STATE already says.

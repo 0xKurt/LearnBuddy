@@ -94,12 +94,79 @@ jobs:
         if: hashFiles('packages/buddy-kit/src/cli/create-buddy.ts') != ''
         run: pnpm create-buddy "$RUNNER_TEMP/reference-buddy" --config packages/buddy-kit/reference.config.json --verify=typecheck
 
-      - name: Starter kit core (create-buddy --core → typecheck against core-gaps.json)
-        # The generic core by construction, without the learning domain (issue #107, cut 10):
-        # copied, installed and typechecked. Every error left in production code is listed in
-        # packages/buddy-kit/core-gaps.json; a new one is red (the core reaches the domain again),
-        # and so is a closed one the list still names, so the list only gets shorter.
-        if: hashFiles('packages/buddy-kit/src/cli/core-check.ts') != ''
+  core:
+    # The generic core by construction, without the learning domain (issue #107): copied,
+    # installed and typechecked against packages/buddy-kit/core-gaps.json, its API booted, its
+    # own database (packages/buddy-kit/core-baseline.sql) compared with what the migrations build
+    # without the domain, and its tests run on that database. Its own job beside `check`: it
+    # installs and tests a whole second copy, which `check` has no minutes left for.
+    name: starter kit core (create-buddy --core, own database, core tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      LB_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      LB_REQUIRE_TEST_DB: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Does the change reach the core?
+        # Only what the core copy is made of, or what decides it: the kit, the API, the app's
+        # code, the contracts, the guard's domain lists and the migrations. Everything on main.
+        id: reach
+        run: |
+          # A Buddy made by the kit has no core check of its own (create.ts leaves it out).
+          if [ ! -f packages/buddy-kit/src/cli/core-check.ts ]; then echo "run=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "${{ github.event_name }}" != "pull_request" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if git diff --name-only "origin/${{ github.base_ref }}...${{ github.event.pull_request.head.sha }}" \
+            | grep -qE '^(packages/buddy-kit/|apps/api/|apps/mobile/(app|components|lib)/|packages/shared-types/|tools/guards/boundaries\.config\.mjs$|infra/supabase/(migrations/|test-shim\.sql$)|\.github/workflows/check\.yml$)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing the core copy is made of changed: skipped."
+          fi
+
+      - name: Postgres 16 client (psql, pg_dump)
+        # The baseline is compared with psql; `--write` needs a pg_dump of the server's major.
+        if: steps.reach.outputs.run == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+          echo "LB_PG_DUMP=/usr/lib/postgresql/16/bin/pg_dump" >> "$GITHUB_ENV"
+
+      - name: Setup pnpm
+        if: steps.reach.outputs.run == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        if: steps.reach.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.reach.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Core check
+        # A new type gap is red (the core reaches the domain again), and so is a closed one the
+        # list still names; so is a baseline that is not the core's schema, a boot that refuses,
+        # or a core test that fails on the core's own database.
+        if: steps.reach.outputs.run == 'true'
         run: pnpm core-check
 
   deploy-check:

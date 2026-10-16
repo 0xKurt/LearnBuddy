@@ -23,13 +23,8 @@ import { LlmError, type LlmRequest } from '../llm/gateway.js';
 import { buildContext } from '../modules/buddy/context.js';
 import { loadBuddyState } from '../modules/buddy/state.js';
 import { testDatabaseAvailable } from '../testing/database.js';
-import {
-  createTestEnv,
-  finishRun,
-  onboard,
-  type Learner,
-  type TestEnv,
-} from '../testing/harness.js';
+import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { finishRun } from '../testing/practice.js';
 
 const dbReady = await testDatabaseAvailable();
 

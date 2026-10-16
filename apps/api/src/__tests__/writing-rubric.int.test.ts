@@ -18,13 +18,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
-import {
-  createTestEnv,
-  finishRun,
-  onboard,
-  type Learner,
-  type TestEnv,
-} from '../testing/harness.js';
+import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
+import { finishRun } from '../testing/practice.js';
 
 const dbReady = await testDatabaseAvailable();
 

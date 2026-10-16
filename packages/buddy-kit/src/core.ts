@@ -8,10 +8,9 @@
 // - The contracts barrel loses its exports of domain contracts and gains the core's own
 //   assembly of the conversation and home (`buddyContracts` with no domain).
 // - Tests, the test harness, evals and scripts that reach a file which stayed out stay out
-//   too. Production code never does: the boundary guard holds it to the two seams.
-//
-// What it does not do yet: the database. The migrations are the source's, learning tables
-// included; a core-only baseline is a later step (docs/buddy-kit.md).
+//   too, and so does a spec that names the domain without importing it (`namesDomain`).
+//   Production code never does: the boundary guard holds it to the two seams.
+// - The database: one migration, the core's baseline (baseline.ts), in place of the source's.
 
 import { readFileSync } from 'node:fs';
 import { join, normalize } from 'node:path';
@@ -30,6 +29,12 @@ const seam = (name: string) => readFileSync(join(SEAMS, name), 'utf8');
  */
 export const CORE_SEAMS: Readonly<Record<string, string>> = {
   'apps/api/src/modules/learning/register.ts': seam('api-register.ts.txt'),
+  // The domain's part of the API's test fakes (vitest.config.ts setupFiles): none.
+  'apps/api/src/testing/domain.ts': `// A Buddy without the learning domain (create-buddy --core, issue #107): no domain's part
+// of the test fakes — the scripted gateway has no choice step to answer.
+// requires live verification in Claude Code session (paired with a real Postgres)
+export {};
+`,
   'apps/mobile/lib/learning/register.tsx': `// A Buddy without the learning domain (create-buddy --core, issue #107): nothing to register.
 // A domain of this Buddy registers its cards, start entries and attachments here.
 export function registerLearning(): void {}
@@ -125,14 +130,72 @@ function relativeImports(root: string, file: string): string[][] {
 }
 
 /**
- * The support files of a copy that reach a file which is not there (stayed out, or was left out
- * in an earlier round): they go too, until nothing left reaches a gap. Production code is not
- * looked at — it may never reach the domain, and the typecheck of the copy says so if it does.
+ * What tells a test of the domain from one of the core where no import does (issue #107): a spec
+ * that drives practice through the domain's routes, scripts one of its tools or reads one of its
+ * tables never imports the domain, and fails in a copy without it. The guard's lists
+ * (tools/guards/boundaries.config.mjs DOMAIN_TABLES, DOMAIN_TOOLS, DOMAIN_ROUTES).
  */
-export function supportReachingGaps(root: string, files: readonly string[]): string[] {
-  const present = new Set(files);
+export type DomainSignals = {
+  tables: readonly string[];
+  tools: readonly string[];
+  routes: readonly string[];
+};
+
+/** What the kit reads of the guard's configuration (tools/guards/boundaries.config.mjs). */
+export type Guard = {
+  DOMAIN: string[];
+  DOMAIN_TABLES: string[];
+  DOMAIN_TOOLS: string[];
+  DOMAIN_ROUTES: string[];
+};
+
+export const signalsOf = (g: Guard): DomainSignals => ({
+  tables: g.DOMAIN_TABLES,
+  tools: g.DOMAIN_TOOLS,
+  routes: g.DOMAIN_ROUTES,
+});
+
+const escaped = (s: string) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+
+/** A spec of the domain that names none of it says so in its header (the core's FK names, say). */
+export const DOMAIN_MARK = '@buddy-kit domain';
+
+/** Whether a support file's text names the domain: a route of it, a tool of it, a table of it. */
+export function namesDomain(text: string, signals: DomainSignals): boolean {
+  if (text.includes(DOMAIN_MARK)) return true;
+  const any = (xs: readonly string[]) => xs.map(escaped).join('|');
+  // A route's `:id` stands for whatever the spec puts there (`${id}`, a literal uuid).
+  const paths = signals.routes.map((r) => escaped(r).replace(/:[a-z_]+/gi, '[^/\'"`]+')).join('|');
+  const route = new RegExp(`['"\`](/v1)?(${paths})(/|['"\`?])`);
+  const tool = new RegExp(`['"\`](${any(signals.tools)})['"\`]`);
+  const table = new RegExp(
+    `\\b(from|into|update|join|table)\\s+(public\\.)?(${any(signals.tables)})\\b`,
+    'i',
+  );
+  return route.test(text) || tool.test(text) || table.test(text);
+}
+
+/**
+ * The support files of a copy that reach a file which is not there (stayed out, or was left out
+ * in an earlier round), or name the domain (`namesDomain`): they go too, until nothing left
+ * reaches a gap. Production code is not looked at — it may never reach the domain, and the
+ * typecheck of the copy says so if it does.
+ */
+export function supportReachingGaps(
+  root: string,
+  files: readonly string[],
+  signals?: DomainSignals,
+): string[] {
+  // A spec that imports a seam asks for what the domain registers there: a copy's seams register
+  // nothing of it, so such a spec is the domain's.
+  const seams = new Set(Object.keys(CORE_SEAMS));
+  const present = new Set(files.filter((f) => !seams.has(f)));
   const out = new Set<string>();
   const there = (c: string) => present.has(c) && !out.has(c);
+  for (const f of files) {
+    if (!signals || !isSupport(f) || !/\.(tsx?|mjs)$/.test(f)) continue;
+    if (namesDomain(readFileSync(join(root, f), 'utf8'), signals)) out.add(f);
+  }
   for (let changed = true; changed; ) {
     changed = false;
     for (const f of files) {

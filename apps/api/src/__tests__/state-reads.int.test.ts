@@ -52,8 +52,9 @@ describe.skipIf(!dbReady)("Buddy's state reads", () => {
     const { db, peak } = counting(env.db);
     const sequential = await loadBuddyState(env.db, l.learnerId, env.deps.now());
     const parallel = await loadBuddyState(db, l.learnerId, env.deps.now());
-    // Many independent reads at once, not one after the other.
-    expect(peak()).toBeGreaterThanOrEqual(8);
+    // Many independent reads at once, not one after the other: the core's six at least, and a
+    // domain's own beside them (issue #107: a core copy has only the six).
+    expect(peak()).toBeGreaterThanOrEqual(6);
     // And the same state either way.
     expect(parallel).toEqual(sequential);
   });

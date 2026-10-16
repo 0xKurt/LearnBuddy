@@ -67,6 +67,38 @@ export const DOMAIN_TABLES = [
   'learned_answers',
 ];
 
+/**
+ * The learning domain's act tools and lookups, as the model calls them, and the paths of its HTTP
+ * routes (issue #107). With DOMAIN_TABLES they tell a test of the domain from a test of the core
+ * where no import does — a spec that drives practice through its route, scripts one of its tools
+ * or reads one of its tables (packages/buddy-kit/src/core.ts: such tests stay out of a core copy).
+ * modules/learning/__tests__/register.test.ts holds them together with what the domain registers.
+ */
+export const DOMAIN_TOOLS = [
+  'prepare_practice',
+  'request_material',
+  'delete_material',
+  'rename_material',
+  'delete_item',
+  'offer_learning',
+  'offer_drill',
+  'start_roleplay',
+  'plan_talk',
+  'offer_rehearsal',
+  'search_material',
+  'practice_history',
+  'find_questions',
+];
+
+export const DOMAIN_ROUTES = [
+  '/practice',
+  '/materials',
+  '/buddy/roleplays',
+  '/buddy/rehearsals',
+  '/buddy/steps/:id/start',
+  '/buddy/confirmations',
+];
+
 /** Where the guard looks: the two apps' production code. */
 export const ROOTS = [
   'apps/api/src',

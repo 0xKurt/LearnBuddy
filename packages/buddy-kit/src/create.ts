@@ -35,11 +35,13 @@ import {
   coreBarrel,
   corePackageJson,
   supportReachingGaps,
+  type DomainSignals,
 } from './core.js';
 import { type BuddyConfig, KitError } from './config.js';
 import { processorsMarkdown } from './processors.js';
 import { REWRITES, rewriteEverywhere } from './rewrite.js';
 import { findForeign, readSource } from './source.js';
+import { BASELINE, COPY_BASELINE, coreMigrationList, isMigration } from './baseline.js';
 
 /** Never copied: history, research, the local state of provision. */
 const EXCLUDED_PREFIXES = [
@@ -103,6 +105,9 @@ export type CreateReport = {
 };
 
 /** Text files are rewritten and scanned; binaries are copied as they are. */
+/** The API's list of expected migrations; a core copy expects its one baseline. */
+const MIGRATION_LIST = 'apps/api/src/lib/migrations.ts';
+
 const TEXT =
   /\.(ts|tsx|js|mjs|cjs|json|md|sql|ya?ml|sh|txt|html|css|toml)$|(^|\/)\.(gitignore|[a-z]+rc)$/;
 
@@ -116,6 +121,8 @@ export function createBuddy(opts: {
   domain?: readonly string[];
   /** Leave the domain out: the generic core by construction (core.ts). Needs `domain`. */
   core?: boolean;
+  /** What tells a test of the domain where no import does (core.ts `namesDomain`). */
+  signals?: DomainSignals;
 }): CreateReport {
   const source = resolve(opts.sourceRoot);
   const target = resolve(opts.targetRoot);
@@ -140,17 +147,27 @@ export function createBuddy(opts: {
   const ofDomain = (f: string) => opts.core === true && domain.some((r) => r.test(f));
   // The core copy: the domain stays out, then every test, eval or script that reaches it.
   const support = opts.core
-    ? supportReachingGaps(source, [
-        ...opts.files.filter((f) => isCopied(f) && !ofDomain(f)),
-        ...Object.keys(CORE_SEAMS),
-        CORE_ASSEMBLY,
-      ])
+    ? supportReachingGaps(
+        source,
+        [
+          ...opts.files.filter((f) => isCopied(f) && !ofDomain(f)),
+          ...Object.keys(CORE_SEAMS),
+          CORE_ASSEMBLY,
+        ],
+        opts.signals,
+      )
     : [];
   const leftOut = new Set(support);
   if (opts.core) report.core = { domain: opts.files.filter(ofDomain).length, support };
   const copied: string[] = [];
   for (const file of opts.files) {
-    if (!isCopied(file) || ofDomain(file) || leftOut.has(file)) {
+    // A core copy migrates from its own baseline, not the source's migrations (baseline.ts).
+    if (
+      !isCopied(file) ||
+      ofDomain(file) ||
+      leftOut.has(file) ||
+      (opts.core && isMigration(file))
+    ) {
       report.skipped.push(file);
       continue;
     }
@@ -180,6 +197,8 @@ export function createBuddy(opts: {
     const written: Array<[string, string]> = [
       ...Object.entries(CORE_SEAMS),
       [CORE_ASSEMBLY, CORE_ASSEMBLY_TEXT],
+      [COPY_BASELINE, readFileSync(join(source, BASELINE), 'utf8')],
+      [MIGRATION_LIST, coreMigrationList(readFileSync(join(target, MIGRATION_LIST), 'utf8'))],
     ];
     for (const [file, text] of written) {
       mkdirSync(dirname(join(target, file)), { recursive: true });

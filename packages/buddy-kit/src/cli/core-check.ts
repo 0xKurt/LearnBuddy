@@ -16,9 +16,11 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 
 import { parseConfig } from '../config.js';
-import { CORE_BOOT, isSupport } from '../core.js';
+import { BASELINE, compareBaseline, generateBaseline } from '../baseline.js';
+import { CORE_BOOT, isSupport, signalsOf, type Guard } from '../core.js';
 import { createBuddy } from '../create.js';
 
 const REPO = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -65,14 +67,34 @@ export function compareGaps(
 
 async function main(): Promise<void> {
   const write = process.argv.includes('--write');
+  // The copy's database is built on the test Postgres; without one the check cannot say anything.
+  const admin = process.env.LB_TEST_DATABASE_URL;
+  if (!admin) throw new Error('core-check needs LB_TEST_DATABASE_URL (the test Postgres)');
   const target = join(mkdtempSync(join(tmpdir(), 'core-check-')), 'core');
   try {
     const files = execFileSync('git', ['ls-files', '-z'], { cwd: REPO, encoding: 'utf8' })
       .split('\0')
       .filter(Boolean);
-    const { DOMAIN } = (await import(
+    const guard = (await import(
       pathToFileURL(join(REPO, 'tools/guards/boundaries.config.mjs')).href
-    )) as { DOMAIN: string[] };
+    )) as Guard;
+    const { DOMAIN, DOMAIN_TABLES } = guard;
+    // The copy's own database: generated (--write), or the checked-in one compared with what the
+    // migrations build without the domain (baseline.ts).
+    if (write) {
+      writeFileSync(join(REPO, BASELINE), generateBaseline(admin, REPO, DOMAIN_TABLES));
+      console.log(`written: ${BASELINE}`);
+    } else {
+      const { missing, extra } = compareBaseline(admin, REPO, DOMAIN_TABLES);
+      if (missing.length > 0 || extra.length > 0) {
+        console.error(
+          `✗ ${BASELINE} is not the core's schema the migrations build (pnpm core-check --write):${missing.map((l) => `\n  - missing: ${l}`).join('')}${extra.map((l) => `\n  - extra: ${l}`).join('')}`,
+        );
+        process.exitCode = 1;
+        return;
+      }
+      console.log(`✓ ${BASELINE} is the core's schema the migrations build`);
+    }
     const config = parseConfig(
       JSON.parse(readFileSync(join(REPO, 'packages/buddy-kit/reference.config.json'), 'utf8')),
     );
@@ -83,6 +105,7 @@ async function main(): Promise<void> {
       config,
       domain: DOMAIN,
       core: true,
+      signals: signalsOf(guard),
     });
     console.log(
       `core copy: ${report.copied} files, ${report.core?.domain ?? 0} of the domain and ${report.core?.support.length ?? 0} tests/evals/scripts that need it left out`,
@@ -126,6 +149,41 @@ async function main(): Promise<void> {
       return;
     }
     console.log(boot.stdout.trim());
+    // Does it work on its own database? The copy's API tests (the core's: the domain's stayed
+    // out) on databases built from its one migration, the baseline.
+    const tests = spawnSync('pnpm', ['exec', 'vitest', 'run', '--reporter=dot'], {
+      cwd: join(target, 'apps/api'),
+      encoding: 'utf8',
+      maxBuffer: 256 * 1024 * 1024,
+      env: {
+        ...process.env,
+        LB_TEST_DATABASE_URL: admin,
+        LB_REQUIRE_TEST_DB: '1',
+        LB_TEST_MAX_WORKERS: process.env.LB_TEST_MAX_WORKERS ?? '2',
+        // Plain text, so the summary below can be read (CI forces colour otherwise).
+        NO_COLOR: '1',
+        FORCE_COLOR: '0',
+      },
+    });
+    const run = stripVTControlCharacters(`${tests.stdout}${tests.stderr}`);
+    // How many ran, read from vitest's summary: a run that ran none proves nothing.
+    const ran = /Tests\s+(\d+) passed[^\n]*/.exec(run);
+    if (tests.status === 0 && (!ran || Number(ran[1]) === 0)) {
+      console.error(`✗ the core's tests ran none on its own database:\n${run.slice(-4000)}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (tests.status !== 0) {
+      const log = join(tmpdir(), 'core-check-tests.log');
+      writeFileSync(log, run);
+      const failed = [...new Set(run.match(/^ FAIL {2}\S+/gm) ?? [])];
+      console.error(
+        `✗ the core's tests fail on its own database (the whole run: ${log}):\n  ${failed.join('\n  ')}`,
+      );
+      process.exitCode = 1;
+      return;
+    }
+    console.log(`core tests: ${ran?.[0].replace(/^Tests\s+/, '') ?? ''}`);
     const total = Object.values(gaps).reduce((s, n) => s + n, 0);
     console.log(
       `core typecheck: ${total} errors in production code (${Object.keys(gaps).length} file/code pairs), ${support} in tests and evals`,

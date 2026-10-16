@@ -5,6 +5,7 @@
 // the real catalog of the migrated database, not from the migration texts: what counts is what
 // production has. Behaviour stays as it was: same columns, same ON DELETE.
 // requires live verification in Claude Code session (needs a running Postgres)
+// @buddy-kit domain — the core's foreign keys into the domain: a core copy has none.
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
