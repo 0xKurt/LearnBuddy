@@ -141,6 +141,8 @@ export type LlmErrorKind =
 
 /** The finish reason of an answer cut off at the output token limit. */
 export const TRUNCATED = 'MAX_TOKENS';
+/** Ours, not a provider's: the request carried more inline than the gateway takes (#688). */
+export const TOO_LARGE = 'INLINE_TOO_LARGE';
 
 export class LlmError extends Error {
   readonly kind: LlmErrorKind;
@@ -179,6 +181,10 @@ export class LlmError extends Error {
       case 'invalid_output':
         return 'refused';
     }
+  }
+  /** Refused before it was sent: more media inline than the gateway takes (#688). */
+  get tooLarge(): boolean {
+    return this.kind === 'refused' && this.finishReason === TOO_LARGE;
   }
   /** The answer was cut off at the output token limit (finish reason MAX_TOKENS). */
   get truncated(): boolean {

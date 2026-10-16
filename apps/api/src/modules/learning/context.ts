@@ -124,6 +124,8 @@ function failureNote(reason: string | null): string {
       return 'is a corrected test on which nothing is marked wrong, so there is nothing to practise from it; its photos are deleted and reading it again is not possible. Never ask for or mention a grade or points';
     case 'budget_exhausted':
       return 'could not be read: no more sheets could be read today (tomorrow it works again)';
+    case 'too_large':
+      return 'was too many large photos for one reading, so it was not read; reading it again is not possible — she can send it again in two parts';
     case 'unreadable':
       return 'could not be read: the photos were hard to read (she can have it read again, or photograph it better)';
     default:
