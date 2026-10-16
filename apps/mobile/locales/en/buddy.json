@@ -164,6 +164,7 @@
     "ready_title": "Practice ready: {{title}}",
     "ready_body_one": "{{count}} question · about {{minutes}} min",
     "ready_body_other": "{{count}} questions · about {{minutes}} min",
+    "ready_closed": "No longer open",
     "ready_focus": "Mostly: {{topics}}",
     "ready_for_exam": "For “{{exam}}” {{when}}",
     "ready_cta_short": "Practise",

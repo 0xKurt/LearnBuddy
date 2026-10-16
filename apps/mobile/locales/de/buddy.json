@@ -164,6 +164,7 @@
     "ready_title": "Übung bereit: {{title}}",
     "ready_body_one": "{{count}} Aufgabe · ca. {{minutes}} Min.",
     "ready_body_other": "{{count}} Aufgaben · ca. {{minutes}} Min.",
+    "ready_closed": "Nicht mehr offen",
     "ready_focus": "Vor allem: {{topics}}",
     "ready_for_exam": "Für „{{exam}}“ {{when}}",
     "ready_cta_short": "Jetzt üben",

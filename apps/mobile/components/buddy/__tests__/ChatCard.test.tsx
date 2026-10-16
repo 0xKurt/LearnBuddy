@@ -221,14 +221,45 @@ describe('every hint in the chat is that one card (MIGRATION §5)', () => {
       question_count: 7,
       est_minutes: 6,
       ready: true,
+      outcome: null,
     };
     const { unmount } = renderInApp(<ReadyCard ready={ready} />);
     expect(screen.getByText('Arbeitsblatt Brüche')).toBeTruthy();
     expect(screen.getByRole('button', { name: "Los geht's" })).toBeTruthy();
     unmount();
-    // Started or replaced since: no start that is not there.
-    renderInApp(<ReadyCard ready={{ ...ready, ready: false }} />);
-    expect(screen.queryByText('Arbeitsblatt Brüche')).toBeNull();
+  });
+
+  it('practice she started stays in the history and says where it went (issue #844)', () => {
+    // Device 16.10.: once a second practice began, the first one's card left the thread and
+    // under "Deine Fragen … sind fertig" nothing stood any more.
+    const base: Extract<ActionSummary, { tool: 'show_ready' }> = {
+      tool: 'show_ready',
+      step_id: '00000000-0000-4000-8000-0000000000bb',
+      title: 'Arbeitsblatt Brüche',
+      question_count: 7,
+      est_minutes: 6,
+      ready: false,
+      outcome: null,
+    };
+    const run = '00000000-0000-4000-8000-0000000000cc';
+    let view = renderInApp(
+      <ReadyCard ready={{ ...base, outcome: { state: 'running', session_id: run, left: 5 } }} />,
+    );
+    expect(screen.getByText('Arbeitsblatt Brüche')).toBeTruthy();
+    expect(screen.getByText('Noch 5 Aufgaben')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Weitermachen' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: "Los geht's" })).toBeNull();
+    view.unmount();
+    view = renderInApp(
+      <ReadyCard ready={{ ...base, outcome: { state: 'done', session_id: run } }} />,
+    );
+    expect(screen.getByText('Arbeitsblatt Brüche')).toBeTruthy();
+    expect(screen.getByText('Geschafft!')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
+    view.unmount();
+    renderInApp(<ReadyCard ready={{ ...base, outcome: { state: 'closed' } }} />);
+    expect(screen.getByText('Arbeitsblatt Brüche')).toBeTruthy();
+    expect(screen.getByText('Nicht mehr offen')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
   });
 

@@ -293,6 +293,7 @@ export async function runShowReady(ctx: ToolContext): Promise<ToolOutcome> {
       question_count: step.payload.item_ids?.length ?? 0,
       est_minutes: step.payload.est_minutes ?? minutesFor(step.payload.item_ids?.length ?? 0),
       ready: true,
+      outcome: null,
     },
     undo: null,
   };

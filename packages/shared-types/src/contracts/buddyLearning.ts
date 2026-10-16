@@ -60,6 +60,19 @@ export type RoleplayFeedback = z.infer<typeof RoleplayFeedback>;
 
 // ─────────────── its tools' cards ───────────────
 
+/**
+ * Where a practice card's practice stands now (issue #844), decorated when the thread is served
+ * (CLAUDE.md rule 5): null while it waits to be started; running with what is left of her run;
+ * done with the run that finished it; closed when it can no longer start (replaced, dropped, or
+ * its run left behind). What stood in the conversation stays there, in its end state.
+ */
+export const PracticeOutcome = z.discriminatedUnion('state', [
+  z.object({ state: z.literal('running'), session_id: Uuid, left: z.number().int() }),
+  z.object({ state: z.literal('done'), session_id: Uuid }),
+  z.object({ state: z.literal('closed') }),
+]);
+export type PracticeOutcome = z.infer<typeof PracticeOutcome>;
+
 const LEARNING_ACTIONS = [
   z.object({
     tool: z.literal('prepare_practice'),
@@ -236,6 +249,7 @@ const LEARNING_ACTIONS = [
     question_count: z.number().int(),
     est_minutes: z.number().int(),
     ready: z.boolean().default(true),
+    outcome: PracticeOutcome.nullable().default(null),
   }),
 ] as const;
 
@@ -267,6 +281,7 @@ export const AnnouncedPractice = z.object({
   title: z.string(),
   question_count: z.number().int(),
   est_minutes: z.number().int(),
+  outcome: PracticeOutcome.nullable().default(null),
 });
 export type AnnouncedPractice = z.infer<typeof AnnouncedPractice>;
 

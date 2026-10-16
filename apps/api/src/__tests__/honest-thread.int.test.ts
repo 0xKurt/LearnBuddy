@@ -212,17 +212,29 @@ describe.skipIf(!dbReady)('the home tells what happened, at its moment (issue #6
       question_count: 1,
       est_minutes: 2,
       ready: true,
+      outcome: null,
     });
     // Not something she can take back, and not a "done" line: it changes nothing.
     expect(shown?.undoable).toBe(false);
     expect((await home(l)).done.some((a) => a.summary.tool === 'show_ready')).toBe(false);
 
-    // Started: the card no longer offers a start that is not there.
+    // Started: the card no longer offers a start that is not there — it stays and says where
+    // the practice went (issue #844).
     const started = await l.api.post<{ session_id: string }>(`/buddy/steps/${step.id}/start`, {});
     expect(started.status).toBe(200);
     expect(
       actionsOf(await home(l)).find((a) => a.summary.tool === 'show_ready')?.summary,
-    ).toMatchObject({ ready: false });
+    ).toMatchObject({
+      ready: false,
+      outcome: { state: 'running', session_id: started.body.session_id, left: 1 },
+    });
+    await env.db.query(
+      `update practice_sessions set status = 'finished', finished_at = $2 where id = $1`,
+      [started.body.session_id, env.clock.now()],
+    );
+    expect(
+      actionsOf(await home(l)).find((a) => a.summary.tool === 'show_ready')?.summary,
+    ).toMatchObject({ outcome: { state: 'done', session_id: started.body.session_id } });
   });
 
   it('refuses to point at practice when none waits, and the words are repaired', async () => {
