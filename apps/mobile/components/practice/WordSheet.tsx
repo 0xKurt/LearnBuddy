@@ -4,6 +4,7 @@
 //
 // The sheet closes with a visible button, like every sheet (CLAUDE.md rule 14).
 
+import type { SpeakWordResponse } from '@learnbuddy/shared-types/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -57,9 +58,7 @@ function WordAttempt({
   const { palette } = useTheme();
   const { t } = useTranslation(['practice', 'common']);
   /** What came back for the try she just made; null before the first one. */
-  const [tried, setTried] = useState<{ ok: boolean; heard: string; tip: string | null } | null>(
-    null,
-  );
+  const [tried, setTried] = useState<SpeakWordResponse | null>(null);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -73,7 +72,7 @@ function WordAttempt({
         mime: r.mime,
         audio_base64: r.base64,
       });
-      if (mounted.current) setTried({ ok: res.ok, heard: res.heard, tip: res.tip });
+      if (mounted.current) setTried(res);
     } catch (err) {
       if (mounted.current) setProblem(messageFor(err));
     } finally {
@@ -97,7 +96,9 @@ function WordAttempt({
 
   const recording = rec.phase === 'recording';
   const busy = sending || rec.phase === 'starting' || rec.phase === 'stopping';
-  const tip = tried?.tip ?? word.tip;
+  /** The fixed help answer stands alone: nothing was judged (#785, CLAUDE.md rule 18). */
+  const helpAlone = tried?.help != null && !tried.audible;
+  const tip = helpAlone ? null : (tried?.tip ?? word.tip);
 
   return (
     <Sheet visible title={word.text} closeLabel={t('common:actions.close')} onClose={close}>
@@ -108,6 +109,11 @@ function WordAttempt({
         </View>
 
         {tip ? <Text style={[TYPE.body, SHEET_TEXT]}>{tip}</Text> : null}
+        {helpAlone && !sending ? (
+          <Text accessibilityLiveRegion="polite" style={[TYPE.body, SHEET_TEXT]}>
+            {tried?.help}
+          </Text>
+        ) : null}
 
         {sending ? (
           <View
@@ -127,7 +133,7 @@ function WordAttempt({
             {problem}
           </Text>
         ) : null}
-        {tried && !sending ? (
+        {tried && !helpAlone && !sending ? (
           <View accessibilityLiveRegion="polite" style={[SHEET_TEXT, { gap: SPACE.xs }]}>
             <Text
               style={[
@@ -140,6 +146,7 @@ function WordAttempt({
             {tried.heard ? (
               <Text style={TYPE.meta}>{t('practice:speak.heard', { text: tried.heard })}</Text>
             ) : null}
+            {tried.help ? <Text style={TYPE.body}>{tried.help}</Text> : null}
           </View>
         ) : null}
 

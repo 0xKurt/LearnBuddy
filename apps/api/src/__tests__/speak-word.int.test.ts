@@ -85,9 +85,11 @@ describe.skipIf(!dbReady)('practising one word', () => {
         tip: 'Das ‹th› ist die Zunge zwischen den Zähnen.',
       },
     });
+    // "wedder" is not a word of the sentence, so it is read for distress first (#785).
+    env.llm.script('safeguard', { json: { concern: false } });
     const res = await say('weather');
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ audible: true, ok: false });
+    expect(res.body).toMatchObject({ audible: true, ok: false, heard: 'wedder', help: null });
     expect(res.body.tip).toContain('Zunge');
 
     // Practice, not an attempt: no turn, no attempt, the question stays open.
@@ -115,7 +117,7 @@ describe.skipIf(!dbReady)('practising one word', () => {
     });
     const res = await say('weather');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ audible: false, ok: false, heard: '', tip: null });
+    expect(res.body).toEqual({ audible: false, ok: false, heard: '', tip: null, help: null });
   });
 
   it('refuses a word that is not in this sentence', async () => {

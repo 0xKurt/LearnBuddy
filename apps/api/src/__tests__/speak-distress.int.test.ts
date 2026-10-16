@@ -2,12 +2,17 @@
 // recorder is her own words like a written answer. The judge writes down what it heard but has no
 // concern bit, so a take that holds words the sentence does not goes to the distress check; a
 // concern, or the provider's filter holding the take back, gets the app's fixed help answer and
-// nothing is judged. Checked against the database, not only the reply.
+// nothing is judged. Checked against the database, not only the reply. One tapped word said on its
+// own is read the same way (#785).
 // requires live verification in Claude Code session (needs a running Postgres; the model is scripted)
 
 import { randomUUID } from 'node:crypto';
 
-import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
+import type {
+  AnswerResponse,
+  SessionView,
+  SpeakWordResponse,
+} from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { t } from '../i18n/index.js';
@@ -135,5 +140,74 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
     const res = await take();
     expect(res.body.verdict).toBe('correct');
     expect(res.body.reply.text).toBe(`Super gesprochen! ${t('de', 'safeguarding.unchecked')}`);
+  });
+
+  // One tapped word said on its own (#785) stores nothing, but it shows her words back: they are
+  // read the same way, and the answer carries the fixed help text.
+  const sayWord = () =>
+    l.api.post<SpeakWordResponse>(`/practice/sessions/${session.id}/speak-word`, {
+      item_id: session.items[0]!.item.id,
+      word: 'Bonjour',
+      mime: 'audio/m4a',
+      audio_base64: Buffer.alloc(2000, 7).toString('base64'),
+    });
+  /** The judge's answer for one word in which she said `heard`. */
+  const wordJudged = (heard: string) => ({
+    json: { audible: true, expected_ipa: 'bɔ̃ʒuʁ', heard_ipa: 'bɔ̃ʒuʁ', heard, ok: true, tip: null },
+  });
+
+  it('answers distress she says instead of the one word with the fixed help answer, showing her words nowhere', async () => {
+    env.llm.script('pronounce', wordJudged(TOLD));
+    env.llm.script('safeguard', { json: { concern: true } });
+    const res = await sayWord();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body).toEqual({
+      audible: false,
+      ok: false,
+      heard: '',
+      tip: null,
+      help: t('de', 'safeguarding.concern'),
+    });
+    const said = ScriptedGateway.textOf(env.llm.callsFor('safeguard')[0]!);
+    expect(said).toContain(TOLD);
+    expect(said).toContain(SENTENCE);
+    // Still practice: nothing is stored, the sentence keeps its state.
+    expect(
+      await env.db.query(`select 1 from practice_turns where session_id = $1`, [session.id]),
+    ).toEqual([]);
+    expect(await itemRow()).toEqual({ attempts: 0, status: 'open' });
+  });
+
+  it('answers one word the provider holds back with the fixed blocked answer', async () => {
+    env.llm.script('pronounce', { error: new LlmError('blocked', 'SAFETY', null, 'SAFETY') });
+    const res = await sayWord();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      audible: false,
+      ok: false,
+      heard: '',
+      tip: null,
+      help: t('de', 'safeguarding.blocked'),
+    });
+  });
+
+  it('keeps the word judgement and adds the fixed help line when no check can read her words', async () => {
+    env.llm.script('pronounce', wordJudged(TOLD));
+    env.llm.script('safeguard', { error: new LlmError('unavailable', 'down') });
+    const res = await sayWord();
+    expect(res.body).toEqual({
+      audible: true,
+      ok: true,
+      heard: TOLD,
+      tip: null,
+      help: t('de', 'safeguarding.unchecked'),
+    });
+  });
+
+  it('asks no check when she said only the word', async () => {
+    env.llm.script('pronounce', wordJudged('Bonjour'));
+    const res = await sayWord();
+    expect(res.body).toEqual({ audible: true, ok: true, heard: 'Bonjour', tip: null, help: null });
+    expect(env.llm.callsFor('safeguard')).toHaveLength(0);
   });
 });

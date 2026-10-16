@@ -56,12 +56,14 @@ const OLD: SpeakWordResponse = {
   ok: true,
   heard: 'old weather take',
   tip: 'old weather response tip',
+  help: null,
 };
 const CURRENT: SpeakWordResponse = {
   audible: true,
   ok: true,
   heard: 'current word take',
   tip: null,
+  help: null,
 };
 function deferred() {
   let resolve!: (value: SpeakWordResponse) => void;
@@ -249,4 +251,39 @@ it('keeps a legitimate current transport error visible and retries the current w
   await act(async () => retried.resolve(CURRENT));
   expect(screen.queryByRole('alert')).toBeNull();
   expect(screen.getByText(/current word take/)).toBeTruthy();
+});
+
+// The fixed help text by age (#785, CLAUDE.md rule 18): what the server sends, shown as sent.
+const HELP = 'fixed help answer from the server';
+it('shows the fixed help answer alone, in place of the tip, when nothing was judged', async () => {
+  outside.speakWord.mockResolvedValueOnce({
+    audible: false,
+    ok: false,
+    heard: '',
+    tip: null,
+    help: HELP,
+  } satisfies SpeakWordResponse);
+  renderInApp(<Parent />);
+  record();
+  await act(async () => undefined);
+  expect(screen.getByText(HELP)).toBeTruthy();
+  expect(screen.queryByText('weather original tip')).toBeNull();
+  expect(screen.queryByText(/Fast – hör es dir nochmal an/)).toBeNull();
+  expect(screen.queryByText(/Gehört habe ich/)).toBeNull();
+});
+it('shows the fixed help line after a judgement no check could read', async () => {
+  outside.speakWord.mockResolvedValueOnce({
+    audible: true,
+    ok: false,
+    heard: 'wedder',
+    tip: 'a tip for this take',
+    help: HELP,
+  } satisfies SpeakWordResponse);
+  renderInApp(<Parent />);
+  record();
+  await act(async () => undefined);
+  expect(screen.getByText('a tip for this take')).toBeTruthy();
+  expect(screen.getByText(/Fast – hör es dir nochmal an/)).toBeTruthy();
+  expect(screen.getByText(/wedder/)).toBeTruthy();
+  expect(screen.getByText(HELP)).toBeTruthy();
 });

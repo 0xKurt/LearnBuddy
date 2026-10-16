@@ -1090,6 +1090,13 @@ export const SpeakWordResponse = z.object({
   heard: z.string(),
   /** One short tip in her app language, when it was not right yet. */
   tip: z.string().nullable(),
+  /**
+   * The app's fixed help text by her age (CLAUDE.md rule 18, #785), or null. With `audible` false
+   * it stands alone: what she said told of danger, or the provider held the take back — nothing was
+   * judged and her words are not shown. With `audible` true it follows a judgement whose words no
+   * distress check could read.
+   */
+  help: z.string().nullable(),
 });
 export type SpeakWordResponse = z.infer<typeof SpeakWordResponse>;
 
