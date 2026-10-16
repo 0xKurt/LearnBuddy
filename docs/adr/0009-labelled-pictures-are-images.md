@@ -543,7 +543,7 @@ Nothing of this was looked at in the running app.
 - **Servier files** are still the Wikimedia versions (CC BY-SA 3.0, the animal cell CC BY 3.0);
   the originals from smart.servier.com (CC BY 4.0) could replace them under the same file names —
   the anchors then need looking at again.
-- **Heart:** the leader-line remnants need a hand in an image editor.
+- ~~**Heart:** the leader-line remnants need a hand in an image editor.~~ Replaced (#820, §Amendment 2026-10-16).
 - **Stored questions:** whether any database holds rows that name a removed part was not looked at
   (no hosted database was queried). A later clean-up would: select items whose `figure` is a
   schematic and for which `stalePicture` holds (a numbered or keyed part that is no part any more,
@@ -576,6 +576,13 @@ file name, its anchors measured by a generator instead of placed by eye:
   - Its number stands in its column at the anchor's height.
   - The tap set is unchanged: only the skull has an area.
   - The old → new list in the table above describes the Servier image and is history.
-- The frame (300 × 420), the part ids and their names are unchanged, so stored questions keep
-  working. The picture is still shown unchanged on the light paper card in every look
-  (decision 1).
+- **Heart:** `heart.png` is the diastole heart of Mariana Ruiz Villarreal's "Human heart"
+  (Bioicons, CC0), without the systole heart, the labels and the leader lines that file draws.
+  - The file names no part: its shapes are numbered by their place, pinned by the file's hash.
+  - Where one shape draws two parts, the part is measured within a box: the left atrium and
+    ventricle; the wall, the septum and the valve flap; the venae cavae and the right atrium.
+  - "valve" (Segelklappe) is anchored on the flap between the right atrium and ventricle.
+  - The tap set is unchanged: both atria have an area.
+- The frames (skeleton 300 × 420, heart 300 × 368), the part ids and their names are unchanged,
+  so stored questions keep working. The pictures are still shown unchanged on the light paper
+  card in every look (decision 1).
