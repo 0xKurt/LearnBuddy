@@ -1368,9 +1368,11 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   (multiple choice, numbers, exact matches), and in a test also a wrong one — including a plain
   number or fraction with another value as a short answer (`differentNumber`; not in homework,
   where "12" may be a right step). A test needs only the judgement. Fast and free.
-- Thinking where it pays: preparing (reading a worksheet, writing items, keys and explanations —
-  once, mostly in the background) gets 2048; on 3.6 Flash that cost about the same time and money
-  and gave more careful content. The tutor gets none: on 3.6 Flash more thinking was slower and not
+- Thinking where it pays: reading a worksheet and writing a practice run think **not at all**
+  since #670 — the same two sheets of `evals/content` on 3.6 Flash gave 31/31 questions without a
+  finding without thinking against 26/28 with the old 2048 budget, at the same cost, and thought
+  tokens come before the first question streams (`docs/decisions/thinking-2026-10.md`). Hints
+  keep `high` (not measured yet). The tutor gets none: on 3.6 Flash more thinking was slower and not
   better (0: 26/27 at 1.1 s; 1024: 16/18 at 1.4–1.7 s; 4096: 17/18 at 2.5 s, evals/tutor).
 - A model call is only as slow as it must be: thinking budget only where it measurably helps.
   Buddy's turns think at the **minimal level** (`thinking: 'minimal'`, issue #626), not with a

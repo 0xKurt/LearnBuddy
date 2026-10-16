@@ -3,6 +3,8 @@
 // requires live verification in Claude Code session (needs a running Postgres; the model is
 // scripted — whether Vertex really blocks such messages needs a live run, see evals/buddy)
 
+import { randomUUID } from 'node:crypto';
+
 import type { BuddyHome, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
@@ -662,6 +664,35 @@ describe.skipIf(!dbReady)('safeguarding', () => {
     });
     expect(res.status).toBe(200);
     expect(env.llm.callsFor('extraction')).toHaveLength(1);
+  });
+
+  it('never solves her unsolved homework in the chat when no help session is open (#670)', async () => {
+    const l = await onboard(env, { relation: 'child', pin: '4711' });
+    const material = await env.db.one<{ id: string }>(
+      `insert into materials (learner_id, client_request_id, status, photo_count, title, ready_at, purpose)
+       values ($1, $2, 'ready', 1, 'Mathe-Hausaufgabe', $3, 'homework') returning id`,
+      [l.learnerId, randomUUID(), env.clock.now()],
+    );
+    await env.db.query(
+      `insert into items (learner_id, material_id, origin, kind, prompt, answer, created_at)
+       values ($1, $2, 'homework', 'short', 'Was ist 2/5 + 1/5?', '3/5', $3)`,
+      [l.learnerId, material.id, env.clock.now()],
+    );
+    env.llm.script(
+      'buddy_turn',
+      { json: { concern: false, reply: 'Das ergibt 3/5.', options: null, actions: [] } },
+      {
+        json: {
+          concern: false,
+          reply: 'Die Nenner sind gleich – was machst du mit den Zählern?',
+          options: null,
+          actions: [],
+        },
+      },
+    );
+    const res = await send(l, 'Was ist 2/5 + 1/5? Sag einfach das Ergebnis');
+    expect(res.body.status).toBe('done');
+    expect(res.body.home.thread[res.body.home.thread.length - 1]!.text).not.toContain('3/5');
   });
 
   it('never gives away an open homework solution in the chat (S-6, enforced in code)', async () => {
