@@ -207,6 +207,12 @@ type TurnHooks = {
 type CheckHooks = {
   /** The reasons that follow directly from something she did (a sheet read, a practice done). */
   learnerTriggered: ReadonlySet<string>;
+  /**
+   * Those of them the fixed fallbacks answer without the model (`checkFallback.ts`): only these
+   * get it when Buddy is out-run by her chatting (issue #850). A finished practice has none — her
+   * result card and the greeting say it, whatever the check does.
+   */
+  fixedAnswer: ReadonlySet<string>;
   /** One line of TRIGGERS for a reason of the domain's; null: not one of its reasons. */
   describe(state: BuddyState, trigger: Trigger): string | null;
   /** Whether its part of the state gives Buddy something to work with (her questions, say). */

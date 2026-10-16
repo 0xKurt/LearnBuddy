@@ -50,6 +50,7 @@ const NO_DOMAIN: ContextProvider = {
   },
   check: {
     learnerTriggered: new Set(),
+    fixedAnswer: new Set(),
     describe: () => null,
     somethingToWorkWith: () => false,
   },
