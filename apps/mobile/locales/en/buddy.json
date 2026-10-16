@@ -418,6 +418,8 @@
       },
       "pace": "Pace",
       "pace_text": "{{wpm}} words per minute",
+      "pace_unknown": "Not measured",
+      "partial": "Only the first part of your recording was written down – the numbers are for that part.",
       "fillers": "Hesitation sounds",
       "fillers_text_one": "“Um” or “uh” once",
       "fillers_text_other": "“Um” or “uh” {{count}} times",

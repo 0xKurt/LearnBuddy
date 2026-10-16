@@ -603,7 +603,8 @@
       "no_fillers": "No he oído ningún sonido de duda como «eh».",
       "read": "Has leído {{wpm}} palabras por minuto correctamente.",
       "read_all": "Cada palabra estaba escrita tal como la leíste.",
-      "read_words": "Vuelve a mirar estas palabras: {{words}}."
+      "read_words": "Vuelve a mirar estas palabras: {{words}}.",
+      "partial": "Solo pude escribir la primera parte de tu grabación: los números son de esa parte."
     },
     "no_speech": "No he oído ninguna voz en la grabación. Inténtalo otra vez, un poco más cerca del micrófono."
   }

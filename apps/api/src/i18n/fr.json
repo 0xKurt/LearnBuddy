@@ -603,7 +603,8 @@
       "no_fillers": "Je n’ai entendu aucun son d’hésitation comme « euh ».",
       "read": "Tu as lu {{wpm}} mots par minute correctement.",
       "read_all": "Chaque mot était écrit comme tu l’as lu.",
-      "read_words": "Regarde encore ces mots : {{words}}."
+      "read_words": "Regarde encore ces mots : {{words}}.",
+      "partial": "Je n’ai pu écrire que la première partie de ton enregistrement – les chiffres valent pour cette partie."
     },
     "no_speech": "Je n’ai entendu aucune parole dans l’enregistrement. Réessaie, un peu plus près du micro."
   }

@@ -37,6 +37,7 @@ const TALK: RehearsalView = {
     { part: 'main', status: 'unknown' },
     { part: 'closing', status: 'not_heard' },
   ],
+  partial: false,
   step_done: true,
   created_at: '2026-10-10T08:00:00.000Z',
 };
@@ -164,6 +165,19 @@ describe('what a rehearsal measured', () => {
       }),
     );
     expect(screen.getByText('kleine, Wald')).toBeTruthy();
+  });
+
+  it('says a partial measurement is one, and names no pace it does not know (#681)', () => {
+    show(message({ rehearsal: { ...TALK, partial: true, words_per_minute: null } }));
+    expect(screen.queryByText(/Wörter pro Minute/)).toBeNull();
+    const next = within(screen.getByTestId('mode-result-next'));
+    expect(next.getByText('Tempo')).toBeTruthy();
+    expect(next.getByText('Nicht gemessen')).toBeTruthy();
+    expect(
+      next.getByText(
+        'Nur der erste Teil deiner Aufnahme ist aufgeschrieben – die Zahlen gelten für diesen Teil.',
+      ),
+    ).toBeTruthy();
   });
 });
 
