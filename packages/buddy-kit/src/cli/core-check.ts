@@ -1,7 +1,8 @@
 // pnpm core-check: does the generic core build without the learning domain? (issue #107, cut 10)
 //
 // Makes the core copy by construction (create-buddy --core) in a temporary directory, installs
-// it and typechecks every package. Each error in production code is counted per file and code
+// it, typechecks every package and starts its API (seams/core-boot.ts.txt: a server's build of the
+// app, with no database reached and no model asked). Each error in production code is counted per file and code
 // and compared with packages/buddy-kit/core-gaps.json, the gaps that are left: a new one is red
 // (the core reaches the domain again), and so is one that went away while the list still names
 // it — the list says exactly what is left, and only gets shorter. Errors in tests, the harness,
@@ -11,13 +12,13 @@
 //   pnpm core-check --write    # after fixing gaps: writes the list anew (never to add one)
 
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { parseConfig } from '../config.js';
-import { isSupport } from '../core.js';
+import { CORE_BOOT, isSupport } from '../core.js';
 import { createBuddy } from '../create.js';
 
 const REPO = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -111,6 +112,20 @@ async function main(): Promise<void> {
       Object.assign(gaps, counted.gaps);
       support += counted.support;
     }
+    // Does it start? The API built as a server builds it, with no database and no model.
+    mkdirSync(dirname(join(target, CORE_BOOT.path)), { recursive: true });
+    writeFileSync(join(target, CORE_BOOT.path), CORE_BOOT.text);
+    const boot = spawnSync(
+      process.execPath,
+      [join(target, 'node_modules/tsx/dist/cli.mjs'), CORE_BOOT.path.replace(/^apps\/api\//, '')],
+      { cwd: join(target, 'apps/api'), encoding: 'utf8' },
+    );
+    if (boot.status !== 0) {
+      console.error(`✗ the core does not start without the domain:\n${boot.stdout}${boot.stderr}`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(boot.stdout.trim());
     const total = Object.values(gaps).reduce((s, n) => s + n, 0);
     console.log(
       `core typecheck: ${total} errors in production code (${Object.keys(gaps).length} file/code pairs), ${support} in tests and evals`,

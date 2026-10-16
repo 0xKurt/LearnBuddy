@@ -60,8 +60,9 @@ export async function runPlanExam(
   );
   const duplicate = await ctx.db.maybeOne<{ id: string; title: string }>(
     `select id, title from buddy_goals
-      where learner_id = $1 and kind = 'exam' and status = 'active' and subject_id = $2 and due_date = $3`,
-    [ctx.learnerId, subject.id, due],
+      where learner_id = $1 and kind = 'exam' and status = 'active'
+        and subject_id is not distinct from $2 and due_date = $3`,
+    [ctx.learnerId, subject?.id ?? null, due],
   );
   if (duplicate) {
     throw new ToolRejection(
@@ -71,7 +72,7 @@ export async function runPlanExam(
   const goal = await ctx.db.one<{ id: string }>(
     `insert into buddy_goals (learner_id, kind, title, subject_id, due_date, topics)
      values ($1, 'exam', $2, $3, $4, $5) returning id`,
-    [ctx.learnerId, a.title, subject.id, due, a.topics],
+    [ctx.learnerId, a.title, subject?.id ?? null, due, a.topics],
   );
   await scheduleExamWakeups(ctx.db, ctx.learnerId, goal.id, due, ctx.settings, ctx.now);
   ctx.created.goalId = goal.id;
@@ -81,7 +82,7 @@ export async function runPlanExam(
       goal_id: goal.id,
       title: a.title,
       due_date: due,
-      subject_name: subject.name,
+      subject_name: subject?.name ?? null,
     },
     undo: { type: 'drop_goal', goal_id: goal.id },
   };

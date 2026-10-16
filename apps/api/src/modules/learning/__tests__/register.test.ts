@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { checkConfig, type Config } from '../../../config.js';
 import { routePlugins } from '../../../http/plugins.js';
 import { ACT_SCHEMAS } from '../../buddy/decision.js';
 import { lookupNames, registerLookups } from '../../buddy/lookups.js';
@@ -18,7 +19,7 @@ import { subscribersOf } from '../../buddy/events.js';
 import { fillsPractice, occasions } from '../../buddy/occasions.js';
 import { REVIEW_REASONS, reviewAfterBreak, reviewNextDay, runReviews } from '../../buddy/review.js';
 import { privacyTables } from '../../identity/privacyTables.js';
-import { missingJobKinds, jobKinds, tickWork } from '../../scheduler/registry.js';
+import { isPersistent, jobKinds, tickWork } from '../../scheduler/registry.js';
 import { actHandler, missingActHandlers, registerActHandlers } from '../../buddy/tools.js';
 import { LEARNING_LOOKUPS } from '../lookups.js';
 import { registerLearning } from '../register.js';
@@ -104,9 +105,20 @@ describe('the learning domain in the core', () => {
     expect(startsSteps()).toBe(true);
   });
 
+  it('checks its forms in the configuration before the app serves (FORMS_OFF, #296)', () => {
+    registerLearning();
+    const config = (off: string[]) => ({ FORMS_OFF: new Set(off) }) as unknown as Config;
+    expect(() => checkConfig(config(['grid_drwa']))).toThrow(/^Invalid configuration: FORMS_OFF: /);
+    expect(() => checkConfig(config(['grid_draw', 'find_error']))).not.toThrow();
+  });
+
   it('gives every job kind a handler and adds its background work in one order', () => {
     registerLearning();
-    expect(missingJobKinds()).toEqual([]);
+    // Its erasures are never parked, as the core's account deletion (docs/privacy.md).
+    expect(
+      ['purge_photos', 'purge_content', 'delete_account'].every((k) => isPersistent(k as never)),
+    ).toBe(true);
+    expect(isPersistent('extract_material')).toBe(false);
     expect(jobKinds('waiting').map((k) => k.kind)).toEqual(['extract_material']);
     expect(jobKinds('erasure').map((k) => k.kind)).toEqual(['purge_photos', 'purge_content']);
     // recovery, idle runs, the photo sweep — the order the tick runs them in.

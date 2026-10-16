@@ -2,7 +2,6 @@
 // its own rules by code (Regel 0, #224) — in one place for the first reading of a sheet and for a
 // reading the learner settled a spot for (#164). docs/architecture.md §Material.
 
-import type { ItemKind } from '@learnbuddy/shared-types/contracts';
 import type { z } from 'zod';
 
 import { formsOn, samePrompt, usableItems, type StoredItem } from '../practice/items.js';
@@ -12,7 +11,7 @@ import type { ExtractionParse } from './extract.js';
 import { sheetPartTaskItems, wholeTasks } from './partTasks.js';
 
 type Read = z.infer<typeof ExtractionParse>;
-type Forms = { locale: string; off: ReadonlySet<ItemKind> };
+type Forms = { locale: string; off: ReadonlySet<string> };
 
 /**
  * The questions of a reading, in order. The ordinary ones, and after them the structured ones

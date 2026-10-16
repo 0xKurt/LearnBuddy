@@ -1,0 +1,25 @@
+// Does the core copy's API start without the learning domain (pnpm core-check, issue #107)?
+// Builds the app as a server does — configuration, its services, every route and check — with no
+// database reached and no model asked. Exits 0 once `createApp` stood; any refusal throws.
+
+import { createApp } from '../src/app.js';
+import { loadConfig } from '../src/config.js';
+import { productionDeps } from '../src/production.js';
+
+const deps = productionDeps(
+  loadConfig({
+    NODE_ENV: 'test',
+    DATABASE_URL: 'postgres://postgres@127.0.0.1:1/core-boot',
+    SUPABASE_URL: 'http://127.0.0.1:54321',
+    SUPABASE_SERVICE_ROLE_KEY: 'core-boot-service-role-key',
+    TICK_SECRET: 'core-boot-tick-secret-0123456789abcdef',
+    ADMIN_TOKEN_SECRET: 'core-boot-admin-secret-0123456789abcdef',
+    LLM_BACKEND: 'disabled',
+    PUSH_BACKEND: 'disabled',
+  }),
+  () => undefined,
+);
+createApp(deps);
+console.log('core boot: the API starts without the learning domain');
+// Nothing was connected; the pool and the clients have nothing to finish.
+process.exit(0);

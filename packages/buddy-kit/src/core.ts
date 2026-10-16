@@ -3,7 +3,8 @@
 //
 // - Every file of the domain (tools/guards/boundaries.config.mjs `DOMAIN`) stays out.
 // - The two seams where the apps hand over to the domain (`registerLearning` in the API and in
-//   the app) are written again, registering nothing.
+//   the app) are written again: the app's registers nothing, the API's the core's own context
+//   (seams/api-register.ts.txt), so it starts (`pnpm core-check` boots it).
 // - The contracts barrel loses its exports of domain contracts and gains the core's own
 //   assembly of the conversation and home (`buddyContracts` with no domain).
 // - Tests, the test harness, evals and scripts that reach a file which stayed out stay out
@@ -14,18 +15,29 @@
 
 import { readFileSync } from 'node:fs';
 import { join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-/** The seams: the one place each app calls the domain, written to register nothing. */
+/**
+ * The kit's own files written into a core copy (packages/buddy-kit/seams/). Kept as text: their
+ * imports resolve only in the copy, where core-check typechecks and runs them.
+ */
+const SEAMS = fileURLToPath(new URL('../seams/', import.meta.url));
+const seam = (name: string) => readFileSync(join(SEAMS, name), 'utf8');
+
+/**
+ * The seams: the one place each app calls the domain. The app's registers nothing; the API's
+ * registers the core's own context (a Buddy that knows only its own state), so it starts.
+ */
 export const CORE_SEAMS: Readonly<Record<string, string>> = {
-  'apps/api/src/modules/learning/register.ts': `// A Buddy without the learning domain (create-buddy --core, issue #107): nothing to register.
-// A domain of this Buddy registers itself here: its tools, lookups, context, routes and jobs.
-export function registerLearning(): void {}
-`,
+  'apps/api/src/modules/learning/register.ts': seam('api-register.ts.txt'),
   'apps/mobile/lib/learning/register.tsx': `// A Buddy without the learning domain (create-buddy --core, issue #107): nothing to register.
 // A domain of this Buddy registers its cards, start entries and attachments here.
 export function registerLearning(): void {}
 `,
 };
+
+/** A boot of the core copy's API without database or model (core-check). */
+export const CORE_BOOT = { path: 'apps/api/scripts/core-boot.ts', text: seam('core-boot.ts.txt') };
 
 /** The contracts barrel, and the core's own assembly it exports in a core copy. */
 export const CONTRACTS_BARREL = 'packages/shared-types/src/contracts/index.ts';

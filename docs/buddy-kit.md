@@ -347,9 +347,50 @@ Erledigte Schnitte und was der Wächter danach misst (Importe generisch → Doma
       typecheckt sie. Neu oder mehr ist rot: der Kern erreicht die Domain wieder. Weniger ist
       auch rot, bis die Liste nachgezogen ist (`pnpm core-check --write`). So wird die Liste nur
       kürzer.
-    - **Noch nicht:** Die Datenbank der Kopie ist die der Quelle, Lern-Tabellen eingeschlossen.
-      Eine Kern-Basis-Migration ist ein eigener Schritt. Der Kern startet ohne Domain auch noch
-      nicht: `createApp` verlangt einen Kontext-Provider.
+    - **Der Kern startet ohne Domain (16.10.):**
+      - Die API-Naht der Kopie meldet den eigenen Kontext des Kerns an
+        (`packages/buddy-kit/seams/api-register.ts.txt`): Buddy kennt dann nur seinen eigenen
+        Zustand. Dazu gehören Erinnerungen, Ziele, Schritte und Kontakt.
+      - `pnpm core-check` baut die API der Kopie danach so, wie ein Server sie baut
+        (`seams/core-boot.ts.txt`), ohne Datenbank und ohne Modell. Startet sie nicht, ist der
+        Wächter rot.
+      - Damit das geht:
+        - Die Job-Arten der Domain deklariert die Domain selbst (`DomainJobKinds`,
+          `learning/jobs.ts`), samt ihrer Löschaufträge (`persistent`).
+        - `plan_exam` kommt ohne Kategorie aus (`subjects.findOrCreate` darf `null` geben).
+        - `FORMS_OFF` liest der Kern als Namen. Die Lern-Domain prüft sie, wenn sie sich
+          anmeldet (`configCheck`). Ein Tippfehler hält den Start mit derselben Meldung an
+          („Invalid configuration: FORMS_OFF: …“), jetzt in `createApp` statt in `loadConfig`;
+          beides läuft vor dem ersten Request.
+      - Danach zeigt die Kopie **0 Fehler im Produktionscode**: `core-gaps.json` ist leer, und
+        jeder neue Griff des Kerns in die Domain ist rot.
+    - **Noch nicht: die Datenbank.** Die Kopie migriert noch die Datenbank der Quelle,
+      Lern-Tabellen eingeschlossen. Plan für eine eigene Basis des Kerns (nur im Kit, keine
+      Migration für LearnBuddys Produktion):
+      1. **Erzeugt, nicht geschrieben.** Ein Lauf baut auf dem geteilten Test-Postgres eine
+         frische Datenbank aus allen Migrationen. Dann löscht er die Tabellen der Domain
+         (`DOMAIN_TABLES`, 14) mit `drop … cascade`. Das nimmt die 9 Fremdschlüssel `domain_*`
+         des Kerns (Schnitt 9) mit; die Spalten des Kerns bleiben als freie `uuid`. Danach
+         schreibt `pg_dump --schema-only --no-owner --no-privileges` das Ergebnis.
+      2. **Eingecheckt und bewacht.** Das Ergebnis liegt als
+         `packages/buddy-kit/core-baseline.sql` im Repo. `pnpm core-check --write` erzeugt es
+         neu, `pnpm core-check` vergleicht. Jede neue Migration, die die Basis ändert, zeigt sich
+         so im selben PR.
+      3. **In der Kopie die einzige Migration.** `create-buddy --core` schreibt sie als
+         `0001_baseline.sql`, lässt die Migrationen der Quelle weg und schreibt die erwartete Liste
+         (`EXPECTED_MIGRATIONS`) neu. Eine Domain, die später dazukommt, bringt ihre Tabellen und
+         Fremdschlüssel (`domain_*`) in eigenen Migrationen mit.
+      4. **Bewiesen, nicht behauptet.** `core-check` lässt die Integrationstests des Kerns der
+         Kopie auf einer Datenbank aus dieser Basis laufen (eigene Test-DB, 2 Worker, unter der
+         Maschinen-Sperre). Erst dann gilt der Kern als lauffähig mit eigener Datenbank.
+      5. **Vorher zu klären:**
+         - Funktionen, Policies und Trigger des Kerns, die eine Domain-Tabelle nennen (der
+           SQL-Wächter zählt sie im TypeScript, nicht in den Migrationen);
+         - die `pg_cron`-Jobs;
+         - die Vorlage der API-Rolle (`infra/supabase/templates/api-role.sql`).
+
+         Was davon an Domain-Tabellen hängt, fällt mit `cascade` weg und muss im Dump als
+         fehlend auffallen; der Lauf listet es.
 
 ## Die API-Datenbankrolle
 
