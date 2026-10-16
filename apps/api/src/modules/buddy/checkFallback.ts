@@ -144,15 +144,20 @@ export async function fallback(
             m.title ?? t(learner.locale, 'practice.untitled'),
             trig.materialId,
           );
+          // The line names what its start opens (issue #840): the practice's title and size, not
+          // the sheet's question total ("14 Stück" above a card of 4).
+          // One made here carries the sheet's title, or the untitled line says it without one.
+          const title = p && !p.created ? p.title : m.title;
+          const count = p?.count ?? m.questions;
           proposal = {
             kind: 'result',
             // Her photos: the result always reaches her, like any answer (audit M-61).
             origin: 'learner',
             template: null,
             topic: `material:${trig.materialId}`,
-            body: m.title
-              ? t(learner.locale, 'material.ready', { title: m.title, count: m.questions })
-              : t(learner.locale, 'material.ready_untitled', { count: m.questions }),
+            body: title
+              ? t(learner.locale, 'material.ready', { title, count })
+              : t(learner.locale, 'material.ready_untitled', { count }),
             relevance: 0.7,
             goalId: m.goalId,
             stepId: p?.stepId ?? null,
@@ -239,13 +244,20 @@ export async function preparedPractice(
   },
   today: string,
   now: Date,
-): Promise<{ stepId: string; count: number; minutes: number; created: boolean } | null> {
+): Promise<{
+  stepId: string;
+  title: string;
+  count: number;
+  minutes: number;
+  created: boolean;
+} | null> {
   const sheet = scope.materialId ?? null;
   const waiting = await tx.query<{
     id: string;
+    title: string;
     payload: { item_ids?: string[]; est_minutes?: number };
   }>(
-    `select id, payload from buddy_steps
+    `select id, title, payload from buddy_steps
       where learner_id = $1 and kind = 'practice' and state = 'prepared'
         and ($2::boolean or goal_id is not distinct from $3)
       order by created_at desc, seq desc`,
@@ -267,6 +279,7 @@ export async function preparedPractice(
   if (existing) {
     return {
       stepId: existing.id,
+      title: existing.title,
       count: existing.payload.item_ids?.length ?? 0,
       minutes: existing.payload.est_minutes ?? 10,
       created: false,
@@ -292,5 +305,5 @@ export async function preparedPractice(
       now,
     ],
   );
-  return { stepId: step.id, count: items.length, minutes, created: true };
+  return { stepId: step.id, title: scope.title, count: items.length, minutes, created: true };
 }
