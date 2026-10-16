@@ -123,13 +123,13 @@
   {
     "datei": "heart.png",
     "abbildung": "heart",
-    "titel": "Diagram of the human heart (cropped).svg",
-    "autor": "Wapcaplet",
-    "lizenz": "CC BY-SA 3.0",
-    "lizenzUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
-    "quelle": "https://commons.wikimedia.org/wiki/File:Diagram_of_the_human_heart_(cropped).svg",
-    "bearbeitet": "ja: Beschriftungen und gestrichelte Führungslinien entfernt, zugeschnitten, auf 900 px skaliert, Hintergrund transparent",
-    "namensnennung": "„Diagram of the human heart (cropped)\" von Wapcaplet, CC BY-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/), Quelle: https://commons.wikimedia.org/wiki/File:Diagram_of_the_human_heart_(cropped).svg – bearbeitet."
+    "titel": "Human heart (Bioicons)",
+    "autor": "Mariana Ruiz Villarreal (LadyofHats)",
+    "lizenz": "CC0",
+    "lizenzUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "quelle": "https://github.com/duerrsimon/bioicons/blob/162414a8575a3b78f22af390f4a120a0738c5b78/static/icons/cc-0/Tissues/Mariana_RuizVillareal/Human_heart.svg",
+    "bearbeitet": "ja: nur das Herz in der Diastole, ohne Beschriftungen und Führungslinien gerendert, auf 900 px Höhe skaliert, auf 733 px Breite mittig gesetzt, Farbpalette reduziert (packages/shared-math/scripts/figures.mjs)",
+    "namensnennung": "„Human heart\" von Mariana Ruiz Villarreal (LadyofHats), CC0 (https://creativecommons.org/publicdomain/zero/1.0/), Quelle: https://github.com/duerrsimon/bioicons/blob/162414a8575a3b78f22af390f4a120a0738c5b78/static/icons/cc-0/Tissues/Mariana_RuizVillareal/Human_heart.svg – bearbeitet."
   },
   {
     "datei": "ear.png",

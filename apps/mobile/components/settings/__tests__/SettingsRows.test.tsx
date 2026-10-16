@@ -391,7 +391,7 @@ it('lists every picture of the tasks with its licence; a tap shows its attributi
   expect(FIGURE_LICENCES).toHaveLength(53 + 24);
 
   const heart = FIGURE_LICENCES.find((f) => f.files.includes('heart.png'))!;
-  const row = screen.getByRole('button', { name: /^Diagram of the human heart.*CC BY-SA 3\.0$/ });
+  const row = screen.getByRole('button', { name: /^Human heart \(Bioicons\).*CC0$/ });
   expect(screen.queryByText(heart.attribution, { exact: false })).toBeNull();
   fireEvent.click(row);
   // The finished sentence as the source asks for it, and what was changed.
