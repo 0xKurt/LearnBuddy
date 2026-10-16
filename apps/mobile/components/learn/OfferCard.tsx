@@ -102,6 +102,15 @@ export function OfferCard({
     <PracticeReady
       label={label}
       title={offer.text}
+      // Whether its prepared run shows a picture, from the run itself (#842): Buddy's words may
+      // promise one; this line says what is there once the questions exist.
+      detail={
+        offer.pictures_shown === true
+          ? t('learn:topic.with_picture')
+          : offer.pictures_shown === false
+            ? t('learn:topic.without_picture')
+            : null
+      }
       note={dead ? t('learn:topic.not_usable') : state.status === 'failed' ? state.message : null}
       start={
         dead || onTop

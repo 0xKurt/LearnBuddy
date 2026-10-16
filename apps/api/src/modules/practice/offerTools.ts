@@ -178,6 +178,8 @@ export async function runOfferLearning(
       // Nothing started yet; the thread says so once its run is finished (issue #630).
       finished_session_id: null,
       running_session_id: null,
+      // Nothing prepared yet; the thread says so once its questions exist (issue #842).
+      pictures_shown: null,
     },
     undo: null,
   };

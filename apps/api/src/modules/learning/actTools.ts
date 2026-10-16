@@ -195,11 +195,12 @@ const offerLearning = z.object({
       .describe('test only, when she asks for a time limit; else null'),
     // Issue #724: a kind of picture only on her wish, from a closed list; the run's form choice
     // takes it first. One property: the turn's schema sits at Vertex's budget (#627), so her
-    // words are not quoted beside it.
+    // words are not quoted beside it. #842: anatomy goes to the library's checked pictures, and
+    // the reply leaves pictures to the card (`pictures_shown`, read from the run).
     pictures: PictureWish.nullable()
       .optional()
       .describe(
-        'practice or test, when she asks to see a kind of picture: its figure types; else null',
+        'practice or test, when she asks to see a kind of picture: its figure types — the body, a plant or an organ: schematic (a labelled picture from the library), a diagram only for a flow it has none of; else null. Your reply names no picture: the card says whether the run has one',
       ),
   }),
 });

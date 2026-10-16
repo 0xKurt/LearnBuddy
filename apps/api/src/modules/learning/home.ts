@@ -543,6 +543,13 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
     page.actions.filter((a) => a.result.tool === 'offer_learning').map((a) => a.id),
     'active',
   );
+  const pictured = await offerPictures(
+    db,
+    learnerId,
+    page.actions
+      .filter((a) => a.result.tool === 'offer_learning' && (a.result.figures?.length ?? 0) > 0)
+      .map((a) => a.id),
+  );
   // The practice Buddy showed again (issue #630): its start while it still waits, and where it
   // went once she started it — the card stays in the history (issue #844).
   const outcomes = await practiceOutcomes(
@@ -584,6 +591,9 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       if (s.tool === 'offer_learning' && cannotStart.has(actionId))
         return { ...s, startable: false };
       // Done: the card reads as done and opens what came of it (issues #630, #643).
+      // What its prepared run shows, read from its questions (issue #842).
+      if (s.tool === 'offer_learning' && pictured.has(actionId))
+        s = { ...s, pictures_shown: pictured.get(actionId) ?? null };
       if ((s.tool === 'offer_learning' || s.tool === 'offer_drill') && finished.has(actionId))
         return { ...s, finished_session_id: finished.get(actionId) ?? null };
       // Still open: the bar may say "Weitermachen" for it, the card then leaves it there (#846).
@@ -602,6 +612,31 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       ...(announced.has(m.id) ? { announces: announced.get(m.id) } : {}),
     }),
   };
+}
+
+/**
+ * Whether the run each of these offers prepared shows a picture (issue #842), by the offer's
+ * action id: a drawing, option pictures or a picture from her sheet on any of its questions. An
+ * offer with no prepared run is not in the map.
+ */
+async function offerPictures(
+  db: Db,
+  learnerId: string,
+  offerIds: readonly string[],
+): Promise<Map<string, boolean>> {
+  if (offerIds.length === 0) return new Map();
+  const rows = await db.query<{ request: string; shown: boolean }>(
+    `select ps.client_request_id::text as request,
+            bool_or(i.figure is not null or i.choice_figures is not null or i.image_id is not null)
+              as shown
+       from practice_sessions ps
+       join session_items si on si.session_id = ps.id
+       join items i on i.id = si.item_id
+      where ps.learner_id = $1 and ps.client_request_id = any($2::uuid[])
+      group by ps.client_request_id`,
+    [learnerId, offerIds],
+  );
+  return new Map(rows.map((r) => [r.request, r.shown]));
 }
 
 /**
