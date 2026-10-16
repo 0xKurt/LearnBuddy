@@ -13,7 +13,6 @@ import type {
   OutreachView,
   UpcomingItem,
 } from '@learnbuddy/shared-types/contracts';
-import { pollAfterMs } from '@learnbuddy/shared-types/contracts';
 
 import { DAILY_LIMITS } from '../../config.js';
 import type { Deps } from '../../deps.js';
@@ -22,6 +21,7 @@ import type { BuddyState, GoalRow } from './state.js';
 import type { UndoSpec } from './toolKit.js';
 import { undoAppliesAll, undoLoosensContact } from './undo.js';
 import { contextProvider } from './provider.js';
+import { toolsWith } from './registry.js';
 import { loadBuddyState, loadSettings } from './state.js';
 
 const THREAD_LIMIT = 30;
@@ -81,7 +81,8 @@ async function homeFrom(
 
   // One after the other: they share the snapshot's connection. The card on top, the notice and
   // what is working are the domain's (provider.ts, issue #107).
-  const domain = await contextProvider().home.screen(deps, learner.id, state, today, now);
+  const provider = contextProvider().home;
+  const domain = await provider.screen(deps, learner.id, state, today, now);
   const decision = await decisionOf(state, learner, today, now);
   const done = await doneOf(deps, learner, now);
   const thread = await threadOf(deps, learner, beforeMessageId);
@@ -98,11 +99,7 @@ async function homeFrom(
     system,
     context_version: state.settings.context_version,
     // The app's pace while something is in progress (#671): the server's to set.
-    poll_after_ms: pollAfterMs({
-      now: domain.now,
-      working: domain.working,
-      thread: thread.messages,
-    }),
+    poll_after_ms: provider.pollAfter(domain, thread.messages),
   };
 }
 
@@ -159,50 +156,6 @@ async function needsAdult(
   return learner.isMinor && undo !== null && undoLoosensContact(deps.db, learner.id, undo, now);
 }
 
-/**
- * The card must say where the proposal stands, not where it stood when it was written
- * (issue #151): she may have answered it on another device, or the app was closed in
- * between. A row that is gone was deleted with what it proposed — the question is moot.
- */
-function servedSummary(
-  s: ActionSummary,
-  pending: ReadonlyMap<string, PendingStatus>,
-): ActionSummary {
-  if (s.tool === 'confirm_delete')
-    return { ...s, status: pending.get(s.pending_id) ?? 'superseded' };
-  return s;
-}
-
-type PendingStatus = 'open' | 'confirmed' | 'declined' | 'expired' | 'superseded';
-
-/** Where each proposed deletion on this page of the thread stands right now. */
-async function pendingStatuses(
-  deps: Deps,
-  learnerId: string,
-  summaries: readonly ActionSummary[],
-  now: Date,
-): Promise<Map<string, PendingStatus>> {
-  const ids = summaries
-    .filter(
-      (s): s is Extract<ActionSummary, { tool: 'confirm_delete' }> => s.tool === 'confirm_delete',
-    )
-    .map((s) => s.pending_id);
-  if (ids.length === 0) return new Map();
-  const rows = await deps.db.query<{ id: string; status: PendingStatus; expires_at: Date }>(
-    `select id, status, expires_at from buddy_pending_actions
-      where learner_id = $1 and id = any($2::uuid[])`,
-    [learnerId, ids],
-  );
-  return new Map(
-    rows.map((r) => [
-      r.id,
-      // Read against the app's own clock, so a card does not offer a button that the
-      // endpoint would refuse a moment later (CLAUDE.md rule 7).
-      r.status === 'open' && r.expires_at.getTime() <= now.getTime() ? 'expired' : r.status,
-    ]),
-  );
-}
-
 async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<ActionView[]> {
   const learnerId = learner.id;
   const rows = await deps.db.query<{
@@ -213,10 +166,10 @@ async function doneOf(deps: Deps, learner: LearnerLite, now: Date): Promise<Acti
     created_at: Date;
   }>(
     `select id, status, result, undo, created_at from buddy_actions
-      where learner_id = $1 and created_at > $2
-        and tool not in ('offer_learning', 'offer_drill', 'open_area', 'start_roleplay', 'offer_rehearsal')
+      where learner_id = $1 and created_at > $2 and tool <> all($3::text[])
       order by seq desc limit 12`,
-    [learnerId, new Date(now.getTime() - DONE_WINDOW_MS)],
+    // An offer to start something is not something done (registry.ts `offer`).
+    [learnerId, new Date(now.getTime() - DONE_WINDOW_MS), toolsWith('offer')],
   );
   // Offered only when it would work now (nothing changed since): asked for all in one
   // statement (#712); the home is read on one connection (one snapshot).
@@ -405,12 +358,6 @@ async function threadOf(
   const domain = contextProvider().home;
   const acted = await domain.lastActed(deps.db, learnerId);
   const stale = (at: Date) => acted !== null && acted.getTime() > at.getTime();
-  const pending = await pendingStatuses(
-    deps,
-    learnerId,
-    actions.map((a) => a.result),
-    now,
-  );
   // What the domain's cards and messages on this page say now.
   const dress = await domain.thread(deps.db, learnerId, { messages: page, actions }, now);
   const messages: MessageView[] = page.map((m) => {
@@ -446,7 +393,7 @@ async function threadOf(
           id: a.id,
           status: a.status,
           undoable: undoWorks.has(a.id) && !adultOnly.has(a.id),
-          summary: servedSummary(dress.summary(a.id, a.result), pending),
+          summary: dress.summary(a.id, a.result),
           created_at: a.created_at.toISOString(),
         })),
       ...dress.message(m),

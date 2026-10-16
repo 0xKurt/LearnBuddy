@@ -40,8 +40,9 @@ import { startFromStep } from '../practice/service.js';
 import { registerPrivacyTables } from '../identity/privacyTables.js';
 import { registerJobKinds, registerTickWork } from '../scheduler/registry.js';
 import { LEARNING_SECTIONS, levelOf, renderLearning } from './context.js';
-import { dressThread, lastActed, learningHome } from './home.js';
+import { dressThread, lastActed, learningHome, pollAfter } from './home.js';
 import { LEARNING_ACT_TOOLS } from './actTools.js';
+import { learningCheck } from './check.js';
 import { LEARNING_LOOKUPS } from './lookups.js';
 import { findLearningLookBack } from './lookback.js';
 import { LEARNING_PRIVACY_TABLES } from './privacy.js';
@@ -73,7 +74,7 @@ const LEARNING: ContextProvider = {
     turnRules: LEARNING_TURN_RULES,
   },
   subjects: { names: subjectNames, findOrCreate: findOrCreateSubject },
-  home: { screen: learningHome, lastActed, thread: dressThread },
+  home: { screen: learningHome, lastActed, pollAfter, thread: dressThread },
   turn: {
     mode: roleplayMode,
     lookAhead: preInjectedPassages,
@@ -81,6 +82,7 @@ const LEARNING: ContextProvider = {
     applied: prepareOffered,
     concern: endForConcern,
   },
+  check: learningCheck,
   lookBack: findLearningLookBack,
   readySheet,
   sheetPractice,

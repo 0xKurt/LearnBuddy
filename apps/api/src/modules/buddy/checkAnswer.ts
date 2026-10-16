@@ -26,6 +26,7 @@ import { type CheckLease, LeaseLost } from './checkLease.js';
 import type { Trigger } from './checkTrigger.js';
 import { bumpContext } from './plan.js';
 import { contextProvider } from './provider.js';
+import { toolsWith } from './registry.js';
 
 type Outcome = 'answered' | 'fallback' | 'start_attached';
 
@@ -61,13 +62,14 @@ async function answerSheet(
             array_remove(array[o.step_id] || coalesce(array(
               select (a.result ->> 'step_id')::uuid from buddy_actions a
                where a.learner_id = $1 and a.decision_id = o.decision_id
-                 and a.tool = 'prepare_practice' and a.status = 'applied'), '{}'), null)::text[]
+                 and a.tool = any($3::text[]) and a.status = 'applied'), '{}'), null)::text[]
               as starts
        from buddy_outreach o
       where o.learner_id = $1 and o.origin = 'learner' and o.status <> 'suppressed'
         and o.created_at >= $2
       order by o.created_at desc, o.seq desc`,
-    [learner.id, since],
+    // The tools whose result names the practice they prepared (registry.ts `prepares`).
+    [learner.id, since, toolsWith('prepares')],
   );
   const own = await contextProvider().sheetPractice(
     deps.db,
