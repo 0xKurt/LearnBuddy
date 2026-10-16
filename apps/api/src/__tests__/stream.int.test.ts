@@ -204,6 +204,53 @@ describe.skipIf(!dbReady)('streamed replies', () => {
     expect(s.done?.home.thread.at(-1)?.actions[0]?.summary.tool).toBe('remember');
   });
 
+  it('logs when an answer that changed something was stored and sent, before the home (#685)', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    try {
+      env.llm.script(
+        'buddy_turn',
+        answer('Notiert – Handball!', [
+          {
+            tool: 'remember',
+            args: {
+              about: 'everyday',
+              kind: 'fact',
+              statement: 'Spielt Handball',
+              quote: 'Ich spiele Handball',
+              until: null,
+            },
+          },
+        ]),
+      );
+      await stream(env, l, 'Ich spiele Handball');
+      const line = info.mock.calls
+        .map((args) => String(args[0]))
+        .find((x) => x.startsWith('[timing] POST /v1/buddy/messages'))!;
+      const m = / first=(\d+) applied=(\d+) done=(\d+) /.exec(line);
+      expect(m, line).not.toBeNull();
+      const [first, applied, done] = m!.slice(1).map(Number) as [number, number, number];
+      expect(first).toBeLessThanOrEqual(applied);
+      // done - applied: what building and sending the home costs this answer.
+      expect(applied).toBeLessThanOrEqual(done);
+    } finally {
+      info.mockRestore();
+    }
+  });
+
+  it('marks no applied moment for an answer streamed whole while it was written', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    try {
+      env.llm.script('buddy_turn', answer('Gern geschehen!'));
+      await stream(env, l, 'danke');
+      const line = info.mock.calls
+        .map((args) => String(args[0]))
+        .find((x) => x.startsWith('[timing] POST /v1/buddy/messages'))!;
+      expect(line).not.toContain('applied=');
+    } finally {
+      info.mockRestore();
+    }
+  });
+
   it('sends a reply that changes nothing speakable once, not again when it is stored', async () => {
     env.llm.script('buddy_turn', answer('Gern geschehen!'));
     const s = await stream(env, l, 'danke');

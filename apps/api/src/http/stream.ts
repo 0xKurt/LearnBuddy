@@ -10,6 +10,7 @@ import { streamSSE } from 'hono/streaming';
 
 import { isAppError } from '../lib/errors.js';
 import type { AppContext } from './context.js';
+import type { Milestone } from './timing.js';
 
 /** Did the caller ask for the stream? */
 export function wantsStream(c: Context): boolean {
@@ -25,7 +26,7 @@ export function wantsStream(c: Context): boolean {
 export function streamed(
   c: AppContext,
   event: string,
-  run: (emit: (data: unknown) => void) => Promise<unknown>,
+  run: (emit: (data: unknown, milestone?: Milestone) => void) => Promise<unknown>,
 ): Response {
   // Read while the route still runs: the pattern, never the path with its ids.
   const route = `${c.req.method} ${c.req.routePath}`;
@@ -39,10 +40,14 @@ export function streamed(
       sent = sent.then(() => stream.write(': keepalive\n\n')).then(() => undefined);
     }, STREAM_KEEPALIVE_MS);
     try {
-      const result = await run((data) => {
+      // An event may mark a milestone of its own once it is written (#685: `applied`).
+      const result = await run((data, milestone) => {
         sent = sent
           .then(() => stream.writeSSE({ event, data: JSON.stringify(data) }))
-          .then(() => timeline.mark('first'));
+          .then(() => {
+            timeline.mark('first');
+            if (milestone) timeline.mark(milestone);
+          });
       });
       clearInterval(keepalive);
       await sent;
