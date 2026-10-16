@@ -7,7 +7,6 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
-  useState,
   type ReactNode,
 } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -19,6 +18,7 @@ import { PRACTICE } from '../../lib/theme/practice.js';
 
 import { answerFolds, formDensity } from '../../lib/keyboard.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { useSettled } from '../../lib/useSettled.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { AskRoute, CheckBar, type CheckAction } from './CheckBar.js';
 import { FreeSpace } from './FreeSpace.js';
@@ -145,8 +145,10 @@ function OrdinaryBody({
   keys?: ReactNode;
 }) {
   const follow = useThreadFollow(flow.newestReply ?? null, { initiallyFollowing: false });
-  const [contentHeight, setContentHeight] = useState(0);
-  const [box, setBox] = useState(0);
+  // Measured, and laid out from: each converges or is held (`useSettled`, #720 — the crash at
+  // `setContentHeight` with a pie in the card).
+  const [contentHeight, setContentHeight] = useSettled(0, 'bodyContent');
+  const [box, setBox] = useSettled(0, 'bodyBox');
   const { pieces, onHeight } = useStackTops(
     PRACTICE.ordinaryBody.gap,
     ['question', 'answer', 'thread'],

@@ -34,6 +34,7 @@ import { THREAD_PAD, threadEdge, threadRest } from '../../lib/practice/threadRoo
 import { useMotionReduced } from '../../lib/theme/motion.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
 import { SPACE } from '../../lib/theme/space.js';
+import { useSettled } from '../../lib/useSettled.js';
 import { EDGE_FADE, TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
 
 type Props = {
@@ -73,7 +74,8 @@ export function ThreadBox({
 }: Props) {
   const scroll = useRef<ScrollView>(null);
   const reduced = useMotionReduced();
-  const [box, setBox] = useState(0);
+  // Measured and laid out from: converges or is held (`useSettled`, #720).
+  const [box, setBox] = useSettled(0, 'threadBoxView');
   /**
    * Where the conversation stands: how far it is scrolled, and how tall it is. Where it follows
    * its end, that end is where it stands (`threadRest`): the throttled scroll events dropped the last
