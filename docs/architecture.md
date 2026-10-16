@@ -178,6 +178,22 @@ The model never writes ids, dates or instants (`modules/buddy/decision.ts`):
 with a claim token. The turn builds the context (STATE + dialogue), asks the model for a
 `TurnDecision` (JSON schema) — after up to two rounds of lookups (below) — validates and applies it.
 
+**The domain's foreign keys** (issue #107, cut 9, migration `0113_domain_foreign_keys.sql`). Nine
+columns of core tables point at domain tables:
+
+- `buddy_goals`, `buddy_lookbacks` and `buddy_focus` → `subjects`;
+- `buddy_focus`, `buddy_messages` and `buddy_pending_actions` → `materials`;
+- `buddy_pending_actions` → `items`;
+- `buddy_messages` → `rehearsals` and `buddy_roleplays`.
+
+These constraints are the domain's, so they are named `domain_…`. A Buddy without the learning
+domain leaves exactly them out of its core schema. Columns, targets and ON DELETE stayed exactly as
+they were. Three are CASCADE: a deleted sheet takes her sheet message and its pending deletions
+along, and a deleted question its pending deletion. They were recreated `NOT VALID`, then
+validated. `__tests__/domain-foreign-keys.int.test.ts` reads the real catalog. It fails on any
+foreign key from a core table into `DOMAIN_TABLES` that is not named `domain_…`, holds the nine as
+they are, and checks that none is left unvalidated.
+
 **What the domain adds** (issue #107, cut 5). The core never names the learning domain's modules
 or tables (`pnpm guards`: `boundaries.mjs` for imports, `domain-sql.mjs` for SQL); the domain
 registers one context provider at start-up (`modules/buddy/provider.ts`, from
