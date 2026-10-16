@@ -70,9 +70,14 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#faf7fd"
+          "backgroundColor": "#faf7fd",
+          "dark": {
+            "image": "./assets/splash-icon-dark.png",
+            "backgroundColor": "#191627"
+          }
         }
       ],
+      "./plugins/withModalNavigationBar.js",
       "expo-secure-store",
       [
         "expo-image-picker",
