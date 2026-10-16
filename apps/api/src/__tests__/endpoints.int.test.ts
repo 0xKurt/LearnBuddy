@@ -122,6 +122,51 @@ describe.skipIf(!dbReady)('endpoints outside the main journeys', () => {
     expect(stored.response).toBe('later');
   });
 
+  it('records a message seen in her thread as opened once, and a second report changes nothing (#805)', async () => {
+    const [row] = await env.db.query<{ id: string }>(
+      `insert into buddy_outreach (learner_id, kind, origin, topic_key, dedupe_key, title, body,
+                                   status, expires_at)
+       values ($1, 'checkin', 'buddy', 'checkin', 'test-seen', 'Wie lief es?', 'Wie lief es?',
+               'in_app', $2)
+       returning id`,
+      [lena.learnerId, '2026-09-30T00:00:00Z'],
+    );
+    const id = row!.id;
+    const version = () =>
+      env.db
+        .one<{
+          v: number;
+        }>(`select context_version as v from buddy_settings where learner_id = $1`, [
+          lena.learnerId,
+        ])
+        .then((r) => r.v);
+    // Another learner's id is refused, and nothing of hers changes.
+    expect((await tom.api.post(`/buddy/outreach/${id}/opened`, { response: null })).status).toBe(
+      404,
+    );
+    const before = await version();
+    const seen = await lena.api.post<BuddyHome>(`/buddy/outreach/${id}/opened`, { response: null });
+    expect(seen.status).toBe(200);
+    expect(await version()).toBe(before + 1);
+    const openedAt = () =>
+      env.db
+        .one<{ at: Date }>(`select opened_at as at from buddy_outreach where id = $1`, [id])
+        .then((r) => r.at.toISOString());
+    const first = await openedAt();
+    env.clock.advance(60_000);
+    // Seen again (scrolled past once more): the first time stays, the context is untouched.
+    expect((await lena.api.post(`/buddy/outreach/${id}/opened`, { response: null })).status).toBe(
+      200,
+    );
+    expect(await version()).toBe(before + 1);
+    const stored = await env.db.one<{ opened_at: Date; response: string | null }>(
+      `select opened_at, response from buddy_outreach where id = $1`,
+      [id],
+    );
+    expect(stored.opened_at.toISOString()).toBe(first);
+    expect(stored.response).toBeNull();
+  });
+
   it('says Buddy is reading only while a sheet is really being read', async () => {
     const created = await lena.api.post<{ material: { id: string }; uploads: { path: string }[] }>(
       '/materials',
