@@ -14,7 +14,9 @@ import { i18n } from './i18n/index.js';
 export function messageFor(err: unknown): string {
   if (err instanceof ApiError) {
     const reasonKey = err.reason ? `errors:reason.${err.reason}` : null;
-    if (reasonKey && i18n.exists(reasonKey)) return i18n.t(reasonKey);
+    // The reason's numbers stand in its text as the API sent them (`max_mb`, #688): one bound, in
+    // one place.
+    if (reasonKey && i18n.exists(reasonKey)) return i18n.t(reasonKey, numbersOf(err.details));
     const codeKey = `errors:code.${err.code}`;
     if (i18n.exists(codeKey)) return i18n.t(codeKey);
   }
@@ -32,4 +34,11 @@ export function messageFor(err: unknown): string {
 export function turnFailureText(code: string | null): string {
   const key = `errors:turn.${code ?? 'internal'}`;
   return i18n.exists(key) ? i18n.t(key) : i18n.t('errors:turn.internal');
+}
+
+/** The numbers among an error's details, for the text of its reason; nothing else is passed on. */
+function numbersOf(details: Record<string, unknown> | null): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(details ?? {}).filter((e): e is [string, number] => typeof e[1] === 'number'),
+  );
 }

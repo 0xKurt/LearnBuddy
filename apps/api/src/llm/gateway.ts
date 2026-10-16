@@ -196,6 +196,7 @@ export interface LlmGateway {
 const NO_MODEL: GatewayProfile = {
   name: 'disabled',
   media: new Set(),
+  maxInlineBytes: 0,
   structuredOutput: {
     keywords: new Set(),
     keepsPropertyOrder: false,

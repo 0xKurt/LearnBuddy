@@ -6,7 +6,9 @@ import { describe, expect, it } from 'vitest';
 
 import { variants } from '../../../evals/schema/inventory.js';
 import type { LlmRequest } from '../gateway.js';
+import { MAX_PDF_BYTES } from '../../modules/materials/pdf.js';
 import {
+  inlineBytesOf,
   mediaKindOf,
   schemaKeywordsOf,
   unsupportedMedia,
@@ -69,6 +71,21 @@ describe('gateway profiles (#646)', () => {
     ]);
     expect(unsupportedMedia(deaf, req)).toEqual(['audio']);
     expect(unsupportedMedia(VERTEX_PROFILE, req)).toEqual([]);
+  });
+
+  it('counts the media a request carries inline as sent, text aside (#688)', () => {
+    const req = request([
+      { text: 'Photo 1 of 2:' },
+      { inlineData: { mimeType: 'image/jpeg', data: 'A'.repeat(12) } },
+      { inlineData: { mimeType: 'application/pdf', data: 'B'.repeat(8) } },
+    ]);
+    expect(inlineBytesOf(req)).toBe(20);
+  });
+
+  it('leaves a sheet with its PDFs at their cap more than a third of the request for photos', () => {
+    // base64: 4 characters for every 3 bytes.
+    const pdfsAsSent = Math.ceil(MAX_PDF_BYTES / 3) * 4;
+    expect(pdfsAsSent).toBeLessThan((VERTEX_PROFILE.maxInlineBytes * 2) / 3);
   });
 
   it('carries the Vertex schema bound measured in #627', () => {

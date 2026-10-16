@@ -997,7 +997,10 @@ An event never bypasses the contact rules.
 zod. The contract is provider-neutral (#646, `llm/profile.ts`): a call names a **thinking level**
 (`off`/`minimal`/`low`/`medium`/`high`), never a provider's budget, and every gateway carries a
 `GatewayProfile` — the media it reads (`image`, `pdf`, `audio`; a part it cannot read is refused
-in `call.ts` before it is sent), the schema keywords it serves, whether it keeps property order
+in `call.ts` before it is sent), the most bytes of media one request carries inline as sent
+(`maxInlineBytes`, base64 counted: a request past it is refused in `call.ts` before it is sent,
+recorded, and her allowance given back — on Vertex it is 20 MB, the documented inline request
+limit; #688, KI-Audit K17), the schema keywords it serves, whether it keeps property order
 and streams partial JSON, and its schema property bound (the practice and reading schemas are
 narrowed to the bound of the gateway they go to, `formChoice.ts`); its prices are its own table
 (`pricing.ts`). A second provider is a new gateway with its profile and its wire test
@@ -1814,11 +1817,14 @@ that transaction_, so nothing stands twice. What each spot got stays its own (`c
 - so `items_added` is 0 only when no new question holds its reading and every new one holds
   another spot's.
 
-Measured: `material-unclear.int.test.ts`. Three answers given before a reading starts cost one
-reading instead of three. Three answers where two come while the first is being read cost two
-instead of three. Both cases were red before. Not measured live: how often she really answers
-during a running reading. There is no artificial wait before the first reading: she should not
-wait longer for her first answer to be read.
+Measured in `material-unclear.int.test.ts`, both cases red before:
+
+- three answers given before a reading starts cost one reading instead of three;
+- three answers, two of them given while the first is being read, cost two readings instead of
+  three.
+
+Not measured live: how often she really answers during a running reading. There is no artificial
+wait before the first reading, so her first answer is read as fast as before.
 
 **A corrected class test and the notebook entry of the day** (issue #259, #224 Baustein QUELLE,
 `materials/sources.ts`, migration `0093_material_sources.sql`). Two pages a learner brings that are
@@ -1926,7 +1932,7 @@ the background check never answers these questions, so it does not pay for them)
 ask corpus found 17 cases where he could only invent the answer ("kannst du auch word dateien",
 "wie viele seiten gehen"): the prompt now carries the real limits as code facts — photos and PDFs
 only and where they may come from (camera, gallery, files, shared from another app), 20 pages per
-sheet and 15 MB of PDF, about a minute to read, at most three readings, what happens to something
+sheet and 8 MB of PDF, about a minute to read, at most three readings, what happens to something
 that is not learning material, that a send given up after a day says so, that the photos go a week
 after the reading, and that he never sees the photos themselves. They are static and the same for
 every learner, so they sit in the prompt and not in the per-learner STATE; anything that differs
@@ -2009,7 +2015,12 @@ whole file is foreign (a photo; a PDF with one foreign page among others keeps i
 Refused at submit with 422 and a reason — the material is set aside and its files purged at once,
 the app keeps the files for another choice: `too_many_pages` (with `pages`, `max`),
 `file_unreadable` (not a PDF that opens; `position`), `file_too_large` (all PDFs of one material
-over 15 MB, the inline size the model call carries; `max_mb`). A Storage outage while counting is
+over `MAX_PDF_MB` = 8 MB; `max_mb`, which the app's text shows as sent). The PDFs travel inline
+with the sheet's photos, and a request carries at most 20 MB inline as sent (base64, 4 characters
+for 3 bytes): until #688 (KI-Audit K17) the cap was 15 MB, which is 20 MB as sent before a single
+photo — such a sheet was a certain provider error. 8 MB are about 11.2 MB as sent and leave more
+than a third of the request for its photos (`llm/__tests__/profile.test.ts`); what still does not
+fit is refused by the gateway profile before it is sent (§Model calls). A Storage outage while counting is
 503 `storage_unavailable` as for photos. PDFs are not photo-checked on the phone (the check is for
 light, blur and tilt of a camera photo). Not verified live: how the Vertex model reads a real
 scanned school PDF (the tests script the model).
@@ -2120,7 +2131,8 @@ on the device is owed in #294.
 `incoming.ts`, `drop.web.ts`, `components/capture/ShareIntake.tsx`). "Aus Dateien" in the + menu is
 `expo-document-picker` for PDFs and images; images go through the same preparation and photo check
 as camera photos, a PDF gets its own copy (`fileCopy.ts`: two shares called "Arbeitsblatt.pdf" stay
-two files) and shows as a page tile with its name; PDFs together over 15 MB, and other file types,
+two files) and shows as a page tile with its name; PDFs together over 8 MB (`MAX_PDF_MB`, the
+contract's one number), and other file types,
 are said in a toast, not dropped silently. In the browser the same button is a file input, and
 files dragged onto the chat show a drop hint above its bar and land there. A refusal from submit
 (`too_many_pages`, …) keeps the files above the bar with the reason; the draft remembers which

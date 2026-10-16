@@ -39,7 +39,8 @@ describe('files handed in', () => {
   });
 
   it('leaves out PDFs over the size limit together and counts what was left out', () => {
-    const big = 10 * 1024 * 1024;
+    // Each under the 8 MB of all PDFs together (#688), both together over it.
+    const big = 5 * 1024 * 1024;
     const r = sortIncoming([
       f('a.pdf', 'application/pdf', big),
       f('b.docx', null),

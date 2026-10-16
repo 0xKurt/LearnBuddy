@@ -10,7 +10,7 @@ import { AppError } from '../lib/errors.js';
 import { timedModel } from '../lib/requestCost.js';
 import type { EmbeddingGateway, EmbedRequest, EmbedResult } from './embeddings.js';
 import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
-import { unsupportedMedia } from './profile.js';
+import { inlineBytesOf, unsupportedMedia } from './profile.js';
 
 export type ModelDeps = {
   db: Db;
@@ -33,6 +33,15 @@ function generate(llm: LlmGateway, req: LlmRequest): Promise<LlmResult> {
   if (refused.length > 0)
     return Promise.reject(
       new LlmError('refused', `${llm.profile.name} does not read ${refused.join(', ')}`),
+    );
+  // More inline than the provider takes is a certain error there: never sent (#688).
+  const inline = inlineBytesOf(req);
+  if (inline > llm.profile.maxInlineBytes)
+    return Promise.reject(
+      new LlmError(
+        'refused',
+        `${llm.profile.name} takes ${llm.profile.maxInlineBytes} bytes inline, this request carries ${inline}`,
+      ),
     );
   return llm.generate(req);
 }

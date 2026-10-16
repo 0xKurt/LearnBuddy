@@ -47,7 +47,7 @@
     "timeout": "La réponse n'est pas arrivée à temps. Réessaie dans un instant.",
     "too_many_pages": "Ça fait trop de pages – 20 au maximum pour une fiche. Garde seulement celles dont tu as besoin.",
     "file_unreadable": "Ce fichier ne s'ouvre pas. Prends-en un autre ou photographie la fiche.",
-    "file_too_large": "Le fichier est trop lourd – 15 Mo au maximum. Prends plutôt la fiche en photo.",
+    "file_too_large": "Le fichier est trop lourd – {{max_mb}} Mo au maximum. Prends plutôt la fiche en photo.",
     "time_up": "Le temps était déjà écoulé – cette réponse ne compte plus."
   },
   "turn": {
