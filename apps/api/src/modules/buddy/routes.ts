@@ -301,20 +301,28 @@ buddyRoutes.post('/contact/opt-in', async (c) => {
   return c.json(await home(c));
 });
 
+// Opened: a tap on the notification, or the message seen in her thread (#805) — only the app
+// says so (rule 5). Her own rows only; the first time stays. A report that changes nothing
+// (seen again, the same answer) leaves the context as it is (rule 4).
 buddyRoutes.post('/outreach/:id/opened', async (c) => {
   const outreachId = check(Uuid, c.req.param('id'));
   const { response } = await readBody(c, OutreachOpenedRequest);
   await underContext(c, async (tx, learnerId, now) => {
-    const r = await tx.query(
-      `update buddy_outreach
-          set opened_at = coalesce(opened_at, $3),
-              response = coalesce($4, response),
-              responded_at = case when $4::text is null then responded_at else coalesce(responded_at, $3) end
-        where id = $1 and learner_id = $2 returning id`,
+    const r = await tx.maybeOne<{ changed: boolean }>(
+      `with prev as (
+         select opened_at, response from buddy_outreach where id = $1 and learner_id = $2 for update
+       )
+       update buddy_outreach o
+          set opened_at = coalesce(o.opened_at, $3),
+              response = coalesce($4, o.response),
+              responded_at = case when $4::text is null then o.responded_at else coalesce(o.responded_at, $3) end
+         from prev
+        where o.id = $1 and o.learner_id = $2
+       returning (prev.opened_at is null or ($4::text is not null and $4::text is distinct from prev.response)) as changed`,
       [outreachId, learnerId, now, response],
     );
-    if (r.length === 0) throw new AppError('not_found', 'Message not found');
-    await bumpContext(tx, learnerId);
+    if (!r) throw new AppError('not_found', 'Message not found');
+    if (r.changed) await bumpContext(tx, learnerId);
   });
   return c.json(await home(c));
 });

@@ -42,6 +42,7 @@ import {
   saysOnlyInApp,
   takeableBack,
 } from './MessageRow.js';
+import { SeenWhenShown } from './SeenOutreach.js';
 import { UndoSheet } from './UndoSheet.js';
 
 import { SPACE } from '../../lib/theme/space.js';
@@ -246,51 +247,61 @@ export function Conversation({
     // and the way back, whose 44 pt target reaches into the gap above it.
     <View style={{ gap: SPACE.lg }}>
       {placed.before.map((n, i) => noticeEntrance(n, `before-${i}`, enters))}
-      {messages.map((m, index) => (
-        <MessageRow
-          key={m.id}
-          m={m}
-          day={breaks[index] ?? null}
-          orb={m.id === orbAt}
-          spokenMode={spokenMode}
-          readsAlong={m === lastBuddy}
-          enter={enters && !arrivedInPlace(m)}
-          enters={enters}
-          delivery={m.id === inAppDelivery || !saysOnlyInApp(m)}
-          inAppNote={m.id === inAppReceipt}
-          loud={loud}
-          carried={m.actions
-            .filter((a) => carriedOnTop.has(a.id))
-            .map((a) => a.id)
-            .join(',')}
-          showActions={showActions}
-          receipts={receipts}
-          busy={busy}
-          takeBack={showActions && onUndo !== undefined && m.actions.some(takeableBack)}
-          undoLocked={undoLocked}
-          options={
-            onOption !== undefined &&
-            m === last &&
-            m.role === 'buddy' &&
-            (m.options?.length ?? 0) > 0
-          }
-          after={placed.after.get(m.id)}
-          greeting={
-            sessionStart?.afterMessageId === m.id
-              ? {
-                  orb: greets && !thinking,
-                  text: sessionStart.text,
-                  room: sessionRoom,
-                  action: sessionStart.action,
-                }
-              : null
-          }
-          onMenu={setMenu}
-          onTakeBack={setUndoTurnId}
-          onOption={onOption ? option : undefined}
-          onResend={onResend ? resend : undefined}
-        />
-      ))}
+      {messages.map((m, index) => {
+        const row = (
+          <MessageRow
+            key={m.id}
+            m={m}
+            day={breaks[index] ?? null}
+            orb={m.id === orbAt}
+            spokenMode={spokenMode}
+            readsAlong={m === lastBuddy}
+            enter={enters && !arrivedInPlace(m)}
+            enters={enters}
+            delivery={m.id === inAppDelivery || !saysOnlyInApp(m)}
+            inAppNote={m.id === inAppReceipt}
+            loud={loud}
+            carried={m.actions
+              .filter((a) => carriedOnTop.has(a.id))
+              .map((a) => a.id)
+              .join(',')}
+            showActions={showActions}
+            receipts={receipts}
+            busy={busy}
+            takeBack={showActions && onUndo !== undefined && m.actions.some(takeableBack)}
+            undoLocked={undoLocked}
+            options={
+              onOption !== undefined &&
+              m === last &&
+              m.role === 'buddy' &&
+              (m.options?.length ?? 0) > 0
+            }
+            after={placed.after.get(m.id)}
+            greeting={
+              sessionStart?.afterMessageId === m.id
+                ? {
+                    orb: greets && !thinking,
+                    text: sessionStart.text,
+                    room: sessionRoom,
+                    action: sessionStart.action,
+                  }
+                : null
+            }
+            onMenu={setMenu}
+            onTakeBack={setUndoTurnId}
+            onOption={onOption ? option : undefined}
+            onResend={onResend ? resend : undefined}
+          />
+        );
+        // Buddy reaching out: opened once she has seen it here (#805).
+        return m.outreach ? (
+          <SeenWhenShown key={m.id} id={m.outreach.id} watch={m.outreach.opened_at === null}>
+            {row}
+          </SeenWhenShown>
+        ) : (
+          row
+        );
+      })}
       {notices.map((n, i) => noticeEntrance(n, `notice-${i}`, enters))}
       {pending ? (
         <Entrance key="pending" animate={enters} index={0} style={{ alignItems: 'flex-end' }}>

@@ -20,6 +20,7 @@ import { Btn } from '../lb/Btn.js';
 import { TopEdgeFade, topEdgeMaskFrom } from '../lb/EdgeFade.js';
 import { TextLink } from '../lb/TextLink.js';
 import { workingOn } from './extensions.js';
+import { SeenScope, useSeenOutreach } from './SeenOutreach.js';
 
 type Props = {
   h: BuddyHome;
@@ -47,6 +48,8 @@ export function HomeThread({
   const [threadTop, setThreadTop] = useState(0);
   /** Where the conversation is first seen while a card lies on top of it (issue #287). */
   const underCard = cardHeight > 0 ? cardHeight + SPACE.sm : 0;
+  // Which of Buddy's messages she has really seen (#805): what the card on top hides is not seen.
+  const seen = useSeenOutreach(follow.scroll, underCard - threadTop);
   return (
     <>
       {/* What she is working on, in her own words (issue #160). One line, and only when there
@@ -77,14 +80,23 @@ export function HomeThread({
           gap: SPACE.lg,
         }}
         keyboardShouldPersistTaps="handled"
-        onScroll={follow.onScroll}
+        onScroll={(e) => {
+          follow.onScroll(e);
+          seen.check();
+        }}
         {...follow.inputProps}
         scrollEventThrottle={CHAT.scrollThrottle}
-        onLayout={follow.onLayout}
-        onContentSizeChange={follow.follow}
+        onLayout={(e) => {
+          follow.onLayout(e);
+          seen.check();
+        }}
+        onContentSizeChange={() => {
+          follow.follow();
+          seen.check();
+        }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {children}
+        <SeenScope value={seen.register}>{children}</SeenScope>
       </ScrollView>
       {/* A message scrolled up under the head fades out there instead of a hard-cut violet
           sliver (live finding 8). It used to be left out whenever a card was open — on the idea

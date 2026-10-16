@@ -877,6 +877,11 @@ days (rule 6).
   `getLastNotificationResponse` — is kept on the device (`lib/pushQueue.ts`, 7 days) and sent
   once signed in, retried on start and when back online; only a clear 4xx drops it.
   Not yet verified on a device (audit §17, `repro-19`).
+  Also seen in her thread (#805, `components/buddy/SeenOutreach.tsx`): once the home's
+  thread has rested for a second, every message of Buddy's that stands at least half inside
+  the room it can be read in (`lib/buddy/seenOutreach.ts`) is reported once per app run. This
+  only happens while the app is in front and the home has focus; never on fetch. The API keeps
+  the first time and bumps the context only when something changed.
 - **Buttons on a notification** (gaps #16; migration `0039_notification_actions.sql`): the
   server sets `categoryId` per push — `lb_practice` ("Jetzt üben", "Heute nicht", "Seltener
   schreiben") when the message is about practice that is prepared, `lb_message` ("Heute nicht",
