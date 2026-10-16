@@ -7,6 +7,7 @@
 
 import {
   FINAL_FAILURES,
+  pollAfterMs,
   type ActionSummary,
   type BuddyHome,
   type NowCard,
@@ -460,8 +461,55 @@ export async function lastActed(db: Db, learnerId: string): Promise<Date | null>
   return acted.at;
 }
 
+/**
+ * The app's pace while something is in progress (#671): a sheet being read, Buddy at work, a turn
+ * in flight — the server's to set, by the one rule the app falls back on.
+ */
+export function pollAfter(
+  screen: Pick<BuddyHome, 'now' | 'working'>,
+  thread: ReadonlyArray<{ status: string }>,
+): number | null {
+  return pollAfterMs({ now: screen.now, working: screen.working, thread });
+}
+
+type PendingStatus = 'open' | 'confirmed' | 'declined' | 'expired' | 'superseded';
+
+/** Where each proposed deletion on this page of the thread stands right now. */
+async function pendingStatuses(
+  db: Db,
+  learnerId: string,
+  summaries: readonly ActionSummary[],
+  now: Date,
+): Promise<Map<string, PendingStatus>> {
+  const ids = summaries
+    .filter(
+      (s): s is Extract<ActionSummary, { tool: 'confirm_delete' }> => s.tool === 'confirm_delete',
+    )
+    .map((s) => s.pending_id);
+  if (ids.length === 0) return new Map();
+  const rows = await db.query<{ id: string; status: PendingStatus; expires_at: Date }>(
+    `select id, status, expires_at from buddy_pending_actions
+      where learner_id = $1 and id = any($2::uuid[])`,
+    [learnerId, ids],
+  );
+  return new Map(
+    rows.map((r) => [
+      r.id,
+      // Read against the app's own clock, so a card does not offer a button that the
+      // endpoint would refuse a moment later (CLAUDE.md rule 7).
+      r.status === 'open' && r.expires_at.getTime() <= now.getTime() ? 'expired' : r.status,
+    ]),
+  );
+}
+
 /** What the domain's cards on one page of the conversation say now. */
 export async function dressThread(db: Db, learnerId: string, page: ThreadPage, now: Date) {
+  const pending = await pendingStatuses(
+    db,
+    learnerId,
+    page.actions.map((a) => a.result),
+    now,
+  );
   const cannotStart = new Set(
     page.actions.filter((a) => a.cannot_start_at !== null).map((a) => a.id),
   );
@@ -505,6 +553,11 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
   const announced = await announcedPractice(db, learnerId, page);
   return {
     summary: (actionId: string, s: ActionSummary): ActionSummary => {
+      // The card must say where the proposal stands, not where it stood when it was written
+      // (issue #151): she may have answered it on another device, or the app was closed in
+      // between. A row that is gone was deleted with what it proposed — the question is moot.
+      if (s.tool === 'confirm_delete')
+        return { ...s, status: pending.get(s.pending_id) ?? 'superseded' };
       // Where the roleplay stands now (issue #244): the card offers "end" only while it runs.
       if (s.tool === 'start_roleplay')
         return {

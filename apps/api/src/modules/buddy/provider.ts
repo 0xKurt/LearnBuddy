@@ -18,6 +18,7 @@ import type { Aliases, DomainAliases, LearnerFacts } from './context.js';
 import type { LookBackCandidate, LookBackFocus } from './lookback.js';
 import type { BuddyState, DomainState, DomainTotals, GoalRow, StepRow } from './state.js';
 import type { DomainUndo } from './toolKit.js';
+import type { Trigger } from './checkTrigger.js';
 import type { ClaimedMessage, TurnLearner, TurnOutcome } from './turn.js';
 
 // ─────────────── state and STATE ───────────────
@@ -143,6 +144,11 @@ type Home = {
   ): Promise<Omit<BuddyHome, CoreHomeKey>>;
   /** When she last did something of the domain's (sent a photo, started a practice). */
   lastActed(db: Db, learnerId: string): Promise<Date | null>;
+  /** How soon the app should ask again while something is in progress (#671); null: nothing is. */
+  pollAfter(
+    screen: Omit<BuddyHome, CoreHomeKey>,
+    thread: ReadonlyArray<{ status: string }>,
+  ): number | null;
   thread(db: Db, learnerId: string, page: ThreadPage, now: Date): Promise<ThreadDress>;
 };
 
@@ -190,6 +196,17 @@ type TurnHooks = {
   concern(tx: Db, learnerId: string, now: Date): Promise<void>;
 };
 
+// ─────────────── the background check ───────────────
+
+type CheckHooks = {
+  /** The reasons that follow directly from something she did (a sheet read, a practice done). */
+  learnerTriggered: ReadonlySet<string>;
+  /** One line of TRIGGERS for a reason of the domain's; null: not one of its reasons. */
+  describe(state: BuddyState, trigger: Trigger): string | null;
+  /** Whether its part of the state gives Buddy something to work with (her questions, say). */
+  somethingToWorkWith(state: BuddyState): boolean;
+};
+
 // ─────────────── the provider ───────────────
 
 export type ContextProvider = {
@@ -197,6 +214,7 @@ export type ContextProvider = {
   subjects: Subjects;
   home: Home;
   turn: TurnHooks;
+  check: CheckHooks;
   /** A topic that sits now and was shaky some days ago, as candidate for a look back. */
   lookBack(
     db: Db,

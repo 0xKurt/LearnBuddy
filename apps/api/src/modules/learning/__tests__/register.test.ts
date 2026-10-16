@@ -12,7 +12,7 @@ import {
   hasContextProvider,
   registerContextProvider,
 } from '../../buddy/provider.js';
-import { withoutCode } from '../../buddy/registry.js';
+import { toolsWith, withoutCode } from '../../buddy/registry.js';
 import { startsSteps } from '../../buddy/stepStart.js';
 import { subscribersOf } from '../../buddy/events.js';
 import { fillsPractice, occasions } from '../../buddy/occasions.js';
@@ -45,6 +45,8 @@ describe('the learning domain in the core', () => {
     expect(missingActHandlers()).toEqual([]);
     for (const tool of DOMAIN_TOOLS) expect(tool in ACT_SCHEMAS).toBe(false);
     expect(lookupNames()).toEqual([]);
+    expect(toolsWith('offer')).toEqual(['open_area']);
+    expect(toolsWith('prepares')).toEqual([]);
     expect(() => actHandler('prepare_practice')).toThrow(/no handler/);
     expect(hasContextProvider()).toBe(false);
     expect(() => contextProvider()).toThrow(/No context provider/);
@@ -58,6 +60,21 @@ describe('the learning domain in the core', () => {
     // Its lookups, in the order the prompt lists them, each with its code.
     expect(lookupNames()).toEqual(DOMAIN_LOOKUPS);
     expect(hasContextProvider()).toBe(true);
+  });
+
+  it('marks its offers and the tool that prepares practice, which the core reads by flag', () => {
+    // The home's list of what Buddy did leaves the offers out (buddy/home.ts), and an answer to
+    // a sheet starts what prepare_practice prepared (buddy/checkAnswer.ts) — the core names
+    // neither tool (#107).
+    registerLearning();
+    expect([...toolsWith('offer')].sort()).toEqual([
+      'offer_drill',
+      'offer_learning',
+      'offer_rehearsal',
+      'open_area',
+      'start_roleplay',
+    ]);
+    expect(toolsWith('prepares')).toEqual(['prepare_practice']);
   });
 
   it('refuses a second handler for a tool or lookup, and a second context provider', () => {
