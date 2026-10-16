@@ -5927,7 +5927,7 @@ own (CLAUDE.md rule 16).
   numbers; the app shows it as the one result card (`RehearsalResult` on
   `RoleplayModeResult.tsx`): what fits with a tick, the rest in the box for next time. No score, no grade.
 - **A transcript that breaks off costs only what did not fit** (issue #681, KI-Audit K7, migration
-  `0110_rehearsal_partial.sql`). Until then a transcript over 16 000 characters, or an answer cut
+  `0111_rehearsal_partial.sql`). Until then a transcript over 16 000 characters, or an answer cut
   at the output limit (8 192 tokens for a talk), cost the whole recording with a 503, and the
   recording is not kept. Now a fast ten-minute talk (about 17 000 characters) is measured whole:
   the transcript has no bound below what the output limit can carry, and only a runaway one is cut
