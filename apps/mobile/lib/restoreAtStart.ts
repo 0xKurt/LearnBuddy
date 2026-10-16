@@ -18,3 +18,20 @@ export async function restoreAtStart<S>(steps: Steps<S>): Promise<S> {
   ]);
   return session;
 }
+
+type Hers = {
+  restoreCache: (userId: string) => Promise<void>;
+  adoptLocalWork: (userId: string) => Promise<void>;
+};
+
+/**
+ * Signed in: her last conversation from the phone and whose answers and drafts are on it, side by
+ * side (#716) — the cache is kept per person and the local work is the outbox and the drafts, so
+ * neither waits for the other. Both finish before the first screen: no one else's drafts flash.
+ */
+export async function restoreHers(userId: string, steps: Hers): Promise<void> {
+  await Promise.all([
+    steps.restoreCache(userId).catch(() => undefined),
+    steps.adoptLocalWork(userId).catch(() => undefined),
+  ]);
+}

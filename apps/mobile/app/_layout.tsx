@@ -29,7 +29,7 @@ import { flushOutbox } from '../lib/api/outboxSync.js';
 import { forgetCache, keepCache, restoreCache } from '../lib/api/persist.js';
 import { keys, queryClient, setHome } from '../lib/api/queries.js';
 import { currentSession, loadSession, onSessionChange } from '../lib/auth/session.js';
-import { restoreAtStart } from '../lib/restoreAtStart.js';
+import { restoreAtStart, restoreHers } from '../lib/restoreAtStart.js';
 import { applyLocale, fallbackLocale, restoreChosenLocale, i18n } from '../lib/i18n/index.js';
 import { startCrashReports } from '../lib/observability/sentry.js';
 import { barStyleFor } from '../lib/theme/luminance.js';
@@ -99,9 +99,8 @@ function sendOpenedReports(): void {
   }).catch(() => undefined);
 }
 
-/** Signed in: her leftovers are sent, this device is hers for push. */
-async function afterSignedIn(userId: string): Promise<void> {
-  await adoptLocalWork(userId).catch(() => undefined);
+/** Signed in, once the work on the phone is hers: her leftovers are sent, push is hers. */
+function sendHers(): void {
   void sendKeptAnswers();
   sendOpenedReports();
   void syncPushDevice().catch(() => undefined);
@@ -149,13 +148,12 @@ export default function RootLayout() {
         userRef.current = s?.user_id ?? null;
         // Her last conversation at once; it refreshes in the background (gaps.md #2).
         if (s) {
-          await restoreCache(s.user_id);
+          await restoreHers(s.user_id, { restoreCache, adoptLocalWork });
           // An already-restored Me Query need not emit another success event on browser Back.
           const locale = learnerLocaleOf(keys.me, queryClient.getQueryData(keys.me));
           if (locale) applyLocale(locale);
-        }
-        if (s) await afterSignedIn(s.user_id);
-        else void retryPendingRelease().catch(() => undefined);
+          sendHers();
+        } else void retryPendingRelease().catch(() => undefined);
       })
       .finally(() => {
         setReady(true);
@@ -176,7 +174,9 @@ export default function RootLayout() {
         if (userRef.current === s.user_id) return;
         userRef.current = s.user_id;
         // Someone else's leftovers go; hers (after an expired session) are sent now.
-        void afterSignedIn(s.user_id);
+        void adoptLocalWork(s.user_id)
+          .catch(() => undefined)
+          .then(sendHers);
         // A deep link that waited for the sign-in goes on now, on top of the gate.
         const route = pendingRoute.current;
         if (route && readyRef.current) {
