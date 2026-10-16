@@ -1000,7 +1000,9 @@ narrowed to the bound of the gateway they go to, `formChoice.ts`); its prices ar
 (`__tests__/vertex-request.test.ts` for Vertex), with no call site changed.
 `VertexGateway` (Gemini 3.6 Flash via the EU multi-region `eu`; only EU locations start) maps the
 levels onto Vertex: `minimal` as Gemini 3's own level, the others as the budgets the call sites
-sent before (off 0, low 512, medium 1024, high 2048), with explicit output-token cap, thinking and
+sent before (off 0, low 512, medium 1024, high 2048); Gemini 3.8 and 4 take a level only, and
+every level goes out as LOW there (no MINIMAL, no budget; MEDIUM/HIGH thought for minutes,
+`docs/decisions/provider-2026-10.md`, #647), with explicit output-token cap, thinking and
 timeout; `DisabledGateway` when no model is configured (Buddy says so). Every call reserves
 against a per-learner daily limit first (atomic upsert) and is recorded in `llm_calls` with
 tokens (input, output, thinking, and what the provider served from its prefix cache —

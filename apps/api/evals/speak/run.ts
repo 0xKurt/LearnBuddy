@@ -32,8 +32,10 @@ const scripted = new ScriptedGateway();
 const S = mkdtempSync(join(tmpdir(), 'lb-speak-'));
 const say = (voice: string, text: string, file: string) =>
   execFileSync('espeak-ng', ['-v', voice, '-s', '140', '-w', join(S, file), text]);
-const gateway = {
+// The real gateway's profile (#646): without it a run's schema cannot be sized (#647).
+const gateway: LlmGateway = {
   available: true,
+  profile: real.profile,
   generate: async (req: LlmRequest) => {
     if (req.purpose === 'explain') return scripted.generate(req);
     const r = await real.generate(req);
@@ -43,7 +45,7 @@ const gateway = {
     );
     return r;
   },
-} as LlmGateway;
+};
 const env = await createTestEnv({ start: '2026-09-28T14:00:00Z', gateway });
 const l = await onboard(env, {
   relation: 'child',
