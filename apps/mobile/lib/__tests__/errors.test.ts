@@ -106,6 +106,14 @@ describe('messageFor says only what the app itself wrote', () => {
     }
   });
 
+  it('names the bound the API sent with the reason, not a number of its own (#688)', () => {
+    const said = messageFor(
+      new ApiError('invalid_input', 'Too large', 422, { reason: 'file_too_large', max_mb: 8 }),
+    );
+    expect(said).toContain('höchstens 8 MB');
+    expect(said).not.toContain('{{');
+  });
+
   it('a failed turn says one of her texts too, whatever code the server sends', () => {
     for (const code of [null, 'model_unavailable', 'budget_exhausted', 'something_new', '']) {
       expect(OWN_WORDS.has(turnFailureText(code))).toBe(true);

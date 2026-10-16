@@ -26,13 +26,19 @@ export function wantsStream(c: Context): boolean {
 export function streamed(
   c: AppContext,
   event: string,
-  run: (emit: (data: unknown, milestone?: Milestone) => void) => Promise<unknown>,
+  run: (
+    emit: (data: unknown, milestone?: Milestone) => void,
+    /** Aborted when the caller goes away mid-stream (#684): work only it would read may stop. */
+    signal: AbortSignal,
+  ) => Promise<unknown>,
 ): Response {
   // Read while the route still runs: the pattern, never the path with its ids.
   const route = `${c.req.method} ${c.req.routePath}`;
   const timeline = c.get('timeline');
   return streamSSE(c, async (stream) => {
     timeline.mark('start');
+    const gone = new AbortController();
+    stream.onAbort(() => gone.abort());
     let sent = Promise.resolve();
     // A comment line while the work runs: the app ends a stream that stays silent for
     // STREAM_IDLE_MS (#662), and a model call may think longer than that before its first word.
@@ -48,7 +54,7 @@ export function streamed(
             timeline.mark('first');
             if (milestone) timeline.mark(milestone);
           });
-      });
+      }, gone.signal);
       clearInterval(keepalive);
       await sent;
       await stream.writeSSE({ event: 'done', data: JSON.stringify(result) });

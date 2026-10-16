@@ -26,7 +26,8 @@ voiceRoutes.post('/transcribe', async (c) => {
   const deps = depsOf(c);
   const learner = c.get('learner');
   if (!wantsStream(c)) return c.json(await transcribe(deps, learner, input));
-  return streamed(c, 'progress', (emit) => transcribe(deps, learner, input, emit));
+  // A dictation nobody reads any more is stopped with its stream (#684).
+  return streamed(c, 'progress', (emit, signal) => transcribe(deps, learner, input, emit, signal));
 });
 
 /** Buddy's natural voice: one sentence → audio (ADR 0008). */

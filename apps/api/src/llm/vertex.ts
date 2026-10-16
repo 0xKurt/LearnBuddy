@@ -47,6 +47,9 @@ import { MAX_SCHEMA_PROPERTIES } from './schemaBudget.js';
 export const VERTEX_PROFILE: GatewayProfile = {
   name: 'vertex',
   media: new Set(['image', 'pdf', 'audio']),
+  // "The total request size limit is 20 MB" for inline data, sent base64 (Vertex AI Gemini input
+  // file requirements, read 16.10.2026, #688).
+  maxInlineBytes: 20_000_000,
   structuredOutput: {
     keywords: new Set([
       'type',
@@ -211,8 +214,11 @@ export function paramsFor(req: LlmRequest, model: string, timeoutMs: number) {
       safetySettings: SAFETY,
       ...thinkingConfigOf(req.thinking, model),
       // Not req.timeoutMs: that is the budget for the whole call including retries, and
-      // this attempt only gets what is left of it (retry.ts).
-      abortSignal: AbortSignal.timeout(timeoutMs),
+      // this attempt only gets what is left of it (retry.ts). The caller's own signal (#684)
+      // ends it too.
+      abortSignal: req.signal
+        ? AbortSignal.any([AbortSignal.timeout(timeoutMs), req.signal])
+        : AbortSignal.timeout(timeoutMs),
     },
   };
 }

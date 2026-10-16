@@ -3,10 +3,11 @@
 // into the browser. Photos go through the same preparation and check as camera photos; a
 // PDF is sent as it is (the API counts its pages and the model reads it).
 
+import { MAX_PDF_MB } from '@learnbuddy/shared-types/contracts';
+
 const PDF_MIME = 'application/pdf';
-/** All PDFs of one sheet together, as the API takes them (modules/materials/pdf.ts). */
-const MAX_PDF_BYTES = 15 * 1024 * 1024;
-export const MAX_PDF_MB = 15;
+/** All PDFs of one sheet together, as the API takes them (the contract's `MAX_PDF_MB`). */
+const MAX_PDF_BYTES = MAX_PDF_MB * 1024 * 1024;
 
 /** One incoming file, whatever brought it. */
 export type IncomingFile = {

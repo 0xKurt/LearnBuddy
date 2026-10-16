@@ -58,6 +58,43 @@ describe.skipIf(!dbReady)('a gateway with another profile (#646)', () => {
     expect(used?.calls ?? 0).toBe(0);
   });
 
+  // A request over what the provider takes inline is a certain error there (#688, KI-Audit K17):
+  // refused here, recorded, never sent, and her allowance given back.
+  it('refuses a request whose inline media exceed what the gateway takes, before it is sent', async () => {
+    env.llm.profile = { ...VERTEX_PROFILE, name: 'narrow', maxInlineBytes: 16 };
+    const err = await callModel(env.deps, lena.learnerId, '2026-10-15', {
+      purpose: 'extraction',
+      tier: 'smart',
+      promptVersion: 'test',
+      system: 'Read the sheet.',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: 'Photo 1 of 2:' },
+            { inlineData: { mimeType: 'image/jpeg', data: 'A'.repeat(12) } },
+            { text: 'Photo 2 of 2:' },
+            { inlineData: { mimeType: 'application/pdf', data: 'B'.repeat(8) } },
+          ],
+        },
+      ],
+      schema: { type: 'object', properties: { text: { type: 'string' } } },
+      maxOutputTokens: 100,
+      temperature: 0,
+      timeoutMs: 5_000,
+      thinking: 'off',
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(LlmError);
+    expect((err as LlmError).kind).toBe('refused');
+    expect((err as LlmError).message).toBe('narrow takes 16 bytes inline, this request carries 20');
+    expect(env.llm.calls).toEqual([]);
+    const used = await env.db.maybeOne<{ calls: number }>(
+      `select calls from usage_daily where learner_id = $1 and kind = 'extraction'`,
+      [lena.learnerId],
+    );
+    expect(used?.calls ?? 0).toBe(0);
+  });
+
   it('sends the whole schema of a run to a provider that serves it, with no choice first', async () => {
     env.llm.profile = {
       ...VERTEX_PROFILE,

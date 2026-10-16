@@ -92,6 +92,11 @@ export type LlmRequest = {
    * sent to the provider.
    */
   trace?: CallTrace;
+  /**
+   * Nobody waits for this answer any more (#684): the caller's stream dropped. The gateway stops
+   * the request at once and ends with `LlmError('cancelled')`; a cancelled call is never retried.
+   */
+  signal?: AbortSignal;
 };
 
 type CallTrace = {
@@ -131,7 +136,8 @@ export type LlmErrorKind =
   | 'rate_limited'
   | 'blocked' // the provider's safety filter held the answer back, or no candidate
   | 'refused' // the provider rejected the request itself (4xx other than 429)
-  | 'invalid_output'; // not JSON / truncated
+  | 'invalid_output' // not JSON / truncated
+  | 'cancelled'; // the caller stopped waiting (`LlmRequest.signal`, #684)
 
 /** The finish reason of an answer cut off at the output token limit. */
 export const TRUNCATED = 'MAX_TOKENS';
@@ -164,7 +170,9 @@ export class LlmError extends Error {
       case 'unavailable':
       case 'rate_limited':
         return 'transient';
+      // A cancelled call was stopped by us mid-call: the provider may have done (and billed) part.
       case 'timeout':
+      case 'cancelled':
         return 'unknown';
       case 'blocked':
       case 'refused':
@@ -196,6 +204,7 @@ export interface LlmGateway {
 const NO_MODEL: GatewayProfile = {
   name: 'disabled',
   media: new Set(),
+  maxInlineBytes: 0,
   structuredOutput: {
     keywords: new Set(),
     keepsPropertyOrder: false,

@@ -1,7 +1,7 @@
 {
  "issue": "#281",
- "commit": "ee04698c9d7cc02be90665cfbb7fca9521d1dfe7",
- "commitDate": "2026-10-15T18:32:19+02:00",
+ "commit": "8ffe06f0942ee77c007f8efd70b3c9ec584befd8",
+ "commitDate": "2026-10-16T12:26:39+02:00",
  "dirty": true,
  "sdk": "@google/genai 2.25.0",
  "zod": "3.25.76",
@@ -34,11 +34,11 @@
    "profile": "step (lookups allowed; every first call of a turn)",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "buddy.b8c05aac",
+   "promptVersion": "buddy.2489869a",
    "where": "buddy/prompts.ts (buddyPrompt), sent by turn.ts — final ? turnSchema : turnStepSchema",
    "system": {
-    "chars": 24934,
-    "sha256": "39c6ccea4c516a21159525263676af2e93d979db56350825530973444adf87f2",
+    "chars": 24933,
+    "sha256": "9e5982bbcb87d55a47794aabd40610e25816c5f74586a84ea29381e7984e2142",
     "textTokens": null
    },
    "schema": {
@@ -1132,11 +1132,11 @@
    "profile": "final (after MAX_LOOKUP_STEPS)",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "buddy.b8c05aac",
+   "promptVersion": "buddy.2489869a",
    "where": "buddy/turn.ts",
    "system": {
-    "chars": 24934,
-    "sha256": "39c6ccea4c516a21159525263676af2e93d979db56350825530973444adf87f2",
+    "chars": 24933,
+    "sha256": "9e5982bbcb87d55a47794aabd40610e25816c5f74586a84ea29381e7984e2142",
     "textTokens": null
    },
    "schema": {
@@ -2108,7 +2108,7 @@
    "profile": "step",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "buddy.b8c05aac",
+   "promptVersion": "buddy.2489869a",
    "where": "buddy/check.ts — final ? CHECK_SCHEMA : CHECK_STEP_SCHEMA",
    "system": {
     "chars": 7517,
@@ -2436,7 +2436,7 @@
    "profile": "final",
    "tier": "smart",
    "model": "eu/gemini-3.6-flash",
-   "promptVersion": "buddy.b8c05aac",
+   "promptVersion": "buddy.2489869a",
    "where": "buddy/check.ts",
    "system": {
     "chars": 7517,

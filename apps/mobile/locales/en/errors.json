@@ -47,7 +47,7 @@
     "timeout": "The answer didn't arrive in time. Try again in a moment.",
     "too_many_pages": "That's too many pages – one sheet can have 20 at most. Take only the pages you need.",
     "file_unreadable": "This file won't open. Take another one or photograph the sheet.",
-    "file_too_large": "The file is too big – 15 MB at most. Better take a photo of the sheet.",
+    "file_too_large": "The file is too big – {{max_mb}} MB at most. Better take a photo of the sheet.",
     "time_up": "Time was already up – this answer no longer counts."
   },
   "turn": {
