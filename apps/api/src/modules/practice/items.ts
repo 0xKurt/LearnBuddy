@@ -738,7 +738,7 @@ const FIGURE_CHECKS: readonly (<T extends ItemDraft>(it: T, locale: string | nul
  */
 export function formsOn<T extends { kind: ItemKind }>(
   items: readonly T[],
-  off: ReadonlySet<ItemKind>,
+  off: ReadonlySet<string>,
 ): T[] {
   return items.filter((it) => !off.has(it.kind));
 }

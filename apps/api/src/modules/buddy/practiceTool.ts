@@ -209,11 +209,14 @@ export async function runPreparePractice(
     [ctx.learnerId, goal?.id ?? null, subjectId, ctx.now],
   );
   const minutes = minutesFor(itemIds.length);
+  // Her sheet's practice carries her sheet's name (issue #840): the card said "Biologie" under a
+  // line about "Herz und Kreislauf", and she could not tell they were the same thing.
   const title = goal
     ? goal.title
-    : subjectId
-      ? [...ctx.aliases.subjects.values()].find((s) => s.id === subjectId)!.name
-      : t(ctx.locale, 'practice.untitled');
+    : (material?.title ??
+      (subjectId
+        ? [...ctx.aliases.subjects.values()].find((s) => s.id === subjectId)!.name
+        : t(ctx.locale, 'practice.untitled')));
   const step = await ctx.db.one<{ id: string }>(
     `insert into buddy_steps (learner_id, goal_id, kind, title, state, planned_date, payload, prepared_at)
      values ($1, $2, 'practice', $3, 'prepared', $4, $5, $6) returning id`,

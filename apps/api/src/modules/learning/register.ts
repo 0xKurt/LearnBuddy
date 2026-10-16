@@ -4,6 +4,7 @@
 // in this one place and in this order — app start-up (`createApp`) calls `registerLearning()`
 // once and then checks that nothing the core declares is left without its code.
 
+import { configCheck } from '../../config.js';
 import { registerRoutes } from '../../http/plugins.js';
 import { preInjectedPassages } from '../buddy/connectors/material.js';
 import { subscribe } from '../buddy/events.js';
@@ -42,6 +43,7 @@ import { registerJobKinds, registerTickWork } from '../scheduler/registry.js';
 import { LEARNING_SECTIONS, levelOf, renderLearning } from './context.js';
 import { dressThread, lastActed, learningHome, pollAfter } from './home.js';
 import { LEARNING_ACT_TOOLS } from './actTools.js';
+import { formsOffIssues } from './config.js';
 import { learningCheck } from './check.js';
 import { LEARNING_LOOKUPS } from './lookups.js';
 import { findLearningLookBack } from './lookback.js';
@@ -94,6 +96,16 @@ const LEARNING: ContextProvider = {
   undo: { applies: renameBackApplies, run: renameBack },
 };
 
+// Its job kinds (scheduler/jobs.ts `DomainJobKinds`): reading her photos, erasing a sheet's
+// photos and content — run by what registerLearning registers below.
+declare module '../scheduler/jobs.js' {
+  interface DomainJobKinds {
+    extract_material: true;
+    purge_photos: true;
+    purge_content: true;
+  }
+}
+
 let registered = false;
 
 /** Registers the learning domain into the core; a second call changes nothing. */
@@ -104,6 +116,8 @@ export function registerLearning(): void {
   // What Buddy knows of it, says about it and shows of it — registered first: the prompt and
   // every state are built from it.
   registerContextProvider(LEARNING);
+  // Its names in the configuration (FORMS_OFF): checked before the app serves anything.
+  configCheck(formsOffIssues);
 
   // The practice that waits, when Buddy points to it (open_area practice, issue #630).
   registerWaitingStart(runShowReady);
@@ -140,8 +154,8 @@ export function registerLearning(): void {
   // content, the recovery of stuck readings, idle practice runs, forgotten photos.
   registerJobKinds(
     { kind: 'extract_material', lane: 'waiting', run: runExtraction },
-    { kind: 'purge_photos', lane: 'erasure', run: purgePhotos },
-    { kind: 'purge_content', lane: 'erasure', run: purgeContent },
+    { kind: 'purge_photos', lane: 'erasure', run: purgePhotos, persistent: true },
+    { kind: 'purge_content', lane: 'erasure', run: purgeContent, persistent: true },
   );
   registerTickWork(
     { recover: recoverReadings },

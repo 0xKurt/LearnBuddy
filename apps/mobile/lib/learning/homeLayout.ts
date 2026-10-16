@@ -47,7 +47,10 @@ function layout(
     // Keyed on the session, not on "a greeting exists": a practice she finished AFTER the
     // greeting was written still gets its own card.
     result: now?.type === 'practice_result' && now.session_id !== greetingTells,
-    working: h.working === null ? null : inBar ? 'bar' : 'thread',
+    // Only her photos get a "working" note (issue #845): after a practice the check may rightly
+    // say nothing, and "Ich schaue mir an, wie deine Übung lief …" then went with nothing after
+    // it. The result card tells what she did; `working` still keeps the home polling closely.
+    working: h.working !== 'material' ? null : inBar ? 'bar' : 'thread',
     photoAsk: top === 'capture' ? 'bar' : 'thread',
     preparedIn: top === 'ready' || top === 'next' ? 'bar' : 'thread',
   };

@@ -74,12 +74,13 @@ type Subjects = {
   names(db: Db, learnerId: string, ids: readonly string[]): Promise<Map<string, string>>;
   /** The id of the category an alias of this STATE names (`f1`), or null when it names none. */
   ofAlias(aliases: Aliases, alias: string): string | null;
+  /** The category she named, found or made; null where this Buddy keeps none (no domain). */
   findOrCreate(
     db: Db,
     learnerId: string,
     name: string,
     kind: string,
-  ): Promise<{ id: string; name: string; created: boolean }>;
+  ): Promise<{ id: string; name: string; created: boolean } | null>;
 };
 
 // ─────────────── the home screen ───────────────

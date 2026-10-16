@@ -1,7 +1,6 @@
 // Typed configuration. Fails fast at boot on anything missing or malformed;
 // there is no silent fallback to fake services in any environment.
 
-import { ItemKind } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import { isLocalDatabaseHost } from './lib/db.js';
@@ -126,32 +125,26 @@ const Config = z
       .enum(['eu-texttospeech.googleapis.com'])
       .default('eu-texttospeech.googleapis.com'),
     /**
-     * Practice forms switched off in this environment (issue #296), comma-separated `ItemKind`
-     * values, e.g. "grid_draw,find_error". A form that is off is not in the schema the model is
-     * sent, and nothing new of it is stored — from a topic run or a photographed sheet
-     * (`practice/setProfiles.ts` `profileFor`, `practice/items.ts` `formsOn`). Questions of it
-     * that are already stored stay answerable. A new form stays off in production until it was
-     * tested with the real model and the owner has seen it; switching it on or off is this
-     * variable, not a release. An unknown name stops the boot rather than switching nothing.
+     * Forms a domain switched off in this environment (issue #296), comma-separated names, e.g.
+     * "grid_draw,find_error" — the learning domain's practice forms (`ItemKind`): one that is off
+     * is not in the schema the model is sent, and nothing new of it is stored
+     * (`practice/setProfiles.ts` `profileFor`, `practice/items.ts` `formsOn`). Switching it on or
+     * off is this variable, not a release. The domain checks the names when it registers
+     * (`configCheck`, learning/config.ts): an unknown name stops the boot rather than switching
+     * nothing.
      */
     FORMS_OFF: z
       .string()
       .optional()
-      .transform((raw, ctx): ReadonlySet<ItemKind> => {
-        const names = (raw ?? '')
-          .split(',')
-          .map((s) => s.trim())
-          .filter((s) => s !== '');
-        const kinds = z.array(ItemKind).safeParse(names);
-        if (!kinds.success) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `FORMS_OFF: unknown form in "${raw}" (expected ${ItemKind.options.join(', ')})`,
-          });
-          return z.NEVER;
-        }
-        return new Set(kinds.data);
-      }),
+      .transform(
+        (raw): ReadonlySet<string> =>
+          new Set(
+            (raw ?? '')
+              .split(',')
+              .map((s) => s.trim())
+              .filter((s) => s !== ''),
+          ),
+      ),
     /**
      * Push via Expo (ADR 0004 §4, amendment 2026-10-15): the owner closed the legal review on
      * 15.10.2026 (#677). Whether a message may reach her phone is still decided per learner in
@@ -320,3 +313,20 @@ export const DAILY_LIMITS = {
    */
   embedding: 400,
 } as const;
+
+/**
+ * What a domain checks of the configuration when it registers (issue #107): its own names in the
+ * core's keys (FORMS_OFF). Each returns its issues as `KEY: message`; `createApp` stops the boot
+ * on any, with the same words `loadConfig` uses.
+ */
+const checks: Array<(config: Config) => string[]> = [];
+
+export function configCheck(check: (config: Config) => string[]): void {
+  checks.push(check);
+}
+
+/** Stops the boot when a registered check finds the configuration wrong. */
+export function checkConfig(config: Config): void {
+  const issues = checks.flatMap((check) => check(config));
+  if (issues.length > 0) throw new Error(`Invalid configuration: ${issues.join('; ')}`);
+}

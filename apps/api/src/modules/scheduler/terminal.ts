@@ -7,21 +7,21 @@
 //                   before a test, "how did it go", the answer to her photos); an agreed
 //                   reminder is sent by its template (audit failed-countdown-never-fires-no-fallback)
 //   buddy_turn    — her message is marked failed with a code, never "processing" forever
-//   extract_material — reported to the operator: parked counts and the last error per kind
-//                   in GET /health
-//   purge_photos, purge_content, delete_account — never parked (PERSISTENT_KINDS retry with
-//                   backoff; overdue erasure is its own /health section)
+//   delete_account — never parked (PERSISTENT_KINDS retry with backoff; overdue erasure is its
+//                   own /health section)
+//   a domain's kinds — reported to the operator: parked counts and the last error per kind in
+//                   GET /health (the learning domain's reading; its erasures are never parked)
 // Handling is recorded on the job (`result.terminal`), so each parked job is handled once.
 
 import type { Deps } from '../../deps.js';
 import { skipSession } from '../buddy/summarise.js';
-import { enqueueJob, type JobKind, type JobRow } from './jobs.js';
+import { enqueueJob, type CoreJobKind, type JobKind, type JobRow } from './jobs.js';
 
 type TerminalEffect = (deps: Deps, job: JobRow) => Promise<string>;
 
 const operator: TerminalEffect = async () => 'reported';
 
-const TERMINAL: { [K in JobKind]: TerminalEffect } = {
+const TERMINAL: { [K in CoreJobKind]: TerminalEffect } = {
   buddy_check: async (deps, job) => {
     // A fallback that itself failed ends here (reported like the others).
     if (job.payload.fallback_only === true || !job.learner_id) return 'reported';
@@ -45,11 +45,8 @@ const TERMINAL: { [K in JobKind]: TerminalEffect } = {
     );
     return 'message_failed';
   },
-  extract_material: operator,
   // Erasure kinds are never parked (jobs.ts PERSISTENT_KINDS); should one ever be, the
   // operator sees it in /health.
-  purge_photos: operator,
-  purge_content: operator,
   delete_account: operator,
   // A conversation nobody could write down gets an empty row, so the next one is not
   // stuck behind it — and the empty row says plainly that there are no sentences (#22).
@@ -63,6 +60,15 @@ const TERMINAL: { [K in JobKind]: TerminalEffect } = {
   consolidate_memories: operator,
 };
 
+/** A core kind's effect; a domain's kinds are reported to the operator. */
+function terminalOf(kind: JobKind): TerminalEffect {
+  return isCoreKind(kind) ? TERMINAL[kind] : operator;
+}
+
+function isCoreKind(kind: JobKind): kind is CoreJobKind {
+  return kind in TERMINAL;
+}
+
 /** Apply the terminal effect of every parked job not handled yet. */
 export async function handleParkedJobs(deps: Deps, limit = 50): Promise<number> {
   const parked = await deps.db.query<JobRow>(
@@ -73,7 +79,7 @@ export async function handleParkedJobs(deps: Deps, limit = 50): Promise<number> 
     [limit],
   );
   for (const job of parked) {
-    const effect = await TERMINAL[job.kind](deps, job);
+    const effect = await terminalOf(job.kind)(deps, job);
     await deps.db.query(
       `update jobs set result = coalesce(result, '{}'::jsonb) || jsonb_build_object('terminal', $2::text)
         where id = $1 and status = 'failed'`,
