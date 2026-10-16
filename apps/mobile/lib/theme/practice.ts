@@ -10,14 +10,19 @@ export type OptionState = 'idle' | 'selected' | 'correct' | 'wrong' | 'dim';
 
 const COLUMN_CELL_AIR = 1;
 
+/** How far below the progress bar the question stands, in every form (rule 19, #642). */
+const QUESTION_TOP = 18;
+
 export const PRACTICE = {
   ordinaryBody: {
     gap: 10,
-    paddingTop: 18,
+    paddingTop: QUESTION_TOP,
     paddingBottom: SPACE.lg,
     feedbackGap: 14,
     feedbackTop: 6,
   },
+  /** The question column of the board forms (cloze, order, match …): the same top. */
+  questionColumn: { paddingTop: QUESTION_TOP },
   optionHeight: 56,
   boardLineGap: SPACE.xs / 2,
   lineMarkWidth: 16,

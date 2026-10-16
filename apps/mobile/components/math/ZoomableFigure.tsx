@@ -58,13 +58,21 @@ export function ZoomableFigure({ figure, maxHeight, folded = false }: Props) {
         </FigureSizingReport.Provider>
       }
     >
-      {folded ? (
-        <FoldedFigure />
-      ) : figure.type === 'code' ? (
-        <CodeBlock figure={figure} maxHeight={maxHeight} />
-      ) : (
-        <FigureView figure={figure} maxHeight={maxHeight} />
-      )}
+      {folded ? <FoldedFigure /> : null}
+      {/* Folded, the drawing stays mounted out of sight (#642): drawn anew on unfolding, its
+          frame stood empty while it sized itself — right as "Prüfen" closed the keyboard. */}
+      <View
+        testID="figure-drawing"
+        style={folded ? { height: 0, overflow: 'hidden' } : null}
+        accessibilityElementsHidden={folded}
+        importantForAccessibility={folded ? 'no-hide-descendants' : 'auto'}
+      >
+        {figure.type === 'code' ? (
+          <CodeBlock figure={figure} maxHeight={maxHeight} />
+        ) : (
+          <FigureView figure={figure} maxHeight={maxHeight} />
+        )}
+      </View>
     </Zoomable>
   );
 }

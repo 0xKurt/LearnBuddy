@@ -112,6 +112,14 @@ describe('the least a chart is shrunk to (issue #501)', () => {
     expect(figureScale(400, 200, leastFigureScale(climate, 600))).toBe(0.5);
   });
 
+  it('never narrows a box diagram: narrower, it cannot be laid out and stood empty (#642)', () => {
+    // Device 16.10.: "Was gehört in Lücke A im Diagramm" — while she typed (and for a moment after
+    // "Prüfen") the frame stood empty: shrunk by width, `diagramLayout` found no room for its
+    // boxes at their fixed text size and drew nothing. Its height is its boxes', not its width's.
+    expect(leastFigureScale({ type: 'diagram' }, 320)).toBe(1);
+    expect(figureScale(300, 120, leastFigureScale({ type: 'diagram' }, 320))).toBe(1);
+  });
+
   it('never narrows a table: its rows keep their height, its words would break (#387)', () => {
     // The SQL table on 390×844 under the tall code bar: shrunk to 0.4 it got 117 of 294 pt, as
     // tall as before, and its header "klasse" broke into "klass/e".
