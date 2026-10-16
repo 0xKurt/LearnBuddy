@@ -87,11 +87,11 @@ describe('the licences of the pictures', () => {
     const names = [...new Set(FIGURE_LICENCES.map((l) => l.licence))];
     expect(Object.fromEntries(names.map((name) => [name, count(name)]))).toEqual({
       'Public domain': 21,
-      CC0: 15,
+      CC0: 16,
       'CC BY 2.5': 1,
       'CC BY 3.0': 2,
       'CC BY 4.0': 31,
-      'CC BY-SA 3.0': 6,
+      'CC BY-SA 3.0': 5,
       'CC BY-SA 4.0': 1,
     });
   });

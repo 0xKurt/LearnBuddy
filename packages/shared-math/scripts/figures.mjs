@@ -48,6 +48,28 @@ const TAP = 56;
  * drawn twice), the groups its anchor is measured on (`measure`, default: all of them), its
  * number's column, and where to look (`half`, `row`).
  */
+/**
+ * A file without ids of its own: every shape gets one by its place in the file, `e0`, `e1`, …
+ * (the file is pinned by its hash, so the places hold).
+ */
+function numbered(svg) {
+  let n = -1;
+  return svg.replace(
+    /<(path|g|ellipse|circle|polygon)\b/g,
+    (_, tag) => `<${tag} id="e${(n += 1)}"`,
+  );
+}
+
+/** The file cut to the box [x, y, width, height] of its own units. */
+function cropped(svg, [x, y, w, h]) {
+  return svg.replace(/<svg[^>]*>/, (open) =>
+    open
+      .replace(/ width="[^"]*"/, ` width="${w}"`)
+      .replace(/ height="[^"]*"/, ` height="${h}"`)
+      .replace(/ viewBox="[^"]*"/, ` viewBox="${x} ${y} ${w} ${h}"`),
+  );
+}
+
 const FIGURES = {
   skeleton: {
     source: {
@@ -106,6 +128,52 @@ const FIGURES = {
       { id: 'foot', sides: [['FootLeft'], ['FootRight']], column: 'left' },
     ],
   },
+  heart: {
+    source: {
+      file: 'https://github.com/duerrsimon/bioicons/blob/162414a8575a3b78f22af390f4a120a0738c5b78/static/icons/cc-0/Tissues/Mariana_RuizVillareal/Human_heart.svg',
+      sha256: '73316375eb78f57cde7f06d237988cb76efdbec51e0a7b3d8b8d63b91618d906',
+      // Mariana Ruiz Villarreal (LadyofHats), in Bioicons under CC0 1.0.
+      licence: 'CC0 1.0',
+    },
+    // The file shows the heart twice (diastole, systole) with its labels drawn as shapes; the
+    // picture is the diastole heart alone (shapes 18 to 33), cut to its box, without a label.
+    prepare: (svg) => cropped(numbered(svg), [60, 22, 270, 374]),
+    whole: Array.from({ length: 16 }, (_, i) => `e${18 + i}`),
+    // The frame of the image it replaces (300 × 368 in the anchors' frame).
+    image: { width: 733, height: 900 },
+    // Shapes: 19 the right pulmonary veins, 21 the right ventricle,
+    // 23 the venae cavae with the right atrium, 26 the left atrium and ventricle, 29 the aorta,
+    // 30 the pulmonary trunk, 32 the heart wall, septum and valve flaps; 18 and 33 the arrows of the
+    // flow.
+    parts: [
+      { id: 'myocardium', groups: ['e32'], within: [250, 220, 300, 368], column: 'right' },
+      { id: 'septum', groups: ['e32'], within: [168, 250, 190, 330], column: 'right' },
+      { id: 'vena_cava', groups: ['e23'], within: [40, 70, 120, 145], column: 'left' },
+      { id: 'pulmonary_vein', groups: ['e19'], column: 'left' },
+      { id: 'aorta', groups: ['e29'], column: 'left' },
+      { id: 'pulmonary_artery', groups: ['e30'], column: 'right' },
+      {
+        id: 'right_atrium',
+        groups: ['e23'],
+        within: [45, 160, 135, 250],
+        column: 'left',
+        tap: true,
+      },
+      {
+        id: 'left_atrium',
+        groups: ['e26'],
+        // Below the pulmonary trunk, so its area lies on the atrium alone.
+        within: [170, 145, 245, 205],
+        column: 'right',
+        tap: true,
+      },
+      // Its open chamber, below the tricuspid valve's flaps.
+      { id: 'right_ventricle', groups: ['e21'], within: [85, 300, 135, 345], column: 'left' },
+      { id: 'left_ventricle', groups: ['e26'], within: [160, 210, 290, 340], column: 'right' },
+      // The atrioventricular valve: the flap of the wall between the right atrium and ventricle.
+      { id: 'valve', groups: ['e32'], within: [70, 212, 115, 255], column: 'left' },
+    ],
+  },
 };
 
 const [id, svgPath, flag] = process.argv.slice(2);
@@ -159,13 +227,16 @@ const whole = await render(figure.whole);
 const all = await pixels(whole.clone());
 const at = (x, y) => (y * IMAGE.width + x) * 4;
 const same = (a, b, i) => [0, 1, 2, 3].every((c) => Math.abs(a[i + c] - b[i + c]) <= 8);
+/** Whether the frame point lies in the box [x0, y0, x1, y1] of the frame. */
+const inside = ([x0, y0, x1, y1], x, y) => x >= x0 && x <= x1 && y >= y0 && y <= y1;
 
 /**
  * Where the part's own structure shows (its pixels the whole picture draws the same), and its
  * anchor: the middle of the widest stretch of it on one row — the row of its middle, or the row
- * `row` of the way down what shows of it.
+ * `row` of the way down what shows of it. `half` or `within` (a box of the frame, [x0, y0, x1, y1])
+ * keep to one place of it: two parts drawn as one shape (a heart's atrium and ventricle).
  */
-async function measure(ids, { half, row } = {}) {
+async function measure(ids, { half, row, within } = {}) {
   const own = await pixels(await render(ids));
   const shown = [];
   for (let y = 0; y < IMAGE.height; y += 1)
@@ -174,6 +245,7 @@ async function measure(ids, { half, row } = {}) {
       if (own[i + 3] < 200 || !same(own, all, i)) continue;
       if (half === 'right' && x < IMAGE.width / 2) continue;
       if (half === 'left' && x >= IMAGE.width / 2) continue;
+      if (within && !inside(within, x * k, y * k)) continue;
       shown.push([x, y]);
     }
   if (shown.length === 0) throw new Error(`nothing of ${ids.join(', ')} shows`);
