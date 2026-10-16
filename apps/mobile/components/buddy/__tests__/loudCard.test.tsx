@@ -33,6 +33,7 @@ function offer(n: number, text: string, part: Partial<ActionView> = {}): ActionV
       startable: true,
       finished_session_id: null,
       running_session_id: null,
+      pictures_shown: null,
     },
     ...part,
   };

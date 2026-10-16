@@ -173,6 +173,13 @@ const LEARNING_ACTIONS = [
      * `finished_session_id`; null while none runs.
      */
     running_session_id: Uuid.nullable().default(null),
+    /**
+     * Whether the run this offer prepared shows a picture (issue #842), for an offer with a
+     * picture wish: read from its questions when the thread is served, never from Buddy's words —
+     * he promised "Abbildungen" for a run that held none. Null while nothing is prepared, and
+     * for an offer without a wish.
+     */
+    pictures_shown: z.boolean().nullable().default(null),
   }),
   /**
    * Buddy offers a Kopfrechnen round (issue #243): one range from a closed list, and for the
