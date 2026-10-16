@@ -15,6 +15,7 @@ import { FinishedOffer } from './FinishedOffer.js';
 import { KIND_LABEL } from './kinds.js';
 import { useStartTopic } from './useStartTopic.js';
 import { reacted, tapped } from '../../lib/perf.js';
+import { useBarPractice } from '../../lib/learning/homeScope.js';
 import { useVoiceMode } from '../../lib/speech/voiceMode.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_learning' }>;
@@ -38,6 +39,9 @@ export function OfferCard({
 }) {
   const { t } = useTranslation(['learn', 'common', 'buddy']);
   const { state, start } = useStartTopic();
+  // Its open run is what the bar on top continues: the one control stays there (#846).
+  const onBar = useBarPractice();
+  const onTop = offer.running_session_id !== null && onBar.session === offer.running_session_id;
   const preparing = state.status === 'preparing';
   // The server already knows this one cannot start: writing its questions was refused while
   // she was still reading Buddy's reply (issue #196). Then there is no button to offer — she
@@ -100,7 +104,7 @@ export function OfferCard({
       title={offer.text}
       note={dead ? t('learn:topic.not_usable') : state.status === 'failed' ? state.message : null}
       start={
-        dead
+        dead || onTop
           ? null
           : {
               label: preparing

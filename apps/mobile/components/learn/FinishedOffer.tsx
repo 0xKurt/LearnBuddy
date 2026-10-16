@@ -1,8 +1,9 @@
 // An offer whose run she already worked through (issues #630, #643): the card says so and opens
 // what came of it — "Los geht's" on a run that ended promised a start that was over, and opened
 // the ended run's result at the moment she "started" it. Drawn like the finished practice's own
-// card (HomeNotices `ResultView`): the tick, "Geschafft!", "Ansehen". One card for every offer
-// kind that starts a run (`OfferCard`, `DrillOfferCard`).
+// card (HomeNotices `ResultView`): the tick, "Geübt", "Ansehen" — "Geschafft!" is that result
+// card's word, said once (#625: the two stood one under the other). One card for every offer kind
+// that starts a run (`OfferCard`, `DrillOfferCard`).
 
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +29,7 @@ export function FinishedOffer({
       label={label}
       title={title}
       titleLines={2}
-      detail={t('now.result_title')}
+      detail={t('now.offer_done')}
       primary={{
         label: t('now.result_view'),
         variant: 'secondary',
