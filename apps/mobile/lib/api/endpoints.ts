@@ -20,7 +20,6 @@ import {
   ReplyStreamEvent,
   SendMessageResponse,
   SessionView,
-  StartStepResponse,
   SpeechResponse,
   TranscribeResponse,
   TranscribeStreamEvent,
@@ -134,8 +133,6 @@ export const sendMessageStreamed = (
 export const stopMessage = (clientMessageId: string) =>
   request('POST', `/buddy/messages/${clientMessageId}/stop`, { schema: SendMessageResponse });
 
-export const startStep = (stepId: string) =>
-  request('POST', `/buddy/steps/${stepId}/start`, { schema: StartStepResponse, wait: 'long' });
 export const skipStep = (stepId: string) =>
   request('POST', `/buddy/steps/${stepId}/skip`, { schema: BuddyHome });
 export const undoAction = (actionId: string) =>

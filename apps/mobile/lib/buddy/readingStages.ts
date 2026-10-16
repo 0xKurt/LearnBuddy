@@ -6,7 +6,15 @@
 
 import type { NowCard, ReadingStage } from '@learnbuddy/shared-types/contracts';
 
-import type { ReadingView, StepState } from '../../components/buddy/extensions.js';
+export type StepState = 'done' | 'active' | 'todo';
+
+/** What the bar says while Buddy reads a sheet: a title, a line and its steps (i18n keys). */
+export type ReadingView = {
+  stage: ReadingStage;
+  title: { key: string; count?: number };
+  body: { key: string; count?: number };
+  steps: { key: 'sent' | 'read' | 'build'; state: StepState }[];
+};
 
 type Processing = Extract<NowCard, { type: 'material_processing' }>;
 type StepKey = ReadingView['steps'][number]['key'];

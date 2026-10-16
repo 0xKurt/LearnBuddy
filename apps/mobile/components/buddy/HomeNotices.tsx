@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import { askAttach } from '../../lib/capture/attachRequest.js';
 import { refreshHome, type HomeAct } from '../../lib/buddy/useHomeAct.js';
-import type { HomeThumbs, LeftBehind } from '../../lib/buddy/useHomePhotos.js';
+import type { LeftBehind } from '../../lib/buddy/useHomePhotos.js';
 import type { CaptureDraft } from '../../lib/capture/draft.js';
 import type { Timed } from '../../lib/buddy/homeThread.js';
 import type { HomeLayout } from '../../lib/homeLayout.js';
@@ -27,7 +27,6 @@ type Props = {
   h: BuddyHome;
   layout: HomeLayout;
   left: LeftBehind;
-  thumbs: HomeThumbs;
   busy: boolean;
   /** The violet button belongs to the bar on top when there is one. */
   quiet: Quiet;
@@ -37,7 +36,7 @@ type Props = {
 };
 
 /** What a domain's notices are told with. */
-type NoticeParts = Pick<Props, 'h' | 'layout' | 'thumbs' | 'busy' | 'quiet'> & {
+type NoticeParts = Pick<Props, 'h' | 'layout' | 'busy' | 'quiet'> & {
   andReload: AndReload;
 };
 
@@ -59,14 +58,14 @@ export const homeNoticeSlot = slot<DomainNotices>('Notizen im Gespräch');
  * about now (photos not sent, a sheet Buddy could not read, "Buddy is working") has no moment and
  * stands at the end. Empty when Buddy has nothing.
  */
-export function homeNotices({ h, layout, left, thumbs, busy, quiet, act, decision }: Props) {
+export function homeNotices({ h, layout, left, busy, quiet, act, decision }: Props) {
   const andReload: AndReload = (fn) =>
     void act(async () => {
       await fn();
       await refreshHome();
     });
   const domain = homeNoticeSlot.get();
-  const parts: NoticeParts = { h, layout, thumbs, busy, quiet, andReload };
+  const parts: NoticeParts = { h, layout, busy, quiet, andReload };
   const now = (node: ReactElement | null): Timed<ReactElement>[] =>
     node ? [{ item: node, at: null }] : [];
   // The open question: the check-in after a test stands where the test day was over.

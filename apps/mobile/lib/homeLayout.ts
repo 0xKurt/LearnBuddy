@@ -29,7 +29,7 @@ import { CHAT } from './theme/chat.js';
 // menu or the conversation down: the layout does not jump when it comes or goes). She can
 // close it on this phone; it stays closed until what it says changes (topKey).
 
-import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
+import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 
 import { slot } from './registry.js';
 
@@ -82,7 +82,20 @@ export type HomeTop = {
   bar(h: BuddyHome): object | null;
   /** The layout of the domain's part; `hidden`: she closed this bar on this phone. */
   layout(h: BuddyHome, hidden: boolean, greetingTells: string | null): HomeTopLayout;
+  /**
+   * What the bar on top says instead of the conversation (lib/buddy/homeThread.ts, issues #94,
+   * #204): `asks` — the receipt of the ask the bar carries, which leaves the thread; `names` —
+   * a receipt the bar says word for word, whose line leaves it while the bar stands.
+   */
+  carried(
+    h: BuddyHome,
+    layout: HomeLayout,
+  ): { asks(a: Action): boolean; names(a: Action): boolean };
+  /** Buddy is reading something she sent (the head's orb reads along). */
+  reading(h: BuddyHome): boolean;
 };
+
+type Action = MessageView['actions'][number];
 
 export const homeTop = slot<HomeTop>('Leiste oben');
 

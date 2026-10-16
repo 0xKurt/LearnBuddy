@@ -10,7 +10,8 @@ import { useTranslation } from 'react-i18next';
 
 import { clarifyUnclear } from '../../lib/api/endpoints.js';
 import { acceptMissingPages, retryMaterial } from '../../lib/api/learningEndpoints.js';
-import { failedTitleKey } from '../../lib/buddy/failedTitle.js';
+import { failedTitleKey } from '../../lib/learning/failedTitle.js';
+import { useHomeThumbs } from '../../lib/learning/homePhotos.js';
 import { askAttach } from '../../lib/capture/attachRequest.js';
 import { CardChoices, ChatCard, type CardAction } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';
@@ -23,7 +24,7 @@ type Notice = NonNullable<BuddyHome['notice']>;
 type Now = NonNullable<BuddyHome['now']>;
 
 export const learningNotices: DomainNotices = {
-  told({ h, layout, thumbs, busy, quiet, andReload }) {
+  told({ h, layout, busy, quiet, andReload }) {
     const missing = h.notice?.type === 'pages_missing' ? h.notice : null;
     const unclear = h.notice?.type === 'unclear_spot' ? h.notice : null;
     const failed = layout.failed && h.now?.type === 'material_failed' ? h.now : null;
@@ -32,20 +33,20 @@ export const learningNotices: DomainNotices = {
     return [
       unclear
         ? {
-            item: <UnclearNotice key="unclear" notice={unclear} thumb={thumbs.unclear} {...told} />,
+            item: <UnclearNotice key="unclear" notice={unclear} {...told} />,
             at: null,
           }
         : null,
       missing
         ? {
-            item: <PagesNotice key="pages" notice={missing} thumb={thumbs.page} {...told} />,
+            item: <PagesNotice key="pages" notice={missing} {...told} />,
             at: null,
           }
         : null,
       // A sheet Buddy could not read: said here, with "Nochmal lesen" right at it (issue #17).
       failed
         ? {
-            item: <FailedNotice key="failed" now={failed} thumb={thumbs.failed} {...told} />,
+            item: <FailedNotice key="failed" now={failed} {...told} />,
             at: null,
           }
         : null,
@@ -65,8 +66,8 @@ export const learningNotices: DomainNotices = {
     ) : null,
 };
 
-/** What every notice Buddy asks about gets: its photo, and how its taps run. */
-type Told = { thumb: string | null; busy: boolean; quiet: Quiet; andReload: AndReload };
+/** What every notice Buddy asks about gets: how its taps run. Its photo the home found. */
+type Told = { busy: boolean; quiet: Quiet; andReload: AndReload };
 type Asked<N> = Told & { notice: N };
 
 /**
@@ -79,11 +80,11 @@ type Asked<N> = Told & { notice: N };
  */
 function UnclearNotice({
   notice,
-  thumb,
   busy,
   andReload,
 }: Asked<Extract<Notice, { type: 'unclear_spot' }>>) {
   const { t } = useTranslation('buddy');
+  const thumb = useHomeThumbs().unclear;
   const { spot } = notice;
   return (
     <ChatCard
@@ -134,12 +135,12 @@ function UnclearNotice({
 /** Pages Buddy could not read completely: take them again, or "Passt so" without them. */
 function PagesNotice({
   notice,
-  thumb,
   busy,
   quiet,
   andReload,
 }: Asked<Extract<Notice, { type: 'pages_missing' }>>) {
   const { t } = useTranslation('buddy');
+  const thumb = useHomeThumbs().page;
   const several = notice.photo_count > 1;
   // A photo of something else is not worth taking again: then only "Passt so".
   const retake = notice.pages.some((p) => p.problem !== 'not_material');
@@ -196,12 +197,12 @@ function PagesNotice({
 /** A sheet Buddy could not read: read it again when that can help, or a new photo. */
 function FailedNotice({
   now,
-  thumb,
   busy,
   quiet,
   andReload,
 }: Told & { now: Extract<Now, { type: 'material_failed' }> }) {
   const { t } = useTranslation('buddy');
+  const thumb = useHomeThumbs().failed;
   const newPhoto: CardAction = {
     label: t('buddy:now.failed_new_photo'),
     disabled: busy,

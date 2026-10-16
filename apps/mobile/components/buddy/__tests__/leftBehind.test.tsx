@@ -38,7 +38,7 @@ const { useLiveAttachments } = await import('../../../lib/capture/live.js');
 
 describe('pages left from before, once the chat has taken them', () => {
   it('do not come back as left behind when she removes them in the chat', async () => {
-    const { result } = renderHook(() => useHomePhotos(undefined));
+    const { result } = renderHook(() => useHomePhotos());
     await waitFor(() => expect(result.current.left.shown).toEqual(left));
     // "Weiter": the chat's bar holds the page.
     act(() => useLiveAttachments.getState().set(1));

@@ -14,6 +14,7 @@ import {
   SessionView,
   SpeakStreamEvent,
   SpeakWordResponse,
+  StartStepResponse,
   WorkReading,
   type AnswerRequest,
   type CardRecall,
@@ -309,7 +310,11 @@ export const answerDrill = (sessionId: string, itemId: string, text: string) =>
 export const finishSession = (id: string) =>
   request('POST', `/practice/sessions/${id}/finish`, { schema: SessionView, wait: 'long' });
 
-// ─────────────── rehearsal ───────────────
+// ─────────────── buddy's prepared steps and the rehearsal ───────────────
+
+/** A prepared practice step, started: the session it opened, with its first question. */
+export const startStep = (stepId: string) =>
+  request('POST', `/buddy/steps/${stepId}/start`, { schema: StartStepResponse, wait: 'long' });
 
 /**
  * Her recording on Buddy's rehearsal card (issue #264): measured on the server and never kept; the

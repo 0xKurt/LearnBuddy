@@ -1,9 +1,13 @@
 import type { BuddyHome, MessageView } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import type { HomeLayout } from '../../homeLayout.js';
+import { homeTop, type HomeLayout } from '../../homeLayout.js';
+import { learningTop } from '../../learning/homeLayout.js';
 import { greetingOnScreen, placeByTime, threadOnScreen, VISIBLE_MESSAGES } from '../homeThread.js';
 import type { SessionStart } from '../useSessionStart.js';
+
+// What the bar on top carries is the learning domain's (issue #107), filled as at app start.
+homeTop.fill(learningTop);
 
 const STEP = '00000000-0000-4000-8000-000000000001';
 const SESSION = '00000000-0000-4000-8000-000000000002';
