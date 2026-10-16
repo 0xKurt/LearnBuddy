@@ -5,8 +5,8 @@
 // sentence, MP3 back. No hidden retries: the app reads the sentence with the phone's own
 // voice when this fails.
 //
-// Not yet verified live: no call to Google was made while building this (no credentials) — endpoint, voice names, speaking rate and the IAM
-// permission are taken from Google's documentation (ADR 0008 §Live verification).
+// Live in production since ADR 0008 (rows in `speech_cache`, KI-Audit D-F10); every sentence asked
+// for is counted in `speech_calls` with its list-price cost (#682).
 
 import type { VoiceName } from '@learnbuddy/shared-types/contracts';
 import { GoogleAuth } from 'google-auth-library';
@@ -70,6 +70,11 @@ type TokenSource = { getAccessToken(): Promise<string | null | undefined> };
 
 export class GoogleSpeech implements SpeechGateway {
   readonly available = true;
+  /**
+   * Chirp 3: HD, $30 per 1M characters incl. spaces (Cloud TTS pricing read 2026-10-14, KI-Audit F
+   * §3). The first 1M characters a month are free; the record stays the list price, a ceiling.
+   */
+  readonly microsPerCharacter = 30;
   private readonly auth: TokenSource;
 
   constructor(

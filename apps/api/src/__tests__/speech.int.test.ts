@@ -12,7 +12,7 @@ import type {
   SendMessageResponse,
   SpeechResponse,
 } from '@learnbuddy/shared-types/contracts';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POLICIES } from '../lib/limits.js';
 import { runTick } from '../modules/scheduler/tick.js';
@@ -141,6 +141,74 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
       `select count(*)::text as n from speech_cache_shared`,
     );
     expect(Number(shared.n)).toBe(1);
+  });
+
+  it('reads the sentence even when its count cannot be written (#682)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    // The real table made unwritable for this one request: the bookkeeping fails, she does not.
+    await env.db.query(`alter table speech_calls rename to speech_calls_away`);
+    try {
+      const res = await speech({ text: 'Super gemacht!', locale: 'de-DE' });
+      expect(res.status).toBe(200);
+      expect(res.body.audio_base64.length).toBeGreaterThan(0);
+      expect(warn.mock.calls.some((c) => String(c[0]).includes('speech count not recorded'))).toBe(
+        true,
+      );
+    } finally {
+      await env.db.query(`alter table speech_calls_away rename to speech_calls`);
+      warn.mockRestore();
+    }
+  });
+
+  it('counts every sentence asked for, with its characters and list-price cost, never its text (#682)', async () => {
+    const text = 'Drei Viertel ist richtig.';
+    await speech({ text, locale: 'de-DE' });
+    await speech({ text, locale: 'de-DE' });
+    env.speech.failNext(new SpeechError('unavailable', 'down'));
+    await speech({ text: 'Hallo!', locale: 'de-DE' });
+    const preview = {
+      text: 'Hallo, ich bin Buddy. So klinge ich, wenn ich dir etwas vorlese.',
+      locale: 'de-DE',
+      voice: 'warm' as const,
+    };
+    await speech(preview);
+    await speech(preview);
+    const rows = await env.db.query<{
+      outcome: string;
+      characters: number;
+      cost_micros: string;
+      error_kind: string | null;
+      created_at: Date;
+    }>(
+      `select outcome, characters, cost_micros, error_kind, created_at from speech_calls
+        where learner_id = $1`,
+      [l.learnerId],
+    );
+    const sorted = (xs: unknown[][]) => xs.map((x) => JSON.stringify(x)).sort();
+    expect(
+      sorted(rows.map((r) => [r.outcome, r.characters, Number(r.cost_micros), r.error_kind])),
+    ).toEqual(
+      sorted([
+        ['ok', text.length, text.length * 30, null],
+        ['cached', text.length, 0, null],
+        ['error', 6, 0, 'unavailable'],
+        ['ok', preview.text.length, preview.text.length * 30, null],
+        ['shared', preview.text.length, 0, null],
+      ]),
+    );
+    // Stamped by the app clock (rule 7); no column holds what was read.
+    for (const r of rows) expect(r.created_at.toISOString()).toBe(env.clock.now().toISOString());
+    const columns = await env.db.query<{ column_name: string }>(
+      `select column_name from information_schema.columns where table_name = 'speech_calls'`,
+    );
+    expect(columns.map((c) => c.column_name)).not.toContain('text');
+    // TTS characters per day, the audit's acceptance (D-F10).
+    const day = await env.db.one<{ characters: number }>(
+      `select sum(characters)::int as characters from speech_calls
+        where outcome = 'ok' and created_at >= $1::date`,
+      [env.clock.now()],
+    );
+    expect(day.characters).toBe(text.length + preview.text.length);
   });
 
   it('keeps the audio one day: the scheduler deletes it, then it is made again', async () => {
