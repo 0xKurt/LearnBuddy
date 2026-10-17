@@ -87,11 +87,21 @@ const massText = (e: ChemElement) => formatNumber(Math.round(e.mass * 100) / 100
  * prints: atomic number and mass next to the symbol. The cells are too small for the mass on a
  * phone, and a question about neutrons needs it.
  */
+/** The size of the magnified cell's number and mass in a box `h` high. */
+const detailSmall = (h: number) => Math.min(SMALL, Math.max(9, Math.round(h * 0.36)));
+
+/**
+ * Number over mass where two lines fit; in a box one line high — the table drawn small in a
+ * question card — one line beside the symbol, or the two ran past the box (device 17.10.).
+ */
+const stackedDetail = (h: number) => 2 * detailSmall(h) + 4 <= h;
+
 function Detail({ e, x, y, w, h }: { e: ChemElement; x: number; y: number; w: number; h: number }) {
   const { figure: ink } = useTheme();
   const fs = Math.min(20, Math.round(h * 0.6));
-  const small = Math.min(SMALL, Math.max(9, Math.round(h * 0.36)));
-  const right = x + w * 0.68;
+  const small = detailSmall(h);
+  const stacked = stackedDetail(h);
+  const right = x + w * (stacked ? 0.68 : 0.62);
   return (
     <G>
       <Rect
@@ -105,15 +115,27 @@ function Detail({ e, x, y, w, h }: { e: ChemElement; x: number; y: number; w: nu
         strokeWidth={2}
       />
       <Txt
-        x={x + w * 0.3}
+        x={x + w * (stacked ? 0.3 : 0.2)}
         y={y + h / 2 + fs * 0.36}
         size={fs}
         color={ink.stroke}
         bold
         text={e.sym}
       />
-      <Txt x={right} y={y + h / 2 - 2} size={small} color={ink.stroke} text={String(e.z)} />
-      <Txt x={right} y={y + h / 2 + small} size={small} color={ink.stroke} text={massText(e)} />
+      {stacked ? (
+        <>
+          <Txt x={right} y={y + h / 2 - 2} size={small} color={ink.stroke} text={String(e.z)} />
+          <Txt x={right} y={y + h / 2 + small} size={small} color={ink.stroke} text={massText(e)} />
+        </>
+      ) : (
+        <Txt
+          x={right}
+          y={y + h / 2 + small * 0.36}
+          size={small}
+          color={ink.stroke}
+          text={`${e.z} · ${massText(e)}`}
+        />
+      )}
     </G>
   );
 }
@@ -210,9 +232,11 @@ export function PeriodicBody({ figure, width }: { figure: PeriodicFig; width: nu
   const asked = element(figure.at);
   if (asked) {
     const d = DETAIL[figure.v];
-    const { x, y } = at(d.col + (d.span - d.w) / 2, 0);
+    // A box too low for two lines takes the whole gap: its texts stand on one line (`Detail`).
+    const w = stackedDetail(d.h * size - 4) ? d.w : d.span;
+    const { x, y } = at(d.col + (d.span - w) / 2, 0);
     parts.push(
-      <Detail key="detail" e={asked} x={x + 2} y={y + 2} w={d.w * size - 4} h={d.h * size - 4} />,
+      <Detail key="detail" e={asked} x={x + 2} y={y + 2} w={w * size - 4} h={d.h * size - 4} />,
     );
   }
   const label = (key: string, x: number, y: number, text: string) => (
