@@ -22,6 +22,15 @@ import { TutorDecision, RubricDecision } from '../src/modules/practice/tutor.js'
 import { schemaErrors } from '../src/testing/schemaCheck.js';
 import { testDatabaseAvailable } from '../src/testing/database.js';
 import { seed, worksheetJpeg, type Workload } from '../src/testing/bench/workloads.js';
+import {
+  afterIntro,
+  costTable,
+  MIXES,
+  projection,
+  summarize,
+  type Prices,
+} from '../src/testing/bench/costs.js';
+import { VERTEX_EU_PRICES } from '../src/llm/pricing.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 dotenv({ path: resolve(here, '../.env.local'), quiet: true });
@@ -35,6 +44,7 @@ const dry = args.includes('--dry');
 const rounds = Number(option('--rounds', '1'));
 const budget = Number(option('--budget', '1'));
 const output = resolve(option('--out', 'test-results/provider-bench.md'));
+const tag = option('--tag', 'provider-bench');
 // 4.1 nano shuts down on 2026-10-23; historical comparison only when explicitly selected.
 const models = option('--models', 'gpt-5.4-mini,gpt-5.4-nano,gpt-4.1-mini').split(',');
 if (provider === 'openai' && models.some((model) => !OPENAI_MODELS.some((m) => m === model)))
@@ -216,7 +226,7 @@ if (dry) {
   const charged = rows.reduce((n, r) => n + r.budgetCharge, alreadySpent);
   appendFileSync(
     `${process.env.HOME}/.local/share/learnbuddy-agents/BUDGET-LEDGER.md`,
-    `\n2026-10-23 | gateway-fix | #893 | ${rows.reduce((n, r) => n + r.attempts, 0)} | ${spent.toFixed(6)} | two-round provider bench; reserved including prior probes $${charged.toFixed(6)}; ${output}\n`,
+    `\n${new Date().toISOString().slice(0, 10)} | ${tag} | #893 | ${rows.reduce((n, r) => n + r.attempts, 0)} | ${spent.toFixed(6)} | ${rounds}-round provider bench with cost tables; reserved including prior probes $${charged.toFixed(6)}; ${output}\n`,
   );
   const table = [
     '| candidate | workload | valid | first partial ms | first speakable ms | total ms | requests | error |',
@@ -226,9 +236,17 @@ if (dry) {
         `| ${r.candidate} | ${r.workload} | ${r.valid} | ${r.firstPartialMs?.toFixed(0) ?? '–'} | ${r.firstReplyMs?.toFixed(0) ?? '–'} | ${r.totalMs.toFixed(0)} | ${r.attempts} | ${r.error ?? ''} |`,
     ),
   ];
+  const prices: Record<string, Prices> = {
+    vertex: { today: VERTEX_EU_PRICES, from2027: afterIntro(VERTEX_EU_PRICES) },
+    ...Object.fromEntries(
+      models.map((m) => [m, { today: OPENAI_EU_PRICES, from2027: OPENAI_EU_PRICES }]),
+    ),
+  };
+  const summaries = summarize(rows, prices);
+  const costs = `## Cost per call\n\nMeans over calls with a receipt. Receipt = the app's own formula (\`llm_calls.cost_micros\`, cache counted at full price; Vertex net of the introductory credit). List = the provider's price page with its cache discount: Vertex today is net of the 50 % credit until 31.12.2026, from 2027 the list price (= today's gross invoice). OpenAI EU incl. the 10 % residency uplift where it applies; no announced change for 2027.\n\n${costTable(summaries).join('\n')}\n\n## Projection\n\nOne operation = one call of each kind (Vertex adds its form-choice call to explain/extraction). Only the production row is measured counts; days are assumptions.\n\n${projection(summaries, MIXES, 20).join('\n')}\n`;
   writeFileSync(
     output,
-    `# Provider benchmark\n\n${rounds} rounds, interleaved with candidate order rotated. Receipt ceiling $${spent.toFixed(5)} (Vertex gross before credits); budget charged including prior $${alreadySpent}: $${charged.toFixed(5)} / $${budget}. Failed/missing receipts retain the conservative reservation; unaffordable calls are recorded and skipped. First partial is gateway output, not network TTFT.\n\n${sizes.join('\n')}\n\n${table.join('\n')}\n\nDirect prices: ${OPENAI_EU_PRICES.source}, ${OPENAI_EU_PRICES.readOn}. Vertex uses twice its net production prices to cover the gross invoice before credits.\n`,
+    `# Provider benchmark\n\n${rounds} rounds, interleaved with candidate order rotated. Receipt ceiling $${spent.toFixed(5)} (Vertex gross before credits); budget charged including prior $${alreadySpent}: $${charged.toFixed(5)} / $${budget}. Failed/missing receipts retain the conservative reservation; unaffordable calls are recorded and skipped. First partial is gateway output, not network TTFT.\n\n${sizes.join('\n')}\n\n${table.join('\n')}\n\nDirect prices: ${OPENAI_EU_PRICES.source}, ${OPENAI_EU_PRICES.readOn}. Vertex uses twice its net production prices to cover the gross invoice before credits.\n\n${costs}`,
   );
   console.log(output);
 }
