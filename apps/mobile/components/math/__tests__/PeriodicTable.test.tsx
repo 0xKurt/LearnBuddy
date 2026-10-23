@@ -34,6 +34,45 @@ describe('PeriodicBody', () => {
   });
 });
 
+describe('the asked element, magnified', () => {
+  it.each([160, 300])(
+    'keeps its number and mass inside its box at %i px (device 17.10.: "11 / 22,99" ran past it)',
+    (width) => {
+      const na: PeriodicFig = {
+        type: 'periodic_table',
+        v: 'main',
+        hl: ['Na'],
+        ask: 'protons',
+        at: 'Na',
+      };
+      const { container } = renderInApp(<PeriodicBody figure={na} width={width} />);
+      const box = Array.from(container.querySelectorAll('rect')).find(
+        (r) => r.getAttribute('rx') === '4',
+      )!;
+      const top = Number(box.getAttribute('y'));
+      const bottom = top + Number(box.getAttribute('height'));
+      const left = Number(box.getAttribute('x'));
+      const right = left + Number(box.getAttribute('width'));
+      // The magnified cell's own texts: drawn in the box's group.
+      const texts = Array.from(box.parentElement?.querySelectorAll('text') ?? []).filter((n) =>
+        /11|22,99/.test(n.textContent ?? ''),
+      );
+      expect(texts.length).toBeGreaterThan(0);
+      for (const n of texts) {
+        const y = Number(n.getAttribute('y'));
+        const size = Number(n.getAttribute('font-size') ?? n.getAttribute('fontSize'));
+        const x = Number(n.getAttribute('x'));
+        const half = ((n.textContent ?? '').length * size * 0.6) / 2;
+        // The glyphs' cap height above the baseline, the baseline itself inside the box.
+        expect(y - size * 0.72).toBeGreaterThanOrEqual(top);
+        expect(y).toBeLessThanOrEqual(bottom);
+        expect(x - half).toBeGreaterThanOrEqual(left);
+        expect(x + half).toBeLessThanOrEqual(right);
+      }
+    },
+  );
+});
+
 describe('describePeriodic', () => {
   it('reads the table, the staircase and the marked cell, not the class asked for', () => {
     const said = describePeriodic(main, t);
