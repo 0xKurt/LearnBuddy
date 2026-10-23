@@ -99,7 +99,7 @@ export async function distressCheck(
     const tz = await learnerTimezone(deps.db, learnerId);
     const r = await callModel(deps, learnerId, localParts(deps.now(), tz).date, {
       purpose: 'safeguard',
-      tier: 'smart',
+      tier: 'fast',
       promptVersion: DISTRESS_PROMPT_VERSION,
       system: DISTRESS_SYSTEM,
       contents: [{ role: 'user', parts: [{ text: said }] }],

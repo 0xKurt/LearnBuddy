@@ -6,6 +6,7 @@
 // requires live verification in Claude Code session (needs a running Postgres)
 
 import { randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
 
 import type {
   AnswerResponse,
@@ -266,6 +267,58 @@ describe.skipIf(!dbReady)('cloze items', () => {
     expect(env.llm.callsFor('safeguard')).toHaveLength(1);
   });
 
+  it.each([false, true])(
+    'overlaps grading and distress detection and awaits both before saving (concern %s, #867)',
+    async (concern) => {
+      const session = await prepare([perfekt()]);
+      const si = session.items[0]!;
+      const marks: Record<string, number> = {};
+      let replied = false;
+      const unchanged = async () => {
+        expect(replied).toBe(false);
+        expect(
+          await env.db.one<{ attempts: number; turns: number }>(
+            `select attempts, (select count(*)::int from practice_turns
+               where session_id = $1 and role = 'learner') as turns
+               from session_items where session_id = $1 and item_id = $2`,
+            [session.id, si.item.id],
+          ),
+        ).toEqual({ attempts: 0, turns: 0 });
+      };
+      env.llm.script('tutor', async () => {
+        marks.gradeStart = performance.now();
+        await delay(concern ? 300 : 150);
+        await unchanged();
+        marks.gradeEnd = performance.now();
+        return { gaps: [{ n: 1, verdict: 'incorrect' }] };
+      });
+      env.llm.script('safeguard', async (req) => {
+        expect(req.tier).toBe('fast');
+        marks.checkStart = performance.now();
+        await delay(concern ? 150 : 300);
+        await unchanged();
+        marks.checkEnd = performance.now();
+        return { concern };
+      });
+      const res = await answer(session, si, ['waren', 'haben', 'gegessen', 'sind', 'schöner']);
+      replied = true;
+      marks.reply = performance.now();
+      expect(res.status).toBe(200);
+      expect(res.body.reply.text).toBe(
+        concern
+          ? t('de', 'safeguarding.concern')
+          : '4 von 5 Lücken stimmen schon. Bei „waren“ passt es noch nicht.',
+      );
+      expect(res.body.session.items[0]?.attempts).toBe(concern ? 0 : 1);
+      expect(env.llm.callsFor('safeguard')).toHaveLength(1);
+      const overlap =
+        Math.min(marks.gradeEnd!, marks.checkEnd!) - Math.max(marks.gradeStart!, marks.checkStart!);
+      console.info(`#867 concern=${concern}: overlap=${Math.round(overlap)}ms`, marks);
+      expect(overlap).toBeGreaterThan(100);
+      expect(marks.reply).toBeGreaterThanOrEqual(Math.max(marks.gradeEnd!, marks.checkEnd!));
+    },
+  );
+
   // #747: code judges these gaps alone, so no tutor ever reads them — the distress check does.
   it.each(['practice', 'test'] as const)(
     'answers distress in a gap with the fixed help answer, in a %s too',
@@ -291,18 +344,25 @@ describe.skipIf(!dbReady)('cloze items', () => {
     },
   );
 
-  it('adds the fixed help line to code’s reply when no check can read the gaps', async () => {
-    const session = await prepare([
-      cloze('Ein Jahr hat ___ Monate, und ein ___ hat sieben Tage.', ['12', 'Woche']),
-    ]);
-    env.llm.script('safeguard', { error: new LlmError('timeout', 'slow') });
-    const res = await answer(session, session.items[0]!, ['11', 'Wochenende']);
-    // Code's judgement stands; the line follows it, because nobody read her words.
-    expect(res.body.verdict).toBe('incorrect');
-    expect(res.body.reply.text).toBe(
-      `Bei „11“ passt es noch nicht. ${t('de', 'safeguarding.unchecked')}`,
-    );
-  });
+  it.each(['timeout', 'unavailable', 'invalid_output', 'blocked'] as const)(
+    'keeps the fixed fail-safe reply when the parallel check throws %s',
+    async (kind) => {
+      const session = await prepare([
+        cloze('Ein Jahr hat ___ Monate, und ein ___ hat sieben Tage.', ['12', 'Woche']),
+      ]);
+      env.llm.script('safeguard', { error: new LlmError(kind, 'check failed') });
+      const res = await answer(session, session.items[0]!, ['11', 'Wochenende']);
+      expect(res.status).toBe(200);
+      expect(res.body.verdict).toBe(kind === 'blocked' ? 'not_an_attempt' : 'incorrect');
+      expect(res.body.reply.text).toBe(
+        kind === 'blocked'
+          ? t('de', 'safeguarding.blocked')
+          : `Bei „11“ passt es noch nicht. ${t('de', 'safeguarding.unchecked')}`,
+      );
+      expect(res.body.session.items[0]?.attempts).toBe(kind === 'blocked' ? 0 : 1);
+      expect(env.llm.callsFor('safeguard')).toHaveLength(1);
+    },
+  );
 
   it('shows the solution after the third miss', async () => {
     const session = await prepare([foto()], 'practice', { name: 'Biologie', kind: 'biology' });
