@@ -5,9 +5,9 @@
 // model or budget degrades the search instead of failing it. Only the model
 // and the embeddings are faked; the database is real.
 //
-// The local test Postgres may be PG14 without pgvector (migration 0054 then
-// builds the schema without the embedding column): vector-dependent tests
-// skip honestly via `materialEmbeddingsReady`, they never pretend to pass.
+// PG16 without pgvector proves the fallback. The focused PG17 + pgvector CI job also
+// runs this file; pgvector-migration.int.test.ts requires the column and cosine HNSW index
+// there, so the vector test cannot silently skip in that job (#862).
 // requires live verification in Claude Code session (needs a running Postgres)
 
 import { randomUUID } from 'node:crypto';

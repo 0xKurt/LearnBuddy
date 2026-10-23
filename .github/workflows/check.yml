@@ -125,6 +125,44 @@ jobs:
       - name: Test
         run: pnpm -F @learnbuddy/api test
 
+  test-pgvector:
+    # PG16 keeps proving the fallback. This short PG17 run exercises 0054's vector DDL
+    # and search, without repeating the full API suite or making live model calls (#862).
+    name: test (PG17 + pgvector, migration + search)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg17-bookworm
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      LB_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      LB_REQUIRE_TEST_DB: '1'
+      LB_REQUIRE_PGVECTOR: '1'
+      LB_TEST_MAX_WORKERS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Migration 0054 and hybrid search (real vectors, scripted embeddings)
+        # A starter-kit core copy has no learning-domain migration or vector search.
+        if: hashFiles('infra/supabase/migrations/0054_hybrid_search.sql') != ''
+        run: >-
+          pnpm -F @learnbuddy/api test
+          src/__tests__/pgvector-migration.int.test.ts
+          src/__tests__/hybrid-search.int.test.ts
+
   test-app:
     # Every other workspace's tests: the app (components and lib), the contracts, maths, the kit.
     name: test (app and packages)
