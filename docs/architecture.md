@@ -2633,6 +2633,13 @@ bekommen, was der erste geschrieben hat, den Systemprompt nochmal bezahlen (5 10
 könnte sich wiederholen; dieselbe Antwort in zwei Teilen kann das nicht. Ergebnis am Endpoint:
 **3,13–4,87 s statt 6,27–7,03 s** (`docs/speed-audit.md` §Ausgabe-Tokens).
 
+Auch der Präfix durchläuft nach dem JSON-Parsing dieselbe LaTeX-Escape-Reparatur
+(`llm/latex.ts`, `repairJsonStrings`) wie die fertige Antwort, bevor er validiert oder gespeichert
+wird (#863). Ein einfacher Backslash in `\text` wird in JSON zum Tabulator; ohne diese Reparatur
+landet er in den ersten gespeicherten Fragen und die App zeigt `5extcm`. Korrekt maskierte
+Kommandos wie `\,` und `\mathrm` bleiben unverändert. Der Integrationstest prüft die gespeicherten
+Fragen vor und nach dem Eintreffen des Rests; der Parser-Test belegt `5extcm` → `5 cm`.
+
 Früh angefangen wird nur, wenn die ersten drei auch die Prüfungen **vor dem Speichern**
 überstehen (`usableItems`, Regel 0) — das Schema allein reicht nicht. Drei Graphen-Fragen, deren
 Graphen nicht zusammenpassen, ergaben sonst „nichts zu lernen" (422), obwohl die vierte gut war
