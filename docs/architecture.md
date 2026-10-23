@@ -6773,7 +6773,8 @@ filled twice throws (in development Fast Refresh replaces it instead);
   public function they can execute or any table without row level security.
 - Deploy checks: `scripts/deploy-check.sh` (CI job `deploy-check`, and before promoting) runs
   `vercel.json` through Vercel's own builder detector and, when given `DATABASE_URL` /
-  `LB_DEPLOY_URL`, checks TLS, region, the app keys' grants and `/v1/health` of a deploy. A
+  `LB_DEPLOY_URL`, checks TLS, region, the app keys' grants, the connected API role against
+  `infra/supabase/templates/api-role.sql`, and `/v1/health` of a deploy. A
   real preview deploy answering `/v1/health` has not been recorded yet.
 - The scheduler trigger chain up to the network (`scheduler-trigger.int.test.ts`): the
   `lb-tick` cron entry, `lb_invoke_tick()` reading Vault and posting to `{lb_api_url}/internal/tick`
@@ -6797,7 +6798,11 @@ filled twice throws (in development Fast Refresh replaces it instead);
   on `main`.
 
 - Deploy checks (`apps/api/scripts/deploy-check.ts`): Vercel's own builder detection, the
-  database's TLS and region, that the app keys can execute nothing and every table has RLS —
+  database's TLS and region, that the app keys can execute nothing and every table has RLS.
+  With the API's own `DATABASE_URL`, effective grants (including inherited/PUBLIC grants) must
+  match `api-role.sql`: LOGIN/BYPASSRLS, public CRUD, sequence and function access, migration
+  reads when that schema exists; no elevated role flags, public DDL/ownership or auth/storage
+  schema access. The check is read-only and diagnoses each missing privilege (#862) —
   and that **every migration on disk is applied** before new code goes live. The last one was
   added after two missing migrations made a learner's voice choice fail with a bare error
   (issues #67, #79): the schema a build expects is part of the build. Production itself says
