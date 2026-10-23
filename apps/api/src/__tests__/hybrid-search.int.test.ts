@@ -20,6 +20,7 @@ import { LlmError, type LlmRequest } from '../llm/gateway.js';
 import { preInjectedPassages, searchMaterials } from '../modules/buddy/connectors/material.js';
 import {
   chunkPassages,
+  indexMaterialPassages,
   materialEmbeddingsReady,
   MAX_PASSAGE_CHARS,
 } from '../modules/materials/passages.js';
@@ -221,8 +222,19 @@ describe.skipIf(!dbReady)('hybrid material search', () => {
     // The fake cannot understand German compounds; the scripted cluster stands in for
     // what the live eval proves with the real model (evals/lookup).
     env.embeddings.meaning(7, 'Bruchrechnung', 'Brüche');
-    await sheet(env, lena.learnerId, 'Brüche rechnen', FRACTIONS);
-    await sheet(env, lena.learnerId, 'Die Römer', ROMANS);
+    const fractions = await sheet(env, lena.learnerId, 'Brüche rechnen', FRACTIONS);
+    const romans = await sheet(env, lena.learnerId, 'Die Römer', ROMANS);
+    // Ranking needs already embedded passages. Since #673 the query vector starts beside
+    // catch-up and is deliberately skipped if no passage is embedded yet (architecture §Speed).
+    for (const materialId of [fractions, romans]) {
+      expect(
+        await indexMaterialPassages(env.deps, {
+          materialId,
+          learnerId: lena.learnerId,
+          timezone: TZ,
+        }),
+      ).toBe('embedded');
+    }
     const hits = await searchMaterials(env.deps, lena.learnerId, TZ, 'Bruchrechnung', 3);
     expect(hits[0]?.title).toBe('Brüche rechnen');
     expect(env.embeddings.calls.some((c) => c.task === 'RETRIEVAL_QUERY')).toBe(true);
