@@ -271,6 +271,29 @@ describe.skipIf(!dbReady)('new practice learns from her mistakes (#871)', () => 
     );
   });
 
+  it('adds code-chosen topic difficulty to the same bounded context, unless she asked for a level', async () => {
+    for (let i = 0; i < 5; i++) await seed('Brüche', { status: 'correct', first: true });
+    const context = await generate();
+    expect(context).toContain('TARGET DIFFICULTY: ["Mathe","Brüche",3]');
+    expect(context).not.toContain('SHAKY:');
+    expect(await generate({ difficulty: 'easier' })).not.toContain('TARGET DIFFICULTY');
+    expect(await generate({ kind: 'test' })).not.toContain('TARGET DIFFICULTY');
+  });
+
+  it('keeps weak-topic evidence and automatic levels within the original context budget', async () => {
+    for (let i = 0; i < 5; i++) {
+      await seed('Brüche', { said: 'zuletzt daneben' });
+      await seed('Winkel', { status: 'correct', first: true });
+    }
+    const context = await generate();
+    expect(context).toContain('SHAKY: ["Mathe","Brüche"]');
+    expect(context).toContain('TARGET DIFFICULTY: ["Mathe","Brüche",1]');
+    expect(context).toContain('TARGET DIFFICULTY: ["Mathe","Winkel",3]');
+    expect(context).toContain('zuletzt daneben');
+    const block = context.split('LEARNING GAPS')[1]!.split("LEARNER'S TEXT:")[0]!.trimEnd();
+    expect(`LEARNING GAPS${block}`.length).toBeLessThanOrEqual(480);
+  });
+
   it('caps history at 480 characters and picks deterministically with a tied app clock', async () => {
     for (let i = 0; i < 8; i++) {
       await seed(`Thema ${i} ${'x'.repeat(65)}`, {

@@ -2422,6 +2422,27 @@ instructions and JSON escaping; the requested topic and source sheets still boun
 questions. No new data is stored, no extra model call is made, and typed lists/homework keep
 their existing context. The static prompt/schema budgets remain unchanged.
 
+**Adaptive difficulty and interleaved review** (#872). The same measured-result reader serves
+selection and the context above. For ordinary practice without an explicit difficulty wish,
+code takes at most ten results per subject/topic from that 60-result window, no older than
+30 days by the app clock. With at least five results, a first-try hit rate below 60% prefers
+one difficulty step below their rounded median; at least 90% prefers one above (clamped to 1–5).
+Otherwise selection stays unchanged. These thresholds are a conservative product heuristic,
+not a proven learning optimum; [research and library decision](https://github.com/0xKurt/LearnBuddy/issues/872#issuecomment-6368723820).
+Existing questions are ranked by distance to that target within the same subject/topic and
+review-priority group; their stored difficulty never changes, and no question is dropped solely
+for its level. Explicit wishes and test/speaking runs retain their rules. Generated practice
+receives the same code-computed targets in the existing 480-character learning context; the
+model's actual adherence requires separate live verification.
+
+Due review questions alternate between structured subject/topic groups before the count is
+cut, deterministically, retaining each group's existing priority. Multipart tasks stay together
+and whole. Unknown topics retain their slots; new questions are not interleaved, and spoken texts
+keep source order.
+`dueOnly` never includes a future or unseen question. The existing `ts-fsrs` scheduler continues
+to decide due dates; its memory difficulty is separate from the task difficulty 1–5. No new
+scheduler, dependency, persisted profile, migration or extra model call is needed.
+
 Where it lives (`modules/practice/`, one use case per file, #313): `service.ts` starts and
 finishes a run, `answer.ts` answers a question in steps of one file each (#311: `answerLoad.ts`
 loads and guards, `answerRules.ts` gives the rules' verdict, `answerSteps.ts` the follow-on and
