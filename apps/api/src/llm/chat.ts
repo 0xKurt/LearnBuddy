@@ -15,7 +15,7 @@ import {
 } from './chat-schema.js';
 import { restoreStrictPartial } from './chat-partial.js';
 import { repairJsonStrings } from './latex.js';
-import { costMicros, type PriceTable } from './pricing.js';
+import { costMicros, priceModel, type PriceTable } from './pricing.js';
 import { assertMedia, type GatewayProfile } from './profile.js';
 import { RetryingGateway } from './retry.js';
 
@@ -64,7 +64,6 @@ function usageOf(
   meta: CompletionUsage,
   started: number,
 ): LlmUsage {
-  const priceModel = model.replace(/-\d{4}-\d{2}-\d{2}$/, '');
   const inputTokens = meta.prompt_tokens;
   const completionTokens = meta.completion_tokens;
   const thoughtTokens = Math.min(
@@ -79,7 +78,7 @@ function usageOf(
     thoughtTokens,
     cachedTokens: meta.prompt_tokens_details?.cached_tokens ?? 0,
     // Like Vertex, recorded cost is a ceiling: retain reported cache hits but take no discount.
-    costMicros: costMicros(prices, priceModel, {
+    costMicros: costMicros(prices, priceModel(model), {
       inputTokens,
       outputTokens,
       thoughtTokens,

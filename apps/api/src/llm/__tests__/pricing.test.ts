@@ -45,7 +45,11 @@ describe('the Vertex EU price table', () => {
 
   it('keeps the net introductory price of 3.6/3.7/3.8 Flash in eu', () => {
     for (const m of ['gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.8-flash']) {
-      expect(VERTEX_EU_PRICES.models[m]).toEqual({ inputPerM: 0.825, outputPerM: 4.125 });
+      expect(VERTEX_EU_PRICES.models[m]).toEqual({
+        inputPerM: 0.825,
+        cachedInputPerM: 0.0825,
+        outputPerM: 4.125,
+      });
     }
   });
 
