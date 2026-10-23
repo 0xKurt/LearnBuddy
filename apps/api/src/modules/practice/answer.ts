@@ -22,7 +22,13 @@ import { judgeByRules, type AnswerCase } from './answerJudge.js';
 import { loadAnswer } from './answerLoad.js';
 import { finishReply } from './answerReply.js';
 import { ruleVerdict } from './answerRules.js';
-import { checkDistress, guardByCode, settle, withHelpLine } from './answerSafeguard.js';
+import {
+  checkDistress,
+  checkDuringGrading,
+  guardByCode,
+  settle,
+  withHelpLine,
+} from './answerSafeguard.js';
 import { followOnAndSteps } from './answerSteps.js';
 import { tutorJudgement } from './answerTutor.js';
 import { judgeEssay } from './essay.js';
@@ -47,7 +53,14 @@ export async function answerItem(
   const hintRequest = opts.hintRequest === true || question;
   const loaded = await loadAnswer(deps, learner, sessionId, input, { question, hintRequest });
   if ('replayed' in loaded) return loaded.replayed;
-  const ruled = { ...loaded, ...(await ruleVerdict(deps, loaded)) };
+  // Both results are held before any reply or answer state is stored (#867, rule 18).
+  const [rules, check] = await Promise.allSettled([
+    ruleVerdict(deps, loaded),
+    checkDuringGrading(deps, loaded),
+  ]);
+  if (rules.status === 'rejected') throw rules.reason;
+  if (check.status === 'rejected') throw check.reason;
+  const ruled = { ...loaded, ...rules.value };
   const c: AnswerCase = { ...ruled, ...(await followOnAndSteps(deps, ruled)) };
   const byCode = c.essay ? null : judgeByRules(c);
   const judgement = c.essay
@@ -56,7 +69,7 @@ export async function answerItem(
         ([essay, found]) => settle(c, found, { judged: essay, claims: [], safeguarded: false }),
       )
     : byCode
-      ? await guardByCode(deps, c, byCode)
+      ? await guardByCode(deps, c, byCode, check.value)
       : await tutorJudgement(deps, c);
   const finished = finishReply(c, judgement);
   const { explained, columnStep } = finished;

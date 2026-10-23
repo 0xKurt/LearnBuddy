@@ -89,7 +89,7 @@ const Config = z
      * VERTEX_MODEL_SMART=eu/gemini-3.8-flash.
      */
     VERTEX_MODEL_SMART: ModelSpec.default('eu/gemini-3.6-flash'),
-    /** Cheaper model for short low-stakes tasks (no feature uses it: the Lite models failed the tutor eval). */
+    /** Cheaper model for separately measured narrow tasks: the distress check (#867), not the tutor. */
     VERTEX_MODEL_FAST: ModelSpec.default('eu/gemini-3.1-flash-lite'),
     /**
      * Text embeddings for the hybrid material search (issue #23). gemini-embedding-001
