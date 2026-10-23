@@ -6,8 +6,26 @@ import { describe, expect, it } from 'vitest';
 
 import { overBudget, PROMPT_BUDGETS } from '../budgets.js';
 import { variants } from '../inventory.js';
+import { mistakeContext } from '../../../src/modules/practice/mistakeContext.js';
 
 describe('prompt budgets (#651)', () => {
+  it('caps the entire mistake context at 480 characters, including JSON escaping (#871)', () => {
+    expect(mistakeContext([])).toBeNull();
+    for (const long of ['x'.repeat(4000), '\\"\n\t'.repeat(1000)]) {
+      const rows = Array.from({ length: 60 }, (_, n) => ({
+        subject: long,
+        topic: `${n} ${long}`,
+        prompt: long,
+        said: long,
+        wrong_at: new Date('2026-10-23T10:00:00Z'),
+      }));
+      const context = mistakeContext(rows)!;
+      expect(context).toContain('LEARNING GAPS');
+      expect(context.length).toBeLessThanOrEqual(480);
+      expect(mistakeContext(rows)).toBe(context);
+      expect(context.split('\n').filter((line) => line.startsWith('SHAKY:'))).toHaveLength(2);
+    }
+  });
   it('every call the app sends stays within its purpose’s budget', () => {
     expect(overBudget(variants())).toEqual([]);
   });

@@ -2409,6 +2409,19 @@ zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort)
 
 ## Practice
 
+**New runs learn from mistakes** (#871). Before generating a practice or practice test,
+`practice/mistakeContext.ts` reads the learner's latest measured `session_items` result per
+question, within the requested subject and any source sheet/session topics. From the 60 most
+recent results it selects at most two shaky topics by frequency, then recency, and at most two
+latest wrong `practice_turns` answers for those topics. A later first-try success clears that
+question's old miss. An open question counts only after a graded attempt (ordered by the session's
+last activity until it closes). Skipped, untouched, disputed, self-rated, archived and free-text
+questions are not evidence; homework is not a source. Item, session, turn, subject and material ownership
+are checked in the query. The explain/form-choice context adds at most 480 characters, including
+instructions and JSON escaping; the requested topic and source sheets still bound the new
+questions. No new data is stored, no extra model call is made, and typed lists/homework keep
+their existing context. The static prompt/schema budgets remain unchanged.
+
 Where it lives (`modules/practice/`, one use case per file, #313): `service.ts` starts and
 finishes a run, `answer.ts` answers a question in steps of one file each (#311: `answerLoad.ts`
 loads and guards, `answerRules.ts` gives the rules' verdict, `answerSteps.ts` the follow-on and
