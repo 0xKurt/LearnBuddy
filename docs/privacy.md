@@ -335,6 +335,20 @@ live/model/audio gates: [provider decision](decisions/openai-eu-2026-10-23.md).
   Android a recorder must run to meter, and its cache file is deleted the moment Buddy stops.
   Only when her voice is detected does Buddy stop and the normal listening above begin. Not on
   iOS, not with a screen reader on, and only on the conversation screen she opened.
+- **OpenAI Ireland — proposed processor (#893, not activated by this change):** the opt-in
+  speech, recorded-audio and embedding adapters use only `https://eu.api.openai.com/v1`;
+  startup rejects another host, path, scheme, query or credentials, and HTTP redirects are
+  rejected. TTS sends the sentence being read; transcription/pronunciation sends the recording
+  and necessary task context; embeddings send passage/query text. No learner/account identifier
+  is passed as a provider `user` field. Audio conversion and transcripts remain request-memory
+  only; generated speech uses the existing 24-hour cache, and vectors remain attached to their
+  passages with the existing deletion cascade. Failed-provider logs never include its echoed
+  request body. A regional hostname alone does **not** establish contractual EU processing,
+  retention or zero-data-retention eligibility. Before activation: record the DPA with OpenAI
+  Ireland, verify the project's EU residency and endpoint/model-specific retention approvals,
+  update the processor/consent information, and complete the quality gates in
+  `docs/measurements/eu-speech-search-2026-10-23.md`. Google remains listed until all active
+  functions have moved and the old credentials/services are retired.
 - **Google Cloud Text-to-Speech** (Buddy's natural voice, ADR 0008): off unless
   `SPEECH_BACKEND=google`; only the EU endpoint `eu-texttospeech.googleapis.com` is accepted
   (`apps/api/src/config.ts`). **What is sent:** one sentence at a time of what the app reads

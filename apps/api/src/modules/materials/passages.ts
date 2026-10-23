@@ -11,7 +11,8 @@ import type { Deps } from '../../deps.js';
 import type { Db } from '../../lib/db.js';
 import { localParts } from '../../lib/time.js';
 import { callEmbedding } from '../../llm/call.js';
-import { vectorLiteral } from '../../llm/embeddings.js';
+import { vectorLiteral, type EmbeddingGateway } from '../../llm/embeddings.js';
+import { embeddingColumn, embeddingPending } from '../../embeddings/storage.js';
 
 /** What indexing needs; both the reading job (full Deps) and the search path satisfy it. */
 export type PassageDeps = Pick<Deps, 'db' | 'embeddings' | 'now'>;
@@ -73,19 +74,25 @@ function splitOversized(paragraph: string): string[] {
  * pgvector is available — Supabase yes, the local PG14 test server no; migration
  * 0054). Cached per Db instance; the schema never changes at runtime.
  */
-const embeddingColumn = new WeakMap<object, Promise<boolean>>();
+const embeddingColumns = new WeakMap<object, Map<string, Promise<boolean>>>();
 
-export function materialEmbeddingsReady(db: Db): Promise<boolean> {
-  let cached = embeddingColumn.get(db);
+export function materialEmbeddingsReady(db: Db, gateway?: EmbeddingGateway): Promise<boolean> {
+  const column = embeddingColumn(gateway);
+  let columns = embeddingColumns.get(db);
+  if (!columns) {
+    columns = new Map();
+    embeddingColumns.set(db, columns);
+  }
+  let cached = columns.get(column);
   if (!cached) {
     cached = db
       .maybeOne(
         `select 1 as one from information_schema.columns
-          where table_schema = 'public' and table_name = 'material_passages'
-            and column_name = 'embedding'`,
+       where table_schema = 'public' and table_name = 'material_passages' and column_name = $1`,
+        [column],
       )
       .then((row) => row !== null);
-    embeddingColumn.set(db, cached);
+    columns.set(column, cached);
   }
   return cached;
 }
@@ -148,12 +155,13 @@ async function embedMaterialPassages(
   deps: PassageDeps,
   input: { materialId: string; learnerId: string; timezone: string },
 ): Promise<boolean> {
-  if (!deps.embeddings.available || !(await materialEmbeddingsReady(deps.db))) return false;
+  if (!deps.embeddings.available || !(await materialEmbeddingsReady(deps.db, deps.embeddings)))
+    return false;
   const rows = await deps.db.query<{ id: string; text: string }>(
     `select id, text from material_passages
-      where material_id = $1 and learner_id = $2 and embedding is null
+      where material_id = $1 and learner_id = $2 and ${embeddingPending(deps.embeddings, 3)}
       order by position`,
-    [input.materialId, input.learnerId],
+    [input.materialId, input.learnerId, deps.embeddings.model, deps.embeddings.dimensions],
   );
   if (rows.length === 0) return true;
   const day = localParts(deps.now(), input.timezone).date;
@@ -163,12 +171,20 @@ async function embedMaterialPassages(
     day,
     { task: 'RETRIEVAL_DOCUMENT', texts: rows.map((r) => r.text) },
   );
+  if (
+    result.usage.model !== deps.embeddings.model ||
+    result.vectors.length !== rows.length ||
+    result.vectors.some(
+      (v) => v.length !== deps.embeddings.dimensions || v.some((n) => !Number.isFinite(n)),
+    )
+  )
+    throw new Error('Embedding identity or dimensions do not match');
   for (const [i, row] of rows.entries()) {
     const vector = result.vectors[i];
     if (!vector) return false;
     await deps.db.query(
-      `update material_passages set embedding = $2::vector where id = $1 and embedding is null`,
-      [row.id, vectorLiteral(vector)],
+      `update material_passages set ${embeddingColumn(deps.embeddings)} = $2::vector, ${embeddingColumn(deps.embeddings)}_model = $5, ${embeddingColumn(deps.embeddings)}_dimensions = $6 where id = $1 and learner_id = $3 and text = $4 and ${embeddingPending(deps.embeddings, 5)}`,
+      [row.id, vectorLiteral(vector), input.learnerId, row.text, result.usage.model, vector.length],
     );
   }
   return true;
@@ -200,12 +216,12 @@ export async function catchUpPassages(
     }
     if (missing.length === 0 && deps.embeddings.available) {
       // Rows exist but vectors may not (an earlier budget stop): finish one sheet per search.
-      if (!(await materialEmbeddingsReady(deps.db))) return;
+      if (!(await materialEmbeddingsReady(deps.db, deps.embeddings))) return;
       const unembedded = await deps.db.maybeOne<{ material_id: string }>(
         `select material_id from material_passages
-          where learner_id = $1 and embedding is null
+          where learner_id = $1 and ${embeddingPending(deps.embeddings, 2)}
           order by created_at desc limit 1`,
-        [learnerId],
+        [learnerId, deps.embeddings.model, deps.embeddings.dimensions],
       );
       if (unembedded) {
         await embedMaterialPassages(deps, {

@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { openAIClient } from './openai-client.js';
 import type { Config } from '../config.js';
 import { ChatGateway } from './chat.js';
 import { OPENAI_EU_PRICES } from './openai-config.js';
@@ -38,18 +38,9 @@ export const OPENAI_PROFILE: GatewayProfile = {
 
 export class OpenAIGateway extends ChatGateway {
   constructor(config: Config, fetch?: typeof globalThis.fetch) {
-    if (!config.OPENAI_API_KEY) throw new Error('Direct API configuration is incomplete');
     const model = { smart: config.OPENAI_MODEL_SMART, fast: config.OPENAI_MODEL_FAST };
     super({
-      client: new OpenAI({
-        apiKey: config.OPENAI_API_KEY,
-        baseURL: config.OPENAI_BASE_URL,
-        organization: null,
-        project: null,
-        fetch,
-        maxRetries: 0,
-        fetchOptions: { redirect: 'error' },
-      }),
+      client: openAIClient(config, fetch),
       profile: OPENAI_PROFILE,
       model,
     });

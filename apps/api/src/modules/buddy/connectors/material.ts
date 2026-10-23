@@ -18,6 +18,9 @@ import type { Deps } from '../../../deps.js';
 import type { Db } from '../../../lib/db.js';
 import { localParts } from '../../../lib/time.js';
 import { callEmbedding } from '../../../llm/call.js';
+import { clearVectorDistances } from '../../../embeddings/evidence.js';
+import { embeddingColumn, embeddingMatches } from '../../../embeddings/storage.js';
+import type { EmbeddingGateway } from '../../../llm/embeddings.js';
 import { vectorLiteral } from '../../../llm/embeddings.js';
 import { catchUpPassages, materialEmbeddingsReady } from '../../materials/passages.js';
 import { prefixQuery, trigramWords } from './search.js';
@@ -299,10 +302,14 @@ async function newestMaterials(
 const QUERY_EMBED_TIMEOUT_MS = 800;
 
 /** Whether any passage of hers has its embedding (only asked where the column exists). */
-async function hasEmbeddedPassages(db: SearchDeps['db'], learnerId: string): Promise<boolean> {
+async function hasEmbeddedPassages(
+  db: SearchDeps['db'],
+  learnerId: string,
+  embeddings: EmbeddingGateway,
+): Promise<boolean> {
   const row = await db.maybeOne(
-    `select 1 as one from material_passages where learner_id = $1 and embedding is not null limit 1`,
-    [learnerId],
+    `select 1 as one from material_passages where learner_id = $1 and ${embeddingMatches(embeddings, 2)} limit 1`,
+    [learnerId, embeddings.model, embeddings.dimensions],
   );
   return row !== null;
 }
@@ -318,9 +325,10 @@ async function vectorCandidates(
   timezone: string,
   raw: string,
 ): Promise<Candidate[] | null> {
-  if (!deps.embeddings.available || !(await materialEmbeddingsReady(deps.db))) return null;
+  if (!deps.embeddings.available || !(await materialEmbeddingsReady(deps.db, deps.embeddings)))
+    return null;
   // Nothing of hers is embedded yet: no query embedding to pay for and wait on (#673, A-F6).
-  if (!(await hasEmbeddedPassages(deps.db, learnerId))) return null;
+  if (!(await hasEmbeddedPassages(deps.db, learnerId, deps.embeddings))) return null;
   let queryVector: number[];
   try {
     const day = localParts(deps.now(), timezone).date;
@@ -330,7 +338,8 @@ async function vectorCandidates(
       timeoutMs: QUERY_EMBED_TIMEOUT_MS,
     });
     const v = res.vectors[0];
-    if (!v) return null;
+    if (!v || res.usage.model !== deps.embeddings.model || v.length !== deps.embeddings.dimensions)
+      return null;
     queryVector = v;
   } catch {
     return null;
@@ -339,16 +348,22 @@ async function vectorCandidates(
   const rows = await deps.db.query<{ material_id: string; text: string; dist: number }>(
     `select material_id, text, dist from (
        select distinct on (p.material_id) p.material_id, p.text,
-              (p.embedding <=> $3::vector)::float8 as dist
+              (p.${embeddingColumn(deps.embeddings)} <=> $3::vector)::float8 as dist
          from material_passages p
          join materials m on m.id = p.material_id
         where p.learner_id = $1 and m.status = 'ready' and m.archived_at is null
-          and p.embedding is not null
-        order by p.material_id, p.embedding <=> $3::vector
+          and ${embeddingMatches(deps.embeddings, 4, 'p.')}
+        order by p.material_id, p.${embeddingColumn(deps.embeddings)} <=> $3::vector
      ) best
      order by dist
      limit $2`,
-    [learnerId, LIST_SIZE, vectorLiteral(queryVector)],
+    [
+      learnerId,
+      LIST_SIZE,
+      vectorLiteral(queryVector),
+      deps.embeddings.model,
+      deps.embeddings.dimensions,
+    ],
   );
   return rows.map((r) => ({ materialId: r.material_id, passage: r.text, vectorDist: r.dist }));
 }
@@ -399,16 +414,6 @@ export function fuseRrf(fts: Candidate[], trgm: Candidate[], vector: Candidate[]
 const MAX_PREINJECT_CHARS = 1200;
 /** Passages pre-injected at most, so one sheet never floods the context. */
 const MAX_PREINJECT_SHEETS = 2;
-/**
- * Vector-only evidence must be close to count as "clearly matching". Measured live
- * (apps/api/evals/lookup/retrieval.ts, gemini-embedding-001@768d, 2026-09-29,
- * 14 queries × 7 sheets): the right sheet sits at cosine distance 0.215–0.370,
- * the best wrong sheet at ≥ 0.315 — the ranges overlap, so no threshold is clean.
- * 0.35 keeps 13 of 14 true matches and lets 2 of 14 near-miss wrong sheets in;
- * a wrong pre-injected sheet costs a little context (title visibly named), a
- * missed true one costs the answer — so the cut leans open.
- */
-const VECTOR_PREINJECT_MAX_DIST = 0.35;
 
 /**
  * The learner's own words, run through the hybrid search: passages of sheets with
@@ -431,8 +436,12 @@ export async function preInjectedPassages(
     // message is a whole sentence, and its function words ("die", "ist", "was")
     // prefix-match almost any German sheet — rank still uses that list, the
     // decision to inject does not.
+    const vectorEvidence = clearVectorDistances(
+      deps.embeddings.space,
+      gathered.fused.flatMap((f) => (f.vectorDist === null ? [] : [f.vectorDist])),
+    );
     const clear = gathered.fused
-      .filter((f) => f.trgm || (f.vectorDist !== null && f.vectorDist <= VECTOR_PREINJECT_MAX_DIST))
+      .filter((f) => f.trgm || (f.vectorDist !== null && vectorEvidence.has(f.vectorDist)))
       .slice(0, MAX_PREINJECT_SHEETS);
     if (clear.length === 0) return null;
     const meta = await materialMeta(

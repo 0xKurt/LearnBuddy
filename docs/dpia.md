@@ -104,6 +104,19 @@ Nutzerobjekt, laufender Request, Freitextanhänge, Konsolen- und Netz-Breadcrumb
 E-Mail-Adressen werden vorher entfernt — Screenshots und Session-Replay sind ausdrücklich aus
 (`lib/observability/scrub.ts`, unit-getestet). Rechtliche Prüfung vor dem Einschalten, §7).
 
+**Vorgeschlagener weiterer Auftragsverarbeiter (#893, 23.10.2026): OpenAI Ireland.**
+Sprache, Aussprache und Materialsuche können mit expliziten Backend-Schaltern den EU-Endpunkt
+nutzen; die bisherigen Voreinstellungen bleiben erhalten. Nicht-EU-Basis-URLs scheitern beim
+Start, Weiterleitungen werden abgelehnt. Aufnahmen und Transkripte bleiben im Arbeitsspeicher;
+TTS-Cache und Vektoren folgen den bestehenden Löschfristen. Vor Freigabe sind AVV/DPA,
+EU-Projekteinstellung und modell-/endpunktspezifische Aufbewahrung bzw. ZDR-Freigaben zu belegen
+(§7, R4); der Hostname allein ist kein Nachweis. Google entfällt erst nach vollständigem Wechsel.
+Zusätzliche Qualitätsrisiken: verfälschte Aussprache-Rückmeldung, verlorene Zögerlaute oder
+Notfallwörter beim Wechsel der Erkennung. Gegenmaßnahmen: unveränderte Code-Bewertung und
+Schutzpfade, Fehler-/Abbruchtests, Vergleich mit freigegebenen menschlichen Aufnahmen vor
+Aktivierung. Derzeit offen: dieser Vergleich, Hörtest aller Stimmen und die geforderte
+Latenzgleichheit der Sprachausgabe; siehe Messbericht vom 23.10.2026.
+
 **Zwischenspeicher beim Modellanbieter (neu in Fassung 4).** Der Prompt ist so geschichtet,
 dass Gemini den gleichbleibenden Anfang aufeinanderfolgender Aufrufe wiederverwenden kann
 (implizites Caching; `modules/buddy/context.ts`, Messung in `docs/architecture.md` §Speed,

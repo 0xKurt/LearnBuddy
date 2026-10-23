@@ -68,6 +68,7 @@ export async function transcribe(
   try {
     const res = await callModel(deps, learner.id, day, {
       purpose: 'transcribe',
+      audioLanguage: input.lang ?? learner.locale,
       // The lite model invented words ("Dativ" → "Mathematik") in live checks.
       tier: 'smart',
       promptVersion: TRANSCRIBE_PROMPT_VERSION,

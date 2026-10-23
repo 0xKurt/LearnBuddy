@@ -11,6 +11,7 @@
 import type { VoiceName } from '@learnbuddy/shared-types/contracts';
 import { GoogleAuth } from 'google-auth-library';
 
+import { mainSpeechLocale } from './locales.js';
 import type { Config } from '../config.js';
 import { outcomeOfStatus } from '../lib/outcome.js';
 import { ensureCredentialsFile } from '../llm/vertex.js';
@@ -46,24 +47,9 @@ const LOCALES = new Set([
   'uk-UA',
 ]);
 
-/** A region the provider does not have is read in the language's main one ("de-AT" → "de-DE"). */
-const BY_LANGUAGE: Record<string, string> = {
-  de: 'de-DE',
-  en: 'en-GB',
-  fr: 'fr-FR',
-  es: 'es-ES',
-  it: 'it-IT',
-  ru: 'ru-RU',
-  nl: 'nl-NL',
-  pl: 'pl-PL',
-  pt: 'pt-BR',
-  tr: 'tr-TR',
-  uk: 'uk-UA',
-};
-
 export function chirp3Locale(locale: string): string | null {
   if (LOCALES.has(locale)) return locale;
-  return BY_LANGUAGE[locale.split('-')[0] ?? ''] ?? null;
+  return mainSpeechLocale(locale);
 }
 
 type TokenSource = { getAccessToken(): Promise<string | null | undefined> };
@@ -99,6 +85,9 @@ export class GoogleSpeech implements SpeechGateway {
   }
 
   async synthesize(input: SpeechInput): Promise<SpeechAudio> {
+    if (input.signal?.aborted) throw new SpeechError('cancelled', 'Caller stopped waiting');
+    const deadline = AbortSignal.timeout(input.timeoutMs);
+    const signal = input.signal ? AbortSignal.any([input.signal, deadline]) : deadline;
     let token: string | null | undefined;
     try {
       token = await this.auth.getAccessToken();
@@ -108,6 +97,7 @@ export class GoogleSpeech implements SpeechGateway {
     if (!token) throw new SpeechError('unavailable', 'no access token for the speech provider');
     let res: Response;
     try {
+      signal.throwIfAborted();
       res = await fetch(`https://${this.config.SPEECH_ENDPOINT}/v1/text:synthesize`, {
         method: 'POST',
         headers: {
@@ -123,9 +113,10 @@ export class GoogleSpeech implements SpeechGateway {
           voice: { languageCode: input.locale, name: this.voiceId(input.voice, input.locale) },
           audioConfig: { audioEncoding: 'MP3', speakingRate: input.rate },
         }),
-        signal: AbortSignal.timeout(input.timeoutMs),
+        signal,
       });
     } catch (err) {
+      if (input.signal?.aborted) throw new SpeechError('cancelled', 'Caller stopped waiting');
       const name = (err as { name?: string } | null)?.name;
       if (name === 'AbortError' || name === 'TimeoutError')
         throw new SpeechError('timeout', 'speech call timed out');
