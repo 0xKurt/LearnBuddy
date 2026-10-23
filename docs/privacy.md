@@ -248,12 +248,18 @@ Key inventory, rotation order and verification for the owner: [key-rotation.md](
   §Background work): from its start it cannot be cancelled (409 `deletion_running`) and the
   account takes no more changes (the app then shows only "Dein Konto wird gerade gelöscht" with
   a sign-out, `app/deleting.tsx`); it deletes the learner's rows table by table (the domain's
-  first, children first, then the core's; the job keeps the table it is at by name), then the auth user
+  first, children first, then the core's; completed table names are committed with each deletion
+  batch, so a changed registry cannot skip new tables or repeat completed ones), then the auth user
   and the account. It is never given up: failures are retried with backoff, and `GET /health`
   reports a deletion more than a day overdue. The photos go to a Storage deletion queue first:
   the account deletion does **not** wait for Storage (D-9); the queue removes them in chunks of
   at most 1 000 and retries until they are gone (monitored the same way). A repeated request
   while a deletion is scheduled keeps the date and makes sure a job is planned.
+- In-flight deletion payloads from before #862 (an index or a single table name) safely rescan
+  the content tables once on resume: deletes find only remaining rows. The existing job JSON
+  gains `completed_tables`; no schema migration is needed. The old `table` name remains for
+  compatibility with older workers. A partially emptied table stays pending, including across
+  retries; an empty remainder stays complete even when the run stops before the auth stage.
 - Deleting a sheet or a question in the app deletes its content (D-7), see the table above. The
   conversation with Buddy is not changed by it: what she wrote there stays until the account is
   deleted.
