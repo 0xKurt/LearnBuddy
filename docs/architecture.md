@@ -1123,20 +1123,27 @@ keeps it (the provider may have done and billed the work).
 
 `LLM_BACKEND=openai` selects `OpenAIGateway`; Vertex remains the default. `OPENAI_API_KEY`,
 `OPENAI_BASE_URL` (EU-only, default `https://eu.api.openai.com/v1`) and `OPENAI_MODEL_SMART` /
-`OPENAI_MODEL_FAST` configure it. Azure is no longer the planned provider. Its configuration
-adapter remains, sharing the single `ChatGateway` transport, schema conversion, streaming,
-error/abort mapping and cost accounting. Both reject PDF/audio; direct image limits are 20
-images / 20 MB Base64 combined. Redirects and SDK retries are disabled.
+`OPENAI_MODEL_FAST` configure it. Azure's adapter, configuration and tests have been removed.
+All provider limits (accepted MIME types, images, inline bytes, schema properties/depth/enums/
+strings), cache mode, escape normalization and prices live in `GatewayProfile`. The direct
+adapter accepts JPEG/PNG and inline PDFs as Chat Completions `file` parts, with 20 images /
+20 MB Base64 combined. Redirects and SDK retries are disabled. Audio remains a separate workstream.
 
-Buddy stages at most six ordered act functions and ends with `respond`, all strict and with
-parallel calls disabled. Reassembly restores the original turn shape; existing Zod, lookup,
-policy and atomic context-fence handling remain authoritative. Function calls have no side
-effects. Explain/extraction use JSON mode plus the original model Zod contract and the offered
-schema, with one repair at most. They buffer partial output until validation succeeds, so a
-repair cannot replace questions already handed over. Other partial JSON and respond streams
-remain incremental. All internal rounds share the timeout/output budget, and all reported
-usage/cost and request counts survive failures and retries. Cached tokens are recorded, but
-costs use the full-input ceiling; reasoning is never billed twice.
+The real Buddy, explain and extraction schemas were accepted as strict `response_format`
+JSON on the EU endpoint (23.10.2026, #893). Each decision is one request; there are no staged
+function calls or JSON-repair requests. Original Zod constraints, lookups, permissions and the
+atomic context fence remain authoritative. Strict nullable fields are restored to optional
+fields before validation; partial JSON streams incrementally for every purpose. The previous
+function path failed with HTTP 400 because the selected model does not combine function tools
+and reasoning in Chat Completions. HTTP rejection keeps its status (`HTTP_400`); safety refusal
+remains `blocked`. Raw provider responses are logged only by the synthetic benchmark, never
+for learner calls.
+
+The shared parametrised adapter contract covers Fake, Vertex and the direct adapter: request
+shape, refusal, cancellation, error receipts, partial JSON and media preflight. Cancellation
+stops further partial callbacks and retains reported cost. Provider SDK imports are guarded
+outside the adapter folders, with only the two explicitly listed existing eval imports allowed.
+Cached tokens are recorded without assuming a discount; reasoning is never billed twice.
 
 See [the dated decision](decisions/openai-eu-2026-10-23.md) for corrected direct schema limits
 (5,000 properties / 10 levels), EU prices, model deprecations, proposed processor and unresolved

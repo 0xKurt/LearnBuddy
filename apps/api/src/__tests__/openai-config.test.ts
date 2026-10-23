@@ -13,7 +13,7 @@ const base = {
 const direct = { ...base, LLM_BACKEND: 'openai', OPENAI_API_KEY: 'not-a-real-key' };
 
 describe('direct EU gateway is opt-in', () => {
-  it('selects the direct gateway with EU defaults and no Google or Azure credentials', () => {
+  it('selects the direct gateway with EU defaults and no other provider credentials', () => {
     const config = loadConfig(direct);
     expect(config).toMatchObject({
       OPENAI_BASE_URL: 'https://eu.api.openai.com/v1',

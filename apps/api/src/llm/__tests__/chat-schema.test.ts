@@ -1,3 +1,4 @@
+import { OPENAI_PROFILE } from '../openai.js';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -8,10 +9,10 @@ import { strictSchema, restoreStrictJson, assertStrictSchema } from '../chat-sch
 import { toJsonSchema } from '../json-schema.js';
 
 registerLearning();
-const assertAzureSchema = (schema: Parameters<typeof assertStrictSchema>[0]) =>
-  assertStrictSchema(schema, { properties: 100, depth: 5 });
+const assertDirectSchema = (schema: Parameters<typeof assertStrictSchema>[0]) =>
+  assertStrictSchema(schema, OPENAI_PROFILE.structuredOutput);
 
-describe('strict Azure schemas retain the original contract', () => {
+describe('strict direct schemas retain the original contract', () => {
   it('requires optional fields as nullable without mutating names, order or descriptions', () => {
     const contract = z.object({
       properties: z.string().optional().describe('Original meaning'),
@@ -56,7 +57,7 @@ describe('strict Azure schemas retain the original contract', () => {
     };
     expect(TutorDecision.parse(restoreStrictJson(schema, wire)).concern).toBe(false);
     expect(strictSchema(schema).required).toContain('concern');
-    expect(() => assertAzureSchema(strictSchema(schema))).not.toThrow();
+    expect(() => assertDirectSchema(strictSchema(schema))).not.toThrow();
   });
 
   it('chooses the matching union branch before removing optional nulls', () => {
@@ -85,16 +86,16 @@ describe('strict Azure schemas retain the original contract', () => {
     expect(contract.safeParse(value).success).toBe(false);
   });
 
-  it('refuses the real Buddy schema rather than removing tools to fit the published limit', () => {
-    expect(() => assertAzureSchema(strictSchema(buddyPrompt().turnStepSchema))).toThrow(/100/);
+  it('accepts the real Buddy schema without removing tools', () => {
+    expect(() => assertDirectSchema(strictSchema(buddyPrompt().turnStepSchema))).not.toThrow();
   });
 
-  it('accepts five container levels and refuses six or a root union', () => {
+  it('accepts ten container levels and refuses eleven or a root union', () => {
     const wrap = (schema: z.ZodTypeAny) => z.object({ child: schema });
     let schema: z.ZodTypeAny = z.string();
-    for (let i = 0; i < 5; i++) schema = wrap(schema);
-    expect(() => assertAzureSchema(strictSchema(toJsonSchema(schema)))).not.toThrow();
-    expect(() => assertAzureSchema(strictSchema(toJsonSchema(wrap(schema))))).toThrow(/nesting/);
-    expect(() => assertAzureSchema({ anyOf: [{ type: 'object' }] })).toThrow(/root/);
+    for (let i = 0; i < 10; i++) schema = wrap(schema);
+    expect(() => assertDirectSchema(strictSchema(toJsonSchema(schema)))).not.toThrow();
+    expect(() => assertDirectSchema(strictSchema(toJsonSchema(wrap(schema))))).toThrow(/nesting/);
+    expect(() => assertDirectSchema({ anyOf: [{ type: 'object' }] })).toThrow(/root/);
   });
 });

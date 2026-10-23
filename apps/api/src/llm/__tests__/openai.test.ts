@@ -1,22 +1,16 @@
-// requires live verification in Claude Code session (only HTTP is faked; no model calls).
+// requires live verification in Claude Code session (only HTTP is faked).
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-
 import { loadConfig } from '../../config.js';
-import { buddyPrompt, turnSchemasFor } from '../../modules/buddy/prompts.js';
-import { turnDecisionSchema, toolsFor } from '../../modules/buddy/registry.js';
+import { buddyPrompt } from '../../modules/buddy/prompts.js';
+import { turnDecisionSchema } from '../../modules/buddy/registry.js';
 import { replyProgress } from '../../modules/buddy/stream.js';
 import { registerLearning } from '../../modules/learning/register.js';
 import { setSchemaForModel } from '../../modules/practice/setProfiles.js';
 import { StudyExtraction } from '../../modules/materials/sources.js';
 import { DEMO_WORKSHEET } from '../../testing/scenarios/core-loop.js';
-import {
-  strictSchema,
-  assertStrictSchema,
-  restoreStrictJson,
-  schemaObject,
-} from '../chat-schema.js';
-import { OpenAIGateway } from '../openai.js';
+import { strictSchema, assertStrictSchema } from '../chat-schema.js';
+import { OpenAIGateway, OPENAI_PROFILE } from '../openai.js';
 import { toJsonSchema } from '../json-schema.js';
 import { request, usage, completion, http, sse, chunk } from './chat-fixtures.js';
 
@@ -29,338 +23,168 @@ const config = loadConfig({
   LLM_BACKEND: 'openai',
   OPENAI_API_KEY: 'not-a-real-key',
 });
-const respond = {
+const answer = {
   lookups: [],
   concern: false,
   also_asked: false,
+  actions: [],
   reply: 'Hallo',
   options: null,
   asks_permission: false,
 };
-const toolCall = (name: string, args: unknown, id = 'call_1') => ({
-  id,
-  type: 'function',
-  function: { name, arguments: JSON.stringify(args) },
-});
-const toolResponse = (name: string, args: unknown, id?: string) => ({
-  ...completion('tool_calls'),
-  choices: [
-    {
-      index: 0,
-      finish_reason: 'tool_calls',
-      message: { role: 'assistant', content: null, tool_calls: [toolCall(name, args, id)] },
-    },
-  ],
-});
 const turn = () =>
-  request({ purpose: 'buddy_turn', schema: buddyPrompt().turnStepSchema, maxOutputTokens: 2048 });
+  request({
+    purpose: 'buddy_turn',
+    schema: buddyPrompt().turnStepSchema,
+    maxOutputTokens: 2048,
+    thinking: 'minimal',
+  });
 
-describe('direct gateway decisions', () => {
-  it('offers exactly the real act functions plus respond, all strict, without a large response_format', async () => {
-    const fetch = http(toolResponse('respond', respond));
+describe('direct strict decisions (#893)', () => {
+  it('avoids the measured HTTP 400 for function tools with reasoning on the real Buddy schema', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      // EU receipt 23.10.2026: tools + low reasoning is rejected before inference.
+      return body.tools && body.reasoning_effort !== 'none'
+        ? Response.json(
+            {
+              error: {
+                type: 'invalid_request_error',
+                param: 'reasoning_effort',
+                code: null,
+                message:
+                  "Function tools with reasoning_effort are not supported for gpt-5.4-mini in /v1/chat/completions. To use function tools, use /v1/responses or set reasoning_effort to 'none'.",
+              },
+            },
+            { status: 400 },
+          )
+        : Response.json(completion('stop', JSON.stringify(answer)));
+    });
     const result = await new OpenAIGateway(config, fetch).generate(turn());
     const body = JSON.parse(String(fetch.mock.calls[0]![1]?.body));
-    expect(body.tools.map((t: { function: { name: string } }) => t.function.name)).toEqual([
-      ...toolsFor('turn'),
-      'respond',
-    ]);
     expect(body).toMatchObject({
-      tool_choice: 'required',
-      parallel_tool_calls: false,
+      reasoning_effort: 'low',
       store: false,
       prompt_cache_retention: 'in_memory',
+      response_format: {
+        type: 'json_schema',
+        json_schema: { strict: true, schema: strictSchema(turn().schema) },
+      },
     });
-    expect(body).not.toHaveProperty('response_format');
-    for (const tool of body.tools) {
-      expect(tool.function.strict).toBe(true);
-      expect(() =>
-        assertStrictSchema(tool.function.parameters, { properties: 100, depth: 5 }),
-      ).not.toThrow();
-    }
-    expect(result.json).toEqual({ ...respond, actions: [] });
+    expect(body).not.toHaveProperty('tools');
     expect(turnDecisionSchema().safeParse(result.json).success).toBe(true);
+    expect(result.attempts).toBe(1);
   });
 
-  it('stages ordered acts, restores optional nulls, and sums all rounds without double billing reasoning', async () => {
-    const fetch = http(toolResponse('respond', respond));
-    fetch
-      .mockResolvedValueOnce(Response.json(toolResponse('open_area', { area: 'library' })))
-      .mockResolvedValueOnce(
-        Response.json(toolResponse('open_area', { area: 'practice' }, 'call_2')),
-      );
-    const result = await new OpenAIGateway(config, fetch).generate(turn());
-    const parsed = turnDecisionSchema().parse(result.json);
-    expect(parsed.actions).toEqual([
-      { tool: 'open_area', args: { area: 'library' } },
-      { tool: 'open_area', args: { area: 'practice' } },
-    ]);
-    expect(result).toMatchObject({
-      attempts: 3,
-      usage: {
-        costMicros: 3960,
-        inputTokens: 3000,
-        outputTokens: 210,
-        thoughtTokens: 90,
-        cachedTokens: 1800,
-      },
-    });
-    const second = JSON.parse(String(fetch.mock.calls[1]![1]?.body));
-    expect(second.messages.at(-1)).toMatchObject({
-      role: 'tool',
-      content: '{"status":"staged","applied":false}',
-    });
-    expect(second.max_completion_tokens).toBe(1948);
-  });
-
-  it('respects a narrowed offered-tool schema and rejects unknown, unavailable and malformed functions', async () => {
-    for (const response of [
-      toolResponse('forget', {}),
-      toolResponse('unknown', {}),
-      toolResponse('open_area', { area: 'bogus' }),
-      toolResponse('respond', { ...respond, concern: 'false' }),
-    ]) {
-      const fetch = http(response);
-      await expect(
-        new OpenAIGateway(config, fetch).generate({
-          ...turn(),
-          schema: turnSchemasFor(['open_area']).step,
-        }),
-      ).rejects.toMatchObject({ kind: 'invalid_output' });
-      expect(fetch).toHaveBeenCalledTimes(1);
-    }
-  });
-
-  it('rejects missing respond, parallel calls and an interrupted function stream', async () => {
-    const multi = toolResponse('respond', respond);
-    multi.choices[0]!.message.tool_calls.push(toolCall('open_area', { area: 'library' }));
-    for (const response of [completion(), multi]) {
-      await expect(
-        new OpenAIGateway(config, http(response)).generate(turn()),
-      ).rejects.toMatchObject({ kind: 'invalid_output' });
-    }
+  it('streams the real turn incrementally without function assembly', async () => {
+    const raw = JSON.stringify(answer),
+      cut = raw.indexOf('Hallo') + 2;
     const fetch = vi.fn<typeof globalThis.fetch>(async () =>
-      sse(
-        [
-          {
-            ...chunk(''),
-            choices: [
-              {
-                index: 0,
-                delta: { tool_calls: [{ index: 0, ...toolCall('respond', respond) }] },
-                finish_reason: null,
-              },
-            ],
-          },
-        ],
-        false,
-      ),
+      sse([chunk(raw.slice(0, cut)), chunk(raw.slice(cut), 'stop'), { choices: [], usage }]),
     );
-    await expect(
-      new OpenAIGateway(config, fetch).generate({ ...turn(), onPartial: () => {} }),
-    ).rejects.toMatchObject({ kind: 'invalid_output' });
-  });
-
-  it('stops at six acts plus respond, forcing the final call and retaining usage on failure', async () => {
-    const fetch = http(toolResponse('open_area', { area: 'library' }));
-    await expect(new OpenAIGateway(config, fetch).generate(turn())).rejects.toMatchObject({
-      kind: 'invalid_output',
-      attempts: 7,
-      usage: { inputTokens: 7000, costMicros: 9240 },
-    });
-    expect(fetch).toHaveBeenCalledTimes(7);
-    expect(JSON.parse(String(fetch.mock.calls[6]![1]?.body)).tool_choice).toEqual({
-      type: 'function',
-      function: { name: 'respond' },
-    });
-  });
-
-  it('marks missing receipts as unknown cost, including after a paid staged act', async () => {
-    const missing = { ...toolResponse('respond', respond), usage: undefined };
-    const fetch = http(missing);
-    fetch.mockResolvedValueOnce(Response.json(toolResponse('open_area', { area: 'library' })));
-    await expect(new OpenAIGateway(config, fetch).generate(turn())).rejects.toMatchObject({
-      kind: 'invalid_output',
-      finishReason: 'missing_usage',
-      attempts: 2,
-      usage: { inputTokens: 1000, costMicros: 1320 },
-    });
-    await expect(new OpenAIGateway(config, http(missing)).generate(turn())).rejects.toMatchObject({
-      finishReason: 'missing_usage',
-      usage: null,
-    });
-  });
-
-  it('reassembles fragmented function arguments as safe cumulative turn JSON', async () => {
-    const raw = JSON.stringify(respond);
-    const cut = raw.indexOf('Hallo') + 2;
-    const events = [
-      {
-        choices: [
-          {
-            index: 0,
-            delta: {
-              tool_calls: [
-                {
-                  index: 0,
-                  id: 'call',
-                  function: { name: 'respond', arguments: raw.slice(0, cut) },
-                },
-              ],
-            },
-            finish_reason: null,
-          },
-        ],
-      },
-      {
-        choices: [
-          {
-            index: 0,
-            delta: { tool_calls: [{ index: 0, function: { arguments: raw.slice(cut) } }] },
-            finish_reason: 'tool_calls',
-          },
-        ],
-      },
-      { choices: [], usage },
-    ];
     const partials: string[] = [];
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => sse(events));
     const result = await new OpenAIGateway(config, fetch).generate({
       ...turn(),
-      onPartial: (raw) => partials.push(raw),
+      onPartial: (s) => partials.push(s),
     });
     expect(replyProgress(partials[0]!, new Set())).toMatchObject({
       text: 'Ha',
       done: false,
       speakable: true,
     });
-    expect(replyProgress(partials[1]!, new Set())).toMatchObject({ text: 'Hallo', done: true });
-    expect(result.json).toEqual({ ...respond, actions: [] });
-    expect(result.usage.inputTokens).toBe(1000);
+    expect(result.json).toEqual(answer);
   });
 
-  it.each(['gpt-4.1-mini', 'gpt-4.1-nano'] as const)(
-    'omits reasoning effort for %s and uses its own regional price',
-    async (model) => {
-      const fetch = http({ ...completion(), model: `${model}-2025-04-14` });
-      const result = await new OpenAIGateway(
-        { ...config, OPENAI_MODEL_FAST: model },
-        fetch,
-      ).generate(request({ tier: 'fast', thinking: 'high' }));
-      const body = JSON.parse(String(fetch.mock.calls[0]![1]?.body));
-      expect(body).not.toHaveProperty('reasoning_effort');
-      expect(body.temperature).toBe(0.3);
-      expect(result.usage.costMicros).toBe(model === 'gpt-4.1-mini' ? 560 : 140);
+  it.each([
+    [
+      'explain',
+      setSchemaForModel('practice', null),
+      { usable: true, title: 'Brüche', subject: null, items: [] },
+    ],
+    [
+      'extraction',
+      StudyExtraction,
+      { ...DEMO_WORKSHEET, source: 'sheet', marked: [], other_subject: null },
+    ],
+  ] as const)(
+    'sends the whole real %s schema in one strict request',
+    async (purpose, contract, value) => {
+      const json = contract.parse(value),
+        schema = toJsonSchema(contract);
+      const fetch = http(completion('stop', JSON.stringify(json)));
+      expect(() =>
+        assertStrictSchema(strictSchema(schema), OPENAI_PROFILE.structuredOutput),
+      ).not.toThrow();
+      const result = await new OpenAIGateway(config, fetch).generate(
+        request({ purpose, schema, validateOutput: (v) => contract.safeParse(v).success }),
+      );
+      expect(result.json).toEqual(json);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body)).response_format).toEqual({
+        type: 'json_schema',
+        json_schema: { name: 'learnbuddy', strict: true, schema: strictSchema(schema) },
+      });
     },
   );
-});
 
-describe('deep JSON contracts', () => {
-  const contract = z.object({
-    rows: z.array(
-      z.object({ child: z.object({ nested: z.object({ value: z.number().int().min(2) }) }) }),
-    ),
-  });
-  const good = { rows: [{ child: { nested: { value: 2 } } }] };
-  const deep = () =>
-    request({
-      purpose: 'explain',
-      schema: toJsonSchema(contract),
-      validateOutput: (json) => contract.safeParse(json).success,
-      maxOutputTokens: 1000,
-    });
-
-  it('repairs once using the exact Zod bounds, buffering streaming until validation', async () => {
-    const partials: string[] = [];
-    const fetch = vi.fn<typeof globalThis.fetch>();
-    fetch
-      .mockResolvedValueOnce(
-        sse([
-          chunk(JSON.stringify({ rows: [{ child: { nested: { value: 1 } } }] }), 'stop'),
-          { choices: [], usage },
-        ]),
-      )
-      .mockResolvedValueOnce(sse([chunk(JSON.stringify(good), 'stop'), { choices: [], usage }]));
-    const result = await new OpenAIGateway(config, fetch).generate({
-      ...deep(),
-      onPartial: (raw) => partials.push(raw),
-    });
-    expect(result.json).toEqual(good);
-    expect(partials).toEqual([JSON.stringify(good)]);
-    expect(result).toMatchObject({ attempts: 2, usage: { costMicros: 2640 } });
-    expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body)).response_format).toEqual({
-      type: 'json_object',
-    });
-  });
-
-  it('does not publish malformed data after the repair, lose costs or repair a refusal', async () => {
-    const fetch = http(completion('stop', '{}'));
-    // Non-stream request to isolate the repair limit.
-    await expect(new OpenAIGateway(config, fetch).generate(deep())).rejects.toMatchObject({
-      kind: 'invalid_output',
-      attempts: 2,
-      usage: { inputTokens: 2000 },
-    });
-    expect(fetch).toHaveBeenCalledTimes(2);
-    const refused = http(completion('stop', '', 'held back'));
-    await expect(new OpenAIGateway(config, refused).generate(deep())).rejects.toMatchObject({
-      kind: 'blocked',
-      attempts: 1,
-    });
-    expect(refused).toHaveBeenCalledTimes(1);
-  });
-
-  it('requires a domain validator and shares the token budget between repair rounds', async () => {
-    const fetch = http(completion('stop', '{}'));
+  it('keeps domain validation but never spends another request on JSON repair', async () => {
+    const contract = z.object({ value: z.number().int().min(2) });
+    const fetch = http(completion('stop', '{"value":1}'));
     await expect(
-      new OpenAIGateway(config, fetch).generate({ ...deep(), validateOutput: undefined }),
-    ).rejects.toMatchObject({ kind: 'refused' });
-    expect(fetch).not.toHaveBeenCalled();
-    await expect(
-      new OpenAIGateway(config, fetch).generate({ ...deep(), maxOutputTokens: 100 }),
-    ).rejects.toMatchObject({ kind: 'invalid_output', finishReason: 'MAX_TOKENS', attempts: 1 });
+      new OpenAIGateway(config, fetch).generate(
+        request({
+          purpose: 'explain',
+          schema: toJsonSchema(contract),
+          validateOutput: (v) => contract.safeParse(v).success,
+          maxOutputTokens: 1000,
+        }),
+      ),
+    ).rejects.toMatchObject({ kind: 'invalid_output', attempts: 1, usage: { inputTokens: 1000 } });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the real explain/extraction contracts and nested practice data intact', async () => {
-    const generated = setSchemaForModel('practice', null).parse({
-      usable: true,
-      title: 'Brüche',
-      subject: null,
-      items: [],
+  it('keeps HTTP request rejection distinct from safety refusal in diagnostics', async () => {
+    await expect(
+      new OpenAIGateway(
+        config,
+        http({ error: { code: null, param: 'reasoning_effort' } }, 400),
+      ).generate(request()),
+    ).rejects.toMatchObject({
+      kind: 'refused',
+      finishReason: 'HTTP_400',
+      message: 'provider rejected request (400)',
     });
-    const study = StudyExtraction.parse({
-      ...DEMO_WORKSHEET,
-      source: 'sheet',
-      marked: [],
-      other_subject: null,
-    });
-    for (const [purpose, schema, json] of [
-      ['explain', setSchemaForModel('practice', null), generated],
-      ['extraction', StudyExtraction, study],
-    ] as const) {
-      const fetch = http(completion('stop', JSON.stringify(json)));
-      const result = await new OpenAIGateway(config, fetch).generate(
-        request({
-          purpose,
-          schema: toJsonSchema(schema),
-          validateOutput: (value) => schema.safeParse(value).success,
-          maxOutputTokens: 1000,
-        }),
-      );
-      expect(schema.safeParse(result.json).success).toBe(true);
-    }
   });
-});
 
-it('checks the actual turn budget and round-trips optional versus explicit nulls', () => {
-  const schema = buddyPrompt().turnStepSchema;
-  const strict = strictSchema(schema);
-  expect(() => assertStrictSchema(strict, { properties: 5000, depth: 10 })).not.toThrow();
-  expect(schemaObject(strict.properties)).toBe(true);
-  expect(
-    restoreStrictJson(
-      toJsonSchema(z.object({ optional: z.number().optional(), explicit: z.number().nullable() })),
-      { optional: null, explicit: null },
-    ),
-  ).toEqual({ explicit: null });
+  it('sends inline PDFs as file content, preserving accompanying text and images', async () => {
+    const fetch = http();
+    await new OpenAIGateway(config, fetch).generate(
+      request({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: 'Read this worksheet' },
+              { inlineData: { mimeType: 'application/pdf', data: 'JVBERi0=' } },
+              { inlineData: { mimeType: 'image/jpeg', data: 'YQ==' } },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body)).messages[1].content).toEqual([
+      { type: 'text', text: 'Read this worksheet' },
+      {
+        type: 'file',
+        file: { filename: 'material.pdf', file_data: 'data:application/pdf;base64,JVBERi0=' },
+      },
+      { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,YQ==', detail: 'high' } },
+    ]);
+  });
+
+  it('marks missing receipts as unknown cost', async () => {
+    await expect(
+      new OpenAIGateway(config, http({ ...completion(), usage: undefined })).generate(request()),
+    ).rejects.toMatchObject({ finishReason: 'missing_usage', usage: null, attempts: 1 });
+  });
 });

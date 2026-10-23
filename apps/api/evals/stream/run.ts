@@ -2,7 +2,7 @@
 // the live model: when the first bytes come, when the first words of the reply
 // could be shown or spoken, when the reply is complete, and when the whole
 // answer (actions and all) is there — which is when code can check and apply it.
-// Needs LLM_BACKEND=vertex or azure, provider variables and a local Postgres.
+// Needs a configured LLM_BACKEND, provider variables and a local Postgres.
 //   cd apps/api && npx tsx evals/stream/run.ts [rounds]
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 

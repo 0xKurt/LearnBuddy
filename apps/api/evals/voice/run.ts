@@ -1,6 +1,6 @@
 // Live check of speech to text (Vertex) with espeak-ng recordings: German chat
 // message, spoken numbers and fractions in answer mode, a French answer.
-// Needs LLM_BACKEND=vertex or azure, provider variables, a local Postgres and espeak-ng.
+// Needs a configured LLM_BACKEND, provider variables, a local Postgres and espeak-ng.
 //   cd apps/api && npx tsx evals/voice/run.ts
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 

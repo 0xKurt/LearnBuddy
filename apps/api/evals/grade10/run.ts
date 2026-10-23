@@ -264,7 +264,7 @@ function section(title: string, criteria: Criteria, cases: readonly Judged[]): s
 
 async function main(): Promise<void> {
   if (config.LLM_BACKEND === 'disabled')
-    throw new Error('a model backend is required (LLM_BACKEND=vertex or azure)');
+    throw new Error('a model backend is required (a configured LLM_BACKEND)');
   if (!(await testDatabaseAvailable())) throw new Error('a local Postgres is required');
   const explained = await explanations();
   const { judged: tasked, counts } = await tasks();

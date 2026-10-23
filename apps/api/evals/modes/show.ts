@@ -1,7 +1,7 @@
 // Live walk through the learning modes (Vertex) for a person to read: practice
 // on a topic, typed vocabulary, speaking sentences, homework help (typed and
 // photographed), a worksheet photo. Prints what the model produced.
-// Needs LLM_BACKEND=vertex or azure, provider variables and a local Postgres.
+// Needs a configured LLM_BACKEND, provider variables and a local Postgres.
 //   cd apps/api && npx tsx evals/modes/show.ts [practice|vocab|speak|help|photo]
 // (the photo steps use test-results/web/worksheet.jpg from scripts/web-walkthrough.sh)
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)

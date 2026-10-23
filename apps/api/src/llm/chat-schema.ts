@@ -1,4 +1,5 @@
 // Chat Completions strict wire schema; the domain's zod contract and prompt remain unchanged.
+import type { GatewayProfile } from './profile.js';
 import { LlmError, type JsonSchema } from './gateway.js';
 import { schemaProperties } from './schemaBudget.js';
 
@@ -108,20 +109,21 @@ export function restoreStrictJson(schema: JsonSchema, value: unknown): unknown {
   return value;
 }
 
-/** Provider-specific limits; strict function parameters use these same limits. */
+/** Provider-specific limits from the selected profile. */
 export function assertStrictSchema(
   schema: JsonSchema,
-  limits: { properties: number; depth: number },
+  limits: GatewayProfile['structuredOutput'],
 ): void {
   if (schema.type !== 'object' || schema.anyOf)
     throw new LlmError('refused', 'strict schema requires an object root');
-  if (schemaProperties(schema) > limits.properties)
-    throw new LlmError('refused', `strict schema exceeds ${limits.properties} properties`);
+  if (schemaProperties(schema) > limits.maxSchemaProperties)
+    throw new LlmError('refused', `strict schema exceeds ${limits.maxSchemaProperties} properties`);
   let enums = 0;
   let strings = 0;
   const walk = (node: JsonSchema, parents: number): void => {
     const depth = parents + (node.type === 'object' || node.type === 'array' ? 1 : 0);
-    if (depth > limits.depth) throw new LlmError('refused', 'strict schema exceeds nesting limit');
+    if (depth > limits.maxSchemaDepth)
+      throw new LlmError('refused', 'strict schema exceeds nesting limit');
     if (Array.isArray(node.enum)) {
       enums += node.enum.length;
       const length = node.enum.reduce<number>(
@@ -129,7 +131,7 @@ export function assertStrictSchema(
         0,
       );
       strings += length;
-      if (node.enum.length > 250 && length > 15_000)
+      if (node.enum.length > limits.largeEnumThreshold && length > limits.maxLargeEnumChars)
         throw new LlmError('refused', 'strict enum string limit');
     }
     if (schemaObject(node.properties))
@@ -141,6 +143,6 @@ export function assertStrictSchema(
     for (const branch of branches(node)) walk(branch, depth);
   };
   walk(schema, 0);
-  if (enums > 1000 || strings > 120_000)
+  if (enums > limits.maxEnumValues || strings > limits.maxSchemaStringChars)
     throw new LlmError('refused', 'strict schema enum/string limit');
 }

@@ -1,7 +1,7 @@
 // "Lena's week": a 12-year-old (grade 6) talks to Buddy the way kids write —
 // short, typos, no punctuation, mixed topics — against the live model.
 // Prints every reply and what Buddy did, for a person to judge.
-// Needs LLM_BACKEND=vertex or azure, provider variables and a local Postgres.
+// Needs a configured LLM_BACKEND, provider variables and a local Postgres.
 //   cd apps/api && npx tsx evals/lena/day.ts
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 

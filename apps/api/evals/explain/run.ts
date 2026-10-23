@@ -82,7 +82,7 @@ async function main(): Promise<void> {
     ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
   });
   if (config.LLM_BACKEND === 'disabled')
-    throw new Error('a model backend is required (LLM_BACKEND=vertex or azure)');
+    throw new Error('a model backend is required (a configured LLM_BACKEND)');
   if (!(await testDatabaseAvailable())) throw new Error('a local Postgres is required');
   const vertex = llmGateway(config);
 

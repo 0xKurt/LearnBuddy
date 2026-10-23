@@ -3,7 +3,7 @@
 // a deployed API adds both) plus the model calls behind it from llm_calls.
 // Budget: an answer checked within 1.5 s, Buddy's reply within 3 s
 // (docs/architecture.md §Speed).
-// Needs LLM_BACKEND=vertex or azure, provider variables, a local Postgres and espeak-ng.
+// Needs a configured LLM_BACKEND, provider variables, a local Postgres and espeak-ng.
 //   cd apps/api && npx tsx evals/speed/run.ts [rounds]
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 

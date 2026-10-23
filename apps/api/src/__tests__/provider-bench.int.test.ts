@@ -22,7 +22,7 @@ describe.skipIf(!hasDb)('provider benchmark workloads', () => {
         [
           '--import',
           'tsx',
-          'scripts/bench-azure-vs-gemini.ts',
+          'scripts/bench-providers.ts',
           '--provider',
           'openai',
           '--dry',

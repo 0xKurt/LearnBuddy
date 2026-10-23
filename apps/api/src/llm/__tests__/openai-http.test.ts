@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import { loadConfig } from '../../config.js';
-import { AzureOpenAIGateway } from '../azure.js';
 import { OpenAIGateway } from '../openai.js';
 import { request, usage, completion, http, sse, chunk } from './chat-fixtures.js';
 import { toJsonSchema } from '../json-schema.js';
@@ -14,39 +13,17 @@ const config = loadConfig({
   SUPABASE_URL: 'http://unused.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
-  LLM_BACKEND: 'azure',
-  AZURE_OPENAI_PRICES: JSON.stringify({
-    source: 'https://example.test/fictional-test-prices',
-    readOn: '2026-10-23',
-    models: {
-      'gpt-5.4': { inputPerM: 2, outputPerM: 8 },
-      'gpt-5.4-mini': { inputPerM: 0.5, outputPerM: 2 },
-    },
-  }),
-  AZURE_OPENAI_ENDPOINT: 'https://lb-test.openai.azure.com',
-  AZURE_OPENAI_KEY: 'not-a-real-key',
-  AZURE_OPENAI_DEPLOYMENT: 'buddy',
-  AZURE_OPENAI_DEPLOYMENT_FAST: 'small',
-  AZURE_OPENAI_REGION: 'swedencentral',
-  AZURE_OPENAI_DEPLOYMENT_TYPE: 'DataZoneStandard',
+  LLM_BACKEND: 'openai',
+  OPENAI_API_KEY: 'not-a-real-key',
 });
-describe.each(['azure', 'openai'] as const)('%s HTTP gateway', (provider) => {
-  const direct = loadConfig({
-    DATABASE_URL: config.DATABASE_URL,
-    SUPABASE_URL: config.SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY: config.SUPABASE_SERVICE_ROLE_KEY,
-    ADMIN_TOKEN_SECRET: config.ADMIN_TOKEN_SECRET,
-    LLM_BACKEND: 'openai',
-    OPENAI_API_KEY: 'not-a-real-key',
-  });
-  const createGateway = (fetch: typeof globalThis.fetch) =>
-    provider === 'azure' ? new AzureOpenAIGateway(config, fetch) : new OpenAIGateway(direct, fetch);
-  const smart = provider === 'azure' ? 'buddy' : 'gpt-5.4-mini';
-  const fast = provider === 'azure' ? 'small' : 'gpt-5.4-nano';
+describe('direct HTTP gateway', () => {
+  const createGateway = (fetch: typeof globalThis.fetch) => new OpenAIGateway(config, fetch);
+  const smart = 'gpt-5.4-mini',
+    fast = 'gpt-5.4-nano';
   it.each([
-    ['gpt-5.4-2026-03-05', provider === 'azure' ? 2800 : 1320],
-    ['gpt-5.4-mini-2026-03-17', provider === 'azure' ? 700 : 1320],
-    ['unknown-model', provider === 'azure' ? 2800 : 1320],
+    ['gpt-5.4-2026-03-05', 1320],
+    ['gpt-5.4-mini-2026-03-17', 1320],
+    ['unknown-model', 1320],
   ])(
     'prices %s independently of the deployment alias without double billing reasoning',
     async (model, expected) => {
@@ -81,7 +58,7 @@ describe.each(['azure', 'openai'] as const)('%s HTTP gateway', (provider) => {
           contents: [
             {
               role: 'user',
-              parts: Array.from({ length: provider === 'azure' ? 11 : 21 }, () => ({
+              parts: Array.from({ length: 21 }, () => ({
                 inlineData: { mimeType: 'image/png' as const, data: 'YQ==' },
               })),
             },
@@ -95,10 +72,7 @@ describe.each(['azure', 'openai'] as const)('%s HTTP gateway', (provider) => {
           schema: {
             type: 'object',
             properties: Object.fromEntries(
-              Array.from({ length: provider === 'azure' ? 101 : 5001 }, (_, i) => [
-                String(i),
-                { type: 'string' },
-              ]),
+              Array.from({ length: 5001 }, (_, i) => [String(i), { type: 'string' }]),
             ),
           },
         }),
@@ -121,11 +95,7 @@ describe.each(['azure', 'openai'] as const)('%s HTTP gateway', (provider) => {
       }),
     );
     const [url, init] = fetch.mock.calls[0]!;
-    expect(String(url)).toBe(
-      provider === 'azure'
-        ? 'https://lb-test.openai.azure.com/openai/v1/chat/completions'
-        : 'https://eu.api.openai.com/v1/chat/completions',
-    );
+    expect(String(url)).toBe('https://eu.api.openai.com/v1/chat/completions');
     expect(init?.redirect).toBe('error');
     expect(new Headers(init?.headers).get('authorization')).toBe('Bearer not-a-real-key');
     const body = JSON.parse(String(init?.body));
@@ -169,18 +139,18 @@ describe.each(['azure', 'openai'] as const)('%s HTTP gateway', (provider) => {
     });
   });
 
-  it.skipIf(provider !== 'azure')(
-    'supports an explicitly configured dated Azure API version',
-    async () => {
-      const fetch = http();
-      await new AzureOpenAIGateway(
-        { ...config, AZURE_OPENAI_API_VERSION: '2025-04-01-preview' },
+  it.each(['gpt-4.1-mini', 'gpt-4.1-nano'] as const)(
+    'omits reasoning for %s and prices its reported snapshot',
+    async (model) => {
+      const fetch = http({ ...completion(), model: `${model}-2025-04-14` });
+      const result = await new OpenAIGateway(
+        { ...config, OPENAI_MODEL_FAST: model },
         fetch,
-      ).generate(request());
-      expect(String(fetch.mock.calls[0]![0])).toBe(
-        'https://lb-test.openai.azure.com/openai/deployments/buddy/chat/completions?api-version=2025-04-01-preview',
-      );
-      expect(new Headers(fetch.mock.calls[0]![1]?.headers).get('api-key')).toBe('not-a-real-key');
+      ).generate(request({ tier: 'fast', thinking: 'high' }));
+      const body = JSON.parse(String(fetch.mock.calls[0]![1]?.body));
+      expect(body).not.toHaveProperty('reasoning_effort');
+      expect(body.temperature).toBe(0.3);
+      expect(result.usage.costMicros).toBe(model === 'gpt-4.1-mini' ? 560 : 140);
     },
   );
 
@@ -300,18 +270,15 @@ describe.each(['azure', 'openai'] as const)('%s HTTP gateway', (provider) => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it.each(['audio/mp4', 'application/pdf'] as const)(
-    'refuses unsupported %s before HTTP',
-    async (mimeType) => {
-      const fetch = http();
-      await expect(
-        createGateway(fetch).generate(
-          request({
-            contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: 'YQ==' } }] }],
-          }),
-        ),
-      ).rejects.toMatchObject({ kind: 'refused' });
-      expect(fetch).not.toHaveBeenCalled();
-    },
-  );
+  it.each(['audio/mp4'] as const)('refuses unsupported %s before HTTP', async (mimeType) => {
+    const fetch = http();
+    await expect(
+      createGateway(fetch).generate(
+        request({
+          contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: 'YQ==' } }] }],
+        }),
+      ),
+    ).rejects.toMatchObject({ kind: 'refused' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

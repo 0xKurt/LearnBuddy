@@ -27,7 +27,7 @@ import { outcomeOfStatus } from '../lib/outcome.js';
 import { LlmError, type LlmRequest, type LlmResult, type LlmUsage, TRUNCATED } from './gateway.js';
 import { repairJsonStrings } from './latex.js';
 import { costMicros, VERTEX_EU_PRICES } from './pricing.js';
-import type { GatewayProfile, Thinking } from './profile.js';
+import { assertMedia, type GatewayProfile, type Thinking } from './profile.js';
 import { RetryingGateway } from './retry.js';
 import { MAX_SCHEMA_PROPERTIES } from './schemaBudget.js';
 
@@ -43,6 +43,22 @@ export const VERTEX_PROFILE: GatewayProfile = {
   // "The total request size limit is 20 MB" for inline data, sent base64 (Vertex AI Gemini input
   // file requirements, read 16.10.2026, #688).
   maxInlineBytes: 20_000_000,
+  acceptedMimeTypes: new Set([
+    'image/jpeg',
+    'image/png',
+    'application/pdf',
+    'audio/mp4',
+    'audio/m4a',
+    'audio/mpeg',
+    'audio/wav',
+    'audio/webm',
+    'audio/aac',
+  ]),
+  // Application limit: one material has at most 20 pages.
+  maxImages: 20,
+  cache: 'implicit',
+  repairJsonStrings: true,
+  prices: VERTEX_EU_PRICES,
   structuredOutput: {
     keywords: new Set([
       'type',
@@ -57,6 +73,11 @@ export const VERTEX_PROFILE: GatewayProfile = {
     keepsPropertyOrder: true,
     streamsPartialJson: true,
     maxSchemaProperties: MAX_SCHEMA_PROPERTIES,
+    maxSchemaDepth: Number.POSITIVE_INFINITY,
+    maxEnumValues: Number.POSITIVE_INFINITY,
+    maxSchemaStringChars: Number.POSITIVE_INFINITY,
+    largeEnumThreshold: Number.POSITIVE_INFINITY,
+    maxLargeEnumChars: Number.POSITIVE_INFINITY,
   },
 };
 
@@ -222,7 +243,10 @@ export class VertexGateway extends RetryingGateway {
   /** One client per location (the EU multi-region "eu" serves models europe-west4 doesn't). */
   private readonly clients = new Map<string, GoogleGenAI>();
 
-  constructor(private readonly config: Config) {
+  constructor(
+    private readonly config: Config,
+    private readonly createClient?: (location: string) => GoogleGenAI,
+  ) {
     super();
     ensureCredentialsFile(config);
   }
@@ -230,11 +254,13 @@ export class VertexGateway extends RetryingGateway {
   private clientFor(location: string): GoogleGenAI {
     let c = this.clients.get(location);
     if (!c) {
-      c = new GoogleGenAI({
-        vertexai: true,
-        project: this.config.GOOGLE_CLOUD_PROJECT,
-        location,
-      });
+      c =
+        this.createClient?.(location) ??
+        new GoogleGenAI({
+          vertexai: true,
+          project: this.config.GOOGLE_CLOUD_PROJECT,
+          location,
+        });
       this.clients.set(location, c);
     }
     return c;
@@ -242,6 +268,7 @@ export class VertexGateway extends RetryingGateway {
 
   /** One single call to the provider, bounded by the slice of the budget it was given. */
   protected async attempt(req: LlmRequest, timeoutMs: number): Promise<LlmResult> {
+    assertMedia(this.profile, req);
     const { location, model } = splitModelSpec(
       modelFor(this.config, req),
       this.config.GOOGLE_VERTEX_LOCATION,
@@ -250,6 +277,15 @@ export class VertexGateway extends RetryingGateway {
     let response: GenerateContentResponse;
     const params = paramsFor(req, model, timeoutMs);
     let streamedText: string | null = null;
+    let receipt: GenerateContentResponse | null = null;
+    const abort = () => {
+      if (params.config.abortSignal.aborted)
+        throw new LlmError(
+          req.signal?.aborted ? 'cancelled' : 'timeout',
+          'model call stopped',
+          receipt ? usageOf(model, receipt, Date.now() - started) : null,
+        );
+    };
     try {
       if (req.onPartial) {
         // The same call, streamed: the text so far goes to onPartial; the last chunk
@@ -259,24 +295,45 @@ export class VertexGateway extends RetryingGateway {
         for await (const chunk of await this.clientFor(location).models.generateContentStream(
           params,
         )) {
-          last = chunk;
+          if (chunk.usageMetadata) receipt = chunk;
+          abort();
+          // A trailing usage-only chunk must not erase the final candidate/finish reason.
+          if (chunk.candidates?.length) last = chunk;
+          const blocked = chunk.candidates?.[0]?.finishReason;
+          if (blocked && blocked !== FinishReason.STOP && blocked !== FinishReason.MAX_TOKENS)
+            continue;
           const piece = chunk.text;
           if (piece) {
             text += piece;
             req.onPartial(text);
+            abort();
           }
         }
         if (!last) throw new LlmError('blocked', 'no candidate returned');
         response = last;
         streamedText = text;
+        if (!last.candidates?.[0]?.finishReason)
+          throw new LlmError(
+            'invalid_output',
+            'stream ended without a finish reason',
+            receipt ? usageOf(model, receipt, Date.now() - started) : null,
+          );
       } else {
         response = await this.clientFor(location).models.generateContent(params);
+        receipt = response;
       }
+      abort();
     } catch (err) {
-      if (err instanceof LlmError) throw err;
-      throw classify(err);
+      abort();
+      const failure = err instanceof LlmError ? err : classify(err);
+      throw new LlmError(
+        failure.kind,
+        failure.message,
+        receipt ? usageOf(model, receipt, Date.now() - started) : failure.usage,
+        failure.finishReason,
+      );
     }
-    const usage = usageOf(model, response, Date.now() - started);
+    const usage = usageOf(model, receipt, Date.now() - started);
 
     const candidate = response.candidates?.[0];
     if (!candidate) throw new LlmError('blocked', 'no candidate returned', usage);
@@ -292,7 +349,12 @@ export class VertexGateway extends RetryingGateway {
       throw new LlmError('invalid_output', 'empty output', usage);
     }
     try {
-      return { json: repairJsonStrings(JSON.parse(text)), usage };
+      return {
+        json: this.profile.repairJsonStrings
+          ? repairJsonStrings(JSON.parse(text))
+          : JSON.parse(text),
+        usage,
+      };
     } catch {
       throw new LlmError('invalid_output', 'output is not valid JSON', usage);
     }

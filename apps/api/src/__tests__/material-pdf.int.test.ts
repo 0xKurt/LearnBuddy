@@ -11,6 +11,7 @@ import type { MaterialView } from '@learnbuddy/shared-types/contracts';
 import { PDFDocument } from 'pdf-lib';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { OPENAI_PROFILE } from '../llm/openai.js';
 import { VERTEX_PROFILE } from '../llm/vertex.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -75,66 +76,70 @@ describe.skipIf(!dbReady)('worksheets as PDF', () => {
   });
   afterEach(() => env.closeChecked());
 
-  it('reads a PDF and a photo as one sheet: its pages count, the model gets the PDF', async () => {
-    const created = await reserve(lena, ['application/pdf', 'image/jpeg']);
-    expect(created.uploads.map((u) => u.path.split('.').at(-1))).toEqual(['pdf', 'jpg']);
-    env.storage.put(created.uploads[0]!.path, await pdfOf(3));
-    env.storage.put(created.uploads[1]!.path);
-    env.llm.script('extraction', {
-      json: sheet([
-        { page: 1, read: 'all', problem: null },
-        { page: 2, read: 'none', problem: 'not_material' },
-        { page: 3, read: 'all', problem: null },
-        { page: 4, read: 'none', problem: 'not_material' },
-      ]),
-    });
-    const id = created.material.id;
-    // Tom cannot send her material.
-    expect((await tom.api.post(`/materials/${id}/submit`)).status).toBe(404);
-    const submitted = await lena.api.post<MaterialView>(`/materials/${id}/submit`);
-    expect(submitted.status).toBe(202);
-    expect(submitted.body).toMatchObject({ status: 'queued', photo_count: 4 });
-    // A repeat (the answer was lost) changes nothing.
-    expect((await lena.api.post(`/materials/${id}/submit`)).status).toBe(202);
-    await env.flushBackground();
+  it.each([VERTEX_PROFILE, OPENAI_PROFILE])(
+    '$name reads PDF and photo as one sheet with identical page handling',
+    async (profile) => {
+      env.llm.profile = profile;
+      const created = await reserve(lena, ['application/pdf', 'image/jpeg']);
+      expect(created.uploads.map((u) => u.path.split('.').at(-1))).toEqual(['pdf', 'jpg']);
+      env.storage.put(created.uploads[0]!.path, await pdfOf(3));
+      env.storage.put(created.uploads[1]!.path);
+      env.llm.script('extraction', {
+        json: sheet([
+          { page: 1, read: 'all', problem: null },
+          { page: 2, read: 'none', problem: 'not_material' },
+          { page: 3, read: 'all', problem: null },
+          { page: 4, read: 'none', problem: 'not_material' },
+        ]),
+      });
+      const id = created.material.id;
+      // Tom cannot send her material.
+      expect((await tom.api.post(`/materials/${id}/submit`)).status).toBe(404);
+      const submitted = await lena.api.post<MaterialView>(`/materials/${id}/submit`);
+      expect(submitted.status).toBe(202);
+      expect(submitted.body).toMatchObject({ status: 'queued', photo_count: 4 });
+      // A repeat (the answer was lost) changes nothing.
+      expect((await lena.api.post(`/materials/${id}/submit`)).status).toBe(202);
+      await env.flushBackground();
 
-    const m = (await lena.api.get<MaterialView>(`/materials/${id}`)).body;
-    expect(m).toMatchObject({
-      status: 'ready',
-      item_count: 2,
-      photo_count: 4,
-      page_problems: [
-        { page: 2, read: 'none', problem: 'not_material' },
-        { page: 4, read: 'none', problem: 'not_material' },
-      ],
-    });
-    const calls = env.llm.callsFor('extraction');
-    expect(calls).toHaveLength(1);
-    const parts = calls[0]!.contents[0]!.parts;
-    const labels = parts.flatMap((p) => ('text' in p ? [p.text] : []));
-    expect(labels).toContain('PDF with pages 1–3 of 4 (one page report per PDF page):');
-    expect(labels).toContain('Photo 4 of 4:');
-    const mimes = parts.flatMap((p) => ('inlineData' in p ? [p.inlineData.mimeType] : []));
-    expect(mimes).toEqual(['application/pdf', 'image/jpeg']);
+      const m = (await lena.api.get<MaterialView>(`/materials/${id}`)).body;
+      expect(m).toMatchObject({
+        status: 'ready',
+        item_count: 2,
+        photo_count: 4,
+        page_problems: [
+          { page: 2, read: 'none', problem: 'not_material' },
+          { page: 4, read: 'none', problem: 'not_material' },
+        ],
+      });
+      const calls = env.llm.callsFor('extraction');
+      expect(calls).toHaveLength(1);
+      const parts = calls[0]!.contents[0]!.parts;
+      const labels = parts.flatMap((p) => ('text' in p ? [p.text] : []));
+      expect(labels).toContain('PDF with pages 1–3 of 4 (one page report per PDF page):');
+      expect(labels).toContain('Photo 4 of 4:');
+      const mimes = parts.flatMap((p) => ('inlineData' in p ? [p.inlineData.mimeType] : []));
+      expect(mimes).toEqual(['application/pdf', 'image/jpeg']);
 
-    const pages = await env.db.query<{ position: number; page_count: number | null }>(
-      `select position, page_count from material_photos where material_id = $1 order by position`,
-      [id],
-    );
-    expect(pages).toEqual([
-      { position: 0, page_count: 3 },
-      { position: 1, page_count: null },
-    ]);
-    // The photo of something else goes at once; the PDF (one foreign page among the
-    // sheet's pages) is kept for the retention like any sheet, then deleted.
-    const purges = await env.db.query<{ payload: { positions?: number[] }; run_at: Date }>(
-      `select payload, run_at from jobs where kind = 'purge_photos' and payload ->> 'material_id' = $1
+      const pages = await env.db.query<{ position: number; page_count: number | null }>(
+        `select position, page_count from material_photos where material_id = $1 order by position`,
+        [id],
+      );
+      expect(pages).toEqual([
+        { position: 0, page_count: 3 },
+        { position: 1, page_count: null },
+      ]);
+      // The photo of something else goes at once; the PDF (one foreign page among the
+      // sheet's pages) is kept for the retention like any sheet, then deleted.
+      const purges = await env.db.query<{ payload: { positions?: number[] }; run_at: Date }>(
+        `select payload, run_at from jobs where kind = 'purge_photos' and payload ->> 'material_id' = $1
         order by run_at`,
-      [id],
-    );
-    expect(purges.map((p) => p.payload.positions ?? null)).toEqual([[1], null]);
-    expect(purges[1]!.run_at.toISOString()).toBe('2026-10-05T14:00:00.000Z');
-  });
+        [id],
+      );
+      expect(purges.map((p) => p.payload.positions ?? null)).toEqual([[1], null]);
+      expect(purges[1]!.run_at.toISOString()).toBe('2026-10-05T14:00:00.000Z');
+    },
+  );
 
   it('a PDF alone: every page is reported, a cut-off page is named', async () => {
     const created = await reserve(lena, ['application/pdf']);

@@ -142,7 +142,7 @@ async function main(): Promise<void> {
     ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
   });
   if (config.LLM_BACKEND === 'disabled')
-    throw new Error('Set LLM_BACKEND=vertex or azure and its provider configuration');
+    throw new Error('Set a configured LLM_BACKEND and its provider configuration');
   if (!(await testDatabaseAvailable())) throw new Error('No local Postgres (LB_TEST_DATABASE_URL)');
   const gateway = llmGateway(config);
   // What each STATE section costs and whether an answer pointed back at it (issue #168).

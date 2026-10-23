@@ -29,7 +29,7 @@ const wire = JSON.stringify({
   after: null,
 });
 
-describe('Azure partial JSON restoration', () => {
+describe('direct partial JSON restoration', () => {
   it('preserves partial-string completion at every possible chunk boundary', () => {
     for (let i = 1; i <= wire.length; i++) {
       const prefix = wire.slice(0, i);
