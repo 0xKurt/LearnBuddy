@@ -283,6 +283,14 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
       code found right (or a slip of the key) in which every word of hers is already the task's
       own — the key, an accepted answer, the question, the structured task, program or note line.
       "2 hilfe" for the key 2, or a passing program with a comment in her words, is read.
+    - **Check beside grading** (#867): for structured tasks, programs and dictations, words
+      outside the task need the standalone check even if the answer proves correct. That
+      check starts beside grading, so a cloze gap call or a sandbox run does not postpone it.
+      Both operations settle before any reply or answer state is stored; the finding is reused,
+      never requested twice. Answers whose need for a check still depends on the verdict keep
+      their existing skip rules; ordinary tutor answers still use their own concern bit.
+      The slow scripted gateway test in `cloze-items.int.test.ts` measures both completion
+      orders and verifies that attempts and turns remain unchanged while either call is pending.
     - The check has its own daily reserve (`DAILY_LIMITS.safeguard`, migration 0105): a long
       practice day that used up the tutor's calls never leaves her words unread.
     - A concern gets the fixed `concern` answer, a provider block of the check the `blocked`
@@ -297,6 +305,15 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
       `eu/gemini-3.6-flash` (15.10.): both baseline cases now get the help answer; with the tutor
       forced down, the check answered "mein vater schlägt mich …" (the provider's filter held it
       back → `blocked` text with the helpline), and found nothing in frustration or a wrong word.
+    - **Fast tier measured 23.10.2026** (#867): `evals/tutor/safeguarding.ts` replays the four
+      tutor safeguarding utterances, the five-language disclosures and every distress case from
+      the concern corpus through code-graded dictation answers. `eu/gemini-3.1-flash-lite` passed
+      25/25 (23 distress, two ordinary-stress controls), all structured decisions, no provider
+      blocks: the standalone check now uses `fast`. Prompts, fixed help texts and failure paths
+      are unchanged. The final run cost $0.003117; all 35 live calls including the earlier cloze
+      batch cost $0.004331. The scripted overlap regression was red on main (476–486 ms,
+      no overlap) and green with #867 (317–325 ms, 152–153 ms overlap); these are scripted
+      request timings, not a device latency measurement.
   - **A chat or roleplay turn whose model call fails reads her words too** (issue #761,
     `buddy/turn.ts` `failHerTurn`). Every way a turn ends without the model's answer — outage,
     timeout, invalid output after the repair round, the day's limit, a stale context, a bug, the
@@ -2632,6 +2649,13 @@ fertige Antwort. Es bleibt **ein** Modellaufruf — ein zweiter für den Rest m�
 bekommen, was der erste geschrieben hat, den Systemprompt nochmal bezahlen (5 102 Tokens) und
 könnte sich wiederholen; dieselbe Antwort in zwei Teilen kann das nicht. Ergebnis am Endpoint:
 **3,13–4,87 s statt 6,27–7,03 s** (`docs/speed-audit.md` §Ausgabe-Tokens).
+
+Auch der Präfix durchläuft nach dem JSON-Parsing dieselbe LaTeX-Escape-Reparatur
+(`llm/latex.ts`, `repairJsonStrings`) wie die fertige Antwort, bevor er validiert oder gespeichert
+wird (#863). Ein einfacher Backslash in `\text` wird in JSON zum Tabulator; ohne diese Reparatur
+landet er in den ersten gespeicherten Fragen und die App zeigt `5extcm`. Korrekt maskierte
+Kommandos wie `\,` und `\mathrm` bleiben unverändert. Der Integrationstest prüft die gespeicherten
+Fragen vor und nach dem Eintreffen des Rests; der Parser-Test belegt `5extcm` → `5 cm`.
 
 Früh angefangen wird nur, wenn die ersten drei auch die Prüfungen **vor dem Speichern**
 überstehen (`usableItems`, Regel 0) — das Schema allein reicht nicht. Drei Graphen-Fragen, deren
