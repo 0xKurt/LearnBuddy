@@ -39,17 +39,23 @@ type Props = {
 };
 
 export function SheetBubble({ uris, pages, label, line }: Props) {
+  const { t } = useTranslation('capture');
   const shown = Math.min(pages, PAGE.shown);
+  const hasPhotos = uris.slice(0, shown).some(Boolean);
   return (
     <View style={{ alignItems: 'flex-end', gap: SPACE.xs }}>
       <View
-        accessible
-        accessibilityRole="image"
-        accessibilityLabel={line ? `${label}. ${line.text}` : label}
+        accessible={!hasPhotos}
+        accessibilityRole={hasPhotos ? undefined : 'image'}
+        accessibilityLabel={hasPhotos ? undefined : line ? `${label}. ${line.text}` : label}
         style={{ flexDirection: 'row', gap: SPACE.sm }}
       >
         {Array.from({ length: shown }, (_, i) => (
-          <SheetPage key={i} uri={uris[i] ?? null} />
+          <SheetPage
+            key={i}
+            uri={uris[i] ?? null}
+            label={t('photo_label', { index: i + 1, total: pages })}
+          />
         ))}
       </View>
       {line ? <SheetLine {...line} /> : null}
@@ -81,7 +87,7 @@ export function SendingSheetBubble({ sheet }: { sheet: SendingSheet }) {
 }
 
 /** One page: the shadow outside, the clipping inside (Android, components/buddy/AttachStrip.tsx). */
-function SheetPage({ uri }: { uri: string | null }) {
+function SheetPage({ uri, label }: { uri: string | null; label: string }) {
   const { palette } = useTheme();
   const frame = { width: PAGE.width, height: PAGE.height, borderRadius: RADIUS.md };
   return (
@@ -108,9 +114,10 @@ function SheetPage({ uri }: { uri: string | null }) {
         </View>
         {uri ? (
           <View style={{ position: 'absolute', top: 0, left: 0 }}>
-            <ZoomablePhoto uri={uri}>
+            <ZoomablePhoto uri={uri} label={label}>
               <Image
                 source={{ uri }}
+                accessibilityLabel={label}
                 style={{ width: PAGE.width, height: PAGE.height }}
                 contentFit="cover"
               />

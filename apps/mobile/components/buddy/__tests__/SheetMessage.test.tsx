@@ -11,7 +11,7 @@ import { registerLearning } from '../../../lib/learning/register.js';
 import { sendingShown, useSendingSheet } from '../../../lib/capture/sending.js';
 import { renderInApp } from '../../../testing/render.js';
 import { Conversation } from '../Conversation.js';
-import { SendingSheetBubble } from '../SheetBubble.js';
+import { SheetBubble, SendingSheetBubble } from '../SheetBubble.js';
 
 registerLearning();
 
@@ -42,6 +42,19 @@ const thread = (messages: MessageView[]) =>
   renderInApp(<Conversation messages={messages} pending={null} busy={false} />);
 
 describe('her sheet in the thread (issue #632)', () => {
+  it('keeps the photo zoom button outside an image role and labels its thumbnail (#870)', () => {
+    const { container } = renderInApp(
+      <SheetBubble
+        uris={['blob:sheet']}
+        pages={1}
+        label="Du hast ein Foto geschickt"
+        line={{ text: 'Buddy liest es gerade …', tone: 'busy' }}
+      />,
+    );
+    expect(container.querySelector('[role="img"] button, [role="img"] [role="button"]')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Foto 1 von 1' })).toBeTruthy();
+  });
+
   it('is her pages with where they stand, never an empty bubble', () => {
     thread([sent('reading', 2)]);
     expect(screen.getByText('2 Fotos · Buddy liest es gerade …')).toBeTruthy();

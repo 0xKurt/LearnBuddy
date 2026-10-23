@@ -10,8 +10,7 @@ import { LlmError } from '../../llm/gateway.js';
 import { StorageError } from '../../storage/gateway.js';
 import { emitEvent } from '../buddy/events.js';
 import { bumpContext } from '../buddy/plan.js';
-import { findOrCreateSubject } from '../learning/state.js';
-import { formsOn, insertItems, reasonLost, samePrompt } from '../practice/items.js';
+import { formsOn, reasonLost, samePrompt } from '../practice/items.js';
 import {
   extendJobLease,
   finishJob,
@@ -27,6 +26,8 @@ import { filesWhollyIn } from './pdf.js';
 import { loadPhotos } from './photos.js';
 import { enqueuePhotoPurge } from './purge.js';
 import { sheetReader } from './reader.js';
+import { readingProgress, growReadingPractice } from './readingProgress.js';
+import { storeReadingQuestions } from './storeReadingQuestions.js';
 import { fail, holdsLease, retryTransient } from './readingJob.js';
 import { sheetQuestions } from './sheetQuestions.js';
 import { applySource, photoRetentionMs, ReadingParse } from './sources.js';
@@ -90,13 +91,18 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
   // A reading that lost tasks to the choice of forms, or had no choice at all, is not complete,
   // whatever the model said about the rest (#664): the sheet says so, like one with more left.
   let partial = false;
+  const progress = readingProgress(deps, job, m, learner.locale, timezone);
   const read = async (lean: boolean, alreadyRead: readonly string[] = []) => {
     // Up to MOST_READINGS calls of up to two minutes each outlast one lease: it is extended
     // before every call (K6, #663), and a run whose lease went to another run stops asking the
     // model — it would write nothing anyway, and it would spend her allowance twice.
     if (!(await extendJobLease(deps.db, job, deps.now(), WAITING_LEASE_SECONDS)))
       throw new LeaseGone();
-    const res = await readOnce(lean, alreadyRead.length > 0 ? moreRules(alreadyRead) : '');
+    const res = await readOnce(
+      lean,
+      alreadyRead.length > 0 ? moreRules(alreadyRead) : '',
+      progress.accept,
+    );
     if (res.lost > 0 || res.fallback) partial = true;
     return res;
   };
@@ -109,7 +115,8 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
       res = await read(lean);
     } catch (err) {
       // Cut off at the token limit: read again at once, told to be brief (live finding 2).
-      if (!(err instanceof LlmError && err.truncated) || lean) throw err;
+      if (!(err instanceof LlmError && err.truncated) || lean || (await progress.hasQuestions()))
+        throw err;
       lean = true;
       res = await read(lean);
     }
@@ -131,7 +138,12 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
         } catch (err) {
           // The rest could not be read. What was read stands, and the sheet says it is
           // incomplete rather than pretending to be whole (rule 5).
-          if (err instanceof LlmError && (err.retryable || err.truncated)) break;
+          if (
+            err instanceof LlmError &&
+            (err.retryable || err.truncated) &&
+            !(await progress.hasQuestions())
+          )
+            break;
           throw err;
         }
         const parsed = ReadingParse.safeParse(next.json);
@@ -172,6 +184,10 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
     }
   } catch (err) {
     if (err instanceof LeaseGone) return;
+    // Validated questions survive an interrupted stream; the sheet is explicitly incomplete
+    // and its normal retry remains available. Never silently restart an answer already shown.
+    if (await progress.hasQuestions())
+      return fail(deps, job, materialId, 'model_error', { uncounted: true });
     if (isAppError(err) && err.code === 'budget_exhausted')
       return fail(deps, job, materialId, 'budget_exhausted', { uncounted: true });
     // An outage, or cut off twice: try again later; after the last run she gets an honest
@@ -302,51 +318,15 @@ export async function runFirstReading(deps: Deps, job: JobRow): Promise<void> {
         )
       : null;
     const home = target ?? current;
-    let subjectId = home.subject_id;
-    if (!subjectId && x.subject) {
-      subjectId = (
-        await findOrCreateSubject(tx, current.learner_id, x.subject.name, x.subject.kind)
-      ).id;
-    }
-    // A second subject on the sheet: its questions go there (found by their topics).
-    const second =
-      x.other_subject && x.other_subject.topics.length
-        ? await findOrCreateSubject(
-            tx,
-            current.learner_id,
-            x.other_subject.name,
-            x.other_subject.kind,
-          )
-        : null;
-    const secondTopics = new Set(
-      (x.other_subject?.topics ?? []).map((t) => t.trim().toLowerCase()),
-    );
     const homework = home.purpose === 'homework';
-    const bySubject = new Map<string | null, typeof items>();
-    for (const item of items) {
-      const own =
-        second &&
-        second.id !== subjectId &&
-        secondTopics.has((item.topic ?? '').trim().toLowerCase())
-          ? second.id
-          : subjectId;
-      bySubject.set(own, [...(bySubject.get(own) ?? []), item]);
-    }
-    const itemIds: string[] = [];
-    for (const [sid, group] of bySubject) {
-      itemIds.push(
-        ...(await insertItems(
-          tx,
-          {
-            learnerId: current.learner_id,
-            materialId: home.id,
-            subjectId: sid,
-            origin: homework ? 'homework' : 'material',
-          },
-          group,
-        )),
-      );
-    }
+    const { subjectId, itemIds } = await storeReadingQuestions(
+      tx,
+      home,
+      x,
+      items,
+      !target && current.items_incomplete,
+    );
+    if (!target) await growReadingPractice(tx, home, subjectId, now);
     // Tasks this reading wrote no questions for, because their form is not one Buddy can
     // practise (issue #198). They travel with the sheet the learner sees: pages added to an
     // earlier sheet put theirs onto that sheet, after the ones already there.

@@ -2090,6 +2090,30 @@ after the reading, and that he never sees the photos themselves. They are static
 every learner, so they sit in the prompt and not in the per-learner STATE; anything that differs
 per learner or per sheet (a send on its way, a failure and what it means) is in STATE.
 
+**Streaming the first study reading (#870).** Once the form choice has narrowed the schema
+and prompt (#801, #869), `reader.ts` streams that same call. Source, marked tasks and the
+second subject are required and precede the question arrays; `answerUpTo` includes only finished elements
+and repairs JSON strings as for the final answer (#874). `ReadingParse`, the form choice,
+`applySource`, `sheetQuestions` and disabled-form checks all run before storage. Ordinary,
+structured, reading and multipart questions arrive incrementally. Homework help and pages
+merging into another sheet retain their atomic completion path.
+
+Each prefix writes in a short transaction under the job lease and material lock, checks
+archival again, and bumps the context. The material stays `processing` with
+`items_incomplete = true`; the existing practice step/card appears from stored questions,
+then grows through the existing ten-minute selection. Its count is the actual prepared
+item IDs, never a forecast. Once started or dismissed, that step is not changed by the
+stream; additional questions remain on the sheet. No ready event, completion timestamp,
+capture completion or bonus work is emitted before the reading finishes.
+
+Prefix writes drain before finalization, also when the provider throws. Interruption after
+validated questions leaves them intact and marks the sheet failed/incomplete with the usual
+retry. Repeated prefixes and retries reuse existing questions; a lost lease or deletion
+prevents later writes. The stored form choice is reused on retry. Recovery after a worker
+crash follows the same lease and incomplete-state rules; a gateway without ordered partial
+JSON uses the final-answer path. `reading-stream.int.test.ts` pauses a scripted gateway over
+real Postgres and proves early visibility, truthful counts, start, retry and fencing.
+
 **Reading stages** (gap 5, migration 0035): the run holding the reading job's lease reports where
 it is — `read_stage` `opening` (photos being loaded) then `reading` (the model reads them), each
 stamped with the app clock; a requeued reading clears it. The home's `material_processing` card
