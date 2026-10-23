@@ -8,15 +8,15 @@ import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import type { LlmMessage, LlmPart, LlmResult } from '../../llm/gateway.js';
 import { curriculumBlock } from '../curriculum/state.js';
-import { availableLine, chooseForms, keptAndLost } from '../practice/formChoice.js';
+import { availableLine, chooseForms, keptAndLost, offered } from '../practice/formChoice.js';
 import { choiceKey, storeChoice, storedChoice } from './formMemory.js';
 import { ageOn } from '../identity/model.js';
-import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM, LEAN_RULES } from './extract.js';
+import { LEAN_RULES } from './extract.js';
+import { readingCatalogue, readingSystem } from './readingPrompt.js';
 import {
   EXTRACT_PROMPT_VERSION,
   EXTRACTION_SCHEMA,
   HOMEWORK_SCHEMA,
-  SOURCE_RULES,
   SOURCES_PROMPT_VERSION,
 } from './sources.js';
 
@@ -73,7 +73,7 @@ export async function sheetReader(
         ? 'unknown'
         : learner.level;
   const day = localParts(opts.now, tz).date;
-  const system = opts.homework ? HOMEWORK_SYSTEM : `${EXTRACT_SYSTEM}\n\n${SOURCE_RULES}`;
+  const fullSystem = readingSystem(opts.homework);
   const version = `${EXTRACT_PROMPT_VERSION}${opts.homework ? '' : `+${SOURCES_PROMPT_VERSION}`}`;
   const contents: LlmMessage[] = [
     {
@@ -105,9 +105,10 @@ export async function sheetReader(
     const chosen = await chooseForms(deps, learner.id, day, {
       purpose: 'extraction',
       promptVersion: version,
-      system,
+      system: fullSystem,
       contents,
       full: opts.homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
+      chooser: (offer) => readingCatalogue(offer, opts.homework),
       known,
     });
     if (
@@ -124,6 +125,7 @@ export async function sheetReader(
     const chosen = await narrowed;
     const { schema, keep } = chosen;
     const line = availableLine(chosen);
+    const system = readingSystem(opts.homework, offered(schema));
     // The first reading uses the allowance held before the choice (#665); the readings after it
     // (the rest of a long sheet, a lean retry) take their own, as before.
     const res = await callModel(

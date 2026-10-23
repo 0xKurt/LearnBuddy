@@ -27,8 +27,8 @@ export const PROMPT_BUDGETS: Partial<Record<LlmPurpose, PromptBudget>> = {
   buddy_turn: { systemChars: 25_000, schemaChars: 30_000 },
   buddy_check: { systemChars: 8_000, schemaChars: 5_500 },
   explain: { systemChars: 18_000, schemaChars: 33_000 },
-  forms: { systemChars: 42_500, schemaChars: 1_000 },
-  extraction: { systemChars: 42_500, schemaChars: 36_000 },
+  forms: { systemChars: 4_000, schemaChars: 1_000 },
+  extraction: { systemChars: 29_000, schemaChars: 36_000 },
   tutor: { systemChars: 8_500, schemaChars: 2_500 },
   /** The distress check (#747): one bit, so it stays small. */
   safeguard: { systemChars: 1_500, schemaChars: 1_000 },

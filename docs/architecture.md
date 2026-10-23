@@ -1094,8 +1094,8 @@ The Buddy turn sits at 268: a new action field needs room made elsewhere first.
 test or help run and a sheet reading have schemas of 518–774 properties: every task form and
 every figure type at once. They were refused from 03.10. on, when #231's option pictures copied the
 figure union a second time; bisected in #627. When the whole schema does not fit, a small first call
-(the fast model, `gemini-3.1-flash-lite`; no thinking; the same system prompt and message as the
-main call, plus `CHOOSER`) answers two closed lists taken from the schema itself: the forms
+(the fast model, `gemini-3.1-flash-lite`; no thinking; a compact catalogue plus `CHOOSER`,
+and the same message and photos as the main call) answers two closed lists taken from the schema itself: the forms
 (structured kinds and the blocks `bars`, `staffs`, `codes`, `part_tasks`, `reading`) and the
 figure types it needs, the most needed first. Code then builds the main schema (`pruned`: the other
 branches of every figure and form union go, and so do the other blocks). It adds what was chosen in
@@ -1109,8 +1109,8 @@ the choice its reading made (`materials.form_choice`, migration 0109, `formMemor
 the reading's prompt version and `FORMS_OFF`; a clarification or a reading run again uses it
 instead of choosing again from the same photos. A question or task whose figure or option
 pictures were not chosen goes, because it was written to be read off a drawing she would not see.
-A block or a structured form that was not chosen goes too. The main call's system prompt teaches
-every form, so a narrowed call also gets one more line, a rule with no example in it
+A block or a structured form that was not chosen goes too. A narrowed call also gets one more
+line naming its available forms, a rule with no example in it
 (`availableLine`). It names the figures and forms this answer can use; in the minimal set it says
 that no figure can be drawn and that every question must be answerable from its text alone. A sheet is chosen for once, and every reading of it (lean,
 continued) uses that choice. When the choosing call is refused, fails or answers nothing usable,
@@ -1134,9 +1134,14 @@ costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). **The prompt
 (KI-Audit F5-3, #669): a run is told only the rules of the figure families, structured forms and
 lists its schema offers (`generateSystem(offered(schema))`, `figureRules`, `structuredRules`), and the
 choosing call before a run reads a catalogue of what it can choose — one line per form, taken from the
-same rules, and the figure types by name (`choosingCatalogue`) — instead of the whole prompt. The
-whole prompt stays byte for byte what a sheet reading gets (`FIGURE_RULES`, `GENERATE_SYSTEM`); the
-reading's own choosing call keeps it, since it reads the photos anyway. Measured (`inventory:schema`):
+same rules, and the figure types by name (`choosingCatalogue`) — instead of the whole prompt.
+Sheet readings follow the same rule (#869): `readingCatalogue` describes the study or homework
+task and its forms, including reading texts and tasks in parts, with the original photos still
+in the message. `extractSystem` / `homeworkSystem` include only the rules offered by the fitted
+schema, retaining the shared transcription, uncertainty, source and photo-as-data rules. Lean,
+continued and clarified readings use that same choice. With every form and figure offered, both
+full reading prompts remain byte-identical (SHA-256 pins in `readingPrompt.test.ts`). The inventory
+measures these narrowed prompts, including study source rules. Earlier measurements (#669):
 explain 37 963 characters for every run → 5 149 (vocab, speak, Diktat, teach_back, read, essay), at
 most 15 370 (practice) and 17 769 (test) with everything that fits; the choosing call before a run
 38 434 → 1 162–3 581. It has its own purpose (`forms`, in

@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { overBudget, PROMPT_BUDGETS } from '../budgets.js';
 import { variants } from '../inventory.js';
 import { mistakeContext } from '../../../src/modules/practice/mistakeContext.js';
+import { LEAN_RULES } from '../../../src/modules/materials/extract.js';
+import { SOURCE_RULES } from '../../../src/modules/materials/sources.js';
 
 describe('prompt budgets (#651)', () => {
   it('caps the entire mistake context at 480 characters, including JSON escaping (#871)', () => {
@@ -33,6 +35,25 @@ describe('prompt budgets (#651)', () => {
   it('every budget belongs to a purpose that is still sent', () => {
     const sent = new Set(variants().map((v) => v.purpose));
     expect(Object.keys(PROMPT_BUDGETS).filter((p) => !sent.has(p as never))).toEqual([]);
+  });
+
+  it('measures compact reading choices and the narrowed reading including source and lean rules', () => {
+    const calls = variants();
+    const choices = calls.filter((v) => v.purpose === 'forms' && v.profile.includes('extraction'));
+    expect(choices).toHaveLength(2);
+    for (const choice of choices) {
+      expect(choice.system!.length).toBeLessThan(4_000);
+      expect(choice.system).toContain('NOW ONLY CHOOSE');
+      expect(choice.system).not.toContain(SOURCE_RULES);
+    }
+    const readings = calls.filter((v) => v.purpose === 'extraction');
+    expect(readings).toHaveLength(4);
+    for (const reading of readings) {
+      expect(reading.system!.length).toBeLessThan(29_000);
+      expect(reading.system!.includes(SOURCE_RULES)).toBe(reading.profile.startsWith('study'));
+      expect(reading.system!.includes(LEAN_RULES)).toBe(reading.profile.includes('LEAN_RULES'));
+      expect(reading.system).toContain('IN THIS ANSWER ONLY THESE CAN BE USED');
+    }
   });
 
   it('is red when Buddy’s turn schema grows past its budget', () => {
