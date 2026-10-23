@@ -9,7 +9,7 @@ import { renderInApp, styleOf } from '../../../testing/render.js';
 import { paletteOf } from '../../../lib/theme/palettes.js';
 import { RADIUS } from '../../../lib/theme/radius.js';
 import { TOUCH } from '../../../lib/theme/space.js';
-import { SpeakCard } from '../SpeakPanel.js';
+import { SpeakCard, PronunciationNote } from '../SpeakPanel.js';
 
 vi.mock('../WordSheet.js', () => ({
   WordSheet: ({ word }: { word: PronunciationFeedback['words'][number] | null }) =>
@@ -29,6 +29,35 @@ const feedback: PronunciationFeedback = {
 const item = { id: 'spoken-target', prompt: feedback.heard, lang: 'en', topic: null } as ItemView;
 const turns = [{ pronunciation: feedback }] as PracticeTurnView[];
 describe('pronunciation word action targets', () => {
+  it('does not underline uncertain words as errors and explains that no reliable verdict exists', () => {
+    const uncertain: PronunciationFeedback = {
+      ...feedback,
+      overall: 'retry',
+      words: feedback.words.map((w, i) => ({ ...w, ok: i !== 1, tip: null })),
+      breakdown: {
+        source: 'vosk',
+        elapsed_ms: 50,
+        overall: 'unsicher',
+        words: feedback.words.map((w, i) => ({
+          expected: w.text,
+          heard: null,
+          confidence: 0,
+          verdict: i === 1 ? 'unsicher' : 'passt',
+        })),
+      },
+    };
+    renderInApp(
+      <>
+        <SpeakCard item={item} turns={[{ pronunciation: uncertain }] as PracticeTurnView[]} />
+        <PronunciationNote feedback={uncertain} />
+      </>,
+    );
+    expect(styleOf(screen.getByText(feedback.words[1]!.text)).textDecorationLine).not.toBe(
+      'underline',
+    );
+    expect(screen.queryByTestId('speak-legend')).toBeNull();
+    expect(screen.getByText('Das konnte ich nicht sicher beurteilen.')).toBeDefined();
+  });
   it('declares a target per word and a wrapping row without changing the selected word object', () => {
     renderInApp(<SpeakCard item={item} turns={turns} sessionId="spoken-session" />);
     const actions = screen.getAllByRole('button');

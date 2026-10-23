@@ -10,7 +10,12 @@ import { PassageView } from './reading.js';
 import { HeardTones } from './staff.js';
 import { TaskPartView } from './taskParts.js';
 import { StructuredAnswer, StructuredTaskView } from './structured.js';
-import { AudioMime } from './voice.js';
+import {
+  PronunciationPlan,
+  PronunciationResult,
+  PronunciationSubmission,
+  PronunciationVerdict,
+} from './pronunciation.js';
 
 // ─────────────── material (photographed worksheets) ───────────────
 
@@ -441,6 +446,7 @@ export type ItemImage = z.infer<typeof ItemImage>;
  * A dollar for money is written \$; a "$" before a digit never closes math.
  */
 export const ItemView = z.object({
+  pronunciation_plan: PronunciationPlan.nullable().optional(),
   id: Uuid,
   kind: ItemKind,
   prompt: z.string(),
@@ -659,6 +665,7 @@ export type SessionItemView = z.infer<typeof SessionItemView>;
 
 /** What the model heard in a recording, word by word (speak questions). */
 export const PronunciationFeedback = z.object({
+  breakdown: PronunciationResult.optional(),
   /** The words as they sounded, written down. */
   heard: z.string(),
   overall: z.enum(['good', 'almost', 'retry']),
@@ -1074,12 +1081,13 @@ export const StartTopicRequest = z.object({
 export type StartTopicRequest = z.infer<typeof StartTopicRequest>;
 
 /** A recording for a speak question (≤ 30 s; m4a/aac, webm or wav, base64). */
-export const SpeakRequest = z.object({
-  client_turn_id: Uuid,
-  item_id: Uuid,
-  mime: AudioMime,
-  audio_base64: z.string().min(100).max(1_400_000),
-});
+export const SpeakRequest = z.intersection(
+  z.object({
+    client_turn_id: Uuid,
+    item_id: Uuid,
+  }),
+  PronunciationSubmission,
+);
 export type SpeakRequest = z.infer<typeof SpeakRequest>;
 
 /**
@@ -1088,13 +1096,13 @@ export type SpeakRequest = z.infer<typeof SpeakRequest>;
  * the question keeps its state. Rehearsal remains available after the session finishes;
  * it never reopens the session or grades the whole sentence (#570).
  */
-export const SpeakWordRequest = z.object({
-  item_id: Uuid,
-  /** The word as it stands in the sentence. */
-  word: z.string().trim().min(1).max(40),
-  mime: AudioMime,
-  audio_base64: z.string().min(100).max(1_400_000),
-});
+export const SpeakWordRequest = z.intersection(
+  z.object({
+    item_id: Uuid,
+    word: z.string().trim().min(1).max(40),
+  }),
+  PronunciationSubmission,
+);
 export type SpeakWordRequest = z.infer<typeof SpeakWordRequest>;
 
 export const SpeakWordResponse = z.object({
@@ -1126,7 +1134,9 @@ export const SpeakStreamEvent = z.object({
   /** What she said, as far as it is written down; '' before it starts. */
   heard: z.string(),
   /** Words judged so far, in the order of the target text. Only finished ones. */
-  words: z.array(z.object({ text: z.string(), ok: z.boolean() })),
+  words: z.array(
+    z.object({ text: z.string(), ok: z.boolean(), verdict: PronunciationVerdict.optional() }),
+  ),
 });
 export type SpeakStreamEvent = z.infer<typeof SpeakStreamEvent>;
 

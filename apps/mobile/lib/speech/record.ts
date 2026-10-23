@@ -72,7 +72,13 @@ const LONG_RECORDING: RecordingOptions = {
  */
 export const recorderMeters = Platform.OS !== 'web';
 
-export type Recording = { uri: string; mime: AudioMime; durationMs: number; base64: string };
+export type Recording = {
+  uri: string;
+  mime: AudioMime;
+  durationMs: number;
+  base64: string;
+  endedAtMs?: number;
+};
 
 /** Why no recording came out: no microphone access, only a tap, an unknown format, or it broke. */
 export type RecordFailure = 'denied' | 'too_short' | 'unsupported' | 'failed';
@@ -353,6 +359,7 @@ export function useRecording({
         if (phaseRef.current !== 'recording') return;
         clearLimit();
         setPhase('stopping');
+        const endedAtMs = performance.now();
         let uri: string | null = null;
         let durationMs = Date.now() - startedAt.current;
         let pieceMs = 0;
@@ -427,6 +434,7 @@ export function useRecording({
               uri,
               mime: read.mime,
               durationMs: Math.min(durationMs, maxRef.current),
+              endedAtMs,
               base64: read.base64,
             });
           }

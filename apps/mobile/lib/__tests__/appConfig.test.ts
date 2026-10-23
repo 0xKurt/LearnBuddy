@@ -48,3 +48,19 @@ describe('dev build Firebase file', () => {
     expect((await devConfig(null)).android?.googleServicesFile).toBe(undefined);
   });
 });
+
+it.each(['preview', 'production'])(
+  'preserves the Vosk plugin in the %s native APK config',
+  async (variant) => {
+    vi.stubEnv('APP_VARIANT', variant);
+    vi.resetModules();
+    const { default: build } = await import('../../app.config');
+    const config = build({
+      config: appJson.expo as ExpoConfig,
+      projectRoot: '.',
+      staticConfigPath: null,
+      packageJsonPath: null,
+    });
+    expect(config.plugins).toContainEqual(['react-native-vosk', { models: [] }]);
+  },
+);

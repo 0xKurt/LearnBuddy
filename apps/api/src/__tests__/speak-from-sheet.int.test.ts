@@ -18,6 +18,7 @@ import { randomUUID } from 'node:crypto';
 import type { AnswerResponse, MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { scriptPronunciationTip } from '../testing/pronunciation.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -95,16 +96,16 @@ const writtenOnlySheet = () => ({
 
 const judgement = {
   audible: true,
-  expected_ipa: 'ʒə maplɛ lena e ʒabit a ljɔ̃',
-  heard_ipa: 'ʒə mapɛl lena e ʒabit a ljɔn',
   heard: "Je m'appelle Lena et j'habite à Lyon",
-  overall: 'almost',
   words: [
-    { text: 'Je', ok: true, tip: null },
-    { text: "m'appelle", ok: false, tip: 'Das ‹ll› klingt wie ‹l›.' },
-    { text: 'Lyon', ok: true, tip: null },
+    { heard: 'Je', confidence: 1 },
+    { heard: "m'appelle", confidence: 0.7 },
+    { heard: 'Lena', confidence: 1 },
+    { heard: 'et', confidence: 1 },
+    { heard: "j'habite", confidence: 1 },
+    { heard: 'à', confidence: 1 },
+    { heard: 'Lyon', confidence: 1 },
   ],
-  reply: 'Fast! Achte auf „m’appelle“.',
 };
 
 /** Send a sheet and let the reading run; returns the material's view. */
@@ -205,6 +206,7 @@ describe.skipIf(!dbReady)('reading the sentences from a sheet aloud (issue #223 
     const first = speaking.body.items[0]!.item;
     expect(first.prompt).toBe(FIRST);
 
+    scriptPronunciationTip(env, 7);
     env.llm.script('pronounce', { json: judgement });
     const said = await lena.api.post<AnswerResponse>(
       `/practice/sessions/${speaking.body.id}/speak`,
@@ -218,7 +220,7 @@ describe.skipIf(!dbReady)('reading the sentences from a sheet aloud (issue #223 
     const text = asked.contents
       .flatMap((m) => m.parts.flatMap((p) => ('text' in p ? [p.text] : [])))
       .join('\n');
-    expect(text).toContain(FIRST);
+    expect(text).toContain("m'appelle");
     // It counts as practice: the question is closed and carries a review now.
     const closed = said.body.session.items.find((i) => i.item.id === first.id)!;
     expect(closed.status).not.toBe('open');

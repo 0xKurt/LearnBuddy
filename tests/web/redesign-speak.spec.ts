@@ -44,6 +44,10 @@ for (const family of ['pastell', 'ocean'] as const) {
         name: 'The weather is nice today.',
         exact: true,
       });
+      await expect(
+        page.getByText('Online: Aufnahme wird gesendet.', { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText('Audio bleibt auf dem Gerät.', { exact: true })).toHaveCount(0);
       await expect(sentence).toHaveCSS('font-family', /Figtree/);
       const palette = PALETTES[key as keyof typeof PALETTES];
       const ink = parseInt(palette.ink.slice(1), 16);

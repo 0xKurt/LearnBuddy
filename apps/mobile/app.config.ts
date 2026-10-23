@@ -50,6 +50,7 @@ function withSentry(base: ExpoConfig): ExpoConfig {
 }
 
 export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
+  // Keep app.json plugins, including react-native-vosk, in preview/production native APKs.
   const base = withSentry(config as ExpoConfig);
   if (!DEV) return base;
   const firebase = base.android?.googleServicesFile;

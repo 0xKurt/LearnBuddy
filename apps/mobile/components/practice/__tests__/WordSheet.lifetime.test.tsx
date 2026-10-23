@@ -90,11 +90,14 @@ function Parent({ sessionId = SESSION, itemId = ITEM }: { sessionId?: string; it
     </>
   );
 }
-function record() {
+async function record() {
   const starts = recorder.start.mock.calls.length;
   fireEvent.click(screen.getByRole('button', { name: 'Dieses Wort sagen' }));
   expect(recorder.start).toHaveBeenCalledTimes(starts + 1);
-  act(() => recorder.onRecorded?.(RECORDING));
+  // The asynchronous checker finishes before the deliberately held API request starts.
+  await act(async () => {
+    recorder.onRecorded?.(RECORDING);
+  });
 }
 function close() {
   fireEvent.click(screen.getByRole('button', { name: 'Schließen' }));
@@ -129,7 +132,7 @@ describe.each(['resolve', 'reject'] as const)('held old request %s', (outcome) =
     const held = deferred();
     outside.speakWord.mockReturnValueOnce(held.promise);
     renderInApp(<Parent />);
-    record();
+    await record();
     expect(outside.speakWord).toHaveBeenCalledWith(SESSION, {
       item_id: ITEM,
       word: 'weather',
@@ -146,7 +149,7 @@ describe.each(['resolve', 'reject'] as const)('held old request %s', (outcome) =
     const held = deferred();
     outside.speakWord.mockReturnValueOnce(held.promise);
     renderInApp(<Parent />);
-    record();
+    await record();
     close();
     fireEvent.click(screen.getByText('Select weather'));
     await settle(held, outcome);
@@ -162,7 +165,7 @@ describe.each(['resolve', 'reject'] as const)('held old request %s', (outcome) =
       const held = deferred();
       outside.speakWord.mockReturnValueOnce(held.promise);
       const view = renderInApp(<Parent />);
-      record();
+      await record();
       view.rerender(<Parent {...context} />);
       await settle(held, outcome);
       expectNoStaleResult();
@@ -173,14 +176,14 @@ describe.each(['resolve', 'reject'] as const)('held old request %s', (outcome) =
     const current = deferred();
     outside.speakWord.mockReturnValueOnce(old.promise).mockReturnValueOnce(current.promise);
     renderInApp(<Parent />);
-    record();
+    await record();
     close();
     fireEvent.click(screen.getByText('Select today'));
     try {
       expect(
         screen.getByRole('button', { name: 'Dieses Wort sagen' }).getAttribute('aria-disabled'),
       ).not.toBe('true');
-      record();
+      await record();
       expect(outside.speakWord).toHaveBeenLastCalledWith(SESSION, {
         item_id: ITEM,
         word: 'today',
@@ -209,7 +212,7 @@ describe.each(['resolve', 'reject'] as const)('held old request %s', (outcome) =
     const held = deferred();
     outside.speakWord.mockReturnValueOnce(held.promise);
     const old = renderInApp(<Parent />);
-    record();
+    await record();
     old.unmount();
     renderInApp(<Parent sessionId="66666666-6666-4666-8666-666666666666" />);
     await settle(held, outcome);
@@ -222,7 +225,7 @@ it('shows a legitimate current result with the exact word/audio payload', async 
   const held = deferred();
   outside.speakWord.mockReturnValueOnce(held.promise);
   renderInApp(<Parent />);
-  record();
+  await record();
   await act(async () => held.resolve(CURRENT));
   expect(screen.getByText('Das sitzt!')).toBeTruthy();
   expect(screen.getByText(/current word take/)).toBeTruthy();
@@ -239,10 +242,10 @@ it('keeps a legitimate current transport error visible and retries the current w
   const retried = deferred();
   outside.speakWord.mockReturnValueOnce(failed.promise).mockReturnValueOnce(retried.promise);
   renderInApp(<Parent />);
-  record();
+  await record();
   await act(async () => failed.reject(new ApiError('network', 'outside transport failed', 0)));
   expect(screen.getByRole('alert').textContent).toBe(errors.code.network);
-  record();
+  await record();
   expect(outside.speakWord).toHaveBeenCalledTimes(2);
   expect(outside.speakWord.mock.calls[1]).toEqual([
     SESSION,
@@ -264,7 +267,7 @@ it('shows the fixed help answer alone, in place of the tip, when nothing was jud
     help: HELP,
   } satisfies SpeakWordResponse);
   renderInApp(<Parent />);
-  record();
+  await record();
   await act(async () => undefined);
   expect(screen.getByText(HELP)).toBeTruthy();
   expect(screen.queryByText('weather original tip')).toBeNull();
@@ -280,10 +283,18 @@ it('shows the fixed help line after a judgement no check could read', async () =
     help: HELP,
   } satisfies SpeakWordResponse);
   renderInApp(<Parent />);
-  record();
+  await record();
   await act(async () => undefined);
   expect(screen.getByText('a tip for this take')).toBeTruthy();
   expect(screen.getByText(/Fast – hör es dir nochmal an/)).toBeTruthy();
   expect(screen.getByText(/wedder/)).toBeTruthy();
   expect(screen.getByText(HELP)).toBeTruthy();
+});
+
+it('does not upload a take closed before the asynchronous checker returns', async () => {
+  renderInApp(<Parent />);
+  act(() => recorder.onRecorded?.(RECORDING));
+  close();
+  await act(async () => undefined);
+  expect(outside.speakWord).not.toHaveBeenCalled();
 });

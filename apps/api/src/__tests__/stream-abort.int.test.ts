@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { LlmRequest } from '../llm/gateway.js';
+import { scriptPronunciationTip } from '../testing/pronunciation.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import { gate } from '../testing/sync.js';
@@ -19,16 +20,12 @@ const SENTENCE = "Je m'appelle Lena.";
 
 const judgement = {
   audible: true,
-  expected_ipa: 'ʒə maplɛ lena',
-  heard_ipa: 'ʒə maplɛ lena',
   heard: "Je m'appelle Lena",
-  overall: 'good',
   words: [
-    { text: 'Je', ok: true, tip: null },
-    { text: "m'appelle", ok: true, tip: null },
-    { text: 'Lena', ok: true, tip: null },
+    { heard: 'Je', confidence: 1 },
+    { heard: "m'appelle", confidence: 1 },
+    { heard: 'Lena', confidence: 1 },
   ],
-  reply: 'Sehr gut!',
 };
 
 /** A scripted model that never finishes by itself, and notes when the caller stops waiting. */
@@ -146,6 +143,7 @@ describe.skipIf(!dbReady)('a dropped stream stops the work only it would read (#
   });
 
   it('a recording sent again while its judgement still runs joins it: one model call', async () => {
+    scriptPronunciationTip(env, 3);
     const turn = randomUUID();
     const g = gate();
     env.llm.script('pronounce', async () => {

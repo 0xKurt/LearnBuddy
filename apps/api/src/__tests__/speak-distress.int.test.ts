@@ -17,6 +17,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { t } from '../i18n/index.js';
 import { LlmError } from '../llm/gateway.js';
+import { scriptPronunciationTip } from '../testing/pronunciation.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -30,12 +31,8 @@ const TOLD = 'Bonjour, mein Bruder schlägt mich jeden Tag';
 const judged = (heard: string) => ({
   json: {
     audible: true,
-    expected_ipa: 'bɔ̃ʒuʁ ʒə sɥi lena',
-    heard_ipa: 'bɔ̃ʒuʁ',
     heard,
-    overall: 'good',
-    words: ['Bonjour,', 'je', 'suis', 'Lena.'].map((text) => ({ text, ok: true, tip: null })),
-    reply: 'Super gesprochen!',
+    words: ['Bonjour', 'je', 'suis', 'Lena'].map((heard) => ({ heard, confidence: 1 })),
   },
 });
 
@@ -127,19 +124,21 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
   });
 
   it('asks no check when she said only the sentence', async () => {
+    scriptPronunciationTip(env, 4);
     env.llm.script('pronounce', judged('Bonjour, je suis Lena'));
     const res = await take();
     expect(res.body.verdict).toBe('correct');
-    expect(res.body.reply.text).toBe('Super gesprochen!');
+    expect(res.body.reply.text).toBe('Hör zu und vergleiche.');
     expect(env.llm.callsFor('safeguard')).toHaveLength(1); // Only the topic's preflight.
   });
 
   it('keeps the judgement and adds the fixed help line when no check can read her words', async () => {
+    scriptPronunciationTip(env, 4);
     env.llm.script('pronounce', judged(TOLD));
     env.llm.script('safeguard', { error: new LlmError('unavailable', 'down') });
     const res = await take();
     expect(res.body.verdict).toBe('correct');
-    expect(res.body.reply.text).toBe(`Super gesprochen! ${t('de', 'safeguarding.unchecked')}`);
+    expect(res.body.reply.text).toBe(`Hör zu und vergleiche. ${t('de', 'safeguarding.unchecked')}`);
   });
 
   // One tapped word said on its own (#785) stores nothing, but it shows her words back: they are
@@ -153,7 +152,7 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
     });
   /** The judge's answer for one word in which she said `heard`. */
   const wordJudged = (heard: string) => ({
-    json: { audible: true, expected_ipa: 'bɔ̃ʒuʁ', heard_ipa: 'bɔ̃ʒuʁ', heard, ok: true, tip: null },
+    json: { audible: true, heard, words: [{ heard: 'Bonjour', confidence: 1 }] },
   });
 
   it('answers distress she says instead of the one word with the fixed help answer, showing her words nowhere', async () => {
@@ -192,6 +191,7 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
   });
 
   it('keeps the word judgement and adds the fixed help line when no check can read her words', async () => {
+    scriptPronunciationTip(env, 1);
     env.llm.script('pronounce', wordJudged(TOLD));
     env.llm.script('safeguard', { error: new LlmError('unavailable', 'down') });
     const res = await sayWord();
@@ -205,6 +205,7 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
   });
 
   it('asks no check when she said only the word', async () => {
+    scriptPronunciationTip(env, 1);
     env.llm.script('pronounce', wordJudged('Bonjour'));
     const res = await sayWord();
     expect(res.body).toEqual({ audible: true, ok: true, heard: 'Bonjour', tip: null, help: null });

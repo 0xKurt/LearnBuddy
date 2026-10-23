@@ -11,6 +11,7 @@ import type {
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { scriptPronunciationTip } from '../testing/pronunciation.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -87,16 +88,12 @@ function scriptGeneration(env: TestEnv, sentence: string): void {
 
 const judgement = {
   audible: true,
-  expected_ipa: 'ʒə maplɛ lena',
-  heard_ipa: 'ʒə mapɛl lena',
   heard: "Je m'appelle Lena",
-  overall: 'almost',
   words: [
-    { text: 'Je', ok: true, tip: null },
-    { text: "m'appelle", ok: false, tip: 'Das ‹ll› klingt wie ‹l›.' },
-    { text: 'Lena', ok: true, tip: null },
+    { heard: 'Je', confidence: 1 },
+    { heard: "m'appelle", confidence: 0.7 },
+    { heard: 'Lena', confidence: 1 },
   ],
-  reply: 'Fast! Achte auf „m’appelle“.',
 };
 
 describe.skipIf(!dbReady)('streamed pronunciation judgement', () => {
@@ -122,6 +119,7 @@ describe.skipIf(!dbReady)('streamed pronunciation judgement', () => {
   });
 
   it('colours the words while it listens and ends with the stored judgement', async () => {
+    scriptPronunciationTip(env, 3, 'Das ‹ll› klingt wie ‹l›.');
     env.llm.script('pronounce', { json: judgement });
     const s = await speak(env, l, sessionId, itemId);
     expect(s.status).toBe(200);
@@ -135,10 +133,17 @@ describe.skipIf(!dbReady)('streamed pronunciation judgement', () => {
     expect(last.words.map((w) => w.text)).toEqual(['Je', "m'appelle", 'Lena']);
     // Only the result counts: verdict, feedback and the closed question come from `done`.
     expect(s.done?.verdict).toBe('partially_correct');
-    expect(s.done?.reply.pronunciation).toEqual({
+    expect(s.done?.reply.pronunciation).toMatchObject({
       heard: "Je m'appelle Lena",
       overall: 'almost',
-      words: judgement.words.map((w) => ({ text: w.text, ok: w.ok, tip: w.ok ? null : w.tip })),
+      breakdown: {
+        overall: 'fast',
+        words: [
+          { expected: 'Je', verdict: 'passt' },
+          { expected: "m'appelle", verdict: 'fast' },
+          { expected: 'Lena', verdict: 'passt' },
+        ],
+      },
     });
     expect(env.llm.callsFor('pronounce')).toHaveLength(1);
   });
@@ -169,19 +174,9 @@ describe.skipIf(!dbReady)('streamed pronunciation judgement', () => {
   // one: nothing is stored, the question stays open, she simply says it again.
   it('refuses a judgement that contradicts itself, and judges nothing', async () => {
     for (const broken of [
-      { ...judgement, overall: 'good' },
-      {
-        ...judgement,
-        words: [
-          { text: 'Je', ok: true, tip: null },
-          { text: 'suis', ok: false, tip: 'x' },
-        ],
-      },
-      {
-        ...judgement,
-        overall: 'retry',
-        words: judgement.words.map((w) => ({ ...w, ok: true, tip: null })),
-      },
+      { ...judgement, audible: false },
+      { ...judgement, words: [{ heard: 'Je', confidence: 1.5 }] },
+      { ...judgement, words: [{ heard: 'Je', confidence: -1 }] },
     ]) {
       scriptGeneration(env, "Je m'appelle Lena.");
       const run = await l.api.post<SessionView>('/practice/topic', {

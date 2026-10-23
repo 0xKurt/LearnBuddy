@@ -4,7 +4,8 @@
 // whole sentence coloured); what the underline means stands as a quiet hint under the card.
 // SpeakPanel is the pinned bottom part: the chips above (hearing the sentence, slower, the way
 // past it) and the one large primary — "Sprechen", then "Fertig" (tap to start, tap to stop,
-// 15 s at most). The recording goes to the server, whose model listens to it; a failed upload is
+// 15 s at most). A prepared native checker handles reliable audio locally; the disclosed hybrid fallback
+// sends it to the audio gateway. A failed upload is
 // sent again with the same client_turn_id, so it is counted only once.
 //
 // The bar carries TWO shapes, not four (issue #186): one large filled pill — the single leading
@@ -13,6 +14,7 @@
 // and a ghost button on it, and wrote "und ich weiss auch nicht wieso das vom design so
 // anders ist" (01.10.).
 
+import { PronunciationStatus } from './PronunciationStatus.js';
 import type {
   AnswerResponse,
   AudioMime,
@@ -20,6 +22,7 @@ import type {
   PracticeTurnView,
   PronunciationFeedback,
   SpeakStreamEvent,
+  PronunciationSubmission,
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +38,10 @@ import { messageFor } from '../../lib/errors.js';
 import { signsAround } from '../../lib/practice/spokenWords.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
+import type { z } from 'zod';
+import { useLocalPronunciation } from '../../lib/speech/usePronunciation.js';
+import { usePronunciationLab } from '../../lib/speech/pronunciationLab.js';
+import { pronunciationSubmission } from '../../lib/speech/pronunciation.js';
 import { MAX_RECORDING_MS } from '../../lib/speech/voice.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -50,6 +57,7 @@ import { QuestionCard } from '../lb/QuestionCard.js';
 import { toast } from '../lb/Toast.js';
 import { dropped, reacted, tapped } from '../../lib/perf.js';
 import { BottomBar } from '../lb/BottomBar.js';
+import { PronunciationLab } from './PronunciationLab.js';
 import { ListenButton } from './ListenButton.js';
 import { Hint } from './Question.js';
 import { SpokenWordTargets } from './SpokenWordTargets.js';
@@ -98,12 +106,16 @@ function MarkedWords({
   const written = (w: SpokenWord, i: number) => (
     <>
       {signs[i]?.before}
-      <Text style={w.ok ? null : weak}>{w.text}</Text>
+      <Text style={w.ok || feedback.breakdown?.words[i]?.verdict === 'unsicher' ? null : weak}>
+        {w.text}
+      </Text>
       {signs[i]?.after}
     </>
   );
   const ok = feedback.words.filter((w) => w.ok).map((w) => w.text);
-  const practise = feedback.words.filter((w) => !w.ok).map((w) => w.text);
+  const practise = feedback.words
+    .filter((w, i) => !w.ok && feedback.breakdown?.words[i]?.verdict !== 'unsicher')
+    .map((w) => w.text);
   const summary = [
     ok.length > 0 ? t('speak.words_ok', { words: ok.join(', ') }) : null,
     practise.length > 0 ? t('speak.words_practise', { words: practise.join(', ') }) : null,
@@ -148,7 +160,7 @@ function LiveWords({ prompt, words }: { prompt: string; words: SpeakStreamEvent[
         const judged = words[at];
         at++;
         return (
-          <Text key={i} style={judged && !judged.ok ? weak : null}>
+          <Text key={i} style={judged && !judged.ok && judged.verdict !== 'unsicher' ? weak : null}>
             {part}
           </Text>
         );
@@ -187,8 +199,12 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
   const [word, setWord] = useState<SpokenWord | null>(null);
   const marked = feedback !== null && feedback.words.length > 0;
 
+  useEffect(() => {
+    if (__DEV__) usePronunciationLab.setState({ plan: item.pronunciation_plan ?? null });
+  }, [item.pronunciation_plan]);
   return (
     <>
+      {__DEV__ ? <PronunciationLab /> : null}
       {/* One meta line (Flows.jsx:108, "Sprechen · sag es laut"): what it is about, where the
           question names it, and what to do. */}
       <QuestionCard
@@ -200,6 +216,7 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
             sessionId={sessionId}
             itemId={item.id}
             lang={item.lang}
+            plan={item.pronunciation_plan ?? null}
             onClose={() => setWord(null)}
           />
         ) : null}
@@ -218,7 +235,10 @@ export function SpeakCard({ item, turns, live, sessionId }: CardProps) {
         )}
       </QuestionCard>
       {/* What the underline means: a quiet hint under the card, not in it (Flows.jsx:115). */}
-      {marked && feedback.words.some((w) => !w.ok) ? (
+      {marked &&
+      feedback.words.some(
+        (w, i) => !w.ok && feedback.breakdown?.words[i]?.verdict !== 'unsicher',
+      ) ? (
         <View style={{ marginTop: QUESTION.hintGap }}>
           <Hint testID="speak-legend">{t('speak.legend')}</Hint>
         </View>
@@ -240,6 +260,9 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
   // says "Fast", and Buddy's bubble says it in his words. Three times was two too many.
   return (
     <View style={{ gap: PRACTICE.speechNoteGap }}>
+      {feedback.breakdown?.overall === 'unsicher' ? (
+        <Text style={TYPE.meta}>{t('speak.uncertain')}</Text>
+      ) : null}
       {tips.map((w, i) => (
         <Text key={`${i}-${w.text}`} style={TYPE.body}>
           {t('speak.tip', { word: w.text, tip: w.tip ?? '' })}
@@ -254,7 +277,14 @@ export function PronunciationNote({ feedback }: { feedback: PronunciationFeedbac
 
 // ─────────────── the pinned controls ───────────────
 
-type Pending = { clientTurnId: string; itemId: string; mime: AudioMime; base64: string };
+type Pending = {
+  clientTurnId: string;
+  itemId: string;
+  mime: AudioMime;
+  base64: string;
+  local: boolean;
+  submission?: z.infer<typeof PronunciationSubmission>;
+};
 
 /**
  * What the speaking task is doing with her voice right now (null: nothing), for the screen's
@@ -300,6 +330,8 @@ export function SpeakPanel({
   const waiting = useRef<AbortController | null>(null);
   const online = useOnline();
   const lang = item.lang ?? item.prompt_lang ?? 'en';
+  const { local, pack } = useLocalPronunciation(item.pronunciation_plan?.language);
+  const recordedLocally = useRef(false);
   /** The newest callback, so resetting on a new question needs no dependency on it. */
   const progressRef = useRef(onProgress);
   progressRef.current = onProgress;
@@ -322,13 +354,19 @@ export function SpeakPanel({
     const controller = new AbortController();
     waiting.current = controller;
     try {
+      p.submission ??= await pronunciationSubmission(
+        item,
+        { mime: p.mime, audio_base64: p.base64 },
+        p.local,
+        controller.signal,
+      );
+      if (p.submission.evidence) p.base64 = '';
       const res = await speakItem(
         sessionId,
         {
           client_turn_id: p.clientTurnId,
           item_id: p.itemId,
-          mime: p.mime,
-          audio_base64: p.base64,
+          ...p.submission,
         },
         {
           signal: controller.signal,
@@ -374,7 +412,13 @@ export function SpeakPanel({
     onRecorded: (r: Recording) => {
       // Closing the file and turning it into base64 happens before the first byte moves.
       reacted('speak_finish');
-      pending.current = { clientTurnId: newId(), itemId: item.id, mime: r.mime, base64: r.base64 };
+      pending.current = {
+        clientTurnId: newId(),
+        itemId: item.id,
+        mime: r.mime,
+        base64: r.base64,
+        local: recordedLocally.current,
+      };
       tapped('speak_wait');
       void send();
     },
@@ -410,6 +454,7 @@ export function SpeakPanel({
     }
     setProblem(null);
     stopListening();
+    recordedLocally.current = local;
     void rec.start();
   }
 
@@ -509,7 +554,9 @@ export function SpeakPanel({
     <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
       {t(`speak.problem.${problem}`)}
     </Text>
-  ) : null;
+  ) : (
+    <PronunciationStatus local={local} pack={pack} />
+  );
 
   return (
     <BottomBar>

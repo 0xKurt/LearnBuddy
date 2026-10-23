@@ -100,7 +100,6 @@
       "punctuation": "Casi – revisa la puntuación en «{{word}}»."
     },
     "had_enough": "Vale, por hoy ya está bien. Puedes terminar el ejercicio, o hacemos un ejemplo pequeño juntos. Dime qué prefieres.",
-    "heard_retry": "No te he oído bien. Inténtalo otra vez un poco más alto y más cerca del móvil.",
     "help_final_answer": "¡Eso va bien! Ahora escríbeme tu resultado final, tal como lo pide el ejercicio.",
     "help_solved": "¡Genial, lo has resuelto por tu cuenta!",
     "help_step": "Vamos paso a paso: ¿qué datos te da el ejercicio y qué hay que buscar?",
@@ -552,7 +551,11 @@
       }
     },
     "not_usable": "No he podido preparar este ejercicio.",
-    "prepare_failed": "La preparación no ha funcionado ahora. Puedes intentarlo de nuevo."
+    "prepare_failed": "La preparación no ha funcionado ahora. Puedes intentarlo de nuevo.",
+    "pronunciation_passt": "Suena bien.",
+    "pronunciation_fast": "Casi — escucha de nuevo las palabras marcadas.",
+    "pronunciation_nochmal": "Escucha las palabras marcadas e inténtalo otra vez.",
+    "pronunciation_unsicher": "No puedo valorarlo con seguridad. Escucha y compara."
   },
   "contact": {
     "less_often": "Entendido: a partir de ahora solo te escribiré al móvil cuando sea realmente importante. Todo lo demás te espera aquí. Puedes cambiarlo en los ajustes."

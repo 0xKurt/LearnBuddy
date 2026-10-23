@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { checkedPronunciationPlan } from '@learnbuddy/shared-types/contracts';
+import { SYSTEM as PRONOUNCE_SYSTEM } from '../../modules/practice/pronunciation.js';
 import { ACT_SCHEMAS } from '../../modules/buddy/decision.js';
 // Guard (issue #350, the open point of #313): every walkthrough spec brings its own scripted
 // answers. A queued answer (`ScriptedGateway.script`) goes to whichever spec asks first, so a spec
@@ -78,11 +80,13 @@ const SAMPLES = {
   ),
   tourPageAgain: sheet(HOMEWORK_SYSTEM, 800, 1080),
   // tour.spec.ts: one sentence to say.
-  tourPronounce: request('pronounce', 'pronounce', {
-    text: 'TARGET (en): The weather is nice today.',
+  tourPronounce: request('pronounce', PRONOUNCE_SYSTEM, {
+    text: JSON.stringify(
+      checkedPronunciationPlan('The weather is nice today.', 'en', [[], ['wether'], [], [], []]),
+    ),
   }),
-  tourWord: request('pronounce', 'pronounce', {
-    text: 'WORD (en): weather\nSENTENCE: The weather is nice today.',
+  tourWord: request('pronounce', PRONOUNCE_SYSTEM, {
+    text: JSON.stringify(checkedPronunciationPlan('weather', 'en', [['wether']])),
   }),
   // work-photo.spec.ts: her working for the equation, photographed (#444) — `transcribe` too.
   workPhoto: request(
@@ -147,14 +151,14 @@ describe('the walkthrough model (spec-order independence, #350)', () => {
     expect(await answer(llm, SAMPLES.tourPageAgain)).toMatchObject({
       title: 'Hausaufgabe Rechteck',
     });
-    expect(await answer(llm, SAMPLES.tourPronounce)).toMatchObject({ overall: 'almost' });
+    expect(await answer(llm, SAMPLES.tourPronounce)).toMatchObject({
+      audible: true,
+      heard: 'the wether is nice today',
+    });
     expect(await answer(llm, SAMPLES.tourWord)).toEqual({
       audible: true,
-      expected_ipa: 'ˈwɛðər',
-      heard_ipa: 'ˈwɛðər',
       heard: 'weather',
-      ok: true,
-      tip: null,
+      words: [{ heard: 'weather', confidence: 1 }],
     });
     expect(await answer(llm, SAMPLES.workPhoto)).toMatchObject({ found: 'working' });
     expect(await answer(llm, SAMPLES.heard)).toEqual({

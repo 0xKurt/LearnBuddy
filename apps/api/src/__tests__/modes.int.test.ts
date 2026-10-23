@@ -15,6 +15,7 @@ import type {
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
+import { scriptPronunciationTip } from '../testing/pronunciation.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -698,33 +699,32 @@ describe.skipIf(!dbReady)('learning modes', () => {
         expect(parts.some((p) => 'inlineData' in p && p.inlineData.mimeType === 'audio/mp4')).toBe(
           true,
         );
-        expect(ScriptedGateway.textOf(req)).toContain("TARGET (fr): Je m'appelle Lena.");
+        expect(ScriptedGateway.textOf(req)).toContain("m'appelle");
         return {
           audible: true,
           heard: 'Je mapelle Lena',
-          overall: 'retry',
           words: [
-            { text: 'Je', ok: true, tip: null },
-            { text: "m'appelle", ok: false, tip: 'Das ‹ll› klingt wie ‹l›, Betonung am Ende.' },
-            { text: 'Lena', ok: true, tip: 'unnötig' },
+            { heard: 'Je', confidence: 1 },
+            { heard: 'mapelle', confidence: 1 },
+            { heard: 'Lena', confidence: 1 },
           ],
-          reply: 'Fast! Achte auf „m’appelle“.',
         };
       },
       {
         json: {
           audible: true,
           heard: "Je m'appelle Lena",
-          overall: 'good',
           words: [
-            { text: 'Je', ok: true, tip: null },
-            { text: "m'appelle", ok: true, tip: null },
-            { text: 'Lena', ok: true, tip: null },
+            { heard: 'Je', confidence: 1 },
+            { heard: "m'appelle", confidence: 1 },
+            { heard: 'Lena', confidence: 1 },
           ],
-          reply: 'Klingt super!',
         },
       },
     );
+    env.llm.script('safeguard', { json: { concern: false } });
+    scriptPronunciationTip(env, 3, 'Das ‹ll› klingt wie ‹l›, Betonung am Ende.');
+    scriptPronunciationTip(env, 3);
     const turnId = randomUUID();
     const first = await l.api.post<AnswerResponse>(`/practice/sessions/${s.id}/speak`, {
       client_turn_id: turnId,
@@ -734,7 +734,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
     });
     expect(first.status).toBe(200);
     expect(first.body.verdict).toBe('incorrect');
-    expect(first.body.reply.pronunciation).toEqual({
+    expect(first.body.reply.pronunciation).toMatchObject({
       heard: 'Je mapelle Lena',
       overall: 'retry',
       words: [
@@ -794,6 +794,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
       })
     ).body;
     const speakId = s.items[0]!.item.id;
+    scriptPronunciationTip(env, 1);
     // She taps "Beenden" while the model is still listening.
     env.llm.script('pronounce', async () => {
       const finished = await l.api.post(`/practice/sessions/${s.id}/finish`, {});
@@ -801,9 +802,7 @@ describe.skipIf(!dbReady)('learning modes', () => {
       return {
         audible: true,
         heard: 'Bonjour',
-        overall: 'good',
-        words: [{ text: 'Bonjour', ok: true, tip: null }],
-        reply: 'Klingt super!',
+        words: [{ heard: 'Bonjour', confidence: 1 }],
       };
     });
     const late = await l.api.post(`/practice/sessions/${s.id}/speak`, {

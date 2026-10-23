@@ -5,7 +5,7 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import { scriptGenerations } from './generations.js';
-import { STUDY_READING, HOMEWORK_READING, inTurn, pronounceRules, readingRules } from './rules.js';
+import { STUDY_READING, HOMEWORK_READING, inTurn, pronounceRules, readingRules, tutorRules } from './rules.js';
 import { says, scriptTurns } from './turns.js';
 
 const remember = (statement: string, quote: string) => ({
@@ -155,6 +155,7 @@ export function scriptTour(): void {
       items: [
         {
           kind: 'speak',
+          confusions: [[], ['wether'], [], [], []],
           prompt: 'The weather is nice today.',
           answer: 'The weather is nice today.',
           accepted_answers: [],
@@ -171,37 +172,43 @@ export function scriptTour(): void {
       ],
     }),
   });
-  // By the sentence she says, not as the next judgement anyone asks for (#350).
   pronounceRules.add({
-    when: /TARGET \(en\): The weather is nice today\./,
+    when: /"expected":"The".*"expected":"weather"/,
     answer: () => ({
       audible: true,
-      expected_ipa: 'ðə ˈwɛðər ɪz naɪs təˈdeɪ',
-      heard_ipa: 'de ˈvɛtər ɪs naɪs təˈdeɪ',
       heard: 'the wether is nice today',
-      overall: 'almost',
       words: [
-        { text: 'The', ok: true, tip: null },
-        { text: 'weather', ok: false, tip: '‹th› mit der Zunge zwischen den Zähnen' },
-        { text: 'is', ok: true, tip: null },
-        { text: 'nice', ok: true, tip: null },
-        { text: 'today', ok: true, tip: null },
+        { heard: 'The', confidence: 1 },
+        { heard: 'weather', confidence: 0.7 },
+        { heard: 'is', confidence: 1 },
+        { heard: 'nice', confidence: 1 },
+        { heard: 'today', confidence: 1 },
       ],
-      reply: 'Schon gut verständlich! Übe noch das ‹th› in „weather“.',
     }),
   });
-  // Stateless rehearsal has its own contract; SENTENCE is context, not a sentence answer.
   pronounceRules.add({
-    when: /WORD \(en\): weather\nSENTENCE: The weather is nice today\./,
+    when: /"words":\[\{"expected":"weather"/,
     answer: () => ({
       audible: true,
-      expected_ipa: 'ˈwɛðər',
-      heard_ipa: 'ˈwɛðər',
       heard: 'weather',
-      ok: true,
-      tip: null,
+      words: [{ heard: 'weather', confidence: 1 }],
     }),
   });
+  tutorRules.add(
+    {
+      system: /Phrase one short encouraging pronunciation tip/,
+      when: /"expected":"The".*"expected":"weather"/,
+      answer: () => ({
+        reply: 'Schon gut verständlich! Übe noch das ‹th› in „weather“.',
+        tips: [null, '‹th› mit der Zunge zwischen den Zähnen', null, null, null],
+      }),
+    },
+    {
+      system: /Phrase one short encouraging pronunciation tip/,
+      when: /"words":\[\{"expected":"weather"/,
+      answer: () => ({ reply: 'Das sitzt!', tips: [null] }),
+    },
+  );
   // A sheet that could not be read, read again with success; then homework of two
   // pages whose second is cut off, and that page photographed again.
   // A sheet that could not be read, read again with success; then homework of two pages whose

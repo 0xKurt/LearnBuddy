@@ -100,7 +100,6 @@
       "punctuation": "Presque – regarde encore la ponctuation à « {{word}} »."
     },
     "had_enough": "D’accord — ça suffit pour aujourd’hui si tu veux. Tu peux arrêter l’exercice, ou on fait un petit exemple ensemble. Dis-moi ce que tu préfères.",
-    "heard_retry": "Je ne t'ai pas bien entendu. Réessaie un peu plus fort et plus près du téléphone.",
     "help_final_answer": "Ça a l'air bien ! Écris-moi maintenant ton résultat final, comme l'exercice le demande.",
     "help_solved": "Bravo – tu as trouvé par toi-même !",
     "help_step": "Allons-y pas à pas : qu'est-ce qui est donné dans l'exercice, et qu'est-ce qu'on cherche ?",
@@ -552,7 +551,11 @@
       }
     },
     "not_usable": "Je n’ai pas pu préparer cet exercice.",
-    "prepare_failed": "La préparation n’a pas abouti. Tu peux réessayer."
+    "prepare_failed": "La préparation n’a pas abouti. Tu peux réessayer.",
+    "pronunciation_passt": "Cela semble juste.",
+    "pronunciation_fast": "Presque — réécoute les mots marqués.",
+    "pronunciation_nochmal": "Écoute les mots marqués et réessaie.",
+    "pronunciation_unsicher": "Je ne peux pas juger avec certitude. Écoute et compare."
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

@@ -1740,18 +1740,14 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   instead of after them, is skipped when none of her passages is embedded yet, and is given up
   after 800 ms (`QUERY_EMBED_TIMEOUT_MS`) — the other two lists then carry the search.
 - **The pronunciation judgement streams** (`POST /practice/sessions/:id/speak` with
-  `Accept: text/event-stream`; `SpeakStreamEvent`, issue #8): the model writes `heard` before
-  the word list, so the words colour one by one instead of the card sitting still for seconds.
-  Only words it has finished writing are sent (`partialArray` in `llm/partial.ts` returns
-  complete elements only — a word must never flash green and turn amber two characters later),
-  and nothing counts as judged until the `done` event carries the stored `AnswerResponse`
-  (rule 5). Without the header the same call answers with plain JSON. When the phone goes away
-  mid-stream, the judgement and the dictation stop their model call with it (#684,
-  `LlmRequest.signal`, recorded as `cancelled`; never retried); a recording sent again while its
-  judgement still runs in the same instance joins that run — one model call, one result. The join
-  is per server instance: across instances the unique turn index still keeps one stored result,
-  but the model may be paid twice. Buddy's
-  chat turn is not stopped this way: a dropped stream is not "Stopp", and the answer still lands.
+  `Accept: text/event-stream`; `SpeakStreamEvent`, issues #8/#896): after the complete acoustic
+  evidence is aligned, code emits the word breakdown before the text-only tip call finishes.
+  This avoids showing unvalidated partial model verdicts. Unknown words are not coloured wrong;
+  nothing counts until `done` carries the stored `AnswerResponse`. Without the header the same
+  call answers JSON. Disconnect aborts outstanding gateway calls (#684); a resend with the same
+  client turn joins an in-flight run or replays the stored result. Across instances the unique
+  turn index still guarantees one stored result. A local resend retains only evidence after
+  inference, never uploads audio, and never repeats the native check once evidence exists.
 - **Writing down what she said streams too** (`POST /voice/transcribe` with
   `Accept: text/event-stream`; `TranscribeStreamEvent`, issue #9): on the dictation path — a
   phone without on-device recognition, or a language it cannot do — the words appear while the
@@ -5579,22 +5575,43 @@ word list, so it stays a prompt rule.
   a round without Buddy (there is no tile — the chat is the way in), an offer that stands is not
   yet in STATE's "Already waiting for her" (only `offer_learning` is), so a repeated
   `offer_drill` is not refused by code.
-- **speak** — say a sentence aloud (kind `speak`; `POST /practice/sessions/:id/speak` with a
-  ≤ 15 s recording, bodies up to 2 MB only on this route). The model listens to the audio itself:
-  it writes the expected pronunciation and the sounds actually produced (IPA), then judges word
-  by word (`practice/speak.ts`). good → right, almost → right with help, retry → stays open.
-  **Code checks the judgement before anything counts** (issue #227 A8, `judgementFault`): the
-  words it colours must be words of the sentence in its order, and `overall` must agree with
-  them — good exactly when every word is ok. A judgement that contradicts itself is refused like
-  an unreadable one (`model_unavailable`: nothing stored, the question stays open, she says it
-  again); code cannot know which half is right, so it repairs nothing.
-  The recording is never stored. Live checks (`evals/speak/run.ts`, espeak-ng recordings): wrong
-  words are recognised reliably, a strong German accent in 2 of 3 runs; it is an AI assessment,
-  not a phonetic measurement. A dedicated pronunciation-assessment service (phoneme scores) would
-  replace the measuring half of `speakItem`'s model call — not the whole call: the per-word `tip`
-  and the spoken `reply` are not something a scoring API returns. Weighed against today's numbers
-  in [decisions/azure-pronunciation.md](decisions/azure-pronunciation.md) (issue #27, the owner
-  decides; nothing is connected).
+- **speak** — say a sentence aloud (kind `speak`; `POST /practice/sessions/:id/speak`,
+  ≤15 s recording). `contracts/pronunciation.ts` is the shared `PronunciationChecker` seam
+  (#896): target words, per-word competitors, acoustic evidence and `passt / fast / nochmal /
+unsicher`. Preparation generates `confusions` as structured output; Zod and code validate
+  length, single words, duplicates and target order before `items.pronunciation_plan` is stored.
+  Missing/invalid preparation remains an explicit online fallback, including older items.
+  There are no production word lists. Native Vosk checks each target/competitor against its
+  model vocabulary; missing vocabulary, `[unk]`, omissions, unaligned extra speech and confidence
+  below the source-specific central thresholds are uncertain. Sequence alignment preserves
+  expected words, competitors, insertions and omissions. Audio evidence retains thresholds
+  0.65/0.85; Vosk uses the conservative calibration in
+  `PRONUNCIATION_THRESHOLDS.vosk` (see the 24.10 measurement). Vosk corrections always go to
+  audio: the synthetic reference contains a false correction even at confidence 1.0.
+  Uncertain server results never cost a try, close a question or schedule a review.
+  The server recomputes every verdict; ownership, replay and context fences remain.
+  **Local first on Android, including EAS preview APKs:** a verified language pack selects
+  Vosk before recording. The pinned native module/plugin is preserved by `app.config.ts`.
+  iOS remains developer-only; Expo Go/web and missing plans/modules use the audio gateway.
+  Both sentence practice and word rehearsal use one submission function and one status component.
+  First use downloads EN/DE/FR/ES/IT packs from alphacephei with honest download/verification/
+  extraction states; byte count, SHA-256 and bounded extraction precede atomic publication.
+  During download/failure the labelled online path remains usable. No model files are bundled.
+  **Disclosed hybrid fallback:** every uncertain word or sentence, missing pack or local decoder
+  failure sends the original recording through `purpose: pronounce`, never a transcript model.
+  Confident local results send only evidence. Cancellation sends neither. The complete sentence
+  goes to the audio checker when any word is uncertain, preserving alignment and context.
+  A separate text-only gateway call phrases the tip from the code breakdown; its outage falls
+  back to localised verdict text and cannot alter the grade. Recognised extra speech still passes
+  safeguarding. A constrained decoder cannot reliably reconstruct arbitrary distress speech;
+  unknown evidence must not be described as proof of safety. This remains part of device review.
+  The Dev Menu opens `components/practice/PronunciationLab.tsx` using the current prepared exercise: pack
+  states, install/delete, recording-end-to-verdict time, words/confidences; no learner route or
+  allowlist entry. [Calibration and remaining device work](measurements/vosk-2026-10-24.md)
+  document recognition limits; child recordings must retune thresholds. Conversation/roleplay
+  still need transcript-derived plans, generated confusions and structured Buddy-turn evidence.
+  No native build or device result is claimed (#194/#177/#710). [ADR 0012](adr/0012-on-device-pronunciation.md) records the decision.
+  Audio is ephemeral (the recorder removes its temporary file); no server audio storage.
   **The sentences on her own sheet** (issue #223 point 2): a reading may write `speak` items from a
   photographed sheet ("Lies den Text laut vor"), and `selectPracticeItems` leaves every spoken item
   out of a written run on purpose — the microphone has no place in the middle of typing. That

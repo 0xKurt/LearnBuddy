@@ -4,14 +4,21 @@
 //
 // The sheet closes with a visible button, like every sheet (CLAUDE.md rule 14).
 
-import type { SpeakWordResponse } from '@learnbuddy/shared-types/contracts';
-import { useState } from 'react';
+import { PronunciationStatus } from './PronunciationStatus.js';
+import {
+  pronunciationKey,
+  type PronunciationPlan,
+  type SpeakWordResponse,
+} from '@learnbuddy/shared-types/contracts';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { BusyIndicator } from '../lb/BusyIndicator.js';
 import { speakWord } from '../../lib/api/learningEndpoints.js';
 import { messageFor } from '../../lib/errors.js';
+import { useLocalPronunciation } from '../../lib/speech/usePronunciation.js';
+import { pronunciationSubmission } from '../../lib/speech/pronunciation.js';
 import { useRecording, type Recording } from '../../lib/speech/record.js';
 import { stop as stopListening } from '../../lib/speech/listen.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
@@ -27,6 +34,7 @@ export type SpokenWord = { text: string; ok: boolean; tip: string | null };
 type Props = {
   /** The word she tapped; null keeps the sheet closed. */
   word: SpokenWord | null;
+  plan?: PronunciationPlan | null;
   sessionId: string;
   itemId: string;
   /** The language of the sentence, for reading the word aloud. */
@@ -53,6 +61,7 @@ function WordAttempt({
   itemId,
   lang,
   onClose,
+  plan,
 }: Omit<Props, 'word'> & { word: SpokenWord }) {
   const mounted = useMounted();
   const { palette } = useTheme();
@@ -62,15 +71,36 @@ function WordAttempt({
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
+  const recordedLocally = useRef(false);
+  const checking = useRef<AbortController | null>(null);
+  useEffect(() => () => checking.current?.abort(), []);
+  const target = plan?.words.find(
+    (w) => pronunciationKey(w.expected) === pronunciationKey(word.text),
+  );
+  const { local, pack } = useLocalPronunciation(target ? plan?.language : undefined);
+
   async function judge(r: Recording, text: string): Promise<void> {
+    if (!mounted.current) return;
+    const controller = new AbortController();
+    checking.current = controller;
     setSending(true);
     setProblem(null);
     try {
+      const target = plan?.words.find(
+        (w) => pronunciationKey(w.expected) === pronunciationKey(text),
+      );
+      const wordPlan = plan && target ? { ...plan, words: [{ ...target, expected: text }] } : null;
+      const submission = await pronunciationSubmission(
+        { pronunciation_plan: wordPlan },
+        { mime: r.mime, audio_base64: r.base64 },
+        recordedLocally.current,
+        controller.signal,
+      );
+      if (!mounted.current || controller.signal.aborted) return;
       const res = await speakWord(sessionId, {
         item_id: itemId,
         word: text,
-        mime: r.mime,
-        audio_base64: r.base64,
+        ...submission,
       });
       if (mounted.current) setTried(res);
     } catch (err) {
@@ -88,6 +118,7 @@ function WordAttempt({
   });
 
   function close(): void {
+    checking.current?.abort();
     void rec.cancel();
     setTried(null);
     setProblem(null);
@@ -104,6 +135,9 @@ function WordAttempt({
     <Sheet visible title={word.text} closeLabel={t('common:actions.close')} onClose={close}>
       <View style={{ gap: SPACE.md }}>
         <Text style={[TYPE.meta, SHEET_TEXT]}>{t('practice:speak.word_hint')}</Text>
+        <View style={SHEET_TEXT}>
+          <PronunciationStatus local={local} pack={pack} />
+        </View>
         <View style={{ flexDirection: 'row', gap: SPACE.sm, flexWrap: 'wrap' }}>
           <ListenButton source={{ text: word.text, lang }} slow disabled={recording} />
         </View>
@@ -141,7 +175,13 @@ function WordAttempt({
                 { ...TYPE.title, color: tried.ok ? palette.successText : palette.warningText },
               ]}
             >
-              {t(tried.ok ? 'practice:speak.word_good' : 'practice:speak.word_again')}
+              {t(
+                !tried.audible
+                  ? 'practice:speak.uncertain'
+                  : tried.ok
+                    ? 'practice:speak.word_good'
+                    : 'practice:speak.word_again',
+              )}
             </Text>
             {tried.heard ? (
               <Text style={TYPE.meta}>{t('practice:speak.heard', { text: tried.heard })}</Text>
@@ -165,6 +205,7 @@ function WordAttempt({
             setTried(null);
             // Buddy's voice must not end up in her recording.
             stopListening();
+            recordedLocally.current = local;
             void rec.start();
           }}
         >
