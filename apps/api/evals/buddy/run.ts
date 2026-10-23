@@ -1,5 +1,5 @@
 // Live-model evaluation of Buddy's conversation turns (not part of CI: it
-// needs Vertex credentials and costs a little money). Runs every case through
+// needs provider credentials and costs a little money). Runs every case through
 // the real pipeline on a throwaway database and checks what was applied.
 //
 //   cd apps/api
@@ -23,7 +23,7 @@ import { loadConfig } from '../../src/config.js';
 import { setStateAudit } from '../../src/modules/buddy/blocks.js';
 import { buddyPrompt } from '../../src/modules/buddy/prompts.js';
 import { registerLearning } from '../../src/modules/learning/register.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { BlockAudit } from './blockaudit.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
@@ -141,10 +141,10 @@ async function main(): Promise<void> {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',
     ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
   });
-  if (config.LLM_BACKEND !== 'vertex')
-    throw new Error('Set LLM_BACKEND=vertex and the Vertex variables (docs/SETUP-VERTEX.md)');
+  if (config.LLM_BACKEND === 'disabled')
+    throw new Error('Set LLM_BACKEND=vertex or azure and its provider configuration');
   if (!(await testDatabaseAvailable())) throw new Error('No local Postgres (LB_TEST_DATABASE_URL)');
-  const gateway = new VertexGateway(config);
+  const gateway = llmGateway(config);
   // What each STATE section costs and whether an answer pointed back at it (issue #168).
   // Off by default: with no audit registered the request is byte-identical (blockaudit.ts).
   const blockOut = process.env.BUDDY_BLOCK_AUDIT;

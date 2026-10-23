@@ -5,6 +5,9 @@ candidate, choose by evidence. Measured against `docs/decisions/baseline-2026-10
 axes (Speed, Qualität, Kosten, Anwendungsfall). Eval spend for this decision ≈ **$4.4 of the $15**
 allowed (ledger `BUDGET-LEDGER.md` of the audit round).
 
+> Update 23.10.2026: the owner selected Azure preparation; see the dated section below for
+> the recommendation and blocking schema finding. Earlier measurements remain historical evidence.
+
 ## Recommendation (two steps; ADR 0011)
 
 1. **Survive 19.11. on `eu/gemini-3.8-flash`, with every thinking level sent as LOW.** Of what can
@@ -41,7 +44,7 @@ declared order (`GatewayProfile`, #646).
 | eu/gemini-3.1-flash-lite for the chat turn | yes                                             | yes                                                                                                      | to 07.05.2027                     | $0.275 / $1.65                                                     | no-go for the chat: **58/65** (7 cases fail)                                                        |
 | eu/gemini-4-argon                          | yes (`eu` since 13.10.)                         | yes                                                                                                      | new                               | **$2.20 / $11** until 30.11., then $4.40 / $22                     | no-go: 6.5–10.2 s per turn, 2.7× (from Dec 5.3×) the price                                          |
 | Mistral (La Plateforme, EU)                | EU hosting stated                               | audio only in the Voxtral models, images in others: two models per feature; schema limits not documented | —                                 | not compared                                                       | not tested: new account, DPA, privacy/DPIA entries; JSON-schema size limits unknown                 |
-| Azure OpenAI (EU Data Zone)                | EU data zone                                    | structured outputs up to 5 000 properties; audio-input models not listed for Data Zone Standard          | —                                 | not compared                                                       | not tested: new account, DPA; audio path unclear                                                    |
+| Azure OpenAI (EU Data Zone)                | EU data zone                                    | earlier 5,000-property claim superseded below (23.10.); audio path unresolved                            | —                                 | not compared                                                       | not tested: new account, DPA; audio path unclear                                                    |
 
 Sources: Vertex model cards, locations and pricing pages read 14.10.2026 (KI-Audit F §1–2,
 `reports/ki-audit-2026-10-14/F-pricing.md`); Gemini 4 Argon id and price:
@@ -216,3 +219,181 @@ run, since 3.7 answered 0 of 10 turns in that hour; 3.8's 22/22 from 15.10. stan
   capacity — the ~10-turn interleaved A/B here (`evals/buddy`, 3.6/3.8) costs ≈ $0.35.
 - Keep 3.7 only as a last fallback, with the one-line mapping (`minimal` → `thinkingBudget: 0`
   for 3.7) built and tested first.
+
+## 23.10.2026 — Azure preparation, owner decision (#889)
+
+The owner now chooses **Azure OpenAI in Azure AI Foundry** as the next provider and is opening
+an account. This supersedes the earlier instruction to wait for an account before building an
+adapter. It does **not** activate Azure: Vertex remains the default, no live calls were made,
+and no production settings were changed. Research below uses Microsoft Learn, retrieved
+23.10.2026; published availability is not a guarantee of capacity in the new subscription.
+
+### Recommendation and EU deployment
+
+**Recommend `gpt-5.4` (2026-03-05) for smart calls and `gpt-5.4-mini` (2026-03-17) for fast
+calls, Data Zone Standard (EU), with the resource in Sweden Central.** This is a candidate
+recommendation for validation, not a claim of measured quality, latency or lower cost.
+Both support text/images, structured output, streaming and controllable reasoning. Choosing
+this pair keeps the same reasoning mapping and avoids the newer families' cache-write billing
+and GPT-5.5's extended-cache default. Fast remains for separately evaluated narrow purposes;
+changing a provider does not move the tutor onto the fast tier.
+[Reasoning capabilities](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/reasoning),
+[prompt caching](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/prompt-caching).
+
+The published EU matrix lists these **text/chat** options (not image-generation, embedding or
+realtime models):
+
+| Deployment         | Sweden Central                                                                                                                                                                                                      | Germany West Central             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Data Zone Standard | GPT-4.1 / mini / nano; GPT-4o (2024-05-13, 08-06, 11-20) / mini; GPT-5 / mini / nano; GPT-5.1; GPT-5.4 / mini; GPT-5.5; GPT-5.6 luna / sol / terra; GPT-6 astra / luna / sol; GPT-6.1-sol; o1, o3, o3-mini, o4-mini | Same except GPT-5.1              |
+| Standard/Regional  | GPT-4.1 / mini; GPT-4o (all three versions) / mini; GPT-5.1; o1; o4-mini                                                                                                                                            | No text/chat entry in this table |
+
+GPT-5.4-nano's EU Data Zone entry is North Europe, not these two regions. Global deployments
+in Sweden/Germany do **not** establish EU inference residency. Data Zone EU permits inference
+across EU member states; regional deployments have a narrower boundary. The adapter deliberately
+accepts only the selected DataZoneStandard type and the two EU resource regions.
+[Official regional matrix](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure-region-availability?pivots=standard&tabs=az-europe).
+
+### Blocking schema finding
+
+Microsoft Learn currently documents **100 object properties total and five nesting levels**,
+not the 5,000-property claim in the earlier research. That claim's non-Microsoft source does
+not establish Azure support. All fields must be required, object schemas closed, and root
+`anyOf` is unsupported; optional fields can use null. Definitions and recursion are supported.
+The page supplies **no numeric enum-count or enum-string-size limit**; do not borrow another
+provider's 1,000/15,000/120,000 limits as Azure guarantees.
+[Azure structured-output limits](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/structured-outputs).
+
+Our checked-in inventory has **242 properties, 77 optional fields, 284 enum values and 2,050
+enum-value characters** for the Buddy step; the final schema has 235 properties. Its depth 10
+counts schema nodes including `anyOf`, so it is not directly comparable to container nesting.
+The gateway counts object/array containers (unions add no level), and rejects schemas outside
+100 properties/five levels **before HTTP**. Making optional fields required/nullable does not
+reduce the property count. **The full Buddy turn cannot be activated under the documented
+limit.** We do not remove tools, descriptions or instructions to conceal this incompatibility.
+Resolve it through an authoritative updated Azure limit plus an authorized schema probe, or a
+separately reviewed semantics-preserving schema redesign. Fake HTTP cannot prove acceptance.
+
+`azure-schema.ts` derives the strict wire schema without changing the domain schema, property
+order or descriptions; replies restore only newly introduced null sentinels to omission.
+Original nullable fields stay null, zod defaults still apply, and domain validation remains the
+final authority. The streaming adapter does the same for finished array elements while leaving
+unfinished strings unfinished for `partialString` and `answerUpTo`.
+
+### Images, streaming and reasoning
+
+Chat vision accepts base64 data URLs. Learn's vision guide gives **20 MB per image and ten
+images per chat request**; the adapter conservatively caps the combined base64 media at 20 MB
+and ten images, uses `detail: high` for sheet text, and supports JPEG/PNG already in our seam.
+It refuses PDF/audio before sending; neither is silently converted or sent to another provider.
+[Vision input](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/gpt-with-vision).
+
+Chat Completions streams JSON text through SSE. `stream_options.include_usage` requests the
+usage-only tail; annotation-only chunks are ignored, a missing normal finish is rejected, and
+filter/refusal chunks are not forwarded as text. Keep **default buffered content filtering**:
+asynchronous filtering can expose content before its rejection, and our learner UI does not
+retract already spoken text. A filtered completion can still incur charges.
+[Content streaming](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/content-streaming).
+
+Neutral thinking maps `off → none`, `minimal → low`, and `low/medium/high` unchanged. The
+GPT-5.4 family has no `minimal` mode. Send `max_completion_tokens` (reasoning included); omit
+`temperature` rather than sending an unsupported reasoning parameter. Prompts stay unchanged.
+[Reasoning parameters](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/reasoning).
+
+### Cache, filters, quota and cost
+
+For the selected models, automatic prefix caching starts at 1,024 identical tokens, then
+128-token increments. It includes schemas and images; image detail must match. Default
+in-memory retention clears after inactivity and no later than one hour after last use. No
+extended-retention parameter, explicit cache resource or learner cache key is sent. Reported
+`cached_tokens` is recorded, but accounting conservatively gives no cache discount, as on Vertex.
+[Cache semantics](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/prompt-caching).
+
+**Yes, severity thresholds can differ by deployment.** Create a resource-level filter policy
+and attach it to each deployment. Input/output settings are separate; hate, sexual, violence
+and self-harm have low/medium/high thresholds. Proposed initial policy: sexual at low, other
+categories at medium, for input and output, default buffered streaming. **Do not attach the
+optional profanity blocklist to input**: it could reproduce #758 even with suitable category
+thresholds. Azure has no direct Vertex harassment-category equivalent. Test the exact insult
+case and distress counterexamples before considering a threshold change; no promise that this
+alone fixes #758. Do not disable output safety. The gateway sends no request-level policy
+header (also unsuitable for image input).
+[Deployment filter configuration](https://learn.microsoft.com/en-us/azure/foundry-classic/openai/how-to/content-filters?view=foundry-classic).
+
+Quota is subscription/tier/deployment dependent, not an entitlement from the model table. The
+published default GPT-5.4 DataZoneStandard entry is **1,000 RPM / 1,000,000 TPM** (credit-card
+subscriptions can be lower). The quota table does not supply an equivalent mini DataZoneStandard
+row despite the availability matrix listing it; confirm both in the account. Assign sufficient
+TPM for prompt plus output reservation, check burst behavior and 429 telemetry. The adapter uses
+LearnBuddy's existing bounded retries; SDK retries are disabled.
+[Quotas and limits](https://learn.microsoft.com/en-us/azure/foundry/openai/quotas-limits).
+
+**EU USD per 1M input/output/cached tokens: not verified for either recommended model from the
+allowed Learn-only sources.** The FAQ directs prices to Azure's rate card or public Retail
+Prices API; it does not give a binding per-model EU tariff. Do not substitute global prices or
+an assumed 10% uplift. Pending a verified rate card, Azure startup requires
+`AZURE_OPENAI_PRICES`: a dated USD/1M table with source and both model rates. Tests use explicitly
+fictional rates. Use conservative rates covering the intended context range; this implementation
+does not select a second long-context tariff. No guessed rates are shipped as production defaults.
+[Pricing lookup guidance](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/faq).
+
+`llm_calls` reuses `callModel`: response model/version, input, cached input, visible output,
+reasoning, cost and timing are recorded without content. Azure's completion count includes
+reasoning: subtract it for visible output, bill the sum only once. Versioned IDs use their base
+model price; unknown IDs use the table's ceiling. Missing provider usage (including some blocked
+or interrupted calls) cannot establish the invoice amount; zeros mean unreported, not free.
+Cancellation preserves any usage already reported by the provider through the shared retry path.
+
+### SDK check (Engineering rule 1)
+
+Use **`openai` 7.43.0**, Apache-2.0, 22,916,510 bytes unpacked, no mandatory runtime dependencies
+in npm metadata; published 22.10.2026 with multiple releases that week. Metadata checked with
+`pnpm view`, and source/types inspected locally. `@azure/openai` 2.0.0 is MIT, 235,014 bytes
+unpacked, with `tslib` and `@azure-rest/core-client`; its v2 documentation uses the `openai`
+client and adds Azure-specific types. We do not need that extra runtime package for Chat
+Completions. Node 22/server only; no React Native path or accessibility surface. Reuse SDK SSE,
+HTTP, cancellation and typed requests; maintain only our schema/accounting adaptation.
+[Microsoft's TypeScript SDK guide](https://learn.microsoft.com/en-us/javascript/api/overview/azure/openai-readme?view=azure-node-latest).
+
+### Owner setup and activation gates
+
+1. Create the resource in **Sweden Central**, deploy pinned `gpt-5.4` and `gpt-5.4-mini` versions
+   as **Data Zone Standard (EU)**, and note both deployment names, actual models, quota and filter
+   policy. Germany West Central is also listed for this pair. Never choose Global Standard.
+2. Confirm and retain the Microsoft DPA/AVV, children's-use terms, EU processing/storage,
+   abuse-monitoring retention/human review and the cache terms. Azure remains **proposed, not
+   active** in privacy/DPIA. `store: false` is sent; it does not disable abuse monitoring.
+   [Data processing](https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy).
+3. Configure the deployment filter policies above. Obtain and document the EU rate card. Resolve
+   the full-turn schema blocker, the PDF/audio path and embedding migration before a full switch.
+   Azure mode disables Vertex embeddings and uses the existing lexical-search fallback; Google
+   TTS has its separate setting and is not migrated by this adapter.
+4. For an authorized **non-production** validation, set the following (no values were installed):
+
+   ```text
+   LLM_BACKEND=azure
+   AZURE_OPENAI_ENDPOINT=https://<resource>.openai.azure.com
+   AZURE_OPENAI_KEY=<secret>
+   AZURE_OPENAI_DEPLOYMENT=<smart deployment name>
+   AZURE_OPENAI_DEPLOYMENT_FAST=<fast deployment name>
+   AZURE_OPENAI_MODEL=gpt-5.4
+   AZURE_OPENAI_MODEL_FAST=gpt-5.4-mini
+   AZURE_OPENAI_API_VERSION=v1
+   AZURE_OPENAI_REGION=swedencentral
+   AZURE_OPENAI_DEPLOYMENT_TYPE=DataZoneStandard
+   AZURE_OPENAI_PRICES=<JSON: source URL, readOn date, models with inputPerM/outputPerM for both IDs>
+   ```
+
+   A resource hostname does not reveal its location or SKU. Region/type configuration is an
+   operator declaration, not remote attestation; verify both deployments in the portal. `v1`
+   uses `/openai/v1/chat/completions`; dated `2024-10-21` and `2025-04-01-preview` are explicit
+   compatibility options, whose model support still requires live verification.
+
+5. Run the same buddy/concern/tutor/explain/content/stream evals under the machine test lock,
+   with a separately authorized budget and synthetic/anonymized inputs. General eval runners
+   now use the production gateway factory and respect `LLM_BACKEND`; schema failures remain
+   honest failures. The historical #879 fixed-Vertex comparison and Vertex token/embedding
+   probes remain provider-specific. Audio evals select Azure but are refused before HTTP.
+6. Only after these gates, the owner may change production. This PR neither changes the default
+   nor claims readiness for that step. Keep the Gemini deadline (19.11.2026) as a separate
+   operational deadline; a built adapter is not a proven replacement.

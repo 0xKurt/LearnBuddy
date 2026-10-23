@@ -4,6 +4,7 @@
 import { z } from 'zod';
 
 import { isLocalDatabaseHost } from './lib/db.js';
+import { azureConfigFields, requireAzureConfig } from './llm/azure-config.js';
 
 /**
  * Children's data is processed in the EU only (docs/privacy.md): the EU multi-region "eu" or a
@@ -71,7 +72,8 @@ const Config = z
     /** Node server only: run the scheduler in-process every N seconds (0 = off; pg_cron in production). */
     TICK_INTERVAL_SECONDS: z.coerce.number().int().min(0).max(3600).optional(),
     /** 'disabled' runs the app without a model: Buddy says so honestly. */
-    LLM_BACKEND: z.enum(['vertex', 'disabled']).default('vertex'),
+    LLM_BACKEND: z.enum(['vertex', 'azure', 'disabled']).default('vertex'),
+    ...azureConfigFields,
     GOOGLE_CLOUD_PROJECT: z.string().optional(),
     GOOGLE_VERTEX_LOCATION: EuLocation.default('europe-west4'),
     /** Service-account JSON inline (Vercel); written to a temp file at boot. */
@@ -155,6 +157,7 @@ const Config = z
     EXPO_ACCESS_TOKEN: z.string().optional(),
   })
   .superRefine((c, ctx) => {
+    requireAzureConfig(c, ctx);
     if (c.LLM_BACKEND === 'vertex' && !c.GOOGLE_CLOUD_PROJECT) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

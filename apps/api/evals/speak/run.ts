@@ -1,6 +1,6 @@
 // Live check of the pronunciation judgement (Vertex): does the model hear the
 // difference between a French voice, a German accent and a wrong word?
-// Needs LLM_BACKEND=vertex, GOOGLE_* variables, a local Postgres and espeak-ng.
+// Needs LLM_BACKEND=vertex or azure, provider variables, a local Postgres and espeak-ng.
 //   cd apps/api && npx tsx evals/speak/run.ts
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 import { execFileSync } from 'node:child_process';
@@ -9,12 +9,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 import { loadConfig } from '../../src/config.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { ScriptedGateway } from '../../src/testing/fakes.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
-// The Vertex variables live in apps/api/.env.local, like every other eval.
+// The provider variables live in apps/api/.env.local, like every other eval.
 const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 
@@ -25,7 +25,7 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-const real = new VertexGateway(config);
+const real = llmGateway(config);
 const scripted = new ScriptedGateway();
 // Recordings made with espeak-ng (apt install espeak-ng): the sentence read by a
 // French voice, by a German voice (strong accent), and with a wrong word.

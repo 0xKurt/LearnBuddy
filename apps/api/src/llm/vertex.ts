@@ -24,18 +24,11 @@ import {
 
 import type { Config } from '../config.js';
 import { outcomeOfStatus } from '../lib/outcome.js';
-import {
-  LlmError,
-  type LlmGateway,
-  type LlmRequest,
-  type LlmResult,
-  type LlmUsage,
-  TRUNCATED,
-} from './gateway.js';
+import { LlmError, type LlmRequest, type LlmResult, type LlmUsage, TRUNCATED } from './gateway.js';
 import { repairJsonStrings } from './latex.js';
 import { costMicros, VERTEX_EU_PRICES } from './pricing.js';
 import type { GatewayProfile, Thinking } from './profile.js';
-import { generateWithRetries } from './retry.js';
+import { RetryingGateway } from './retry.js';
 import { MAX_SCHEMA_PROPERTIES } from './schemaBudget.js';
 
 /**
@@ -223,13 +216,14 @@ export function paramsFor(req: LlmRequest, model: string, timeoutMs: number) {
   };
 }
 
-export class VertexGateway implements LlmGateway {
+export class VertexGateway extends RetryingGateway {
   readonly available = true;
   readonly profile = VERTEX_PROFILE;
   /** One client per location (the EU multi-region "eu" serves models europe-west4 doesn't). */
   private readonly clients = new Map<string, GoogleGenAI>();
 
   constructor(private readonly config: Config) {
+    super();
     ensureCredentialsFile(config);
   }
 
@@ -246,18 +240,8 @@ export class VertexGateway implements LlmGateway {
     return c;
   }
 
-  /**
-   * One structured answer. Retries for the two errors that mean "not now" — the provider
-   * unreachable (one more try, #167) or throttling us (two more, #206) — all of it inside
-   * the caller's own `timeoutMs`. The schedule, the budget arithmetic and the rule that a
-   * streamed answer is never restarted live in retry.ts, where they are proven.
-   */
-  generate(req: LlmRequest): Promise<LlmResult> {
-    return generateWithRetries(req, (watched, timeoutMs) => this.attempt(watched, timeoutMs));
-  }
-
   /** One single call to the provider, bounded by the slice of the budget it was given. */
-  private async attempt(req: LlmRequest, timeoutMs: number): Promise<LlmResult> {
+  protected async attempt(req: LlmRequest, timeoutMs: number): Promise<LlmResult> {
     const { location, model } = splitModelSpec(
       modelFor(this.config, req),
       this.config.GOOGLE_VERTEX_LOCATION,

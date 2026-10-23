@@ -1118,6 +1118,19 @@ included) and the whole wait (`total_ms`; `latency_ms` stays the last attempt's)
 down, request refused, safety block — gives its reservation back; a timeout or unusable output
 keeps it (the provider may have done and billed the work).
 
+### Azure preparation (#889, off by default)
+
+`AzureOpenAIGateway` is selected only by `LLM_BACKEND=azure`; `production.llmGateway` also wires
+all general model eval runners. Strict JSON schema is adapted at the gateway boundary and null
+sentinels restored in complete and partial answers; the prompt and domain zod validators remain
+unchanged. Images are supported, PDF/audio refused. Retry/timeout budgets and `llm_calls` use the
+existing shared paths. Azure completion tokens include reasoning, so visible output subtracts it
+before shared cost arithmetic. Costs use a required, dated Azure price table; no unverified rate
+is a default. The published 100-property/five-container-level limit rejects the full Buddy turn
+before HTTP. See [provider decision](decisions/provider-2026-10.md#23102026--azure-preparation-owner-decision-889)
+for the unresolved activation gates; this is not an active provider. Region/SKU settings are
+operator declarations, since Azure resource hostnames cannot prove residency.
+
 ### Schema budget (#627)
 
 Vertex serves a `responseJsonSchema` only up to a size it does not publish. A schema past that size

@@ -24,7 +24,7 @@ import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
 import { toJsonSchema } from '../../src/llm/json-schema.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
 import { closeSheetBrowser, photographSheet } from '../sheetPhoto.js';
@@ -53,7 +53,7 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
 });
-const vertex = new VertexGateway(config);
+const vertex = llmGateway(config);
 
 type Criteria = Readonly<Record<string, string>>;
 
@@ -263,7 +263,8 @@ function section(title: string, criteria: Criteria, cases: readonly Judged[]): s
 }
 
 async function main(): Promise<void> {
-  if (config.LLM_BACKEND !== 'vertex') throw new Error('LLM_BACKEND=vertex is required');
+  if (config.LLM_BACKEND === 'disabled')
+    throw new Error('a model backend is required (LLM_BACKEND=vertex or azure)');
   if (!(await testDatabaseAvailable())) throw new Error('a local Postgres is required');
   const explained = await explanations();
   const { judged: tasked, counts } = await tasks();

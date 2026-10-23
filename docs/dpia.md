@@ -369,3 +369,20 @@ beide Richtungen belegt (§5, R2); geprüft werden muss weiterhin, ob die Texte 
 und rechtlich richtig sind — das ist keine Messfrage. Solange die App im Familienkreis läuft und die dort betroffene Person die
 Tochter des Verantwortlichen ist, ist das vertretbar; **vor jeder Nutzung durch Dritte** müssen
 die Punkte aus §7 abgearbeitet sein.
+
+## Vorgeschlagener Verarbeiter: Azure — 23.10.2026, noch nicht aktiv (#889)
+
+Die technische Vorbereitung ändert die Freigabe dieser Folgenabschätzung nicht. Microsoft Azure
+OpenAI ist ein **vorgeschlagener** Verarbeiter für erforderliche Lerntexte und Blattfotos;
+Vertex bleibt Standard. Der Owner muss AVV/DPA und Minderjährigen-Bedingungen bestätigen sowie
+EU-Deployment, Missbrauchsüberwachung einschließlich Speicherung/menschlicher Prüfung und
+Cache-Bedingungen dokumentieren. `store: false` hebt die Missbrauchsüberwachung nicht auf.
+[Microsofts Verarbeitungsbeschreibung](https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy).
+
+R4 (Verarbeiter/Region), R11 (Cache) und R2 (Schutzpfade/Fehlalarme) sind vor Aktivierung erneut
+zu bewerten. Eine schwedische Ressourcenadresse beweist keine EU-Inferenz: beide Deployments
+müssen Data Zone Standard EU sein, nicht Global. Die bisherigen Schutzpfade bleiben bestehen;
+#758 ist ohne Live-Messung nicht gelöst. Audio/PDF und der vollständige Buddy-Schemavertrag
+sind noch keine belegten Azure-Fähigkeiten dieses Anschlusses. Keine Freigabe und keine
+Produktivumschaltung in diesem PR; Nachweise und Setup stehen in
+[der Providerentscheidung](decisions/provider-2026-10.md#23102026--azure-preparation-owner-decision-889).

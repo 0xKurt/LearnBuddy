@@ -3,7 +3,7 @@
 // does Lena wait? The questions are fixed (scripted "explain"); only the tutor
 // is live. Used to pick the tutor model (docs/architecture.md §Model calls):
 //   VERTEX_ROUTES='{"tutor":"eu/gemini-3.1-flash-lite"}' npx tsx evals/tutor/run.ts
-// Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
+// Needs LLM_BACKEND=vertex or azure, provider variables and a local Postgres.
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
@@ -11,13 +11,13 @@ import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contr
 import { loadConfig } from '../../src/config.js';
 import { t, type MessageKey } from '../../src/i18n/index.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { mathNorm } from '../../src/modules/practice/tutor.js';
 import { ScriptedGateway } from '../../src/testing/fakes.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { TUTOR_SAFEGUARDING_CASES } from './safeguardingCases.js';
 
-// The Vertex variables live in apps/api/.env.local, like every other eval.
+// The provider variables live in apps/api/.env.local, like every other eval.
 const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 
@@ -28,7 +28,7 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-const real = new VertexGateway(config);
+const real = llmGateway(config);
 const scripted = new ScriptedGateway();
 const gateway: LlmGateway = {
   available: true,

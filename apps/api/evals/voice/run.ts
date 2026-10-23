@@ -1,6 +1,6 @@
 // Live check of speech to text (Vertex) with espeak-ng recordings: German chat
 // message, spoken numbers and fractions in answer mode, a French answer.
-// Needs LLM_BACKEND=vertex, GOOGLE_* variables, a local Postgres and espeak-ng.
+// Needs LLM_BACKEND=vertex or azure, provider variables, a local Postgres and espeak-ng.
 //   cd apps/api && npx tsx evals/voice/run.ts
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
@@ -12,10 +12,10 @@ import { join } from 'node:path';
 import type { TranscribeResponse } from '@learnbuddy/shared-types/contracts';
 
 import { loadConfig } from '../../src/config.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
-// The Vertex variables live in apps/api/.env.local, like every other eval.
+// The provider variables live in apps/api/.env.local, like every other eval.
 const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 
@@ -29,7 +29,7 @@ const config = loadConfig({
 const dir = mkdtempSync(join(tmpdir(), 'lb-voice-'));
 const env = await createTestEnv({
   start: '2026-09-28T14:00:00Z',
-  gateway: new VertexGateway(config),
+  gateway: llmGateway(config),
 });
 const l = await onboard(env, {
   relation: 'child',
