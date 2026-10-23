@@ -2108,8 +2108,13 @@ capture completion or bonus work is emitted before the reading finishes.
 
 Prefix writes drain before finalization, also when the provider throws. Interruption after
 validated questions leaves them intact and marks the sheet failed/incomplete with the usual
-retry. Repeated prefixes and retries reuse existing questions; a lost lease or deletion
-prevents later writes. The stored form choice is reused on retry. Recovery after a worker
+retry. Repeated prefixes match stored rows one-to-one to positions in the parsed question
+list: two positions remain two questions, even with identical content. Matching uses a
+SHA-256 content hash of the prompt, answer, figures, choices and question/key context,
+with canonical object-key order and without regenerated multipart group IDs. Retries may
+reorder questions and still reuse the stored rows; prompt text alone never identifies a
+question (#888). A lost lease or deletion prevents later writes. The stored form choice is
+reused on retry. Recovery after a worker
 crash follows the same lease and incomplete-state rules; a gateway without ordered partial
 JSON uses the final-answer path. `reading-stream.int.test.ts` pauses a scripted gateway over
 real Postgres and proves early visibility, truthful counts, start, retry and fencing.

@@ -49,7 +49,7 @@ describe.skipIf(!dbReady)('streamed sheet reading (#870)', () => {
   beforeEach(async () => {
     env = await createTestEnv();
     lena = await onboard(env, { name: 'Lena' });
-    env.llm.scriptChoice({ json: { forms: [], figures: [] } });
+    env.llm.scriptChoice({ json: { forms: [], figures: ['fraction'] } });
     env.llm.byDefault('buddy_check', {
       json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },
     });
@@ -162,6 +162,122 @@ describe.skipIf(!dbReady)('streamed sheet reading (#870)', () => {
     expect((await home()).now).toMatchObject({ type: 'practice_ready', question_count: 2 });
     expect(env.llm.choices).toHaveLength(1);
   });
+
+  it.each(['finish', 'retry'] as const)(
+    'keeps same-prompt questions with different figures through increments and %s',
+    async (ending) => {
+      const first = gate();
+      const second = gate();
+      const questions = ['circle', 'bar'].map((shape) => ({
+        ...question(1),
+        kind: 'numeric',
+        prompt: 'Welcher Bruch ist gefärbt?',
+        answer: '1/2',
+        figure: { type: 'fraction', shape, fractions: [{ parts: 4, filled: 2 }] },
+      }));
+      const result = { ...sheet, items: questions };
+      env.llm.script('extraction', async (req) => {
+        req.onPartial?.(prefix(questions.slice(0, 1)));
+        first.markCalled();
+        await first.wait;
+        req.onPartial?.(prefix(questions));
+        second.markCalled();
+        await second.wait;
+        if (ending === 'retry') throw new LlmError('cancelled', 'connection closed');
+        return result;
+      });
+      const id = await upload();
+      await lena.api.post(`/materials/${id}/submit`);
+      try {
+        await first.called;
+        await expect.poll(async () => (await material(id)).item_count).toBe(1);
+        first.release();
+        await second.called;
+        await expect.poll(async () => (await material(id)).item_count).toBe(2);
+        expect((await home()).now).toMatchObject({ type: 'practice_ready', question_count: 2 });
+      } finally {
+        first.release();
+        second.release();
+      }
+      await env.flushBackground();
+      const stored = await env.db.query<{ id: string; figure: unknown }>(
+        `select id, figure from items where material_id = $1 order by id`,
+        [id],
+      );
+      expect(stored.map((it) => it.figure)).toEqual(
+        expect.arrayContaining(questions.map((it) => it.figure)),
+      );
+      if (ending === 'retry') {
+        expect(await material(id)).toMatchObject({ status: 'failed', items_incomplete: true });
+        // Position may change between reads; persisted JSONB also orders object keys differently.
+        env.llm.script('extraction', {
+          written: prefix([...questions].reverse()),
+          json: { ...result, items: [...questions].reverse() },
+        });
+        expect((await lena.api.post(`/materials/${id}/retry`)).status).toBe(202);
+        await env.flushBackground();
+      }
+      expect(await material(id)).toMatchObject({
+        status: 'ready',
+        items_incomplete: false,
+        item_count: 2,
+      });
+      expect(
+        await env.db.query(`select id, figure from items where material_id = $1 order by id`, [id]),
+      ).toEqual(stored);
+      expect((await home()).now).toMatchObject({ type: 'practice_ready', question_count: 2 });
+    },
+  );
+
+  it('preserves identical questions at separate positions without adding them again on retry', async () => {
+    const questions = [question(1), question(1)];
+    env.llm.script('extraction', {
+      written: prefix(questions),
+      error: new LlmError('cancelled', 'connection closed'),
+    });
+    const id = await upload();
+    await lena.api.post(`/materials/${id}/submit`);
+    await env.flushBackground();
+    expect(await material(id)).toMatchObject({ status: 'failed', item_count: 2 });
+    env.llm.script('extraction', { json: { ...sheet, items: questions } });
+    expect((await lena.api.post(`/materials/${id}/retry`)).status).toBe(202);
+    await env.flushBackground();
+    expect(await material(id)).toMatchObject({ status: 'ready', item_count: 2 });
+  });
+
+  it.each(['answer', 'choices'] as const)(
+    'keeps a new %s with the same prompt on retry',
+    async (changed) => {
+      const questions =
+        changed === 'answer'
+          ? [question(1), { ...question(1), answer: 'Andere Stadt' }]
+          : [2, 3].map((n) => ({
+              ...question(1),
+              kind: 'multiple_choice',
+              choices: ['Stadt 1', `Stadt ${n}`],
+              correct_choice: 0,
+            }));
+      env.llm.script('extraction', {
+        written: prefix(questions.slice(0, 1)),
+        error: new LlmError('cancelled', 'connection closed'),
+      });
+      const id = await upload();
+      await lena.api.post(`/materials/${id}/submit`);
+      await env.flushBackground();
+      expect(await material(id)).toMatchObject({ status: 'failed', item_count: 1 });
+      env.llm.script('extraction', {
+        written: prefix(questions),
+        json: { ...sheet, items: questions },
+      });
+      expect((await lena.api.post(`/materials/${id}/retry`)).status).toBe(202);
+      await env.flushBackground();
+      expect(await material(id)).toMatchObject({
+        status: 'ready',
+        items_incomplete: false,
+        item_count: 2,
+      });
+    },
+  );
 
   it('can start immediately and leaves that active run stable as the sheet grows', async () => {
     const g = gate();
