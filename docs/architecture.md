@@ -6660,6 +6660,14 @@ filled twice throws (in development Fast Refresh replaces it instead);
 
 ## Testing
 
+CI keeps the full API suite on PG16 without pgvector and adds a focused PG17 job with the
+versioned `pgvector/pgvector` image (#862). It runs only `pgvector-migration.int.test.ts` and
+`hybrid-search.int.test.ts`, using scripted embeddings. The first builds the real migrations
+and verifies both branches of 0054: extension activation, `vector(768)`, a valid cosine HNSW
+index and the distance operator when available; no column/index on the fallback server.
+`LB_REQUIRE_PGVECTOR=1` makes missing vector support or a PG major other than 17 fail in that
+job, rather than silently skipping the vector search test. The shared local PG16 stays unchanged.
+
 - **Engineering guards** (issue #313): copies (jscpd), file size, tokens only, raw `Pressable`,
   dead code (knip), the web bundle budget and the drawing-component registry, each with an
   Ausnahmeliste that only shrinks. They run in `pnpm lint`, the pre-commit hook and the
