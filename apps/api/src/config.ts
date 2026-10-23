@@ -116,12 +116,14 @@ const Config = z
           return z.NEVER;
         }
       }),
+    EMBEDDING_BACKEND: z.enum(['vertex', 'openai', 'disabled']).default('vertex'),
+    AUDIO_BACKEND: z.enum(['vertex', 'openai']).default('vertex'),
     /**
      * Buddy's natural voice (ADR 0008): 'google' = Cloud Text-to-Speech (Chirp 3: HD voices)
      * through its EU endpoint, with the Vertex service account. 'disabled': the app reads
      * aloud with the phone's own voice, as before.
      */
-    SPEECH_BACKEND: z.enum(['google', 'disabled']).default('disabled'),
+    SPEECH_BACKEND: z.enum(['google', 'openai', 'disabled']).default('disabled'),
     /** Only the EU endpoint: the text of her replies is processed in the EU (docs/privacy.md). */
     SPEECH_ENDPOINT: z
       .enum(['eu-texttospeech.googleapis.com'])
@@ -268,7 +270,7 @@ export function bootWarnings(c: Config): string[] {
   // app sounds like a robot and nothing in it says so (issue #176, owner 01.10.: "alle
   // finden die abgehakte computerstimme gruselig"). The fallback is correct; being silent
   // about it was not.
-  if (c.SPEECH_BACKEND !== 'google') {
+  if (c.SPEECH_BACKEND === 'disabled') {
     warnings.push(
       "SPEECH_BACKEND is not 'google': Buddy has no natural voice, so every reply is read with the phone's own",
     );

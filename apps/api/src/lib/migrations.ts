@@ -105,6 +105,7 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
   '0112_material_too_large',
   '0113_domain_foreign_keys',
   '0114_offer_hints_on_open',
+  '0115_openai_passage_vectors',
 ];
 
 /**

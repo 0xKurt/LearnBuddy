@@ -23,18 +23,38 @@ const MAX_BATCH = 64;
 
 export class VertexEmbeddings implements EmbeddingGateway {
   readonly available = true;
+  readonly dimensions = EMBED_DIMENSIONS;
+  get microsPerInputToken(): number {
+    return (
+      costMicros(VERTEX_EU_PRICES, this.model, {
+        inputTokens: 1_000_000,
+        audioInputTokens: 0,
+        outputTokens: 0,
+        thoughtTokens: 0,
+      }) / 1_000_000
+    );
+  }
+  get model(): string {
+    return splitModelSpec(this.config.VERTEX_MODEL_EMBEDDING, this.config.GOOGLE_VERTEX_LOCATION)
+      .model;
+  }
   private client: GoogleGenAI | null = null;
 
-  constructor(private readonly config: Config) {
+  constructor(
+    private readonly config: Config,
+    private readonly clientFactory?: () => GoogleGenAI,
+  ) {
     ensureCredentialsFile(config);
   }
 
   private clientFor(location: string): GoogleGenAI {
-    this.client ??= new GoogleGenAI({
-      vertexai: true,
-      project: this.config.GOOGLE_CLOUD_PROJECT,
-      location,
-    });
+    this.client ??=
+      this.clientFactory?.() ??
+      new GoogleGenAI({
+        vertexai: true,
+        project: this.config.GOOGLE_CLOUD_PROJECT,
+        location,
+      });
     return this.client;
   }
 
@@ -43,6 +63,9 @@ export class VertexEmbeddings implements EmbeddingGateway {
       this.config.VERTEX_MODEL_EMBEDDING,
       this.config.GOOGLE_VERTEX_LOCATION,
     );
+    if (req.signal?.aborted) throw new LlmError('cancelled', 'Caller stopped waiting');
+    const deadline = AbortSignal.timeout(req.timeoutMs ?? 20_000);
+    const signal = req.signal ? AbortSignal.any([req.signal, deadline]) : deadline;
     const started = Date.now();
     const vectors: number[][] = [];
     let inputTokens = 0;
@@ -50,18 +73,19 @@ export class VertexEmbeddings implements EmbeddingGateway {
       const batch = req.texts.slice(at, at + MAX_BATCH);
       let response;
       try {
+        signal.throwIfAborted();
         response = await this.clientFor(location).models.embedContent({
           model,
           contents: batch,
           config: {
             taskType: req.task,
             outputDimensionality: EMBED_DIMENSIONS,
-            ...(req.timeoutMs !== undefined
-              ? { abortSignal: AbortSignal.timeout(req.timeoutMs) }
-              : {}),
+            abortSignal: signal,
           },
         });
       } catch (err) {
+        if (req.signal?.aborted) throw new LlmError('cancelled', 'Caller stopped waiting');
+        if (signal.aborted) throw new LlmError('timeout', 'Embedding deadline exceeded');
         if (err instanceof LlmError) throw err;
         throw classify(err);
       }

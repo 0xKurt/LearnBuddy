@@ -71,6 +71,8 @@ export type LlmRequest = {
   promptVersion: string;
   system: string;
   contents: LlmMessage[];
+  /** Known recording language, independent of question/target text; BCP-47 or ISO 639-1. */
+  audioLanguage?: string;
   schema: JsonSchema;
   /** Original domain validator after structured decoding; never sent to the provider. */
   validateOutput?: (json: unknown) => boolean;

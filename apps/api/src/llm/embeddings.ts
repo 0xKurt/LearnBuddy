@@ -21,6 +21,7 @@ export type EmbedRequest = {
    * turn and is only one of three search lists: past this it is dropped, never waited for.
    */
   timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 type EmbedUsage = {
@@ -39,11 +40,20 @@ export type EmbedResult = {
 
 export interface EmbeddingGateway {
   readonly available: boolean;
+  readonly model: string;
+  readonly dimensions: number;
+  /** Upper bound for backfill budget reservation, micro-USD per input token. */
+  readonly microsPerInputToken: number;
+  /** Absent on existing adapters: the legacy 768d space. Vectors from different spaces never mix. */
+  readonly space?: 'vertex-768' | 'openai-small-1536';
   embed(req: EmbedRequest): Promise<EmbedResult>;
 }
 
 export class DisabledEmbeddings implements EmbeddingGateway {
   readonly available = false;
+  readonly model = 'disabled';
+  readonly dimensions = EMBED_DIMENSIONS;
+  readonly microsPerInputToken = 0;
   async embed(): Promise<EmbedResult> {
     throw new LlmError('unavailable', 'No embedding model is configured (LLM_BACKEND=disabled)');
   }

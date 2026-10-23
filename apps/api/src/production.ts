@@ -12,6 +12,10 @@ import { VertexGateway } from './llm/vertex.js';
 import { DisabledPush, ExpoPush } from './push/transport.js';
 import { DisabledSpeech } from './speech/gateway.js';
 import { GoogleSpeech } from './speech/google.js';
+import { OpenAISpeech } from './speech/openai.js';
+import { OpenAIAudioGateway } from './speech/audio.js';
+import { openAIClient } from './llm/openai-client.js';
+import { OpenAIEmbeddings } from './embeddings/openai.js';
 import { SupabaseStorage } from './storage/gateway.js';
 
 /**
@@ -19,8 +23,15 @@ import { SupabaseStorage } from './storage/gateway.js';
  * evals take it from here, so a change of provider is made in one place.
  */
 export function llmGateway(config: Config): LlmGateway {
-  if (config.LLM_BACKEND === 'openai') return new OpenAIGateway(config);
-  return config.LLM_BACKEND === 'vertex' ? new VertexGateway(config) : new DisabledGateway();
+  const gateway =
+    config.LLM_BACKEND === 'openai'
+      ? new OpenAIGateway(config)
+      : config.LLM_BACKEND === 'vertex'
+        ? new VertexGateway(config)
+        : new DisabledGateway();
+  return config.AUDIO_BACKEND === 'openai'
+    ? new OpenAIAudioGateway(openAIClient(config), gateway, config)
+    : gateway;
 }
 
 export function productionDeps(
@@ -40,10 +51,19 @@ export function productionDeps(
     storage: new SupabaseStorage(config),
     llm: llmGateway(config),
     embeddings:
-      config.LLM_BACKEND === 'vertex' ? new VertexEmbeddings(config) : new DisabledEmbeddings(),
+      config.EMBEDDING_BACKEND === 'openai'
+        ? new OpenAIEmbeddings(openAIClient(config))
+        : config.EMBEDDING_BACKEND === 'vertex' && config.GOOGLE_CLOUD_PROJECT
+          ? new VertexEmbeddings(config)
+          : new DisabledEmbeddings(),
     push:
       config.PUSH_BACKEND === 'expo' ? new ExpoPush(config.EXPO_ACCESS_TOKEN) : new DisabledPush(),
-    speech: config.SPEECH_BACKEND === 'google' ? new GoogleSpeech(config) : new DisabledSpeech(),
+    speech:
+      config.SPEECH_BACKEND === 'openai'
+        ? new OpenAISpeech(openAIClient(config))
+        : config.SPEECH_BACKEND === 'google'
+          ? new GoogleSpeech(config)
+          : new DisabledSpeech(),
     background,
   };
 }

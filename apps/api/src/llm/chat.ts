@@ -1,5 +1,6 @@
 // Shared Chat Completions transport; provider wrappers own credentials, endpoint and prices.
-import { APIError, APIConnectionTimeoutError, type OpenAI } from 'openai';
+import type { OpenAI } from 'openai';
+import { classifyOpenAI } from './openai-error.js';
 import type {
   ChatCompletionCreateParamsBase,
   ChatCompletionMessageParam,
@@ -10,7 +11,6 @@ import {
   assertStrictSchema,
   strictSchema,
   restoreStrictJson,
-  schemaObject,
   matchesSchema,
 } from './chat-schema.js';
 import { restoreStrictPartial } from './chat-partial.js';
@@ -88,42 +88,6 @@ function usageOf(
   };
 }
 
-function filtered(error: unknown): boolean {
-  if (!schemaObject(error)) return false;
-  return (
-    error.code === 'content_filter' ||
-    error.code === 'ResponsibleAIPolicyViolation' ||
-    filtered(error.innererror) ||
-    filtered(error.error)
-  );
-}
-
-function classify(
-  error: unknown,
-  signal: AbortSignal,
-  req: LlmRequest,
-  usage: LlmUsage | null,
-): LlmError {
-  if (req.signal?.aborted) return new LlmError('cancelled', 'the caller stopped waiting', usage);
-  if (signal.aborted || error instanceof APIConnectionTimeoutError)
-    return new LlmError('timeout', 'model call timed out', usage);
-  if (error instanceof LlmError) return error;
-  if (error instanceof APIError) {
-    if (filtered(error.error) || error.code === 'content_filter')
-      return new LlmError('blocked', 'provider content filter', usage, 'content_filter');
-    if (error.status === 429) return new LlmError('rate_limited', 'provider rate limit', usage);
-    if (error.status !== undefined && error.status >= 400 && error.status < 500)
-      return new LlmError(
-        'refused',
-        `provider rejected request (${error.status})`,
-        usage,
-        `HTTP_${error.status}`,
-      );
-  }
-  // Provider error text can contain the child's input; never copy it into logs.
-  return new LlmError('unavailable', 'model call failed', usage);
-}
-
 export type ChatConfig = {
   client: OpenAI;
   profile: GatewayProfile;
@@ -169,7 +133,7 @@ export class ChatGateway extends RetryingGateway {
     const signal = req.signal ? AbortSignal.any([timeout, req.signal]) : timeout;
     let total: LlmUsage | null = null;
     try {
-      if (signal.aborted) throw classify(null, signal, req, null);
+      if (signal.aborted) throw classifyOpenAI(null, signal, req.signal, null);
       const left = Math.max(1, Math.round(timeoutMs - (performance.now() - started)));
       const roundStart = performance.now();
       const options = { signal, timeout: left };
@@ -197,7 +161,7 @@ export class ChatGateway extends RetryingGateway {
             if (refused || reason === 'content_filter') continue;
             text += choice.delta.content ?? '';
             if (text) req.onPartial(restoreStrictPartial(req.schema, text));
-            if (signal.aborted) throw classify(null, signal, req, null);
+            if (signal.aborted) throw classifyOpenAI(null, signal, req.signal, null);
           }
         } else {
           const result = await this.config.client.chat.completions.create(
@@ -213,13 +177,13 @@ export class ChatGateway extends RetryingGateway {
           text = choice?.message.content ?? '';
         }
       } catch (error) {
-        throw classify(error, signal, req, null);
+        throw classifyOpenAI(error, signal, req.signal, null);
       } finally {
         if (meta) {
           total = usageOf(this.profile.prices, reportedModel, meta, roundStart);
         }
       }
-      if (signal.aborted) throw classify(null, signal, req, null);
+      if (signal.aborted) throw classifyOpenAI(null, signal, req.signal, null);
       if (!candidate || refused || reason === 'content_filter')
         throw new LlmError(
           'blocked',
@@ -256,7 +220,7 @@ export class ChatGateway extends RetryingGateway {
       usage.latencyMs = Math.round(performance.now() - started);
       return { json, usage, attempts: 1 };
     } catch (error) {
-      const classified = classify(error, signal, req, total);
+      const classified = classifyOpenAI(error, signal, req.signal, total);
       const result = new LlmError(
         classified.kind,
         classified.message,

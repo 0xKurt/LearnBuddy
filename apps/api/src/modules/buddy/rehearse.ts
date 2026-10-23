@@ -267,6 +267,7 @@ async function listen(
     const res = await callModel(deps, learner.id, day, {
       // Speech recognition, budgeted with every other recording (DAILY_LIMITS.transcribe).
       purpose: 'transcribe',
+      audioLanguage: learner.locale,
       tier: 'smart',
       promptVersion: REHEARSE_PROMPT_VERSION,
       system: offer.kind === 'talk' ? TALK_SYSTEM : READ_SYSTEM,

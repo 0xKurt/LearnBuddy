@@ -161,6 +161,7 @@ jobs:
         run: >-
           pnpm -F @learnbuddy/api test
           src/__tests__/pgvector-migration.int.test.ts
+          src/__tests__/embedding-switch.int.test.ts
           src/__tests__/hybrid-search.int.test.ts
 
   test-app:

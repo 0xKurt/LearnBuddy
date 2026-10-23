@@ -17,11 +17,12 @@ export type SpeechInput = {
   /** Speaking rate, 1 = normal. */
   rate: number;
   timeoutMs: number;
+  signal?: AbortSignal;
 };
 
 export type SpeechAudio = { mime: 'audio/mpeg' | 'audio/wav'; audio: Buffer };
 
-export type SpeechErrorKind = 'unavailable' | 'timeout' | 'rate_limited' | 'refused';
+export type SpeechErrorKind = 'unavailable' | 'timeout' | 'rate_limited' | 'refused' | 'cancelled';
 
 export class SpeechError extends Error {
   readonly kind: SpeechErrorKind;
@@ -36,6 +37,7 @@ export class SpeechError extends Error {
       case 'unavailable':
       case 'rate_limited':
         return 'transient';
+      case 'cancelled':
       case 'timeout':
         return 'unknown';
       case 'refused':

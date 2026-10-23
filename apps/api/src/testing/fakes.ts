@@ -2,18 +2,9 @@
 // auth, photo storage and text to speech. The database is never faked (testing/database.ts).
 // requires live verification in Claude Code session (paired with a real Postgres)
 
-import type { VoiceName } from '@learnbuddy/shared-types/contracts';
-
 import type { AuthUser, AuthVerifier } from '../auth/verifier.js';
 import type { Db } from '../lib/db.js';
 import { AppError } from '../lib/errors.js';
-import {
-  EMBED_DIMENSIONS,
-  normalise,
-  type EmbeddingGateway,
-  type EmbedRequest,
-  type EmbedResult,
-} from '../llm/embeddings.js';
 import {
   LlmError,
   type LlmGateway,
@@ -28,13 +19,13 @@ import { assertMedia, type GatewayProfile } from '../llm/profile.js';
 import { withinBudget } from '../llm/schemaBudget.js';
 import { VERTEX_PROFILE } from '../llm/vertex.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
-import type { SpeechAudio, SpeechError, SpeechGateway, SpeechInput } from '../speech/gateway.js';
 import {
   STORAGE_REMOVE_LIMIT,
   StorageError,
   type StorageGateway,
   type UploadTarget,
 } from '../storage/gateway.js';
+import { fakeDeadline } from './fake-deadline.js';
 import { fakeChooser, type FakeChooser } from './chooser.js';
 
 /** The only clock in tests; the API never reads Date.now() for decisions. */
@@ -145,17 +136,6 @@ function sizeOf(base64: string): string {
     i += 2 + b.readUInt16BE(i + 2);
   }
   return '';
-}
-
-/** A scripted answer ends like a real provider's when the caller's signal aborts (#684). */
-function untilCancelled<T>(answer: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
-  if (!signal) return answer;
-  return new Promise<T>((resolve, reject) => {
-    const cancel = () => reject(new LlmError('cancelled', 'the caller stopped waiting'));
-    if (signal.aborted) return cancel();
-    signal.addEventListener('abort', cancel, { once: true });
-    answer.then(resolve, reject).finally(() => signal.removeEventListener('abort', cancel));
-  });
 }
 
 /**
@@ -315,10 +295,10 @@ export class ScriptedGateway implements LlmGateway {
     let json: unknown;
     if (typeof answer === 'function') {
       try {
-        json = await untilCancelled(Promise.resolve(answer(req)), req.signal);
+        json = await fakeDeadline(Promise.resolve(answer(req)), req.timeoutMs, req.signal);
       } catch (err) {
         // The caller stopped waiting (#684): the provider's answer, not a broken script.
-        if (err instanceof LlmError && err.kind === 'cancelled') throw err;
+        if (err instanceof LlmError && ['cancelled', 'timeout'].includes(err.kind)) throw err;
         this.scriptErrors.push(err instanceof Error ? err.message : String(err));
         throw err;
       }
@@ -336,7 +316,7 @@ export class ScriptedGateway implements LlmGateway {
         // The rest of the answer is still being written: whatever the caller does with the first
         // elements, it does it now.
         try {
-          await untilCancelled(pause.until, req.signal);
+          await fakeDeadline(pause.until, req.timeoutMs, req.signal);
         } catch (error) {
           if (error instanceof LlmError && error.kind === 'cancelled')
             throw new LlmError('cancelled', error.message, { ...SCRIPTED_USAGE });
@@ -361,70 +341,7 @@ export class ScriptedGateway implements LlmGateway {
   }
 }
 
-/**
- * Embeddings in tests: deterministic, no semantics. Unregistered texts get a
- * hash-derived unit vector (distinct texts land nearly orthogonal); a test that
- * needs "these texts mean the same" registers them under one cluster with
- * `meaning` — the fake then returns that cluster's basis direction, so vector
- * search ranks them together. Semantic quality itself is measured only against
- * the live model (apps/api/evals/lookup), never faked (CLAUDE.md rule 3).
- */
-export class FakeEmbeddings implements EmbeddingGateway {
-  available = true;
-  readonly calls: EmbedRequest[] = [];
-  private readonly clusters: Array<{ cluster: number; needle: string }> = [];
-  private failures: LlmError[] = [];
-
-  /** Texts containing `needle` (case-insensitive) embed near cluster `cluster` (0–49). */
-  meaning(cluster: number, ...needles: string[]): this {
-    for (const needle of needles) this.clusters.push({ cluster, needle: needle.toLowerCase() });
-    return this;
-  }
-
-  failNext(...errors: LlmError[]): this {
-    this.failures.push(...errors);
-    return this;
-  }
-
-  async embed(req: EmbedRequest): Promise<EmbedResult> {
-    this.calls.push(req);
-    const failure = this.failures.shift();
-    if (failure) throw failure;
-    return {
-      vectors: req.texts.map((t) => this.vectorOf(t)),
-      usage: {
-        model: 'fake-embedding',
-        inputTokens: req.texts.reduce((n, t) => n + Math.ceil(t.length / 4), 0),
-        costMicros: 1,
-        latencyMs: 1,
-      },
-    };
-  }
-
-  private vectorOf(text: string): number[] {
-    const v = new Array<number>(EMBED_DIMENSIONS).fill(0);
-    const lower = text.toLowerCase();
-    let inCluster = false;
-    for (const { cluster, needle } of this.clusters) {
-      if (lower.includes(needle)) {
-        v[cluster % 50] = (v[cluster % 50] ?? 0) + 1;
-        inCluster = true;
-      }
-    }
-    // A stable pseudo-random direction in the dimensions above the cluster space;
-    // small next to a cluster hit, dominant without one.
-    let h = 2166136261;
-    for (let i = 0; i < lower.length; i++) {
-      h = Math.imul(h ^ lower.charCodeAt(i), 16777619);
-    }
-    const scale = inCluster ? 0.05 : 1;
-    for (let i = 50; i < EMBED_DIMENSIONS; i++) {
-      h = Math.imul(h ^ i, 16777619);
-      v[i] = scale * (((h >>> 0) % 2001) / 1000 - 1);
-    }
-    return normalise(v);
-  }
-}
+export { FakeEmbeddings } from './fake-embeddings.js';
 
 /** What the real verifier throws when Supabase Auth cannot answer (auth/verifier.ts). */
 const authOutage = (): AppError =>
@@ -644,79 +561,4 @@ export class FakePush implements PushTransport {
   }
 }
 
-/**
- * Text to speech in tests and the dev stack: a WAV of silence as long as the text would take
- * to say (so playback, progress and read-along can be exercised without Google). Records every
- * call; `failNext` makes the provider fail the way the real one can.
- */
-/** The main region of each language the fake reads, as `chirp3Locale` has it. */
-const MAIN_LOCALE: Record<string, string> = {
-  de: 'de-DE',
-  en: 'en-GB',
-  fr: 'fr-FR',
-  es: 'es-ES',
-  it: 'it-IT',
-};
-
-export class FakeSpeech implements SpeechGateway {
-  readonly available = true;
-  /** Chirp 3: HD's list price, so a test reads the cost a real sentence records (#682). */
-  readonly microsPerCharacter = 30;
-  readonly calls: SpeechInput[] = [];
-  private failures: SpeechError[] = [];
-  /** Languages this provider does not read (`lacks`), like a real one missing a voice. */
-  private readonly missing = new Set<string>();
-
-  voiceId(voice: VoiceName, locale: string): string {
-    return `fake-${locale}-${voice}`;
-  }
-
-  /** From now on the provider has no voice for these languages ("it", …). */
-  lacks(...languages: string[]): this {
-    for (const l of languages) this.missing.add(l);
-    return this;
-  }
-
-  localeFor(locale: string): string | null {
-    if (this.missing.has(locale.slice(0, 2))) return null;
-    if (/^(de|en|fr|es|it)-[A-Z]{2}$/.test(locale)) return locale;
-    // A bare language code, like the real gateway maps it ("en" → "en-GB", `chirp3Locale`):
-    // that is what a listening text carries (issue #210), and a fake that answered null to it
-    // would make the exercise look impossible in tests and possible in production.
-    return MAIN_LOCALE[locale] ?? null;
-  }
-
-  failNext(...errors: SpeechError[]): this {
-    this.failures.push(...errors);
-    return this;
-  }
-
-  async synthesize(input: SpeechInput): Promise<SpeechAudio> {
-    this.calls.push(input);
-    const failure = this.failures.shift();
-    if (failure) throw failure;
-    const ms = Math.min(8000, Math.max(300, (input.text.length * 60) / input.rate));
-    return { mime: 'audio/wav', audio: silentWav(ms) };
-  }
-}
-
-/** 8 kHz, 8-bit mono PCM silence. */
-function silentWav(ms: number): Buffer {
-  const rate = 8000;
-  const samples = Math.round((rate * ms) / 1000);
-  const b = Buffer.alloc(44 + samples, 0x80);
-  b.write('RIFF', 0, 'ascii');
-  b.writeUInt32LE(36 + samples, 4);
-  b.write('WAVE', 8, 'ascii');
-  b.write('fmt ', 12, 'ascii');
-  b.writeUInt32LE(16, 16);
-  b.writeUInt16LE(1, 20); // PCM
-  b.writeUInt16LE(1, 22); // mono
-  b.writeUInt32LE(rate, 24);
-  b.writeUInt32LE(rate, 28); // byte rate
-  b.writeUInt16LE(1, 32); // block align
-  b.writeUInt16LE(8, 34); // bits per sample
-  b.write('data', 36, 'ascii');
-  b.writeUInt32LE(samples, 40);
-  return b;
-}
+export { FakeSpeech } from './fake-speech.js';

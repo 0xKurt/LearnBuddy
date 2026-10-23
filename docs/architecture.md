@@ -787,6 +787,32 @@ passages — a full 12 000-character sheet is ≈ 3 500 tokens ≈ $0.0007, a ty
 each search query ≈ $0.000003; the one-time backfill of existing sheets is the same per-sheet
 price, paid lazily at search time (bounded per call, purpose `embedding`, 400/day).
 
+**Search provider migration (#893, proposed).** `EMBEDDING_BACKEND=openai` selects
+`text-embedding-3-small` at 1536 dimensions through the shared EU-only client
+(`llm/openai-client.ts`). The default remains Vertex. Migration 0115 adds `embedding_openai`
+and its partial cosine HNSW index; the original 768d column and index remain intact. No query
+compares different spaces. Apply the migration first, leave the legacy provider active, run
+`scripts/reindex-passages.ts` read-only to inspect, then `--apply --max-usd=1` to backfill.
+Both vector columns carry companion model-id and dimension columns. Queries compare only
+vectors with the configured identity, even when a new model has the same dimensionality.
+Existing unlabelled legacy vectors are regenerated rather than guessed from their length.
+The script covers all existing passages, writes missing or mismatched vectors, checks the passage text
+and learner again when writing, and can be resumed after failure. Repeat until the read-only
+check reports zero immediately before changing the backend; ongoing uploads must settle before
+that final check. New/changed sheets then index in the selected space. Rollback retains the old
+index, but passages created while the new backend was active may have only its vector.
+**Before rollback**, settle uploads and run `--target=vertex --apply --max-usd=1`, then
+`--target=vertex` until zero remain. The same model/dimension checks and text fence apply in
+both directions; switching the environment alone does not restore complete semantic coverage.
+The coordinator performs production migration
+and rollout; this change makes no production writes.
+
+Both candidates retrieved 18/18 expected sheets at rank 1 in the small multilingual vector
+fixture (not a general accuracy claim). Small costs $0.02/M input tokens versus $0.13/M for large.
+Its pre-injection gate uses only the nearest vector, distance <= 0.66 and a >= 0.04 separation
+from the runner-up, alongside the unchanged lexical evidence. Gemini retains its .35 threshold.
+See `docs/measurements/eu-speech-search-2026-10-23.md` for measurements and remaining gates.
+
 **Passage pre-injection** (issue #26). Just-in-time retrieval fails when the model does not
 call the tool. A turn therefore runs the learner's own words through the same search first and
 appends clearly matching passages to the end of STATE (after the volatile `Now` block, so the
@@ -5923,6 +5949,29 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   never costs a long take. Each piece counts against the budgets on its own (§Limits). Cut
   quality on real recordings (stitched vs. whole clip) is not yet measured — that comparison
   belongs to the walkthrough scenario before the pieces path replaces anything further.
+- **EU audio migration (#893, proposed):** `AUDIO_BACKEND=openai` wraps the existing model
+  gateway for recordings only. `/audio/transcriptions` (`gpt-4o-transcribe`) supplies the verbatim
+  transcript, with the known recording language supplied independently of the target/question;
+  the existing text gateway performs maths formatting, distress interpretation and
+  rehearsal structure. Empty transcripts are handled in code, with no formatter call. Existing
+  code still grades dictation/listening answers and reading accuracy, measures talk timing and
+  validates pronunciation consistency. Photo transcription stays on the image gateway.
+  Pronunciation sends the sounds to `gpt-audio-1.5` (six adult references: same error recall,
+  fewer false alarms than the current gateway; mini regressed); transcript matching cannot assess accent
+  or phonemes. M4A/AAC/WebM convert to WAV in memory with JS/WASM, with input/decoded-size bounds;
+  recordings are never written to disk. Existing budgets count one logical request and record
+  the cost of both stages, including a paid transcription followed by a failed formatter.
+  Cancellation and one deadline cover both stages; no fallback to another provider occurs.
+  The default stays on the current gateway. Broader human pronunciation equivalence across children/languages and
+  live end-to-end formatting/filler preservation remain rollout gates, not proven by fakes.
+- **EU TTS candidate (#893):** `SPEECH_BACKEND=openai` selects `OpenAISpeech` behind the same seam,
+  shared cache, locale support and six voice names; provider/model/locale/voice are part of the
+  cache identity. `tts-1` returns MP3 and receives the existing speaking-rate steps directly.
+  The EU-only client is shared with transcription/pronunciation/embeddings via `OPENAI_API_KEY`
+  and `OPENAI_BASE_URL`; any other base URL fails startup, redirects and SDK retries are disabled.
+  Defaults remain unchanged. This candidate is **not cleared for rollout**: measured full-MP3
+  latency 1.66–2.06 s regresses against Chirp3's 0.61–0.90 s on the five short locale samples;
+  `gpt-4o-mini-tts` was 10.98–15.97 s. Voice/accent quality still needs a listening comparison.
 - **Buddy's natural voice** (ADR 0008): everything read aloud goes sentence by sentence through
   `POST /voice/speech` (`modules/voice/speech.ts` → `speech/` seam → Google Cloud TTS, Chirp 3:
   HD voices, EU endpoint; `SPEECH_BACKEND=google`, default off until verified live). Voice and
