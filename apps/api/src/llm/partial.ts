@@ -9,6 +9,8 @@
 // written: only text up to a closing brace is used, and what comes out is validated like any
 // finished answer.
 
+import { repairJsonStrings } from './latex.js';
+
 export type PartialString = { text: string; done: boolean };
 
 const ESCAPES: Record<string, string> = {
@@ -140,7 +142,9 @@ export function answerUpTo(raw: string, key: string, n: number): unknown | null 
     found++;
     if (found < n) continue;
     try {
-      return JSON.parse(`${raw.slice(0, to + 1)}]}`);
+      // This prefix can be stored before the provider returns its repaired final answer.
+      // Apply the same repair here, before validation or whitespace handling loses the escape.
+      return repairJsonStrings(JSON.parse(`${raw.slice(0, to + 1)}]}`));
     } catch {
       // What stands before the array is not valid JSON on its own. Nothing is guessed: the
       // caller tries again with the next chunk, and otherwise gets the finished answer.

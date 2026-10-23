@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { repairJsonStrings } from '../latex.js';
 import { answerUpTo, partialArray, partialString } from '../partial.js';
 
 describe('partialString', () => {
@@ -102,6 +103,30 @@ describe('answerUpTo — the answer as it stands after the first n questions (is
 
   it('hands back exactly the first n, never the ones already written after them', () => {
     expect((answerUpTo(WHOLE, 'items', 2) as { items: unknown[] }).items).toHaveLength(2);
+  });
+
+  it('repairs JSON escapes in the prefix just like the finished answer (#863)', () => {
+    // Single backslashes are valid JSON escapes, but no longer LaTeX after JSON.parse.
+    const raw = String.raw`{"title":"Maße","items":[{"prompt":"$5\text{ cm}$ und $3\\,\\mathrm{mm}$","answer":"$\frac{1}{2}$","figure":{"label":"$\beta \neq \nu$"}},{"prompt":"Zeile eins\nneue Zeile"}]}`;
+    const expected = repairJsonStrings(JSON.parse(raw));
+    expect(answerUpTo(raw, 'items', 2)).toEqual(expected);
+    const cut = raw.indexOf(',{"prompt":"Zeile');
+    expect(answerUpTo(raw.slice(0, cut), 'items', 1)).toEqual({
+      title: 'Maße',
+      items: [
+        {
+          prompt: '$5\\text{ cm}$ und $3\\,\\mathrm{mm}$',
+          answer: '$\\frac{1}{2}$',
+          figure: { label: '$\\beta \\neq \\nu$' },
+        },
+      ],
+    });
+  });
+
+  it('still rejects invalid JSON escapes instead of guessing commands (#863)', () => {
+    expect(
+      answerUpTo(String.raw`{"items":[{"prompt":"$5\,\mathrm{cm}$"}]}`, 'items', 1),
+    ).toBeNull();
   });
 
   it('says "not yet" until n questions are finished, and never half of one', () => {
