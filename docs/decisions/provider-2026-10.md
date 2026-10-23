@@ -110,8 +110,9 @@ throughout). That blocker is gone.
 5. Before 19.11.: decide Priority PayGo on the measured production latency.
 
 **Rollback:** set `VERTEX_MODEL_SMART` back to `eu/gemini-3.6-flash` — possible until 19.11.;
-after that the only like-for-like fallback is `eu/gemini-3.7-flash` (until 28.01.2027), which the
-same level mapping does not cover (3.7 still takes budgets) and so needs no code change.
+after that the only like-for-like fallback is `eu/gemini-3.7-flash` (until 28.01.2027). It is
+**not** a config-only switch: 3.7 refuses Buddy's turn with 400 (measured 23.10., see the last
+section) and needs one line in `llm/vertex.ts` first.
 
 ## Insults and the provider's filter (#758)
 
@@ -143,3 +144,75 @@ Either one then needs entries in `docs/privacy.md` §Processors and `docs/dpia.m
 production — the owner's (legal) call. Model Garden partners on Vertex (Claude, Mistral on
 `europe-west*`) were listed for the project but are Vertex again and need enabling in the
 console; Claude reads no audio.
+
+## Bridge re-check: 3.7 against 3.8, 23.10.2026
+
+The owner wants another Gemini for now and the provider change later. 3.7 had been set aside for
+its switch-off date (28.01.2027) and one 10 s outlier on 01.10., but its speed had never been
+measured on Buddy's turn. Both were measured the same way, interleaved (A/B; from 17:00 A/B/C
+with 3.6 as control; order rotating per case), on the same machine (load 3.5–9), with the code
+of `main` (`eu/gemini-3.8-flash`: every level LOW; `eu/gemini-3.7-flash`: see the first
+finding). Spend ≈ **$0.34** of the $1.50 allowed (ledger `bridge37`).
+
+### 1. 3.7 is not a config-only switch
+
+On `main`, Buddy's turn (also the learning turn and the canary) sends `thinkingLevel: MINIMAL`
+to every model before 3.8. 3.7 refuses it: **HTTP 400 "Thinking level is unsupported:
+THINKING_LEVEL_MINIMAL"**, so with `VERTEX_MODEL_SMART=eu/gemini-3.7-flash` alone every chat
+turn fails. 3.7 accepts `thinkingBudget: 0` (one turn 3.7 s, 0 thought tokens) and
+`thinkingLevel: LOW` (one turn 8.4 s). The runs below used `minimal → thinkingBudget: 0` for 3.7
+as a local, uncommitted change; making 3.7 usable needs that one line in `thinkingConfigOf`.
+`off` (budget 0: sheet reading, tutor, practice) is accepted; budgets 512/1024/2048 (roleplay,
+consolidation, figures, hints) could not be checked, because from 17:00 the quota refusal came
+before validation.
+
+### 2. Neither had capacity in `eu` on 23.10.
+
+From 15:18 to 17:37 the project got almost no answers from 3.7 or 3.8 in `eu`, while 3.6 answered
+every call. A tiny raw call ("Say ok.", no schema, straight to the `eu` endpoint, 150 s cap), once
+per model about every 5 min:
+
+| model         | answered             | 429 RESOURCE_EXHAUSTED | no answer within 150 s / 503 |
+| ------------- | -------------------- | ---------------------- | ---------------------------- |
+| eu/gemini-3.6 | **17/17**, 1.0–1.7 s | 0                      | 0                            |
+| eu/gemini-3.7 | 3/17, 6.7–63 s       | 11 (most within 1 s)   | 3                            |
+| eu/gemini-3.8 | 1/17, 2.6 s          | 7 (1–89 s)             | 9                            |
+
+3.7 and 3.8 are not served in `europe-west1/3/4` (404), so `eu` is the only EU route. From 17:00
+3.7's refusal read "Resource has been exhausted (e.g. check quota)" instead of "try again later",
+which reads like a project quota rather than shared capacity; the Quotas page in the Cloud
+Console says which (owner).
+
+### 3. Buddy's turn, the same cases interleaved
+
+| round                                 | model | passed | first speakable reply p50 / p90 (n) | model call p50 / p90 / max (n) | cost   |
+| ------------------------------------- | ----- | ------ | ----------------------------------- | ------------------------------ | ------ |
+| 15:29–15:45, 15 cases (5 distress)    | 3.7   | 5/15   | 4.3 s (n = 1)                       | 4.1 / 17.3 / 17.3 s (n = 6)    | $0.065 |
+|                                       | 3.8   | 4/15   | 6.7 / 22.2 s (n = 4)                | 9.4 / 22.2 / 22.2 s (n = 7)    | $0.081 |
+| 17:00–17:08, 10 cases, 3.6 as control | 3.6   | 10/10  | **3.3 / 4.8 s** (n = 10)            | 3.5 / 4.8 / 5.4 s (n = 10)     | $0.160 |
+|                                       | 3.7   | 0/10   | —                                   | —                              | $0     |
+|                                       | 3.8   | 0/10   | —                                   | —                              | $0     |
+
+Every failure but one is `model_unavailable` (the 30 s turn timeout, or the throttle). Distress
+(`*_distress_safeguarding`): 3.7 4/5 with the helpline, the fifth unavailable; 3.8 0/5, all
+unavailable — a child then sees the generic failure line, not her helpline. The one quality miss
+was 3.8's `de_test_nerves_not_concern`: test nerves answered with the held-back line and 116 111
+(one run). So the ~10 turns per model for p50/p90 were **not reached**: 1 and 4 measured first
+replies prove nothing about 3.7 against 3.8. `evals/tutor` and a sheet reading on 3.7 were not
+run, since 3.7 answered 0 of 10 turns in that hour; 3.8's 22/22 from 15.10. stands.
+
+### Recommendation for the bridge
+
+**Stay with `eu/gemini-3.8-flash`** (ADR 0011), and treat capacity, not speed, as the open risk.
+
+- Today's runs give 3.7 no speed edge: its few answers came under the same throttle, and on
+  01.10. its tutor median equalled 3.8's (2065 vs 2056 ms, `model-choice-2026-10-01.md`).
+- 3.7 needs a code change before it works at all, and it goes away on 28.01.2027 — a second
+  migration if the provider change is not done by then. 3.8 has no switch-off date.
+- On 23.10. **neither** could carry the chat for over two hours while 3.6 answered in ~1.3 s.
+  Switching production that afternoon would have failed nearly every turn. Before 19.11. the
+  owner decides (a) the quota for 3.8 in `eu` (Cloud Console, Quotas) and (b) Provisioned
+  Throughput or Priority PayGo for 3.8 in `eu` (cost); then the turn is re-measured on a day with
+  capacity — the ~10-turn interleaved A/B here (`evals/buddy`, 3.6/3.8) costs ≈ $0.35.
+- Keep 3.7 only as a last fallback, with the one-line mapping (`minimal` → `thinkingBudget: 0`
+  for 3.7) built and tested first.
