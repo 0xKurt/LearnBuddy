@@ -25,6 +25,7 @@
 // on the rate (`modules/scheduler/throttle.ts`) — the fix for that lives in the Cloud
 // Console, not here.
 
+import { addUsage } from './usage.js';
 import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
 
 /**
@@ -131,26 +132,41 @@ export async function generateWithRetries(
       }
     : req;
   let attemptsDone = 0;
+  let callsDone = 0;
+  let spent: LlmResult['usage'] | null = null;
   for (;;) {
     // The caller stopped waiting (#684): no attempt starts, none is repeated.
-    if (req.signal?.aborted) throw new LlmError('cancelled', 'the caller stopped waiting');
+    if (req.signal?.aborted) {
+      const cancelled = new LlmError('cancelled', 'the caller stopped waiting', spent);
+      cancelled.attempts = Math.max(1, callsDone);
+      throw cancelled;
+    }
     const left = deadline - waits.elapsedMs();
     try {
       const result = await attempt(watched, Math.max(Math.round(left), 0));
       // A throttle answered on the third try is no longer invisible in `llm_calls` (#652).
-      return { ...result, attempts: attemptsDone + 1 };
-    } catch (err) {
+      return {
+        ...result,
+        usage: addUsage(spent, result.usage)!,
+        attempts: callsDone + (result.attempts ?? 1),
+      };
+    } catch (failure) {
+      let err: unknown = failure;
       attemptsDone++;
+      callsDone += err instanceof LlmError ? err.attempts : 1;
+      spent = addUsage(spent, err instanceof LlmError ? err.usage : null);
+      if (err instanceof LlmError)
+        err = new LlmError(err.kind, err.message, spent, err.finishReason);
       if (req.signal?.aborted) {
         const cancelled = new LlmError(
           'cancelled',
           'the caller stopped waiting',
           err instanceof LlmError ? err.usage : null,
         );
-        cancelled.attempts = attemptsDone;
+        cancelled.attempts = callsDone;
         throw cancelled;
       }
-      if (err instanceof LlmError) err.attempts = attemptsDone;
+      if (err instanceof LlmError) err.attempts = callsDone;
       if (handedOut || attemptsDone >= attemptsFor(err)) throw err;
       const pause = retryPauseMs(attemptsDone, waits.random);
       // No room for the pause AND an attempt that could finish: give up honestly now

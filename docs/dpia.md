@@ -370,19 +370,33 @@ und rechtlich richtig sind — das ist keine Messfrage. Solange die App im Famil
 Tochter des Verantwortlichen ist, ist das vertretbar; **vor jeder Nutzung durch Dritte** müssen
 die Punkte aus §7 abgearbeitet sein.
 
-## Vorgeschlagener Verarbeiter: Azure — 23.10.2026, noch nicht aktiv (#889)
+## Vorgeschlagener Verarbeiter: OpenAI Ireland — 23.10.2026, noch nicht aktiv (#891)
 
-Die technische Vorbereitung ändert die Freigabe dieser Folgenabschätzung nicht. Microsoft Azure
-OpenAI ist ein **vorgeschlagener** Verarbeiter für erforderliche Lerntexte und Blattfotos;
-Vertex bleibt Standard. Der Owner muss AVV/DPA und Minderjährigen-Bedingungen bestätigen sowie
-EU-Deployment, Missbrauchsüberwachung einschließlich Speicherung/menschlicher Prüfung und
-Cache-Bedingungen dokumentieren. `store: false` hebt die Missbrauchsüberwachung nicht auf.
-[Microsofts Verarbeitungsbeschreibung](https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy).
+Der Owner wählt die direkte API; Azure als Zielanbieter und PR #890 sind ersetzt. Vorgeschlagen
+ist **OpenAI Ireland Ltd.** als Auftragsverarbeiter notwendiger Lerntexte und Blattfotos.
+Diese technische Vorbereitung ist keine Freigabe der Folgenabschätzung. Vertex bleibt Standard.
+[API-Vertrag](https://openai.com/policies/services-agreement/),
+[AVV/DPA](https://openai.com/policies/data-processing-addendum/).
 
-R4 (Verarbeiter/Region), R11 (Cache) und R2 (Schutzpfade/Fehlalarme) sind vor Aktivierung erneut
-zu bewerten. Eine schwedische Ressourcenadresse beweist keine EU-Inferenz: beide Deployments
-müssen Data Zone Standard EU sein, nicht Global. Die bisherigen Schutzpfade bleiben bestehen;
-#758 ist ohne Live-Messung nicht gelöst. Audio/PDF und der vollständige Buddy-Schemavertrag
-sind noch keine belegten Azure-Fähigkeiten dieses Anschlusses. Keine Freigabe und keine
-Produktivumschaltung in diesem PR; Nachweise und Setup stehen in
-[der Providerentscheidung](decisions/provider-2026-10.md#23102026--azure-preparation-owner-decision-889).
+Die geplante Verarbeitung nutzt ein neues europäisches Residency-Projekt mit genehmigter
+**Zero Data Retention**, Endpunkt `https://eu.api.openai.com/v1`, `store:false` und ausschließlich
+In-Memory-Promptcache. Die Projektfreigabe wurde nicht nachgewiesen. R4 (Verarbeiter/Region),
+R11 (Cache) und R2 (Schutzpfade/Fehlalarme) sind neu zu bewerten: Anbieterregion **EEA + Schweiz**
+statt ausschließlich EU-Mitgliedstaaten, Systemdaten/Schema-Metadaten außerhalb der Residency-
+Zusage sowie mögliche Speicherung verdächtiger CSAM-Bilder trotz ZDR. Keine absolute Zusage,
+dass keinerlei Daten jemals gespeichert werden.
+[Verarbeitungsgrenzen](https://developers.openai.com/api/docs/guides/your-data).
+
+**Offene Aktivierungsvoraussetzung:** Elternzustimmung für alle unter 18 laut API-Vertrag;
+die heutige Selbstzustimmung ab 16 deckt 16–17 allein nicht ab. Unter 13 bzw. dem anwendbaren
+digitalen Einwilligungsalter darf persönliche Information nicht vor eingerichteter ZDR-
+Verarbeitung übermittelt werden. Altersgerechte Information, Schutz vor ungeeigneten Inhalten,
+Melde-/Eskalationswege und Einwilligungsnachweise sind nachzuweisen. Die Consumer-Mindestalter-
+Regel ist nicht der API-Vertrag.
+[Under-18 API guidance](https://developers.openai.com/api/docs/guides/safety-checks/under-18-api-guidance).
+
+Ein Providerblock ist kein Beleg für Kindesgefährdung. Schutzcode bleibt bestehen; #758 und echte
+Notfälle brauchen neue Evals, ebenso Aufgabenqualität und Latenz der gepufferten JSON-Reparatur.
+Audio/PDF haben noch keinen geprüften Weg dieses Anschlusses. Vor Aktivierung müssen auch
+Datenschutzhinweis/CONSENT_VERSION, Subprozessoren, Vertrag, Kontingente und Modell-Abschalttermine
+geklärt sein. [Forschung und Freigabeschritte](decisions/openai-eu-2026-10-23.md).

@@ -4,10 +4,12 @@ import { z } from 'zod';
 import { buddyPrompt } from '../../modules/buddy/prompts.js';
 import { registerLearning } from '../../modules/learning/register.js';
 import { TutorDecision } from '../../modules/practice/tutor.js';
-import { azureSchema, restoreAzureJson, assertAzureSchema } from '../azure-schema.js';
+import { strictSchema, restoreStrictJson, assertStrictSchema } from '../chat-schema.js';
 import { toJsonSchema } from '../json-schema.js';
 
 registerLearning();
+const assertAzureSchema = (schema: Parameters<typeof assertStrictSchema>[0]) =>
+  assertStrictSchema(schema, { properties: 100, depth: 5 });
 
 describe('strict Azure schemas retain the original contract', () => {
   it('requires optional fields as nullable without mutating names, order or descriptions', () => {
@@ -20,7 +22,7 @@ describe('strict Azure schemas retain the original contract', () => {
     });
     const schema = toJsonSchema(contract);
     const before = JSON.stringify(schema);
-    const strict = azureSchema(schema);
+    const strict = strictSchema(schema);
     expect(strict.required).toEqual(['properties', 'items', 'kept', 'required', 'children']);
     expect(strict.additionalProperties).toBe(false);
     expect(strict.properties).toMatchObject({
@@ -30,7 +32,7 @@ describe('strict Azure schemas retain the original contract', () => {
       },
       items: { anyOf: [{ type: 'string', enum: ['a', 'b'] }, { type: 'null' }] },
     });
-    const result = restoreAzureJson(schema, {
+    const result = restoreStrictJson(schema, {
       properties: null,
       items: null,
       kept: null,
@@ -52,9 +54,9 @@ describe('strict Azure schemas retain the original contract', () => {
       revealed_answer: false,
       concern: null,
     };
-    expect(TutorDecision.parse(restoreAzureJson(schema, wire)).concern).toBe(false);
-    expect(azureSchema(schema).required).toContain('concern');
-    expect(() => assertAzureSchema(azureSchema(schema))).not.toThrow();
+    expect(TutorDecision.parse(restoreStrictJson(schema, wire)).concern).toBe(false);
+    expect(strictSchema(schema).required).toContain('concern');
+    expect(() => assertAzureSchema(strictSchema(schema))).not.toThrow();
   });
 
   it('chooses the matching union branch before removing optional nulls', () => {
@@ -66,7 +68,7 @@ describe('strict Azure schemas retain the original contract', () => {
         ]),
       ),
     });
-    const value = restoreAzureJson(toJsonSchema(contract), {
+    const value = restoreStrictJson(toJsonSchema(contract), {
       rows: [
         { kind: 'optional', value: null },
         { kind: 'nullable', value: null },
@@ -78,21 +80,21 @@ describe('strict Azure schemas retain the original contract', () => {
 
   it('does not erase invalid required nulls, unknown keys or unmatched union values', () => {
     const contract = z.object({ x: z.string(), y: z.string().optional() }).strict();
-    const value = restoreAzureJson(toJsonSchema(contract), { x: null, extra: null, y: null });
+    const value = restoreStrictJson(toJsonSchema(contract), { x: null, extra: null, y: null });
     expect(value).toEqual({ x: null, extra: null });
     expect(contract.safeParse(value).success).toBe(false);
   });
 
   it('refuses the real Buddy schema rather than removing tools to fit the published limit', () => {
-    expect(() => assertAzureSchema(azureSchema(buddyPrompt().turnStepSchema))).toThrow(/100/);
+    expect(() => assertAzureSchema(strictSchema(buddyPrompt().turnStepSchema))).toThrow(/100/);
   });
 
   it('accepts five container levels and refuses six or a root union', () => {
     const wrap = (schema: z.ZodTypeAny) => z.object({ child: schema });
     let schema: z.ZodTypeAny = z.string();
     for (let i = 0; i < 5; i++) schema = wrap(schema);
-    expect(() => assertAzureSchema(azureSchema(toJsonSchema(schema)))).not.toThrow();
-    expect(() => assertAzureSchema(azureSchema(toJsonSchema(wrap(schema))))).toThrow(/nesting/);
+    expect(() => assertAzureSchema(strictSchema(toJsonSchema(schema)))).not.toThrow();
+    expect(() => assertAzureSchema(strictSchema(toJsonSchema(wrap(schema))))).toThrow(/nesting/);
     expect(() => assertAzureSchema({ anyOf: [{ type: 'object' }] })).toThrow(/root/);
   });
 });

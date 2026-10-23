@@ -5,8 +5,11 @@ candidate, choose by evidence. Measured against `docs/decisions/baseline-2026-10
 axes (Speed, Qualität, Kosten, Anwendungsfall). Eval spend for this decision ≈ **$4.4 of the $15**
 allowed (ledger `BUDGET-LEDGER.md` of the audit round).
 
-> Update 23.10.2026: the owner selected Azure preparation; see the dated section below for
-> the recommendation and blocking schema finding. Earlier measurements remain historical evidence.
+> Final owner decision, 23.10.2026 (#891): **OpenAI directly**, in an EU data-residency
+> project with Zero Data Retention; **Azure is dropped**. The preparation below and PR #890
+> are superseded. Vertex remains the active default until the owner switches after the gates.
+> [Current decision, official research and implementation](openai-eu-2026-10-23.md).
+> Earlier measurements and the Azure proposal below are historical, not an activation runbook.
 
 ## Recommendation (two steps; ADR 0011)
 

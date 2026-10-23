@@ -1,7 +1,7 @@
 // Preserve incomplete strings/brackets while restoring null sentinels in completed array elements.
 // Closing a partial JSON string ourselves would make partialString falsely announce it as done.
 import type { JsonSchema } from './gateway.js';
-import { optionalNull, schemaObject } from './azure-schema.js';
+import { optionalNull, schemaObject } from './chat-schema.js';
 import { partialString } from './partial.js';
 
 /** Every real union we emit is tagged (schema-inventory.md); nullable wrappers are unambiguous. */
@@ -26,7 +26,7 @@ function objectBranch(schema: JsonSchema, raw: string): JsonSchema {
   );
 }
 
-export function restoreAzurePartial(schema: JsonSchema, raw: string): string {
+export function restoreStrictPartial(schema: JsonSchema, raw: string): string {
   let at = 0;
   const whitespace = () => {
     while (/\s/.test(raw[at] ?? '') && at < raw.length) at++;

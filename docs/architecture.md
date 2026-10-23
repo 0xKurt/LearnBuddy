@@ -1114,22 +1114,34 @@ part of and how she waited for it (#652, migration 0107): the Buddy decision it 
 (`decision_id`, chosen before the call), its `round`, the `schema_variant` that went out
 (`step`/`final`, or `whole`/`chosen`/`minimal`/`fallback` for a run or reading), whether it was
 `streamed` and its `first_token_ms`, how many requests the gateway sent (`attempts`, retries
-included) and the whole wait (`total_ms`; `latency_ms` stays the last attempt's). A call that the provider did not run for her — provider
+included) and the whole wait (`total_ms`; `latency_ms` sums gateway durations across attempts).
+A call that the provider did not run for her — provider
 down, request refused, safety block — gives its reservation back; a timeout or unusable output
 keeps it (the provider may have done and billed the work).
 
-### Azure preparation (#889, off by default)
+### Direct EU provider preparation (#891, off by default)
 
-`AzureOpenAIGateway` is selected only by `LLM_BACKEND=azure`; `production.llmGateway` also wires
-all general model eval runners. Strict JSON schema is adapted at the gateway boundary and null
-sentinels restored in complete and partial answers; the prompt and domain zod validators remain
-unchanged. Images are supported, PDF/audio refused. Retry/timeout budgets and `llm_calls` use the
-existing shared paths. Azure completion tokens include reasoning, so visible output subtracts it
-before shared cost arithmetic. Costs use a required, dated Azure price table; no unverified rate
-is a default. The published 100-property/five-container-level limit rejects the full Buddy turn
-before HTTP. See [provider decision](decisions/provider-2026-10.md#23102026--azure-preparation-owner-decision-889)
-for the unresolved activation gates; this is not an active provider. Region/SKU settings are
-operator declarations, since Azure resource hostnames cannot prove residency.
+`LLM_BACKEND=openai` selects `OpenAIGateway`; Vertex remains the default. `OPENAI_API_KEY`,
+`OPENAI_BASE_URL` (EU-only, default `https://eu.api.openai.com/v1`) and `OPENAI_MODEL_SMART` /
+`OPENAI_MODEL_FAST` configure it. Azure is no longer the planned provider. Its configuration
+adapter remains, sharing the single `ChatGateway` transport, schema conversion, streaming,
+error/abort mapping and cost accounting. Both reject PDF/audio; direct image limits are 20
+images / 20 MB Base64 combined. Redirects and SDK retries are disabled.
+
+Buddy stages at most six ordered act functions and ends with `respond`, all strict and with
+parallel calls disabled. Reassembly restores the original turn shape; existing Zod, lookup,
+policy and atomic context-fence handling remain authoritative. Function calls have no side
+effects. Explain/extraction use JSON mode plus the original model Zod contract and the offered
+schema, with one repair at most. They buffer partial output until validation succeeds, so a
+repair cannot replace questions already handed over. Other partial JSON and respond streams
+remain incremental. All internal rounds share the timeout/output budget, and all reported
+usage/cost and request counts survive failures and retries. Cached tokens are recorded, but
+costs use the full-input ceiling; reasoning is never billed twice.
+
+See [the dated decision](decisions/openai-eu-2026-10-23.md) for corrected direct schema limits
+(5,000 properties / 10 levels), EU prices, model deprecations, proposed processor and unresolved
+activation gates. In particular, an EU URL is not proof of project ZDR, and current self-consent
+from 16 does not satisfy the API agreement's parental-consent requirement for all minors.
 
 ### Schema budget (#627)
 

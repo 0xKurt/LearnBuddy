@@ -64,7 +64,7 @@ const SOURCE_FIELDS = {
 };
 
 /** The study reading's schema: the sheet's fields plus what kind of page it is. */
-const StudyExtraction = z.object({
+export const StudyExtraction = z.object({
   // These decisions must be complete before any question can be stored from a prefix (#870).
   source: SOURCE_FIELDS.source.removeCatch().removeDefault(),
   marked: SOURCE_FIELDS.marked.removeCatch().removeDefault(),

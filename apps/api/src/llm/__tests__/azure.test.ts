@@ -4,7 +4,8 @@ import { z } from 'zod';
 
 import { loadConfig } from '../../config.js';
 import { AzureOpenAIGateway } from '../azure.js';
-import type { LlmRequest } from '../gateway.js';
+import { OpenAIGateway } from '../openai.js';
+import { request, usage, completion, http, sse, chunk } from './chat-fixtures.js';
 import { toJsonSchema } from '../json-schema.js';
 import { answerUpTo, partialString } from '../partial.js';
 
@@ -29,75 +30,28 @@ const config = loadConfig({
   AZURE_OPENAI_REGION: 'swedencentral',
   AZURE_OPENAI_DEPLOYMENT_TYPE: 'DataZoneStandard',
 });
-const request = (overrides: Partial<LlmRequest> = {}): LlmRequest => ({
-  purpose: 'tutor',
-  tier: 'smart',
-  promptVersion: 'test',
-  system: 'SYSTEM',
-  contents: [{ role: 'user', parts: [{ text: 'Hallo' }] }],
-  schema: toJsonSchema(z.object({ reply: z.string() })),
-  maxOutputTokens: 100,
-  temperature: 0.3,
-  timeoutMs: 200,
-  thinking: 'off',
-  ...overrides,
-});
-const usage = {
-  prompt_tokens: 1000,
-  completion_tokens: 100,
-  total_tokens: 1100,
-  prompt_tokens_details: { cached_tokens: 600 },
-  completion_tokens_details: { reasoning_tokens: 30 },
-};
-const completion = (
-  reason = 'stop',
-  content = '{"reply":"Hallo"}',
-  refusal: string | null = null,
-) => ({
-  id: 'test',
-  object: 'chat.completion',
-  created: 0,
-  model: 'gpt-5.4-2026-03-05',
-  usage,
-  choices: [{ index: 0, finish_reason: reason, message: { role: 'assistant', content, refusal } }],
-});
-function http(body: unknown = completion(), status = 200) {
-  return vi.fn<typeof fetch>(async () => Response.json(body, { status }));
-}
-function sse(events: unknown[], done = true) {
-  const body =
-    events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join('') +
-    (done ? 'data: [DONE]\n\n' : '');
-  // Deliberately split inside SSE lines and UTF-8 characters: the SDK must assemble them.
-  const bytes = new TextEncoder().encode(body);
-  return new Response(
-    new ReadableStream({
-      start(controller) {
-        for (let i = 0; i < bytes.length; i += 7) controller.enqueue(bytes.slice(i, i + 7));
-        controller.close();
-      },
-    }),
-    { headers: { 'content-type': 'text/event-stream' } },
-  );
-}
-const chunk = (content: string, finish_reason: string | null = null) => ({
-  id: 'test',
-  object: 'chat.completion.chunk',
-  created: 0,
-  model: 'gpt-5.4-2026-03-05',
-  choices: [{ index: 0, delta: { content }, finish_reason }],
-});
-
-describe('Azure HTTP gateway', () => {
+describe.each(['azure', 'openai'] as const)('%s HTTP gateway', (provider) => {
+  const direct = loadConfig({
+    DATABASE_URL: config.DATABASE_URL,
+    SUPABASE_URL: config.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: config.SUPABASE_SERVICE_ROLE_KEY,
+    ADMIN_TOKEN_SECRET: config.ADMIN_TOKEN_SECRET,
+    LLM_BACKEND: 'openai',
+    OPENAI_API_KEY: 'not-a-real-key',
+  });
+  const createGateway = (fetch: typeof globalThis.fetch) =>
+    provider === 'azure' ? new AzureOpenAIGateway(config, fetch) : new OpenAIGateway(direct, fetch);
+  const smart = provider === 'azure' ? 'buddy' : 'gpt-5.4-mini';
+  const fast = provider === 'azure' ? 'small' : 'gpt-5.4-nano';
   it.each([
-    ['gpt-5.4-2026-03-05', 2800],
-    ['gpt-5.4-mini-2026-03-17', 700],
-    ['unknown-model', 2800],
+    ['gpt-5.4-2026-03-05', provider === 'azure' ? 2800 : 1320],
+    ['gpt-5.4-mini-2026-03-17', provider === 'azure' ? 700 : 1320],
+    ['unknown-model', provider === 'azure' ? 2800 : 1320],
   ])(
     'prices %s independently of the deployment alias without double billing reasoning',
     async (model, expected) => {
       const fetch = http({ ...completion(), model });
-      const result = await new AzureOpenAIGateway(config, fetch).generate(request());
+      const result = await createGateway(fetch).generate(request());
       expect(result.usage).toMatchObject({
         model,
         costMicros: expected,
@@ -113,23 +67,21 @@ describe('Azure HTTP gateway', () => {
     fetch.mockResolvedValueOnce(
       Response.json({ error: { code: 'server_error' } }, { status: 503 }),
     );
-    const result = await new AzureOpenAIGateway(config, fetch).generate(
-      request({ timeoutMs: 10_000 }),
-    );
+    const result = await createGateway(fetch).generate(request({ timeoutMs: 10_000 }));
     expect(result.attempts).toBe(2);
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it('refuses too many images and oversized schemas before sending them', async () => {
     const fetch = http();
-    const gateway = new AzureOpenAIGateway(config, fetch);
+    const gateway = createGateway(fetch);
     await expect(
       gateway.generate(
         request({
           contents: [
             {
               role: 'user',
-              parts: Array.from({ length: 11 }, () => ({
+              parts: Array.from({ length: provider === 'azure' ? 11 : 21 }, () => ({
                 inlineData: { mimeType: 'image/png' as const, data: 'YQ==' },
               })),
             },
@@ -143,7 +95,10 @@ describe('Azure HTTP gateway', () => {
           schema: {
             type: 'object',
             properties: Object.fromEntries(
-              Array.from({ length: 101 }, (_, i) => [String(i), { type: 'string' }]),
+              Array.from({ length: provider === 'azure' ? 101 : 5001 }, (_, i) => [
+                String(i),
+                { type: 'string' },
+              ]),
             ),
           },
         }),
@@ -154,7 +109,7 @@ describe('Azure HTTP gateway', () => {
 
   it('sends strict JSON, original messages and images to the configured deployment', async () => {
     const fetch = http();
-    await new AzureOpenAIGateway(config, fetch).generate(
+    await createGateway(fetch).generate(
       request({
         contents: [
           { role: 'model', parts: [{ text: 'Vorher' }] },
@@ -166,10 +121,16 @@ describe('Azure HTTP gateway', () => {
       }),
     );
     const [url, init] = fetch.mock.calls[0]!;
-    expect(String(url)).toBe('https://lb-test.openai.azure.com/openai/v1/chat/completions');
+    expect(String(url)).toBe(
+      provider === 'azure'
+        ? 'https://lb-test.openai.azure.com/openai/v1/chat/completions'
+        : 'https://eu.api.openai.com/v1/chat/completions',
+    );
+    expect(init?.redirect).toBe('error');
+    expect(new Headers(init?.headers).get('authorization')).toBe('Bearer not-a-real-key');
     const body = JSON.parse(String(init?.body));
     expect(body).toMatchObject({
-      model: 'buddy',
+      model: smart,
       max_completion_tokens: 100,
       reasoning_effort: 'none',
       response_format: { type: 'json_schema', json_schema: { name: 'learnbuddy', strict: true } },
@@ -201,24 +162,27 @@ describe('Azure HTTP gateway', () => {
     ['high', 'high'],
   ] as const)('maps neutral thinking %s to %s on the fast deployment', async (thinking, effort) => {
     const fetch = http();
-    await new AzureOpenAIGateway(config, fetch).generate(request({ thinking, tier: 'fast' }));
+    await createGateway(fetch).generate(request({ thinking, tier: 'fast' }));
     expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body))).toMatchObject({
-      model: 'small',
+      model: fast,
       reasoning_effort: effort,
     });
   });
 
-  it('supports an explicitly configured dated Azure API version', async () => {
-    const fetch = http();
-    await new AzureOpenAIGateway(
-      { ...config, AZURE_OPENAI_API_VERSION: '2025-04-01-preview' },
-      fetch,
-    ).generate(request());
-    expect(String(fetch.mock.calls[0]![0])).toBe(
-      'https://lb-test.openai.azure.com/openai/deployments/buddy/chat/completions?api-version=2025-04-01-preview',
-    );
-    expect(new Headers(fetch.mock.calls[0]![1]?.headers).get('api-key')).toBe('not-a-real-key');
-  });
+  it.skipIf(provider !== 'azure')(
+    'supports an explicitly configured dated Azure API version',
+    async () => {
+      const fetch = http();
+      await new AzureOpenAIGateway(
+        { ...config, AZURE_OPENAI_API_VERSION: '2025-04-01-preview' },
+        fetch,
+      ).generate(request());
+      expect(String(fetch.mock.calls[0]![0])).toBe(
+        'https://lb-test.openai.azure.com/openai/deployments/buddy/chat/completions?api-version=2025-04-01-preview',
+      );
+      expect(new Headers(fetch.mock.calls[0]![1]?.headers).get('api-key')).toBe('not-a-real-key');
+    },
+  );
 
   it('streams cumulative JSON usable by existing partial helpers and keeps trailing usage', async () => {
     const partials: string[] = [];
@@ -234,7 +198,7 @@ describe('Azure HTTP gateway', () => {
     const schema = toJsonSchema(
       z.object({ reply: z.string(), items: z.array(z.object({ x: z.number().optional() })) }),
     );
-    const result = await new AzureOpenAIGateway(config, fetch).generate(
+    const result = await createGateway(fetch).generate(
       request({ schema, onPartial: (s) => partials.push(s) }),
     );
     expect(partialString(partials[0]!, 'reply')).toEqual({ text: 'Grü', done: false });
@@ -264,7 +228,7 @@ describe('Azure HTTP gateway', () => {
       { error: { code, message: 'private child text must not appear in our error' } },
       status,
     );
-    const result = new AzureOpenAIGateway(config, fetch).generate(request());
+    const result = createGateway(fetch).generate(request());
     await expect(result).rejects.toMatchObject({ kind });
     await expect(result).rejects.not.toThrow(/private child/);
     expect(fetch).toHaveBeenCalledTimes(1);
@@ -274,27 +238,27 @@ describe('Azure HTTP gateway', () => {
     ['content_filter', 'blocked', 'content_filter'],
     ['length', 'invalid_output', 'MAX_TOKENS'],
   ])('maps finish reason %s and retains usage', async (reason, kind, finishReason) => {
-    await expect(
-      new AzureOpenAIGateway(config, http(completion(reason))).generate(request()),
-    ).rejects.toMatchObject({ kind, finishReason, usage: { inputTokens: 1000 } });
+    await expect(createGateway(http(completion(reason))).generate(request())).rejects.toMatchObject(
+      { kind, finishReason, usage: { inputTokens: 1000 } },
+    );
   });
 
   it('treats a refusal and missing candidates as blocked, malformed JSON as invalid output', async () => {
     await expect(
-      new AzureOpenAIGateway(config, http(completion('stop', '', 'No'))).generate(request()),
+      createGateway(http(completion('stop', '', 'No'))).generate(request()),
     ).rejects.toMatchObject({ kind: 'blocked' });
     await expect(
-      new AzureOpenAIGateway(config, http({ choices: [], usage })).generate(request()),
+      createGateway(http({ choices: [], usage })).generate(request()),
     ).rejects.toMatchObject({ kind: 'blocked' });
     await expect(
-      new AzureOpenAIGateway(config, http(completion('stop', '{'))).generate(request()),
+      createGateway(http(completion('stop', '{'))).generate(request()),
     ).rejects.toMatchObject({ kind: 'invalid_output' });
   });
 
   it('rejects a disconnected stream even if the JSON happens to be complete', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => sse([chunk('{"reply":"Hi"}')], false));
     await expect(
-      new AzureOpenAIGateway(config, fetch).generate(request({ onPartial: () => {} })),
+      createGateway(fetch).generate(request({ onPartial: () => {} })),
     ).rejects.toMatchObject({ kind: 'invalid_output' });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -305,7 +269,7 @@ describe('Azure HTTP gateway', () => {
       sse([chunk('{"reply":"Hi'), chunk('filtered"}', 'content_filter'), { choices: [], usage }]),
     );
     await expect(
-      new AzureOpenAIGateway(config, fetch).generate(request({ onPartial: partial })),
+      createGateway(fetch).generate(request({ onPartial: partial })),
     ).rejects.toMatchObject({ kind: 'blocked', usage: { inputTokens: 1000 } });
     expect(partial).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(1);
@@ -323,17 +287,15 @@ describe('Azure HTTP gateway', () => {
         }),
     );
     const controller = new AbortController();
-    const pending = new AzureOpenAIGateway(config, fetch).generate(
-      request({ signal: controller.signal }),
-    );
+    const pending = createGateway(fetch).generate(request({ signal: controller.signal }));
     setTimeout(() => controller.abort(), 15);
     await expect(pending).rejects.toMatchObject({ kind: 'cancelled' });
-    await expect(
-      new AzureOpenAIGateway(config, fetch).generate(request({ timeoutMs: 15 })),
-    ).rejects.toMatchObject({ kind: 'timeout' });
+    await expect(createGateway(fetch).generate(request({ timeoutMs: 15 }))).rejects.toMatchObject({
+      kind: 'timeout',
+    });
     expect(fetch).toHaveBeenCalledTimes(2);
     await expect(
-      new AzureOpenAIGateway(config, fetch).generate(request({ signal: controller.signal })),
+      createGateway(fetch).generate(request({ signal: controller.signal })),
     ).rejects.toMatchObject({ kind: 'cancelled' });
     expect(fetch).toHaveBeenCalledTimes(2);
   });
@@ -343,7 +305,7 @@ describe('Azure HTTP gateway', () => {
     async (mimeType) => {
       const fetch = http();
       await expect(
-        new AzureOpenAIGateway(config, fetch).generate(
+        createGateway(fetch).generate(
           request({
             contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: 'YQ==' } }] }],
           }),

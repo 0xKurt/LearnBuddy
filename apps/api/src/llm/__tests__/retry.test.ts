@@ -328,4 +328,45 @@ describe('a throttled call inside the caller’s budget', () => {
     expect(plain).toEqual({ ...answer, attempts: 2 });
     expect(calls).toBe(2);
   });
+  it('counts every receipt and request from a multi-call workflow before retrying', async () => {
+    const f = fakeWaits();
+    let tries = 0;
+    const result = await generateWithRetries(
+      request(),
+      async () => {
+        if (++tries === 1) {
+          const error = new LlmError('unavailable', 'last round failed', answer.usage);
+          error.attempts = 2;
+          throw error;
+        }
+        return { ...answer, attempts: 3 };
+      },
+      f.waits,
+    );
+    expect(result.attempts).toBe(5);
+    expect(result.usage.costMicros).toBe(answer.usage.costMicros * 2);
+    expect(result.usage.inputTokens).toBe(answer.usage.inputTokens * 2);
+  });
+  it('retains receipts when the caller cancels during the retry pause', async () => {
+    const f = fakeWaits();
+    const controller = new AbortController();
+    await expect(
+      generateWithRetries(
+        request({ signal: controller.signal }),
+        async () => {
+          throw new LlmError('unavailable', 'failed after usage', answer.usage);
+        },
+        {
+          ...f.waits,
+          sleep: async () => {
+            controller.abort();
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      kind: 'cancelled',
+      usage: answer.usage,
+      attempts: 1,
+    });
+  });
 });

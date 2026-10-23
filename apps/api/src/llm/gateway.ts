@@ -2,7 +2,7 @@
 //
 // Feature code asks for a structured JSON answer that matches a schema and
 // validates it again with zod; free text is never parsed for decisions.
-// Implementations: VertexGateway (default), AzureOpenAIGateway (opt-in), DisabledGateway (no model
+// Implementations: VertexGateway (default), OpenAIGateway / AzureOpenAIGateway (opt-in), DisabledGateway (no model
 // configured — callers degrade honestly), ScriptedGateway (tests only).
 
 import type { AudioMime } from '@learnbuddy/shared-types/contracts';
@@ -72,6 +72,8 @@ export type LlmRequest = {
   system: string;
   contents: LlmMessage[];
   schema: JsonSchema;
+  /** Original domain validator for gateways using JSON mode; never sent to the provider. */
+  validateOutput?: (json: unknown) => boolean;
   maxOutputTokens: number;
   temperature: number;
   timeoutMs: number;
