@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import { fitted, offered } from '../../practice/formChoice.js';
-import { CHOICE_RULES, figureRules } from '../../practice/items.js';
+import { CHOICE_RULES, figureRules, MATH_RULES, NUMERIC_KEY_RULES } from '../../practice/items.js';
 import { READING_RULES } from '../../practice/reading.js';
 import { STRUCTURED_RULE_OF } from '../../practice/setProfiles.js';
 import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM, extractSystem, homeworkSystem } from '../extract.js';
@@ -13,6 +13,11 @@ import { readingCatalogue } from '../readingPrompt.js';
 import { EXTRACTION_SCHEMA, HOMEWORK_SCHEMA } from '../sources.js';
 
 const NOTHING = { forms: [], figures: [] };
+const CONTENT_CHOICES = [
+  { forms: ['part_tasks'], figures: ['fraction'] },
+  { forms: ['part_tasks'], figures: [] },
+  NOTHING,
+];
 const sha = (text: string) => createHash('sha256').update(text).digest('hex');
 const cases = [
   [
@@ -72,11 +77,7 @@ describe('reading prompts from the choice', () => {
       // The two content-eval findings on #883 had a comparison without its operands.
       // Basic multiple-choice items remain available even when no structured form is chosen.
       expect(CHOICE_RULES).toContain('the question names them itself');
-      for (const choice of [
-        { forms: ['part_tasks'], figures: ['fraction'] },
-        { forms: ['part_tasks'], figures: [] },
-        NOTHING,
-      ]) {
+      for (const choice of CONTENT_CHOICES) {
         const selected = offered(fitted(schema, choice).schema);
         expect(full.split(CHOICE_RULES)).toHaveLength(2);
         expect(build(selected).split(CHOICE_RULES), JSON.stringify(selected)).toHaveLength(2);
@@ -91,6 +92,22 @@ describe('reading prompts from the choice', () => {
       expect(system).not.toContain(READING_RULES);
     }
   });
+
+  it.each(cases)(
+    'keeps notation and numeric-key rules for the observed choices and fallback (%#)',
+    (build, full, schema) => {
+      // The two mixed-number items in #883 were dropped for unsupported alternate answers.
+      expect(MATH_RULES).toContain('answers and accepted_answers');
+      expect(MATH_RULES).toContain('a question that uses one is dropped');
+      for (const choice of CONTENT_CHOICES) {
+        const selected = offered(fitted(schema, choice).schema);
+        for (const rule of [MATH_RULES, NUMERIC_KEY_RULES]) {
+          expect(full.split(rule)).toHaveLength(2);
+          expect(build(selected).split(rule), JSON.stringify(selected)).toHaveLength(2);
+        }
+      }
+    },
+  );
 
   it.each([false, true])('catalogues all offered forms and figures (homework=%s)', (homework) => {
     const offer = offered(homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA);
