@@ -66,7 +66,7 @@ export type LlmPurpose =
 
 export type LlmRequest = {
   purpose: LlmPurpose;
-  /** 'smart' for everything today; 'fast' is the cheaper model for low-stakes tasks. */
+  /** 'smart' for general tasks; 'fast' for narrow decisions with their own passing evaluation. */
   tier: 'smart' | 'fast';
   promptVersion: string;
   system: string;

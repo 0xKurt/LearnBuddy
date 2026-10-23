@@ -149,6 +149,8 @@ sweep records when it ran and how many rows it removed — counts only, never co
 
 ## Access control
 
+Key inventory, rotation order and verification for the owner: [key-rotation.md](key-rotation.md).
+
 - The app only talks to the API. The API connects to Postgres with its own role — versioned in
   `infra/supabase/templates/api-role.sql` and tested by running the API as it
   (`api-role.int.test.ts`): no superuser, no DDL, nothing in `auth` — and scopes

@@ -15,10 +15,14 @@ import { safeguardingText } from '../../i18n/safeguarding.js';
 import type { Deps } from '../../deps.js';
 import { isMinor } from '../identity/model.js';
 import type { AnswerCase, Judged } from './answerJudge.js';
+import type { Answering } from './answerLoad.js';
 import { distressCheck, saysMoreThan, wordsIn, type DistressFinding } from '../buddy/distress.js';
+import { codeTaskOf } from './code.js';
 import { NEAR_MISS } from './evaluate.js';
 import type { RubricClaim } from './rubric.js';
 import { solutionsOf } from './service.js';
+import { staffTaskOf } from './staff.js';
+import { answerTextOf, structuredTaskOf } from './structured.js';
 import { VALUE_CONFIRMED } from './tutor.js';
 
 /** The judgement of her answer, and what follows from the distress check. */
@@ -59,7 +63,20 @@ function safeguard(c: AnswerCase, kind: 'concern' | 'blocked'): Judged {
  * key, an accepted answer, the question, or the structured task, program or note line the item
  * holds. "2 hilfe" for the key 2, or a passing program with a comment in her words, is read.
  */
-export function ownWords(c: AnswerCase): string | null {
+export function ownWords(
+  c: Pick<
+    AnswerCase,
+    | 'input'
+    | 'rule'
+    | 'text'
+    | 'item'
+    | 'hintRequest'
+    | 'question'
+    | 'structured'
+    | 'codeTask'
+    | 'staffTask'
+  >,
+): string | null {
   const { input, rule, text, item } = c;
   if (c.hintRequest && !c.question) return null;
   if (input.via === 'tapped' || (input.text == null && input.parts == null)) return null;
@@ -103,13 +120,50 @@ export async function checkDistress(deps: Deps, c: AnswerCase): Promise<Distress
     : distressCheck(deps, c.learner.id, words, { question: c.item.prompt });
 }
 
+/**
+ * Start beside grading when even a correct answer would need the standalone check (#867).
+ * Structured tasks, programs and dictations have no tutor concern bit. Words outside the task
+ * must be read whatever their grade, so neither the gap model nor the sandbox has to finish
+ * first. Other answers keep the final verdict's skip rules and the tutor's single call.
+ * null means deferred, never "clear"; the caller still checks after grading.
+ */
+export async function checkDuringGrading(
+  deps: Deps,
+  a: Answering,
+): Promise<DistressFinding | null> {
+  if (a.hintRequest || a.input.via === 'tapped') return null;
+  const structured = structuredTaskOf(a.item.task, a.item.kind);
+  const codeTask = codeTaskOf(a.item.code_task);
+  if (!structured && !codeTask && a.item.kind !== 'spelling_dictation') return null;
+  const text =
+    structured && a.input.parts
+      ? answerTextOf(structured, a.input.parts, a.learner.locale)
+      : (a.input.text ?? '');
+  const words = ownWords({
+    ...a,
+    text,
+    rule: 'correct',
+    structured,
+    codeTask,
+    staffTask: staffTaskOf(a.item.staff_task),
+  });
+  return words === null
+    ? null
+    : distressCheck(deps, a.learner.id, words, { question: a.item.prompt });
+}
+
 /** The judgement code gave alone, with her words checked (#747): code grades, it does not listen. */
 export async function guardByCode(
   deps: Deps,
   c: AnswerCase,
   judged: Judged,
+  found: DistressFinding | null = null,
 ): Promise<TutorJudgement> {
-  return settle(c, await checkDistress(deps, c), { judged, claims: [], safeguarded: false });
+  return settle(c, found ?? (await checkDistress(deps, c)), {
+    judged,
+    claims: [],
+    safeguarded: false,
+  });
 }
 
 /** The reply she gets when no check could read her words: the fixed help line after it. */

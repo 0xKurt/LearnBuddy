@@ -19,6 +19,7 @@ import pg from 'pg';
 
 import { databaseRegionWarning, databaseTlsIssue } from '../src/config.js';
 import { connectionOptions } from '../src/lib/db.js';
+import { apiRoleProblems } from './api-role-check.js';
 
 const API_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -105,7 +106,7 @@ async function checkVercel(): Promise<void> {
   else fail('vercel: rewrites must send /v1/(.*) and /api/(.*) to /api');
 }
 
-async function checkDatabase(url: string): Promise<void> {
+export async function checkDatabase(url: string): Promise<void> {
   const tls = databaseTlsIssue(url);
   if (tls) fail(`database: ${tls}`);
   else ok('database: TLS with certificate verification for remote hosts');
@@ -119,6 +120,9 @@ async function checkDatabase(url: string): Promise<void> {
   });
   await client.connect();
   try {
+    const roleProblems = await apiRoleProblems(client);
+    if (roleProblems.length === 0) ok('database: API role matches api-role.sql');
+    for (const problem of roleProblems) fail(`database: API ${problem}`);
     const fns = await client.query<{ fn: string; role: string }>(
       `select p.oid::regprocedure::text as fn, r.role
          from pg_proc p
@@ -190,9 +194,11 @@ async function checkHealth(base: string): Promise<void> {
   }
 }
 
-await checkVercel();
-if (process.env.DATABASE_URL) await checkDatabase(process.env.DATABASE_URL);
-else console.info('skip  database checks (no DATABASE_URL)');
-if (process.env.LB_DEPLOY_URL) await checkHealth(process.env.LB_DEPLOY_URL);
-else console.info('skip  deploy health smoke (no LB_DEPLOY_URL)');
-process.exit(failed ? 1 : 0);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await checkVercel();
+  if (process.env.DATABASE_URL) await checkDatabase(process.env.DATABASE_URL);
+  else console.info('skip  database checks (no DATABASE_URL)');
+  if (process.env.LB_DEPLOY_URL) await checkHealth(process.env.LB_DEPLOY_URL);
+  else console.info('skip  deploy health smoke (no LB_DEPLOY_URL)');
+  process.exit(failed ? 1 : 0);
+}

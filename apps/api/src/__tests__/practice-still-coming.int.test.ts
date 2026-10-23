@@ -20,6 +20,7 @@ import { randomUUID } from 'node:crypto';
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { repairJsonStrings } from '../llm/latex.js';
 import { FIRST_BATCH, REST_WINDOW_MS } from '../modules/practice/generate.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
@@ -126,6 +127,49 @@ describe.skipIf(!dbReady)('a run that starts before its questions are all writte
     expect(grown.body.status).toBe('active');
     // One model call, not two: the rest is the same answer, so it cannot repeat itself.
     expect(env.llm.callsFor('explain')).toHaveLength(1);
+  });
+
+  it('stores repaired maths before handing out the first questions (#863)', async () => {
+    const held = heldStream();
+    const prompts = [
+      '$5\text{ cm}$',
+      'Ein Quader ist $5\\,\text{cm}$ lang. Berechne sein Volumen.',
+      '$3\\,\\mathrm{mm}$',
+    ];
+    const raw = JSON.stringify({
+      ...SET,
+      items: SET.items.map((item, i) => ({ ...item, prompt: prompts[i] ?? item.prompt })),
+    });
+    env.llm.script('explain', async (req) => {
+      // The provider streams raw JSON, then repairs the parsed final response (vertex.ts).
+      req.onPartial?.(raw.slice(0, raw.indexOf(',{"kind":"short","prompt":"Frage 4"')));
+      await held.until;
+      return repairJsonStrings(JSON.parse(raw));
+    });
+
+    const started = await start(l);
+    expect(started.status).toBe(201);
+    expect(started.body.preparing).toBe(true);
+    const expected = prompts.map((prompt) => repairJsonStrings(prompt));
+    const stored = await env.db.query<{ prompt: string }>(
+      `select i.prompt from session_items si join items i on i.id = si.item_id
+       where si.session_id = $1 order by si.position`,
+      [started.body.id],
+    );
+    expect(stored.map((item) => item.prompt)).toEqual(expected);
+    expect(started.body.items.map((entry) => entry.item.prompt)).toEqual(expected);
+
+    held.release();
+    await env.flushBackground();
+    const grown = await l.api.get<SessionView>(`/practice/sessions/${started.body.id}`);
+    expect(grown.body.preparing).toBe(false);
+    expect(grown.body.items.map((entry) => entry.item.prompt)).toEqual([
+      ...expected,
+      ...SET.items.slice(FIRST_BATCH).map((item) => item.prompt),
+    ]);
+    expect(grown.body.items.slice(0, FIRST_BATCH).map((entry) => entry.item.id)).toEqual(
+      started.body.items.map((entry) => entry.item.id),
+    );
   });
 
   it('does not end the run when she answers the first questions before the rest lands', async () => {
