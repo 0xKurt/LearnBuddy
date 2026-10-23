@@ -315,6 +315,45 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
       batch cost $0.004331. The scripted overlap regression was red on main (476–486 ms,
       no overlap) and green with #867 (317–325 ms, 152–153 ms overlap); these are scripted
       request timings, not a device latency measurement.
+    - **False alarms compared 23.10.2026** (#879): the same eval now adds 40 labelled
+      non-distress texts (eight each in de/en/fr/es/it), keeping both original controls and all
+      23 original disclosures unchanged. Frustration, jokes, insults at Buddy, test nerves,
+      history essays about war, poem analysis about death, sad fictional endings and roleplay
+      danger are eval data only. Practice supplies the question, roleplay the scene marker;
+      chat supplies neither. New controls call the production `distressCheck` directly with
+      those contexts; the original cases still verify the practice endpoint, fixed/stored reply
+      and attempt count. This measures the shared check, not the complete chat/roleplay model turn.
+      Each of the **42 controls** ran once on `eu/gemini-3.1-flash-lite` (fast) and once on
+      `eu/gemini-3.6-flash` (smart), paired and alternating which model went first. Prompt
+      `safeguard.0fd047a9`, schema, safety settings, temperature 0, thinking off, 64 output tokens
+      and 10 s timeout were identical. No prompt or production routing changed.
+
+      | Non-distress context | Fast: help alarms / cases | Smart: help alarms / cases |
+      | -------------------- | ------------------------- | -------------------------- |
+      | Practice             | 0/22 (0%)                 | 0/22 (0%)                  |
+      | Chat                 | 1/15 (6.67%)              | 2/15 (13.33%)              |
+      | Roleplay             | 0/5 (0%)                  | 0/5 (0%)                   |
+      | **Total**            | **1/42 (2.38%)**          | **2/42 (4.76%)**           |
+
+      Neither model returned `concern: true` for a control (**0/42** each). The help alarms
+      were provider blocks: `de_insult` on both, `es_insult` on smart only. Counts include those
+      blocks because they show the child a fixed help answer; `unchecked` is tracked separately
+      and cannot pass the comparison (none occurred). By language, fast/smart help alarms were
+      de 1/10 vs 1/10, en 0/8 vs 0/8, fr 0/8 vs 0/8, es 0/8 vs 1/8, it 0/8 vs 0/8.
+      The existing true-distress cases ran **once on fast: 23/23 `concern`**, zero misses,
+      blocks or unchecked results; every endpoint assertion passed. **Keep fast for every
+      caller:** its observed false-alarm rate is no worse overall or in any caller group, with
+      no missed true case, so no tier split is warranted. The remaining insult blocks are a
+      provider-filter limitation, not evidence for moving the check to smart.
+      The complete run used **107 calls / 107 provider attempts**, **$0.023271 metered net /
+      $0.038407 gross ceiling**, including 3.6's pre-credit price; before/after batch and call
+      entries are in the shared budget ledger. Temporary `.env.local` and credential files were
+      deleted. The runner writes requests, responses, usage and its summary to `.cache/879/`.
+      `evals/tutor/__tests__/safeguarding.test.ts` was red with the original two controls
+      (`2 < 30`) and green with the expanded corpus (7 tests); it also pins pairing, the decision
+      rule and rejection of incomplete/unchecked runs. This is one pass on a small synthetic
+      corpus, not a population false-alarm estimate or proof of statistical equivalence.
+
   - **A chat or roleplay turn whose model call fails reads her words too** (issue #761,
     `buddy/turn.ts` `failHerTurn`). Every way a turn ends without the model's answer — outage,
     timeout, invalid output after the repair round, the day's limit, a stale context, a bug, the
@@ -393,6 +432,7 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     stored as a memory, because `refuseDuringConcern` only fires once `concern` is true — the ban
     on storing health and family trouble is prompt-only (issue #108). Numbers, verbatim replies
     and what the measurement does not show: `apps/api/evals/concern/README.md`.
+
 - **Learning only** (issue #38, prompt buddy.23). Buddy is this learner's learning companion, not
   a general assistant: work for someone else's purpose, entertainment for its own sake or an
   adult's job is declined in one friendly sentence that names what he can do instead. The line is
@@ -1075,9 +1115,41 @@ part of and how she waited for it (#652, migration 0107): the Buddy decision it 
 (`decision_id`, chosen before the call), its `round`, the `schema_variant` that went out
 (`step`/`final`, or `whole`/`chosen`/`minimal`/`fallback` for a run or reading), whether it was
 `streamed` and its `first_token_ms`, how many requests the gateway sent (`attempts`, retries
-included) and the whole wait (`total_ms`; `latency_ms` stays the last attempt's). A call that the provider did not run for her — provider
+included) and the whole wait (`total_ms`; `latency_ms` sums gateway durations across attempts).
+A call that the provider did not run for her — provider
 down, request refused, safety block — gives its reservation back; a timeout or unusable output
 keeps it (the provider may have done and billed the work).
+
+### Direct EU provider preparation (#891, off by default)
+
+`LLM_BACKEND=openai` selects `OpenAIGateway`; Vertex remains the default. `OPENAI_API_KEY`,
+`OPENAI_BASE_URL` (EU-only, default `https://eu.api.openai.com/v1`) and `OPENAI_MODEL_SMART` /
+`OPENAI_MODEL_FAST` configure it. Azure's adapter, configuration and tests have been removed.
+All provider limits (accepted MIME types, images, inline bytes, schema properties/depth/enums/
+strings), cache mode, escape normalization and prices live in `GatewayProfile`. The direct
+adapter accepts JPEG/PNG and inline PDFs as Chat Completions `file` parts, with 20 images /
+20 MB Base64 combined. Redirects and SDK retries are disabled. Audio remains a separate workstream.
+
+The real Buddy, explain and extraction schemas were accepted as strict `response_format`
+JSON on the EU endpoint (23.10.2026, #893). Each decision is one request; there are no staged
+function calls or JSON-repair requests. Original Zod constraints, lookups, permissions and the
+atomic context fence remain authoritative. Strict nullable fields are restored to optional
+fields before validation; partial JSON streams incrementally for every purpose. The previous
+function path failed with HTTP 400 because the selected model does not combine function tools
+and reasoning in Chat Completions. HTTP rejection keeps its status (`HTTP_400`); safety refusal
+remains `blocked`. Raw provider responses are logged only by the synthetic benchmark, never
+for learner calls.
+
+The shared parametrised adapter contract covers Fake, Vertex and the direct adapter: request
+shape, refusal, cancellation, error receipts, partial JSON and media preflight. Cancellation
+stops further partial callbacks and retains reported cost. Provider SDK imports are guarded
+outside the adapter folders, with only the two explicitly listed existing eval imports allowed.
+Cached tokens are recorded without assuming a discount; reasoning is never billed twice.
+
+See [the dated decision](decisions/openai-eu-2026-10-23.md) for corrected direct schema limits
+(5,000 properties / 10 levels), EU prices, model deprecations, proposed processor and unresolved
+activation gates. In particular, an EU URL is not proof of project ZDR, and current self-consent
+from 16 does not satisfy the API agreement's parental-consent requirement for all minors.
 
 ### Schema budget (#627)
 
@@ -1095,8 +1167,8 @@ The Buddy turn sits at 268: a new action field needs room made elsewhere first.
 test or help run and a sheet reading have schemas of 518–774 properties: every task form and
 every figure type at once. They were refused from 03.10. on, when #231's option pictures copied the
 figure union a second time; bisected in #627. When the whole schema does not fit, a small first call
-(the fast model, `gemini-3.1-flash-lite`; no thinking; the same system prompt and message as the
-main call, plus `CHOOSER`) answers two closed lists taken from the schema itself: the forms
+(the fast model, `gemini-3.1-flash-lite`; no thinking; a compact catalogue plus `CHOOSER`,
+and the same message and photos as the main call) answers two closed lists taken from the schema itself: the forms
 (structured kinds and the blocks `bars`, `staffs`, `codes`, `part_tasks`, `reading`) and the
 figure types it needs, the most needed first. Code then builds the main schema (`pruned`: the other
 branches of every figure and form union go, and so do the other blocks). It adds what was chosen in
@@ -1110,8 +1182,8 @@ the choice its reading made (`materials.form_choice`, migration 0109, `formMemor
 the reading's prompt version and `FORMS_OFF`; a clarification or a reading run again uses it
 instead of choosing again from the same photos. A question or task whose figure or option
 pictures were not chosen goes, because it was written to be read off a drawing she would not see.
-A block or a structured form that was not chosen goes too. The main call's system prompt teaches
-every form, so a narrowed call also gets one more line, a rule with no example in it
+A block or a structured form that was not chosen goes too. A narrowed call also gets one more
+line naming its available forms, a rule with no example in it
 (`availableLine`). It names the figures and forms this answer can use; in the minimal set it says
 that no figure can be drawn and that every question must be answerable from its text alone. A sheet is chosen for once, and every reading of it (lean,
 continued) uses that choice. When the choosing call is refused, fails or answers nothing usable,
@@ -1135,9 +1207,14 @@ costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). **The prompt
 (KI-Audit F5-3, #669): a run is told only the rules of the figure families, structured forms and
 lists its schema offers (`generateSystem(offered(schema))`, `figureRules`, `structuredRules`), and the
 choosing call before a run reads a catalogue of what it can choose — one line per form, taken from the
-same rules, and the figure types by name (`choosingCatalogue`) — instead of the whole prompt. The
-whole prompt stays byte for byte what a sheet reading gets (`FIGURE_RULES`, `GENERATE_SYSTEM`); the
-reading's own choosing call keeps it, since it reads the photos anyway. Measured (`inventory:schema`):
+same rules, and the figure types by name (`choosingCatalogue`) — instead of the whole prompt.
+Sheet readings follow the same rule (#869): `readingCatalogue` describes the study or homework
+task and its forms, including reading texts and tasks in parts, with the original photos still
+in the message. `extractSystem` / `homeworkSystem` include only the rules offered by the fitted
+schema, retaining the shared transcription, uncertainty, source and photo-as-data rules. Lean,
+continued and clarified readings use that same choice. With every form and figure offered, both
+full reading prompts remain byte-identical (SHA-256 pins in `readingPrompt.test.ts`). The inventory
+measures these narrowed prompts, including study source rules. Earlier measurements (#669):
 explain 37 963 characters for every run → 5 149 (vocab, speak, Diktat, teach_back, read, essay), at
 most 15 370 (practice) and 17 769 (test) with everything that fits; the choosing call before a run
 38 434 → 1 162–3 581. It has its own purpose (`forms`, in
@@ -2046,6 +2123,35 @@ after the reading, and that he never sees the photos themselves. They are static
 every learner, so they sit in the prompt and not in the per-learner STATE; anything that differs
 per learner or per sheet (a send on its way, a failure and what it means) is in STATE.
 
+**Streaming the first study reading (#870).** Once the form choice has narrowed the schema
+and prompt (#801, #869), `reader.ts` streams that same call. Source, marked tasks and the
+second subject are required and precede the question arrays; `answerUpTo` includes only finished elements
+and repairs JSON strings as for the final answer (#874). `ReadingParse`, the form choice,
+`applySource`, `sheetQuestions` and disabled-form checks all run before storage. Ordinary,
+structured, reading and multipart questions arrive incrementally. Homework help and pages
+merging into another sheet retain their atomic completion path.
+
+Each prefix writes in a short transaction under the job lease and material lock, checks
+archival again, and bumps the context. The material stays `processing` with
+`items_incomplete = true`; the existing practice step/card appears from stored questions,
+then grows through the existing ten-minute selection. Its count is the actual prepared
+item IDs, never a forecast. Once started or dismissed, that step is not changed by the
+stream; additional questions remain on the sheet. No ready event, completion timestamp,
+capture completion or bonus work is emitted before the reading finishes.
+
+Prefix writes drain before finalization, also when the provider throws. Interruption after
+validated questions leaves them intact and marks the sheet failed/incomplete with the usual
+retry. Repeated prefixes match stored rows one-to-one to positions in the parsed question
+list: two positions remain two questions, even with identical content. Matching uses a
+SHA-256 content hash of the prompt, answer, figures, choices and question/key context,
+with canonical object-key order and without regenerated multipart group IDs. Retries may
+reorder questions and still reuse the stored rows; prompt text alone never identifies a
+question (#888). A lost lease or deletion prevents later writes. The stored form choice is
+reused on retry. Recovery after a worker
+crash follows the same lease and incomplete-state rules; a gateway without ordered partial
+JSON uses the final-answer path. `reading-stream.int.test.ts` pauses a scripted gateway over
+real Postgres and proves early visibility, truthful counts, start, retry and fencing.
+
 **Reading stages** (gap 5, migration 0035): the run holding the reading job's lease reports where
 it is — `read_stage` `opening` (photos being loaded) then `reading` (the model reads them), each
 stamped with the app clock; a requeued reading clears it. The home's `material_processing` card
@@ -2409,6 +2515,40 @@ zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort)
 `modules/curriculum/__tests__/state.test.ts` (jede Regel nennt Lehrplan, Land und Jahr).
 
 ## Practice
+
+**New runs learn from mistakes** (#871). Before generating a practice or practice test,
+`practice/mistakeContext.ts` reads the learner's latest measured `session_items` result per
+question, within the requested subject and any source sheet/session topics. From the 60 most
+recent results it selects at most two shaky topics by frequency, then recency, and at most two
+latest wrong `practice_turns` answers for those topics. A later first-try success clears that
+question's old miss. An open question counts only after a graded attempt (ordered by the session's
+last activity until it closes). Skipped, untouched, disputed, self-rated, archived and free-text
+questions are not evidence; homework is not a source. Item, session, turn, subject and material ownership
+are checked in the query. The explain/form-choice context adds at most 480 characters, including
+instructions and JSON escaping; the requested topic and source sheets still bound the new
+questions. No new data is stored, no extra model call is made, and typed lists/homework keep
+their existing context. The static prompt/schema budgets remain unchanged.
+
+**Adaptive difficulty and interleaved review** (#872). The same measured-result reader serves
+selection and the context above. For ordinary practice without an explicit difficulty wish,
+code takes at most ten results per subject/topic from that 60-result window, no older than
+30 days by the app clock. With at least five results, a first-try hit rate below 60% prefers
+one difficulty step below their rounded median; at least 90% prefers one above (clamped to 1–5).
+Otherwise selection stays unchanged. These thresholds are a conservative product heuristic,
+not a proven learning optimum; [research and library decision](https://github.com/0xKurt/LearnBuddy/issues/872#issuecomment-6368723820).
+Existing questions are ranked by distance to that target within the same subject/topic and
+review-priority group; their stored difficulty never changes, and no question is dropped solely
+for its level. Explicit wishes and test/speaking runs retain their rules. Generated practice
+receives the same code-computed targets in the existing 480-character learning context; the
+model's actual adherence requires separate live verification.
+
+Due review questions alternate between structured subject/topic groups before the count is
+cut, deterministically, retaining each group's existing priority. Multipart tasks stay together
+and whole. Unknown topics retain their slots; new questions are not interleaved, and spoken texts
+keep source order.
+`dueOnly` never includes a future or unseen question. The existing `ts-fsrs` scheduler continues
+to decide due dates; its memory difficulty is separate from the task difficulty 1–5. No new
+scheduler, dependency, persisted profile, migration or extra model call is needed.
 
 Where it lives (`modules/practice/`, one use case per file, #313): `service.ts` starts and
 finishes a run, `answer.ts` answers a question in steps of one file each (#311: `answerLoad.ts`
@@ -6685,6 +6825,14 @@ filled twice throws (in development Fast Refresh replaces it instead);
 `components/learn/__tests__/register.test.tsx` fails when a place is left empty or filled twice.
 
 ## Testing
+
+CI keeps the full API suite on PG16 without pgvector and adds a focused PG17 job with the
+versioned `pgvector/pgvector` image (#862). It runs only `pgvector-migration.int.test.ts` and
+`hybrid-search.int.test.ts`, using scripted embeddings. The first builds the real migrations
+and verifies both branches of 0054: extension activation, `vector(768)`, a valid cosine HNSW
+index and the distance operator when available; no column/index on the fallback server.
+`LB_REQUIRE_PGVECTOR=1` makes missing vector support or a PG major other than 17 fail in that
+job, rather than silently skipping the vector search test. The shared local PG16 stays unchanged.
 
 - **Engineering guards** (issue #313): copies (jscpd), file size, tokens only, raw `Pressable`,
   dead code (knip), the web bundle budget and the drawing-component registry, each with an

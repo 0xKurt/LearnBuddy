@@ -7,7 +7,8 @@
 // Prices are the gateway's too: it reports each call's cost in `LlmUsage.costMicros` from its own
 // table (`pricing.ts`).
 
-import type { LlmPart, LlmRequest } from './gateway.js';
+import type { PriceTable } from './pricing.js';
+import { LlmError, TOO_LARGE, type LlmPart, type LlmRequest } from './gateway.js';
 
 /**
  * How much the model may think before it answers, in the call site's terms. Each gateway maps it
@@ -43,6 +44,12 @@ export type GatewayProfile = {
    * answers with an error for certain, so the request is refused before it is sent (#688).
    */
   maxInlineBytes: number;
+  acceptedMimeTypes: ReadonlySet<string>;
+  maxImages: number;
+  cache: 'none' | 'implicit' | 'in_memory';
+  /** Escape normalization only; never an extra generation/repair request. */
+  repairJsonStrings: boolean;
+  prices: PriceTable;
   structuredOutput: {
     keywords: ReadonlySet<SchemaKeyword>;
     /**
@@ -57,6 +64,11 @@ export type GatewayProfile = {
     streamsPartialJson: boolean;
     /** The most properties over every object of a schema the provider serves (`schemaBudget.ts`). */
     maxSchemaProperties: number;
+    maxSchemaDepth: number;
+    maxEnumValues: number;
+    maxSchemaStringChars: number;
+    largeEnumThreshold: number;
+    maxLargeEnumChars: number;
   };
 };
 
@@ -74,7 +86,12 @@ export function unsupportedMedia(profile: GatewayProfile, req: LlmRequest): Medi
   for (const m of req.contents)
     for (const p of m.parts) {
       const kind = mediaKindOf(p);
-      if (kind !== null && !profile.media.has(kind)) kinds.add(kind);
+      if (
+        kind !== null &&
+        (!profile.media.has(kind) ||
+          ('inlineData' in p && !profile.acceptedMimeTypes.has(p.inlineData.mimeType)))
+      )
+        kinds.add(kind);
     }
   return [...kinds];
 }
@@ -101,4 +118,17 @@ export function schemaKeywordsOf(schema: object): Set<string> {
   };
   walk(schema);
   return used;
+}
+
+/** Shared preflight: every adapter rejects unsupported media before transport/consumption. */
+export function assertMedia(profile: GatewayProfile, req: LlmRequest): void {
+  const refused = unsupportedMedia(profile, req);
+  if (refused.length)
+    throw new LlmError('refused', `${profile.name} does not read ${refused.join(', ')}`);
+  if (
+    inlineBytesOf(req) > profile.maxInlineBytes ||
+    req.contents.flatMap((m) => m.parts).filter((p) => mediaKindOf(p) === 'image').length >
+      profile.maxImages
+  )
+    throw new LlmError('refused', 'inline input limit exceeded', null, TOO_LARGE);
 }

@@ -24,7 +24,7 @@ import { writeFileSync } from 'node:fs';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { buddyPrompt } from '../../src/modules/buddy/prompts.js';
 import { registerLearning } from '../../src/modules/learning/register.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
@@ -194,10 +194,10 @@ async function main(): Promise<void> {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',
     ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
   });
-  if (config.LLM_BACKEND !== 'vertex')
-    throw new Error('Set LLM_BACKEND=vertex and the Vertex variables (docs/SETUP-VERTEX.md)');
+  if (config.LLM_BACKEND === 'disabled')
+    throw new Error('Set a configured LLM_BACKEND and its provider configuration');
   if (!(await testDatabaseAvailable())) throw new Error('No local Postgres (LB_TEST_DATABASE_URL)');
-  const gateway = new VertexGateway(config);
+  const gateway = llmGateway(config);
   const only = process.argv.slice(2);
   const cases = only.length ? CONCERN_CASES.filter((c) => only.includes(c.id)) : CONCERN_CASES;
   if (cases.length === 0) throw new Error('no case matched');

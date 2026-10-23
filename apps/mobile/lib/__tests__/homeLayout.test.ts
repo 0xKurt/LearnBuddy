@@ -100,6 +100,30 @@ describe('home layout (user feedback #6, issue #17)', () => {
     expect(homeLayout({ now: null, decision: null, working: null }).bar).toBeNull();
   });
 
+  it('keeps only the sheet status while the first validated questions are ready (#870)', () => {
+    const h = home({ now: { type: 'practice_ready', ...prepared }, working: 'material' });
+    h.thread = [
+      {
+        id: 'sheet-message',
+        role: 'learner',
+        text: '',
+        status: 'done',
+        failure_code: null,
+        client_message_id: null,
+        options: null,
+        reply_to_id: null,
+        outreach: null,
+        actions: [],
+        roleplay_feedback: null,
+        created_at: '2026-10-23T12:00:00Z',
+        sheet: { material_id: 'sheet', pages: 1, stage: 'reading' },
+      },
+    ];
+    expect(layoutOf(h)).toMatchObject({ bar: 'ready', working: null });
+    h.thread = [];
+    expect(layoutOf(h).working).toBe('thread');
+  });
+
   it('gives each acting card its bar: resume, ready, capture, reading', () => {
     const resume: NonNullable<BuddyHome['now']> = {
       type: 'resume_practice',

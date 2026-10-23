@@ -369,3 +369,34 @@ beide Richtungen belegt (§5, R2); geprüft werden muss weiterhin, ob die Texte 
 und rechtlich richtig sind — das ist keine Messfrage. Solange die App im Familienkreis läuft und die dort betroffene Person die
 Tochter des Verantwortlichen ist, ist das vertretbar; **vor jeder Nutzung durch Dritte** müssen
 die Punkte aus §7 abgearbeitet sein.
+
+## Vorgeschlagener Verarbeiter: OpenAI Ireland — 23.10.2026, noch nicht aktiv (#891)
+
+Der Owner wählt die direkte API; Azure als Zielanbieter und PR #890 sind ersetzt. Vorgeschlagen
+ist **OpenAI Ireland Ltd.** als Auftragsverarbeiter notwendiger Lerntexte und Blattfotos.
+Diese technische Vorbereitung ist keine Freigabe der Folgenabschätzung. Vertex bleibt Standard.
+[API-Vertrag](https://openai.com/policies/services-agreement/),
+[AVV/DPA](https://openai.com/policies/data-processing-addendum/).
+
+Die geplante Verarbeitung nutzt ein neues europäisches Residency-Projekt mit genehmigter
+**Zero Data Retention**, Endpunkt `https://eu.api.openai.com/v1`, `store:false` und ausschließlich
+In-Memory-Promptcache. Die Projektfreigabe wurde nicht nachgewiesen. R4 (Verarbeiter/Region),
+R11 (Cache) und R2 (Schutzpfade/Fehlalarme) sind neu zu bewerten: Anbieterregion **EEA + Schweiz**
+statt ausschließlich EU-Mitgliedstaaten, Systemdaten/Schema-Metadaten außerhalb der Residency-
+Zusage sowie mögliche Speicherung verdächtiger CSAM-Bilder trotz ZDR. Keine absolute Zusage,
+dass keinerlei Daten jemals gespeichert werden.
+[Verarbeitungsgrenzen](https://developers.openai.com/api/docs/guides/your-data).
+
+**Offene Aktivierungsvoraussetzung:** Elternzustimmung für alle unter 18 laut API-Vertrag;
+die heutige Selbstzustimmung ab 16 deckt 16–17 allein nicht ab. Unter 13 bzw. dem anwendbaren
+digitalen Einwilligungsalter darf persönliche Information nicht vor eingerichteter ZDR-
+Verarbeitung übermittelt werden. Altersgerechte Information, Schutz vor ungeeigneten Inhalten,
+Melde-/Eskalationswege und Einwilligungsnachweise sind nachzuweisen. Die Consumer-Mindestalter-
+Regel ist nicht der API-Vertrag.
+[Under-18 API guidance](https://developers.openai.com/api/docs/guides/safety-checks/under-18-api-guidance).
+
+Ein Providerblock ist kein Beleg für Kindesgefährdung. Schutzcode bleibt bestehen; #758 und echte
+Notfälle brauchen neue Evals, ebenso Aufgabenqualität und Latenz der gepufferten JSON-Reparatur.
+Audio/PDF haben noch keinen geprüften Weg dieses Anschlusses. Vor Aktivierung müssen auch
+Datenschutzhinweis/CONSENT_VERSION, Subprozessoren, Vertrag, Kontingente und Modell-Abschalttermine
+geklärt sein. [Forschung und Freigabeschritte](decisions/openai-eu-2026-10-23.md).

@@ -22,6 +22,7 @@ import { runTick } from '../modules/scheduler/tick.js';
 import { createTestDatabase, testDatabaseAvailable } from './database.js';
 import { createDevApp, DevAuth, DevStorage } from './dev-app.js';
 import { FakeEmbeddings, FakeSpeech, ScriptedGateway } from './fakes.js';
+import { scriptedReadingStream } from './streamedReading.js';
 import { scriptWalkthrough } from './scenarios/walkthrough.js';
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -66,6 +67,8 @@ async function main(): Promise<void> {
   };
 
   const outer = createDevApp(deps, auth, storage);
+  if (process.env.LB_DEV_READING_STREAM === '1')
+    outer.route('/dev-reading', scriptedReadingStream(scripted));
 
   serve({ fetch: outer.fetch, port: PORT });
   console.info(

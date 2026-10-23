@@ -1,7 +1,7 @@
 // "Lena's week": a 12-year-old (grade 6) talks to Buddy the way kids write —
 // short, typos, no punctuation, mixed topics — against the live model.
 // Prints every reply and what Buddy did, for a person to judge.
-// Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
+// Needs a configured LLM_BACKEND, provider variables and a local Postgres.
 //   cd apps/api && npx tsx evals/lena/day.ts
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
@@ -13,7 +13,7 @@ import type {
 } from '@learnbuddy/shared-types/contracts';
 
 import { loadConfig } from '../../src/config.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
 const config = loadConfig({
@@ -26,7 +26,7 @@ const config = loadConfig({
 // Monday 28 Sep 2026, 15:30 in Berlin – after school.
 const env = await createTestEnv({
   start: '2026-09-28T13:30:00Z',
-  gateway: new VertexGateway(config),
+  gateway: llmGateway(config),
 });
 const l = await onboard(env, {
   relation: 'child',

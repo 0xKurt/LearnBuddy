@@ -22,6 +22,7 @@ import { schemaProperties, MAX_SCHEMA_PROPERTIES } from '../llm/schemaBudget.js'
 import { chosenFor, offered } from '../modules/practice/formChoice.js';
 import { FIRST_BATCH, REST_WINDOW_MS } from '../modules/practice/generate.js';
 import { explainSchemaFor } from '../modules/practice/setProfiles.js';
+import { sheetReader } from '../modules/materials/reader.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -281,6 +282,15 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     const rows = await stored();
     expect(rows.some((r) => r.prompt.startsWith('Wie spät'))).toBe(false);
     expect(reading?.system).toContain('figures — fraction');
+    // Both calls still see the same photo; neither pays for rules it cannot use (#869).
+    const choice = env.llm.choices.find((c) => chosenFor(c) === 'extraction')!;
+    expect(choice.contents).toEqual(reading!.contents);
+    expect(choice.contents[0]!.parts.some((p) => 'inlineData' in p)).toBe(true);
+    expect(choice.system.length).toBeLessThan(4_000);
+    expect(reading!.system.length).toBeLessThan(22_000);
+    expect(reading!.system).not.toContain('A map (stumme Karte)');
+    expect(reading!.system).not.toContain('Reading texts ("reading")');
+    expect(reading!.system).toContain('SOURCE —');
     expect(rows.find((r) => r.prompt.startsWith('Wie viel ist drei'))?.figure?.type).toBe(
       'fraction',
     );
@@ -299,6 +309,35 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     structured: [],
     more_items: false,
   };
+
+  it.each([false, true])(
+    'keeps a narrowed prompt for lean and continued readings (homework=%s)',
+    async (homework) => {
+      env.llm.scriptChoice({ json: { forms: ['cloze'], figures: [] } });
+      env.llm.byDefault('extraction', { json: READING });
+      const { read } = await sheetReader(env.deps, l.learnerId, {
+        homework,
+        parts: [{ text: 'Page 1' }, { inlineData: { mimeType: 'image/jpeg', data: 'AA==' } }],
+        now: env.deps.now(),
+      });
+      await read(false, '');
+      await read(true, 'Read the remaining tasks.');
+      expect(env.llm.choices).toHaveLength(1);
+      expect(env.llm.choices[0]!.system.length).toBeLessThan(4_000);
+      const calls = env.llm.callsFor('extraction');
+      expect(calls).toHaveLength(2);
+      for (const call of calls) {
+        expect(call.system.length).toBeLessThan(22_000);
+        expect(call.system).toContain('type "cloze"');
+        expect(call.system).not.toContain('type "match"');
+        expect(call.system).not.toContain('Figures: add');
+        expect(call.system.includes('SOURCE —')).toBe(!homework);
+      }
+      expect(calls[1]!.system).toContain('KEEP IT SHORT');
+      expect(calls[1]!.system).toContain('Read the remaining tasks.');
+      expect(calls[1]!.contents).toEqual(calls[0]!.contents);
+    },
+  );
 
   /** Her sheet, photographed and read; returns the sheet as the app shows it. */
   async function readSheet(): Promise<MaterialView> {
@@ -337,6 +376,10 @@ describe.skipIf(!dbReady)('choosing the forms first (#627)', () => {
     const sheet = await readSheet();
     expect(sheet.status).toBe('ready');
     expect(sheet.items_incomplete).toBe(true);
+    const [reading] = env.llm.callsFor('extraction');
+    expect(reading!.system).toContain('NO FIGURE CAN BE DRAWN');
+    expect(reading!.system).not.toContain('Figures: add');
+    expect(reading!.system).not.toContain('type "cloze"');
   });
 
   it('a sheet whose every task fits the choice stays complete (#664)', async () => {

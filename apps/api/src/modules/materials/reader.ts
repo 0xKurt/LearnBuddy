@@ -8,15 +8,17 @@ import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
 import type { LlmMessage, LlmPart, LlmResult } from '../../llm/gateway.js';
 import { curriculumBlock } from '../curriculum/state.js';
-import { availableLine, chooseForms, keptAndLost } from '../practice/formChoice.js';
+import { availableLine, chooseForms, keptAndLost, offered } from '../practice/formChoice.js';
 import { choiceKey, storeChoice, storedChoice } from './formMemory.js';
 import { ageOn } from '../identity/model.js';
-import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM, LEAN_RULES } from './extract.js';
+import { LEAN_RULES, HomeworkExtraction } from './extract.js';
+import { readingCatalogue, readingSystem } from './readingPrompt.js';
+import { streamReading, type ReadingConsumer } from './streamReading.js';
 import {
   EXTRACT_PROMPT_VERSION,
   EXTRACTION_SCHEMA,
   HOMEWORK_SCHEMA,
-  SOURCE_RULES,
+  StudyExtraction,
   SOURCES_PROMPT_VERSION,
 } from './sources.js';
 
@@ -42,6 +44,7 @@ type ReadingLearner = {
 type Reader = (
   lean: boolean,
   extra: string,
+  onReading?: ReadingConsumer,
 ) => Promise<LlmResult & { lost: number; fallback: boolean }>;
 
 /**
@@ -73,7 +76,7 @@ export async function sheetReader(
         ? 'unknown'
         : learner.level;
   const day = localParts(opts.now, tz).date;
-  const system = opts.homework ? HOMEWORK_SYSTEM : `${EXTRACT_SYSTEM}\n\n${SOURCE_RULES}`;
+  const fullSystem = readingSystem(opts.homework);
   const version = `${EXTRACT_PROMPT_VERSION}${opts.homework ? '' : `+${SOURCES_PROMPT_VERSION}`}`;
   const contents: LlmMessage[] = [
     {
@@ -105,9 +108,10 @@ export async function sheetReader(
     const chosen = await chooseForms(deps, learner.id, day, {
       purpose: 'extraction',
       promptVersion: version,
-      system,
+      system: fullSystem,
       contents,
       full: opts.homework ? HOMEWORK_SCHEMA : EXTRACTION_SCHEMA,
+      chooser: (offer) => readingCatalogue(offer, opts.homework),
       known,
     });
     if (
@@ -119,13 +123,19 @@ export async function sheetReader(
       await storeChoice(deps.db, opts.materialId, key, chosen.keep);
     return chosen;
   };
-  const read: Reader = async (lean, extra) => {
+  const read: Reader = async (lean, extra, onReading) => {
     narrowed ??= choose();
     const chosen = await narrowed;
     const { schema, keep } = chosen;
     const line = availableLine(chosen);
+    const system = readingSystem(opts.homework, offered(schema));
     // The first reading uses the allowance held before the choice (#665); the readings after it
     // (the rest of a long sheet, a lean retry) take their own, as before.
+    const profile = deps.llm.profile.structuredOutput;
+    const stream =
+      onReading && profile.streamsPartialJson && profile.keepsPropertyOrder
+        ? streamReading(keep, onReading)
+        : null;
     const res = await callModel(
       deps,
       learner.id,
@@ -138,6 +148,8 @@ export async function sheetReader(
         system: `${system}${line ? `\n\n${line}` : ''}${lean ? `\n\n${LEAN_RULES}` : ''}${extra ? `\n\n${extra}` : ''}`,
         contents,
         schema,
+        validateOutput: (json) =>
+          (opts.homework ? HomeworkExtraction : StudyExtraction).safeParse(json).success,
         // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
         // reading that runs on is cut off after seconds, not after 40 (live finding 2).
         maxOutputTokens: opts.homework ? 8_000 : 12_000,
@@ -148,9 +160,10 @@ export async function sheetReader(
         thinking: 'off',
         // Which set went out, in `llm_calls` (#652): the whole schema, a choice, or the fallback.
         trace: { schemaVariant: chosen.how },
+        ...(stream ? { onPartial: stream.onPartial } : {}),
       },
       chosen.reservation,
-    );
+    ).finally(() => stream?.drain());
     const { kept, lost } = keptAndLost(res.json, keep);
     if (lost.length > 0)
       console.warn(

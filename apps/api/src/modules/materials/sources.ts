@@ -64,7 +64,13 @@ const SOURCE_FIELDS = {
 };
 
 /** The study reading's schema: the sheet's fields plus what kind of page it is. */
-const StudyExtraction = ExtractionResult.extend(SOURCE_FIELDS);
+export const StudyExtraction = z.object({
+  // These decisions must be complete before any question can be stored from a prefix (#870).
+  source: SOURCE_FIELDS.source.removeCatch().removeDefault(),
+  marked: SOURCE_FIELDS.marked.removeCatch().removeDefault(),
+  other_subject: ExtractionResult.shape.other_subject.removeCatch(),
+  ...ExtractionResult.omit({ other_subject: true }).shape,
+});
 /** How every reading is parsed; homework has no source fields and parses as a sheet. */
 export const ReadingParse = ExtractionParse.extend(SOURCE_FIELDS);
 type Reading = z.infer<typeof ReadingParse>;

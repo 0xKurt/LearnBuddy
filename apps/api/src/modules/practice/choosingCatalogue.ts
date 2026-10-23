@@ -26,14 +26,19 @@ const BLOCK_RULE: Readonly<Record<string, string>> = {
  * form from the same rules the run is told, and the figure types by name — not the whole prompt,
  * which teaches how to WRITE each form. No sample question.
  */
-export function choosingCatalogue(offer: { forms: string[]; figures: string[] }): string {
-  const rule = (f: string) => (STRUCTURED_RULE_OF as Record<string, string>)[f] ?? BLOCK_RULE[f];
+export function choosingCatalogue(
+  offer: { forms: string[]; figures: string[] },
+  context?: { intro: string; rules: Readonly<Record<string, string>> },
+): string {
+  const rule = (f: string) =>
+    context?.rules[f] ?? (STRUCTURED_RULE_OF as Record<string, string>)[f] ?? BLOCK_RULE[f];
   const forms = offer.forms.flatMap((f) => {
     const r = rule(f);
     return r ? [`- ${firstSentence(r)}`] : [];
   });
   return [
-    'You prepare learning in the LearnBuddy app for the learner in LEARNER: the TASK and her text in the message say what this run is.',
+    context?.intro ??
+      'You prepare learning in the LearnBuddy app for the learner in LEARNER: the TASK and her text in the message say what this run is.',
     forms.length > 0 ? `Task forms beyond plain questions:\n${forms.join('\n')}` : '',
     offer.figures.length > 0
       ? `${firstSentence(FIGURE_INTRO)}\nFigure types: ${offer.figures.join(', ')}.`
