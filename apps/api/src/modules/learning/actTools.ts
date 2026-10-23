@@ -13,6 +13,7 @@ import {
   PictureWish,
   READ_ALOUD_WORDS,
   RoleplayLanguage,
+  StartTopicRequest,
   TalkFormat,
   TalkStage,
   VocabDirection as VocabDirectionSchema,
@@ -134,21 +135,8 @@ export const TEST_MINUTE_CHOICES = ['10', '20', '30', '45', '60', '90'] as const
 const offerLearning = z.object({
   tool: z.literal('offer_learning'),
   args: z.object({
-    kind: z
-      .enum([
-        'practice',
-        'vocab',
-        'speak',
-        'listen',
-        'help',
-        'test',
-        'spelling_dictation',
-        'teach_back',
-        'read',
-        'essay',
-      ])
-      // What each kind is for stands once, in the prompt's "Learning now" (#667).
-      .describe('see "Learning now"'),
+    // What each kind is for stands once, in the prompt's "Learning now" (#667).
+    kind: StartTopicRequest.shape.kind.describe('see "Learning now"'),
     text: z
       .string()
       .trim()

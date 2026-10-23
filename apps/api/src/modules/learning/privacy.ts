@@ -3,9 +3,11 @@
 // deletion's content stage empties them — children first, so no delete waits on a cascade. What
 // each exports is what was exported when identity/privacy.ts listed them itself.
 
+import type { Deps } from '../../deps.js';
 import type { PrivacyTable } from '../identity/privacyTables.js';
 
 export const LEARNING_PRIVACY_TABLES: readonly PrivacyTable[] = [
+  { table: 'offer_counters' },
   { table: 'practice_turns' },
   {
     table: 'session_items',
@@ -61,3 +63,15 @@ export const LEARNING_PRIVACY_TABLES: readonly PrivacyTable[] = [
     rows: null,
   },
 ];
+
+/** Content-free offer counts expire after 180 days, like the call log (#868). */
+export async function purgeOfferCounters(deps: Deps): Promise<number> {
+  const cutoff = new Date(deps.now().getTime() - 180 * 86_400_000);
+  const rows = await deps.db.query(
+    `delete from offer_counters
+      where action_id in (select action_id from offer_counters where created_at < $1 limit 1000)
+      returning action_id`,
+    [cutoff],
+  );
+  return rows.length;
+}

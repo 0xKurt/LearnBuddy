@@ -9,10 +9,8 @@ alter table session_items add column hints_requested_at timestamptz;
 create table offer_counters (
   action_id uuid primary key references buddy_actions(id) on delete cascade,
   learner_id uuid not null references learners(id) on delete cascade,
-  kind text not null check (kind in (
-    'practice', 'vocab', 'speak', 'listen', 'help', 'test',
-    'spelling_dictation', 'teach_back', 'read', 'essay'
-  )),
+  -- Validated from the contract in code; new kinds do not need another migration.
+  kind text not null,
   offered smallint not null default 1 check (offered = 1),
   opened smallint not null default 0 check (opened in (0, 1)),
   created_at timestamptz not null

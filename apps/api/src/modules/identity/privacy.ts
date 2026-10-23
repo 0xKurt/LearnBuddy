@@ -49,7 +49,6 @@ const LEARNER_TABLES = [
   'buddy_session_summaries',
   'usage_daily',
   'llm_calls',
-  'offer_counters',
   // What reading aloud cost (#682): numbers only, hers like her model calls.
   'speech_calls',
 ] as const;
@@ -178,7 +177,6 @@ export async function cancelDeletion(deps: Deps, accountId: string): Promise<voi
 /** The core's learner-scoped tables, children first, so no delete waits on a cascade. */
 const CORE_CONTENT = [
   'buddy_focus',
-  'offer_counters',
   'buddy_pending_actions',
   'buddy_outreach',
   'buddy_actions',

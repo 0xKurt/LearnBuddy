@@ -65,6 +65,7 @@ export const DOMAIN_TABLES = [
   'buddy_roleplays',
   'rehearsals',
   'learned_answers',
+  'offer_counters',
 ];
 
 /**

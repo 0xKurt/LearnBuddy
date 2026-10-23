@@ -47,7 +47,7 @@ import { formsOffIssues } from './config.js';
 import { learningCheck } from './check.js';
 import { LEARNING_LOOKUPS } from './lookups.js';
 import { findLearningLookBack } from './lookback.js';
-import { LEARNING_PRIVACY_TABLES } from './privacy.js';
+import { LEARNING_PRIVACY_TABLES, purgeOfferCounters } from './privacy.js';
 import { LEARNING_STYLE_RULES, LEARNING_TURN_RULES } from './prompt.js';
 import { learningSchemas } from './schemas.js';
 import { learningBuddyRoutes } from './routes.js';
@@ -161,6 +161,7 @@ export function registerLearning(): void {
     { recover: recoverReadings },
     { closeIdle: closeIdleSessions },
     { sweep: { key: 'swept_photos', run: sweepForgottenPhotos } },
+    { sweep: { key: 'offer_counters', run: purgeOfferCounters } },
   );
 
   // Its proactivity: the offers to review and what wakes them, ten minutes of her questions

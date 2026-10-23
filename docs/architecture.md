@@ -4094,6 +4094,10 @@ and manual runs are outside this metric. Sum `opened` / sum `offered`, grouped b
 tap rate over retained offers; opening after expiry does not recreate the counters. Like
 `llm_calls`, rows expire after 180 days, join account export and cascade with deletion (migration
 `0114_offer_hints_on_open.sql`).
+The learning domain owns the table, its privacy registration and its scheduler sweep; the core
+copy drops it. The offer tool validates `kind` from `StartTopicRequest` and records its counter
+through the tool outcome's transaction callback after the action receives its id. SQL keeps
+`kind text not null`, so extending the contract does not require a matching migration.
 
 A hint that states the result in any form
 (also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. The ladder counts only
