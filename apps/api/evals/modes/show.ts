@@ -1,14 +1,14 @@
 // Live walk through the learning modes (Vertex) for a person to read: practice
 // on a topic, typed vocabulary, speaking sentences, homework help (typed and
 // photographed), a worksheet photo. Prints what the model produced.
-// Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
+// Needs LLM_BACKEND=vertex or azure, provider variables and a local Postgres.
 //   cd apps/api && npx tsx evals/modes/show.ts [practice|vocab|speak|help|photo]
 // (the photo steps use test-results/web/worksheet.jpg from scripts/web-walkthrough.sh)
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 import { existsSync, readFileSync } from 'node:fs';
 import type { AnswerResponse, MaterialView, SessionView } from '@learnbuddy/shared-types/contracts';
 import { loadConfig } from '../../src/config.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
@@ -19,7 +19,7 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-const real = new VertexGateway(config);
+const real = llmGateway(config);
 // The real gateway's profile (#646): without it a run's schema cannot be sized (#647).
 const gateway: LlmGateway = {
   available: true,

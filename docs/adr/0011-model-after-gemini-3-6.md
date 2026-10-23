@@ -39,3 +39,13 @@ calmly instead of being held back by the provider's filter (#758).
 - The owner provides, for one candidate: key + EU data residency + DPA, and ≈ $3–4 eval budget
   (`provider-2026-10.md`, last section). Adding it as a processor in `docs/privacy.md` and
   `docs/dpia.md` is the owner's legal call.
+
+## Amendment — 23.10.2026: Azure preparation (#889)
+
+The owner selected Azure as the intended replacement and explicitly requested the adapter before
+account setup and live evaluation. This supersedes decision 2's restriction on building it.
+Vertex remains the default; no production switch is approved or performed here. The candidate
+pair is GPT-5.4/GPT-5.4-mini, EU Data Zone Standard in Sweden Central. The official Azure strict
+schema limit (100 properties/five levels) does not cover the full Buddy turn; prices, DPA, media
+coverage and quality still require evidence. See the dated research and activation gates in
+[the provider decision](../decisions/provider-2026-10.md#23102026--azure-preparation-owner-decision-889).

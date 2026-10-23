@@ -1,3 +1,4 @@
+// requires live verification in Claude Code session
 // What a failed model call is worth trying again, and how that stays inside the caller's
 // own timeout (issues #167, #206).
 //
@@ -174,11 +175,13 @@ describe('a throttled call inside the caller’s budget', () => {
       async () => {
         calls++;
         gone.abort();
-        throw new LlmError('rate_limited', 'provider rate limit');
+        throw new LlmError('rate_limited', 'provider rate limit', answer.usage);
       },
       f.waits,
     ).catch((e: unknown) => e);
     expect((err as LlmError).kind).toBe('cancelled');
+    // Cancelling after a provider reported tokens must not erase the bill (#889).
+    expect((err as LlmError).usage).toEqual(answer.usage);
     expect(calls).toBe(1);
     expect(f.slept).toEqual([]);
   });

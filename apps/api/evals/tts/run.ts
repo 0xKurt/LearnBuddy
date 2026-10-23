@@ -13,12 +13,12 @@ import type { SendMessageResponse } from '@learnbuddy/shared-types/contracts';
 import { loadConfig } from '../../src/config.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
 import { partialString } from '../../src/llm/partial.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { GoogleSpeech } from '../../src/speech/google.js';
 import { rateFor } from '../../src/speech/gateway.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
-// The Vertex variables live in apps/api/.env.local, like every other eval.
+// The provider variables live in apps/api/.env.local, like every other eval.
 const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 
@@ -31,7 +31,7 @@ const config = loadConfig({
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
 const speech = new GoogleSpeech(config);
-const real = new VertexGateway(config);
+const real = llmGateway(config);
 
 // ─────────────── how long an MP3 plays ───────────────
 

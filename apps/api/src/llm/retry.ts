@@ -25,7 +25,7 @@
 // on the rate (`modules/scheduler/throttle.ts`) — the fix for that lives in the Cloud
 // Console, not here.
 
-import { LlmError, type LlmRequest, type LlmResult } from './gateway.js';
+import { LlmError, type LlmGateway, type LlmRequest, type LlmResult } from './gateway.js';
 
 /**
  * How many attempts a failure of this kind is worth IN TOTAL, the first one included.
@@ -142,7 +142,11 @@ export async function generateWithRetries(
     } catch (err) {
       attemptsDone++;
       if (req.signal?.aborted) {
-        const cancelled = new LlmError('cancelled', 'the caller stopped waiting');
+        const cancelled = new LlmError(
+          'cancelled',
+          'the caller stopped waiting',
+          err instanceof LlmError ? err.usage : null,
+        );
         cancelled.attempts = attemptsDone;
         throw cancelled;
       }
@@ -155,4 +159,16 @@ export async function generateWithRetries(
       await waits.sleep(pause);
     }
   }
+}
+
+/** Every network gateway enters through the same retry budget; each supplies one attempt. */
+export abstract class RetryingGateway implements LlmGateway {
+  abstract readonly available: boolean;
+  abstract readonly profile: LlmGateway['profile'];
+
+  generate(req: LlmRequest): Promise<LlmResult> {
+    return generateWithRetries(req, (watched, timeoutMs) => this.attempt(watched, timeoutMs));
+  }
+
+  protected abstract attempt(req: LlmRequest, timeoutMs: number): Promise<LlmResult>;
 }

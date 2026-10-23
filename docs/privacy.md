@@ -273,6 +273,23 @@ Familienkreis hinaus.
 
 ## Processors
 
+### Proposed processor — Azure, 23.10.2026 (#889), not active
+
+Microsoft Azure OpenAI is proposed for the same necessary learner text and sheet photos as the
+existing gateway. Vertex stays the default. Before enabling it, the owner must confirm and retain
+the DPA/AVV, terms for minors, actual EU Data Zone deployment, abuse-monitoring retention/review
+and cache conditions. Microsoft states that customer prompts are not used for foundation-model
+training without permission. `store: false` does not disable abuse monitoring. No Azure account
+settings or legal acceptance were verified here.
+[Microsoft data processing](https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy).
+
+The endpoint name cannot attest to its region: the configured region/type must match the actual
+resource and both deployments. Audio/PDF are refused by this adapter. Activation blockers and
+operator setup: [provider decision, 23.10.2026](decisions/provider-2026-10.md#23102026--azure-preparation-owner-decision-889).
+The active processors below are unchanged; this entry authorizes no transfer of children's data.
+
+### Current processors
+
 - **Supabase** (database, auth, storage): EU region of the project.
 - **Google Vertex AI** (model): EU only — the EU multi-region endpoint `eu` (Gemini 3.6 Flash; Google
   states ML processing and storage stay in EU member states, seen as a snippet of its data-residency
