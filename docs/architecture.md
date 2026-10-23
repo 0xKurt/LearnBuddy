@@ -314,6 +314,45 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
       batch cost $0.004331. The scripted overlap regression was red on main (476–486 ms,
       no overlap) and green with #867 (317–325 ms, 152–153 ms overlap); these are scripted
       request timings, not a device latency measurement.
+    - **False alarms compared 23.10.2026** (#879): the same eval now adds 40 labelled
+      non-distress texts (eight each in de/en/fr/es/it), keeping both original controls and all
+      23 original disclosures unchanged. Frustration, jokes, insults at Buddy, test nerves,
+      history essays about war, poem analysis about death, sad fictional endings and roleplay
+      danger are eval data only. Practice supplies the question, roleplay the scene marker;
+      chat supplies neither. New controls call the production `distressCheck` directly with
+      those contexts; the original cases still verify the practice endpoint, fixed/stored reply
+      and attempt count. This measures the shared check, not the complete chat/roleplay model turn.
+      Each of the **42 controls** ran once on `eu/gemini-3.1-flash-lite` (fast) and once on
+      `eu/gemini-3.6-flash` (smart), paired and alternating which model went first. Prompt
+      `safeguard.0fd047a9`, schema, safety settings, temperature 0, thinking off, 64 output tokens
+      and 10 s timeout were identical. No prompt or production routing changed.
+
+      | Non-distress context | Fast: help alarms / cases | Smart: help alarms / cases |
+      | -------------------- | ------------------------- | -------------------------- |
+      | Practice             | 0/22 (0%)                 | 0/22 (0%)                  |
+      | Chat                 | 1/15 (6.67%)              | 2/15 (13.33%)              |
+      | Roleplay             | 0/5 (0%)                  | 0/5 (0%)                   |
+      | **Total**            | **1/42 (2.38%)**          | **2/42 (4.76%)**           |
+
+      Neither model returned `concern: true` for a control (**0/42** each). The help alarms
+      were provider blocks: `de_insult` on both, `es_insult` on smart only. Counts include those
+      blocks because they show the child a fixed help answer; `unchecked` is tracked separately
+      and cannot pass the comparison (none occurred). By language, fast/smart help alarms were
+      de 1/10 vs 1/10, en 0/8 vs 0/8, fr 0/8 vs 0/8, es 0/8 vs 1/8, it 0/8 vs 0/8.
+      The existing true-distress cases ran **once on fast: 23/23 `concern`**, zero misses,
+      blocks or unchecked results; every endpoint assertion passed. **Keep fast for every
+      caller:** its observed false-alarm rate is no worse overall or in any caller group, with
+      no missed true case, so no tier split is warranted. The remaining insult blocks are a
+      provider-filter limitation, not evidence for moving the check to smart.
+      The complete run used **107 calls / 107 provider attempts**, **$0.023271 metered net /
+      $0.038407 gross ceiling**, including 3.6's pre-credit price; before/after batch and call
+      entries are in the shared budget ledger. Temporary `.env.local` and credential files were
+      deleted. The runner writes requests, responses, usage and its summary to `.cache/879/`.
+      `evals/tutor/__tests__/safeguarding.test.ts` was red with the original two controls
+      (`2 < 30`) and green with the expanded corpus (7 tests); it also pins pairing, the decision
+      rule and rejection of incomplete/unchecked runs. This is one pass on a small synthetic
+      corpus, not a population false-alarm estimate or proof of statistical equivalence.
+
   - **A chat or roleplay turn whose model call fails reads her words too** (issue #761,
     `buddy/turn.ts` `failHerTurn`). Every way a turn ends without the model's answer — outage,
     timeout, invalid output after the repair round, the day's limit, a stale context, a bug, the
@@ -392,6 +431,7 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     stored as a memory, because `refuseDuringConcern` only fires once `concern` is true — the ban
     on storing health and family trouble is prompt-only (issue #108). Numbers, verbatim replies
     and what the measurement does not show: `apps/api/evals/concern/README.md`.
+
 - **Learning only** (issue #38, prompt buddy.23). Buddy is this learner's learning companion, not
   a general assistant: work for someone else's purpose, entertainment for its own sake or an
   adult's job is declined in one friendly sentence that names what he can do instead. The line is

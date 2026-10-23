@@ -1,13 +1,12 @@
-// Isolated live check of the practice distress path (#867): the four tutor safeguarding
-// cases, Buddy's five languages and every distress case from the concern corpus. Only the
-// safeguard call is live; a dictation makes the whole typed answer code-graded.
+// Shared distress check comparison (#879). Controls are paired fast/smart; original distress
+// cases run once on fast through the practice endpoint. Only the safeguard call is live.
 // Run under scripts/test-lock.sh, with the shared LB_TEST_DATABASE_URL and .env.local:
 //   cd apps/api && pnpm exec tsx evals/tutor/safeguarding.ts
-// Every call is logged before/after in the agent budget ledger; total ceiling $0.50.
+// Every call is logged before/after in the agent budget ledger; total gross ceiling $1.00.
 // requires live verification in Claude Code session (scripted task, real model and Postgres)
 
 import assert from 'node:assert/strict';
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -18,12 +17,12 @@ import { loadConfig } from '../../src/config.js';
 import { safeguardingText } from '../../src/i18n/safeguarding.js';
 import { LlmError, type LlmGateway, type LlmUsage } from '../../src/llm/gateway.js';
 import { VertexGateway, modelFor } from '../../src/llm/vertex.js';
+import { distressCheck, type DistressFinding } from '../../src/modules/buddy/distress.js';
 import { ScriptedGateway } from '../../src/testing/fakes.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import '../../src/testing/domain.js';
-import { CASES as BUDDY_CASES } from '../buddy/cases.js';
-import { CONCERN_CASES } from '../concern/cases.js';
-import { TUTOR_SAFEGUARDING_CASES } from './safeguardingCases.js';
+import { comparisonPlan, summarize, type Measurement, type Trial } from './safeguardingCompare.js';
+import { SAFEGUARDING_CASES } from './safeguardingCorpus.js';
 
 dotenv({ path: '.env.local' });
 assert.equal(process.env.LB_TEST_LOCK_HELD, '1', 'Take the machine test lock first');
@@ -36,37 +35,50 @@ const config = loadConfig({
 });
 assert.equal(config.LLM_BACKEND, 'vertex');
 // An explicit deployment route must not silently send this experiment to the smart model.
-config.VERTEX_ROUTES = { safeguard: config.VERTEX_MODEL_FAST };
+config.VERTEX_ROUTES = {};
+assert.equal(config.VERTEX_MODEL_FAST, 'eu/gemini-3.1-flash-lite');
+assert.equal(config.VERTEX_MODEL_SMART, 'eu/gemini-3.6-flash');
 const real = new VertexGateway(config);
 const scripted = new ScriptedGateway();
 const ledger = join(homedir(), '.local/share/learnbuddy-agents/BUDGET-LEDGER.md');
 let call = 0;
 let chargedMicros = 0;
-let currentCase = '';
-const reserveMicros = 20_000; // conservative reserve, including retries or unmetered failure
-const ceilingMicros = 500_000;
+const plan = comparisonPlan(SAFEGUARDING_CASES);
+let current: Trial = plan[0]!;
+const results: Measurement[] = [];
+const output = '../../.cache/879';
+mkdirSync(output, { recursive: true });
+const startedAt = new Date().toISOString();
+const traceFile = join(output, `safeguarding-${startedAt.replaceAll(':', '-')}.jsonl`);
+const attemptReserveMicros = 20_000;
+const reserveMicros = 3 * attemptReserveMicros; // up to three provider attempts
+const ceilingMicros = 1_000_000;
 const log = (phase: string, usd: string, detail: string) =>
   appendFileSync(
     ledger,
-    `| ${new Date().toISOString()} | distress-867 | #867 | ${phase} call ${call} | ${usd} | ${currentCase}: ${detail} |\n`,
+    `| ${new Date().toISOString()} | distress-879 | #879 | ${phase} call ${call} | ${usd} | ${current.c.id}/${current.tier}: ${detail} |\n`,
   );
 const gateway: LlmGateway = {
   available: true,
   profile: real.profile,
   generate: async (req) => {
     if (req.purpose !== 'safeguard') return scripted.generate(req);
-    assert(chargedMicros + reserveMicros <= ceilingMicros, '$0.50 budget exhausted');
+    assert(chargedMicros + reserveMicros <= ceilingMicros, '$1.00 gross budget exhausted');
     assert.equal(req.maxOutputTokens, 64);
     assert.equal(req.thinking, 'off');
-    assert(JSON.stringify(req).length < 16_000, 'Unexpectedly large check');
+    assert(JSON.stringify(req).length < 4_000, 'Unexpectedly large check');
     call++;
-    const model = modelFor(config, req);
-    log('before', 'reserve 0.020000', `evals/tutor safeguarding on ${model}`);
+    // Evaluation-only override: the request, prompt, schema and limits stay identical.
+    const sent = { ...req, tier: current.tier };
+    const model = modelFor(config, sent);
+    log('before', 'reserve gross 0.060000', `evals/tutor safeguarding on ${model}`);
     let usage: LlmUsage | null = null;
     let outcome = 'ok';
     let attempts = 1;
+    let json: unknown = null;
     try {
-      const result = await real.generate(req);
+      const result = await real.generate(sent);
+      json = result.json;
       usage = result.usage;
       attempts = result.attempts ?? 1;
       return result;
@@ -76,44 +88,57 @@ const gateway: LlmGateway = {
       attempts = err instanceof LlmError ? err.attempts : 1;
       throw err;
     } finally {
-      const cost = usage?.costMicros ?? reserveMicros;
+      // 3.6's table uses net promotional prices; charge twice that before any credit.
+      // Failed earlier attempts have no usage in the gateway result: reserve them too.
+      const cost =
+        (usage ? usage.costMicros * (current.tier === 'smart' ? 2 : 1) : attemptReserveMicros) +
+        (attempts - 1) * attemptReserveMicros;
       chargedMicros += cost;
       log(
         'after',
         (cost / 1e6).toFixed(6),
-        `${model}; ${outcome}; attempts=${attempts}; ${usage ? 'metered' : 'reserved: no usage'}; total ceiling charged $${(chargedMicros / 1e6).toFixed(6)}`,
+        `${model}; ${outcome}; attempts=${attempts}; ${usage ? 'metered gross' : 'reserved: no usage'}; total gross ceiling charged $${(chargedMicros / 1e6).toFixed(6)}`,
+      );
+      appendFileSync(
+        traceFile,
+        `${JSON.stringify({
+          call,
+          id: current.c.id,
+          tier: current.tier,
+          model,
+          request: sent,
+          json,
+          outcome,
+          attempts,
+          usage,
+          grossCeilingMicros: cost,
+        })}\n`,
       );
     }
   },
 };
 
-const cases = [
-  ...TUTOR_SAFEGUARDING_CASES.map((c) => ({ ...c, locale: 'de' as const })),
-  ...BUDDY_CASES.filter((c) => c.id.endsWith('_distress_safeguarding')).map((c) => ({
-    id: c.id,
-    says: c.message,
-    concern: true,
-    locale: c.learner?.locale ?? 'de',
-  })),
-  ...CONCERN_CASES.filter((c) => c.expectConcern).map((c) => ({
-    id: c.id,
-    says: c.says,
-    concern: true,
-    locale: 'de' as const,
-  })),
-];
-
 const env = await createTestEnv({ start: '2026-10-04T15:00:00Z', gateway });
-let failed = 0;
-let blocked = 0;
 try {
-  for (const c of cases) {
-    currentCase = c.id;
+  for (const trial of plan) {
+    current = trial;
+    const { c, tier } = trial;
     const l = await onboard(env, {
       locale: c.locale,
       relation: 'child',
       birthDate: '2014-02-10',
     });
+    if (!c.dictation) {
+      const before = call;
+      const finding = await distressCheck(env.deps, l.learnerId, c.says, {
+        ...(c.question ? { question: c.question } : {}),
+        ...(c.surface === 'roleplay' ? { scene: true } : {}),
+      });
+      assert.equal(call - before, 1, `${c.id}: exactly one live distress check`);
+      results.push({ c, tier, finding, pathValid: true });
+      console.info(`${c.id}/${tier}: ${finding}`);
+      continue;
+    }
     scripted.script('explain', {
       json: {
         usable: true,
@@ -156,21 +181,44 @@ try {
       `select text from practice_turns where session_id = $1 and role = 'tutor' order by seq desc limit 1`,
       [s.body.id],
     );
-    const passed =
+    const finding: DistressFinding =
+      reply === blockedText
+        ? 'blocked'
+        : reply === concernText
+          ? 'concern'
+          : reply.includes(safeguardingText(c.locale, true, 'unchecked'))
+            ? 'unchecked'
+            : 'clear';
+    const pathValid =
       result.status === 200 &&
-      help === c.concern &&
       stored.text === reply &&
-      result.body.verdict === (c.concern ? 'not_an_attempt' : 'incorrect') &&
-      result.body.session.items[0]?.attempts === (c.concern ? 0 : 1) &&
+      result.body.verdict === (help ? 'not_an_attempt' : 'incorrect') &&
+      result.body.session.items[0]?.attempts === (help ? 0 : 1) &&
       !reply.includes(safeguardingText(c.locale, true, 'unchecked'));
-    if (!passed) failed++;
-    if (reply === blockedText) blocked++;
-    console.info(`${passed ? '✓' : '✗'} ${c.id}: ${reply}`);
+    results.push({ c, tier, finding, pathValid });
+    console.info(`${c.id}/${tier}: ${finding}; practice path ${pathValid ? 'ok' : 'FAILED'}`);
   }
+  const summary = summarize(results, plan);
   console.info(
-    `${cases.length - failed}/${cases.length} passed; ${blocked} provider blocks; ${call} live calls; charged $${(chargedMicros / 1e6).toFixed(6)} including unmetered reserves`,
+    JSON.stringify({ ...summary, calls: call, grossCeilingUsd: chargedMicros / 1e6 }, null, 2),
   );
+  process.exitCode = summary.keepFast ? 0 : 1;
 } finally {
+  writeFileSync(
+    join(output, 'safeguarding-report.json'),
+    JSON.stringify(
+      {
+        startedAt,
+        models: { fast: config.VERTEX_MODEL_FAST, smart: config.VERTEX_MODEL_SMART },
+        summary: summarize(results, plan),
+        calls: call,
+        grossCeilingUsd: chargedMicros / 1e6,
+        traceFile,
+        results,
+      },
+      null,
+      2,
+    ),
+  );
   await env.close();
 }
-process.exitCode = failed ? 1 : 0;
