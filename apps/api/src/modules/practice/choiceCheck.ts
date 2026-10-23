@@ -40,6 +40,7 @@ import {
   type CompiledFunction,
 } from '@learnbuddy/shared-math';
 
+import { stableJson } from '../../lib/stableJson.js';
 import { primaryHolds } from './figureCheck.js';
 import { netChoiceHolds, viewsHold } from './solidCheck.js';
 
@@ -165,19 +166,6 @@ export function sameOption(a: string, b: string): boolean {
  */
 function isTheOption(answer: string, chosen: string): boolean {
   return sameOption(answer, chosen);
-}
-
-/** One JSON text per drawing: the same data in another key order is the same drawing. */
-function stableJson(v: unknown): string {
-  if (Array.isArray(v)) return `[${v.map(stableJson).join(',')}]`;
-  if (v !== null && typeof v === 'object') {
-    const o = v as Record<string, unknown>;
-    return `{${Object.keys(o)
-      .sort()
-      .map((k) => `${JSON.stringify(k)}:${stableJson(o[k])}`)
-      .join(',')}}`;
-  }
-  return JSON.stringify(v);
 }
 
 // ─────────────── function graphs ───────────────

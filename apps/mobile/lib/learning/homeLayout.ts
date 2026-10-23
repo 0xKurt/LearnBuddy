@@ -20,7 +20,7 @@ function bar(h: Pick<BuddyHome, 'now'>): object | null {
 }
 
 function layout(
-  h: Pick<BuddyHome, 'now' | 'working'>,
+  h: Pick<BuddyHome, 'now' | 'working' | 'thread'>,
   hidden: boolean,
   greetingTells: string | null,
 ): HomeTopLayout {
@@ -41,6 +41,11 @@ function layout(
                 : null;
   // "Ich lese dein Blatt …" already says Buddy is on the photos (one bar, not two notes).
   const inBar = top === 'reading' && h.working === 'material';
+  // The sheet already says it is being read while its first questions can be started (#870).
+  const inThread = h.thread.some(
+    (m) =>
+      m.sheet?.stage === 'waiting' || m.sheet?.stage === 'reading' || m.sheet?.stage === 'building',
+  );
   return {
     bar: top,
     failed: now?.type === 'material_failed',
@@ -50,7 +55,7 @@ function layout(
     // Only her photos get a "working" note (issue #845): after a practice the check may rightly
     // say nothing, and "Ich schaue mir an, wie deine Übung lief …" then went with nothing after
     // it. The result card tells what she did; `working` still keeps the home polling closely.
-    working: h.working !== 'material' ? null : inBar ? 'bar' : 'thread',
+    working: h.working !== 'material' || inThread ? null : inBar ? 'bar' : 'thread',
     photoAsk: top === 'capture' ? 'bar' : 'thread',
     preparedIn: top === 'ready' || top === 'next' ? 'bar' : 'thread',
   };
