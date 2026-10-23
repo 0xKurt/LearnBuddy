@@ -211,6 +211,13 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           ],
         );
         actions.push({ id: row.id, summary: outcome.summary });
+        if (outcome.summary.tool === 'offer_learning') {
+          await tx.query(
+            `insert into offer_counters (action_id, learner_id, kind, created_at)
+             values ($1, $2, $3, $4)`,
+            [row.id, input.learnerId, outcome.summary.kind, input.now],
+          );
+        }
       }
 
       let replyMessageId: string | null = null;

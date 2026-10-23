@@ -165,5 +165,11 @@ export async function purgeDecisionContent(deps: Deps): Promise<number> {
       returning id`,
     [callCutoff],
   );
-  return cleared.length + calls.length + spoken.length;
+  const offers = await deps.db.query(
+    `delete from offer_counters
+      where action_id in (select action_id from offer_counters where created_at < $1 limit 1000)
+      returning action_id`,
+    [callCutoff],
+  );
+  return cleared.length + calls.length + spoken.length + offers.length;
 }

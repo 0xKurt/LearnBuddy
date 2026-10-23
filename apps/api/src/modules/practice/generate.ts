@@ -32,7 +32,7 @@ import { BAR_RULES, barItems } from './bars.js';
 import { CODE_RULES, codeItems } from './code.js';
 import { DICTATION_RULES, dictationItems, type DictationItem } from './dictation.js';
 import { ESSAY_RULES, essayItems } from './essayTask.js';
-import { prepareHints } from './hints.js';
+import { prepareOpenedHints } from './open.js';
 import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
 import {
@@ -842,7 +842,7 @@ async function prepareTopic(
   if (!head || !first || first.items.length < FIRST_BATCH) {
     const { set, err } = await whole;
     if (!set) throw err;
-    const stored = await store(
+    return store(
       deps,
       learner,
       input,
@@ -860,13 +860,11 @@ async function prepareTopic(
         origin: input.kind === 'spelling_dictation' ? dictationOrigin(set, dictation) : null,
       },
     );
-    hintsFor(deps, learner, input, stored);
-    return stored.id;
   }
 
   // Three questions stand there and the rest is still being written. The run starts on them, and
   // it says so from the moment it exists: there is no instant at which three look like all.
-  const started = await store(
+  const sessionId = await store(
     deps,
     learner,
     input,
@@ -893,8 +891,6 @@ async function prepareTopic(
       origin: null,
     },
   );
-  const sessionId = started.id;
-  hintsFor(deps, learner, input, started);
   deps.background(async () => {
     // Whatever goes wrong behind her, the run stops saying "more is coming" instead of waiting out
     // its window for questions that will never arrive (rule 5).
@@ -912,31 +908,6 @@ async function prepareTopic(
     });
   });
   return sessionId;
-}
-
-/** The run `store` wrote, or found: `itemIds` are the questions it brought, none when it found it. */
-type Stored = { id: string; itemIds: string[] };
-
-/**
- * Hints for the questions a run was just given, written in the background while she reads the
- * first one (F9-a, #660). Only by the call that created the run: a second request for the same
- * run (her tap on a card Buddy prepared, a lost reply sent again) finds it and starts nothing.
- * Started here, not in the route, so a run Buddy prepares ahead (`prepare.ts`) has its hints by
- * the time she taps. Best effort: if this never runs, the tutor model helps as before
- * (hints.ts). A test shows no hints, but the same call writes each question's worked solution,
- * which its review explains with (#388 §3.2).
- */
-function hintsFor(
-  deps: Deps,
-  learner: PracticeLearner,
-  input: StartTopicRequest,
-  stored: Stored,
-): void {
-  if (input.kind !== 'practice' && input.kind !== 'test') return;
-  if (stored.itemIds.length === 0) return;
-  deps.background(async () => {
-    await prepareHints(deps, learner, stored.id, stored.itemIds).catch(() => 0);
-  });
 }
 
 /**
@@ -958,7 +929,7 @@ async function store(
     /** Where this run's questions come from, when the kind alone does not say (a Diktat, #242). */
     origin: 'typed' | 'buddy' | null;
   },
-): Promise<Stored> {
+): Promise<string> {
   if (
     !set.usable ||
     prepared.items.length +
@@ -1022,8 +993,11 @@ async function store(
         },
         now,
       );
+      if (input.kind === 'practice' || input.kind === 'test') {
+        await tx.query('update practice_sessions set hints_on_open = true where id = $1', [id]);
+      }
       await bumpContext(tx, learner.id);
-      return { id, itemIds };
+      return id;
     });
   } catch (err) {
     // The same request ran twice at once: return the one that won — its questions are its own.
@@ -1032,7 +1006,7 @@ async function store(
         `select id from practice_sessions where learner_id = $1 and client_request_id = $2`,
         [learner.id, input.client_request_id],
       );
-      if (won) return { id: won.id, itemIds: [] };
+      if (won) return won.id;
     }
     throw err;
   }
@@ -1127,10 +1101,9 @@ async function addTheRest(
     if (n > 0) await bumpContext(tx, learner.id);
     return n > 0 ? itemIds : [];
   });
-  // The questions that just arrived have no prepared ladder yet: hints for exactly these, never
-  // again for the first ones, whose own call may still be running (F9-a, #660). Best effort,
-  // like the call for the first questions.
-  if (added.length > 0) await prepareHints(deps, learner, sessionId, added).catch(() => 0);
+  // Only an opened run needs hints (#868). Claims also prevent a concurrent open from asking
+  // about these questions twice; an unopened offer leaves them for its eventual open.
+  if (added.length > 0) await prepareOpenedHints(deps, learner, sessionId, added);
 }
 
 /** This prompt's version: its name and a hash of what it sends (`promptVersion`, #425). */

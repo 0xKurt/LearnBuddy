@@ -71,6 +71,8 @@ export const deleteMaterialItem = (materialId: string, itemId: string) =>
 
 export const getSession = (id: string) =>
   request('GET', `/practice/sessions/${id}`, { schema: SessionView });
+/** An actual screen open, separate from the home card's read-only prefetch (#868). */
+export const openPracticeSession = (id: string) => request('POST', `/practice/sessions/${id}/open`);
 /** The plain request (the outbox resends with it; same client_turn_id → recorded once). */
 export const postAnswer = (id: string, body: AnswerRequest) =>
   request('POST', `/practice/sessions/${id}/answer`, {

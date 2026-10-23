@@ -165,19 +165,19 @@ Regel 2), Zustelldetails.
 
 **Kurze Fristen, im Code als Konstanten:**
 
-| Was                                                 | Frist                                    | Beleg                                                         |
-| --------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------- |
-| Fotos und PDFs nach dem Lesen                       | 7 Tage                                   | `modules/materials/purge.ts` `PHOTO_RETENTION_DAYS`           |
-| Entfernte/korrigierte Notiz (Undo-Fenster)          | 7 Tage                                   | `modules/identity/retention.ts` `MEMORY_UNDO_DAYS`            |
-| Was das Modell beim Entscheiden schrieb             | 90 Tage                                  | `modules/identity/retention.ts` `DECISION_CONTENT_DAYS` (#78) |
-| Buchhaltung der Modellaufrufe (nie Inhalt)          | 180 Tage                                 | `modules/identity/retention.ts` `CALL_LOG_DAYS`               |
-| Sprachaufnahmen (Sprechen statt Tippen, Aussprache) | nie gespeichert                          | `docs/privacy.md` §What is stored                             |
-| Foto ihres Rechenwegs und seine Abschrift           | nie gespeichert                          | `modules/practice/workPhoto.ts` (Issue #444)                  |
-| Vorgelesenes Audio                                  | 24 h                                     | `speech_cache`, Migration `0044_shared_speech_cache.sql`      |
-| Konzeptbild-Ausschnitte, Suchabschnitte             | mit dem Blatt                            | `modules/materials/purge.ts` `purgeContent` (Issues #50, #23) |
-| Unklare Stellen eines Blattes                       | mit dem Blatt                            | `modules/materials/purge.ts` `purgeContent` (Issue #164)      |
-| Prompt-Zwischenspeicher beim Anbieter (implizit)    | ≤ 24 h (Angabe des Anbieters, ungeprüft) | Herstellerdoku, §1; R11                                       |
-| Löschfrist nach Löschwunsch (Widerrufsfenster)      | 7 Tage Halt                              | `modules/identity/privacy.ts` `DELETION_HOLD_DAYS`            |
+| Was                                                           | Frist                                    | Beleg                                                         |
+| ------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------- |
+| Fotos und PDFs nach dem Lesen                                 | 7 Tage                                   | `modules/materials/purge.ts` `PHOTO_RETENTION_DAYS`           |
+| Entfernte/korrigierte Notiz (Undo-Fenster)                    | 7 Tage                                   | `modules/identity/retention.ts` `MEMORY_UNDO_DAYS`            |
+| Was das Modell beim Entscheiden schrieb                       | 90 Tage                                  | `modules/identity/retention.ts` `DECISION_CONTENT_DAYS` (#78) |
+| Buchhaltung der Modellaufrufe und Angebotszähler (nie Inhalt) | 180 Tage                                 | `modules/identity/retention.ts` `CALL_LOG_DAYS`               |
+| Sprachaufnahmen (Sprechen statt Tippen, Aussprache)           | nie gespeichert                          | `docs/privacy.md` §What is stored                             |
+| Foto ihres Rechenwegs und seine Abschrift                     | nie gespeichert                          | `modules/practice/workPhoto.ts` (Issue #444)                  |
+| Vorgelesenes Audio                                            | 24 h                                     | `speech_cache`, Migration `0044_shared_speech_cache.sql`      |
+| Konzeptbild-Ausschnitte, Suchabschnitte                       | mit dem Blatt                            | `modules/materials/purge.ts` `purgeContent` (Issues #50, #23) |
+| Unklare Stellen eines Blattes                                 | mit dem Blatt                            | `modules/materials/purge.ts` `purgeContent` (Issue #164)      |
+| Prompt-Zwischenspeicher beim Anbieter (implizit)              | ≤ 24 h (Angabe des Anbieters, ungeprüft) | Herstellerdoku, §1; R11                                       |
+| Löschfrist nach Löschwunsch (Widerrufsfenster)                | 7 Tage Halt                              | `modules/identity/privacy.ts` `DELETION_HOLD_DAYS`            |
 
 **Kein Druck als Designregel.** Die App zeigt Lernenden nie, wie viele Tage sie ausgelassen hat
 oder wie viel „offen" ist (CLAUDE.md Regel 6); Sperrbildschirm-Texte tragen keine Noten und

@@ -1,4 +1,5 @@
-// Buddy prepares what he just offered, while she still reads his reply (issue #48).
+// Buddy prepares the offered questions while she reads his reply (#48).
+// Hints wait for the app to open the run (open.ts, #868).
 //
 // Until now `offer_learning` only put a card in the chat; the questions were written when
 // she tapped it — a model call of 2.5–6 s she waited through (docs/architecture.md §Speed).
