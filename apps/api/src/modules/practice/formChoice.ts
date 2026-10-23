@@ -4,7 +4,7 @@
 // Vertex serves a response schema only up to a measured size (`llm/schemaBudget.ts`). The schema
 // of a practice run or of a sheet reading holds every task form and every figure type, about three
 // times that size, so Vertex refused it before the model read a word. Here a small first call (the
-// fast model, no thinking, the same system prompt and the same message as the main call) picks,
+// fast model, no thinking, a compact catalogue and the same message as the main call) picks,
 // from closed lists, the forms and figure types this run or this sheet needs. Code then builds the
 // main schema from exactly those (`pruned`). It adds them in the order the model ranked them, and
 // only while the schema stays within the budget (`fitted`). It also drops anything the answer

@@ -13,6 +13,7 @@ import * as rehearse from '../buddy/rehearse.js';
 import * as roleplay from '../buddy/roleplay.js';
 import * as extract from '../materials/extract.js';
 import * as images from '../materials/images.js';
+import { readingCatalogue, readingSystem } from '../materials/readingPrompt.js';
 import * as sheetSources from '../materials/sources.js';
 import * as practice from '../practice/answerTutor.js';
 import * as cloze from '../practice/cloze.js';
@@ -46,13 +47,16 @@ const leanOf = (system: string) => `${system}\n\n${extract.LEAN_RULES}`;
 
 /**
  * The choosing call before a main call whose whole schema is past the budget (#627, #665): two
- * closed lists as its answer, with the chooser's rule on top of the reading's own system prompt,
- * or of a run's short catalogue of what it offers (#669, `choosingCatalogue`).
+ * closed lists as its answer, with the chooser's rule on top of a short catalogue (#669, #869).
  */
-function choosingFor(main: SentSchema, full: SentSchema['schema']): SentSchema[] {
+function choosingFor(
+  main: SentSchema,
+  full: SentSchema['schema'],
+  catalogue = choosingCatalogue,
+): SentSchema[] {
   if (withinBudget(full)) return [];
   const purpose = main.purpose === 'extraction' ? 'extraction' : 'explain';
-  const lead = purpose === 'explain' ? choosingCatalogue(formChoice.offered(full)) : main.system;
+  const lead = catalogue(formChoice.offered(full));
   return [
     {
       purpose: 'forms',
@@ -61,7 +65,7 @@ function choosingFor(main: SentSchema, full: SentSchema['schema']): SentSchema[]
       promptVersion: promptVersion(
         `forms-${purpose}`,
         formChoice.CHOOSER,
-        ...(purpose === 'explain' ? [lead] : []),
+        lead,
         main.promptVersion,
       ),
       system: `${lead}\n\n${formChoice.CHOOSER}`,
@@ -82,20 +86,32 @@ export function learningSchemas(): SentSchema[] {
     schema: formChoice.widest(full),
     where,
   });
-  const reading = (profile: string, system: string, full: SentSchema['schema']): SentSchema => ({
-    purpose: 'extraction',
-    profile,
-    tier: 'smart',
-    promptVersion: sheetSources.EXTRACT_PROMPT_VERSION,
-    system,
-    schema: formChoice.widest(full),
-    where: 'materials/reader.ts — homework ? HOMEWORK_* : EXTRACT_*, lean after a cut-off answer',
-  });
+  const reading = (
+    profile: string,
+    homework: boolean,
+    full: SentSchema['schema'],
+    lean = false,
+  ): SentSchema => {
+    const schema = formChoice.widest(full);
+    const line = withinBudget(full)
+      ? null
+      : formChoice.availableLine(formChoice.fitted(full, formChoice.offered(full)));
+    const system = `${readingSystem(homework, formChoice.offered(schema))}${line ? `\n\n${line}` : ''}`;
+    return {
+      purpose: 'extraction',
+      profile,
+      tier: 'smart',
+      promptVersion: `${sheetSources.EXTRACT_PROMPT_VERSION}${homework ? '' : `+${sheetSources.SOURCES_PROMPT_VERSION}`}`,
+      system: lean ? leanOf(system) : system,
+      schema,
+      where: 'materials/reader.ts — readingSystem, lean after a cut-off answer',
+    };
+  };
   // A main call and the choosing call before it, when it needs one. A lean reading reuses the
   // choice of the sheet's first reading, so it has none of its own.
-  const chosen = (main: SentSchema, full: SentSchema['schema']) => [
+  const chosen = (main: SentSchema, full: SentSchema['schema'], catalogue = choosingCatalogue) => [
     main,
-    ...choosingFor(main, full),
+    ...choosingFor(main, full, catalogue),
   ];
   return [
     {
@@ -133,19 +149,22 @@ export function learningSchemas(): SentSchema[] {
       );
     }),
     ...chosen(
-      reading('study', extract.EXTRACT_SYSTEM, sheetSources.EXTRACTION_SCHEMA),
+      reading('study', false, sheetSources.EXTRACTION_SCHEMA),
       sheetSources.EXTRACTION_SCHEMA,
+      (offer) => readingCatalogue(offer, false),
     ),
     reading(
       'study + LEAN_RULES (after a cut-off answer)',
-      leanOf(extract.EXTRACT_SYSTEM),
+      false,
       sheetSources.EXTRACTION_SCHEMA,
+      true,
     ),
     ...chosen(
-      reading('homework', extract.HOMEWORK_SYSTEM, sheetSources.HOMEWORK_SCHEMA),
+      reading('homework', true, sheetSources.HOMEWORK_SCHEMA),
       sheetSources.HOMEWORK_SCHEMA,
+      (offer) => readingCatalogue(offer, true),
     ),
-    reading('homework + LEAN_RULES', leanOf(extract.HOMEWORK_SYSTEM), sheetSources.HOMEWORK_SCHEMA),
+    reading('homework + LEAN_RULES', true, sheetSources.HOMEWORK_SCHEMA, true),
     {
       purpose: 'tutor',
       profile: 'tutor',
