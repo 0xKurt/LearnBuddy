@@ -3,8 +3,8 @@ import { createHash } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { offered } from '../../practice/formChoice.js';
-import { figureRules } from '../../practice/items.js';
+import { fitted, offered } from '../../practice/formChoice.js';
+import { CHOICE_RULES, figureRules } from '../../practice/items.js';
 import { READING_RULES } from '../../practice/reading.js';
 import { STRUCTURED_RULE_OF } from '../../practice/setProfiles.js';
 import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM, extractSystem, homeworkSystem } from '../extract.js';
@@ -62,6 +62,24 @@ describe('reading prompts from the choice', () => {
         expect(system, form).toContain(rule);
         for (const [other, text] of Object.entries(rules))
           if (other !== form) expect(system, `${form} excludes ${other}`).not.toContain(text);
+      }
+    },
+  );
+
+  it.each(cases)(
+    'keeps the comparison-operand rule for the observed choices and fallback (%#)',
+    (build, full, schema) => {
+      // The two content-eval findings on #883 had a comparison without its operands.
+      // Basic multiple-choice items remain available even when no structured form is chosen.
+      expect(CHOICE_RULES).toContain('the question names them itself');
+      for (const choice of [
+        { forms: ['part_tasks'], figures: ['fraction'] },
+        { forms: ['part_tasks'], figures: [] },
+        NOTHING,
+      ]) {
+        const selected = offered(fitted(schema, choice).schema);
+        expect(full.split(CHOICE_RULES)).toHaveLength(2);
+        expect(build(selected).split(CHOICE_RULES), JSON.stringify(selected)).toHaveLength(2);
       }
     },
   );
