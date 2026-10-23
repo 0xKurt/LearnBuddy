@@ -35,6 +35,7 @@ import { runLearnerJobs } from '../buddy/check.js';
 import { recordCard, startCardPass } from './cardPass.js';
 import { answerDrill, startDrill } from './drillRound.js';
 import { startTopic } from './generate.js';
+import { openSession } from './open.js';
 import { listenAudio } from './listen.js';
 import { reexplain } from './reexplain.js';
 import { answerItem } from './answer.js';
@@ -78,6 +79,13 @@ practiceRoutes.get('/sessions/:id', async (c) => {
   return c.json(
     await sessionView(deps.db, c.get('learner').id, sessionId, deps.storage, deps.now()),
   );
+});
+
+// GET is also used by the home card's prefetch. Only the mounted run reports an open (#868).
+practiceRoutes.post('/sessions/:id/open', async (c) => {
+  const sessionId = check(Uuid, c.req.param('id'));
+  await openSession(depsOf(c), c.get('learner'), sessionId);
+  return c.body(null, 204);
 });
 
 practiceRoutes.post('/sessions/:id/answer', async (c) => {
@@ -254,6 +262,7 @@ practiceRoutes.post('/topic', async (c) => {
   const id = await startTopic(deps, learner, input);
   // Her tap opens it: a test she asked to sit with time starts its clock now (issue #241).
   await settleTestClock(deps.db, learner.id, id, deps.now());
+  await openSession(deps, learner, id);
   return c.json(await sessionView(deps.db, learner.id, id, deps.storage, deps.now()), 201);
 });
 

@@ -127,6 +127,7 @@ less is refused at boot, and a database region outside the EU is logged as a boo
 | `GET/POST /materials`, `GET/DELETE /materials/:id`, `POST /materials/:id/submit\|retry`              | photos → questions                                                                                                    |
 | `PATCH /materials/:id`, `GET /materials/:id/items`, `DELETE /materials/:id/items/:itemId`            | rename; her questions (never solutions); delete one                                                                   |
 | `POST /practice/sessions`, `GET /practice/sessions/:id`, `POST …/answer\|reveal\|finish`             | practice                                                                                                              |
+| `POST /practice/sessions/:id/open`                                                                   | Actual screen open/resume: starts background hints and counts the offer once; GET prefetch does neither (#868)        |
 | `POST /practice/sessions/:id/items/:itemId/flag`                                                     | "Frage passt nicht": skipped here, archived                                                                           |
 | `POST /practice/sessions/:id/listen`                                                                 | Hörverstehen and Diktat: the recording of one question's spoken text or key (issues #210, #242)                       |
 | `POST /practice/sessions/:id/cards`, `POST …/card`                                                   | Lernkarten: a pass over the words that did not sit, each card judged by her (#147)                                    |
@@ -4209,11 +4210,36 @@ so the rules only say it when it is certain; everything else goes to the tutor (
 2–3 hints (what is asked → which rule → the first step) and the solution explained step by step:
 questions from a photo in the (background) reading call, questions on a topic in a separate
 background call right after the session starts (`hints.ts`, purpose `hints`) — writing them in the
-start call made her wait 8–11 s instead of 5–6 s. Once per question (F9-a, #660): the call that
-creates the run (`hintsFor` in `generate.ts`, also when Buddy prepares an offered run ahead in
-`prepare.ts`, so its hints are there by her tap) asks for the questions it brought, the call that
-adds an early run's rest for exactly those; a request that only finds the run starts none. No lock
-is needed: the sets are disjoint, and the write keeps `hints = '{}'` as its fence. A hint that states the result in any form
+start call made her wait 8–11 s instead of 5–6 s. Since #868, topic questions are still prepared
+as soon as Buddy offers them, but hints start only when the app opens the run (`open.ts`, POST
+`/practice/topic` or POST `/practice/sessions/:id/open` on mounting/resuming the screen).
+GET prefetch from the home card never counts as an open or starts hints. The mount notification
+is independent of a fresh or still-running prefetched query, and retries transient failures.
+Opening never awaits the model. Preparing on open gives the
+hint call the time she spends reading; starting on the first “Tipp” would add that call to the
+hint's critical path. A tap before preparation finishes still uses the existing tutor fallback;
+instant hints are guaranteed only once prepared, not during an unfinished or failed model call.
+`practice_sessions.hints_on_open` opts in only generated practice/test runs, preserving other
+kinds and photo reading. `practice_sessions.opened_at` records the first app open; atomic `session_items.hints_requested_at`
+claims keep concurrent opens and streamed remainders disjoint, including across processes. An
+unopened offer (also one whose full stream arrives) makes no `hints` calls. Calls remain best
+effort, with the tutor fallback after a failure. Integration timing holds the hint provider
+while opening, then verifies the first prepared hint needs no further model call.
+
+`offer_counters` records one content-free pair (`offered = 1`, `opened = 0/1`) per `offer_learning`
+action, with its kind, learner/action ids and app-clock creation time. Publication records the
+pair in the same transaction as the action; the first successful app open updates it atomically
+with the run. Retries, concurrent requests and resume do not inflate it. Other kinds of action
+and manual runs are outside this metric. Sum `opened` / sum `offered`, grouped by `kind`, for the
+tap rate over retained offers; opening after expiry does not recreate the counters. Like
+`llm_calls`, rows expire after 180 days, join account export and cascade with deletion (migration
+`0114_offer_hints_on_open.sql`).
+The learning domain owns the table, its privacy registration and its scheduler sweep; the core
+copy drops it. The offer tool validates `kind` from `StartTopicRequest` and records its counter
+through the tool outcome's transaction callback after the action receives its id. SQL keeps
+`kind text not null`, so extending the contract does not require a matching migration.
+
+A hint that states the result in any form
 (also another notation: 31/20 for 1 11/20, `valuesIn`) is dropped by code. The ladder counts only
 hints she was really shown as hints (migration `0043_prepared_hints_used.sql`: `hints_used` = every
 hint shown, prepared or written by the tutor; `prepared_hints_used` = which prepared one is next).

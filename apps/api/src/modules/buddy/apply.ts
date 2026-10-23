@@ -211,6 +211,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
           ],
         );
         actions.push({ id: row.id, summary: outcome.summary });
+        await outcome.record?.(tx, row.id);
       }
 
       let replyMessageId: string | null = null;

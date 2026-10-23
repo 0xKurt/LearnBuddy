@@ -157,9 +157,15 @@ describe('the learning domain in the core', () => {
     expect(isPersistent('extract_material')).toBe(false);
     expect(jobKinds('waiting').map((k) => k.kind)).toEqual(['extract_material']);
     expect(jobKinds('erasure').map((k) => k.kind)).toEqual(['purge_photos', 'purge_content']);
-    // recovery, idle runs, the photo sweep — the order the tick runs them in.
-    expect(tickWork().map((w) => Object.keys(w)[0])).toEqual(['recover', 'closeIdle', 'sweep']);
+    // Recovery, idle runs, then the domain's retention sweeps.
+    expect(tickWork().map((w) => Object.keys(w)[0])).toEqual([
+      'recover',
+      'closeIdle',
+      'sweep',
+      'sweep',
+    ]);
     expect(tickWork()[2]?.sweep?.key).toBe('swept_photos');
+    expect(tickWork()[3]?.sweep?.key).toBe('offer_counters');
   });
 
   it('adds its occasions after Buddy: the reviews, and what wakes them', () => {
@@ -181,6 +187,7 @@ describe('the learning domain in the core', () => {
     // core may not name in SQL is never missing from her export or her deletion.
     const config = '../../../../../../tools/guards/boundaries.config.mjs';
     const { DOMAIN_TABLES } = (await import(config)) as { DOMAIN_TABLES: string[] };
+    expect(DOMAIN_TABLES).toContain('offer_counters');
     expect(
       privacyTables()
         .map((t) => t.table)

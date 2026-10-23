@@ -3,12 +3,12 @@
 // run behind Buddy's card loaded before she taps (lib/api/sessionCache.ts).
 
 import type { NowCard, PracticeTurnView, SessionView } from '@learnbuddy/shared-types/contracts';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { staggered } from './homePoll.js';
 import { keys } from './keys.js';
-import { getSession } from './learningEndpoints.js';
+import { getSession, openPracticeSession } from './learningEndpoints.js';
 import { queryClient } from './queries.js';
 import { followResumeCard } from './sessionCache.js';
 
@@ -18,12 +18,17 @@ import { followResumeCard } from './sessionCache.js';
  * written (issue #220, `SessionView.preparing`), nothing she does brings them, so the screen asks
  * until they are there. The same second-and-a-half rhythm the sheet reading uses.
  */
-export const usePracticeSession = (id: string) =>
-  useQuery({
+export const usePracticeSession = (id: string) => {
+  // Independent of the query cache: even a fresh or in-flight prefetch is not an open (#868).
+  // Mutations pause offline and retry transient failures; the endpoint is idempotent.
+  const { mutate: opened } = useMutation({ mutationFn: openPracticeSession, retry: 2 });
+  useEffect(() => opened(id), [id, opened]);
+  return useQuery({
     queryKey: keys.session(id),
     queryFn: () => getSession(id),
     refetchInterval: (q) => (q.state.data?.preparing ? staggered(1500) : false),
   });
+};
 
 /** A session the server just started (and returned): its first question shows at once. */
 export function seedSession(view: SessionView): void {

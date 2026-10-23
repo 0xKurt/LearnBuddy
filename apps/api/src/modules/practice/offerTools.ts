@@ -5,6 +5,7 @@
 
 import {
   DrillSpec,
+  StartTopicRequest,
   TEST_MINUTES,
   TestMinutes,
   type PictureWish,
@@ -30,6 +31,9 @@ export async function runOfferLearning(
   ctx: ToolContext,
 ): Promise<ToolOutcome> {
   const a = action.args;
+  const kind = StartTopicRequest.shape.kind.safeParse(a.kind);
+  if (!kind.success)
+    throw new ToolRejection('offer kind must be supported by the learning contract');
   // One field carries either wish (#724, `decision.ts`): the level or the vocabulary's direction.
   const difficulty = a.wish === 'harder' || a.wish === 'easier' ? a.wish : null;
   const direction = a.wish === 'recognise' || a.wish === 'produce' ? a.wish : null;
@@ -160,7 +164,7 @@ export async function runOfferLearning(
   return {
     summary: {
       tool: 'offer_learning',
-      kind: a.kind,
+      kind: kind.data,
       text: a.text,
       goal_id: goal?.id ?? null,
       material_id: sheet?.id ?? null,
@@ -182,6 +186,13 @@ export async function runOfferLearning(
       pictures_shown: null,
     },
     undo: null,
+    record: async (tx, actionId) => {
+      await tx.query(
+        `insert into offer_counters (action_id, learner_id, kind, created_at)
+         values ($1, $2, $3, $4)`,
+        [actionId, ctx.learnerId, kind.data, ctx.now],
+      );
+    },
   };
 }
 

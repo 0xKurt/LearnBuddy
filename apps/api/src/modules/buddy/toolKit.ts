@@ -142,7 +142,12 @@ export type UndoSpec =
     }
   | { type: 'cancel_check'; job_id: string };
 
-export type ToolOutcome = { summary: ActionSummary; undo: UndoSpec | null };
+export type ToolOutcome = {
+  summary: ActionSummary;
+  undo: UndoSpec | null;
+  /** Domain bookkeeping after the action has an id, inside the decision's transaction. */
+  record?: (tx: Db, actionId: string) => Promise<void>;
+};
 
 /** What Buddy may know at once; at the cap he asks her what he may forget (never evicts). */
 export const MAX_ACTIVE_MEMORIES = 60;
