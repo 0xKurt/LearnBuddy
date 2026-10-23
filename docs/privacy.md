@@ -273,6 +273,35 @@ Familienkreis hinaus.
 
 ## Processors
 
+### Proposed processor — OpenAI Ireland, 23.10.2026 (#891), not active
+
+**OpenAI Ireland Ltd.** is the proposed processor for necessary learner text and worksheet
+photos under the [API Services Agreement](https://openai.com/policies/services-agreement/) and
+[DPA](https://openai.com/policies/data-processing-addendum/). The owner chose the direct API;
+the Azure proposal (#889/PR #890) is superseded. Vertex remains the default. This entry records
+a proposal, not an activated transfer or completed contractual review.
+
+The intended project has approved **Zero Data Retention** and European data residency through
+`https://eu.api.openai.com/v1`. The provider defines Europe as **EEA + Switzerland**; this needs
+explicit review against our EU-only promise. ZDR must be approved/configured on the actual project;
+`store:false` alone is insufficient. System data/schema metadata are outside the residency
+promise, and suspected CSAM images may be retained for review even under ZDR. The gateway uses
+in-memory caching only. [Data controls](https://developers.openai.com/api/docs/guides/your-data).
+
+**Activation gap:** the API agreement requires parental/guardian consent for **all minors**;
+our present self-consent from 16 does not establish that for 16–17. Below 13 or the applicable
+digital-consent age, the provider's API guidance requires ZDR before personal-data processing.
+Age-appropriate notices, safeguards, reporting/escalation and the necessary consent evidence
+must be ready before use. [Under-18 API guidance](https://developers.openai.com/api/docs/guides/safety-checks/under-18-api-guidance).
+Consumer account age rules are not substituted for the API agreement.
+
+Before activation: retain contractual/project evidence, resolve the 16–17 consent gap and the
+regional/retention exceptions, update the in-app privacy text and `CONSENT_VERSION`, and validate
+the safeguarding flows. No consent version changes in this preparation. Details and remaining
+live/model/audio gates: [provider decision](decisions/openai-eu-2026-10-23.md).
+
+### Current processors
+
 - **Supabase** (database, auth, storage): EU region of the project.
 - **Google Vertex AI** (model): EU only — the EU multi-region endpoint `eu` (Gemini 3.6 Flash; Google
   states ML processing and storage stay in EU member states, seen as a snippet of its data-residency

@@ -72,6 +72,7 @@ import {
 } from './service.js';
 import {
   explainSchemaFor,
+  setSchemaForModel,
   parseSetFor,
   SET_PROFILES,
   structuredRules,
@@ -369,9 +370,8 @@ async function dictationSourceOf(
   );
   if (!sheet) throw new AppError('not_found', 'Material not found');
   const text = (sheet.extracted_text ?? '').trim();
-  if (text.length === 0) {
+  if (text.length === 0)
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
-  }
   return { text: text.slice(0, SHEET_CHARS), fromSheet: true };
 }
 
@@ -546,6 +546,8 @@ async function generateSet(
         system: line ? `${system}\n\n${line}` : system,
         contents,
         schema: narrowed.schema,
+        validateOutput: (json) =>
+          setSchemaForModel(input.kind, sheets?.topics ?? null, off).safeParse(json).success,
         maxOutputTokens: 10_000,
         temperature: 0.4,
         // A streamed run must be finished inside the window the run waits for it, or it would
@@ -649,10 +651,8 @@ function preparedFrom(
     ),
     input.difficulty,
   );
-  if (input.kind === 'help') {
-    // Homework is what the learner typed — tasks the model added are dropped.
-    items = items.filter((i) => fromLearnerText(i.prompt, input.text));
-  }
+  // Homework is what the learner typed — tasks the model added are dropped.
+  if (input.kind === 'help') items = items.filter((i) => fromLearnerText(i.prompt, input.text));
   if (input.kind === 'test' && !ownSheets) {
     // A practice test says what it is: questions like the test her class writes. A question on
     // material her Bundesland does not teach at her year cannot be on that test, however
@@ -758,11 +758,10 @@ async function prepareTopic(
   input: StartTopicRequest,
 ): Promise<string> {
   // A clock belongs to a test (issue #241): refused before any model call, never quietly dropped.
-  if ((input.minutes ?? null) !== null && input.kind !== 'test') {
+  if ((input.minutes ?? null) !== null && input.kind !== 'test')
     throw new AppError('invalid_input', 'A time limit belongs to a test', {
       reason: 'time_only_for_tests',
     });
-  }
 
   // The same request again (her tap on a card already prepared): that run, never a second one.
   const existing = await runOfRequest(deps.db, learner.id, input.client_request_id, deps.now());

@@ -17,7 +17,7 @@ import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
 import { VertexEmbeddings } from '../../src/llm/vertex-embeddings.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
 import { SHEETS, type Sheet } from './fixtures.js';
@@ -130,10 +130,10 @@ async function main(): Promise<void> {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',
     ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
   });
-  if (config.LLM_BACKEND !== 'vertex')
-    throw new Error('Set LLM_BACKEND=vertex and the Vertex variables (docs/SETUP-VERTEX.md)');
+  if (config.LLM_BACKEND === 'disabled')
+    throw new Error('Set a configured LLM_BACKEND and its provider configuration');
   if (!(await testDatabaseAvailable())) throw new Error('No local Postgres (LB_TEST_DATABASE_URL)');
-  const gateway = new VertexGateway(config);
+  const gateway = llmGateway(config);
   const only = process.argv.slice(2);
   const cases = only.length ? CASES.filter((c) => only.includes(c.id)) : CASES;
 
@@ -143,7 +143,7 @@ async function main(): Promise<void> {
     const env = await createTestEnv({
       start: '2026-09-28T08:00:00Z',
       gateway,
-      embeddings: new VertexEmbeddings(config),
+      embeddings: config.LLM_BACKEND === 'vertex' ? new VertexEmbeddings(config) : 'disabled',
     });
     try {
       const l = await onboard(env, {

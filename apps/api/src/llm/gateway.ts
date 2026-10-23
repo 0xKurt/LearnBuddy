@@ -2,7 +2,7 @@
 //
 // Feature code asks for a structured JSON answer that matches a schema and
 // validates it again with zod; free text is never parsed for decisions.
-// Implementations: VertexGateway (production), DisabledGateway (no model
+// Implementations: VertexGateway (default), OpenAIGateway (opt-in), DisabledGateway (no model
 // configured — callers degrade honestly), ScriptedGateway (tests only).
 
 import type { AudioMime } from '@learnbuddy/shared-types/contracts';
@@ -72,6 +72,8 @@ export type LlmRequest = {
   system: string;
   contents: LlmMessage[];
   schema: JsonSchema;
+  /** Original domain validator after structured decoding; never sent to the provider. */
+  validateOutput?: (json: unknown) => boolean;
   maxOutputTokens: number;
   temperature: number;
   timeoutMs: number;
@@ -211,11 +213,21 @@ const NO_MODEL: GatewayProfile = {
   name: 'disabled',
   media: new Set(),
   maxInlineBytes: 0,
+  acceptedMimeTypes: new Set(),
+  maxImages: 0,
+  cache: 'none',
+  repairJsonStrings: false,
+  prices: { source: 'disabled', readOn: '', models: {} },
   structuredOutput: {
     keywords: new Set(),
     keepsPropertyOrder: false,
     streamsPartialJson: false,
     maxSchemaProperties: Number.POSITIVE_INFINITY,
+    maxSchemaDepth: Number.POSITIVE_INFINITY,
+    maxEnumValues: Number.POSITIVE_INFINITY,
+    maxSchemaStringChars: Number.POSITIVE_INFINITY,
+    largeEnumThreshold: Number.POSITIVE_INFINITY,
+    maxLargeEnumChars: Number.POSITIVE_INFINITY,
   },
 };
 

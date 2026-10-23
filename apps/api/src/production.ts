@@ -4,6 +4,7 @@ import { SupabaseAuthVerifier } from './auth/verifier.js';
 import { bootWarnings, type Config } from './config.js';
 import type { Deps } from './deps.js';
 import { createDb, type PgDb } from './lib/db.js';
+import { OpenAIGateway } from './llm/openai.js';
 import { DisabledEmbeddings } from './llm/embeddings.js';
 import { DisabledGateway, type LlmGateway } from './llm/gateway.js';
 import { VertexEmbeddings } from './llm/vertex-embeddings.js';
@@ -18,6 +19,7 @@ import { SupabaseStorage } from './storage/gateway.js';
  * evals take it from here, so a change of provider is made in one place.
  */
 export function llmGateway(config: Config): LlmGateway {
+  if (config.LLM_BACKEND === 'openai') return new OpenAIGateway(config);
   return config.LLM_BACKEND === 'vertex' ? new VertexGateway(config) : new DisabledGateway();
 }
 

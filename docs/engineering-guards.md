@@ -399,3 +399,16 @@ ist.
   Modulgrenzen (#107) kosten etwa 7 s je Lauf (dependency-cruiser über beide Apps, parallel zu
   jscpd). Der Starterkit-Schritt kostet etwa eine Minute (Kopie, `pnpm install` aus dem Store
   dieses Jobs, typecheck des neuen Projekts; lokal 48 s auf 4 Kernen).
+
+## Anbieter-SDK-Grenze (#893)
+
+`tools/guards/provider-imports.mjs` prüft TypeScript/JavaScript-Imports per AST, einschließlich
+Typimporten, Reexports, `import()` und `require()`. `openai` und `@google/genai` (mit Subpfaden)
+sind nur unter `apps/api/src/llm/`, `apps/api/src/speech/` und `apps/api/src/embeddings/` erlaubt.
+Die einzigen bestehenden Eval-Ausnahmen sind explizit paketgenau:
+
+- `apps/api/evals/schema/inventory.ts` → `@google/genai` (Schema-Inventar).
+- `apps/api/evals/requests/measure.ts` → `@google/genai/tokenizer/node` (lokale Tokenmessung).
+
+Neue Eval-/Testdateien sind keine automatische Ausnahme. Der Guard und seine Regressionstests
+laufen über `pnpm guards` in den unveränderten Hooks.

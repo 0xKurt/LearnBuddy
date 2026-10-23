@@ -24,7 +24,7 @@ import { randomUUID } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 
 import { loadConfig } from '../../src/config.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { BUDDY } from './buddy.js';
 import { LEARNING } from './learning.js';
@@ -126,7 +126,7 @@ async function main(): Promise<void> {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',
     ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
   });
-  const gateway = new VertexGateway(config);
+  const gateway = llmGateway(config);
 
   for (const c of chosen) {
     const ask = askOf(c.id);

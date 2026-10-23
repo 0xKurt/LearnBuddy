@@ -29,9 +29,9 @@ import { chromium } from '@playwright/test';
 import { loadConfig } from '../../src/config.js';
 import { mentionsSolution } from '../../src/modules/practice/tutor.js';
 import type { LlmGateway } from '../../src/llm/gateway.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 
-// The Vertex variables live in apps/api/.env.local, like every other eval.
+// The provider variables live in apps/api/.env.local, like every other eval.
 const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 import {
@@ -49,7 +49,7 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-const vertex = new VertexGateway(config);
+const vertex = llmGateway(config);
 /** Reading answers kept for the transcript (to see why a sheet failed). */
 const readings: unknown[] = [];
 const gateway: LlmGateway = {

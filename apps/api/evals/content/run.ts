@@ -27,7 +27,7 @@ import { z } from 'zod';
 import { loadConfig } from '../../src/config.js';
 import type { LlmGateway } from '../../src/llm/gateway.js';
 import { toJsonSchema } from '../../src/llm/json-schema.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { closeSheetBrowser, photographSheet } from '../sheetPhoto.js';
 
@@ -41,7 +41,7 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-const vertex = new VertexGateway(config);
+const vertex = llmGateway(config);
 /** What the model answered for the steps this eval judges — printed when something fails. */
 const seen: { purpose: string; json?: unknown; error?: string }[] = [];
 const gateway: LlmGateway = {

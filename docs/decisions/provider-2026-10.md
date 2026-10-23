@@ -5,6 +5,12 @@ candidate, choose by evidence. Measured against `docs/decisions/baseline-2026-10
 axes (Speed, Qualität, Kosten, Anwendungsfall). Eval spend for this decision ≈ **$4.4 of the $15**
 allowed (ledger `BUDGET-LEDGER.md` of the audit round).
 
+> Final owner decision, 23.10.2026 (#891): **OpenAI directly**, in an EU data-residency
+> project with Zero Data Retention; **Azure is dropped**. The preparation below and PR #890
+> are superseded. Vertex remains the active default until the owner switches after the gates.
+> [Current decision, official research and implementation](openai-eu-2026-10-23.md).
+> Earlier measurements and the Azure proposal below are historical, not an activation runbook.
+
 ## Recommendation (two steps; ADR 0011)
 
 1. **Survive 19.11. on `eu/gemini-3.8-flash`, with every thinking level sent as LOW.** Of what can
@@ -41,7 +47,7 @@ declared order (`GatewayProfile`, #646).
 | eu/gemini-3.1-flash-lite for the chat turn | yes                                             | yes                                                                                                      | to 07.05.2027                     | $0.275 / $1.65                                                     | no-go for the chat: **58/65** (7 cases fail)                                                        |
 | eu/gemini-4-argon                          | yes (`eu` since 13.10.)                         | yes                                                                                                      | new                               | **$2.20 / $11** until 30.11., then $4.40 / $22                     | no-go: 6.5–10.2 s per turn, 2.7× (from Dec 5.3×) the price                                          |
 | Mistral (La Plateforme, EU)                | EU hosting stated                               | audio only in the Voxtral models, images in others: two models per feature; schema limits not documented | —                                 | not compared                                                       | not tested: new account, DPA, privacy/DPIA entries; JSON-schema size limits unknown                 |
-| Azure OpenAI (EU Data Zone)                | EU data zone                                    | structured outputs up to 5 000 properties; audio-input models not listed for Data Zone Standard          | —                                 | not compared                                                       | not tested: new account, DPA; audio path unclear                                                    |
+| Azure OpenAI (EU Data Zone)                | EU data zone                                    | earlier 5,000-property claim superseded below (23.10.); audio path unresolved                            | —                                 | not compared                                                       | not tested: new account, DPA; audio path unclear                                                    |
 
 Sources: Vertex model cards, locations and pricing pages read 14.10.2026 (KI-Audit F §1–2,
 `reports/ki-audit-2026-10-14/F-pricing.md`); Gemini 4 Argon id and price:
@@ -133,12 +139,8 @@ For **either** candidate, ≈ $3–4 of eval budget for the five suites (same as
   `MISTRAL_API_KEY`. Open before building: Mistral reads audio only with its Voxtral models and
   sheets with its vision models, so one feature may need two models; its JSON-schema size limits
   are not documented and must be tried with our 269-property turn schema.
-- **Azure OpenAI (EU Data Zone):** an Azure subscription with an Azure OpenAI resource in an EU
-  region (Sweden Central or Germany West Central), a **Data Zone Standard** deployment of a current
-  GPT model, endpoint + key in `apps/api/.env.local` (`AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_KEY`),
-  and Microsoft's DPA (part of the subscription terms). Open: which audio-input model is offered
-  as Data Zone Standard in the EU; strict structured outputs require every field `required` and
-  `additionalProperties: false`, which `json-schema.ts` would emit per gateway.
+- The formerly proposed Azure resource/deployment setup was withdrawn on 23.10.2026;
+  the direct EU project replaces it (#893).
 
 Either one then needs entries in `docs/privacy.md` §Processors and `docs/dpia.md` before
 production — the owner's (legal) call. Model Garden partners on Vertex (Claude, Mistral on
@@ -216,3 +218,10 @@ run, since 3.7 answered 0 of 10 turns in that hour; 3.8's 22/22 from 15.10. stan
   capacity — the ~10-turn interleaved A/B here (`evals/buddy`, 3.6/3.8) costs ≈ $0.35.
 - Keep 3.7 only as a last fallback, with the one-line mapping (`minimal` → `thinkingBudget: 0`
   for 3.7) built and tested first.
+
+## 23.10.2026 — superseded provider preparation (#889 → #893)
+
+The earlier Azure preparation is withdrawn by the owner's direct-EU-provider decision.
+Its adapter, startup settings and deployment instructions have been removed. Current transport,
+measured schema acceptance and benchmark results live in
+[the direct EU decision](openai-eu-2026-10-23.md).

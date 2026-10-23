@@ -2,7 +2,7 @@
 // the live model: when the first bytes come, when the first words of the reply
 // could be shown or spoken, when the reply is complete, and when the whole
 // answer (actions and all) is there — which is when code can check and apply it.
-// Needs LLM_BACKEND=vertex, GOOGLE_* variables and a local Postgres.
+// Needs a configured LLM_BACKEND, provider variables and a local Postgres.
 //   cd apps/api && npx tsx evals/stream/run.ts [rounds]
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
@@ -11,10 +11,10 @@ import type { SendMessageResponse, SessionView } from '@learnbuddy/shared-types/
 import { loadConfig } from '../../src/config.js';
 import type { LlmGateway, LlmRequest } from '../../src/llm/gateway.js';
 import { partialString } from '../../src/llm/partial.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
-// The Vertex variables live in apps/api/.env.local, like every other eval.
+// The provider variables live in apps/api/.env.local, like every other eval.
 const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 
@@ -25,7 +25,7 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-const real = new VertexGateway(config);
+const real = llmGateway(config);
 
 type Mark = {
   purpose: string;

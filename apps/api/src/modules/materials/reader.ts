@@ -11,13 +11,14 @@ import { curriculumBlock } from '../curriculum/state.js';
 import { availableLine, chooseForms, keptAndLost, offered } from '../practice/formChoice.js';
 import { choiceKey, storeChoice, storedChoice } from './formMemory.js';
 import { ageOn } from '../identity/model.js';
-import { LEAN_RULES } from './extract.js';
+import { LEAN_RULES, HomeworkExtraction } from './extract.js';
 import { readingCatalogue, readingSystem } from './readingPrompt.js';
 import { streamReading, type ReadingConsumer } from './streamReading.js';
 import {
   EXTRACT_PROMPT_VERSION,
   EXTRACTION_SCHEMA,
   HOMEWORK_SCHEMA,
+  StudyExtraction,
   SOURCES_PROMPT_VERSION,
 } from './sources.js';
 
@@ -147,6 +148,8 @@ export async function sheetReader(
         system: `${system}${line ? `\n\n${line}` : ''}${lean ? `\n\n${LEAN_RULES}` : ''}${extra ? `\n\n${extra}` : ''}`,
         contents,
         schema,
+        validateOutput: (json) =>
+          (opts.homework ? HomeworkExtraction : StudyExtraction).safeParse(json).success,
         // Homework is at most 12 tasks without worked solutions: a smaller limit, so a
         // reading that runs on is cut off after seconds, not after 40 (live finding 2).
         maxOutputTokens: opts.homework ? 8_000 : 12_000,

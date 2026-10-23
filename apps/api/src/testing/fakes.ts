@@ -24,7 +24,7 @@ import {
   type JsonSchema,
 } from '../llm/gateway.js';
 import { answerUpTo } from '../llm/partial.js';
-import type { GatewayProfile } from '../llm/profile.js';
+import { assertMedia, type GatewayProfile } from '../llm/profile.js';
 import { withinBudget } from '../llm/schemaBudget.js';
 import { VERTEX_PROFILE } from '../llm/vertex.js';
 import type { PushMessage, PushReceipt, PushTicket, PushTransport } from '../push/transport.js';
@@ -288,6 +288,8 @@ export class ScriptedGateway implements LlmGateway {
   }
 
   async generate(req: LlmRequest): Promise<LlmResult> {
+    if (req.signal?.aborted) throw new LlmError('cancelled', 'the caller stopped waiting');
+    assertMedia(this.profile, req);
     const c = fakeChooser();
     if (c?.isChoosing(req)) {
       this.choices.push(req);
@@ -333,17 +335,28 @@ export class ScriptedGateway implements LlmGateway {
         req.onPartial(text.slice(0, cutAfter(text, pause.key, pause.n)));
         // The rest of the answer is still being written: whatever the caller does with the first
         // elements, it does it now.
-        await pause.until;
+        try {
+          await untilCancelled(pause.until, req.signal);
+        } catch (error) {
+          if (error instanceof LlmError && error.kind === 'cancelled')
+            throw new LlmError('cancelled', error.message, { ...SCRIPTED_USAGE });
+          throw error;
+        }
         req.onPartial(text);
       } else {
         for (const n of [
           Math.floor(text.length / 3),
           Math.floor((2 * text.length) / 3),
           text.length,
-        ])
+        ]) {
           req.onPartial(text.slice(0, n));
+          if (req.signal?.aborted)
+            throw new LlmError('cancelled', 'the caller stopped waiting', { ...SCRIPTED_USAGE });
+        }
       }
     }
+    if (req.signal?.aborted)
+      throw new LlmError('cancelled', 'the caller stopped waiting', { ...SCRIPTED_USAGE });
     return { json, usage: { ...SCRIPTED_USAGE } };
   }
 }
