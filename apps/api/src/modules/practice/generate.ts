@@ -47,6 +47,7 @@ import { formsOfSession, formsOfSheets, type KnownForms } from './formSources.js
 import { choosingCatalogue } from './choosingCatalogue.js';
 import { runOfRequest } from './lifecycle.js';
 import { homeLandLine } from './mapCheck.js';
+import { learningGaps, LEARNING_GAPS_RULE } from './mistakeContext.js';
 import {
   CHOICE_RULES,
   figureRules,
@@ -470,6 +471,15 @@ async function generateSet(
     : undefined;
   try {
     const day = localParts(now, timezone).date;
+    const gaps =
+      input.kind === 'practice' || input.kind === 'test'
+        ? await learningGaps(deps.db, learner.id, {
+            subject: input.subject,
+            topics: sheets?.topics ?? pattern?.topics ?? null,
+            fromSession: sheets ? null : input.from_session_id,
+            goalId: sheets?.goalId,
+          })
+        : null;
     const contents: LlmMessage[] = [
       {
         role: 'user',
@@ -496,6 +506,7 @@ async function generateSet(
               dictation?.fromSheet
                 ? `SHEET TEXT (${SHEET_USE[input.kind]}):\n${dictation.text}`
                 : null,
+              gaps,
               `LEARNER'S TEXT:\n${input.text}`,
             ]
               .filter(Boolean)
@@ -1139,5 +1150,6 @@ export const GENERATE_PROMPT_VERSION = promptVersion(
   GENERATE_SYSTEM,
   TASK,
   LEVEL,
+  LEARNING_GAPS_RULE,
   (Object.keys(TASK) as StartTopicRequest['kind'][]).map((kind) => explainSchemaFor(kind, null)),
 );
