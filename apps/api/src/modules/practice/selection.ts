@@ -35,6 +35,8 @@ import type { DifficultyWish, VocabDirection } from '@learnbuddy/shared-types/co
 
 import type { Db } from '../../lib/db.js';
 import { FREE_TEXT_KINDS } from './itemFields.js';
+import { adaptPractice, topicTargets } from './adaptation.js';
+import { recentPracticeResults } from './mistakeContext.js';
 import { stalePicture, type PictureQuestion } from './schematicCheck.js';
 
 export type PracticeScope = {
@@ -105,6 +107,9 @@ export function minutesFor(count: number): number {
 type Candidate = {
   id: string;
   topic: string | null;
+  subject_id: string | null;
+  difficulty: number;
+  reviewed: boolean;
   due: Date | null;
   /** The task in parts it is a part of (`items.task_part`, #297), and its letter; else null. */
   task: string | null;
@@ -202,7 +207,7 @@ export async function selectPracticeItems(
     // The wishes narrow the pool before the limit, so nothing she asked for is cut off by
     // 200 rows of something else; the difficulty is measured on what is left (its median).
     `with pool as (
-       select i.id, i.topic, i.difficulty, i.created_at, i.seq, st.due, st.item_id as reviewed,
+       select i.id, i.topic, i.subject_id, i.difficulty, i.created_at, i.seq, st.due, st.item_id as reviewed,
               i.task_part->>'group' as task, i.task_part->>'part' as part,
               -- A labelled picture's question, to be read back through its check (#599).
               case when i.figure->>'type' = 'schematic'
@@ -254,7 +259,8 @@ export async function selectPracticeItems(
        select percentile_cont(0.5) within group (order by difficulty::double precision) as mid
          from pool
      )
-     select p.id, p.topic, p.due, p.task, p.part, p.picture
+     select p.id, p.topic, p.subject_id, p.difficulty, (p.reviewed is not null) as reviewed,
+            p.due, p.task, p.part, p.picture
        from pool p, middle
       where $9::text is null
          or ($9 = 'easier' and p.difficulty < middle.mid)
@@ -270,8 +276,8 @@ export async function selectPracticeItems(
         -- set is the same set twice (issue #223 point 2).
         p.created_at, p.seq
       -- No fixed ceiling: a word list with fifty words is fifty questions (#145). The
-      -- limit follows what was asked for, with room above it so a focus topic still has
-      -- something to sort; "all" takes the lot.
+      -- practice pool stays whole so a second topic or target level after row 200 can
+      -- still be chosen; other runs retain their existing window. "all" takes the lot.
       -- NULL is no limit in Postgres; the cast is what makes the driver send it as one.
       limit $11::bigint`,
     [
@@ -285,7 +291,7 @@ export async function selectPracticeItems(
       wish.ownLanguage ?? null,
       wish.difficulty ?? null,
       wish.vocabularyOnly === true,
-      count === 'all' ? null : Math.max(200, count),
+      count === 'all' || run === 'practice' ? null : Math.max(200, count),
       run,
       FREE_TEXT_KINDS,
       wish.dueOnly === true,
@@ -307,6 +313,14 @@ export async function selectPracticeItems(
       const rest = askable.filter((c) => !focused.includes(c));
       pool = [...focused, ...rest];
     }
+  }
+  if (run === 'practice') {
+    const topics = [...new Set(pool.flatMap((c) => (c.topic?.trim() ? [c.topic] : [])))];
+    const targets =
+      !wish.difficulty && topics.length > 0
+        ? topicTargets(await recentPracticeResults(db, learnerId, { subjectId, topics }), now)
+        : [];
+    pool = adaptPractice(wholeTasksFirst(pool, 'all'), targets, now);
   }
   return wholeTasksFirst(pool, count).map((c) => c.id);
 }

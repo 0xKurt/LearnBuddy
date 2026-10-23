@@ -3,6 +3,7 @@
 
 import type { Db } from '../../lib/db.js';
 import { FREE_TEXT_KINDS } from './itemFields.js';
+import { topicTargets, type TopicResult, type TopicTarget } from './adaptation.js';
 
 /** Includes the instruction, labels and JSON escaping, not just the learner's data. */
 const MAX_CHARS = 480;
@@ -19,8 +20,11 @@ type Mistake = {
 };
 
 /** Rows arrive newest first; frequency ranks topics, recency breaks ties. */
-export function mistakeContext(rows: readonly Mistake[]): string | null {
-  if (rows.length === 0) return null;
+export function mistakeContext(
+  rows: readonly Mistake[],
+  targets: readonly TopicTarget[] = [],
+): string | null {
+  if (rows.length === 0 && targets.length === 0) return null;
   const topics = new Map<string, { row: Mistake; count: number }>();
   const key = (r: Mistake) => JSON.stringify([r.subject, r.topic.toLowerCase()]);
   for (const row of rows) {
@@ -38,6 +42,13 @@ export function mistakeContext(rows: readonly Mistake[]): string | null {
   for (const { row } of chosen) {
     append(`SHAKY: ${JSON.stringify([compact(row.subject, 24), compact(row.topic, 40)])}`);
   }
+  for (const target of targets.slice(0, 2)) {
+    // Keep exact labels for a level instruction: a shortened label could mean another topic.
+    if ((target.subject?.length ?? 0) <= 24 && target.topic.length <= 40)
+      append(
+        `TARGET DIFFICULTY: ${JSON.stringify([target.subject, target.topic, target.difficulty])}`,
+      );
+  }
   const selected = new Set(chosen.map(({ row }) => key(row)));
   const latest = rows
     .filter((r) => r.said !== null && selected.has(key(r)))
@@ -51,20 +62,25 @@ export function mistakeContext(rows: readonly Mistake[]): string | null {
   return text;
 }
 
-/** Latest measured result per question; a later first-try success clears the old miss. */
-export async function learningGaps(
+type ResultScope = {
+  subject?: string | null;
+  subjectId?: string | null;
+  topics: readonly string[] | null;
+  fromSession?: string | null;
+  goalId?: string | null;
+};
+
+type MeasuredResult = Mistake & TopicResult;
+
+/** Latest measured result per question; shared by new-run context and selection (#871/#872). */
+export async function recentPracticeResults(
   db: Db,
   learnerId: string,
-  scope: {
-    subject?: string | null;
-    topics: readonly string[] | null;
-    fromSession?: string | null;
-    goalId?: string | null;
-  },
-): Promise<string | null> {
-  const rows = await db.query<Mistake>(
+  scope: ResultScope,
+): Promise<MeasuredResult[]> {
+  return db.query<MeasuredResult>(
     `with recent as (
-       select i.id, i.seq, i.prompt, trim(i.topic) as topic, s.name as subject,
+       select i.id, i.seq, i.prompt, i.subject_id, i.difficulty, trim(i.topic) as topic, s.name as subject,
               last.session_id, last.status, last.first_try_correct, last.closed_at,
               last.session_seq, last.position
          from items i
@@ -86,6 +102,7 @@ export async function learningGaps(
           and i.origin <> 'homework' and i.kind <> all($4::text[])
           and nullif(trim(i.topic), '') is not null
           and ($2::text is null or lower(s.name) = lower($2))
+          and ($8::uuid is null or i.subject_id = $8)
           and ($3::text[] is null or lower(trim(i.topic)) = any($3))
           -- A source's subject is structured too: same-named topics in another subject do not fit.
           and ($5::uuid is null or exists (
@@ -100,14 +117,15 @@ export async function learningGaps(
         order by last.closed_at desc nulls last, last.session_seq desc, last.position desc, i.seq desc
         limit $7
      )
-     select r.subject, r.topic, r.prompt, wrong.text as said, wrong.created_at as wrong_at from recent r
+     select r.subject_id, r.subject, r.topic, r.prompt, r.difficulty, r.closed_at,
+            (r.status = 'correct' and coalesce(r.first_try_correct, false)) as correct,
+            wrong.text as said, wrong.created_at as wrong_at from recent r
      left join lateral (
        select t.text, t.created_at from practice_turns t
         where t.learner_id = $1 and t.session_id = r.session_id and t.item_id = r.id
           and t.role = 'learner' and t.verdict in ('incorrect','partially_correct')
         order by t.seq desc limit 1
      ) wrong on true
-     where not (r.status = 'correct' and coalesce(r.first_try_correct, false))
      order by r.closed_at desc nulls last, r.session_seq desc, r.position desc, r.seq desc`,
     [
       learnerId,
@@ -117,7 +135,20 @@ export async function learningGaps(
       scope.fromSession ?? null,
       scope.goalId ?? null,
       RECENT_ITEMS,
+      scope.subjectId ?? null,
     ],
   );
-  return mistakeContext(rows);
+}
+
+/** One bounded context; the code-computed levels use the same outcomes, never a second query. */
+export async function learningGaps(
+  db: Db,
+  learnerId: string,
+  scope: ResultScope & { adaptiveAt?: Date },
+): Promise<string | null> {
+  const rows = await recentPracticeResults(db, learnerId, scope);
+  return mistakeContext(
+    rows.filter((r) => !r.correct),
+    scope.adaptiveAt ? topicTargets(rows, scope.adaptiveAt) : [],
+  );
 }

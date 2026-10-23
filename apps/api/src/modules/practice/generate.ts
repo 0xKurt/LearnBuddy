@@ -478,6 +478,7 @@ async function generateSet(
             topics: sheets?.topics ?? pattern?.topics ?? null,
             fromSession: sheets ? null : input.from_session_id,
             goalId: sheets?.goalId,
+            adaptiveAt: input.kind === 'practice' && !input.difficulty ? now : undefined,
           })
         : null;
     const contents: LlmMessage[] = [
