@@ -11,8 +11,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import pg from 'pg';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { checkDatabase } from '../../scripts/deploy-check.js';
 import { TEST_DATABASE_URL, testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, TEST_TICK_SECRET, type TestEnv } from '../testing/harness.js';
 
@@ -37,6 +38,7 @@ describe.skipIf(!dbReady)('the API role from infra/supabase/templates/api-role.s
   let env: TestEnv;
   let role: string;
   let adminUrl: string;
+  let apiUrl: string;
 
   beforeEach(async () => {
     // A missing psql must fail, not skip: the template is only proven if it really ran.
@@ -53,12 +55,14 @@ describe.skipIf(!dbReady)('the API role from infra/supabase/templates/api-role.s
         const u = new URL(url);
         u.username = role;
         u.password = password;
-        return u.toString();
+        apiUrl = u.toString();
+        return apiUrl;
       },
     });
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await env.close();
     // Roles are per cluster; the database (with its default privileges) is gone by now.
     const admin = new pg.Client({ connectionString: TEST_DATABASE_URL });
@@ -94,6 +98,74 @@ describe.skipIf(!dbReady)('the API role from infra/supabase/templates/api-role.s
     await expect(env.db.query('select * from auth.users limit 1')).rejects.toThrow(
       /permission denied/,
     );
+  });
+
+  async function adminSql(sql: string): Promise<void> {
+    const admin = new pg.Client({ connectionString: adminUrl });
+    await admin.connect();
+    try {
+      await admin.query(sql);
+    } finally {
+      await admin.end();
+    }
+  }
+
+  async function deployFailures(): Promise<string[]> {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await checkDatabase(apiUrl);
+    return errors.mock.calls.map(([message]) => String(message));
+  }
+
+  it('accepts the template role in the deploy check', async () => {
+    expect(await deployFailures()).toEqual([]);
+  });
+
+  it.each([
+    ['no RLS bypass', 'nobypassrls', 'BYPASSRLS'],
+    ['superuser', 'superuser', 'SUPERUSER'],
+    ['database creation', 'createdb', 'CREATEDB'],
+    ['role creation', 'createrole', 'CREATEROLE'],
+    ['replication', 'replication', 'REPLICATION'],
+  ])('rejects %s in the deploy check', async (_label, attribute, diagnostic) => {
+    await adminSql(`alter role "${role}" ${attribute}`);
+    expect((await deployFailures()).join('\n')).toContain(diagnostic);
+  });
+
+  it.each(['select', 'insert', 'update', 'delete'])('detects missing table %s', async (grant) => {
+    await adminSql(`revoke ${grant} on public.accounts from "${role}"`);
+    expect((await deployFailures()).join('\n')).toContain(`public.accounts: missing ${grant}`);
+  });
+
+  it('checks sequence, function and migration-read rights individually', async () => {
+    await adminSql(`
+      create sequence public.role_probe;
+      revoke update on sequence public.role_probe from "${role}";
+      create function public.role_probe() returns int language sql as 'select 1';
+      revoke execute on function public.role_probe() from public, "${role}";
+      create schema supabase_migrations;
+      create table supabase_migrations.schema_migrations (version text, name text);
+      grant usage on schema supabase_migrations to "${role}";
+    `);
+    const failures = (await deployFailures()).join('\n');
+    expect(failures).toContain('public.role_probe: missing update');
+    expect(failures).toContain('role_probe(): missing execute');
+    expect(failures).toContain('supabase_migrations.schema_migrations: missing select');
+  });
+
+  it('detects missing public usage and table ownership', async () => {
+    await adminSql(`revoke usage on schema public from public, "${role}";
+      alter table public.accounts owner to "${role}"`);
+    const failures = (await deployFailures()).join('\n');
+    expect(failures).toContain('public: missing usage');
+    expect(failures).toContain('public.accounts: forbidden ownership');
+  });
+
+  it('detects effective schema CREATE inherited from PUBLIC and private schema access', async () => {
+    await adminSql(`grant create on schema public to public;
+      grant usage on schema auth to "${role}"`);
+    const failures = (await deployFailures()).join('\n');
+    expect(failures).toContain('public: forbidden create');
+    expect(failures).toContain('auth: forbidden usage');
   });
 
   it('runs a whole account through the API: sign-up, material, export, deletion, health', async () => {
