@@ -219,10 +219,13 @@ type DeletionState = {
   auth_user_id?: string;
   learner_id?: string | null;
   /**
-   * content stage: the table to go on with, by name, so a table a domain registers cannot shift
-   * it. A number is an index written before #107 cut 6; none: the first table.
+   * Compatibility cursor for older workers. Numbers came from before #107 cut 6.
+   * Without completed_tables, neither an index nor one name proves which tables were emptied:
+   * rescan once, idempotently, rather than guessing the list used by that release.
    */
   table?: string | number;
+  /** Content progress by identity, independent of the current registry order (#862). */
+  completed_tables?: string[];
 };
 
 class LeaseLost extends Error {}
@@ -289,10 +292,15 @@ export async function executeAccountDeletion(deps: Deps, job: JobRow): Promise<v
           );
         }
         // The content stage starts at its first table (no `table` yet).
-        const next = { ...state, stage: 'content' as const, table: undefined };
+        const next = {
+          ...state,
+          stage: 'content' as const,
+          table: undefined,
+          completed_tables: [],
+        };
         if (!(await saveJobPayload(tx, job, next))) throw new LeaseLost('lease lost');
       });
-      Object.assign(state, { stage: 'content', table: undefined });
+      Object.assign(state, { stage: 'content', table: undefined, completed_tables: [] });
       // Try them right away; whatever Storage refuses now is retried by the queue (D-9).
       await drainStorageDeletions(deps, { prefix: `${accountId}/` });
     }
@@ -300,34 +308,44 @@ export async function executeAccountDeletion(deps: Deps, job: JobRow): Promise<v
     if (state.stage === 'content') {
       const started = Date.now();
       const tables = contentTables();
-      // By name; a number is an index from before #107 cut 6: start again from the first table
-      // (each delete only finds what is left).
-      const from = tables.findIndex((t) => t.table === state.table);
-      let table = from >= 0 ? from : 0;
-      while (state.learner_id && table < tables.length) {
-        const t = tables[table]!;
-        // Table names and row queries come from code (the core's list, the domain's
-        // registration), never from input.
-        const [r] = await deps.db.query<{ n: number }>(
-          `with d as (delete from ${t.table}
-                       where ctid = any(array(${t.rows} limit ${CONTENT_BATCH}))
-                       returning 1)
-           select count(*)::int as n from d`,
-          [state.learner_id],
-        );
-        if ((r?.n ?? 0) < CONTENT_BATCH) {
-          table++;
-          await save({ ...state, table: tables[table]?.table });
-        }
-        if (Date.now() - started > CONTENT_BUDGET_MS) {
-          // Resumes from the saved table on the next run (soon, not after a backoff).
-          await rescheduleJob(deps.db, job, {
-            now: deps.now(),
-            runAt: deps.now(),
-            error: 'continues',
+      const completed = new Set(state.completed_tables ?? []);
+      for (const t of state.learner_id ? tables : []) {
+        if (completed.has(t.table)) continue;
+        let count: number;
+        do {
+          // Delete and progress commit together. A crash or a lost lease cannot leave a
+          // completed batch with an older cursor. Names and queries only come from code.
+          const batch = await deps.db.tx(async (tx) => {
+            const [r] = await tx.query<{ n: number }>(
+              `with d as (delete from ${t.table}
+                           where ctid = any(array(${t.rows} limit ${CONTENT_BATCH}))
+                           returning 1)
+               select count(*)::int as n from d`,
+              [state.learner_id],
+            );
+            const n = r?.n ?? 0;
+            const done = n < CONTENT_BATCH ? [...completed, t.table] : [...completed];
+            const next: DeletionState = {
+              ...state,
+              completed_tables: done,
+              table: tables.find((candidate) => !done.includes(candidate.table))?.table,
+            };
+            if (!(await saveJobPayload(tx, job, next))) throw new LeaseLost('lease lost');
+            return { n, next };
           });
-          return;
-        }
+          Object.assign(state, batch.next);
+          count = batch.n;
+          if (count < CONTENT_BATCH) completed.add(t.table);
+          if (Date.now() - started > CONTENT_BUDGET_MS) {
+            // An empty remainder is durable too: the next run proceeds straight to auth.
+            await rescheduleJob(deps.db, job, {
+              now: deps.now(),
+              runAt: deps.now(),
+              error: 'continues',
+            });
+            return;
+          }
+        } while (count === CONTENT_BATCH);
       }
       await save({ ...state, stage: 'auth' });
     }
