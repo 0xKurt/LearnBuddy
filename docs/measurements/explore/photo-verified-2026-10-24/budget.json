@@ -1,0 +1,409 @@
+{
+  "spentUsd": 0.18070699999999998,
+  "reservedUsd": 2.7755575615628914e-17,
+  "receipts": [
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 15,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 1744,
+        "latencyMs": 593
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 6777,
+        "outputTokens": 560,
+        "thoughtTokens": 0,
+        "cachedTokens": 3968,
+        "costMicros": 8364,
+        "latencyMs": 2250
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1892,
+        "outputTokens": 17,
+        "thoughtTokens": 31,
+        "cachedTokens": 0,
+        "costMicros": 1799,
+        "latencyMs": 839
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3597,
+        "outputTokens": 52,
+        "thoughtTokens": 150,
+        "cachedTokens": 2688,
+        "costMicros": 3968,
+        "latencyMs": 1442
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12450,
+        "outputTokens": 86,
+        "thoughtTokens": 26,
+        "cachedTokens": 10880,
+        "costMicros": 10826,
+        "latencyMs": 1174
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 15,
+        "thoughtTokens": 0,
+        "cachedTokens": 1664,
+        "costMicros": 1744,
+        "latencyMs": 557
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 6777,
+        "outputTokens": 556,
+        "thoughtTokens": 0,
+        "cachedTokens": 6400,
+        "costMicros": 8344,
+        "latencyMs": 2262
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1898,
+        "outputTokens": 17,
+        "thoughtTokens": 23,
+        "cachedTokens": 0,
+        "costMicros": 1764,
+        "latencyMs": 742
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3597,
+        "outputTokens": 63,
+        "thoughtTokens": 340,
+        "cachedTokens": 3456,
+        "costMicros": 4963,
+        "latencyMs": 2161
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12450,
+        "outputTokens": 79,
+        "thoughtTokens": 28,
+        "cachedTokens": 10880,
+        "costMicros": 10801,
+        "latencyMs": 1270
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 15,
+        "thoughtTokens": 0,
+        "cachedTokens": 1664,
+        "costMicros": 1744,
+        "latencyMs": 555
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 6777,
+        "outputTokens": 556,
+        "thoughtTokens": 0,
+        "cachedTokens": 3968,
+        "costMicros": 8344,
+        "latencyMs": 2233
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1898,
+        "outputTokens": 17,
+        "thoughtTokens": 16,
+        "cachedTokens": 0,
+        "costMicros": 1730,
+        "latencyMs": 680
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3597,
+        "outputTokens": 61,
+        "thoughtTokens": 320,
+        "cachedTokens": 3456,
+        "costMicros": 4854,
+        "latencyMs": 1915
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12450,
+        "outputTokens": 71,
+        "thoughtTokens": 50,
+        "cachedTokens": 12288,
+        "costMicros": 10871,
+        "latencyMs": 1212
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 17,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 1754,
+        "latencyMs": 626
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 7366,
+        "outputTokens": 552,
+        "thoughtTokens": 0,
+        "cachedTokens": 7040,
+        "costMicros": 8810,
+        "latencyMs": 2106
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1892,
+        "outputTokens": 17,
+        "thoughtTokens": 42,
+        "cachedTokens": 0,
+        "costMicros": 1853,
+        "latencyMs": 738
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3570,
+        "outputTokens": 70,
+        "thoughtTokens": 512,
+        "cachedTokens": 2688,
+        "costMicros": 5827,
+        "latencyMs": 2793
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12340,
+        "outputTokens": 62,
+        "thoughtTokens": 176,
+        "cachedTokens": 10880,
+        "costMicros": 11359,
+        "latencyMs": 1610
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12492,
+        "outputTokens": 78,
+        "thoughtTokens": 147,
+        "cachedTokens": 12160,
+        "costMicros": 11420,
+        "latencyMs": 1872
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 17,
+        "thoughtTokens": 0,
+        "cachedTokens": 1664,
+        "costMicros": 1754,
+        "latencyMs": 609
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 7366,
+        "outputTokens": 579,
+        "thoughtTokens": 0,
+        "cachedTokens": 7040,
+        "costMicros": 8943,
+        "latencyMs": 2127
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1898,
+        "outputTokens": 17,
+        "thoughtTokens": 19,
+        "cachedTokens": 1536,
+        "costMicros": 1745,
+        "latencyMs": 674
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3570,
+        "outputTokens": 163,
+        "thoughtTokens": 512,
+        "cachedTokens": 2688,
+        "costMicros": 6287,
+        "latencyMs": 3025
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12362,
+        "outputTokens": 77,
+        "thoughtTokens": 140,
+        "cachedTokens": 6784,
+        "costMicros": 11273,
+        "latencyMs": 1538
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 17,
+        "thoughtTokens": 0,
+        "cachedTokens": 1664,
+        "costMicros": 1754,
+        "latencyMs": 580
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 7366,
+        "outputTokens": 595,
+        "thoughtTokens": 0,
+        "cachedTokens": 7040,
+        "costMicros": 9023,
+        "latencyMs": 2204
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1898,
+        "outputTokens": 17,
+        "thoughtTokens": 29,
+        "cachedTokens": 1536,
+        "costMicros": 1794,
+        "latencyMs": 775
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3570,
+        "outputTokens": 63,
+        "thoughtTokens": 261,
+        "cachedTokens": 3456,
+        "costMicros": 4550,
+        "latencyMs": 1767
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12340,
+        "outputTokens": 65,
+        "thoughtTokens": 40,
+        "cachedTokens": 12160,
+        "costMicros": 10701,
+        "latencyMs": 1114
+      },
+      "reservedUsd": 0
+    }
+  ]
+}

@@ -1,0 +1,469 @@
+{
+  "goal": {
+    "id": "summary-not-repeat",
+    "issue": 937,
+    "wants": "A structured condensation of the conversation",
+    "messages": [
+      "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "Mach mir bitte eine kurze Zusammenfassung davon."
+    ],
+    "expect": "summary"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "27f0c44c-890f-4765-9aa6-1721a5b4a80d",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "learner",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:44:44.269Z",
+      "updated_at": "2026-10-24T17:44:44.271Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "570e6946-7035-4218-af1c-38b4e95fc845",
+        "role": "learner",
+        "text": "Cuéntame en detalle todo sobre el esqueleto humano.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8a2e1bb2-14d0-4353-8e02-18e705692abc",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b32484cd-8ff1-41be-b336-c98fc328f0e4",
+        "role": "buddy",
+        "text": "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "huesos principales",
+          "articulaciones",
+          "funciones"
+        ],
+        "reply_to_id": "570e6946-7035-4218-af1c-38b4e95fc845",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cb22d967-d376-4830-992a-e875c3142c5d",
+        "role": "learner",
+        "text": "Hazme un resumen breve de eso.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "16bf93f0-67d4-4065-b1de-9806d022b67f",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4fe12091-7a8e-4f41-9c2f-4fc446ee9a74",
+        "role": "buddy",
+        "text": "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cb22d967-d376-4830-992a-e875c3142c5d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "de2c7aeb-bf9b-4703-8bdc-7de180a5abb7",
+        "role": "learner",
+        "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a7dc6094-8352-4b5c-bd58-db9dbbe8ce3d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2c6e265a-42d5-4003-9d30-b5c1ce001fd9",
+        "role": "buddy",
+        "text": "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobarlo.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "de2c7aeb-bf9b-4703-8bdc-7de180a5abb7",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "27f0c44c-890f-4765-9aa6-1721a5b4a80d",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "learner",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 7,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:44:44.269Z",
+      "updated_at": "2026-10-24T17:44:51.661Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Cuéntame en detalle todo sobre el esqueleto humano.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Claro",
+            "Claro:",
+            "Claro: el",
+            "Claro: el es",
+            "Claro: el esquele",
+            "Claro: el esqueleto",
+            "Claro: el esqueleto humano",
+            "Claro: el esqueleto humano es",
+            "Claro: el esqueleto humano es como",
+            "Claro: el esqueleto humano es como el",
+            "Claro: el esqueleto humano es como el ar",
+            "Claro: el esqueleto humano es como el armaz",
+            "Claro: el esqueleto humano es como el armazón",
+            "Claro: el esqueleto humano es como el armazón de",
+            "Claro: el esqueleto humano es como el armazón de una",
+            "Claro: el esqueleto humano es como el armazón de una tienda",
+            "Claro: el esqueleto humano es como el armazón de una tienda de",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña;",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene,",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro,",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmon",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones.",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de hues",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articul",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones,",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede dobl",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse,",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el c",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rod",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres,",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta:",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quier",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los hues",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales,",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articul",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?",
+            "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?"
+          ],
+          "ms": 2221,
+          "text": "Cuéntame en detalle todo sobre el esqueleto humano.",
+          "id": "8a2e1bb2-14d0-4353-8e02-18e705692abc"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Hazme un resumen breve de eso.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Cuéntame en detalle todo sobre el esqueleto humano."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Claro",
+            "Claro:",
+            "Claro: el",
+            "Claro: el es",
+            "Claro: el esquele",
+            "Claro: el esqueleto",
+            "Claro: el esqueleto humano",
+            "Claro: el esqueleto humano es",
+            "Claro: el esqueleto humano es el",
+            "Claro: el esqueleto humano es el ar",
+            "Claro: el esqueleto humano es el armaz",
+            "Claro: el esqueleto humano es el armazón",
+            "Claro: el esqueleto humano es el armazón del",
+            "Claro: el esqueleto humano es el armazón del cuerpo",
+            "Claro: el esqueleto humano es el armazón del cuerpo.",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene,",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes;",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además,",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articul",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos mov",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos",
+            "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos."
+          ],
+          "ms": 1245,
+          "text": "Hazme un resumen breve de eso.",
+          "id": "16bf93f0-67d4-4065-b1de-9806d022b67f"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Cuéntame en detalle todo sobre el esqueleto humano."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?"
+          },
+          {
+            "who": "learner",
+            "text": "Hazme un resumen breve de eso."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Sí",
+            "Sí,",
+            "Sí, está",
+            "Sí, está muy",
+            "Sí, está muy bien",
+            "Sí, está muy bien estruct",
+            "Sí, está muy bien estructurado",
+            "Sí, está muy bien estructurado y",
+            "Sí, está muy bien estructurado y claro",
+            "Sí, está muy bien estructurado y claro.",
+            "Sí, está muy bien estructurado y claro. Si",
+            "Sí, está muy bien estructurado y claro. Si quieres",
+            "Sí, está muy bien estructurado y claro. Si quieres,",
+            "Sí, está muy bien estructurado y claro. Si quieres, te",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini rep",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago ",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobar",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobarlo",
+            "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobarlo."
+          ],
+          "ms": 1907,
+          "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?",
+          "id": "a7dc6094-8352-4b5c-bd58-db9dbbe8ce3d"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "spanish-teen-summary-not-repeat",
+  "persona": {
+    "id": "spanish-teen",
+    "age": 16,
+    "locale": "es",
+    "style": "Spanish first language, strong reader, speech-like prose",
+    "behaviour": "Switches topic and requests a hint before answering"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": true
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

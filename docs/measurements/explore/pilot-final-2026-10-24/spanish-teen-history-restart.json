@@ -1,0 +1,1019 @@
+{
+  "goal": {
+    "id": "history-restart",
+    "issue": 937,
+    "wants": "Full server conversation after switching mode and restarting",
+    "messages": [
+      "Erkläre mir Brüche.",
+      "Wie addiere ich sie?",
+      "Fass das bitte zusammen."
+    ],
+    "expect": "history"
+  },
+  "initial": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "570e6946-7035-4218-af1c-38b4e95fc845",
+        "role": "learner",
+        "text": "Cuéntame en detalle todo sobre el esqueleto humano.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8a2e1bb2-14d0-4353-8e02-18e705692abc",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b32484cd-8ff1-41be-b336-c98fc328f0e4",
+        "role": "buddy",
+        "text": "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "huesos principales",
+          "articulaciones",
+          "funciones"
+        ],
+        "reply_to_id": "570e6946-7035-4218-af1c-38b4e95fc845",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cb22d967-d376-4830-992a-e875c3142c5d",
+        "role": "learner",
+        "text": "Hazme un resumen breve de eso.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "16bf93f0-67d4-4065-b1de-9806d022b67f",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4fe12091-7a8e-4f41-9c2f-4fc446ee9a74",
+        "role": "buddy",
+        "text": "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cb22d967-d376-4830-992a-e875c3142c5d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "de2c7aeb-bf9b-4703-8bdc-7de180a5abb7",
+        "role": "learner",
+        "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a7dc6094-8352-4b5c-bd58-db9dbbe8ce3d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2c6e265a-42d5-4003-9d30-b5c1ce001fd9",
+        "role": "buddy",
+        "text": "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobarlo.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "de2c7aeb-bf9b-4703-8bdc-7de180a5abb7",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "767089b3-965c-4d93-95a5-fca690ca63df",
+        "role": "learner",
+        "text": "Recuérdame dentro de 5 minutos que tengo que practicar inglés.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9e788369-1412-47f6-94c2-5ab00d2926e2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "29f85943-9fea-4d00-9006-5a429bc0cc68",
+        "role": "buddy",
+        "text": "Listo: te lo recuerdo dentro de 5 minutos. Te llegará en la app.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "767089b3-965c-4d93-95a5-fca690ca63df",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "6fcbe737-ca6d-47df-b316-b05857c01925",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "practicar inglés",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "6d111012-0bce-427f-b000-7142ff981909",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d5603765-e02c-45a5-aeab-3077def6855f",
+        "role": "buddy",
+        "text": "Como acordamos: practicar inglés.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "9b5e1c9e-28a3-4df6-be44-119367be5a2e",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Como acordamos: practicar inglés.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "6d111012-0bce-427f-b000-7142ff981909",
+          "title": "practicar inglés",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "44a02790-1cfc-4ff2-82b1-9567da48f857",
+        "role": "learner",
+        "text": "Te recuerdo que es hora de practicar inglés. Para empezar, ¿quieres que te prepare un texto corto para leer o prefieres hacer algunas preguntas para practicar vocabulario?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f4d97407-e298-4c76-975c-373c3f5809c7",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "cb8a2445-218f-4f19-99a6-1fee06ded799",
+        "role": "buddy",
+        "text": "Sí, seguimos con inglés; si quieres, abre la práctica y empezamos.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "44a02790-1cfc-4ff2-82b1-9567da48f857",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "27f0c44c-890f-4765-9aa6-1721a5b4a80d",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "learner",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 14,
+      "last_seen_at": "2026-10-24T10:06:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:44:44.269Z",
+      "updated_at": "2026-10-24T17:44:59.872Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "practicar inglés",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "final": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "570e6946-7035-4218-af1c-38b4e95fc845",
+        "role": "learner",
+        "text": "Cuéntame en detalle todo sobre el esqueleto humano.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8a2e1bb2-14d0-4353-8e02-18e705692abc",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b32484cd-8ff1-41be-b336-c98fc328f0e4",
+        "role": "buddy",
+        "text": "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "huesos principales",
+          "articulaciones",
+          "funciones"
+        ],
+        "reply_to_id": "570e6946-7035-4218-af1c-38b4e95fc845",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cb22d967-d376-4830-992a-e875c3142c5d",
+        "role": "learner",
+        "text": "Hazme un resumen breve de eso.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "16bf93f0-67d4-4065-b1de-9806d022b67f",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4fe12091-7a8e-4f41-9c2f-4fc446ee9a74",
+        "role": "buddy",
+        "text": "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cb22d967-d376-4830-992a-e875c3142c5d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "de2c7aeb-bf9b-4703-8bdc-7de180a5abb7",
+        "role": "learner",
+        "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a7dc6094-8352-4b5c-bd58-db9dbbe8ce3d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2c6e265a-42d5-4003-9d30-b5c1ce001fd9",
+        "role": "buddy",
+        "text": "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobarlo.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "de2c7aeb-bf9b-4703-8bdc-7de180a5abb7",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "767089b3-965c-4d93-95a5-fca690ca63df",
+        "role": "learner",
+        "text": "Recuérdame dentro de 5 minutos que tengo que practicar inglés.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9e788369-1412-47f6-94c2-5ab00d2926e2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "29f85943-9fea-4d00-9006-5a429bc0cc68",
+        "role": "buddy",
+        "text": "Listo: te lo recuerdo dentro de 5 minutos. Te llegará en la app.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "767089b3-965c-4d93-95a5-fca690ca63df",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "6fcbe737-ca6d-47df-b316-b05857c01925",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "practicar inglés",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "6d111012-0bce-427f-b000-7142ff981909",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d5603765-e02c-45a5-aeab-3077def6855f",
+        "role": "buddy",
+        "text": "Como acordamos: practicar inglés.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "9b5e1c9e-28a3-4df6-be44-119367be5a2e",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Como acordamos: practicar inglés.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "6d111012-0bce-427f-b000-7142ff981909",
+          "title": "practicar inglés",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "44a02790-1cfc-4ff2-82b1-9567da48f857",
+        "role": "learner",
+        "text": "Te recuerdo que es hora de practicar inglés. Para empezar, ¿quieres que te prepare un texto corto para leer o prefieres hacer algunas preguntas para practicar vocabulario?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f4d97407-e298-4c76-975c-373c3f5809c7",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "cb8a2445-218f-4f19-99a6-1fee06ded799",
+        "role": "buddy",
+        "text": "Sí, seguimos con inglés; si quieres, abre la práctica y empezamos.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "44a02790-1cfc-4ff2-82b1-9567da48f857",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "48421e6f-3f8f-4ce3-aa2c-64b9e1c83a27",
+        "role": "learner",
+        "text": "Explícame las fracciones.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "390e5525-0da1-499a-ba17-228427fb1f2e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "b3f5a384-6208-4ea2-96dc-6ad8fbf4bd7d",
+        "role": "buddy",
+        "text": "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo. ¿Lo ves así?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "48421e6f-3f8f-4ce3-aa2c-64b9e1c83a27",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "2443b33a-a73a-47ce-96af-7c869f52d23f",
+        "role": "learner",
+        "text": "¿Cómo se suman?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "babe3982-3516-4b05-9002-48f33d7cbd58",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "a0b9908a-467b-4b5a-9fae-be34fecd1f66",
+        "role": "buddy",
+        "text": "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe con un ejemplo sencillo?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Sí, con un ejemplo",
+          "Prefiero sin ejemplo",
+          "Una suma con el mismo denominador"
+        ],
+        "reply_to_id": "2443b33a-a73a-47ce-96af-7c869f52d23f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "18a9cdc8-bbfb-4587-9f62-2eb0532200d7",
+        "role": "learner",
+        "text": "Resúmelo, por favor.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b66e5541-39c6-47d0-960d-55688c23e475",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "659611f8-e073-4039-b48a-775567e151e0",
+        "role": "buddy",
+        "text": "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres, te pongo un ejemplo muy corto.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "18a9cdc8-bbfb-4587-9f62-2eb0532200d7",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "27f0c44c-890f-4765-9aa6-1721a5b4a80d",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "learner",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 20,
+      "last_seen_at": "2026-10-24T10:06:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:44:44.269Z",
+      "updated_at": "2026-10-24T17:45:05.307Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "practicar inglés",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Explícame las fracciones.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Cuéntame en detalle todo sobre el esqueleto humano."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?"
+          },
+          {
+            "who": "learner",
+            "text": "Hazme un resumen breve de eso."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos."
+          },
+          {
+            "who": "learner",
+            "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?"
+          },
+          {
+            "who": "buddy",
+            "text": "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobarlo."
+          },
+          {
+            "who": "learner",
+            "text": "Recuérdame dentro de 5 minutos que tengo que practicar inglés."
+          },
+          {
+            "who": "buddy",
+            "text": "Listo: te lo recuerdo dentro de 5 minutos. Te llegará en la app."
+          },
+          {
+            "who": "buddy",
+            "text": "Como acordamos: practicar inglés."
+          },
+          {
+            "who": "learner",
+            "text": "Te recuerdo que es hora de practicar inglés. Para empezar, ¿quieres que te prepare un texto corto para leer o prefieres hacer algunas preguntas para practicar vocabulario?"
+          },
+          {
+            "who": "buddy",
+            "text": "Sí, seguimos con inglés; si quieres, abre la práctica y empezamos."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Una",
+            "Una fr",
+            "Una fracción",
+            "Una fracción es",
+            "Una fracción es una",
+            "Una fracción es una forma",
+            "Una fracción es una forma de",
+            "Una fracción es una forma de decir",
+            "Una fracción es una forma de decir cu",
+            "Una fracción es una forma de decir cuánt",
+            "Una fracción es una forma de decir cuántas",
+            "Una fracción es una forma de decir cuántas partes",
+            "Una fracción es una forma de decir cuántas partes tom",
+            "Una fracción es una forma de decir cuántas partes tomas",
+            "Una fracción es una forma de decir cuántas partes tomas de",
+            "Una fracción es una forma de decir cuántas partes tomas de un",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo,",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cort",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en ",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 tro",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos:",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si cog",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges ",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 tro",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo,",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$.",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes,",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cu",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuánt",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se divid",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo.",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo. ¿",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo. ¿Lo",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo. ¿Lo ves",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo. ¿Lo ves así",
+            "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo. ¿Lo ves así?"
+          ],
+          "ms": 1941,
+          "text": "Explícame las fracciones.",
+          "id": "390e5525-0da1-499a-ba17-228427fb1f2e"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "¿Cómo se suman?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Cuéntame en detalle todo sobre el esqueleto humano."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?"
+          },
+          {
+            "who": "learner",
+            "text": "Hazme un resumen breve de eso."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos."
+          },
+          {
+            "who": "learner",
+            "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?"
+          },
+          {
+            "who": "buddy",
+            "text": "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobarlo."
+          },
+          {
+            "who": "learner",
+            "text": "Recuérdame dentro de 5 minutos que tengo que practicar inglés."
+          },
+          {
+            "who": "buddy",
+            "text": "Listo: te lo recuerdo dentro de 5 minutos. Te llegará en la app."
+          },
+          {
+            "who": "buddy",
+            "text": "Como acordamos: practicar inglés."
+          },
+          {
+            "who": "learner",
+            "text": "Te recuerdo que es hora de practicar inglés. Para empezar, ¿quieres que te prepare un texto corto para leer o prefieres hacer algunas preguntas para practicar vocabulario?"
+          },
+          {
+            "who": "buddy",
+            "text": "Sí, seguimos con inglés; si quieres, abre la práctica y empezamos."
+          },
+          {
+            "who": "learner",
+            "text": "Explícame las fracciones."
+          },
+          {
+            "who": "buddy",
+            "text": "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo. ¿Lo ves así?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Para",
+            "Para sum",
+            "Para sumarlas",
+            "Para sumarlas,",
+            "Para sumarlas, primero",
+            "Para sumarlas, primero tienen",
+            "Para sumarlas, primero tienen que",
+            "Para sumarlas, primero tienen que hablar",
+            "Para sumarlas, primero tienen que hablar el",
+            "Para sumarlas, primero tienen que hablar el mismo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma",
+            "Para sumarlas, primero tienen que hablar el mismo idioma:",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denomin",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador.",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen,",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo camb",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cu",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño;",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sum",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba.",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñ",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe con",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe con un",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe con un ejemplo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe con un ejemplo sencillo",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe con un ejemplo sencillo?",
+            "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe con un ejemplo sencillo?"
+          ],
+          "ms": 1559,
+          "text": "¿Cómo se suman?",
+          "id": "babe3982-3516-4b05-9002-48f33d7cbd58"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Resúmelo, por favor.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Cuéntame en detalle todo sobre el esqueleto humano."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es como el armazón de una tienda de campaña; por dentro nos sostiene, da forma al cuerpo y protege órganos como el cerebro, el corazón y los pulmones. Está hecho de huesos unidos por articulaciones, que son los puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\nSi quieres, seguimos con una parte concreta: ¿quieres primero los huesos principales, las articulaciones o sus funciones?"
+          },
+          {
+            "who": "learner",
+            "text": "Hazme un resumen breve de eso."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro: el esqueleto humano es el armazón del cuerpo. Nos sostiene, nos da forma y protege órganos importantes; además, las articulaciones permiten que nos movamos."
+          },
+          {
+            "who": "learner",
+            "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?"
+          },
+          {
+            "who": "buddy",
+            "text": "Sí, está muy bien estructurado y claro. Si quieres, te preparo un mini repaso rápido o te hago 3 preguntas para comprobarlo."
+          },
+          {
+            "who": "learner",
+            "text": "Recuérdame dentro de 5 minutos que tengo que practicar inglés."
+          },
+          {
+            "who": "buddy",
+            "text": "Listo: te lo recuerdo dentro de 5 minutos. Te llegará en la app."
+          },
+          {
+            "who": "buddy",
+            "text": "Como acordamos: practicar inglés."
+          },
+          {
+            "who": "learner",
+            "text": "Te recuerdo que es hora de practicar inglés. Para empezar, ¿quieres que te prepare un texto corto para leer o prefieres hacer algunas preguntas para practicar vocabulario?"
+          },
+          {
+            "who": "buddy",
+            "text": "Sí, seguimos con inglés; si quieres, abre la práctica y empezamos."
+          },
+          {
+            "who": "learner",
+            "text": "Explícame las fracciones."
+          },
+          {
+            "who": "buddy",
+            "text": "Una fracción es una forma de decir cuántas partes tomas de un todo, como una pizza cortada en 4 trozos: si coges 1 trozo, es $\\frac{1}{4}$. El número de arriba dice las partes que tienes, y el de abajo en cuántas partes iguales se dividió todo. ¿Lo ves así?"
+          },
+          {
+            "who": "learner",
+            "text": "¿Cómo se suman?"
+          },
+          {
+            "who": "buddy",
+            "text": "Para sumarlas, primero tienen que hablar el mismo idioma: mismo denominador. Si no lo tienen, lo cambias hasta que ambos cuenten partes del mismo tamaño; entonces sumas solo los de arriba. ¿Quieres que te lo enseñe con un ejemplo sencillo?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Claro",
+            "Claro:",
+            "Claro: para",
+            "Claro: para sumar",
+            "Claro: para sumar fr",
+            "Claro: para sumar fracciones",
+            "Claro: para sumar fracciones,",
+            "Claro: para sumar fracciones, primero",
+            "Claro: para sumar fracciones, primero tienen",
+            "Claro: para sumar fracciones, primero tienen que",
+            "Claro: para sumar fracciones, primero tienen que tener",
+            "Claro: para sumar fracciones, primero tienen que tener el",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denomin",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador;",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sum",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numer",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores.",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres,",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres, te",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres, te pongo",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres, te pongo un",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres, te pongo un ejemplo",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres, te pongo un ejemplo muy",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres, te pongo un ejemplo muy corto",
+            "Claro: para sumar fracciones, primero tienen que tener el mismo denominador; después solo sumas los numeradores. Si quieres, te pongo un ejemplo muy corto."
+          ],
+          "ms": 1418,
+          "text": "Resúmelo, por favor.",
+          "id": "b66e5541-39c6-47d0-960d-55688c23e475"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "spanish-teen-history-restart",
+  "persona": {
+    "id": "spanish-teen",
+    "age": 16,
+    "locale": "es",
+    "style": "Spanish first language, strong reader, speech-like prose",
+    "behaviour": "Switches topic and requests a hint before answering"
+  },
+  "impressions": [],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Cuéntame en detalle todo sobre el esqueleto humano.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Hazme un resumen breve de eso.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Aquí tienes un resumen estructurado de nuestra conversación sobre el esqueleto humano:\n\n1. Definición: El esqueleto humano es el armazón interno que sostiene y da forma al cuerpo.\n2. Funciones principales: sostiene el cuerpo, protege órganos vitales (cerebro, corazón, pulmones) y permite el movimiento.\n3. Composición: está formado por huesos unidos por articulaciones.\n4. Articulaciones: puntos donde el cuerpo puede doblarse, como el codo o la rodilla.\n\n¿Quieres que te ayude con algo más sobre este tema?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Recuérdame dentro de 5 minutos que tengo que practicar inglés.",
+      "double": false
+    },
+    {
+      "type": "tick"
+    },
+    {
+      "type": "message",
+      "text": "Te recuerdo que es hora de practicar inglés. Para empezar, ¿quieres que te prepare un texto corto para leer o prefieres hacer algunas preguntas para practicar vocabulario?",
+      "double": false
+    }
+  ]
+}

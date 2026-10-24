@@ -1,0 +1,1411 @@
+{
+  "goal": {
+    "id": "no-internals",
+    "issue": 934,
+    "wants": "Readable child-facing explanation, no internal protocol",
+    "messages": [
+      "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+    ],
+    "expect": "clean"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "84e1b71c-e94c-4571-b8ef-1d9536891d80",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "25372318-4364-4b9c-b41c-c4a8511c2ee2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9997ad5a-8fa3-4cbf-b9c2-5413b1644676",
+        "role": "buddy",
+        "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Spanisch",
+          "ein Thema, das du lernst"
+        ],
+        "reply_to_id": "84e1b71c-e94c-4571-b8ef-1d9536891d80",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4ebb9d40-45f7-4f55-bb15-2405d126499b",
+        "role": "learner",
+        "text": "Deutsch und Englisch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f45304ae-ed0d-449c-8cb7-bcc9ab0381f8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c11103c6-cc1b-44e2-b0aa-de368dc79e18",
+        "role": "buddy",
+        "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Freizeit"
+        ],
+        "reply_to_id": "4ebb9d40-45f7-4f55-bb15-2405d126499b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ca4c28e9-7167-4294-94dd-215354770b18",
+        "role": "learner",
+        "text": "Ich möchte Vokabeln zum Thema Tiere, bitte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8c788b37-7957-4a21-9ffe-71ac67f03b92",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b442a082-44bd-4116-badb-a2ac12638bc0",
+        "role": "buddy",
+        "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ca4c28e9-7167-4294-94dd-215354770b18",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "3808d2f8-d64a-45fd-85c3-72fc787d442e",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "test",
+              "text": "Tiere",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "93cac434-d001-4993-b5a6-6f0942060aa3",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f3ae060a-926d-4a6e-b1da-c165d71801d2",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fc85a0c0-f35f-4718-adb4-061ff3358bf9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f70c5db8-13be-43fc-bcf0-4378813483c5",
+        "role": "buddy",
+        "text": "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "wichtigsten Knochen",
+          "wofür es da ist"
+        ],
+        "reply_to_id": "f3ae060a-926d-4a6e-b1da-c165d71801d2",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "fbb9e258-8b02-438d-8b51-2f903779c092",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "49f8ca1e-f106-4663-a064-29e4d2e1e949",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a87d9124-86d9-4e8d-bd33-9baad881c660",
+        "role": "buddy",
+        "text": "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "fbb9e258-8b02-438d-8b51-2f903779c092",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "3e546221-f831-4a48-81fc-a399ecc992b4",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "practice",
+              "text": "menschliches Skelett mit Bildern",
+              "tool": "offer_learning",
+              "figures": [
+                "schematic"
+              ],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": true,
+              "running_session_id": "442b0bab-677a-439a-a252-344f560ac66a",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "06a8e268-5203-4d99-947a-4964d10d19d6",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Insekt?",
+        "answer": "Ameise",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "111197c0-ab14-4c01-9267-a0f99afdff4d",
+        "kind": "short",
+        "prompt": "Was fällt dir an deinem eigenen Skelett auf, wenn du an Bewegung denkst?",
+        "answer": "Es gibt Halt und ermöglicht Bewegung.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "1b50060a-0f54-480a-a21c-41d9187441b4",
+        "kind": "short",
+        "prompt": "Nenne zwei Beispiele für Wirbeltiere.",
+        "answer": "Hund und Fisch",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "46fcf082-5eb9-40e9-95ad-382887ed4684",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Säugetier?",
+        "answer": "Bär",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "579b77b8-172f-47d7-9164-de8f0c441f2a",
+        "kind": "short",
+        "prompt": "Wie heißt der Knochen im Oberarm?",
+        "answer": "Oberarmknochen",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "725cc2c3-7df6-46fd-b4f0-8d738aabb539",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die ihre Jungen mit Milch ernähren?",
+        "answer": "Säugetiere",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "7a5bad95-89bb-454e-850a-3bb622638083",
+        "kind": "multiple_choice",
+        "prompt": "Welcher Knochen gehört zum Bein?",
+        "answer": "Oberschenkelknochen",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "7b5d35a1-e366-415a-a3c9-73525be002ab",
+        "kind": "numeric",
+        "prompt": "Wie viele Beine hat eine Spinne?",
+        "answer": "8",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "8297043d-15d7-4abf-be70-90cd6b61bdc5",
+        "kind": "short",
+        "prompt": "Wie heißt der Knochen, der den Rücken stützt?",
+        "answer": "Wirbelsäule",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "aaa36bf7-4811-4320-a4da-ab8e86dc71a3",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier lebt am wahrscheinlichsten im Wasser?",
+        "answer": "Delfin",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "afca0a15-cb9a-4fd5-9fce-853dc4602ed8",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Amphibium?",
+        "answer": "Frosch",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "b5cc6de8-bce4-4036-99fe-2b7d8b18ac0c",
+        "kind": "short",
+        "prompt": "Nenne zwei Aufgaben des Skeletts.",
+        "answer": "Es stützt den Körper und schützt innere Organe.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "c69c6c09-1618-41fa-a645-9f18eac12d1c",
+        "kind": "multiple_choice",
+        "prompt": "Welches Merkmal hilft Vögeln besonders beim Fliegen?",
+        "answer": "Federn",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "ccd15287-0956-428d-bcc9-18f6846f96ff",
+        "kind": "multiple_choice",
+        "prompt": "Welche Knochen gehören zum Arm?",
+        "answer": "Speiche und Elle",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "d92fe274-868e-433a-8250-54fbbbfdebaa",
+        "kind": "multiple_choice",
+        "prompt": "Welches ist ein Knochen des menschlichen Skeletts?",
+        "answer": "Schädel",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "ee5f7c55-484a-4627-8281-99c42685b68b",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die Eier legen?",
+        "answer": "Eierlegende Tiere",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "fbc113c1-f496-4829-bb05-62ae1eae465b",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die nur Pflanzen fressen?",
+        "answer": "Pflanzenfresser",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "0b65be91-679a-41f4-baf9-04e3ff8ce1ee",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 14,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:39:30.247Z",
+      "updated_at": "2026-10-24T17:40:18.639Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "442b0bab-677a-439a-a252-344f560ac66a",
+        "client_request_id": "3e546221-f831-4a48-81fc-a399ecc992b4"
+      },
+      {
+        "id": "93cac434-d001-4993-b5a6-6f0942060aa3",
+        "client_request_id": "3808d2f8-d64a-45fd-85c3-72fc787d442e"
+      }
+    ],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "84e1b71c-e94c-4571-b8ef-1d9536891d80",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "25372318-4364-4b9c-b41c-c4a8511c2ee2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9997ad5a-8fa3-4cbf-b9c2-5413b1644676",
+        "role": "buddy",
+        "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Spanisch",
+          "ein Thema, das du lernst"
+        ],
+        "reply_to_id": "84e1b71c-e94c-4571-b8ef-1d9536891d80",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4ebb9d40-45f7-4f55-bb15-2405d126499b",
+        "role": "learner",
+        "text": "Deutsch und Englisch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f45304ae-ed0d-449c-8cb7-bcc9ab0381f8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c11103c6-cc1b-44e2-b0aa-de368dc79e18",
+        "role": "buddy",
+        "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Freizeit"
+        ],
+        "reply_to_id": "4ebb9d40-45f7-4f55-bb15-2405d126499b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ca4c28e9-7167-4294-94dd-215354770b18",
+        "role": "learner",
+        "text": "Ich möchte Vokabeln zum Thema Tiere, bitte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8c788b37-7957-4a21-9ffe-71ac67f03b92",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b442a082-44bd-4116-badb-a2ac12638bc0",
+        "role": "buddy",
+        "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ca4c28e9-7167-4294-94dd-215354770b18",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "3808d2f8-d64a-45fd-85c3-72fc787d442e",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "test",
+              "text": "Tiere",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "93cac434-d001-4993-b5a6-6f0942060aa3",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f3ae060a-926d-4a6e-b1da-c165d71801d2",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fc85a0c0-f35f-4718-adb4-061ff3358bf9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f70c5db8-13be-43fc-bcf0-4378813483c5",
+        "role": "buddy",
+        "text": "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "wichtigsten Knochen",
+          "wofür es da ist"
+        ],
+        "reply_to_id": "f3ae060a-926d-4a6e-b1da-c165d71801d2",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "fbb9e258-8b02-438d-8b51-2f903779c092",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "49f8ca1e-f106-4663-a064-29e4d2e1e949",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a87d9124-86d9-4e8d-bd33-9baad881c660",
+        "role": "buddy",
+        "text": "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "fbb9e258-8b02-438d-8b51-2f903779c092",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "3e546221-f831-4a48-81fc-a399ecc992b4",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "practice",
+              "text": "menschliches Skelett mit Bildern",
+              "tool": "offer_learning",
+              "figures": [
+                "schematic"
+              ],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": true,
+              "running_session_id": "442b0bab-677a-439a-a252-344f560ac66a",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c19e60dc-e18c-4318-9803-147d08696b69",
+        "role": "learner",
+        "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "bff5c524-c45f-4b72-ac3e-bffc2771b887",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a5cf1332-a44f-4763-a4ef-232fa218c978",
+        "role": "buddy",
+        "text": "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt weitermachen kannst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c19e60dc-e18c-4318-9803-147d08696b69",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5f3b1126-a503-494a-bb02-7185cfaf8b27",
+        "role": "learner",
+        "text": "Das ist eine spannende Frage! Wenn du an dein eigenes Skelett und Bewegung denkst, fällt dir vielleicht auf, dass deine Knochen zusammen mit Muskeln und Gelenken dafür sorgen, dass du dich bewegen kannst. Möchtest du, dass ich dir erkläre, wie das genau funktioniert?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "02fc88b0-4652-45a0-9093-1e31870f8ac0",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f36c8cbc-1371-491b-b263-f3aadf982d21",
+        "role": "buddy",
+        "text": "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm oder Bein noch genauer zeigen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "5f3b1126-a503-494a-bb02-7185cfaf8b27",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "34034e41-24cc-4bbc-a2f4-b960333bd5e4",
+        "role": "learner",
+        "text": "Ich finde es spannend, wie Knochen, Muskeln und Gelenke zusammenarbeiten, damit ich mich bewegen kann. Möchtest du, dass ich dir zeige, wie das am Arm funktioniert?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "efdd54e6-5dd1-4ed8-a32d-e7e5ddc16cde",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cf2f44aa-0879-4be7-8c6e-30f5987537ee",
+        "role": "buddy",
+        "text": "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet, streckt er sich wieder.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "34034e41-24cc-4bbc-a2f4-b960333bd5e4",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "06a8e268-5203-4d99-947a-4964d10d19d6",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Insekt?",
+        "answer": "Ameise",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "111197c0-ab14-4c01-9267-a0f99afdff4d",
+        "kind": "short",
+        "prompt": "Was fällt dir an deinem eigenen Skelett auf, wenn du an Bewegung denkst?",
+        "answer": "Es gibt Halt und ermöglicht Bewegung.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "1b50060a-0f54-480a-a21c-41d9187441b4",
+        "kind": "short",
+        "prompt": "Nenne zwei Beispiele für Wirbeltiere.",
+        "answer": "Hund und Fisch",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "46fcf082-5eb9-40e9-95ad-382887ed4684",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Säugetier?",
+        "answer": "Bär",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "579b77b8-172f-47d7-9164-de8f0c441f2a",
+        "kind": "short",
+        "prompt": "Wie heißt der Knochen im Oberarm?",
+        "answer": "Oberarmknochen",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "725cc2c3-7df6-46fd-b4f0-8d738aabb539",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die ihre Jungen mit Milch ernähren?",
+        "answer": "Säugetiere",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "7a5bad95-89bb-454e-850a-3bb622638083",
+        "kind": "multiple_choice",
+        "prompt": "Welcher Knochen gehört zum Bein?",
+        "answer": "Oberschenkelknochen",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "7b5d35a1-e366-415a-a3c9-73525be002ab",
+        "kind": "numeric",
+        "prompt": "Wie viele Beine hat eine Spinne?",
+        "answer": "8",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "8297043d-15d7-4abf-be70-90cd6b61bdc5",
+        "kind": "short",
+        "prompt": "Wie heißt der Knochen, der den Rücken stützt?",
+        "answer": "Wirbelsäule",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "aaa36bf7-4811-4320-a4da-ab8e86dc71a3",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier lebt am wahrscheinlichsten im Wasser?",
+        "answer": "Delfin",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "afca0a15-cb9a-4fd5-9fce-853dc4602ed8",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Amphibium?",
+        "answer": "Frosch",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "b5cc6de8-bce4-4036-99fe-2b7d8b18ac0c",
+        "kind": "short",
+        "prompt": "Nenne zwei Aufgaben des Skeletts.",
+        "answer": "Es stützt den Körper und schützt innere Organe.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "c69c6c09-1618-41fa-a645-9f18eac12d1c",
+        "kind": "multiple_choice",
+        "prompt": "Welches Merkmal hilft Vögeln besonders beim Fliegen?",
+        "answer": "Federn",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "ccd15287-0956-428d-bcc9-18f6846f96ff",
+        "kind": "multiple_choice",
+        "prompt": "Welche Knochen gehören zum Arm?",
+        "answer": "Speiche und Elle",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "d92fe274-868e-433a-8250-54fbbbfdebaa",
+        "kind": "multiple_choice",
+        "prompt": "Welches ist ein Knochen des menschlichen Skeletts?",
+        "answer": "Schädel",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "ee5f7c55-484a-4627-8281-99c42685b68b",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die Eier legen?",
+        "answer": "Eierlegende Tiere",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "fbc113c1-f496-4829-bb05-62ae1eae465b",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die nur Pflanzen fressen?",
+        "answer": "Pflanzenfresser",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "0b65be91-679a-41f4-baf9-04e3ff8ce1ee",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 20,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:39:30.247Z",
+      "updated_at": "2026-10-24T17:41:13.371Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "442b0bab-677a-439a-a252-344f560ac66a",
+        "client_request_id": "3e546221-f831-4a48-81fc-a399ecc992b4"
+      },
+      {
+        "id": "93cac434-d001-4993-b5a6-6f0942060aa3",
+        "client_request_id": "3808d2f8-d64a-45fd-85c3-72fc787d442e"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema."
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Tiere, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Tiere",
+            "kind": "test"
+          },
+          {
+            "label": "menschliches Skelett mit Bildern",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Was fällt dir an deinem eigenen Skelett auf, wenn du an Bewegung denkst?",
+          "choices": null
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "G",
+            "Gern",
+            "Gern —",
+            "Gern — ich",
+            "Gern — ich bin",
+            "Gern — ich bin wie",
+            "Gern — ich bin wie deine",
+            "Gern — ich bin wie deine Lern",
+            "Gern — ich bin wie deine Lern-B",
+            "Gern — ich bin wie deine Lern-Beg",
+            "Gern — ich bin wie deine Lern-Begleitung",
+            "Gern — ich bin wie deine Lern-Begleitung:",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkl",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach,",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, ü",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir,",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und hel",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben,",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vor",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzus",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen.",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst,",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen,",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt weit",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt weiterm",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt weitermachen",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt weitermachen kannst",
+            "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt weitermachen kannst."
+          ],
+          "ms": 1733,
+          "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+          "id": "bff5c524-c45f-4b72-ac3e-bffc2771b887"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Das ist eine spannende Frage! Wenn du an dein eigenes Skelett und Bewegung denkst, fällt dir vielleicht auf, dass deine Knochen zusammen mit Muskeln und Gelenken dafür sorgen, dass du dich bewegen kannst. Möchtest du, dass ich dir erkläre, wie das genau funktioniert?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema."
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Tiere, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor."
+          },
+          {
+            "who": "learner",
+            "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+          },
+          {
+            "who": "buddy",
+            "text": "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt weitermachen kannst."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Tiere",
+            "kind": "test"
+          },
+          {
+            "label": "menschliches Skelett mit Bildern",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Was fällt dir an deinem eigenen Skelett auf, wenn du an Bewegung denkst?",
+          "choices": null
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja —",
+            "Ja — gern",
+            "Ja — gern.",
+            "Ja — gern. Stell",
+            "Ja — gern. Stell dir",
+            "Ja — gern. Stell dir Kno",
+            "Ja — gern. Stell dir Knochen",
+            "Ja — gern. Stell dir Knochen wie",
+            "Ja — gern. Stell dir Knochen wie St",
+            "Ja — gern. Stell dir Knochen wie Stä",
+            "Ja — gern. Stell dir Knochen wie Stäbe",
+            "Ja — gern. Stell dir Knochen wie Stäbe und",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Musk",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie G",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gumm",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummib",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor:",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Kno",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form,",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweg",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen,",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Musk",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Kno",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen,",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst.",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm be",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beug",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst,",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel,",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Sch",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharn",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier.",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm oder",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm oder Bein",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm oder Bein noch",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm oder Bein noch genauer",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm oder Bein noch genauer zeigen",
+            "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm oder Bein noch genauer zeigen?"
+          ],
+          "ms": 2884,
+          "text": "Das ist eine spannende Frage! Wenn du an dein eigenes Skelett und Bewegung denkst, fällt dir vielleicht auf, dass deine Knochen zusammen mit Muskeln und Gelenken dafür sorgen, dass du dich bewegen kannst. Möchtest du, dass ich dir erkläre, wie das genau funktioniert?",
+          "id": "02fc88b0-4652-45a0-9093-1e31870f8ac0"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich finde es spannend, wie Knochen, Muskeln und Gelenke zusammenarbeiten, damit ich mich bewegen kann. Möchtest du, dass ich dir zeige, wie das am Arm funktioniert?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema."
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Tiere, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor."
+          },
+          {
+            "who": "learner",
+            "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+          },
+          {
+            "who": "buddy",
+            "text": "Gern — ich bin wie deine Lern-Begleitung: Ich erkläre dir Dinge einfach, übe mit dir, stelle Tests zusammen und helfe dir bei Aufgaben, ohne dir alles einfach vorzusagen. Wenn du willst, kann ich dir auch sagen, was ich gerade schon für dich vorbereitet habe und wie du direkt weitermachen kannst."
+          },
+          {
+            "who": "learner",
+            "text": "Das ist eine spannende Frage! Wenn du an dein eigenes Skelett und Bewegung denkst, fällt dir vielleicht auf, dass deine Knochen zusammen mit Muskeln und Gelenken dafür sorgen, dass du dich bewegen kannst. Möchtest du, dass ich dir erkläre, wie das genau funktioniert?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — gern. Stell dir Knochen wie Stäbe und Muskeln wie Gummibänder vor: Die Knochen geben Form, die Gelenke sind die beweglichen Stellen, und die Muskeln ziehen an den Knochen, damit du dich bewegen kannst. Wenn du zum Beispiel den Arm beugst, zieht ein Muskel, und das Gelenk klappt wie ein Scharnier. Soll ich dir das an Arm oder Bein noch genauer zeigen?"
+          }
+        ],
+        "offers": [
+          {
+            "label": "Tiere",
+            "kind": "test"
+          },
+          {
+            "label": "menschliches Skelett mit Bildern",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Was fällt dir an deinem eigenen Skelett auf, wenn du an Bewegung denkst?",
+          "choices": null
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja,",
+            "Ja, gern",
+            "Ja, gern —",
+            "Ja, gern — am",
+            "Ja, gern — am Arm",
+            "Ja, gern — am Arm sieht",
+            "Ja, gern — am Arm sieht man",
+            "Ja, gern — am Arm sieht man das",
+            "Ja, gern — am Arm sieht man das gut",
+            "Ja, gern — am Arm sieht man das gut:",
+            "Ja, gern — am Arm sieht man das gut: Die",
+            "Ja, gern — am Arm sieht man das gut: Die Kno",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste St",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen,",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die beweg",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle,",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Musk",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Kno",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Se",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen.",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammen",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht,",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebe",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt;",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet,",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet, stre",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet, streckt",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet, streckt er",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet, streckt er sich",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet, streckt er sich wieder",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet, streckt er sich wieder.",
+            "Ja, gern — am Arm sieht man das gut: Die Knochen sind wie feste Stangen, das Gelenk am Ellenbogen ist die bewegliche Stelle, und die Muskeln ziehen an den Knochen wie an Seilen. Wenn ein Muskel sich zusammenzieht, wird der Arm gebeugt; wenn der andere arbeitet, streckt er sich wieder. "
+          ],
+          "ms": 2101,
+          "text": "Ich finde es spannend, wie Knochen, Muskeln und Gelenke zusammenarbeiten, damit ich mich bewegen kann. Möchtest du, dass ich dir zeige, wie das am Arm funktioniert?",
+          "id": "efdd54e6-5dd1-4ed8-a32d-e7e5ddc16cde"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "dictating-no-internals",
+  "persona": {
+    "id": "dictating",
+    "age": 10,
+    "locale": "de",
+    "style": "Dictates long sentences with recognition mistakes",
+    "behaviour": "Changes topic then returns to original wish"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Das ist eine spannende Frage! Wenn du an dein eigenes Skelett und Bewegung denkst, fällt dir vielleicht auf, dass deine Knochen zusammen mit Muskeln und Gelenken dafür sorgen, dass du dich bewegen kannst. Möchtest du, dass ich dir erkläre, wie das genau funktioniert?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich finde es spannend, wie Knochen, Muskeln und Gelenke zusammenarbeiten, damit ich mich bewegen kann. Möchtest du, dass ich dir zeige, wie das am Arm funktioniert?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Deutsch und Englisch.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ich möchte Vokabeln zum Thema Tiere, bitte.",
+      "double": false
+    },
+    {
+      "type": "tap",
+      "offer": 0,
+      "double": true
+    },
+    {
+      "type": "message",
+      "text": "Erkläre mir das menschliche Skelett.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Am besten komplett mit Bild.",
+      "double": false
+    },
+    {
+      "type": "tap",
+      "offer": 1,
+      "double": false
+    }
+  ]
+}

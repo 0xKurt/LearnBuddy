@@ -1,0 +1,1227 @@
+{
+  "goal": {
+    "id": "no-internals",
+    "issue": 934,
+    "wants": "Readable child-facing explanation, no internal protocol",
+    "messages": [
+      "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+    ],
+    "expect": "clean"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0354e1a0-bb4a-4c84-80f0-9942f5df716e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5260d893-21ba-4983-ae7f-ba4b631c322f",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Sachthema"
+        ],
+        "reply_to_id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0e572321-8664-4fa5-85d5-23f9ab64f5d1",
+        "role": "learner",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "status": "done",
+        "failure_code": "invalid",
+        "client_message_id": "33266285-5b12-4205-8bee-0ee2941c57e6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "role": "learner",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "56a1c55f-4920-4e9b-b85c-cfdbb5b1a434",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0cab745f-7302-42d3-ac6c-996a2e1c5998",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "7d8beee6-88a1-4f7a-b46f-5c591d3e9e2f",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basisvokabeln Deutsch–Englisch mit einer Lückenübung",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "role": "learner",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a4b17535-6eb4-4eb9-a9df-0b4b3f00ec0e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c876205d-b3c1-47fe-8559-ef7ab8932f49",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "26602f14-564e-477c-be86-73a45287b78c",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basiswörter Deutsch–Englisch mit Lücken",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ff7e759-6f96-4401-8396-b72cc1ec5bcb",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b3ff16c5-46de-4338-aa49-bdc259c1247e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8a5b0091-d3c1-4dd0-83a4-b2b23bb4ca6f",
+        "role": "buddy",
+        "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Ja, bitte.",
+          "Nur die wichtigsten Knochen.",
+          "Erst mal nicht."
+        ],
+        "reply_to_id": "9ff7e759-6f96-4401-8396-b72cc1ec5bcb",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aeba0129-c584-4258-a46c-c23b0d553b6f",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e2fb20cf-fa53-4a32-8dba-c025e7dd37ca",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "71e31e70-dcfd-4105-b333-6c4e160717f3",
+        "role": "buddy",
+        "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "aeba0129-c584-4258-a46c-c23b0d553b6f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1959b4b4-39e2-4544-a0de-72d36dbb6af5",
+        "role": "learner",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5200d19e-ec9f-4f83-a502-9df5d39dd16d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "47ed267e-9dd6-4578-8a44-21f35f7df3e1",
+        "role": "buddy",
+        "text": "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1959b4b4-39e2-4544-a0de-72d36dbb6af5",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e06dd670-f009-4f4a-a8a8-4c5c3087668f",
+        "role": "learner",
+        "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "bce58c61-18d6-4bea-bf25-f030a84b81c1",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "62dfd1c9-870c-428e-bed2-0c8c60bdc636",
+        "role": "buddy",
+        "text": "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e06dd670-f009-4f4a-a8a8-4c5c3087668f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0354e1a0-bb4a-4c84-80f0-9942f5df716e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5260d893-21ba-4983-ae7f-ba4b631c322f",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Sachthema"
+        ],
+        "reply_to_id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0e572321-8664-4fa5-85d5-23f9ab64f5d1",
+        "role": "learner",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "status": "done",
+        "failure_code": "invalid",
+        "client_message_id": "33266285-5b12-4205-8bee-0ee2941c57e6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "role": "learner",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "56a1c55f-4920-4e9b-b85c-cfdbb5b1a434",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0cab745f-7302-42d3-ac6c-996a2e1c5998",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "7d8beee6-88a1-4f7a-b46f-5c591d3e9e2f",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basisvokabeln Deutsch–Englisch mit einer Lückenübung",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "role": "learner",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a4b17535-6eb4-4eb9-a9df-0b4b3f00ec0e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c876205d-b3c1-47fe-8559-ef7ab8932f49",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "26602f14-564e-477c-be86-73a45287b78c",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basiswörter Deutsch–Englisch mit Lücken",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ff7e759-6f96-4401-8396-b72cc1ec5bcb",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b3ff16c5-46de-4338-aa49-bdc259c1247e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8a5b0091-d3c1-4dd0-83a4-b2b23bb4ca6f",
+        "role": "buddy",
+        "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Ja, bitte.",
+          "Nur die wichtigsten Knochen.",
+          "Erst mal nicht."
+        ],
+        "reply_to_id": "9ff7e759-6f96-4401-8396-b72cc1ec5bcb",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aeba0129-c584-4258-a46c-c23b0d553b6f",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e2fb20cf-fa53-4a32-8dba-c025e7dd37ca",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "71e31e70-dcfd-4105-b333-6c4e160717f3",
+        "role": "buddy",
+        "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "aeba0129-c584-4258-a46c-c23b0d553b6f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1959b4b4-39e2-4544-a0de-72d36dbb6af5",
+        "role": "learner",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5200d19e-ec9f-4f83-a502-9df5d39dd16d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "47ed267e-9dd6-4578-8a44-21f35f7df3e1",
+        "role": "buddy",
+        "text": "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1959b4b4-39e2-4544-a0de-72d36dbb6af5",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e06dd670-f009-4f4a-a8a8-4c5c3087668f",
+        "role": "learner",
+        "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "bce58c61-18d6-4bea-bf25-f030a84b81c1",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "62dfd1c9-870c-428e-bed2-0c8c60bdc636",
+        "role": "buddy",
+        "text": "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e06dd670-f009-4f4a-a8a8-4c5c3087668f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8c8e894b-43bc-4cc6-93b0-6fadbfaad8d5",
+        "role": "learner",
+        "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "64a66ae3-1eba-48bf-977b-60e70501ac41",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4253a5be-ff74-46ad-a7ea-fbec5191c8b9",
+        "role": "buddy",
+        "text": "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen, den Überblick zu behalten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8c8e894b-43bc-4cc6-93b0-6fadbfaad8d5",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "64988c66-ecc1-4aef-8a13-0759f5b28bce",
+        "role": "learner",
+        "text": "Okay, ich erkläre dir ausführlich, wie ich dir beim Lernen helfe: Du sagst mir erst, was du lernen willst (z.B. Thema und was du schon kannst). Dann mache ich daraus eine kindgerechte Erklärung in kleinen Schritten, mit Beispielen. Danach machen wir eine Übung: Ich kann dir zum Beispiel Fragen stellen oder einen Lückentext geben, und du antwortest. Wenn du etwas falsch machst, sage ich dir nicht nur „falsch“, sondern ich erkläre kurz, warum, und wir üben genau den Teil nochmal. Wenn du willst, können wir auch Karteikarten machen (Wort auf Deutsch und Englisch/aber du sagst mir, was du brauchst). Und wenn du müde wirst, können wir kurz eine Mini-Pause machen mit einer kleinen Aufgabe oder einem Rätsel, damit du wieder mehr Energie hast.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9380e8c9-23f5-4237-8e8e-ade921b53f1d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9142e1e8-aff3-47af-8152-3f31240d6416",
+        "role": "buddy",
+        "text": "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das gleich mit einem Thema ausprobieren.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "64988c66-ecc1-4aef-8a13-0759f5b28bce",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f00d4fb7-cf30-44f1-bbb9-0ae7ffa8643a",
+        "role": "learner",
+        "text": "Super! Dann machen wir jetzt eine Lernübung mit Lücken: \n1) Skelett (englisch) = _____\n( Schreib die richtige Lösung in Englisch.)",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "814ef77f-91d2-45bc-876c-112ddc67acaa",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a6f08608-5227-44e7-838a-b3239fb67ff9",
+        "role": "buddy",
+        "text": "skeleton",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "f00d4fb7-cf30-44f1-bbb9-0ae7ffa8643a",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          },
+          {
+            "who": "learner",
+            "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen."
+          },
+          {
+            "who": "learner",
+            "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "G",
+            "Gerne",
+            "Gerne.",
+            "Gerne. Ich",
+            "Gerne. Ich bin",
+            "Gerne. Ich bin wie",
+            "Gerne. Ich bin wie dein",
+            "Gerne. Ich bin wie dein Lern",
+            "Gerne. Ich bin wie dein Lern-B",
+            "Gerne. Ich bin wie dein Lern-Buddy",
+            "Gerne. Ich bin wie dein Lern-Buddy:",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich hel",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Ver",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Ü",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Mer",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sort",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst.",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst —",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Ü",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wieder",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lern",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\n",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Ü",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karte",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteik",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, L",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lück",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückent",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Ab",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwier",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges.",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als N",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächst",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen,",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen, den",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen, den Überblick",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen, den Überblick zu",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen, den Überblick zu behalten",
+            "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen, den Überblick zu behalten."
+          ],
+          "ms": 1785,
+          "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+          "id": "64a66ae3-1eba-48bf-977b-60e70501ac41"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, ich erkläre dir ausführlich, wie ich dir beim Lernen helfe: Du sagst mir erst, was du lernen willst (z.B. Thema und was du schon kannst). Dann mache ich daraus eine kindgerechte Erklärung in kleinen Schritten, mit Beispielen. Danach machen wir eine Übung: Ich kann dir zum Beispiel Fragen stellen oder einen Lückentext geben, und du antwortest. Wenn du etwas falsch machst, sage ich dir nicht nur „falsch“, sondern ich erkläre kurz, warum, und wir üben genau den Teil nochmal. Wenn du willst, können wir auch Karteikarten machen (Wort auf Deutsch und Englisch/aber du sagst mir, was du brauchst). Und wenn du müde wirst, können wir kurz eine Mini-Pause machen mit einer kleinen Aufgabe oder einem Rätsel, damit du wieder mehr Energie hast.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          },
+          {
+            "who": "learner",
+            "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen."
+          },
+          {
+            "who": "learner",
+            "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären."
+          },
+          {
+            "who": "learner",
+            "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+          },
+          {
+            "who": "buddy",
+            "text": "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen, den Überblick zu behalten."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Das",
+            "Das klingt",
+            "Das klingt gut",
+            "Das klingt gut und",
+            "Das klingt gut und genau",
+            "Das klingt gut und genau so",
+            "Das klingt gut und genau so kann",
+            "Das klingt gut und genau so kann ich",
+            "Das klingt gut und genau so kann ich dir",
+            "Das klingt gut und genau so kann ich dir beim",
+            "Das klingt gut und genau so kann ich dir beim Lernen",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen.",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du mach",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Sch",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten:",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen,",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann ü",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben,",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwier",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen —",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich.",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du mag",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst,",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das gleich",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das gleich mit",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das gleich mit einem",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das gleich mit einem Thema",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das gleich mit einem Thema ausprobieren",
+            "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das gleich mit einem Thema ausprobieren."
+          ],
+          "ms": 1525,
+          "text": "Okay, ich erkläre dir ausführlich, wie ich dir beim Lernen helfe: Du sagst mir erst, was du lernen willst (z.B. Thema und was du schon kannst). Dann mache ich daraus eine kindgerechte Erklärung in kleinen Schritten, mit Beispielen. Danach machen wir eine Übung: Ich kann dir zum Beispiel Fragen stellen oder einen Lückentext geben, und du antwortest. Wenn du etwas falsch machst, sage ich dir nicht nur „falsch“, sondern ich erkläre kurz, warum, und wir üben genau den Teil nochmal. Wenn du willst, können wir auch Karteikarten machen (Wort auf Deutsch und Englisch/aber du sagst mir, was du brauchst). Und wenn du müde wirst, können wir kurz eine Mini-Pause machen mit einer kleinen Aufgabe oder einem Rätsel, damit du wieder mehr Energie hast.",
+          "id": "9380e8c9-23f5-4237-8e8e-ade921b53f1d"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Super! Dann machen wir jetzt eine Lernübung mit Lücken: \n1) Skelett (englisch) = _____\n( Schreib die richtige Lösung in Englisch.)",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          },
+          {
+            "who": "learner",
+            "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen."
+          },
+          {
+            "who": "learner",
+            "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären."
+          },
+          {
+            "who": "learner",
+            "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+          },
+          {
+            "who": "buddy",
+            "text": "Gerne. Ich bin wie dein Lern-Buddy: Ich helfe dir beim Verstehen, Üben und Merken, ohne dass du alles allein sortieren musst. Du kannst mir einfach schreiben, was du gerade brauchst — zum Beispiel eine Erklärung, Übung, Wiederholung, Hilfe bei einer Aufgabe oder eine kurze Lernpause mit kleinen Fragen.\n\nIch mache dir dann je nach Wunsch eine einfache Erklärung, eine Übung, Karteikarten, Lückentext, Abfrage oder ich gehe mit dir Schritt für Schritt durch etwas Schwieriges. Wenn du willst, kann ich auch mit dir planen, was du als Nächstes lernen solltest, oder dir helfen, den Überblick zu behalten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, ich erkläre dir ausführlich, wie ich dir beim Lernen helfe: Du sagst mir erst, was du lernen willst (z.B. Thema und was du schon kannst). Dann mache ich daraus eine kindgerechte Erklärung in kleinen Schritten, mit Beispielen. Danach machen wir eine Übung: Ich kann dir zum Beispiel Fragen stellen oder einen Lückentext geben, und du antwortest. Wenn du etwas falsch machst, sage ich dir nicht nur „falsch“, sondern ich erkläre kurz, warum, und wir üben genau den Teil nochmal. Wenn du willst, können wir auch Karteikarten machen (Wort auf Deutsch und Englisch/aber du sagst mir, was du brauchst). Und wenn du müde wirst, können wir kurz eine Mini-Pause machen mit einer kleinen Aufgabe oder einem Rätsel, damit du wieder mehr Energie hast."
+          },
+          {
+            "who": "buddy",
+            "text": "Das klingt gut und genau so kann ich dir beim Lernen helfen. Du machst es schön in kleinen Schritten: erst verstehen, dann üben, dann nochmal den schwierigen Teil anschauen — das ist super hilfreich. Wenn du magst, können wir das gleich mit einem Thema ausprobieren."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "s",
+            "skeleton",
+            "skeleton"
+          ],
+          "ms": 1113,
+          "text": "Super! Dann machen wir jetzt eine Lernübung mit Lücken: \n1) Skelett (englisch) = _____\n( Schreib die richtige Lösung in Englisch.)",
+          "id": "814ef77f-91d2-45bc-876c-112ddc67acaa"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "execution.error",
+      "kind": "clean",
+      "route": "/explorer",
+      "evidence": "simulator: no current question",
+      "category": "simulator"
+    }
+  ],
+  "id": "dictating-no-internals",
+  "persona": {
+    "id": "dictating",
+    "age": 10,
+    "locale": "de",
+    "style": "Dictates long sentences with recognition mistakes",
+    "behaviour": "Changes topic then returns to original wish"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, ich erkläre dir ausführlich, wie ich dir beim Lernen helfe: Du sagst mir erst, was du lernen willst (z.B. Thema und was du schon kannst). Dann mache ich daraus eine kindgerechte Erklärung in kleinen Schritten, mit Beispielen. Danach machen wir eine Übung: Ich kann dir zum Beispiel Fragen stellen oder einen Lückentext geben, und du antwortest. Wenn du etwas falsch machst, sage ich dir nicht nur „falsch“, sondern ich erkläre kurz, warum, und wir üben genau den Teil nochmal. Wenn du willst, können wir auch Karteikarten machen (Wort auf Deutsch und Englisch/aber du sagst mir, was du brauchst). Und wenn du müde wirst, können wir kurz eine Mini-Pause machen mit einer kleinen Aufgabe oder einem Rätsel, damit du wieder mehr Energie hast.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Super! Dann machen wir jetzt eine Lernübung mit Lücken: \n1) Skelett (englisch) = _____\n( Schreib die richtige Lösung in Englisch.)",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "answer",
+        "text": "skeleton",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Erkläre mir das menschliche Skelett.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Am besten komplett mit Bild.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+      "double": false
+    }
+  ],
+  "error": "simulator: no current question"
+}

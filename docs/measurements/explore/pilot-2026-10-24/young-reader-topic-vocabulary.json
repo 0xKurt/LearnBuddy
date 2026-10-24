@@ -1,0 +1,273 @@
+{
+  "goal": {
+    "id": "topic-vocabulary",
+    "issue": 940,
+    "wants": "20 English school vocabulary pairs, German to English practice",
+    "messages": [
+      "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+    ],
+    "expect": "vocab",
+    "count": 20
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+        "role": "learner",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5329a352-40ff-47d0-8c39-a927e52fc7dc",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f8e6693c-20aa-49d9-9a3b-1c7cfe9b8482",
+        "role": "buddy",
+        "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "2306b8af-18aa-4d83-928a-5117ee851ea2",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "20 englische Basisvokabeln zum Thema Schule; abfrage von Deutsch nach Englisch",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+        "role": "learner",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "d67c160d-fcc7-4678-a8b6-30332e52a980",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ad2fe7e-f8b5-4b71-b8a8-40af9d2c43bf",
+        "role": "buddy",
+        "text": "Schule = ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich bere",
+            "Ich bereite",
+            "Ich bereite dir",
+            "Ich bereite dir ",
+            "Ich bereite dir 20",
+            "Ich bereite dir 20 engl",
+            "Ich bereite dir 20 englische",
+            "Ich bereite dir 20 englische Schul",
+            "Ich bereite dir 20 englische Schulw",
+            "Ich bereite dir 20 englische Schulwörter",
+            "Ich bereite dir 20 englische Schulwörter zum",
+            "Ich bereite dir 20 englische Schulwörter zum Ab",
+            "Ich bereite dir 20 englische Schulwörter zum Abfragen",
+            "Ich bereite dir 20 englische Schulwörter zum Abfragen von",
+            "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch",
+            "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach",
+            "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch",
+            "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor",
+            "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor."
+          ],
+          "ms": 2835,
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "id": "5329a352-40ff-47d0-8c39-a927e52fc7dc"
+        },
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [],
+          "ms": 11,
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "id": "5329a352-40ff-47d0-8c39-a927e52fc7dc"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Sch",
+            "Schule",
+            "Schule =",
+            "Schule = ?",
+            "Schule = ?"
+          ],
+          "ms": 1296,
+          "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+          "id": "d67c160d-fcc7-4678-a8b6-30332e52a980"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "vocabulary.count",
+      "evidence": "wanted 20, got 0",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "execution.error",
+      "kind": "vocab",
+      "route": "/explorer",
+      "evidence": "simulator: no current question",
+      "category": "simulator"
+    }
+  ],
+  "id": "young-reader-topic-vocabulary",
+  "persona": {
+    "id": "young-reader",
+    "age": 8,
+    "locale": "de",
+    "style": "Reads slowly; very short phonetic spelling",
+    "behaviour": "Impatient, taps twice when waiting"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "answer",
+        "text": "school",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "error": "simulator: no current question",
+  "advisory": {
+    "agreed": {
+      "useful": false,
+      "understandable": true,
+      "faithful": false
+    },
+    "disputed": [],
+    "clean": false
+  }
+}

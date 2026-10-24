@@ -1,0 +1,1928 @@
+{
+  "goal": {
+    "id": "vocab-not-cloze",
+    "issue": 940,
+    "wants": "Five English animal vocabulary pairs; quiz German to English, never cloze exercises",
+    "messages": [
+      "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+    ],
+    "expect": "vocab",
+    "count": 5
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "1acb6c27-b598-4d31-8274-8968eb485d66",
+        "role": "learner",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f188057f-a5cf-448a-8d6c-3d0155d1dd31",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ba1df169-e51b-46ba-9aaa-93e16c87e975",
+        "role": "buddy",
+        "text": "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1acb6c27-b598-4d31-8274-8968eb485d66",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "0ad4f875-a7a4-4e6f-88ad-6deb54099244",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "20 englische Basisvokabeln zum Thema Schule, Abfrage von Deutsch nach Englisch",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d28c411e-f7ea-41e5-9a4c-cef669d5a775",
+        "role": "learner",
+        "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\".",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "1bb66454-3480-4f15-a313-a2484d2b6cc9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "edad0315-3381-489f-a939-1bf793813661",
+        "role": "buddy",
+        "text": "Ja, ich bin bereit. Buch = book.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "d28c411e-f7ea-41e5-9a4c-cef669d5a775",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "def3a4f9-fe01-454d-9d1e-57e99cab7e51",
+        "role": "learner",
+        "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fd3180f7-d908-40e4-af98-6f6011550114",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "995e4927-1c2d-4ee9-94cd-39ca0205bf5f",
+        "role": "buddy",
+        "text": "Tafel = board.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "def3a4f9-fe01-454d-9d1e-57e99cab7e51",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "085bd401-f159-44c3-8230-852d9d2e34d9",
+        "role": "learner",
+        "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "4037cee3-5ee5-4cac-9dcd-3bd3f650bb0a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a452bcec-77d0-4788-8593-ae34e33e09ae",
+        "role": "buddy",
+        "text": "Klar — ich helfe dir dabei. Worum sollen die Vokabeln gehen: Schule, Tiere, Essen oder etwas anderes?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Etwas anderes"
+        ],
+        "reply_to_id": "085bd401-f159-44c3-8230-852d9d2e34d9",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b28d2362-0f16-4479-83f1-039e11a91f88",
+        "role": "learner",
+        "text": "Denk du dir Basisvokabeln aus.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2dcec13e-e05b-42d0-89b6-367da356ac23",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aee5bbe7-a498-4e68-8fd3-3157a1c51f80",
+        "role": "buddy",
+        "text": "Klar — ich habe dir 20 einfache Schulwörter zum Üben vorbereitet.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "b28d2362-0f16-4479-83f1-039e11a91f88",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "e1c53af6-9076-4ab3-8325-04c63a582486",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Buch – book\nTafel – board\nHeft – notebook\nStift – pen\nBleistift – pencil\nRadiergummi – eraser\nSchere – scissors\nKleber – glue\nRucksack – backpack\nLehrer – teacher\nSchüler – pupil\nKlassenzimmer – classroom\nSchule – school\nHausaufgabe – homework\nFedermäppchen – pencil case\nLineal – ruler\nMappe – folder\nArbeitsblatt – worksheet\nPause – break\nTisch – desk",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "9d88ff1a-bab4-48f3-9062-62a2601a4a65",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cbfc3a85-5bd9-47b1-a578-8688265515e0",
+        "role": "learner",
+        "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung.",
+        "status": "failed",
+        "failure_code": "invalid",
+        "client_message_id": "d9348204-6582-4cc1-9dca-64cb5f5c62f6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "0b04da68-de13-49b9-9e80-0dd22afa320d",
+        "kind": "vocab",
+        "prompt": "Schule",
+        "answer": "school",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "12a932cd-9a04-490b-a76f-680d6c7a5b86",
+        "kind": "vocab",
+        "prompt": "eraser",
+        "answer": "Radiergummi",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "16f7e3c7-988d-45b8-b22d-84abea4de96d",
+        "kind": "vocab",
+        "prompt": "pen",
+        "answer": "Stift",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "17fee2c7-b6a7-4833-ae03-853e312f28e1",
+        "kind": "vocab",
+        "prompt": "scissors",
+        "answer": "Schere",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "1acb34e9-c469-4380-ac22-b16264fb6d60",
+        "kind": "vocab",
+        "prompt": "Mappe",
+        "answer": "folder",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "3279ee67-dd82-450f-acac-5857b014d0a7",
+        "kind": "vocab",
+        "prompt": "Arbeitsblatt",
+        "answer": "worksheet",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "3b6c4224-d634-466e-bd11-cfb2801b3e53",
+        "kind": "vocab",
+        "prompt": "Tisch",
+        "answer": "desk",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "3c916c96-d99f-42ad-ac99-c5a9f71e5e4d",
+        "kind": "vocab",
+        "prompt": "worksheet",
+        "answer": "Arbeitsblatt",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "420a3c1e-75fb-449d-9431-4785bd824f7a",
+        "kind": "vocab",
+        "prompt": "break",
+        "answer": "Pause",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "508132ac-8e63-4376-a88a-be9514acc0de",
+        "kind": "vocab",
+        "prompt": "folder",
+        "answer": "Mappe",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "53ca39dc-89f3-4da0-99c8-580a4a75294b",
+        "kind": "vocab",
+        "prompt": "ruler",
+        "answer": "Lineal",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "5534bb15-c322-4054-9314-6c857ff1c042",
+        "kind": "vocab",
+        "prompt": "pupil",
+        "answer": "Schüler",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "5967a13b-2e04-4ddf-9e31-c64a11498c3d",
+        "kind": "vocab",
+        "prompt": "pencil case",
+        "answer": "Federmäppchen",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "6025983d-8220-4763-a292-69872be8b710",
+        "kind": "vocab",
+        "prompt": "Lineal",
+        "answer": "ruler",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "6ceeb6f6-3e8f-433d-8392-395378d97627",
+        "kind": "vocab",
+        "prompt": "backpack",
+        "answer": "Rucksack",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "6dd8cf83-e9d2-45b6-a3d8-a86070378715",
+        "kind": "vocab",
+        "prompt": "teacher",
+        "answer": "Lehrer",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "7d6af1d1-fea7-4a93-8ce2-01731965db1c",
+        "kind": "vocab",
+        "prompt": "Tafel",
+        "answer": "board",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "92c0edcc-5e7e-40a9-b33e-7ce46efd6cc3",
+        "kind": "vocab",
+        "prompt": "Schere",
+        "answer": "scissors",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "9688c08d-33bd-42ea-b5cc-609dca4a5692",
+        "kind": "vocab",
+        "prompt": "Schüler",
+        "answer": "pupil",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "9764af00-f6ba-40a1-9165-05ac7c64f2bd",
+        "kind": "vocab",
+        "prompt": "Klassenzimmer",
+        "answer": "classroom",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "9777d708-ead3-46be-8447-648e7c909dda",
+        "kind": "vocab",
+        "prompt": "notebook",
+        "answer": "Heft",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "984f9ef4-ca90-402a-8b64-b5473ee56473",
+        "kind": "vocab",
+        "prompt": "Heft",
+        "answer": "notebook",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "9886b34c-2023-4898-8828-ae15a32727fc",
+        "kind": "vocab",
+        "prompt": "homework",
+        "answer": "Hausaufgabe",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "9e8bd36f-3888-4d40-92d3-aa68d1848d1f",
+        "kind": "vocab",
+        "prompt": "desk",
+        "answer": "Tisch",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "a2279e15-bfa4-4603-8f5c-be55b642c2dc",
+        "kind": "vocab",
+        "prompt": "Hausaufgabe",
+        "answer": "homework",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "a85673f4-b44f-48f3-8b6f-92748a81a824",
+        "kind": "vocab",
+        "prompt": "board",
+        "answer": "Tafel",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "ac2c26e5-ce9e-474c-8087-2933885ec63f",
+        "kind": "vocab",
+        "prompt": "book",
+        "answer": "Buch",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "af172350-d52e-4309-ac63-aafbd6d5e9f3",
+        "kind": "vocab",
+        "prompt": "Bleistift",
+        "answer": "pencil",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "b276fceb-4c35-4c2d-96ee-240c4ecd0295",
+        "kind": "vocab",
+        "prompt": "Federmäppchen",
+        "answer": "pencil case",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "b5006f0b-e3a4-45d0-a86a-33fca0717e07",
+        "kind": "vocab",
+        "prompt": "Pause",
+        "answer": "break",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "d6019267-dd5a-40dd-9ff5-6714e6d70af5",
+        "kind": "vocab",
+        "prompt": "classroom",
+        "answer": "Klassenzimmer",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "db32bd4f-36a8-409e-a993-53c0169062c0",
+        "kind": "vocab",
+        "prompt": "Rucksack",
+        "answer": "backpack",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "e3bbded1-72fe-449f-8ea9-a55f2b71e702",
+        "kind": "vocab",
+        "prompt": "Lehrer",
+        "answer": "teacher",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "e5a43004-6697-42b1-a0aa-2623ad5a2a31",
+        "kind": "vocab",
+        "prompt": "school",
+        "answer": "Schule",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "ebc8adb7-e2dd-4d2c-92a8-b35d6360b0f0",
+        "kind": "vocab",
+        "prompt": "pencil",
+        "answer": "Bleistift",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "f2462ce4-4997-4d8e-9aa1-25900877740b",
+        "kind": "vocab",
+        "prompt": "Buch",
+        "answer": "book",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "f4a235a6-a640-4014-9211-bbbda2156779",
+        "kind": "vocab",
+        "prompt": "Stift",
+        "answer": "pen",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "f8d32acb-c5de-41bf-ace0-5167a5870631",
+        "kind": "vocab",
+        "prompt": "Kleber",
+        "answer": "glue",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "fd3f4c29-ab8f-4c9c-9a0c-ae9bf83da03c",
+        "kind": "vocab",
+        "prompt": "Radiergummi",
+        "answer": "eraser",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "fdeceb5e-41e5-4b4a-a39e-a85d386e990b",
+        "kind": "vocab",
+        "prompt": "glue",
+        "answer": "Kleber",
+        "prompt_lang": "en",
+        "lang": "de"
+      }
+    ],
+    "settings": {
+      "learner_id": "a463099d-32f5-4151-b683-6153ca4b02c0",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 14,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:38:42.155Z",
+      "updated_at": "2026-10-24T17:39:07.233Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "9d88ff1a-bab4-48f3-9062-62a2601a4a65",
+        "client_request_id": "e1c53af6-9076-4ab3-8325-04c63a582486"
+      }
+    ],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "1acb6c27-b598-4d31-8274-8968eb485d66",
+        "role": "learner",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f188057f-a5cf-448a-8d6c-3d0155d1dd31",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ba1df169-e51b-46ba-9aaa-93e16c87e975",
+        "role": "buddy",
+        "text": "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1acb6c27-b598-4d31-8274-8968eb485d66",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "0ad4f875-a7a4-4e6f-88ad-6deb54099244",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "20 englische Basisvokabeln zum Thema Schule, Abfrage von Deutsch nach Englisch",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d28c411e-f7ea-41e5-9a4c-cef669d5a775",
+        "role": "learner",
+        "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\".",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "1bb66454-3480-4f15-a313-a2484d2b6cc9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "edad0315-3381-489f-a939-1bf793813661",
+        "role": "buddy",
+        "text": "Ja, ich bin bereit. Buch = book.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "d28c411e-f7ea-41e5-9a4c-cef669d5a775",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "def3a4f9-fe01-454d-9d1e-57e99cab7e51",
+        "role": "learner",
+        "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fd3180f7-d908-40e4-af98-6f6011550114",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "995e4927-1c2d-4ee9-94cd-39ca0205bf5f",
+        "role": "buddy",
+        "text": "Tafel = board.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "def3a4f9-fe01-454d-9d1e-57e99cab7e51",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "085bd401-f159-44c3-8230-852d9d2e34d9",
+        "role": "learner",
+        "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "4037cee3-5ee5-4cac-9dcd-3bd3f650bb0a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a452bcec-77d0-4788-8593-ae34e33e09ae",
+        "role": "buddy",
+        "text": "Klar — ich helfe dir dabei. Worum sollen die Vokabeln gehen: Schule, Tiere, Essen oder etwas anderes?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Etwas anderes"
+        ],
+        "reply_to_id": "085bd401-f159-44c3-8230-852d9d2e34d9",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b28d2362-0f16-4479-83f1-039e11a91f88",
+        "role": "learner",
+        "text": "Denk du dir Basisvokabeln aus.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2dcec13e-e05b-42d0-89b6-367da356ac23",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aee5bbe7-a498-4e68-8fd3-3157a1c51f80",
+        "role": "buddy",
+        "text": "Klar — ich habe dir 20 einfache Schulwörter zum Üben vorbereitet.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "b28d2362-0f16-4479-83f1-039e11a91f88",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "e1c53af6-9076-4ab3-8325-04c63a582486",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Buch – book\nTafel – board\nHeft – notebook\nStift – pen\nBleistift – pencil\nRadiergummi – eraser\nSchere – scissors\nKleber – glue\nRucksack – backpack\nLehrer – teacher\nSchüler – pupil\nKlassenzimmer – classroom\nSchule – school\nHausaufgabe – homework\nFedermäppchen – pencil case\nLineal – ruler\nMappe – folder\nArbeitsblatt – worksheet\nPause – break\nTisch – desk",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "9d88ff1a-bab4-48f3-9062-62a2601a4a65",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cbfc3a85-5bd9-47b1-a578-8688265515e0",
+        "role": "learner",
+        "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung.",
+        "status": "done",
+        "failure_code": "invalid",
+        "client_message_id": "d9348204-6582-4cc1-9dca-64cb5f5c62f6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "89bc36d6-fb30-4aa8-860c-93f474c2002e",
+        "role": "learner",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3e36c5dd-cf10-44d4-b9f6-2a771d177572",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8815bb0e-0979-4586-8e0b-98e7afd65e16",
+        "role": "buddy",
+        "text": "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt von Deutsch nach Englisch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "89bc36d6-fb30-4aa8-860c-93f474c2002e",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "6ca8f502-0201-4c99-a72e-dccb91e0b198",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Hund – dog\nKatze – cat\nVogel – bird\nFisch – fish\nPferd – horse",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "ce7ee052-b6ee-4711-9fdc-70f3e6d50b41",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3527a4d1-16cd-41ea-b8bd-e8da8b3c815e",
+        "role": "learner",
+        "text": "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet. Ich frage dich jetzt von Deutsch nach Englisch. Wie heißt \"Hund\" auf Englisch?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "bf7a0d1a-a454-4b11-ae23-82d8d9f588b4",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "463a0e39-cbc8-4de3-aed6-506fe3ebcbc4",
+        "role": "buddy",
+        "text": "Hund = dog.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "3527a4d1-16cd-41ea-b8bd-e8da8b3c815e",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "08cd9dba-8c86-4acc-bbbd-f4c6dd39ed8a",
+        "kind": "vocab",
+        "prompt": "cat",
+        "answer": "Katze",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "0b04da68-de13-49b9-9e80-0dd22afa320d",
+        "kind": "vocab",
+        "prompt": "Schule",
+        "answer": "school",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "12a932cd-9a04-490b-a76f-680d6c7a5b86",
+        "kind": "vocab",
+        "prompt": "eraser",
+        "answer": "Radiergummi",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "16f7e3c7-988d-45b8-b22d-84abea4de96d",
+        "kind": "vocab",
+        "prompt": "pen",
+        "answer": "Stift",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "17fee2c7-b6a7-4833-ae03-853e312f28e1",
+        "kind": "vocab",
+        "prompt": "scissors",
+        "answer": "Schere",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "1acb34e9-c469-4380-ac22-b16264fb6d60",
+        "kind": "vocab",
+        "prompt": "Mappe",
+        "answer": "folder",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "200e2702-1920-405b-ae46-8cbbba12e0a1",
+        "kind": "vocab",
+        "prompt": "bird",
+        "answer": "Vogel",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "2d9d4990-5afd-4950-9363-4e4aca5cadb9",
+        "kind": "vocab",
+        "prompt": "dog",
+        "answer": "Hund",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "3279ee67-dd82-450f-acac-5857b014d0a7",
+        "kind": "vocab",
+        "prompt": "Arbeitsblatt",
+        "answer": "worksheet",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "3b6c4224-d634-466e-bd11-cfb2801b3e53",
+        "kind": "vocab",
+        "prompt": "Tisch",
+        "answer": "desk",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "3c916c96-d99f-42ad-ac99-c5a9f71e5e4d",
+        "kind": "vocab",
+        "prompt": "worksheet",
+        "answer": "Arbeitsblatt",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "420a3c1e-75fb-449d-9431-4785bd824f7a",
+        "kind": "vocab",
+        "prompt": "break",
+        "answer": "Pause",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "4f61a74e-c11f-491a-86b8-ad05c5ab5680",
+        "kind": "vocab",
+        "prompt": "Katze",
+        "answer": "cat",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "508132ac-8e63-4376-a88a-be9514acc0de",
+        "kind": "vocab",
+        "prompt": "folder",
+        "answer": "Mappe",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "53ca39dc-89f3-4da0-99c8-580a4a75294b",
+        "kind": "vocab",
+        "prompt": "ruler",
+        "answer": "Lineal",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "5534bb15-c322-4054-9314-6c857ff1c042",
+        "kind": "vocab",
+        "prompt": "pupil",
+        "answer": "Schüler",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "5967a13b-2e04-4ddf-9e31-c64a11498c3d",
+        "kind": "vocab",
+        "prompt": "pencil case",
+        "answer": "Federmäppchen",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "6025983d-8220-4763-a292-69872be8b710",
+        "kind": "vocab",
+        "prompt": "Lineal",
+        "answer": "ruler",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "610423ec-31bd-42bd-990a-7a07678b0732",
+        "kind": "vocab",
+        "prompt": "Vogel",
+        "answer": "bird",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "659c79ce-9904-436f-a56e-29e09507ccc7",
+        "kind": "vocab",
+        "prompt": "Pferd",
+        "answer": "horse",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "6ceeb6f6-3e8f-433d-8392-395378d97627",
+        "kind": "vocab",
+        "prompt": "backpack",
+        "answer": "Rucksack",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "6dd8cf83-e9d2-45b6-a3d8-a86070378715",
+        "kind": "vocab",
+        "prompt": "teacher",
+        "answer": "Lehrer",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "7d6af1d1-fea7-4a93-8ce2-01731965db1c",
+        "kind": "vocab",
+        "prompt": "Tafel",
+        "answer": "board",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "92c0edcc-5e7e-40a9-b33e-7ce46efd6cc3",
+        "kind": "vocab",
+        "prompt": "Schere",
+        "answer": "scissors",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "9688c08d-33bd-42ea-b5cc-609dca4a5692",
+        "kind": "vocab",
+        "prompt": "Schüler",
+        "answer": "pupil",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "9764af00-f6ba-40a1-9165-05ac7c64f2bd",
+        "kind": "vocab",
+        "prompt": "Klassenzimmer",
+        "answer": "classroom",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "9777d708-ead3-46be-8447-648e7c909dda",
+        "kind": "vocab",
+        "prompt": "notebook",
+        "answer": "Heft",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "984f9ef4-ca90-402a-8b64-b5473ee56473",
+        "kind": "vocab",
+        "prompt": "Heft",
+        "answer": "notebook",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "9886b34c-2023-4898-8828-ae15a32727fc",
+        "kind": "vocab",
+        "prompt": "homework",
+        "answer": "Hausaufgabe",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "9e8bd36f-3888-4d40-92d3-aa68d1848d1f",
+        "kind": "vocab",
+        "prompt": "desk",
+        "answer": "Tisch",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "a2279e15-bfa4-4603-8f5c-be55b642c2dc",
+        "kind": "vocab",
+        "prompt": "Hausaufgabe",
+        "answer": "homework",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "a85673f4-b44f-48f3-8b6f-92748a81a824",
+        "kind": "vocab",
+        "prompt": "board",
+        "answer": "Tafel",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "ac2c26e5-ce9e-474c-8087-2933885ec63f",
+        "kind": "vocab",
+        "prompt": "book",
+        "answer": "Buch",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "af172350-d52e-4309-ac63-aafbd6d5e9f3",
+        "kind": "vocab",
+        "prompt": "Bleistift",
+        "answer": "pencil",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "b276fceb-4c35-4c2d-96ee-240c4ecd0295",
+        "kind": "vocab",
+        "prompt": "Federmäppchen",
+        "answer": "pencil case",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "b5006f0b-e3a4-45d0-a86a-33fca0717e07",
+        "kind": "vocab",
+        "prompt": "Pause",
+        "answer": "break",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "b587ae28-47c1-425d-bd56-10b74587dc5d",
+        "kind": "vocab",
+        "prompt": "Fisch",
+        "answer": "fish",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "d6019267-dd5a-40dd-9ff5-6714e6d70af5",
+        "kind": "vocab",
+        "prompt": "classroom",
+        "answer": "Klassenzimmer",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "db32bd4f-36a8-409e-a993-53c0169062c0",
+        "kind": "vocab",
+        "prompt": "Rucksack",
+        "answer": "backpack",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "e3bbded1-72fe-449f-8ea9-a55f2b71e702",
+        "kind": "vocab",
+        "prompt": "Lehrer",
+        "answer": "teacher",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "e3d1c843-4924-4d32-8c5b-56126f465749",
+        "kind": "vocab",
+        "prompt": "fish",
+        "answer": "Fisch",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "e5a43004-6697-42b1-a0aa-2623ad5a2a31",
+        "kind": "vocab",
+        "prompt": "school",
+        "answer": "Schule",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "ebc8adb7-e2dd-4d2c-92a8-b35d6360b0f0",
+        "kind": "vocab",
+        "prompt": "pencil",
+        "answer": "Bleistift",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "ee8e1808-2493-42a2-8e19-43844929e42b",
+        "kind": "vocab",
+        "prompt": "Hund",
+        "answer": "dog",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "f2462ce4-4997-4d8e-9aa1-25900877740b",
+        "kind": "vocab",
+        "prompt": "Buch",
+        "answer": "book",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "f4a235a6-a640-4014-9211-bbbda2156779",
+        "kind": "vocab",
+        "prompt": "Stift",
+        "answer": "pen",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "f8d32acb-c5de-41bf-ace0-5167a5870631",
+        "kind": "vocab",
+        "prompt": "Kleber",
+        "answer": "glue",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "f97baf61-f02f-4241-bc4e-9ab45fc09e96",
+        "kind": "vocab",
+        "prompt": "horse",
+        "answer": "Pferd",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "fd3f4c29-ab8f-4c9c-9a0c-ae9bf83da03c",
+        "kind": "vocab",
+        "prompt": "Radiergummi",
+        "answer": "eraser",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "fdeceb5e-41e5-4b4a-a39e-a85d386e990b",
+        "kind": "vocab",
+        "prompt": "glue",
+        "answer": "Kleber",
+        "prompt_lang": "en",
+        "lang": "de"
+      }
+    ],
+    "settings": {
+      "learner_id": "a463099d-32f5-4151-b683-6153ca4b02c0",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 19,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:38:42.155Z",
+      "updated_at": "2026-10-24T17:39:30.008Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "9d88ff1a-bab4-48f3-9062-62a2601a4a65",
+        "client_request_id": "e1c53af6-9076-4ab3-8325-04c63a582486"
+      },
+      {
+        "id": "ce7ee052-b6ee-4711-9fdc-70f3e6d50b41",
+        "client_request_id": "6ca8f502-0201-4c99-a72e-dccb91e0b198"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "double": true
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\"."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, ich bin bereit. Buch = book."
+          },
+          {
+            "who": "learner",
+            "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?"
+          },
+          {
+            "who": "buddy",
+            "text": "Tafel = board."
+          },
+          {
+            "who": "learner",
+            "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich helfe dir dabei. Worum sollen die Vokabeln gehen: Schule, Tiere, Essen oder etwas anderes?"
+          },
+          {
+            "who": "learner",
+            "text": "Denk du dir Basisvokabeln aus."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich habe dir 20 einfache Schulwörter zum Üben vorbereitet."
+          },
+          {
+            "who": "learner",
+            "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Buch – book\nTafel – board\nHeft – notebook\nStift – pen\nBleistift – pencil\nRadiergummi – eraser\nSchere – scissors\nKleber – glue\nRucksack – backpack\nLehrer – teacher\nSchüler – pupil\nKlassenzimmer – classroom\nSchule – school\nHausaufgabe – homework\nFedermäppchen – pencil case\nLineal – ruler\nMappe – folder\nArbeitsblatt – worksheet\nPause – break\nTisch – desk",
+            "kind": "vocab"
+          }
+        ],
+        "question": {
+          "prompt": "book",
+          "choices": null
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich habe",
+            "Ich habe dir",
+            "Ich habe dir ",
+            "Ich habe dir 5",
+            "Ich habe dir 5 Tier",
+            "Ich habe dir 5 Tierw",
+            "Ich habe dir 5 Tierwörter",
+            "Ich habe dir 5 Tierwörter zum",
+            "Ich habe dir 5 Tierwörter zum Ü",
+            "Ich habe dir 5 Tierwörter zum Üben",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet —",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du sag",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du sagst",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du sagst jeweils",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du sagst jeweils das",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du sagst jeweils das engl",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du sagst jeweils das englische",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du sagst jeweils das englische Wort",
+            "Ich habe dir 5 Tierwörter zum Üben vorbereitet — du sagst jeweils das englische Wort.",
+            "",
+            "Ich",
+            "Ich habe",
+            "Ich habe dir",
+            "Ich habe dir ",
+            "Ich habe dir 5",
+            "Ich habe dir 5 Tier",
+            "Ich habe dir 5 Tier-V",
+            "Ich habe dir 5 Tier-Vok",
+            "Ich habe dir 5 Tier-Vokabel",
+            "Ich habe dir 5 Tier-Vokabeln",
+            "Ich habe dir 5 Tier-Vokabeln zum",
+            "Ich habe dir 5 Tier-Vokabeln zum Ü",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet —",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übers",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt von",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt von Deutsch",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt von Deutsch nach",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt von Deutsch nach Englisch",
+            "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt von Deutsch nach Englisch."
+          ],
+          "ms": 8752,
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "id": "3e36c5dd-cf10-44d4-b9f6-2a771d177572"
+        },
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [],
+          "ms": 7,
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "id": "3e36c5dd-cf10-44d4-b9f6-2a771d177572"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 1,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\"."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, ich bin bereit. Buch = book."
+          },
+          {
+            "who": "learner",
+            "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?"
+          },
+          {
+            "who": "buddy",
+            "text": "Tafel = board."
+          },
+          {
+            "who": "learner",
+            "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich helfe dir dabei. Worum sollen die Vokabeln gehen: Schule, Tiere, Essen oder etwas anderes?"
+          },
+          {
+            "who": "learner",
+            "text": "Denk du dir Basisvokabeln aus."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich habe dir 20 einfache Schulwörter zum Üben vorbereitet."
+          },
+          {
+            "who": "learner",
+            "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung."
+          },
+          {
+            "who": "learner",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt von Deutsch nach Englisch."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Buch – book\nTafel – board\nHeft – notebook\nStift – pen\nBleistift – pencil\nRadiergummi – eraser\nSchere – scissors\nKleber – glue\nRucksack – backpack\nLehrer – teacher\nSchüler – pupil\nKlassenzimmer – classroom\nSchule – school\nHausaufgabe – homework\nFedermäppchen – pencil case\nLineal – ruler\nMappe – folder\nArbeitsblatt – worksheet\nPause – break\nTisch – desk",
+            "kind": "vocab"
+          },
+          {
+            "label": "Hund – dog\nKatze – cat\nVogel – bird\nFisch – fish\nPferd – horse",
+            "kind": "vocab"
+          }
+        ],
+        "question": {
+          "prompt": "book",
+          "choices": null
+        }
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "6ca8f502-0201-4c99-a72e-dccb91e0b198",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "ce7ee052-b6ee-4711-9fdc-70f3e6d50b41",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Wortschatz",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "2d9d4990-5afd-4950-9363-4e4aca5cadb9",
+                  "kind": "vocab",
+                  "prompt": "dog",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Tiere",
+                  "origin": "typed",
+                  "lang": "de",
+                  "prompt_lang": "en",
+                  "subject_kind": "english",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "Pferd",
+                    "Katze",
+                    "Vogel",
+                    "Hund"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "08cd9dba-8c86-4acc-bbbd-f4c6dd39ed8a",
+                  "kind": "vocab",
+                  "prompt": "cat",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Tiere",
+                  "origin": "typed",
+                  "lang": "de",
+                  "prompt_lang": "en",
+                  "subject_kind": "english",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "Vogel",
+                    "Katze",
+                    "Fisch",
+                    "Pferd"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "200e2702-1920-405b-ae46-8cbbba12e0a1",
+                  "kind": "vocab",
+                  "prompt": "bird",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Tiere",
+                  "origin": "typed",
+                  "lang": "de",
+                  "prompt_lang": "en",
+                  "subject_kind": "english",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "Fisch",
+                    "Pferd",
+                    "Vogel",
+                    "Hund"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "e3d1c843-4924-4d32-8c5b-56126f465749",
+                  "kind": "vocab",
+                  "prompt": "fish",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Tiere",
+                  "origin": "typed",
+                  "lang": "de",
+                  "prompt_lang": "en",
+                  "subject_kind": "english",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "Katze",
+                    "Fisch",
+                    "Vogel",
+                    "Pferd"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "f97baf61-f02f-4241-bc4e-9ab45fc09e96",
+                  "kind": "vocab",
+                  "prompt": "horse",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Tiere",
+                  "origin": "typed",
+                  "lang": "de",
+                  "prompt_lang": "en",
+                  "subject_kind": "english",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "Katze",
+                    "Pferd",
+                    "Vogel",
+                    "Fisch"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "2d9d4990-5afd-4950-9363-4e4aca5cadb9",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet. Ich frage dich jetzt von Deutsch nach Englisch. Wie heißt \"Hund\" auf Englisch?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\"."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, ich bin bereit. Buch = book."
+          },
+          {
+            "who": "learner",
+            "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?"
+          },
+          {
+            "who": "buddy",
+            "text": "Tafel = board."
+          },
+          {
+            "who": "learner",
+            "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich helfe dir dabei. Worum sollen die Vokabeln gehen: Schule, Tiere, Essen oder etwas anderes?"
+          },
+          {
+            "who": "learner",
+            "text": "Denk du dir Basisvokabeln aus."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich habe dir 20 einfache Schulwörter zum Üben vorbereitet."
+          },
+          {
+            "who": "learner",
+            "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung."
+          },
+          {
+            "who": "learner",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet — du übersetzt von Deutsch nach Englisch."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Buch – book\nTafel – board\nHeft – notebook\nStift – pen\nBleistift – pencil\nRadiergummi – eraser\nSchere – scissors\nKleber – glue\nRucksack – backpack\nLehrer – teacher\nSchüler – pupil\nKlassenzimmer – classroom\nSchule – school\nHausaufgabe – homework\nFedermäppchen – pencil case\nLineal – ruler\nMappe – folder\nArbeitsblatt – worksheet\nPause – break\nTisch – desk",
+            "kind": "vocab"
+          },
+          {
+            "label": "Hund – dog\nKatze – cat\nVogel – bird\nFisch – fish\nPferd – horse",
+            "kind": "vocab"
+          }
+        ],
+        "question": {
+          "prompt": "dog",
+          "choices": null
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Hund",
+            "Hund =",
+            "Hund = dog",
+            "Hund = dog."
+          ],
+          "ms": 1040,
+          "text": "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet. Ich frage dich jetzt von Deutsch nach Englisch. Wie heißt \"Hund\" auf Englisch?",
+          "id": "bf7a0d1a-a454-4b11-ae23-82d8d9f588b4"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "vocabulary.direction",
+      "evidence": "[[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"]]",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "young-reader-vocab-not-cloze",
+  "persona": {
+    "id": "young-reader",
+    "age": 8,
+    "locale": "de",
+    "style": "Reads slowly; very short phonetic spelling",
+    "behaviour": "Impatient, taps twice when waiting"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "tap",
+        "offer": 1,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich habe dir 5 Tier-Vokabeln zum Üben vorbereitet. Ich frage dich jetzt von Deutsch nach Englisch. Wie heißt \"Hund\" auf Englisch?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+      "double": true
+    },
+    {
+      "type": "message",
+      "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\".",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen.",
+      "double": true
+    },
+    {
+      "type": "message",
+      "text": "Denk du dir Basisvokabeln aus.",
+      "double": true
+    },
+    {
+      "type": "message",
+      "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung.",
+      "double": true
+    },
+    {
+      "type": "tap",
+      "offer": 0,
+      "double": true
+    }
+  ]
+}

@@ -1,0 +1,531 @@
+{
+  "goal": {
+    "id": "clarification-chain",
+    "issue": 938,
+    "wants": "A vocabulary request continues after answering the language question",
+    "messages": [
+      "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "Deutsch und Englisch."
+    ],
+    "expect": "offer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "f5f0721b-e233-4e7e-8349-5b3186e66c64",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:35:45.153Z",
+      "updated_at": "2026-10-24T17:35:45.156Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "552a72e3-1d12-43cf-904d-9720f86f3436",
+        "role": "learner",
+        "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "c56276a0-7bab-4156-8e35-288eed0eef27",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "18fc39a0-a764-4481-996b-febcd8ad7cd7",
+        "role": "buddy",
+        "text": "Je te prépare un test de vocabulaire avec 20 mots.\n\nJe n’ai pas pu préparer cet exercice.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "552a72e3-1d12-43cf-904d-9720f86f3436",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "5b5ae3d2-cfe3-4855-a6f2-420baf76740b",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "test",
+              "text": "20 mots de vocabulaire",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "93be3c16-7e53-4d05-98d6-0250ec50f5e4",
+        "role": "learner",
+        "text": "Allemand et anglais.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "49be4004-cd89-4885-8cb5-37d74948aa56",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "812c1592-fb2c-4adb-9dff-d6adb432738e",
+        "role": "buddy",
+        "text": "D’accord — pour quel thème tu veux ces 20 mots en allemand et en anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "la nourriture",
+          "l’école",
+          "la maison",
+          "les animaux"
+        ],
+        "reply_to_id": "93be3c16-7e53-4d05-98d6-0250ec50f5e4",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "63760fac-1f10-4d93-9296-350cfc5b9b32",
+        "role": "learner",
+        "text": "Je veux des mots sur le thème de la nourriture, s'il te plaît.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "134e59d2-9c9a-4caf-8e41-ee3c947b6153",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "566863c0-fe87-4721-a791-3b56f2ca487c",
+        "role": "buddy",
+        "text": "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand\n- les deux sens",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "allemand → anglais",
+          "anglais → allemand",
+          "les deux sens"
+        ],
+        "reply_to_id": "63760fac-1f10-4d93-9296-350cfc5b9b32",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8be67420-fc83-4280-bb41-b635f711cbe2",
+        "role": "learner",
+        "text": "Je peux te préparer un test de vocabulaire sur la nourriture dans les deux sens : allemand → anglais et anglais → allemand. Ça te va ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "03763b0c-425d-4a63-bbdf-169e1d4c6ca5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ba16b07d-d650-4f1b-a0d9-9708d4867b23",
+        "role": "buddy",
+        "text": "Oui, je te prépare ça.\n\nJe n’ai pas pu préparer cet exercice.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8be67420-fc83-4280-bb41-b635f711cbe2",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "c105cafd-2c73-4215-80a9-8a03c9a8dacb",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "20 mots sur la nourriture en allemand et en anglais, dans les deux sens allemand → anglais et anglais → allemand",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "f5f0721b-e233-4e7e-8349-5b3186e66c64",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 11,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:35:45.153Z",
+      "updated_at": "2026-10-24T17:36:01.915Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Je",
+            "Je te",
+            "Je te prépare",
+            "Je te prépare un",
+            "Je te prépare un test",
+            "Je te prépare un test de",
+            "Je te prépare un test de vocab",
+            "Je te prépare un test de vocabulaire",
+            "Je te prépare un test de vocabulaire avec",
+            "Je te prépare un test de vocabulaire avec ",
+            "Je te prépare un test de vocabulaire avec 20",
+            "Je te prépare un test de vocabulaire avec 20 mots",
+            "Je te prépare un test de vocabulaire avec 20 mots."
+          ],
+          "ms": 3934,
+          "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+          "id": "c56276a0-7bab-4156-8e35-288eed0eef27"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Allemand et anglais.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je te prépare un test de vocabulaire avec 20 mots.\n\nJe n’ai pas pu préparer cet exercice."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "D",
+            "D’accord",
+            "D’accord —",
+            "D’accord — pour",
+            "D’accord — pour quel",
+            "D’accord — pour quel thème",
+            "D’accord — pour quel thème tu",
+            "D’accord — pour quel thème tu veux",
+            "D’accord — pour quel thème tu veux ces",
+            "D’accord — pour quel thème tu veux ces ",
+            "D’accord — pour quel thème tu veux ces 20",
+            "D’accord — pour quel thème tu veux ces 20 mots",
+            "D’accord — pour quel thème tu veux ces 20 mots en",
+            "D’accord — pour quel thème tu veux ces 20 mots en allemand",
+            "D’accord — pour quel thème tu veux ces 20 mots en allemand et",
+            "D’accord — pour quel thème tu veux ces 20 mots en allemand et en",
+            "D’accord — pour quel thème tu veux ces 20 mots en allemand et en anglais",
+            "D’accord — pour quel thème tu veux ces 20 mots en allemand et en anglais ?",
+            "D’accord — pour quel thème tu veux ces 20 mots en allemand et en anglais ?"
+          ],
+          "ms": 1738,
+          "text": "Allemand et anglais.",
+          "id": "49be4004-cd89-4885-8cb5-37d74948aa56"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Je veux des mots sur le thème de la nourriture, s'il te plaît.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je te prépare un test de vocabulaire avec 20 mots.\n\nJe n’ai pas pu préparer cet exercice."
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — pour quel thème tu veux ces 20 mots en allemand et en anglais ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Je",
+            "Je te",
+            "Je te prépare",
+            "Je te prépare un",
+            "Je te prépare un exercice",
+            "Je te prépare un exercice de",
+            "Je te prépare un exercice de vocab",
+            "Je te prépare un exercice de vocabulaire",
+            "Je te prépare un exercice de vocabulaire sur",
+            "Je te prépare un exercice de vocabulaire sur la",
+            "Je te prépare un exercice de vocabulaire sur la nourriture",
+            "Je te prépare un exercice de vocabulaire sur la nourriture en",
+            "Je te prépare un exercice de vocabulaire sur la nourriture en allemand",
+            "Je te prépare un exercice de vocabulaire sur la nourriture en allemand et",
+            "Je te prépare un exercice de vocabulaire sur la nourriture en allemand et en",
+            "Je te prépare un exercice de vocabulaire sur la nourriture en allemand et en anglais",
+            "Je te prépare un exercice de vocabulaire sur la nourriture en allemand et en anglais.",
+            "",
+            "Oui",
+            "Oui —",
+            "Oui — tu",
+            "Oui — tu veux",
+            "Oui — tu veux le",
+            "Oui — tu veux le test",
+            "Oui — tu veux le test dans",
+            "Oui — tu veux le test dans quel",
+            "Oui — tu veux le test dans quel sens",
+            "Oui — tu veux le test dans quel sens ?",
+            "Oui — tu veux le test dans quel sens ?\n",
+            "Oui — tu veux le test dans quel sens ?\n-",
+            "Oui — tu veux le test dans quel sens ?\n- allemand",
+            "Oui — tu veux le test dans quel sens ?\n- allemand →",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n-",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais →",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand\n",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand\n-",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand\n- les",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand\n- les deux",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand\n- les deux sens",
+            "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand\n- les deux sens"
+          ],
+          "ms": 5818,
+          "text": "Je veux des mots sur le thème de la nourriture, s'il te plaît.",
+          "id": "134e59d2-9c9a-4caf-8e41-ee3c947b6153"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Je peux te préparer un test de vocabulaire sur la nourriture dans les deux sens : allemand → anglais et anglais → allemand. Ça te va ?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je te prépare un test de vocabulaire avec 20 mots.\n\nJe n’ai pas pu préparer cet exercice."
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — pour quel thème tu veux ces 20 mots en allemand et en anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Je veux des mots sur le thème de la nourriture, s'il te plaît."
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — tu veux le test dans quel sens ?\n- allemand → anglais\n- anglais → allemand\n- les deux sens"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Oui",
+            "Oui,",
+            "Oui, je",
+            "Oui, je te",
+            "Oui, je te prépare",
+            "Oui, je te prépare ça",
+            "Oui, je te prépare ça."
+          ],
+          "ms": 3313,
+          "text": "Je peux te préparer un test de vocabulaire sur la nourriture dans les deux sens : allemand → anglais et anglais → allemand. Ça te va ?",
+          "id": "03763b0c-425d-4a63-bbdf-169e1d4c6ca5"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "offer",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "french-child-clarification-chain",
+  "persona": {
+    "id": "french-child",
+    "age": 11,
+    "locale": "fr",
+    "style": "French first language, weak reader",
+    "behaviour": "Impatient and easily discouraged"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Je veux des mots sur le thème de la nourriture, s'il te plaît.",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Je peux te préparer un test de vocabulaire sur la nourriture dans les deux sens : allemand → anglais et anglais → allemand. Ça te va ?",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": false,
+      "understandable": true,
+      "faithful": false
+    },
+    "disputed": [],
+    "clean": false
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "goal": {
+    "id": "reminder-next-step",
+    "issue": 941,
+    "wants": "Reminder with content and a valid next step",
+    "messages": [
+      "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+    ],
+    "expect": "reminder"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": true,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "a31de482-aaab-449f-9e11-8cc1e7437bab",
+        "role": "learner",
+        "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2453c1b4-d503-4ee0-a51e-96f6c5ced31c",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1be2fd35-d079-412e-b059-fe583b08ecbe",
+        "role": "buddy",
+        "text": "Claro — ¿sobre qué tema es?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "mate",
+          "inglés",
+          "historia",
+          "ciencia"
+        ],
+        "reply_to_id": "a31de482-aaab-449f-9e11-8cc1e7437bab",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": true,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Claro",
+            "Claro —",
+            "Claro — ¿",
+            "Claro — ¿sobre",
+            "Claro — ¿sobre qué",
+            "Claro — ¿sobre qué tema",
+            "Claro — ¿sobre qué tema es",
+            "Claro — ¿sobre qué tema es?",
+            "Claro — ¿sobre qué tema es?"
+          ],
+          "ms": 1265,
+          "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas.",
+          "id": "2453c1b4-d503-4ee0-a51e-96f6c5ced31c"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tick"
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas."
+          },
+          {
+            "who": "buddy",
+            "text": "Claro — ¿sobre qué tema es?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "reminder.delivered",
+      "evidence": "No reminder in API thread after TestClock + tick",
+      "kind": "reminder",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "execution.error",
+      "kind": "reminder",
+      "route": "/explorer",
+      "evidence": "simulator: no current question",
+      "category": "simulator"
+    }
+  ],
+  "id": "spanish-teen-reminder-next-step",
+  "persona": {
+    "id": "spanish-teen",
+    "age": 16,
+    "locale": "es",
+    "style": "Spanish first language, strong reader, speech-like prose",
+    "behaviour": "Switches topic and requests a hint before answering"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "hint"
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+      "double": false
+    }
+  ],
+  "error": "simulator: no current question"
+}

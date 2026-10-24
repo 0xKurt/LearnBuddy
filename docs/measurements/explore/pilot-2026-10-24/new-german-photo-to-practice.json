@@ -1,0 +1,865 @@
+{
+  "goal": {
+    "id": "photo-to-practice",
+    "issue": 944,
+    "wants": "Practice based on my photographed fractions worksheet",
+    "messages": [
+      "Ich möchte die Aufgaben auf meinem Blatt üben."
+    ],
+    "expect": "photo"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+        "role": "learner",
+        "text": "erklär mal brüche aber einfach",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b7025bfa-9156-4a9e-9755-decfabe31adb",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e9a0f581-a66b-4b3d-8e5d-a485c60d2b00",
+        "role": "buddy",
+        "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "lesen",
+          "vergleichen",
+          "rechnen"
+        ],
+        "reply_to_id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+        "role": "learner",
+        "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e7167f0f-7c93-4ff9-9c88-6d314bcb2938",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "db66ce7d-d611-43e9-a3f6-61d4082fc493",
+        "role": "buddy",
+        "text": "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Wasser",
+          "Pizza",
+          "Kuchen"
+        ],
+        "reply_to_id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+        "role": "learner",
+        "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e0fb7202-41f4-4dc1-a3ce-d86a00c8e020",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b8019583-fc67-4768-ae53-4f55642a09e9",
+        "role": "buddy",
+        "text": "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Ja, mit Pizza",
+          "Ja, mit Wasser",
+          "Nein, noch ein anderes Beispiel"
+        ],
+        "reply_to_id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "78aed472-acf6-4d59-8932-7ff6d201f46f",
+        "role": "learner",
+        "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "cc816a9e-2c0f-4315-99a9-b4f3dc956b4c",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "82e48188-c74c-41df-9977-9c326771579e",
+        "role": "buddy",
+        "text": "Klar. Denk an eine Tafel Schokolade mit 4 gleich großen Stücken: Der Strich bei $\\frac{3}{4}$ ist wie ein Zaun zwischen „oben“ und „unten“ — oben steht, wie viele Stücke du nimmst, unten steht, in wie viele Stücke die ganze Schokolade geteilt ist. Bei $\\frac{3}{4}$ sind 3 Stücke da und 1 Stück fehlt noch, deshalb ist es fast ganz.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "78aed472-acf6-4d59-8932-7ff6d201f46f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "334a643e-428a-45ed-94e2-7706346ed1f4",
+        "role": "learner",
+        "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0f3f863f-1f69-47e1-a78b-0eca816a53f2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1ef98886-edc8-4f57-92ef-a88a7c6494e1",
+        "role": "buddy",
+        "text": "Ja — mit dem Strich meine ich die Linie zwischen oben und unten, also die Trennlinie im Bruch. Oben steht: wie viele Teile du hast. Unten steht: in wie viele gleich große Teile das Ganze geteilt ist.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "334a643e-428a-45ed-94e2-7706346ed1f4",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "03584a8d-cadc-4afa-b20f-69e404d9b687",
+        "role": "learner",
+        "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8ca684ad-81d6-429d-ab00-81c6ce30a875",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e1163121-8b09-47da-a59b-6300e7c5d03d",
+        "role": "buddy",
+        "text": "Ja — in Brüchen ist das „/“ eigentlich nur eine Schreibweise für die Bruchlinie. Es meint: „oben gehört zu unten“ oder „oben von unten“ — nicht einfach nur eine Rechenaufgabe. Deshalb heißt $\\frac{3}{4}$: 3 von 4 gleich großen Teilen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "03584a8d-cadc-4afa-b20f-69e404d9b687",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "09eeaee6-73bd-4b4b-8a75-763aa315eb7d",
+        "role": "learner",
+        "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "6ae7901e-f50d-4d47-bf29-eb0933cdf77a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0104258f-f2f1-404b-96a3-758c5eb63d49",
+        "role": "buddy",
+        "text": "Klar: **„Oben zeigt, wie viele du hast; unten zeigt, woraus das Ganze besteht.“**\n\nFür $\\frac{3}{4}$ heißt das: **3 von 4 gleich großen Teilen**.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "09eeaee6-73bd-4b4b-8a75-763aa315eb7d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+        "role": "learner",
+        "text": "erklär mal brüche aber einfach",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b7025bfa-9156-4a9e-9755-decfabe31adb",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e9a0f581-a66b-4b3d-8e5d-a485c60d2b00",
+        "role": "buddy",
+        "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "lesen",
+          "vergleichen",
+          "rechnen"
+        ],
+        "reply_to_id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+        "role": "learner",
+        "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e7167f0f-7c93-4ff9-9c88-6d314bcb2938",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "db66ce7d-d611-43e9-a3f6-61d4082fc493",
+        "role": "buddy",
+        "text": "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Wasser",
+          "Pizza",
+          "Kuchen"
+        ],
+        "reply_to_id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+        "role": "learner",
+        "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e0fb7202-41f4-4dc1-a3ce-d86a00c8e020",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b8019583-fc67-4768-ae53-4f55642a09e9",
+        "role": "buddy",
+        "text": "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Ja, mit Pizza",
+          "Ja, mit Wasser",
+          "Nein, noch ein anderes Beispiel"
+        ],
+        "reply_to_id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "78aed472-acf6-4d59-8932-7ff6d201f46f",
+        "role": "learner",
+        "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "cc816a9e-2c0f-4315-99a9-b4f3dc956b4c",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "82e48188-c74c-41df-9977-9c326771579e",
+        "role": "buddy",
+        "text": "Klar. Denk an eine Tafel Schokolade mit 4 gleich großen Stücken: Der Strich bei $\\frac{3}{4}$ ist wie ein Zaun zwischen „oben“ und „unten“ — oben steht, wie viele Stücke du nimmst, unten steht, in wie viele Stücke die ganze Schokolade geteilt ist. Bei $\\frac{3}{4}$ sind 3 Stücke da und 1 Stück fehlt noch, deshalb ist es fast ganz.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "78aed472-acf6-4d59-8932-7ff6d201f46f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "334a643e-428a-45ed-94e2-7706346ed1f4",
+        "role": "learner",
+        "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0f3f863f-1f69-47e1-a78b-0eca816a53f2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1ef98886-edc8-4f57-92ef-a88a7c6494e1",
+        "role": "buddy",
+        "text": "Ja — mit dem Strich meine ich die Linie zwischen oben und unten, also die Trennlinie im Bruch. Oben steht: wie viele Teile du hast. Unten steht: in wie viele gleich große Teile das Ganze geteilt ist.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "334a643e-428a-45ed-94e2-7706346ed1f4",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "03584a8d-cadc-4afa-b20f-69e404d9b687",
+        "role": "learner",
+        "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8ca684ad-81d6-429d-ab00-81c6ce30a875",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e1163121-8b09-47da-a59b-6300e7c5d03d",
+        "role": "buddy",
+        "text": "Ja — in Brüchen ist das „/“ eigentlich nur eine Schreibweise für die Bruchlinie. Es meint: „oben gehört zu unten“ oder „oben von unten“ — nicht einfach nur eine Rechenaufgabe. Deshalb heißt $\\frac{3}{4}$: 3 von 4 gleich großen Teilen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "03584a8d-cadc-4afa-b20f-69e404d9b687",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "09eeaee6-73bd-4b4b-8a75-763aa315eb7d",
+        "role": "learner",
+        "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "6ae7901e-f50d-4d47-bf29-eb0933cdf77a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0104258f-f2f1-404b-96a3-758c5eb63d49",
+        "role": "buddy",
+        "text": "Klar: **„Oben zeigt, wie viele du hast; unten zeigt, woraus das Ganze besteht.“**\n\nFür $\\frac{3}{4}$ heißt das: **3 von 4 gleich großen Teilen**.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "09eeaee6-73bd-4b4b-8a75-763aa315eb7d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "895c4a6a-add5-4e20-9773-67879c77e79d",
+        "role": "learner",
+        "text": "",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "sheet": {
+          "material_id": "8a36b3d0-4f80-4ef8-b807-0be5034de52f",
+          "pages": 1,
+          "stage": "ready"
+        },
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "bd897a41-aca1-478a-9de8-f6c0ee58684e",
+        "role": "buddy",
+        "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück).",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "67bc421e-4213-4016-9e1a-249dc74495b2",
+          "kind": "result",
+          "origin": "buddy",
+          "title": "Buddy",
+          "body": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück).",
+          "why": null,
+          "status": "in_app",
+          "send_at": null,
+          "sent_at": null,
+          "opened_at": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "4f97d612-e99c-4afd-8dbc-f74f6b255b1c",
+          "title": "Brüche kürzen",
+          "question_count": 2,
+          "est_minutes": 5,
+          "outcome": null
+        },
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ee0f8e6f-faf3-4a27-87c7-f2c5bbe4c5a1",
+        "role": "learner",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ec6ac53a-94ab-4035-b65b-9f922cc48bd0",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1ca2c6af-dd7d-4d33-8563-94bdbaf80797",
+        "role": "buddy",
+        "text": "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den Start, dann geht’s los.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ee0f8e6f-faf3-4a27-87c7-f2c5bbe4c5a1",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "1b5d296a-fca0-441c-aca4-c2531ec5512c",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "tool": "show_ready",
+              "ready": true,
+              "title": "Brüche kürzen",
+              "outcome": null,
+              "step_id": "4f97d612-e99c-4afd-8dbc-f74f6b255b1c",
+              "est_minutes": 5,
+              "question_count": 2
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "2812abaf-f299-418d-937c-f48103d5963e",
+        "kind": "short",
+        "prompt": "Kürze $\\frac{9}{12}$.",
+        "answer": "$\\frac{3}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "9cd4c96d-e0db-45c6-8013-e3172d625078",
+        "kind": "short",
+        "prompt": "Kürze $\\frac{8}{12}$.",
+        "answer": "$\\frac{2}{3}$",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Brüche kürzen",
+        "state": "prepared",
+        "agreed": false
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "photo"
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?"
+          },
+          {
+            "who": "learner",
+            "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?"
+          },
+          {
+            "who": "learner",
+            "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?"
+          },
+          {
+            "who": "buddy",
+            "text": "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen?"
+          },
+          {
+            "who": "learner",
+            "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Denk an eine Tafel Schokolade mit 4 gleich großen Stücken: Der Strich bei $\\frac{3}{4}$ ist wie ein Zaun zwischen „oben“ und „unten“ — oben steht, wie viele Stücke du nimmst, unten steht, in wie viele Stücke die ganze Schokolade geteilt ist. Bei $\\frac{3}{4}$ sind 3 Stücke da und 1 Stück fehlt noch, deshalb ist es fast ganz."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — mit dem Strich meine ich die Linie zwischen oben und unten, also die Trennlinie im Bruch. Oben steht: wie viele Teile du hast. Unten steht: in wie viele gleich große Teile das Ganze geteilt ist."
+          },
+          {
+            "who": "learner",
+            "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — in Brüchen ist das „/“ eigentlich nur eine Schreibweise für die Bruchlinie. Es meint: „oben gehört zu unten“ oder „oben von unten“ — nicht einfach nur eine Rechenaufgabe. Deshalb heißt $\\frac{3}{4}$: 3 von 4 gleich großen Teilen."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: **„Oben zeigt, wie viele du hast; unten zeigt, woraus das Ganze besteht.“**\n\nFür $\\frac{3}{4}$ heißt das: **3 von 4 gleich großen Teilen**."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [],
+      "taps": [],
+      "findings": [],
+      "response": {
+        "id": "8a36b3d0-4f80-4ef8-b807-0be5034de52f",
+        "title": "Brüche kürzen",
+        "status": "ready",
+        "failure_reason": null,
+        "photos_deleted": false,
+        "item_count": 2,
+        "speak_count": 0,
+        "purpose": "study",
+        "source": "sheet",
+        "session_id": null,
+        "session_status": null,
+        "page_problems": [],
+        "items_incomplete": false,
+        "not_practicable": [],
+        "photo_count": 1,
+        "merged_into": null,
+        "subject_name": "Mathematik",
+        "goal_id": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?"
+          },
+          {
+            "who": "learner",
+            "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?"
+          },
+          {
+            "who": "learner",
+            "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?"
+          },
+          {
+            "who": "buddy",
+            "text": "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen?"
+          },
+          {
+            "who": "learner",
+            "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Denk an eine Tafel Schokolade mit 4 gleich großen Stücken: Der Strich bei $\\frac{3}{4}$ ist wie ein Zaun zwischen „oben“ und „unten“ — oben steht, wie viele Stücke du nimmst, unten steht, in wie viele Stücke die ganze Schokolade geteilt ist. Bei $\\frac{3}{4}$ sind 3 Stücke da und 1 Stück fehlt noch, deshalb ist es fast ganz."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — mit dem Strich meine ich die Linie zwischen oben und unten, also die Trennlinie im Bruch. Oben steht: wie viele Teile du hast. Unten steht: in wie viele gleich große Teile das Ganze geteilt ist."
+          },
+          {
+            "who": "learner",
+            "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — in Brüchen ist das „/“ eigentlich nur eine Schreibweise für die Bruchlinie. Es meint: „oben gehört zu unten“ oder „oben von unten“ — nicht einfach nur eine Rechenaufgabe. Deshalb heißt $\\frac{3}{4}$: 3 von 4 gleich großen Teilen."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: **„Oben zeigt, wie viele du hast; unten zeigt, woraus das Ganze besteht.“**\n\nFür $\\frac{3}{4}$ heißt das: **3 von 4 gleich großen Teilen**."
+          },
+          {
+            "who": "learner",
+            "text": ""
+          },
+          {
+            "who": "buddy",
+            "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — ich",
+            "Klar — ich habe",
+            "Klar — ich habe dir",
+            "Klar — ich habe dir die",
+            "Klar — ich habe dir die Ü",
+            "Klar — ich habe dir die Übung",
+            "Klar — ich habe dir die Übung zu",
+            "Klar — ich habe dir die Übung zu **",
+            "Klar — ich habe dir die Übung zu **Br",
+            "Klar — ich habe dir die Übung zu **Brüche",
+            "Klar — ich habe dir die Übung zu **Brüche kür",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen**",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet.",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tip",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den Start",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den Start,",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den Start, dann",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den Start, dann geht",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den Start, dann geht’s",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den Start, dann geht’s los",
+            "Klar — ich habe dir die Übung zu **Brüche kürzen** vorbereitet. Tippe unten auf den Start, dann geht’s los."
+          ],
+          "ms": 1300,
+          "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+          "id": "ec6ac53a-94ab-4035-b65b-9f922cc48bd0"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "photo",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "execution.error",
+      "kind": "photo",
+      "route": "/explorer",
+      "evidence": "simulator: offer index no longer visible",
+      "category": "simulator"
+    }
+  ],
+  "id": "new-german-photo-to-practice",
+  "persona": {
+    "id": "new-german",
+    "age": 13,
+    "locale": "de",
+    "style": "Arabic first language, beginner German",
+    "behaviour": "Misunderstands terminology, asks for clarification"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "erklär mal brüche aber einfach",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?",
+      "double": false
+    }
+  ],
+  "error": "simulator: offer index no longer visible"
+}

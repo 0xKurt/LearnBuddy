@@ -1,0 +1,562 @@
+{
+  "goal": {
+    "id": "photo-to-practice",
+    "issue": 944,
+    "wants": "Practice based on my photographed fractions worksheet",
+    "messages": [
+      "Ich möchte die Aufgaben auf meinem Blatt üben."
+    ],
+    "expect": "photo"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "0f3086f7-e2be-4ac1-be1b-5f0f6fa992ef",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "learner",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:56:48.719Z",
+      "updated_at": "2026-10-24T17:56:48.720Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "fce368b3-bb0a-49c3-9c96-f89c48d04e7e",
+        "role": "learner",
+        "text": "",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "sheet": {
+          "material_id": "d9e5a488-1c29-48cb-9856-8d36a9403a80",
+          "pages": 1,
+          "stage": "ready"
+        },
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "15be2387-7a46-49cc-a8e8-e4998577142c",
+        "role": "buddy",
+        "text": "Ho preparato 2 esercizi brevi su Brüche kürzen. Se ti va, apri la pratica e fai il primo adesso: ci vogliono circa 5 minuti.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "1313e1a1-c9dc-4ad4-a575-912e04b38d9c",
+          "kind": "idea",
+          "origin": "buddy",
+          "title": "Brüche kürzen: pronto",
+          "body": "Ho preparato 2 esercizi brevi su Brüche kürzen. Se ti va, apri la pratica e fai il primo adesso: ci vogliono circa 5 minuti.",
+          "why": "È pronto adesso e il passo successivo è semplice: iniziare con il primo esercizio.",
+          "status": "in_app",
+          "send_at": null,
+          "sent_at": null,
+          "opened_at": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "760dc0c8-3b5b-4f86-be9a-5f8dc40fb563",
+          "title": "Brüche kürzen",
+          "question_count": 2,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "running",
+            "session_id": "dfcf91bd-d01b-49e2-b907-4e96c75a0fca",
+            "left": 2
+          }
+        },
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c426a4e9-23b7-40c8-94ef-89d6d6bfcdaa",
+        "role": "learner",
+        "text": "Vorrei esercitarmi con i problemi sul mio foglio.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0160ade0-cb98-4251-b265-9b1d119a2bdc",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6b1c8b42-749c-4678-9834-2fdff1f90b78",
+        "role": "buddy",
+        "text": "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila e partiamo da lì.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c426a4e9-23b7-40c8-94ef-89d6d6bfcdaa",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "439cbd34-f454-42db-b04b-7fe9acad73a8",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "tool": "show_ready",
+              "ready": false,
+              "title": "Brüche kürzen",
+              "outcome": {
+                "state": "running",
+                "session_id": "dfcf91bd-d01b-49e2-b907-4e96c75a0fca",
+                "left": 2
+              },
+              "step_id": "760dc0c8-3b5b-4f86-be9a-5f8dc40fb563",
+              "est_minutes": 5,
+              "question_count": 2
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "375946e4-409d-49a3-817e-d4d251dfa461",
+        "kind": "numeric",
+        "prompt": "Kürze $\\frac{9}{12}$.",
+        "answer": "0.75",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "7d170ff3-86d5-41f6-a9dd-f1ed1d819e65",
+        "kind": "numeric",
+        "prompt": "Kürze $\\frac{8}{12}$.",
+        "answer": "0.6666666667",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "0f3086f7-e2be-4ac1-be1b-5f0f6fa992ef",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "learner",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 10,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:56:48.719Z",
+      "updated_at": "2026-10-24T17:56:56.438Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "dfcf91bd-d01b-49e2-b907-4e96c75a0fca",
+        "client_request_id": null
+      }
+    ],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Brüche kürzen",
+        "state": "in_progress",
+        "agreed": false
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "photo"
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [],
+      "taps": [],
+      "findings": [],
+      "response": {
+        "id": "d9e5a488-1c29-48cb-9856-8d36a9403a80",
+        "title": "Brüche kürzen",
+        "status": "ready",
+        "failure_reason": null,
+        "photos_deleted": false,
+        "item_count": 2,
+        "speak_count": 0,
+        "purpose": "study",
+        "source": "sheet",
+        "session_id": null,
+        "session_status": null,
+        "page_problems": [],
+        "items_incomplete": false,
+        "not_practicable": [],
+        "photo_count": 1,
+        "merged_into": null,
+        "subject_name": "Mathematik",
+        "goal_id": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Vorrei esercitarmi con i problemi sul mio foglio.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": ""
+          },
+          {
+            "who": "buddy",
+            "text": "Ho preparato 2 esercizi brevi su Brüche kürzen. Se ti va, apri la pratica e fai il primo adesso: ci vogliono circa 5 minuti."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Brüche kürzen",
+            "kind": "practice"
+          }
+        ],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "C",
+            "Certo",
+            "Certo —",
+            "Certo — c",
+            "Certo — c’è",
+            "Certo — c’è già",
+            "Certo — c’è già una",
+            "Certo — c’è già una pratica",
+            "Certo — c’è già una pratica pronta",
+            "Certo — c’è già una pratica pronta sui",
+            "Certo — c’è già una pratica pronta sui problemi",
+            "Certo — c’è già una pratica pronta sui problemi del",
+            "Certo — c’è già una pratica pronta sui problemi del tuo",
+            "Certo — c’è già una pratica pronta sui problemi del tuo fog",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio.",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Apr",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila e",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila e part",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila e partiamo",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila e partiamo da",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila e partiamo da lì",
+            "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila e partiamo da lì."
+          ],
+          "ms": 1566,
+          "text": "Vorrei esercitarmi con i problemi sul mio foglio.",
+          "id": "0160ade0-cb98-4251-b265-9b1d119a2bdc"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": true
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": ""
+          },
+          {
+            "who": "buddy",
+            "text": "Ho preparato 2 esercizi brevi su Brüche kürzen. Se ti va, apri la pratica e fai il primo adesso: ci vogliono circa 5 minuti."
+          },
+          {
+            "who": "learner",
+            "text": "Vorrei esercitarmi con i problemi sul mio foglio."
+          },
+          {
+            "who": "buddy",
+            "text": "Certo — c’è già una pratica pronta sui problemi del tuo foglio. Aprila e partiamo da lì."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Brüche kürzen",
+            "kind": "practice"
+          }
+        ],
+        "question": null
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "439cbd34-f454-42db-b04b-7fe9acad73a8",
+          "kind": "practice",
+          "route": "/buddy/steps/:id/start",
+          "http": 200,
+          "session": {
+            "id": "dfcf91bd-d01b-49e2-b907-4e96c75a0fca",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Brüche kürzen",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "375946e4-409d-49a3-817e-d4d251dfa461",
+                  "kind": "numeric",
+                  "prompt": "Kürze $\\frac{9}{12}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche kürzen",
+                  "origin": "material",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "7d170ff3-86d5-41f6-a9dd-f1ed1d819e65",
+                  "kind": "numeric",
+                  "prompt": "Kürze $\\frac{8}{12}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche kürzen",
+                  "origin": "material",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "375946e4-409d-49a3-817e-d4d251dfa461",
+            "summary": null
+          },
+          "error": null
+        },
+        {
+          "action": "439cbd34-f454-42db-b04b-7fe9acad73a8",
+          "kind": "practice",
+          "route": "/buddy/steps/:id/start",
+          "http": 200,
+          "session": {
+            "id": "dfcf91bd-d01b-49e2-b907-4e96c75a0fca",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Brüche kürzen",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "375946e4-409d-49a3-817e-d4d251dfa461",
+                  "kind": "numeric",
+                  "prompt": "Kürze $\\frac{9}{12}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche kürzen",
+                  "origin": "material",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "7d170ff3-86d5-41f6-a9dd-f1ed1d819e65",
+                  "kind": "numeric",
+                  "prompt": "Kürze $\\frac{8}{12}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche kürzen",
+                  "origin": "material",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "375946e4-409d-49a3-817e-d4d251dfa461",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "italian-parent-photo-check-2",
+  "persona": {
+    "id": "italian-parent",
+    "age": 38,
+    "locale": "it",
+    "style": "Italian-speaking parent preparing practice for child",
+    "behaviour": "Checks details, corrects assumptions",
+    "parent": true
+  },
+  "prefix": [],
+  "impressions": []
+}

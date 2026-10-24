@@ -1,0 +1,16 @@
+# The runner posts a local OS notification with an explicit intent to the DEV package.
+# This proves OS notification -> app -> existing chat, not FCM delivery or receipt processing.
+appId: com.learnbuddy.app.dev
+---
+- pressKey: HOME
+- swipe:
+    start: 50%, 0%
+    end: 50%, 80%
+    duration: 500
+- tapOn: '.*LearnBuddy smoke reminder.*'
+- extendedWaitUntil:
+    visible:
+      id: composer
+    timeout: 30000
+- assertVisible: '.*Bruch.*'
+- takeScreenshot: explorer-notification-open

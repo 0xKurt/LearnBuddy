@@ -1,0 +1,1049 @@
+{
+  "goal": {
+    "id": "history-restart",
+    "issue": 937,
+    "wants": "Full server conversation after switching mode and restarting",
+    "messages": [
+      "Erkläre mir Brüche.",
+      "Wie addiere ich sie?",
+      "Fass das bitte zusammen."
+    ],
+    "expect": "history"
+  },
+  "initial": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "a9933070-01cf-4707-8860-56724dea2fdb",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7fd81c86-ba3d-4e76-bafd-ae5355913b06",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1c144dda-70dc-4da2-b214-662ccc1021d4",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "a9933070-01cf-4707-8860-56724dea2fdb",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "52e5e634-1392-420b-80bf-fed3377f7f7b",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5ff4e862-3979-47e4-b863-306b020cf44b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b3e15d00-4595-4379-a3f3-e5585d0a2e9e",
+        "role": "buddy",
+        "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "52e5e634-1392-420b-80bf-fed3377f7f7b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6a1f251d-010c-48bf-9e30-f6a72920c454",
+        "role": "learner",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "df86e5f8-81fc-41d9-9e3c-95aad5d68641",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "696e19c6-7f8d-470c-8b1c-7ccca6384d1b",
+        "role": "buddy",
+        "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "6a1f251d-010c-48bf-9e30-f6a72920c454",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aa8059b7-a3c2-4bec-88ad-77b6cb60db44",
+        "role": "learner",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "94caf4bf-a13f-4bd7-ad0d-155774d33ad8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2c53c022-e07c-4dca-91fd-3d1bbf212ffd",
+        "role": "buddy",
+        "text": "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "aa8059b7-a3c2-4bec-88ad-77b6cb60db44",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "7eae0d31-3245-4276-a2cd-02896dab085d",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "21ebfa10-6a66-4d43-9365-abbd3889b670",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f4328be4-22ab-4b8f-8ef2-f8b93c10a203",
+        "role": "buddy",
+        "text": "Wie verabredet: Englisch üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "bd4bb8cc-b9b6-41b5-9d3e-39d9dee3776e",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Wie verabredet: Englisch üben.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "21ebfa10-6a66-4d43-9365-abbd3889b670",
+          "title": "Englisch üben",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "149efb3f-8d0c-48ac-a513-449a4f10bc52",
+        "role": "learner",
+        "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "73057822-9799-49f4-8aee-8bf3b3d89a6a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "3b903348-4d37-4369-9b34-d8ce6eeb8f89",
+        "role": "buddy",
+        "text": "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "kurzer Text",
+          "Vokabeln"
+        ],
+        "reply_to_id": "149efb3f-8d0c-48ac-a513-449a4f10bc52",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "cdb42a6f-b6eb-4131-b15b-823472a838ed",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 14,
+      "last_seen_at": "2026-10-24T10:06:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:41:13.777Z",
+      "updated_at": "2026-10-24T17:41:33.834Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "final": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "a9933070-01cf-4707-8860-56724dea2fdb",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7fd81c86-ba3d-4e76-bafd-ae5355913b06",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1c144dda-70dc-4da2-b214-662ccc1021d4",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "a9933070-01cf-4707-8860-56724dea2fdb",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "52e5e634-1392-420b-80bf-fed3377f7f7b",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5ff4e862-3979-47e4-b863-306b020cf44b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b3e15d00-4595-4379-a3f3-e5585d0a2e9e",
+        "role": "buddy",
+        "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "52e5e634-1392-420b-80bf-fed3377f7f7b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6a1f251d-010c-48bf-9e30-f6a72920c454",
+        "role": "learner",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "df86e5f8-81fc-41d9-9e3c-95aad5d68641",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "696e19c6-7f8d-470c-8b1c-7ccca6384d1b",
+        "role": "buddy",
+        "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "6a1f251d-010c-48bf-9e30-f6a72920c454",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aa8059b7-a3c2-4bec-88ad-77b6cb60db44",
+        "role": "learner",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "94caf4bf-a13f-4bd7-ad0d-155774d33ad8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2c53c022-e07c-4dca-91fd-3d1bbf212ffd",
+        "role": "buddy",
+        "text": "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "aa8059b7-a3c2-4bec-88ad-77b6cb60db44",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "7eae0d31-3245-4276-a2cd-02896dab085d",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "21ebfa10-6a66-4d43-9365-abbd3889b670",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f4328be4-22ab-4b8f-8ef2-f8b93c10a203",
+        "role": "buddy",
+        "text": "Wie verabredet: Englisch üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "bd4bb8cc-b9b6-41b5-9d3e-39d9dee3776e",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Wie verabredet: Englisch üben.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "21ebfa10-6a66-4d43-9365-abbd3889b670",
+          "title": "Englisch üben",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "149efb3f-8d0c-48ac-a513-449a4f10bc52",
+        "role": "learner",
+        "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "73057822-9799-49f4-8aee-8bf3b3d89a6a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "3b903348-4d37-4369-9b34-d8ce6eeb8f89",
+        "role": "buddy",
+        "text": "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "kurzer Text",
+          "Vokabeln"
+        ],
+        "reply_to_id": "149efb3f-8d0c-48ac-a513-449a4f10bc52",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "1cf0239d-56d1-4976-8427-8c8beb75a63a",
+        "role": "learner",
+        "text": "Erkläre mir Brüche.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "1b77b99c-3b48-4385-8bef-dbc96c394408",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "fc619b66-4bab-48f9-93ff-cb65fdbb3e50",
+        "role": "buddy",
+        "text": "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches Beispiel dazu zeige?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1cf0239d-56d1-4976-8427-8c8beb75a63a",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "373348dc-17d5-4755-978f-315b6d2a1f53",
+        "role": "learner",
+        "text": "Wie addiere ich sie?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "1328d367-8009-4b02-a251-b94b2cd0c27b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "5122ab5b-ff6d-4a0c-b00b-19b53903918f",
+        "role": "buddy",
+        "text": "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das mit einem einfachen Beispiel zeigen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "373348dc-17d5-4755-978f-315b6d2a1f53",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "81395385-5b42-4dda-9cce-7a06d9be67df",
+        "role": "learner",
+        "text": "Fass das bitte zusammen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a8bea6a4-4385-4f1f-815e-8e5173915978",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "ea369d43-ba48-48bf-89fd-eb2b3a3d1894",
+        "role": "buddy",
+        "text": "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind, musst du sie zuerst gleich machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "81395385-5b42-4dda-9cce-7a06d9be67df",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "cdb42a6f-b6eb-4131-b15b-823472a838ed",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 20,
+      "last_seen_at": "2026-10-24T10:06:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:41:13.777Z",
+      "updated_at": "2026-10-24T17:41:39.197Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erkläre mir Brüche.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Ein",
+            "Klar: Ein Br",
+            "Klar: Ein Bruch",
+            "Klar: Ein Bruch zeigt",
+            "Klar: Ein Bruch zeigt,",
+            "Klar: Ein Bruch zeigt, wie",
+            "Klar: Ein Bruch zeigt, wie viele",
+            "Klar: Ein Bruch zeigt, wie viele Teile",
+            "Klar: Ein Bruch zeigt, wie viele Teile von",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Gan",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen geme",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind —",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza,",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stück",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke ges",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist.",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Ob",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht,",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stück",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst,",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht,",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze gete",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist.",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Will",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du,",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfach",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches Beispiel",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches Beispiel dazu",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches Beispiel dazu ze",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches Beispiel dazu zeige",
+            "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches Beispiel dazu zeige?"
+          ],
+          "ms": 1761,
+          "text": "Erkläre mir Brüche.",
+          "id": "1b77b99c-3b48-4385-8bef-dbc96c394408"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Wie addiere ich sie?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben?"
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir Brüche."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches Beispiel dazu zeige?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Wenn",
+            "Wenn die",
+            "Wenn die Br",
+            "Wenn die Brüche",
+            "Wenn die Brüche den",
+            "Wenn die Brüche den gleichen",
+            "Wenn die Brüche den gleichen Nen",
+            "Wenn die Brüche den gleichen Nenner",
+            "Wenn die Brüche den gleichen Nenner haben",
+            "Wenn die Brüche den gleichen Nenner haben,",
+            "Wenn die Brüche den gleichen Nenner haben, add",
+            "Wenn die Brüche den gleichen Nenner haben, addierst",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Z",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nen",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich —",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen P",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizz",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzast",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken.",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. ",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \n",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel:",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5}",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} +",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5}",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} =",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\n",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nen",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind,",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile.",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das mit",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das mit einem",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das mit einem einfachen",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das mit einem einfachen Beispiel",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das mit einem einfachen Beispiel zeigen",
+            "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das mit einem einfachen Beispiel zeigen?"
+          ],
+          "ms": 1615,
+          "text": "Wie addiere ich sie?",
+          "id": "1328d367-8009-4b02-a251-b94b2cd0c27b"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Fass das bitte zusammen.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben?"
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir Brüche."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch zeigt, wie viele Teile von einem Ganzen gemeint sind — wie eine Pizza, die in gleich große Stücke geschnitten ist. Oben steht, wie viele Stücke du meinst, unten steht, in wie viele gleiche Teile das Ganze geteilt ist. Willst du, dass ich dir ein ganz einfaches Beispiel dazu zeige?"
+          },
+          {
+            "who": "learner",
+            "text": "Wie addiere ich sie?"
+          },
+          {
+            "who": "buddy",
+            "text": "Wenn die Brüche den gleichen Nenner haben, addierst du einfach die Zähler und lässt den Nenner gleich — wie bei gleich großen Pizzastücken. \nZum Beispiel: $\\frac{2}{5} + \\frac{1}{5} = \\frac{3}{5}$.\nWenn die Nenner verschieden sind, brauchst du erst gleich große Teile. Soll ich dir das mit einem einfachen Beispiel zeigen?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Bei",
+            "Klar: Bei Brü",
+            "Klar: Bei Brüchen",
+            "Klar: Bei Brüchen mit",
+            "Klar: Bei Brüchen mit gle",
+            "Klar: Bei Brüchen mit gleic",
+            "Klar: Bei Brüchen mit gleichem",
+            "Klar: Bei Brüchen mit gleichem Nen",
+            "Klar: Bei Brüchen mit gleichem Nenner",
+            "Klar: Bei Brüchen mit gleichem Nenner add",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Z",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nen",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich.",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nen",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind,",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind, musst",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind, musst du",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind, musst du sie",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind, musst du sie zuerst",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind, musst du sie zuerst gleich",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind, musst du sie zuerst gleich machen",
+            "Klar: Bei Brüchen mit gleichem Nenner addierst du nur die Zähler und lässt den Nenner gleich. Wenn die Nenner verschieden sind, musst du sie zuerst gleich machen."
+          ],
+          "ms": 1379,
+          "text": "Fass das bitte zusammen.",
+          "id": "a8bea6a4-4385-4f1f-815e-8e5173915978"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "contradicting-history-restart",
+  "persona": {
+    "id": "contradicting",
+    "age": 12,
+    "locale": "de",
+    "style": "Competent reader, informal lowercase spelling",
+    "behaviour": "Contradicts Buddy when dissatisfied"
+  },
+  "impressions": [],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+      "double": false
+    },
+    {
+      "type": "tick"
+    },
+    {
+      "type": "message",
+      "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?",
+      "double": false
+    }
+  ]
+}

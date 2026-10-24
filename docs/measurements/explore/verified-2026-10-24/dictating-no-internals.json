@@ -1,0 +1,2067 @@
+{
+  "goal": {
+    "id": "no-internals",
+    "issue": 934,
+    "wants": "Readable child-facing explanation, no internal protocol",
+    "messages": [
+      "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+    ],
+    "expect": "clean"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "9af66518-fc43-4288-8aa8-0b783f2d9a8c",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b3e1c89f-5eae-47ec-83f8-8e5d8d4292af",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7965d73a-e5b6-449c-9799-f9b761d43505",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "ein anderes Fach",
+          "aus einem bestimmten Thema"
+        ],
+        "reply_to_id": "9af66518-fc43-4288-8aa8-0b783f2d9a8c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2bc65455-7385-44cd-a412-44dcb5493816",
+        "role": "learner",
+        "text": "Deutsch und Englisch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "4fb42447-8c2b-49e6-bae0-300ab3c43ce6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2ff13f15-e3c3-4a63-b9d4-8eea57dca18b",
+        "role": "buddy",
+        "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Deutsch → Englisch",
+          "Englisch → Deutsch",
+          "gemischt"
+        ],
+        "reply_to_id": "2bc65455-7385-44cd-a412-44dcb5493816",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4f3749b8-dc93-4f8f-8237-8e6fbfadf6e1",
+        "role": "learner",
+        "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2518eb8d-786d-4bef-b8be-41618688c844",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3ad96af3-70b7-4f67-9715-19d9d8aac430",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Alltag"
+        ],
+        "reply_to_id": "4f3749b8-dc93-4f8f-8237-8e6fbfadf6e1",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ac5daec0-a2bb-49b9-b510-f095d77437d9",
+        "role": "learner",
+        "text": "Ich möchte Vokabeln zum Thema Alltag, bitte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "809538f7-2bdc-4bb3-976f-f7e4015187a7",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5e2e1298-d5c7-4249-b17a-305b23b3d59f",
+        "role": "buddy",
+        "text": "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ac5daec0-a2bb-49b9-b510-f095d77437d9",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f9a380d9-832f-4240-a610-0b6af4aadfdd",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "03bdf73d-c605-456e-9a2f-a51396b3febd",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9965dfe0-a155-4077-b9bb-dcd100d4a53f",
+        "role": "buddy",
+        "text": "Klar. Das Skelett ist wie das Gerüst eines Hauses: Es gibt deinem Körper Halt, schützt wichtige Organe und hilft dir, dich zu bewegen. Die Knochen sind nicht starr wie Holz, sondern zusammen mit Gelenken und Muskeln machen sie Bewegungen möglich. Willst du zuerst die wichtigsten Knochen kennenlernen oder lieber wissen, wie Gelenke funktionieren?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "wichtigste Knochen",
+          "Gelenke",
+          "Bewegung",
+          "Schutz der Organe"
+        ],
+        "reply_to_id": "f9a380d9-832f-4240-a610-0b6af4aadfdd",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "93fe4793-8e83-4bca-a990-9c69716c542b",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7231a399-e2c7-4367-ab76-1e6cb4debc90",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d86846a9-9a1f-4cee-9d8e-930442847937",
+        "role": "buddy",
+        "text": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "93fe4793-8e83-4bca-a990-9c69716c542b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1e54b615-7ad6-4612-914a-fc0345a0dda6",
+        "role": "learner",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "d30e32cc-16ef-429f-987e-58c266459f9d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "034d1044-033d-4c7b-87c4-fcbe511ea66b",
+        "role": "buddy",
+        "text": "Ich kann dir hier kein echtes Foto zeigen, aber ich bereite dir ein beschriftetes Bild vom menschlichen Skelett vor.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1e54b615-7ad6-4612-914a-fc0345a0dda6",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "4c17ff9e-9e70-49bf-9920-8d1f1ade5f4d",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "practice",
+              "text": "menschliches Skelett",
+              "tool": "offer_learning",
+              "figures": [
+                "schematic"
+              ],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": true,
+              "running_session_id": "df0ecdc0-472d-4d84-b9e4-f3adf217a7e5",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "098d5144-682a-4b0f-b3c0-3b998f835e7e",
+        "kind": "short",
+        "prompt": "Nenne einen Knochen aus dem Arm.",
+        "answer": "Speiche",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "55d418e8-e8ae-48d6-985f-ca91b2416b99",
+        "kind": "multiple_choice",
+        "prompt": "Wozu dient das Skelett vor allem?",
+        "answer": "Es stützt den Körper und schützt Organe.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "59321bb1-baaf-4b4e-994e-abfa7871b7fa",
+        "kind": "multiple_choice",
+        "prompt": "Welcher Teil gehört zur Wirbelsäule?",
+        "answer": "Wirbel",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "c96f1679-b975-4dad-a316-d2f155a31f78",
+        "kind": "multiple_choice",
+        "prompt": "Welcher Knochen gehört zum Bein?",
+        "answer": "Schienbein",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "e5c1a433-fa69-46a4-9d8a-b85c6395a812",
+        "kind": "multiple_choice",
+        "prompt": "Was verbindet der Brustkorb vor allem?",
+        "answer": "Er schützt Herz und Lunge.",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "9f250321-b68d-4473-9b57-e5e9e655857e",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 17,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:32:19.093Z",
+      "updated_at": "2026-10-24T17:32:53.532Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "df0ecdc0-472d-4d84-b9e4-f3adf217a7e5",
+        "client_request_id": "4c17ff9e-9e70-49bf-9920-8d1f1ade5f4d"
+      }
+    ],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "9af66518-fc43-4288-8aa8-0b783f2d9a8c",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b3e1c89f-5eae-47ec-83f8-8e5d8d4292af",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7965d73a-e5b6-449c-9799-f9b761d43505",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "ein anderes Fach",
+          "aus einem bestimmten Thema"
+        ],
+        "reply_to_id": "9af66518-fc43-4288-8aa8-0b783f2d9a8c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2bc65455-7385-44cd-a412-44dcb5493816",
+        "role": "learner",
+        "text": "Deutsch und Englisch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "4fb42447-8c2b-49e6-bae0-300ab3c43ce6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2ff13f15-e3c3-4a63-b9d4-8eea57dca18b",
+        "role": "buddy",
+        "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Deutsch → Englisch",
+          "Englisch → Deutsch",
+          "gemischt"
+        ],
+        "reply_to_id": "2bc65455-7385-44cd-a412-44dcb5493816",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4f3749b8-dc93-4f8f-8237-8e6fbfadf6e1",
+        "role": "learner",
+        "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2518eb8d-786d-4bef-b8be-41618688c844",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3ad96af3-70b7-4f67-9715-19d9d8aac430",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Alltag"
+        ],
+        "reply_to_id": "4f3749b8-dc93-4f8f-8237-8e6fbfadf6e1",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ac5daec0-a2bb-49b9-b510-f095d77437d9",
+        "role": "learner",
+        "text": "Ich möchte Vokabeln zum Thema Alltag, bitte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "809538f7-2bdc-4bb3-976f-f7e4015187a7",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5e2e1298-d5c7-4249-b17a-305b23b3d59f",
+        "role": "buddy",
+        "text": "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ac5daec0-a2bb-49b9-b510-f095d77437d9",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f9a380d9-832f-4240-a610-0b6af4aadfdd",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "03bdf73d-c605-456e-9a2f-a51396b3febd",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9965dfe0-a155-4077-b9bb-dcd100d4a53f",
+        "role": "buddy",
+        "text": "Klar. Das Skelett ist wie das Gerüst eines Hauses: Es gibt deinem Körper Halt, schützt wichtige Organe und hilft dir, dich zu bewegen. Die Knochen sind nicht starr wie Holz, sondern zusammen mit Gelenken und Muskeln machen sie Bewegungen möglich. Willst du zuerst die wichtigsten Knochen kennenlernen oder lieber wissen, wie Gelenke funktionieren?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "wichtigste Knochen",
+          "Gelenke",
+          "Bewegung",
+          "Schutz der Organe"
+        ],
+        "reply_to_id": "f9a380d9-832f-4240-a610-0b6af4aadfdd",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "93fe4793-8e83-4bca-a990-9c69716c542b",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7231a399-e2c7-4367-ab76-1e6cb4debc90",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d86846a9-9a1f-4cee-9d8e-930442847937",
+        "role": "buddy",
+        "text": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "93fe4793-8e83-4bca-a990-9c69716c542b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1e54b615-7ad6-4612-914a-fc0345a0dda6",
+        "role": "learner",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "d30e32cc-16ef-429f-987e-58c266459f9d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "034d1044-033d-4c7b-87c4-fcbe511ea66b",
+        "role": "buddy",
+        "text": "Ich kann dir hier kein echtes Foto zeigen, aber ich bereite dir ein beschriftetes Bild vom menschlichen Skelett vor.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1e54b615-7ad6-4612-914a-fc0345a0dda6",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "4c17ff9e-9e70-49bf-9920-8d1f1ade5f4d",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "practice",
+              "text": "menschliches Skelett",
+              "tool": "offer_learning",
+              "figures": [
+                "schematic"
+              ],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": true,
+              "running_session_id": "df0ecdc0-472d-4d84-b9e4-f3adf217a7e5",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "211cfd0c-aa4a-44d2-bd1b-3f29f5bb0727",
+        "role": "learner",
+        "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ba684185-e59d-40aa-ae4e-a77e285c761f",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b42d8f52-1829-4487-a29f-06fe81822e41",
+        "role": "buddy",
+        "text": "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder dich abfragen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "211cfd0c-aa4a-44d2-bd1b-3f29f5bb0727",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "098d5144-682a-4b0f-b3c0-3b998f835e7e",
+        "kind": "short",
+        "prompt": "Nenne einen Knochen aus dem Arm.",
+        "answer": "Speiche",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "55d418e8-e8ae-48d6-985f-ca91b2416b99",
+        "kind": "multiple_choice",
+        "prompt": "Wozu dient das Skelett vor allem?",
+        "answer": "Es stützt den Körper und schützt Organe.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "59321bb1-baaf-4b4e-994e-abfa7871b7fa",
+        "kind": "multiple_choice",
+        "prompt": "Welcher Teil gehört zur Wirbelsäule?",
+        "answer": "Wirbel",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "c96f1679-b975-4dad-a316-d2f155a31f78",
+        "kind": "multiple_choice",
+        "prompt": "Welcher Knochen gehört zum Bein?",
+        "answer": "Schienbein",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "e5c1a433-fa69-46a4-9d8a-b85c6395a812",
+        "kind": "multiple_choice",
+        "prompt": "Was verbindet der Brustkorb vor allem?",
+        "answer": "Er schützt Herz und Lunge.",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "9f250321-b68d-4473-9b57-e5e9e655857e",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 19,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:32:19.093Z",
+      "updated_at": "2026-10-24T17:33:12.913Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "df0ecdc0-472d-4d84-b9e4-f3adf217a7e5",
+        "client_request_id": "4c17ff9e-9e70-49bf-9920-8d1f1ade5f4d"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Alltag, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Das Skelett ist wie das Gerüst eines Hauses: Es gibt deinem Körper Halt, schützt wichtige Organe und hilft dir, dich zu bewegen. Die Knochen sind nicht starr wie Holz, sondern zusammen mit Gelenken und Muskeln machen sie Bewegungen möglich. Willst du zuerst die wichtigsten Knochen kennenlernen oder lieber wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz"
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir hier kein echtes Foto zeigen, aber ich bereite dir ein beschriftetes Bild vom menschlichen Skelett vor."
+          }
+        ],
+        "offers": [
+          {
+            "label": "menschliches Skelett",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Wozu dient das Skelett vor allem?",
+          "choices": [
+            "Es stützt den Körper und schützt Organe.",
+            "Es verdaut die Nahrung.",
+            "Es bildet das Blut.",
+            "Es nimmt Licht auf."
+          ]
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "G",
+            "Gerne",
+            "Gerne.",
+            "Gerne. Ich",
+            "Gerne. Ich hel",
+            "Gerne. Ich helfe",
+            "Gerne. Ich helfe dir",
+            "Gerne. Ich helfe dir beim",
+            "Gerne. Ich helfe dir beim Lernen",
+            "Gerne. Ich helfe dir beim Lernen wie",
+            "Gerne. Ich helfe dir beim Lernen wie ein",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruh",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lern",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner:",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkl",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, ü",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an.",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verste",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zer",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und ble",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klar",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\n",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Plan",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, V",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vok",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabel",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Refer",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wieder",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederhol",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen.",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen —",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären,",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, ü",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder dich",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder dich ab",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder dich abfragen",
+            "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder dich abfragen."
+          ],
+          "ms": 2302,
+          "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+          "id": "ba684185-e59d-40aa-ae4e-a77e285c761f"
+        }
+      ],
+      "taps": [],
+      "findings": [
+        {
+          "invariant": "text.code-fence",
+          "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+          "kind": "chat",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ]
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Alltag, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Das Skelett ist wie das Gerüst eines Hauses: Es gibt deinem Körper Halt, schützt wichtige Organe und hilft dir, dich zu bewegen. Die Knochen sind nicht starr wie Holz, sondern zusammen mit Gelenken und Muskeln machen sie Bewegungen möglich. Willst du zuerst die wichtigsten Knochen kennenlernen oder lieber wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz"
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir hier kein echtes Foto zeigen, aber ich bereite dir ein beschriftetes Bild vom menschlichen Skelett vor."
+          },
+          {
+            "who": "learner",
+            "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+          },
+          {
+            "who": "buddy",
+            "text": "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder dich abfragen."
+          }
+        ],
+        "offers": [
+          {
+            "label": "menschliches Skelett",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Wozu dient das Skelett vor allem?",
+          "choices": [
+            "Es stützt den Körper und schützt Organe.",
+            "Es verdaut die Nahrung.",
+            "Es bildet das Blut.",
+            "Es nimmt Licht auf."
+          ]
+        }
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "4c17ff9e-9e70-49bf-9920-8d1f1ade5f4d",
+          "kind": "practice",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "df0ecdc0-472d-4d84-b9e4-f3adf217a7e5",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Skelett",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "55d418e8-e8ae-48d6-985f-ca91b2416b99",
+                  "kind": "multiple_choice",
+                  "prompt": "Wozu dient das Skelett vor allem?",
+                  "choices": [
+                    "Es stützt den Körper und schützt Organe.",
+                    "Es verdaut die Nahrung.",
+                    "Es bildet das Blut.",
+                    "Es nimmt Licht auf."
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "59321bb1-baaf-4b4e-994e-abfa7871b7fa",
+                  "kind": "multiple_choice",
+                  "prompt": "Welcher Teil gehört zur Wirbelsäule?",
+                  "choices": [
+                    "Wirbel",
+                    "Zahn",
+                    "Muskel",
+                    "Lunge"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "098d5144-682a-4b0f-b3c0-3b998f835e7e",
+                  "kind": "short",
+                  "prompt": "Nenne einen Knochen aus dem Arm.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": {
+                    "type": "schematic",
+                    "d": "skeleton",
+                    "n": [
+                      "skull",
+                      "spine",
+                      "ribcage",
+                      "pelvis",
+                      "humerus",
+                      "radius"
+                    ],
+                    "ask": 6
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "c96f1679-b975-4dad-a316-d2f155a31f78",
+                  "kind": "multiple_choice",
+                  "prompt": "Welcher Knochen gehört zum Bein?",
+                  "choices": [
+                    "Schienbein",
+                    "Elle",
+                    "Brustbein",
+                    "Schlüsselbein"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "e5c1a433-fa69-46a4-9d8a-b85c6395a812",
+                  "kind": "multiple_choice",
+                  "prompt": "Was verbindet der Brustkorb vor allem?",
+                  "choices": [
+                    "Er schützt Herz und Lunge.",
+                    "Er macht Nahrung klein.",
+                    "Er pumpt Blut.",
+                    "Er bildet Sehen und Hören."
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "55d418e8-e8ae-48d6-985f-ca91b2416b99",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": [
+        {
+          "invariant": "text.code-fence",
+          "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+          "kind": "chat",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ]
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Alltag, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Das Skelett ist wie das Gerüst eines Hauses: Es gibt deinem Körper Halt, schützt wichtige Organe und hilft dir, dich zu bewegen. Die Knochen sind nicht starr wie Holz, sondern zusammen mit Gelenken und Muskeln machen sie Bewegungen möglich. Willst du zuerst die wichtigsten Knochen kennenlernen oder lieber wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz"
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir hier kein echtes Foto zeigen, aber ich bereite dir ein beschriftetes Bild vom menschlichen Skelett vor."
+          },
+          {
+            "who": "learner",
+            "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+          },
+          {
+            "who": "buddy",
+            "text": "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder dich abfragen."
+          }
+        ],
+        "offers": [
+          {
+            "label": "menschliches Skelett",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Wozu dient das Skelett vor allem?",
+          "choices": [
+            "Es stützt den Körper und schützt Organe.",
+            "Es verdaut die Nahrung.",
+            "Es bildet das Blut.",
+            "Es nimmt Licht auf."
+          ]
+        }
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "4c17ff9e-9e70-49bf-9920-8d1f1ade5f4d",
+          "kind": "practice",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "df0ecdc0-472d-4d84-b9e4-f3adf217a7e5",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Skelett",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "55d418e8-e8ae-48d6-985f-ca91b2416b99",
+                  "kind": "multiple_choice",
+                  "prompt": "Wozu dient das Skelett vor allem?",
+                  "choices": [
+                    "Es stützt den Körper und schützt Organe.",
+                    "Es verdaut die Nahrung.",
+                    "Es bildet das Blut.",
+                    "Es nimmt Licht auf."
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "59321bb1-baaf-4b4e-994e-abfa7871b7fa",
+                  "kind": "multiple_choice",
+                  "prompt": "Welcher Teil gehört zur Wirbelsäule?",
+                  "choices": [
+                    "Wirbel",
+                    "Zahn",
+                    "Muskel",
+                    "Lunge"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "098d5144-682a-4b0f-b3c0-3b998f835e7e",
+                  "kind": "short",
+                  "prompt": "Nenne einen Knochen aus dem Arm.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": {
+                    "type": "schematic",
+                    "d": "skeleton",
+                    "n": [
+                      "skull",
+                      "spine",
+                      "ribcage",
+                      "pelvis",
+                      "humerus",
+                      "radius"
+                    ],
+                    "ask": 6
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "c96f1679-b975-4dad-a316-d2f155a31f78",
+                  "kind": "multiple_choice",
+                  "prompt": "Welcher Knochen gehört zum Bein?",
+                  "choices": [
+                    "Schienbein",
+                    "Elle",
+                    "Brustbein",
+                    "Schlüsselbein"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "e5c1a433-fa69-46a4-9d8a-b85c6395a812",
+                  "kind": "multiple_choice",
+                  "prompt": "Was verbindet der Brustkorb vor allem?",
+                  "choices": [
+                    "Er schützt Herz und Lunge.",
+                    "Er macht Nahrung klein.",
+                    "Er pumpt Blut.",
+                    "Er bildet Sehen und Hören."
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "55d418e8-e8ae-48d6-985f-ca91b2416b99",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": [
+        {
+          "invariant": "text.code-fence",
+          "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+          "kind": "chat",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ]
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Alltag, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Das Skelett ist wie das Gerüst eines Hauses: Es gibt deinem Körper Halt, schützt wichtige Organe und hilft dir, dich zu bewegen. Die Knochen sind nicht starr wie Holz, sondern zusammen mit Gelenken und Muskeln machen sie Bewegungen möglich. Willst du zuerst die wichtigsten Knochen kennenlernen oder lieber wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz"
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir hier kein echtes Foto zeigen, aber ich bereite dir ein beschriftetes Bild vom menschlichen Skelett vor."
+          },
+          {
+            "who": "learner",
+            "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+          },
+          {
+            "who": "buddy",
+            "text": "Gerne. Ich helfe dir beim Lernen wie ein ruhiger Lernpartner: Ich erkläre dir schwere Dinge einfach, übe mit dir, frage dich ab und passe mich an dein Tempo an. Wenn du etwas nicht verstehst, zerlege ich es in kleine Schritte und bleibe bei dem Thema, bis es klarer wird.\n\nIch kann dir auch beim Planen helfen, zum Beispiel für Tests, Vokabeln, Referate oder Wiederholungen. Wenn du möchtest, können wir jetzt direkt mit einem Thema anfangen — ich kann erklären, üben oder dich abfragen."
+          }
+        ],
+        "offers": [
+          {
+            "label": "menschliches Skelett",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Wozu dient das Skelett vor allem?",
+          "choices": [
+            "Es stützt den Körper und schützt Organe.",
+            "Es verdaut die Nahrung.",
+            "Es bildet das Blut.",
+            "Es nimmt Licht auf."
+          ]
+        }
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "4c17ff9e-9e70-49bf-9920-8d1f1ade5f4d",
+          "kind": "practice",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "df0ecdc0-472d-4d84-b9e4-f3adf217a7e5",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Skelett",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "55d418e8-e8ae-48d6-985f-ca91b2416b99",
+                  "kind": "multiple_choice",
+                  "prompt": "Wozu dient das Skelett vor allem?",
+                  "choices": [
+                    "Es stützt den Körper und schützt Organe.",
+                    "Es verdaut die Nahrung.",
+                    "Es bildet das Blut.",
+                    "Es nimmt Licht auf."
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "59321bb1-baaf-4b4e-994e-abfa7871b7fa",
+                  "kind": "multiple_choice",
+                  "prompt": "Welcher Teil gehört zur Wirbelsäule?",
+                  "choices": [
+                    "Wirbel",
+                    "Zahn",
+                    "Muskel",
+                    "Lunge"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "098d5144-682a-4b0f-b3c0-3b998f835e7e",
+                  "kind": "short",
+                  "prompt": "Nenne einen Knochen aus dem Arm.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": {
+                    "type": "schematic",
+                    "d": "skeleton",
+                    "n": [
+                      "skull",
+                      "spine",
+                      "ribcage",
+                      "pelvis",
+                      "humerus",
+                      "radius"
+                    ],
+                    "ask": 6
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "c96f1679-b975-4dad-a316-d2f155a31f78",
+                  "kind": "multiple_choice",
+                  "prompt": "Welcher Knochen gehört zum Bein?",
+                  "choices": [
+                    "Schienbein",
+                    "Elle",
+                    "Brustbein",
+                    "Schlüsselbein"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "e5c1a433-fa69-46a4-9d8a-b85c6395a812",
+                  "kind": "multiple_choice",
+                  "prompt": "Was verbindet der Brustkorb vor allem?",
+                  "choices": [
+                    "Er schützt Herz und Lunge.",
+                    "Er macht Nahrung klein.",
+                    "Er pumpt Blut.",
+                    "Er bildet Sehen und Hören."
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 3,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "55d418e8-e8ae-48d6-985f-ca91b2416b99",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": [
+        {
+          "invariant": "text.code-fence",
+          "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+          "kind": "chat",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "text.code-fence",
+      "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+      "kind": "chat",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "text.code-fence",
+      "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+      "kind": "chat",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "text.code-fence",
+      "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+      "kind": "chat",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "text.code-fence",
+      "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+      "kind": "chat",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "dictating-no-internals",
+  "persona": {
+    "id": "dictating",
+    "age": 10,
+    "locale": "de",
+    "style": "Dictates long sentences with recognition mistakes",
+    "behaviour": "Changes topic then returns to original wish"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Deutsch und Englisch.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ich möchte Vokabeln zum Thema Alltag, bitte.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Erkläre mir das menschliche Skelett.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Am besten komplett mit Bild.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen?",
+      "double": false
+    },
+    {
+      "type": "tap",
+      "offer": 0,
+      "double": false
+    }
+  ]
+}

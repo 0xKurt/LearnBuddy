@@ -1,0 +1,392 @@
+{
+  "goal": {
+    "id": "clarification-chain",
+    "issue": 938,
+    "wants": "A vocabulary request continues after answering the language question",
+    "messages": [
+      "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "Deutsch und Englisch."
+    ],
+    "expect": "offer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "f624d3a1-2410-48fe-a934-e1a725a00aa8",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:43:48.258Z",
+      "updated_at": "2026-10-24T17:43:48.261Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "role": "learner",
+        "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "69a692e6-e98d-4665-a2f1-3da1834cb4d5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "41a5610d-4fe9-447c-95f4-9f992522f1e4",
+        "role": "buddy",
+        "text": "Oui — sur quel vocabulaire veux-tu être testée ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "anglais",
+          "allemand",
+          "une leçon précise",
+          "des mots d’un thème"
+        ],
+        "reply_to_id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "role": "learner",
+        "text": "Allemand et anglais.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ae3e9989-7c34-4520-9a51-b8c0dbc809f5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e17b59e1-a0bf-4553-89a9-c5058152cf83",
+        "role": "buddy",
+        "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "école",
+          "maison",
+          "animaux",
+          "je ne sais pas"
+        ],
+        "reply_to_id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "role": "learner",
+        "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "921f7d80-685e-4045-a3b1-36e119a4b534",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e52f0f51-e2fe-409e-9bf2-5e74ed61d82b",
+        "role": "buddy",
+        "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "animaux",
+          "nourriture",
+          "objets de la maison"
+        ],
+        "reply_to_id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "f624d3a1-2410-48fe-a934-e1a725a00aa8",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 7,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:43:48.258Z",
+      "updated_at": "2026-10-24T17:43:54.600Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Oui",
+            "Oui —",
+            "Oui — sur",
+            "Oui — sur quel",
+            "Oui — sur quel vocab",
+            "Oui — sur quel vocabulaire",
+            "Oui — sur quel vocabulaire veux",
+            "Oui — sur quel vocabulaire veux-tu",
+            "Oui — sur quel vocabulaire veux-tu être",
+            "Oui — sur quel vocabulaire veux-tu être test",
+            "Oui — sur quel vocabulaire veux-tu être testée",
+            "Oui — sur quel vocabulaire veux-tu être testée ?",
+            "Oui — sur quel vocabulaire veux-tu être testée ?"
+          ],
+          "ms": 1883,
+          "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+          "id": "69a692e6-e98d-4665-a2f1-3da1834cb4d5"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Allemand et anglais.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "D",
+            "D’accord",
+            "D’accord —",
+            "D’accord — sur",
+            "D’accord — sur quel",
+            "D’accord — sur quel thème",
+            "D’accord — sur quel thème ou",
+            "D’accord — sur quel thème ou quelles",
+            "D’accord — sur quel thème ou quelles listes",
+            "D’accord — sur quel thème ou quelles listes de",
+            "D’accord — sur quel thème ou quelles listes de mots",
+            "D’accord — sur quel thème ou quelles listes de mots veux",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être test",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?",
+            "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          ],
+          "ms": 1744,
+          "text": "Allemand et anglais.",
+          "id": "ae3e9989-7c34-4520-9a51-b8c0dbc809f5"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Bien",
+            "Bien sûr",
+            "Bien sûr —",
+            "Bien sûr — tu",
+            "Bien sûr — tu peux",
+            "Bien sûr — tu peux choisir",
+            "Bien sûr — tu peux choisir par",
+            "Bien sûr — tu peux choisir par exemple",
+            "Bien sûr — tu peux choisir par exemple :",
+            "Bien sûr — tu peux choisir par exemple : animaux",
+            "Bien sûr — tu peux choisir par exemple : animaux,",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture,",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école.",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Le",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’alle",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?",
+            "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?"
+          ],
+          "ms": 1630,
+          "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+          "id": "921f7d80-685e-4045-a3b1-36e119a4b534"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "offer",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "french-child-clarification-chain",
+  "persona": {
+    "id": "french-child",
+    "age": 11,
+    "locale": "fr",
+    "style": "French first language, weak reader",
+    "behaviour": "Impatient and easily discouraged"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

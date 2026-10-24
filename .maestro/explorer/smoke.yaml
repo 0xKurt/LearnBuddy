@@ -1,0 +1,11 @@
+# Explicit order: one isolated synthetic account, then the seven required device paths.
+appId: com.learnbuddy.app.dev
+---
+- runFlow: 00-bootstrap.yaml
+- runFlow: 01-back.yaml
+- runFlow: 02-theme.yaml
+- runFlow: 03-mute.yaml
+- runFlow: 04-history-talk.yaml
+- runFlow: 05-notification.yaml
+- runFlow: 06-offer.yaml
+- runFlow: 07-language-pack.yaml

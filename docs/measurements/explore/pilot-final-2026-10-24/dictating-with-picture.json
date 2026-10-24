@@ -1,0 +1,1327 @@
+{
+  "goal": {
+    "id": "with-picture",
+    "issue": 934,
+    "wants": "A real picture of the skeleton",
+    "messages": [
+      "Erkläre mir das menschliche Skelett.",
+      "Am besten komplett mit Bild."
+    ],
+    "expect": "picture"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "84e1b71c-e94c-4571-b8ef-1d9536891d80",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "25372318-4364-4b9c-b41c-c4a8511c2ee2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9997ad5a-8fa3-4cbf-b9c2-5413b1644676",
+        "role": "buddy",
+        "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Spanisch",
+          "ein Thema, das du lernst"
+        ],
+        "reply_to_id": "84e1b71c-e94c-4571-b8ef-1d9536891d80",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4ebb9d40-45f7-4f55-bb15-2405d126499b",
+        "role": "learner",
+        "text": "Deutsch und Englisch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f45304ae-ed0d-449c-8cb7-bcc9ab0381f8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c11103c6-cc1b-44e2-b0aa-de368dc79e18",
+        "role": "buddy",
+        "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Freizeit"
+        ],
+        "reply_to_id": "4ebb9d40-45f7-4f55-bb15-2405d126499b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ca4c28e9-7167-4294-94dd-215354770b18",
+        "role": "learner",
+        "text": "Ich möchte Vokabeln zum Thema Tiere, bitte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8c788b37-7957-4a21-9ffe-71ac67f03b92",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b442a082-44bd-4116-badb-a2ac12638bc0",
+        "role": "buddy",
+        "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ca4c28e9-7167-4294-94dd-215354770b18",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "3808d2f8-d64a-45fd-85c3-72fc787d442e",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "test",
+              "text": "Tiere",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "93cac434-d001-4993-b5a6-6f0942060aa3",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "06a8e268-5203-4d99-947a-4964d10d19d6",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Insekt?",
+        "answer": "Ameise",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "1b50060a-0f54-480a-a21c-41d9187441b4",
+        "kind": "short",
+        "prompt": "Nenne zwei Beispiele für Wirbeltiere.",
+        "answer": "Hund und Fisch",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "46fcf082-5eb9-40e9-95ad-382887ed4684",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Säugetier?",
+        "answer": "Bär",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "725cc2c3-7df6-46fd-b4f0-8d738aabb539",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die ihre Jungen mit Milch ernähren?",
+        "answer": "Säugetiere",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "7b5d35a1-e366-415a-a3c9-73525be002ab",
+        "kind": "numeric",
+        "prompt": "Wie viele Beine hat eine Spinne?",
+        "answer": "8",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "aaa36bf7-4811-4320-a4da-ab8e86dc71a3",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier lebt am wahrscheinlichsten im Wasser?",
+        "answer": "Delfin",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "afca0a15-cb9a-4fd5-9fce-853dc4602ed8",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Amphibium?",
+        "answer": "Frosch",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "c69c6c09-1618-41fa-a645-9f18eac12d1c",
+        "kind": "multiple_choice",
+        "prompt": "Welches Merkmal hilft Vögeln besonders beim Fliegen?",
+        "answer": "Federn",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "ee5f7c55-484a-4627-8281-99c42685b68b",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die Eier legen?",
+        "answer": "Eierlegende Tiere",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "fbc113c1-f496-4829-bb05-62ae1eae465b",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die nur Pflanzen fressen?",
+        "answer": "Pflanzenfresser",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "0b65be91-679a-41f4-baf9-04e3ff8ce1ee",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 8,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:39:30.247Z",
+      "updated_at": "2026-10-24T17:39:45.062Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "93cac434-d001-4993-b5a6-6f0942060aa3",
+        "client_request_id": "3808d2f8-d64a-45fd-85c3-72fc787d442e"
+      }
+    ],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "84e1b71c-e94c-4571-b8ef-1d9536891d80",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "25372318-4364-4b9c-b41c-c4a8511c2ee2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9997ad5a-8fa3-4cbf-b9c2-5413b1644676",
+        "role": "buddy",
+        "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Spanisch",
+          "ein Thema, das du lernst"
+        ],
+        "reply_to_id": "84e1b71c-e94c-4571-b8ef-1d9536891d80",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4ebb9d40-45f7-4f55-bb15-2405d126499b",
+        "role": "learner",
+        "text": "Deutsch und Englisch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f45304ae-ed0d-449c-8cb7-bcc9ab0381f8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c11103c6-cc1b-44e2-b0aa-de368dc79e18",
+        "role": "buddy",
+        "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Freizeit"
+        ],
+        "reply_to_id": "4ebb9d40-45f7-4f55-bb15-2405d126499b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ca4c28e9-7167-4294-94dd-215354770b18",
+        "role": "learner",
+        "text": "Ich möchte Vokabeln zum Thema Tiere, bitte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8c788b37-7957-4a21-9ffe-71ac67f03b92",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b442a082-44bd-4116-badb-a2ac12638bc0",
+        "role": "buddy",
+        "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ca4c28e9-7167-4294-94dd-215354770b18",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "3808d2f8-d64a-45fd-85c3-72fc787d442e",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "test",
+              "text": "Tiere",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "93cac434-d001-4993-b5a6-6f0942060aa3",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f3ae060a-926d-4a6e-b1da-c165d71801d2",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fc85a0c0-f35f-4718-adb4-061ff3358bf9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f70c5db8-13be-43fc-bcf0-4378813483c5",
+        "role": "buddy",
+        "text": "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "wichtigsten Knochen",
+          "wofür es da ist"
+        ],
+        "reply_to_id": "f3ae060a-926d-4a6e-b1da-c165d71801d2",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "fbb9e258-8b02-438d-8b51-2f903779c092",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "49f8ca1e-f106-4663-a064-29e4d2e1e949",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a87d9124-86d9-4e8d-bd33-9baad881c660",
+        "role": "buddy",
+        "text": "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "fbb9e258-8b02-438d-8b51-2f903779c092",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "3e546221-f831-4a48-81fc-a399ecc992b4",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "practice",
+              "text": "menschliches Skelett mit Bildern",
+              "tool": "offer_learning",
+              "figures": [
+                "schematic"
+              ],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": true,
+              "running_session_id": "442b0bab-677a-439a-a252-344f560ac66a",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "06a8e268-5203-4d99-947a-4964d10d19d6",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Insekt?",
+        "answer": "Ameise",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "111197c0-ab14-4c01-9267-a0f99afdff4d",
+        "kind": "short",
+        "prompt": "Was fällt dir an deinem eigenen Skelett auf, wenn du an Bewegung denkst?",
+        "answer": "Es gibt Halt und ermöglicht Bewegung.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "1b50060a-0f54-480a-a21c-41d9187441b4",
+        "kind": "short",
+        "prompt": "Nenne zwei Beispiele für Wirbeltiere.",
+        "answer": "Hund und Fisch",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "46fcf082-5eb9-40e9-95ad-382887ed4684",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Säugetier?",
+        "answer": "Bär",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "579b77b8-172f-47d7-9164-de8f0c441f2a",
+        "kind": "short",
+        "prompt": "Wie heißt der Knochen im Oberarm?",
+        "answer": "Oberarmknochen",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "725cc2c3-7df6-46fd-b4f0-8d738aabb539",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die ihre Jungen mit Milch ernähren?",
+        "answer": "Säugetiere",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "7a5bad95-89bb-454e-850a-3bb622638083",
+        "kind": "multiple_choice",
+        "prompt": "Welcher Knochen gehört zum Bein?",
+        "answer": "Oberschenkelknochen",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "7b5d35a1-e366-415a-a3c9-73525be002ab",
+        "kind": "numeric",
+        "prompt": "Wie viele Beine hat eine Spinne?",
+        "answer": "8",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "8297043d-15d7-4abf-be70-90cd6b61bdc5",
+        "kind": "short",
+        "prompt": "Wie heißt der Knochen, der den Rücken stützt?",
+        "answer": "Wirbelsäule",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "aaa36bf7-4811-4320-a4da-ab8e86dc71a3",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier lebt am wahrscheinlichsten im Wasser?",
+        "answer": "Delfin",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "afca0a15-cb9a-4fd5-9fce-853dc4602ed8",
+        "kind": "multiple_choice",
+        "prompt": "Welches Tier ist ein Amphibium?",
+        "answer": "Frosch",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "b5cc6de8-bce4-4036-99fe-2b7d8b18ac0c",
+        "kind": "short",
+        "prompt": "Nenne zwei Aufgaben des Skeletts.",
+        "answer": "Es stützt den Körper und schützt innere Organe.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "c69c6c09-1618-41fa-a645-9f18eac12d1c",
+        "kind": "multiple_choice",
+        "prompt": "Welches Merkmal hilft Vögeln besonders beim Fliegen?",
+        "answer": "Federn",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "ccd15287-0956-428d-bcc9-18f6846f96ff",
+        "kind": "multiple_choice",
+        "prompt": "Welche Knochen gehören zum Arm?",
+        "answer": "Speiche und Elle",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "d92fe274-868e-433a-8250-54fbbbfdebaa",
+        "kind": "multiple_choice",
+        "prompt": "Welches ist ein Knochen des menschlichen Skeletts?",
+        "answer": "Schädel",
+        "prompt_lang": "de",
+        "lang": "de"
+      },
+      {
+        "id": "ee5f7c55-484a-4627-8281-99c42685b68b",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die Eier legen?",
+        "answer": "Eierlegende Tiere",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "fbc113c1-f496-4829-bb05-62ae1eae465b",
+        "kind": "short",
+        "prompt": "Wie nennt man Tiere, die nur Pflanzen fressen?",
+        "answer": "Pflanzenfresser",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "0b65be91-679a-41f4-baf9-04e3ff8ce1ee",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 14,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:39:30.247Z",
+      "updated_at": "2026-10-24T17:40:18.639Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "442b0bab-677a-439a-a252-344f560ac66a",
+        "client_request_id": "3e546221-f831-4a48-81fc-a399ecc992b4"
+      },
+      {
+        "id": "93cac434-d001-4993-b5a6-6f0942060aa3",
+        "client_request_id": "3808d2f8-d64a-45fd-85c3-72fc787d442e"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema."
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Tiere, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Tiere",
+            "kind": "test"
+          }
+        ],
+        "question": {
+          "prompt": "Welches Tier ist ein Säugetier?",
+          "choices": [
+            "Bär",
+            "Frosch",
+            "Forelle",
+            "Huhn"
+          ]
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — das",
+            "Klar — das S",
+            "Klar — das Skele",
+            "Klar — das Skelett",
+            "Klar — das Skelett ist",
+            "Klar — das Skelett ist wie",
+            "Klar — das Skelett ist wie das",
+            "Klar — das Skelett ist wie das Ger",
+            "Klar — das Skelett ist wie das Gerüst",
+            "Klar — das Skelett ist wie das Gerüst von",
+            "Klar — das Skelett ist wie das Gerüst von einem",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus:",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt.",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Kno",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile,",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schä",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehir",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brust",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und L",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\n",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nM",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMö",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Kno",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen,",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, w",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wof",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das S",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skele",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?",
+            "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?"
+          ],
+          "ms": 1812,
+          "text": "Erkläre mir das menschliche Skelett.",
+          "id": "fc85a0c0-f35f-4718-adb4-061ff3358bf9"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Am besten komplett mit Bild.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema."
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Tiere, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?"
+          }
+        ],
+        "offers": [
+          {
+            "label": "Tiere",
+            "kind": "test"
+          }
+        ],
+        "question": {
+          "prompt": "Welches Tier ist ein Säugetier?",
+          "choices": [
+            "Bär",
+            "Frosch",
+            "Forelle",
+            "Huhn"
+          ]
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich kann",
+            "Ich kann dir",
+            "Ich kann dir das",
+            "Ich kann dir das S",
+            "Ich kann dir das Skele",
+            "Ich kann dir das Skelett",
+            "Ich kann dir das Skelett hier",
+            "Ich kann dir das Skelett hier erklären",
+            "Ich kann dir das Skelett hier erklären und",
+            "Ich kann dir das Skelett hier erklären und ich",
+            "Ich kann dir das Skelett hier erklären und ich bere",
+            "Ich kann dir das Skelett hier erklären und ich bereite",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Ü",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer besch",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrift",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Ab",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor",
+            "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor."
+          ],
+          "ms": 10183,
+          "text": "Am besten komplett mit Bild.",
+          "id": "49f8ca1e-f106-4663-a064-29e4d2e1e949"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 1,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — welche Vokabeln meinst du? Zum Beispiel Englisch, Französisch, Spanisch oder ein bestimmtes Thema."
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte Vokabeln zum Thema Tiere, bitte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich stelle dir einen Vokabeltest zu Tieren auf Deutsch und Englisch bereit."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das Skelett ist wie das Gerüst von einem Haus: Es gibt deinem Körper Form und Halt. Die Knochen schützen auch wichtige Teile, zum Beispiel den Schädel das Gehirn und den Brustkorb Herz und Lunge.\n\nMöchtest du erst die wichtigsten Knochen kennenlernen oder lieber wissen, wofür das Skelett genau da ist?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir das Skelett hier erklären und ich bereite dir dazu eine Übung mit einer beschrifteten Abbildung vor."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Tiere",
+            "kind": "test"
+          },
+          {
+            "label": "menschliches Skelett mit Bildern",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Welches Tier ist ein Säugetier?",
+          "choices": [
+            "Bär",
+            "Frosch",
+            "Forelle",
+            "Huhn"
+          ]
+        }
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "3e546221-f831-4a48-81fc-a399ecc992b4",
+          "kind": "practice",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "442b0bab-677a-439a-a252-344f560ac66a",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Skelett",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "111197c0-ab14-4c01-9267-a0f99afdff4d",
+                  "kind": "short",
+                  "prompt": "Was fällt dir an deinem eigenen Skelett auf, wenn du an Bewegung denkst?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "d92fe274-868e-433a-8250-54fbbbfdebaa",
+                  "kind": "multiple_choice",
+                  "prompt": "Welches ist ein Knochen des menschlichen Skeletts?",
+                  "choices": [
+                    "Herz",
+                    "Schädel",
+                    "Lunge",
+                    "Magen"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": "de",
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "b5cc6de8-bce4-4036-99fe-2b7d8b18ac0c",
+                  "kind": "short",
+                  "prompt": "Nenne zwei Aufgaben des Skeletts.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "579b77b8-172f-47d7-9164-de8f0c441f2a",
+                  "kind": "short",
+                  "prompt": "Wie heißt der Knochen im Oberarm?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": {
+                    "type": "schematic",
+                    "d": "skeleton",
+                    "n": [
+                      "skull",
+                      "spine",
+                      "ribcage",
+                      "pelvis",
+                      "humerus",
+                      "femur"
+                    ],
+                    "ask": 5
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "ccd15287-0956-428d-bcc9-18f6846f96ff",
+                  "kind": "multiple_choice",
+                  "prompt": "Welche Knochen gehören zum Arm?",
+                  "choices": [
+                    "Speiche und Elle",
+                    "Schienbein und Wadenbein",
+                    "Brustbein und Rippen",
+                    "Schädel und Kiefer"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": "de",
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "7a5bad95-89bb-454e-850a-3bb622638083",
+                  "kind": "multiple_choice",
+                  "prompt": "Welcher Knochen gehört zum Bein?",
+                  "choices": [
+                    "Elle",
+                    "Rippe",
+                    "Oberschenkelknochen",
+                    "Schlüsselbein"
+                  ],
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": "de",
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "8297043d-15d7-4abf-be70-90cd6b61bdc5",
+                  "kind": "short",
+                  "prompt": "Wie heißt der Knochen, der den Rücken stützt?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Skelett",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "biology",
+                  "figure": {
+                    "type": "schematic",
+                    "d": "skeleton",
+                    "n": [
+                      "skull",
+                      "spine",
+                      "ribcage",
+                      "pelvis",
+                      "humerus",
+                      "femur"
+                    ],
+                    "ask": 2
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "111197c0-ab14-4c01-9267-a0f99afdff4d",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "picture.present",
+      "evidence": "No validated picture action in API conversation",
+      "kind": "picture",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "dictating-with-picture",
+  "persona": {
+    "id": "dictating",
+    "age": 10,
+    "locale": "de",
+    "style": "Dictates long sentences with recognition mistakes",
+    "behaviour": "Changes topic then returns to original wish"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "tap",
+        "offer": 1,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Deutsch und Englisch.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ich möchte Vokabeln zum Thema Tiere, bitte.",
+      "double": false
+    },
+    {
+      "type": "tap",
+      "offer": 0,
+      "double": true
+    }
+  ]
+}

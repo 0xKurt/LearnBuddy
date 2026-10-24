@@ -1,0 +1,2063 @@
+{
+  "goal": {
+    "id": "no-internals",
+    "issue": 934,
+    "wants": "Readable child-facing explanation, no internal protocol",
+    "messages": [
+      "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+    ],
+    "expect": "clean"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "role": "learner",
+        "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "69a692e6-e98d-4665-a2f1-3da1834cb4d5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "41a5610d-4fe9-447c-95f4-9f992522f1e4",
+        "role": "buddy",
+        "text": "Oui — sur quel vocabulaire veux-tu être testée ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "anglais",
+          "allemand",
+          "une leçon précise",
+          "des mots d’un thème"
+        ],
+        "reply_to_id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "role": "learner",
+        "text": "Allemand et anglais.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ae3e9989-7c34-4520-9a51-b8c0dbc809f5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e17b59e1-a0bf-4553-89a9-c5058152cf83",
+        "role": "buddy",
+        "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "école",
+          "maison",
+          "animaux",
+          "je ne sais pas"
+        ],
+        "reply_to_id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "role": "learner",
+        "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "921f7d80-685e-4045-a3b1-36e119a4b534",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e52f0f51-e2fe-409e-9bf2-5e74ed61d82b",
+        "role": "buddy",
+        "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "animaux",
+          "nourriture",
+          "objets de la maison"
+        ],
+        "reply_to_id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb00e9d6-717e-4a47-b64f-64520e34e225",
+        "role": "learner",
+        "text": "Explique-moi le squelette humain.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9792096f-1f96-4bbb-9e36-221f0194ce11",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8f09536c-9a39-41ae-a714-c1deef7749bf",
+        "role": "buddy",
+        "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Oui, les principales parties",
+          "Oui, les os les plus importants",
+          "Oui, mais très simple"
+        ],
+        "reply_to_id": "eb00e9d6-717e-4a47-b64f-64520e34e225",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4b90e6af-acc3-47e6-b9fa-c6f65a9769d3",
+        "role": "learner",
+        "text": "De préférence en entier avec une image.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8f4a566f-5967-4988-b76f-379929a3594d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3ab150f2-727f-4406-9d29-597f70fd5cee",
+        "role": "buddy",
+        "text": "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "un schéma simple",
+          "os par os",
+          "les grandes parties seulement"
+        ],
+        "reply_to_id": "4b90e6af-acc3-47e6-b9fa-c6f65a9769d3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "684a9014-3a2f-482a-aa66-0732fcca70da",
+        "role": "learner",
+        "text": "Peux-tu me montrer une vraie photo du squelette humain ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "286671e7-f3db-4382-91b1-845f095a509b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb15586e-6720-46b8-ae80-2c7d10b9e2ce",
+        "role": "buddy",
+        "text": "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "684a9014-3a2f-482a-aa66-0732fcca70da",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "f624d3a1-2410-48fe-a934-e1a725a00aa8",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 13,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:43:48.258Z",
+      "updated_at": "2026-10-24T17:44:04.248Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "role": "learner",
+        "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "69a692e6-e98d-4665-a2f1-3da1834cb4d5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "41a5610d-4fe9-447c-95f4-9f992522f1e4",
+        "role": "buddy",
+        "text": "Oui — sur quel vocabulaire veux-tu être testée ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "anglais",
+          "allemand",
+          "une leçon précise",
+          "des mots d’un thème"
+        ],
+        "reply_to_id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "role": "learner",
+        "text": "Allemand et anglais.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ae3e9989-7c34-4520-9a51-b8c0dbc809f5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e17b59e1-a0bf-4553-89a9-c5058152cf83",
+        "role": "buddy",
+        "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "école",
+          "maison",
+          "animaux",
+          "je ne sais pas"
+        ],
+        "reply_to_id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "role": "learner",
+        "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "921f7d80-685e-4045-a3b1-36e119a4b534",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e52f0f51-e2fe-409e-9bf2-5e74ed61d82b",
+        "role": "buddy",
+        "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "animaux",
+          "nourriture",
+          "objets de la maison"
+        ],
+        "reply_to_id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb00e9d6-717e-4a47-b64f-64520e34e225",
+        "role": "learner",
+        "text": "Explique-moi le squelette humain.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9792096f-1f96-4bbb-9e36-221f0194ce11",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8f09536c-9a39-41ae-a714-c1deef7749bf",
+        "role": "buddy",
+        "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Oui, les principales parties",
+          "Oui, les os les plus importants",
+          "Oui, mais très simple"
+        ],
+        "reply_to_id": "eb00e9d6-717e-4a47-b64f-64520e34e225",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4b90e6af-acc3-47e6-b9fa-c6f65a9769d3",
+        "role": "learner",
+        "text": "De préférence en entier avec une image.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8f4a566f-5967-4988-b76f-379929a3594d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3ab150f2-727f-4406-9d29-597f70fd5cee",
+        "role": "buddy",
+        "text": "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "un schéma simple",
+          "os par os",
+          "les grandes parties seulement"
+        ],
+        "reply_to_id": "4b90e6af-acc3-47e6-b9fa-c6f65a9769d3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "684a9014-3a2f-482a-aa66-0732fcca70da",
+        "role": "learner",
+        "text": "Peux-tu me montrer une vraie photo du squelette humain ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "286671e7-f3db-4382-91b1-845f095a509b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb15586e-6720-46b8-ae80-2c7d10b9e2ce",
+        "role": "buddy",
+        "text": "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "684a9014-3a2f-482a-aa66-0732fcca70da",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6b724da4-f334-408a-b843-81ecd6ab1ca9",
+        "role": "learner",
+        "text": "Explique-moi en détail comment tu peux m’aider à apprendre.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "069940aa-77b9-42ad-a87b-c3b46ff2a37e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "32970d96-50a8-43b3-9fe0-9eee8008f189",
+        "role": "buddy",
+        "text": "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail à ta place.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "6b724da4-f334-408a-b843-81ecd6ab1ca9",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "fcc494e2-610b-46f2-a514-32b45d37b731",
+        "role": "learner",
+        "text": "Je peux te préparer un petit test avec des questions sur le squelette humain, ou bien t'expliquer chaque os un par un avec des images simples. Que préfères-tu ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e9251912-5a3b-4c4f-8f53-51a05fe804b2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c2992930-5901-4c22-a3c3-fe443501b26b",
+        "role": "buddy",
+        "text": "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige ensemble ce qui bloque.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "fcc494e2-610b-46f2-a514-32b45d37b731",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "671524d1-bc33-4f59-9af0-92ef5c8b3f81",
+        "role": "learner",
+        "text": "D'accord, je vais te préparer un petit test de 10 questions sur le squelette humain. Prête ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "827cc5d1-fa51-4509-8bb4-16f908833203",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "92d5b74f-f629-4716-84f4-b48c1238291f",
+        "role": "buddy",
+        "text": "Oui, je te prépare le test sur le squelette humain.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "671524d1-bc33-4f59-9af0-92ef5c8b3f81",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "6c8cdf1e-69d1-4af7-b8e7-4c13e7ae8225",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "test",
+              "text": "le squelette humain",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "71754c4b-7c1e-455b-bb86-e3bc69a3bfbd",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "14c9266f-0eb4-4767-b8f6-4764d93fad4e",
+        "kind": "short",
+        "prompt": "Comment s’appelle l’os de l’avant-bras du côté du petit doigt ?",
+        "answer": "l’ulna",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "317737d8-c398-4f67-a62f-348b1e70330b",
+        "kind": "short",
+        "prompt": "Comment s’appelle l’os de la cuisse ?",
+        "answer": "le fémur",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "5c528aba-472b-40ea-b9e1-729f2647e1e7",
+        "kind": "multiple_choice",
+        "prompt": "Que protège surtout le crâne ?",
+        "answer": "le cerveau",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "6434554d-fb75-4384-83e6-9f6fe2c96071",
+        "kind": "multiple_choice",
+        "prompt": "Lequel de ces os fait partie du bras ?",
+        "answer": "l’humérus",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "6e4b5442-278a-4d84-aeda-dd94ce31d61a",
+        "kind": "short",
+        "prompt": "Comment s’appelle la partie du squelette qui forme le centre du dos ?",
+        "answer": "la colonne vertébrale",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "6f248055-9c8d-4a4e-bf7a-3a862b4d32ca",
+        "kind": "multiple_choice",
+        "prompt": "Quel est le rôle principal du squelette ?",
+        "answer": "soutenir et protéger le corps",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "6fb8f6fb-d9cc-40b2-8f9d-3ec327271529",
+        "kind": "numeric",
+        "prompt": "Combien de vertèbres cervicales a l’être humain ?",
+        "answer": "7",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "9d065d1b-6187-400a-83d1-349bd0cb40c2",
+        "kind": "multiple_choice",
+        "prompt": "Lequel de ces os est dans la jambe ?",
+        "answer": "le tibia",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "bd7ca263-6cee-481b-82e4-303df4a774e4",
+        "kind": "multiple_choice",
+        "prompt": "Quel os protège le cœur et les poumons ?",
+        "answer": "les côtes",
+        "prompt_lang": "fr",
+        "lang": null
+      },
+      {
+        "id": "cacb939d-c1d4-4892-8c25-e22dc1faff8d",
+        "kind": "short",
+        "prompt": "Comment s’appelle l’articulation entre la cuisse et la jambe ?",
+        "answer": "le genou",
+        "prompt_lang": "fr",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "f624d3a1-2410-48fe-a934-e1a725a00aa8",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 20,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:43:48.258Z",
+      "updated_at": "2026-10-24T17:44:20.833Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "71754c4b-7c1e-455b-bb86-e3bc69a3bfbd",
+        "client_request_id": "6c8cdf1e-69d1-4af7-b8e7-4c13e7ae8225"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Explique-moi en détail comment tu peux m’aider à apprendre.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi le squelette humain."
+          },
+          {
+            "who": "buddy",
+            "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?"
+          },
+          {
+            "who": "learner",
+            "text": "De préférence en entier avec une image."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me montrer une vraie photo du squelette humain ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Je",
+            "Je peux",
+            "Je peux t",
+            "Je peux t’aider",
+            "Je peux t’aider un",
+            "Je peux t’aider un peu",
+            "Je peux t’aider un peu comme",
+            "Je peux t’aider un peu comme un",
+            "Je peux t’aider un peu comme un grand",
+            "Je peux t’aider un peu comme un grand cah",
+            "Je peux t’aider un peu comme un grand cahier",
+            "Je peux t’aider un peu comme un grand cahier vivant",
+            "Je peux t’aider un peu comme un grand cahier vivant :",
+            "Je peux t’aider un peu comme un grand cahier vivant : je",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’ex",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement,",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’ent",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entra",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça dev",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair.",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire ré",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser,",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test,",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice,",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraî",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis —",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail à",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail à ta",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail à ta place",
+            "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail à ta place."
+          ],
+          "ms": 2269,
+          "text": "Explique-moi en détail comment tu peux m’aider à apprendre.",
+          "id": "069940aa-77b9-42ad-a87b-c3b46ff2a37e"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Je peux te préparer un petit test avec des questions sur le squelette humain, ou bien t'expliquer chaque os un par un avec des images simples. Que préfères-tu ?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi le squelette humain."
+          },
+          {
+            "who": "buddy",
+            "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?"
+          },
+          {
+            "who": "learner",
+            "text": "De préférence en entier avec une image."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me montrer une vraie photo du squelette humain ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties."
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi en détail comment tu peux m’aider à apprendre."
+          },
+          {
+            "who": "buddy",
+            "text": "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail à ta place."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Je",
+            "Je préfère",
+            "Je préfère le",
+            "Je préfère le petit",
+            "Je préfère le petit test",
+            "Je préfère le petit test sur",
+            "Je préfère le petit test sur le",
+            "Je préfère le petit test sur le sque",
+            "Je préfère le petit test sur le squelette",
+            "Je préfère le petit test sur le squelette humain",
+            "Je préfère le petit test sur le squelette humain.",
+            "Je préfère le petit test sur le squelette humain. C",
+            "Je préfère le petit test sur le squelette humain. C’est",
+            "Je préfère le petit test sur le squelette humain. C’est le",
+            "Je préfère le petit test sur le squelette humain. C’est le plus",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris,",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corr",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige ensemble",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige ensemble ce",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige ensemble ce qui",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige ensemble ce qui bloque",
+            "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige ensemble ce qui bloque."
+          ],
+          "ms": 1867,
+          "text": "Je peux te préparer un petit test avec des questions sur le squelette humain, ou bien t'expliquer chaque os un par un avec des images simples. Que préfères-tu ?",
+          "id": "e9251912-5a3b-4c4f-8f53-51a05fe804b2"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "D'accord, je vais te préparer un petit test de 10 questions sur le squelette humain. Prête ?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi le squelette humain."
+          },
+          {
+            "who": "buddy",
+            "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?"
+          },
+          {
+            "who": "learner",
+            "text": "De préférence en entier avec une image."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me montrer une vraie photo du squelette humain ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties."
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi en détail comment tu peux m’aider à apprendre."
+          },
+          {
+            "who": "buddy",
+            "text": "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail à ta place."
+          },
+          {
+            "who": "learner",
+            "text": "Je peux te préparer un petit test avec des questions sur le squelette humain, ou bien t'expliquer chaque os un par un avec des images simples. Que préfères-tu ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige ensemble ce qui bloque."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Oui",
+            "Oui,",
+            "Oui, je",
+            "Oui, je te",
+            "Oui, je te prépare",
+            "Oui, je te prépare le",
+            "Oui, je te prépare le test",
+            "Oui, je te prépare le test sur",
+            "Oui, je te prépare le test sur le",
+            "Oui, je te prépare le test sur le sque",
+            "Oui, je te prépare le test sur le squelette",
+            "Oui, je te prépare le test sur le squelette humain",
+            "Oui, je te prépare le test sur le squelette humain."
+          ],
+          "ms": 10129,
+          "text": "D'accord, je vais te préparer un petit test de 10 questions sur le squelette humain. Prête ?",
+          "id": "827cc5d1-fa51-4509-8bb4-16f908833203"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": true
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi le squelette humain."
+          },
+          {
+            "who": "buddy",
+            "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?"
+          },
+          {
+            "who": "learner",
+            "text": "De préférence en entier avec une image."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me montrer une vraie photo du squelette humain ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties."
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi en détail comment tu peux m’aider à apprendre."
+          },
+          {
+            "who": "buddy",
+            "text": "Je peux t’aider un peu comme un grand cahier vivant : je t’explique une idée simplement, puis je t’entraîne dessus avec des petites questions jusqu’à ce que ça devienne plus clair. Je peux aussi te faire réviser, te poser un mini test, t’aider à comprendre un exercice, ou te préparer un entraînement sur un sujet précis — sans faire le travail à ta place."
+          },
+          {
+            "who": "learner",
+            "text": "Je peux te préparer un petit test avec des questions sur le squelette humain, ou bien t'expliquer chaque os un par un avec des images simples. Que préfères-tu ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je préfère le petit test sur le squelette humain. C’est le plus utile pour voir ce que tu as déjà compris, puis on corrige ensemble ce qui bloque."
+          },
+          {
+            "who": "learner",
+            "text": "D'accord, je vais te préparer un petit test de 10 questions sur le squelette humain. Prête ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui, je te prépare le test sur le squelette humain."
+          }
+        ],
+        "offers": [
+          {
+            "label": "le squelette humain",
+            "kind": "test"
+          }
+        ],
+        "question": null
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "6c8cdf1e-69d1-4af7-b8e7-4c13e7ae8225",
+          "kind": "test",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "71754c4b-7c1e-455b-bb86-e3bc69a3bfbd",
+            "mode": "test",
+            "reveal_allowed": false,
+            "status": "active",
+            "title": "Squelette humain",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "5c528aba-472b-40ea-b9e1-729f2647e1e7",
+                  "kind": "multiple_choice",
+                  "prompt": "Que protège surtout le crâne ?",
+                  "choices": [
+                    "le cerveau",
+                    "les poumons",
+                    "l’estomac",
+                    "les reins"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "6e4b5442-278a-4d84-aeda-dd94ce31d61a",
+                  "kind": "short",
+                  "prompt": "Comment s’appelle la partie du squelette qui forme le centre du dos ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "bd7ca263-6cee-481b-82e4-303df4a774e4",
+                  "kind": "multiple_choice",
+                  "prompt": "Quel os protège le cœur et les poumons ?",
+                  "choices": [
+                    "les côtes",
+                    "le fémur",
+                    "la clavicule",
+                    "le tibia"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "317737d8-c398-4f67-a62f-348b1e70330b",
+                  "kind": "short",
+                  "prompt": "Comment s’appelle l’os de la cuisse ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "6434554d-fb75-4384-83e6-9f6fe2c96071",
+                  "kind": "multiple_choice",
+                  "prompt": "Lequel de ces os fait partie du bras ?",
+                  "choices": [
+                    "l’humérus",
+                    "le tibia",
+                    "le bassin",
+                    "la rotule"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "14c9266f-0eb4-4767-b8f6-4764d93fad4e",
+                  "kind": "short",
+                  "prompt": "Comment s’appelle l’os de l’avant-bras du côté du petit doigt ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "6fb8f6fb-d9cc-40b2-8f9d-3ec327271529",
+                  "kind": "numeric",
+                  "prompt": "Combien de vertèbres cervicales a l’être humain ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "6f248055-9c8d-4a4e-bf7a-3a862b4d32ca",
+                  "kind": "multiple_choice",
+                  "prompt": "Quel est le rôle principal du squelette ?",
+                  "choices": [
+                    "soutenir et protéger le corps",
+                    "fabriquer les aliments",
+                    "faire battre le cœur",
+                    "respirer à la place des poumons"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "cacb939d-c1d4-4892-8c25-e22dc1faff8d",
+                  "kind": "short",
+                  "prompt": "Comment s’appelle l’articulation entre la cuisse et la jambe ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "9d065d1b-6187-400a-83d1-349bd0cb40c2",
+                  "kind": "multiple_choice",
+                  "prompt": "Lequel de ces os est dans la jambe ?",
+                  "choices": [
+                    "le tibia",
+                    "la clavicule",
+                    "l’omoplate",
+                    "le crâne"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "5c528aba-472b-40ea-b9e1-729f2647e1e7",
+            "summary": null
+          },
+          "error": null
+        },
+        {
+          "action": "6c8cdf1e-69d1-4af7-b8e7-4c13e7ae8225",
+          "kind": "test",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "71754c4b-7c1e-455b-bb86-e3bc69a3bfbd",
+            "mode": "test",
+            "reveal_allowed": false,
+            "status": "active",
+            "title": "Squelette humain",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "5c528aba-472b-40ea-b9e1-729f2647e1e7",
+                  "kind": "multiple_choice",
+                  "prompt": "Que protège surtout le crâne ?",
+                  "choices": [
+                    "le cerveau",
+                    "les poumons",
+                    "l’estomac",
+                    "les reins"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "6e4b5442-278a-4d84-aeda-dd94ce31d61a",
+                  "kind": "short",
+                  "prompt": "Comment s’appelle la partie du squelette qui forme le centre du dos ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "bd7ca263-6cee-481b-82e4-303df4a774e4",
+                  "kind": "multiple_choice",
+                  "prompt": "Quel os protège le cœur et les poumons ?",
+                  "choices": [
+                    "les côtes",
+                    "le fémur",
+                    "la clavicule",
+                    "le tibia"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "317737d8-c398-4f67-a62f-348b1e70330b",
+                  "kind": "short",
+                  "prompt": "Comment s’appelle l’os de la cuisse ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "6434554d-fb75-4384-83e6-9f6fe2c96071",
+                  "kind": "multiple_choice",
+                  "prompt": "Lequel de ces os fait partie du bras ?",
+                  "choices": [
+                    "l’humérus",
+                    "le tibia",
+                    "le bassin",
+                    "la rotule"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "14c9266f-0eb4-4767-b8f6-4764d93fad4e",
+                  "kind": "short",
+                  "prompt": "Comment s’appelle l’os de l’avant-bras du côté du petit doigt ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "6fb8f6fb-d9cc-40b2-8f9d-3ec327271529",
+                  "kind": "numeric",
+                  "prompt": "Combien de vertèbres cervicales a l’être humain ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "6f248055-9c8d-4a4e-bf7a-3a862b4d32ca",
+                  "kind": "multiple_choice",
+                  "prompt": "Quel est le rôle principal du squelette ?",
+                  "choices": [
+                    "soutenir et protéger le corps",
+                    "fabriquer les aliments",
+                    "faire battre le cœur",
+                    "respirer à la place des poumons"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "cacb939d-c1d4-4892-8c25-e22dc1faff8d",
+                  "kind": "short",
+                  "prompt": "Comment s’appelle l’articulation entre la cuisse et la jambe ?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "9d065d1b-6187-400a-83d1-349bd0cb40c2",
+                  "kind": "multiple_choice",
+                  "prompt": "Lequel de ces os est dans la jambe ?",
+                  "choices": [
+                    "le tibia",
+                    "la clavicule",
+                    "l’omoplate",
+                    "le crâne"
+                  ],
+                  "unit": null,
+                  "topic": "squelette humain",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "fr",
+                  "subject_kind": "biology",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": false,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "5c528aba-472b-40ea-b9e1-729f2647e1e7",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "french-child-no-internals",
+  "persona": {
+    "id": "french-child",
+    "age": 11,
+    "locale": "fr",
+    "style": "French first language, weak reader",
+    "behaviour": "Impatient and easily discouraged"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Je peux te préparer un petit test avec des questions sur le squelette humain, ou bien t'expliquer chaque os un par un avec des images simples. Que préfères-tu ?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "D'accord, je vais te préparer un petit test de 10 questions sur le squelette humain. Prête ?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Allemand et anglais.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Explique-moi le squelette humain.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "De préférence en entier avec une image.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Peux-tu me montrer une vraie photo du squelette humain ?",
+      "double": false
+    }
+  ]
+}

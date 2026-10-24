@@ -1,0 +1,23 @@
+appId: com.learnbuddy.app.dev
+---
+- stopApp
+- launchApp:
+    clearState: false
+- tapOn:
+    id: composer
+- inputText: 'Ich will Brueche ueben'
+- tapOn: Senden
+- extendedWaitUntil:
+    visible: "Los geht's"
+    timeout: 30000
+- doubleTapOn: "Los geht's"
+- extendedWaitUntil:
+    visible: Prüfen
+    timeout: 30000
+- assertNotVisible: Nicht mehr offen
+- assertVisible:
+    id: composer
+- takeScreenshot: explorer-offer-start
+- back
+- assertVisible:
+    id: composer

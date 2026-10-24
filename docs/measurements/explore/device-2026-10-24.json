@@ -1,0 +1,19 @@
+{
+  "device": "35b1c1c",
+  "maestro": "2.10.0",
+  "nativeBuild": false,
+  "apk": "existing installed com.learnbuddy.app.dev base APK; pulled locally",
+  "adbInstall": "adb install -r succeeded twice",
+  "initialParserFailures": [
+    "openNotifications unsupported; replaced with swipe",
+    "shake unsupported; replaced with MENU key"
+  ],
+  "helperInstall": {
+    "status": "blocked",
+    "error": "INSTALL_FAILED_USER_RESTRICTED: Install canceled by user"
+  },
+  "flowsExecuted": 0,
+  "audioEvidence": false,
+  "releasePassed": false,
+  "cleanup": "own forwards 8794/8094 and local servers removed"
+}

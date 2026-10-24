@@ -1,0 +1,594 @@
+{
+  "goal": {
+    "id": "summary-not-repeat",
+    "issue": 937,
+    "wants": "A structured condensation of the conversation",
+    "messages": [
+      "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "Mach mir bitte eine kurze Zusammenfassung davon."
+    ],
+    "expect": "summary"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "e84b356b-ebfe-41ca-8580-2a3a0e6d5e64",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:33:15.614Z",
+      "updated_at": "2026-10-24T17:33:15.617Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "8bdb2460-27ba-418e-bcf2-e908eb8ffc75",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ab29584a-90c3-4d6d-aeac-79295de08fe2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "efa7bc6d-ebdd-492d-81e1-2d0fa2a3d324",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Teile",
+          "Aufgaben",
+          "beides nacheinander"
+        ],
+        "reply_to_id": "8bdb2460-27ba-418e-bcf2-e908eb8ffc75",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "786b5b17-85b7-4f67-9ffb-099fff21d825",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "94aefb76-861c-4f62-9cb8-37217f7a61f9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "65b6aeb5-a3dc-4d82-a9dc-4fab060b005e",
+        "role": "buddy",
+        "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "786b5b17-85b7-4f67-9ffb-099fff21d825",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c19f8d8c-9978-43ce-853b-d3957fd55b0d",
+        "role": "learner",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "311b56f1-c1a5-44f4-9018-38bad13ccc58",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5cb2d441-4a2a-4780-aeea-1097d897c913",
+        "role": "buddy",
+        "text": "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c19f8d8c-9978-43ce-853b-d3957fd55b0d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c07d14fe-cc92-41ad-a492-f7265533883d",
+        "role": "learner",
+        "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "054a8402-8333-469a-a0ef-5d0a1004ef19",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "741425ae-f4d1-445f-af2e-13b601b32494",
+        "role": "buddy",
+        "text": "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c07d14fe-cc92-41ad-a492-f7265533883d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "e84b356b-ebfe-41ca-8580-2a3a0e6d5e64",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 9,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:33:15.614Z",
+      "updated_at": "2026-10-24T17:33:24.287Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — das",
+            "Klar — das mensch",
+            "Klar — das menschliche",
+            "Klar — das menschliche S",
+            "Klar — das menschliche Skele",
+            "Klar — das menschliche Skelett",
+            "Klar — das menschliche Skelett ist",
+            "Klar — das menschliche Skelett ist wie",
+            "Klar — das menschliche Skelett ist wie das",
+            "Klar — das menschliche Skelett ist wie das Ger",
+            "Klar — das menschliche Skelett ist wie das Gerüst",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses:",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen.",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es wür",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht auf",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können,",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Org",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt.",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst,",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als N",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächst",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch:",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schä",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel,",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wir",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbels",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsä",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule,",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brust",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb,",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine —",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des S",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skele",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?",
+            "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?"
+          ],
+          "ms": 2138,
+          "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+          "id": "ab29584a-90c3-4d6d-aeac-79295de08fe2"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Das",
+            "Das mensch",
+            "Das menschliche",
+            "Das menschliche S",
+            "Das menschliche Skele",
+            "Das menschliche Skelett",
+            "Das menschliche Skelett ist",
+            "Das menschliche Skelett ist das",
+            "Das menschliche Skelett ist das Ger",
+            "Das menschliche Skelett ist das Gerüst",
+            "Das menschliche Skelett ist das Gerüst des",
+            "Das menschliche Skelett ist das Gerüst des Körpers",
+            "Das menschliche Skelett ist das Gerüst des Körpers:",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form,",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn auf",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Org",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehir",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn,",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und L",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge.",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Musk",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln.",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schä",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel,",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wir",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbels",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsä",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule,",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brust",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine",
+            "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          ],
+          "ms": 1503,
+          "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+          "id": "94aefb76-861c-4f62-9cb8-37217f7a61f9"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja,",
+            "Ja, das",
+            "Ja, das ist",
+            "Ja, das ist eine",
+            "Ja, das ist eine gute",
+            "Ja, das ist eine gute kurze",
+            "Ja, das ist eine gute kurze Zusammen",
+            "Ja, das ist eine gute kurze Zusammenfassung",
+            "Ja, das ist eine gute kurze Zusammenfassung.",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst,",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kür",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen",
+            "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen."
+          ],
+          "ms": 1301,
+          "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+          "id": "311b56f1-c1a5-44f4-9018-38bad13ccc58"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Das",
+            "Klar: Das S",
+            "Klar: Das Skele",
+            "Klar: Das Skelett",
+            "Klar: Das Skelett gibt",
+            "Klar: Das Skelett gibt dem",
+            "Klar: Das Skelett gibt dem Körper",
+            "Klar: Das Skelett gibt dem Körper Form",
+            "Klar: Das Skelett gibt dem Körper Form,",
+            "Klar: Das Skelett gibt dem Körper Form, schützt",
+            "Klar: Das Skelett gibt dem Körper Form, schützt Org",
+            "Klar: Das Skelett gibt dem Körper Form, schützt Organe",
+            "Klar: Das Skelett gibt dem Körper Form, schützt Organe und",
+            "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft",
+            "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei",
+            "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der",
+            "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung",
+            "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung."
+          ],
+          "ms": 1334,
+          "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?",
+          "id": "054a8402-8333-469a-a0ef-5d0a1004ef19"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "contradicting-summary-not-repeat",
+  "persona": {
+    "id": "contradicting",
+    "age": 12,
+    "locale": "de",
+    "style": "Competent reader, informal lowercase spelling",
+    "behaviour": "Contradicts Buddy when dissatisfied"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": true
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

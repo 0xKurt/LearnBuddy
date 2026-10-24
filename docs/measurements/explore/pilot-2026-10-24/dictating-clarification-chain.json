@@ -1,0 +1,496 @@
+{
+  "goal": {
+    "id": "clarification-chain",
+    "issue": 938,
+    "wants": "A vocabulary request continues after answering the language question",
+    "messages": [
+      "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+    ],
+    "expect": "offer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0354e1a0-bb4a-4c84-80f0-9942f5df716e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5260d893-21ba-4983-ae7f-ba4b631c322f",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Sachthema"
+        ],
+        "reply_to_id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0e572321-8664-4fa5-85d5-23f9ab64f5d1",
+        "role": "learner",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "status": "done",
+        "failure_code": "invalid",
+        "client_message_id": "33266285-5b12-4205-8bee-0ee2941c57e6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "role": "learner",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "56a1c55f-4920-4e9b-b85c-cfdbb5b1a434",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0cab745f-7302-42d3-ac6c-996a2e1c5998",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "7d8beee6-88a1-4f7a-b46f-5c591d3e9e2f",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basisvokabeln Deutsch–Englisch mit einer Lückenübung",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "role": "learner",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a4b17535-6eb4-4eb9-a9df-0b4b3f00ec0e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c876205d-b3c1-47fe-8559-ef7ab8932f49",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "26602f14-564e-477c-be86-73a45287b78c",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basiswörter Deutsch–Englisch mit Lücken",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — zu",
+            "Klar — zu welchem",
+            "Klar — zu welchem Thema",
+            "Klar — zu welchem Thema sollen",
+            "Klar — zu welchem Thema sollen die",
+            "Klar — zu welchem Thema sollen die ",
+            "Klar — zu welchem Thema sollen die 20",
+            "Klar — zu welchem Thema sollen die 20 V",
+            "Klar — zu welchem Thema sollen die 20 Vok",
+            "Klar — zu welchem Thema sollen die 20 Vokabel",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          ],
+          "ms": 1345,
+          "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+          "id": "0354e1a0-bb4a-4c84-80f0-9942f5df716e"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "failed",
+          "code": "model_invalid",
+          "replies": [
+            "",
+            "Ich",
+            "Ich stelle",
+            "Ich stelle dir",
+            "Ich stelle dir einen",
+            "Ich stelle dir einen Test",
+            "Ich stelle dir einen Test mit",
+            "Ich stelle dir einen Test mit ",
+            "Ich stelle dir einen Test mit 20",
+            "Ich stelle dir einen Test mit 20 Basis",
+            "Ich stelle dir einen Test mit 20 Basisv",
+            "Ich stelle dir einen Test mit 20 Basisvok",
+            "Ich stelle dir einen Test mit 20 Basisvokabel",
+            "Ich stelle dir einen Test mit 20 Basisvokabeln",
+            "Ich stelle dir einen Test mit 20 Basisvokabeln Deutsch",
+            "Ich stelle dir einen Test mit 20 Basisvokabeln Deutsch–",
+            "Ich stelle dir einen Test mit 20 Basisvokabeln Deutsch–Eng",
+            "Ich stelle dir einen Test mit 20 Basisvokabeln Deutsch–Engl",
+            "Ich stelle dir einen Test mit 20 Basisvokabeln Deutsch–Englisch",
+            "Ich stelle dir einen Test mit 20 Basisvokabeln Deutsch–Englisch bereit",
+            "Ich stelle dir einen Test mit 20 Basisvokabeln Deutsch–Englisch bereit.",
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — ich",
+            "Klar — ich stelle",
+            "Klar — ich stelle dir",
+            "Klar — ich stelle dir einen",
+            "Klar — ich stelle dir einen V",
+            "Klar — ich stelle dir einen Vok",
+            "Klar — ich stelle dir einen Vokabel",
+            "Klar — ich stelle dir einen Vokabeltest",
+            "Klar — ich stelle dir einen Vokabeltest zu",
+            "Klar — ich stelle dir einen Vokabeltest zu Basis",
+            "Klar — ich stelle dir einen Vokabeltest zu Basisw",
+            "Klar — ich stelle dir einen Vokabeltest zu Basiswör",
+            "Klar — ich stelle dir einen Vokabeltest zu Basiswörtern",
+            "Klar — ich stelle dir einen Vokabeltest zu Basiswörtern in",
+            "Klar — ich stelle dir einen Vokabeltest zu Basiswörtern in Deutsch",
+            "Klar — ich stelle dir einen Vokabeltest zu Basiswörtern in Deutsch und",
+            "Klar — ich stelle dir einen Vokabeltest zu Basiswörtern in Deutsch und Englisch",
+            "Klar — ich stelle dir einen Vokabeltest zu Basiswörtern in Deutsch und Englisch zusammen",
+            "Klar — ich stelle dir einen Vokabeltest zu Basiswörtern in Deutsch und Englisch zusammen."
+          ],
+          "ms": 4554,
+          "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+          "id": "33266285-5b12-4205-8bee-0ee2941c57e6"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich bere",
+            "Ich bereite",
+            "Ich bereite dir",
+            "Ich bereite dir eine",
+            "Ich bereite dir eine Deutsch",
+            "Ich bereite dir eine Deutsch–",
+            "Ich bereite dir eine Deutsch–Eng",
+            "Ich bereite dir eine Deutsch–Engl",
+            "Ich bereite dir eine Deutsch–Englisch",
+            "Ich bereite dir eine Deutsch–Englisch‑",
+            "Ich bereite dir eine Deutsch–Englisch‑V",
+            "Ich bereite dir eine Deutsch–Englisch‑Vok",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabel",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelü",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basis",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basisw",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswör",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und L",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor."
+          ],
+          "ms": 3638,
+          "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+          "id": "56a1c55f-4920-4e9b-b85c-cfdbb5b1a434"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          },
+          {
+            "who": "learner",
+            "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich bere",
+            "Ich bereite",
+            "Ich bereite dir",
+            "Ich bereite dir eine",
+            "Ich bereite dir eine Deutsch",
+            "Ich bereite dir eine Deutsch–",
+            "Ich bereite dir eine Deutsch–Eng",
+            "Ich bereite dir eine Deutsch–Engl",
+            "Ich bereite dir eine Deutsch–Englisch",
+            "Ich bereite dir eine Deutsch–Englisch‑",
+            "Ich bereite dir eine Deutsch–Englisch‑V",
+            "Ich bereite dir eine Deutsch–Englisch‑Vok",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabel",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelü",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit L",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor",
+            "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor."
+          ],
+          "ms": 3242,
+          "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+          "id": "a4b17535-6eb4-4eb9-a9df-0b4b3f00ec0e"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "offer",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "dictating-clarification-chain",
+  "persona": {
+    "id": "dictating",
+    "age": 10,
+    "locale": "de",
+    "style": "Dictates long sentences with recognition mistakes",
+    "behaviour": "Changes topic then returns to original wish"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "double": false
+      },
+      "frustration": 2,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": false,
+      "understandable": null,
+      "faithful": false
+    },
+    "disputed": [
+      "understandable"
+    ],
+    "clean": false
+  }
+}

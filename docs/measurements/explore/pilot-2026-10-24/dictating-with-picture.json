@@ -1,0 +1,1081 @@
+{
+  "goal": {
+    "id": "with-picture",
+    "issue": 934,
+    "wants": "A real picture of the skeleton",
+    "messages": [
+      "Erkläre mir das menschliche Skelett.",
+      "Am besten komplett mit Bild."
+    ],
+    "expect": "picture"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0354e1a0-bb4a-4c84-80f0-9942f5df716e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5260d893-21ba-4983-ae7f-ba4b631c322f",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Sachthema"
+        ],
+        "reply_to_id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0e572321-8664-4fa5-85d5-23f9ab64f5d1",
+        "role": "learner",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "status": "done",
+        "failure_code": "invalid",
+        "client_message_id": "33266285-5b12-4205-8bee-0ee2941c57e6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "role": "learner",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "56a1c55f-4920-4e9b-b85c-cfdbb5b1a434",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0cab745f-7302-42d3-ac6c-996a2e1c5998",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "7d8beee6-88a1-4f7a-b46f-5c591d3e9e2f",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basisvokabeln Deutsch–Englisch mit einer Lückenübung",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "role": "learner",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a4b17535-6eb4-4eb9-a9df-0b4b3f00ec0e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c876205d-b3c1-47fe-8559-ef7ab8932f49",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "26602f14-564e-477c-be86-73a45287b78c",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basiswörter Deutsch–Englisch mit Lücken",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0354e1a0-bb4a-4c84-80f0-9942f5df716e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5260d893-21ba-4983-ae7f-ba4b631c322f",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "Sachthema"
+        ],
+        "reply_to_id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0e572321-8664-4fa5-85d5-23f9ab64f5d1",
+        "role": "learner",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "status": "done",
+        "failure_code": "invalid",
+        "client_message_id": "33266285-5b12-4205-8bee-0ee2941c57e6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "role": "learner",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "56a1c55f-4920-4e9b-b85c-cfdbb5b1a434",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0cab745f-7302-42d3-ac6c-996a2e1c5998",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "7d8beee6-88a1-4f7a-b46f-5c591d3e9e2f",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basisvokabeln Deutsch–Englisch mit einer Lückenübung",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "role": "learner",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a4b17535-6eb4-4eb9-a9df-0b4b3f00ec0e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c876205d-b3c1-47fe-8559-ef7ab8932f49",
+        "role": "buddy",
+        "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "26602f14-564e-477c-be86-73a45287b78c",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "Basiswörter Deutsch–Englisch mit Lücken",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ff7e759-6f96-4401-8396-b72cc1ec5bcb",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b3ff16c5-46de-4338-aa49-bdc259c1247e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8a5b0091-d3c1-4dd0-83a4-b2b23bb4ca6f",
+        "role": "buddy",
+        "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Ja, bitte.",
+          "Nur die wichtigsten Knochen.",
+          "Erst mal nicht."
+        ],
+        "reply_to_id": "9ff7e759-6f96-4401-8396-b72cc1ec5bcb",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aeba0129-c584-4258-a46c-c23b0d553b6f",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e2fb20cf-fa53-4a32-8dba-c025e7dd37ca",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "71e31e70-dcfd-4105-b333-6c4e160717f3",
+        "role": "buddy",
+        "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "aeba0129-c584-4258-a46c-c23b0d553b6f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1959b4b4-39e2-4544-a0de-72d36dbb6af5",
+        "role": "learner",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5200d19e-ec9f-4f83-a502-9df5d39dd16d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "47ed267e-9dd6-4578-8a44-21f35f7df3e1",
+        "role": "buddy",
+        "text": "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1959b4b4-39e2-4544-a0de-72d36dbb6af5",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e06dd670-f009-4f4a-a8a8-4c5c3087668f",
+        "role": "learner",
+        "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "bce58c61-18d6-4bea-bf25-f030a84b81c1",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "62dfd1c9-870c-428e-bed2-0c8c60bdc636",
+        "role": "buddy",
+        "text": "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e06dd670-f009-4f4a-a8a8-4c5c3087668f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          },
+          {
+            "who": "learner",
+            "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Das",
+            "Klar: Das mensch",
+            "Klar: Das menschliche",
+            "Klar: Das menschliche S",
+            "Klar: Das menschliche Skele",
+            "Klar: Das menschliche Skelett",
+            "Klar: Das menschliche Skelett ist",
+            "Klar: Das menschliche Skelett ist wie",
+            "Klar: Das menschliche Skelett ist wie ein",
+            "Klar: Das menschliche Skelett ist wie ein Ger",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus.",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt,",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Org",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehir",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Musk",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Be",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen.",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Will",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Kno",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen",
+            "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?"
+          ],
+          "ms": 1427,
+          "text": "Erkläre mir das menschliche Skelett.",
+          "id": "b3ff16c5-46de-4338-aa49-bdc259c1247e"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Am besten komplett mit Bild.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          },
+          {
+            "who": "learner",
+            "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — ich",
+            "Klar — ich kann",
+            "Klar — ich kann dir",
+            "Klar — ich kann dir kein",
+            "Klar — ich kann dir kein echtes",
+            "Klar — ich kann dir kein echtes Bild",
+            "Klar — ich kann dir kein echtes Bild zeigen",
+            "Klar — ich kann dir kein echtes Bild zeigen,",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfach",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übers",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichts",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen:",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nK",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf =",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schä",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nH",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals =",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wir",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbels",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsä",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBr",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrust",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb =",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rip",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nM",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte =",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Be",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nAr",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine =",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Kno",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Ger",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n  ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schä",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n    ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n  ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wir",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbels",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsä",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /  ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |   ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rip",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\   ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |   ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n    ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Be",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n   ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /    ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein    ",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\n",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas S",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skele",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich auf",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht,",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inner",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Musk",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team.",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst,",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkl",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als N",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächst",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Kno",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach",
+            "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach."
+          ],
+          "ms": 2338,
+          "text": "Am besten komplett mit Bild.",
+          "id": "e2fb20cf-fa53-4a32-8dba-c025e7dd37ca"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          },
+          {
+            "who": "learner",
+            "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich kann",
+            "Ich kann dir",
+            "Ich kann dir hier",
+            "Ich kann dir hier keinen",
+            "Ich kann dir hier keinen Link",
+            "Ich kann dir hier keinen Link oder",
+            "Ich kann dir hier keinen Link oder eine",
+            "Ich kann dir hier keinen Link oder eine Webseite",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen,",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das S",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skele",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lern",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Sk",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skiz",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen.",
+            "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen. "
+          ],
+          "ms": 1498,
+          "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+          "id": "5200d19e-ec9f-4f83-a502-9df5d39dd16d"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+          },
+          {
+            "who": "learner",
+            "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!"
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?"
+          },
+          {
+            "who": "learner",
+            "text": "Am besten komplett mit Bild."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich kann",
+            "Ich kann dir",
+            "Ich kann dir keinen",
+            "Ich kann dir keinen direkten",
+            "Ich kann dir keinen direkten Link",
+            "Ich kann dir keinen direkten Link oder",
+            "Ich kann dir keinen direkten Link oder eine",
+            "Ich kann dir keinen direkten Link oder eine Website",
+            "Ich kann dir keinen direkten Link oder eine Website geben",
+            "Ich kann dir keinen direkten Link oder eine Website geben,",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfach",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lern",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom S",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skele",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären",
+            "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären."
+          ],
+          "ms": 1336,
+          "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+          "id": "bce58c61-18d6-4bea-bf25-f030a84b81c1"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "picture.present",
+      "evidence": "No validated picture action in API conversation",
+      "kind": "picture",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "dictating-with-picture",
+  "persona": {
+    "id": "dictating",
+    "age": 10,
+    "locale": "de",
+    "style": "Dictates long sentences with recognition mistakes",
+    "behaviour": "Changes topic then returns to original wish"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+      "double": false
+    }
+  ]
+}

@@ -1,0 +1,586 @@
+{
+  "goal": {
+    "id": "summary-not-repeat",
+    "issue": 937,
+    "wants": "A structured condensation of the conversation",
+    "messages": [
+      "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "Mach mir bitte eine kurze Zusammenfassung davon."
+    ],
+    "expect": "summary"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": true,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "18b210fd-da49-40b5-a953-05befbf41779",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "66e4e686-decd-475e-b62b-bed1fb70ecfd",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ca18e0dd-7164-4e49-8398-32935216400f",
+        "role": "buddy",
+        "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "wichtigste Knochen",
+          "Aufbau eines Knochens",
+          "Gelenke"
+        ],
+        "reply_to_id": "18b210fd-da49-40b5-a953-05befbf41779",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ec3a342-dcec-49ce-84a7-433feb74b07b",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "697b1710-0e22-41c4-ab80-2a57374841e5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6ea60eff-2aa2-4579-aeb8-0ec376781fff",
+        "role": "buddy",
+        "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "9ec3a342-dcec-49ce-84a7-433feb74b07b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb329f44-3c99-4cb0-9621-c8ecba780fd4",
+        "role": "learner",
+        "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7bb609a8-dd5b-44c0-95bd-6f4086addf0b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d32ab9d0-0de0-4d27-bc34-68b200234ffe",
+        "role": "buddy",
+        "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "eb329f44-3c99-4cb0-9621-c8ecba780fd4",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1d55fa71-934b-4779-afb4-3667c0297262",
+        "role": "learner",
+        "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "48efa06c-b309-4ac4-b2ec-a1ca3b69fccf",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "73a43e5f-664a-416d-8663-7eba1ff0ae5d",
+        "role": "buddy",
+        "text": "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1d55fa71-934b-4779-afb4-3667c0297262",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": true,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — stell",
+            "Klar — stell dir",
+            "Klar — stell dir das",
+            "Klar — stell dir das S",
+            "Klar — stell dir das Skele",
+            "Klar — stell dir das Skelett",
+            "Klar — stell dir das Skelett wie",
+            "Klar — stell dir das Skelett wie das",
+            "Klar — stell dir das Skelett wie das stabile",
+            "Klar — stell dir das Skelett wie das stabile Ger",
+            "Klar — stell dir das Skelett wie das stabile Gerüst",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor:",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form,",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn auf",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Org",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehir",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn,",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und L",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge.",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Kno",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen,",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Kn",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorp",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen:",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Kno",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile,",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweg",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Ver",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen,",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Kn",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorp",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein we",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Pol",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen.",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Will",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Kno",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen,",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines K",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knoch",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen,",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelen",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?",
+            "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?"
+          ],
+          "ms": 1805,
+          "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+          "id": "66e4e686-decd-475e-b62b-bed1fb70ecfd"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Das",
+            "Klar: Das mensch",
+            "Klar: Das menschliche",
+            "Klar: Das menschliche S",
+            "Klar: Das menschliche Skele",
+            "Klar: Das menschliche Skelett",
+            "Klar: Das menschliche Skelett ist",
+            "Klar: Das menschliche Skelett ist das",
+            "Klar: Das menschliche Skelett ist das stabile",
+            "Klar: Das menschliche Skelett ist das stabile Ger",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers.",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt,",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Org",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelen",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Musk",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung",
+            "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung."
+          ],
+          "ms": 1441,
+          "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+          "id": "697b1710-0e22-41c4-ab80-2a57374841e5"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja,",
+            "Ja, genau",
+            "Ja, genau so",
+            "Ja, genau so passt",
+            "Ja, genau so passt es",
+            "Ja, genau so passt es.",
+            "Ja, genau so passt es. Wenn",
+            "Ja, genau so passt es. Wenn du",
+            "Ja, genau so passt es. Wenn du willst",
+            "Ja, genau so passt es. Wenn du willst,",
+            "Ja, genau so passt es. Wenn du willst, kann",
+            "Ja, genau so passt es. Wenn du willst, kann ich",
+            "Ja, genau so passt es. Wenn du willst, kann ich es",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in ",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lern",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte um",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umform",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren",
+            "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren."
+          ],
+          "ms": 1184,
+          "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+          "id": "7bb609a8-dd5b-44c0-95bd-6f4086addf0b"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "-",
+            "- Das",
+            "- Das S",
+            "- Das Skele",
+            "- Das Skelett",
+            "- Das Skelett ist",
+            "- Das Skelett ist das",
+            "- Das Skelett ist das stabile",
+            "- Das Skelett ist das stabile Ger",
+            "- Das Skelett ist das stabile Gerüst",
+            "- Das Skelett ist das stabile Gerüst des",
+            "- Das Skelett ist das stabile Gerüst des Körpers",
+            "- Das Skelett ist das stabile Gerüst des Körpers.",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n-",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n-",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Org",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n-",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelen",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Musk",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung",
+            "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung."
+          ],
+          "ms": 1150,
+          "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+          "id": "48efa06c-b309-4ac4-b2ec-a1ca3b69fccf"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "summary.condensation",
+      "evidence": "length 164/103, word overlap 0.16",
+      "kind": "summary",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "contradicting-summary-not-repeat",
+  "persona": {
+    "id": "contradicting",
+    "age": 12,
+    "locale": "de",
+    "style": "Competent reader, informal lowercase spelling",
+    "behaviour": "Contradicts Buddy when dissatisfied"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": true
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

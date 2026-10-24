@@ -1,0 +1,236 @@
+[
+  {
+    "id": "twenty-in-chat",
+    "mode": "fault-injected negative control",
+    "messages": [
+      {
+        "id": "6b739c4d-b4ef-40fd-a399-bddf18eb7f10",
+        "role": "learner",
+        "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fc6d26a1-6ecb-403d-8257-684300ab68c8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-09-28T08:00:00.000Z"
+      },
+      {
+        "id": "596ac982-4c44-4a7b-a6d6-7db577ed9646",
+        "role": "buddy",
+        "text": "Damit kann ich leider nichts vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "6b739c4d-b4ef-40fd-a399-bddf18eb7f10",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-09-28T08:00:00.000Z"
+      }
+    ],
+    "failures": [
+      {
+        "invariant": "vocabulary.chat-count",
+        "evidence": "wanted 20 visible pair rows, got 0: Damit kann ich leider nichts vorbereiten.",
+        "kind": "chat-vocab",
+        "route": "/buddy/messages",
+        "category": "app"
+      }
+    ]
+  },
+  {
+    "id": "no-internals",
+    "mode": "fault-injected negative control",
+    "messages": [
+      {
+        "id": "59ba2d37-fd79-4345-a96e-b91602e0a01b",
+        "role": "learner",
+        "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ddbd7f68-7bd5-4454-be86-8279ef192930",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-09-28T08:00:00.000Z"
+      },
+      {
+        "id": "ef0c0c73-92ed-4d7c-92ab-703626f64181",
+        "role": "buddy",
+        "text": "Ich nutze offer_learning und context_version für deinen Wunsch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "59ba2d37-fd79-4345-a96e-b91602e0a01b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-09-28T08:00:00.000Z"
+      }
+    ],
+    "failures": [
+      {
+        "invariant": "text.internal",
+        "evidence": "Ich nutze offer_learning und context_version für deinen Wunsch.",
+        "kind": "chat",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.internal",
+        "evidence": "Ich nutze offer_learning und context_version für deinen Wunsch.",
+        "kind": "chat",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.internal",
+        "evidence": "Ich nutze offer_learning und context_version ",
+        "kind": "stream",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.internal",
+        "evidence": "Ich nutze offer_learning und context_version ",
+        "kind": "stream",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.internal",
+        "evidence": "Ich nutze offer_learning und context_version für deinen Wunsch.",
+        "kind": "stream",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.internal",
+        "evidence": "Ich nutze offer_learning und context_version für deinen Wunsch.",
+        "kind": "stream",
+        "route": "/buddy/messages",
+        "category": "app"
+      }
+    ]
+  },
+  {
+    "id": "with-picture",
+    "mode": "fault-injected negative control",
+    "messages": [
+      {
+        "id": "561de9a3-fa9f-4d2a-a658-6a97c0334284",
+        "role": "learner",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "543c1695-412c-467a-87c1-7b109079b004",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-09-28T08:00:00.000Z"
+      },
+      {
+        "id": "2f513a41-2cdb-4df0-aab5-b3c3c9d16f31",
+        "role": "buddy",
+        "text": "Das Skelett trägt deinen Körper.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "561de9a3-fa9f-4d2a-a658-6a97c0334284",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-09-28T08:00:00.000Z"
+      },
+      {
+        "id": "2ec8cd57-8b36-41a2-9515-cf0bf9b6b65c",
+        "role": "learner",
+        "text": "Am besten komplett mit Bild.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "4d538c13-26df-4dfc-b718-a63c97aa2360",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-09-28T08:00:00.000Z"
+      },
+      {
+        "id": "1252c5b4-4d29-4f7c-a28b-41bde88b7988",
+        "role": "buddy",
+        "text": "```\n+-----+\n| Kopf|\n+-----+\n```",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "2ec8cd57-8b36-41a2-9515-cf0bf9b6b65c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-09-28T08:00:00.000Z"
+      }
+    ],
+    "failures": [
+      {
+        "invariant": "text.code-fence",
+        "evidence": "```\n+-----+\n| Kopf|\n+-----+\n```",
+        "kind": "chat",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.drawing",
+        "evidence": "```\n+-----+\n| Kopf|\n+-----+\n```",
+        "kind": "chat",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.code-fence",
+        "evidence": "```\n+-----+\n| Kopf|\n+---",
+        "kind": "stream",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.drawing",
+        "evidence": "```\n+-----+\n| Kopf|\n+---",
+        "kind": "stream",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.code-fence",
+        "evidence": "```\n+-----+\n| Kopf|\n+-----+\n```",
+        "kind": "stream",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "text.drawing",
+        "evidence": "```\n+-----+\n| Kopf|\n+-----+\n```",
+        "kind": "stream",
+        "route": "/buddy/messages",
+        "category": "app"
+      },
+      {
+        "invariant": "picture.present",
+        "evidence": "No validated picture action in API conversation",
+        "kind": "picture",
+        "route": "/buddy/messages",
+        "category": "app"
+      }
+    ]
+  }
+]

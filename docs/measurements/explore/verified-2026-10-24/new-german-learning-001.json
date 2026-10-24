@@ -1,0 +1,1653 @@
+{
+  "goal": {
+    "id": "learning-001",
+    "issue": 106,
+    "wants": "Understand fractions from zero, and a promise up front that it will not be the way the teacher said it.",
+    "messages": [
+      "erklär mal brüche aber einfach"
+    ],
+    "expect": "answer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "2fae7f84-c612-477f-bd61-8050cadfe4ee",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:33:49.424Z",
+      "updated_at": "2026-10-24T17:33:49.427Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "6fa0949c-5763-4a36-8953-6a26dc094ae7",
+        "role": "learner",
+        "text": "erklär mal brüche aber einfach",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5a919869-3eec-4967-ba6c-39535450c83e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c4940dcb-dedc-4b43-83e9-01ae1ebeda73",
+        "role": "buddy",
+        "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz leicht liest.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "6fa0949c-5763-4a36-8953-6a26dc094ae7",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eefb3eb0-dfd4-47d6-96de-4553fdad798c",
+        "role": "learner",
+        "text": "Kannst du mir sagen, ob du schon weißt, was Zähler und Nenner sind? Ich erkläre dir Brüche so, dass du sie gut verstehst, ohne komplizierte Wörter.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "99c8107e-d933-4e92-859a-2fe85c423d04",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6a1351e2-7ea6-4934-a601-1769790107dc",
+        "role": "buddy",
+        "text": "Noch nicht genau — erklär’s mir einfach, so dass ich’s gut verstehe.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "eefb3eb0-dfd4-47d6-96de-4553fdad798c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "946c48d9-e09e-47a5-bcbf-695d4d224a81",
+        "role": "learner",
+        "text": "Okay, stell dir vor, ein Bruch ist wie ein Kuchen. Der Nenner (die Zahl unten) sagt dir, in wie viele gleich große Stücke der Kuchen geteilt ist. Der Zähler (die Zahl oben) sagt dir, wie viele Stücke du hast. Zum Beispiel bei 3/5 hast du 3 von 5 Stücken Kuchen. Verstehst du das so?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "50bb0abc-cc86-46d0-bc50-d42220471407",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "87b6682f-d52e-43cf-9129-5de471b732e5",
+        "role": "buddy",
+        "text": "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchenbild hilft mir sehr.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "946c48d9-e09e-47a5-bcbf-695d4d224a81",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4622fea8-d3cc-4903-9a7a-ff2ce2c9e3dd",
+        "role": "learner",
+        "text": "Super, dass du das mit dem Kuchen verstehst! Möchtest du jetzt wissen, wie man Brüche addiert oder subtrahiert? Ich erkläre es dir ganz einfach, ohne komplizierte Wörter.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e24ff3bf-6879-42c3-8773-19d58c4de8a9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9aaefda6-04fb-4820-9d45-32dcd30f054e",
+        "role": "buddy",
+        "text": "Ja, gern — ich bereite dir Übung zu Brüche addieren und subtrahieren vor.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "4622fea8-d3cc-4903-9a7a-ff2ce2c9e3dd",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "0bbdfbee-2429-4db8-9e7f-6d72158e1443",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "practice",
+              "text": "Brüche addieren und subtrahieren",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "5edb9b6e-cb8a-4a66-935d-a49978a52b95",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "18b0c21f-d5a5-4454-a0b7-78a87696d10c",
+        "kind": "numeric",
+        "prompt": "Ein Kuchen ist in 12 gleich große Stücke geteilt. Lina isst $\\frac{5}{12}$ und danach noch $\\frac{1}{4}$. Wie viel hat sie insgesamt gegessen?",
+        "answer": "$\\frac{2}{3}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "1917e54a-05fb-4ca4-a2d4-6da4ea2d9506",
+        "kind": "cloze",
+        "prompt": "Setze die fehlenden Brüche ein.",
+        "answer": "Um Brüche mit verschiedenen Nennern zu addieren, macht man sie zuerst gleichnamig. Dann rechnet man die Zähler. Das Ergebnis kann man oft noch kürzen.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "19512c26-2763-4d73-956d-4f1cbb0ac33f",
+        "kind": "multiple_choice",
+        "prompt": "Welche Rechnung ergibt $\\frac{1}{2}$?",
+        "answer": "$\\frac{1}{4} + \\frac{1}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "1976e2e9-c573-4d2e-bcb2-e739cd7d9d52",
+        "kind": "numeric",
+        "prompt": "Berechne $\\frac{1}{3} + \\frac{1}{6}$.",
+        "answer": "$\\frac{1}{2}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "25211161-6e95-4178-8336-4b262182dcf3",
+        "kind": "numeric",
+        "prompt": "Berechne $\\frac{2}{3} + \\frac{1}{6}$.",
+        "answer": "$\\frac{5}{6}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "4e3eb553-e6f9-4abf-9a13-3ee1d09d6382",
+        "kind": "multiple_choice",
+        "prompt": "Welche Rechnung ist größer?",
+        "answer": "$\\frac{2}{5} + \\frac{1}{5}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "629e4fc7-1d90-48aa-8f21-ccbab4ddb20d",
+        "kind": "numeric",
+        "prompt": "Rechne $\\frac{1}{3}$ + $\\frac{1}{2}$ und färbe das Ergebnis ein.",
+        "answer": "5/6",
+        "prompt_lang": null,
+        "lang": null
+      },
+      {
+        "id": "65a036b3-1552-4d5d-a22c-2beb5cda286d",
+        "kind": "numeric",
+        "prompt": "Berechne $\\frac{7}{10} - \\frac{3}{20}$.",
+        "answer": "$\\frac{11}{20}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "a42fc8df-8ead-437b-8f37-b1b42e0071a6",
+        "kind": "numeric",
+        "prompt": "Welcher Bruch ist größer: $\\frac{1}{3}$ oder $\\frac{1}{2}$?",
+        "answer": "1/2",
+        "prompt_lang": null,
+        "lang": null
+      },
+      {
+        "id": "c12b7b17-7cfa-4523-996b-40d90c73e0e7",
+        "kind": "numeric",
+        "prompt": "Berechne $\\frac{5}{8} - \\frac{1}{8}$.",
+        "answer": "$\\frac{1}{2}$",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "2fae7f84-c612-477f-bd61-8050cadfe4ee",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 11,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:33:49.424Z",
+      "updated_at": "2026-10-24T17:34:10.572Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "5edb9b6e-cb8a-4a66-935d-a49978a52b95",
+        "client_request_id": "0bbdfbee-2429-4db8-9e7f-6d72158e1443"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "erklär mal brüche aber einfach",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Ein",
+            "Klar: Ein Br",
+            "Klar: Ein Bruch",
+            "Klar: Ein Bruch ist",
+            "Klar: Ein Bruch ist wie",
+            "Klar: Ein Bruch ist wie ein",
+            "Klar: Ein Bruch ist wie ein Stück",
+            "Klar: Ein Bruch ist wie ein Stück von",
+            "Klar: Ein Bruch ist wie ein Stück von einer",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza.",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Ob",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht,",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stück",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast,",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten,",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza gete",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist —",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viert",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel.",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du mag",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst,",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen,",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Br",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz leicht",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz leicht liest",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz leicht liest."
+          ],
+          "ms": 1626,
+          "text": "erklär mal brüche aber einfach",
+          "id": "5a919869-3eec-4967-ba6c-39535450c83e"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Kannst du mir sagen, ob du schon weißt, was Zähler und Nenner sind? Ich erkläre dir Brüche so, dass du sie gut verstehst, ohne komplizierte Wörter.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz leicht liest."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Noch",
+            "Noch nicht",
+            "Noch nicht genau",
+            "Noch nicht genau —",
+            "Noch nicht genau — erklär",
+            "Noch nicht genau — erklär’s",
+            "Noch nicht genau — erklär’s mir",
+            "Noch nicht genau — erklär’s mir einfach",
+            "Noch nicht genau — erklär’s mir einfach,",
+            "Noch nicht genau — erklär’s mir einfach, so",
+            "Noch nicht genau — erklär’s mir einfach, so dass",
+            "Noch nicht genau — erklär’s mir einfach, so dass ich",
+            "Noch nicht genau — erklär’s mir einfach, so dass ich’s",
+            "Noch nicht genau — erklär’s mir einfach, so dass ich’s gut",
+            "Noch nicht genau — erklär’s mir einfach, so dass ich’s gut verste",
+            "Noch nicht genau — erklär’s mir einfach, so dass ich’s gut verstehe",
+            "Noch nicht genau — erklär’s mir einfach, so dass ich’s gut verstehe."
+          ],
+          "ms": 1528,
+          "text": "Kannst du mir sagen, ob du schon weißt, was Zähler und Nenner sind? Ich erkläre dir Brüche so, dass du sie gut verstehst, ohne komplizierte Wörter.",
+          "id": "99c8107e-d933-4e92-859a-2fe85c423d04"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, stell dir vor, ein Bruch ist wie ein Kuchen. Der Nenner (die Zahl unten) sagt dir, in wie viele gleich große Stücke der Kuchen geteilt ist. Der Zähler (die Zahl oben) sagt dir, wie viele Stücke du hast. Zum Beispiel bei 3/5 hast du 3 von 5 Stücken Kuchen. Verstehst du das so?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz leicht liest."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir sagen, ob du schon weißt, was Zähler und Nenner sind? Ich erkläre dir Brüche so, dass du sie gut verstehst, ohne komplizierte Wörter."
+          },
+          {
+            "who": "buddy",
+            "text": "Noch nicht genau — erklär’s mir einfach, so dass ich’s gut verstehe."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja,",
+            "Ja, genau",
+            "Ja, genau so",
+            "Ja, genau so verste",
+            "Ja, genau so verstehe",
+            "Ja, genau so verstehe ich",
+            "Ja, genau so verstehe ich’s",
+            "Ja, genau so verstehe ich’s:",
+            "Ja, genau so verstehe ich’s: unten",
+            "Ja, genau so verstehe ich’s: unten steht",
+            "Ja, genau so verstehe ich’s: unten steht,",
+            "Ja, genau so verstehe ich’s: unten steht, in",
+            "Ja, genau so verstehe ich’s: unten steht, in wie",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile gete",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird,",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben,",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon geme",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind.",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchen",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchenbild",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchenbild hilft",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchenbild hilft mir",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchenbild hilft mir sehr",
+            "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchenbild hilft mir sehr."
+          ],
+          "ms": 1277,
+          "text": "Okay, stell dir vor, ein Bruch ist wie ein Kuchen. Der Nenner (die Zahl unten) sagt dir, in wie viele gleich große Stücke der Kuchen geteilt ist. Der Zähler (die Zahl oben) sagt dir, wie viele Stücke du hast. Zum Beispiel bei 3/5 hast du 3 von 5 Stücken Kuchen. Verstehst du das so?",
+          "id": "50bb0abc-cc86-46d0-bc50-d42220471407"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Super, dass du das mit dem Kuchen verstehst! Möchtest du jetzt wissen, wie man Brüche addiert oder subtrahiert? Ich erkläre es dir ganz einfach, ohne komplizierte Wörter.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz leicht liest."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir sagen, ob du schon weißt, was Zähler und Nenner sind? Ich erkläre dir Brüche so, dass du sie gut verstehst, ohne komplizierte Wörter."
+          },
+          {
+            "who": "buddy",
+            "text": "Noch nicht genau — erklär’s mir einfach, so dass ich’s gut verstehe."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, stell dir vor, ein Bruch ist wie ein Kuchen. Der Nenner (die Zahl unten) sagt dir, in wie viele gleich große Stücke der Kuchen geteilt ist. Der Zähler (die Zahl oben) sagt dir, wie viele Stücke du hast. Zum Beispiel bei 3/5 hast du 3 von 5 Stücken Kuchen. Verstehst du das so?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchenbild hilft mir sehr."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja,",
+            "Ja, gern",
+            "Ja, gern —",
+            "Ja, gern — ich",
+            "Ja, gern — ich bere",
+            "Ja, gern — ich bereite",
+            "Ja, gern — ich bereite dir",
+            "Ja, gern — ich bereite dir Ü",
+            "Ja, gern — ich bereite dir Übung",
+            "Ja, gern — ich bereite dir Übung zu",
+            "Ja, gern — ich bereite dir Übung zu Br",
+            "Ja, gern — ich bereite dir Übung zu Brüche",
+            "Ja, gern — ich bereite dir Übung zu Brüche add",
+            "Ja, gern — ich bereite dir Übung zu Brüche addieren",
+            "Ja, gern — ich bereite dir Übung zu Brüche addieren und",
+            "Ja, gern — ich bereite dir Übung zu Brüche addieren und sub",
+            "Ja, gern — ich bereite dir Übung zu Brüche addieren und subtr",
+            "Ja, gern — ich bereite dir Übung zu Brüche addieren und subtrah",
+            "Ja, gern — ich bereite dir Übung zu Brüche addieren und subtrahieren",
+            "Ja, gern — ich bereite dir Übung zu Brüche addieren und subtrahieren vor",
+            "Ja, gern — ich bereite dir Übung zu Brüche addieren und subtrahieren vor."
+          ],
+          "ms": 13188,
+          "text": "Super, dass du das mit dem Kuchen verstehst! Möchtest du jetzt wissen, wie man Brüche addiert oder subtrahiert? Ich erkläre es dir ganz einfach, ohne komplizierte Wörter.",
+          "id": "e24ff3bf-6879-42c3-8773-19d58c4de8a9"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": true
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten, in wie viele gleich große Teile die ganze Pizza geteilt ist — zum Beispiel ist $\\frac{1}{4}$ ein Viertel. Wenn du magst, kann ich dir gleich zeigen, wie man Brüche ganz leicht liest."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir sagen, ob du schon weißt, was Zähler und Nenner sind? Ich erkläre dir Brüche so, dass du sie gut verstehst, ohne komplizierte Wörter."
+          },
+          {
+            "who": "buddy",
+            "text": "Noch nicht genau — erklär’s mir einfach, so dass ich’s gut verstehe."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, stell dir vor, ein Bruch ist wie ein Kuchen. Der Nenner (die Zahl unten) sagt dir, in wie viele gleich große Stücke der Kuchen geteilt ist. Der Zähler (die Zahl oben) sagt dir, wie viele Stücke du hast. Zum Beispiel bei 3/5 hast du 3 von 5 Stücken Kuchen. Verstehst du das so?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so verstehe ich’s: unten steht, in wie viele gleich große Teile geteilt wird, und oben, wie viele davon gemeint sind. Das Kuchenbild hilft mir sehr."
+          },
+          {
+            "who": "learner",
+            "text": "Super, dass du das mit dem Kuchen verstehst! Möchtest du jetzt wissen, wie man Brüche addiert oder subtrahiert? Ich erkläre es dir ganz einfach, ohne komplizierte Wörter."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, gern — ich bereite dir Übung zu Brüche addieren und subtrahieren vor."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Brüche addieren und subtrahieren",
+            "kind": "practice"
+          }
+        ],
+        "question": null
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "0bbdfbee-2429-4db8-9e7f-6d72158e1443",
+          "kind": "practice",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "5edb9b6e-cb8a-4a66-935d-a49978a52b95",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Brüche addieren",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "19512c26-2763-4d73-956d-4f1cbb0ac33f",
+                  "kind": "multiple_choice",
+                  "prompt": "Welche Rechnung ergibt $\\frac{1}{2}$?",
+                  "choices": [
+                    "$\\frac{1}{4} + \\frac{1}{4}$",
+                    "$\\frac{1}{3} + \\frac{1}{6}$",
+                    "$\\frac{1}{5} + \\frac{1}{5}$",
+                    "$\\frac{1}{2} + \\frac{1}{4}$"
+                  ],
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "1976e2e9-c573-4d2e-bcb2-e739cd7d9d52",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{1}{3} + \\frac{1}{6}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "c12b7b17-7cfa-4523-996b-40d90c73e0e7",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{5}{8} - \\frac{1}{8}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche subtrahieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "4e3eb553-e6f9-4abf-9a13-3ee1d09d6382",
+                  "kind": "multiple_choice",
+                  "prompt": "Welche Rechnung ist größer?",
+                  "choices": [
+                    "$\\frac{2}{5} + \\frac{1}{5}$",
+                    "$\\frac{1}{2} - \\frac{1}{5}$",
+                    "$\\frac{1}{3} + \\frac{1}{3}$",
+                    "$\\frac{3}{4} - \\frac{1}{2}$"
+                  ],
+                  "unit": null,
+                  "topic": "Brüche vergleichen",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "25211161-6e95-4178-8336-4b262182dcf3",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{2}{3} + \\frac{1}{6}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "65a036b3-1552-4d5d-a22c-2beb5cda286d",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{7}{10} - \\frac{3}{20}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche subtrahieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "18b0c21f-d5a5-4454-a0b7-78a87696d10c",
+                  "kind": "numeric",
+                  "prompt": "Ein Kuchen ist in 12 gleich große Stücke geteilt. Lina isst $\\frac{5}{12}$ und danach noch $\\frac{1}{4}$. Wie viel hat sie insgesamt gegessen?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche im Alltag",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "1917e54a-05fb-4ca4-a2d4-6da4ea2d9506",
+                  "kind": "cloze",
+                  "prompt": "Setze die fehlenden Brüche ein.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": {
+                    "type": "cloze",
+                    "segments": [
+                      "Um Brüche mit verschiedenen Nennern zu addieren, macht man sie zuerst ",
+                      ". Dann rechnet man die ",
+                      ". Das Ergebnis kann man oft noch ",
+                      "."
+                    ],
+                    "gaps": [
+                      "g1",
+                      "g2",
+                      "g3"
+                    ],
+                    "bank": [
+                      "kürzen",
+                      "gleichnamig",
+                      "multiplizieren",
+                      "Nenner",
+                      "Zähler"
+                    ]
+                  },
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": false
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "629e4fc7-1d90-48aa-8f21-ccbab4ddb20d",
+                  "kind": "numeric",
+                  "prompt": "Rechne $\\frac{1}{3}$ + $\\frac{1}{2}$ und färbe das Ergebnis ein.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": null,
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 6,
+                        "filled": 2
+                      },
+                      {
+                        "parts": 6,
+                        "filled": 3
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": {
+                    "mode": "shade",
+                    "parts": 6
+                  },
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 2,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "a42fc8df-8ead-437b-8f37-b1b42e0071a6",
+                  "kind": "numeric",
+                  "prompt": "Welcher Bruch ist größer: $\\frac{1}{3}$ oder $\\frac{1}{2}$?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche vergleichen",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": null,
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": {
+                    "mode": "pick",
+                    "bars": [
+                      {
+                        "parts": 3,
+                        "filled": 1
+                      },
+                      {
+                        "parts": 2,
+                        "filled": 1
+                      }
+                    ]
+                  },
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 2,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "19512c26-2763-4d73-956d-4f1cbb0ac33f",
+            "summary": null
+          },
+          "error": null
+        },
+        {
+          "action": "0bbdfbee-2429-4db8-9e7f-6d72158e1443",
+          "kind": "practice",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "5edb9b6e-cb8a-4a66-935d-a49978a52b95",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Brüche addieren",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "19512c26-2763-4d73-956d-4f1cbb0ac33f",
+                  "kind": "multiple_choice",
+                  "prompt": "Welche Rechnung ergibt $\\frac{1}{2}$?",
+                  "choices": [
+                    "$\\frac{1}{4} + \\frac{1}{4}$",
+                    "$\\frac{1}{3} + \\frac{1}{6}$",
+                    "$\\frac{1}{5} + \\frac{1}{5}$",
+                    "$\\frac{1}{2} + \\frac{1}{4}$"
+                  ],
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "1976e2e9-c573-4d2e-bcb2-e739cd7d9d52",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{1}{3} + \\frac{1}{6}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "c12b7b17-7cfa-4523-996b-40d90c73e0e7",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{5}{8} - \\frac{1}{8}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche subtrahieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "4e3eb553-e6f9-4abf-9a13-3ee1d09d6382",
+                  "kind": "multiple_choice",
+                  "prompt": "Welche Rechnung ist größer?",
+                  "choices": [
+                    "$\\frac{2}{5} + \\frac{1}{5}$",
+                    "$\\frac{1}{2} - \\frac{1}{5}$",
+                    "$\\frac{1}{3} + \\frac{1}{3}$",
+                    "$\\frac{3}{4} - \\frac{1}{2}$"
+                  ],
+                  "unit": null,
+                  "topic": "Brüche vergleichen",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "25211161-6e95-4178-8336-4b262182dcf3",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{2}{3} + \\frac{1}{6}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "65a036b3-1552-4d5d-a22c-2beb5cda286d",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{7}{10} - \\frac{3}{20}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche subtrahieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "18b0c21f-d5a5-4454-a0b7-78a87696d10c",
+                  "kind": "numeric",
+                  "prompt": "Ein Kuchen ist in 12 gleich große Stücke geteilt. Lina isst $\\frac{5}{12}$ und danach noch $\\frac{1}{4}$. Wie viel hat sie insgesamt gegessen?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche im Alltag",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "1917e54a-05fb-4ca4-a2d4-6da4ea2d9506",
+                  "kind": "cloze",
+                  "prompt": "Setze die fehlenden Brüche ein.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": {
+                    "type": "cloze",
+                    "segments": [
+                      "Um Brüche mit verschiedenen Nennern zu addieren, macht man sie zuerst ",
+                      ". Dann rechnet man die ",
+                      ". Das Ergebnis kann man oft noch ",
+                      "."
+                    ],
+                    "gaps": [
+                      "g1",
+                      "g2",
+                      "g3"
+                    ],
+                    "bank": [
+                      "kürzen",
+                      "gleichnamig",
+                      "multiplizieren",
+                      "Nenner",
+                      "Zähler"
+                    ]
+                  },
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": false
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "629e4fc7-1d90-48aa-8f21-ccbab4ddb20d",
+                  "kind": "numeric",
+                  "prompt": "Rechne $\\frac{1}{3}$ + $\\frac{1}{2}$ und färbe das Ergebnis ein.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche addieren",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": null,
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 6,
+                        "filled": 2
+                      },
+                      {
+                        "parts": 6,
+                        "filled": 3
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": {
+                    "mode": "shade",
+                    "parts": 6
+                  },
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 2,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "a42fc8df-8ead-437b-8f37-b1b42e0071a6",
+                  "kind": "numeric",
+                  "prompt": "Welcher Bruch ist größer: $\\frac{1}{3}$ oder $\\frac{1}{2}$?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche vergleichen",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": null,
+                  "subject_kind": "math",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": {
+                    "mode": "pick",
+                    "bars": [
+                      {
+                        "parts": 3,
+                        "filled": 1
+                      },
+                      {
+                        "parts": 2,
+                        "filled": 1
+                      }
+                    ]
+                  },
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 2,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "19512c26-2763-4d73-956d-4f1cbb0ac33f",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "new-german-learning-001",
+  "persona": {
+    "id": "new-german",
+    "age": 13,
+    "locale": "de",
+    "style": "Arabic first language, beginner German",
+    "behaviour": "Misunderstands terminology, asks for clarification"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Kannst du mir sagen, ob du schon weißt, was Zähler und Nenner sind? Ich erkläre dir Brüche so, dass du sie gut verstehst, ohne komplizierte Wörter.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, stell dir vor, ein Bruch ist wie ein Kuchen. Der Nenner (die Zahl unten) sagt dir, in wie viele gleich große Stücke der Kuchen geteilt ist. Der Zähler (die Zahl oben) sagt dir, wie viele Stücke du hast. Zum Beispiel bei 3/5 hast du 3 von 5 Stücken Kuchen. Verstehst du das so?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Super, dass du das mit dem Kuchen verstehst! Möchtest du jetzt wissen, wie man Brüche addiert oder subtrahiert? Ich erkläre es dir ganz einfach, ohne komplizierte Wörter.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

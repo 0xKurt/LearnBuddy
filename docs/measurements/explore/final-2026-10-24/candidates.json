@@ -1,0 +1,1606 @@
+[
+  {
+    "invariant": "vocabulary.chat-count|chat-vocab|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Denk du dir Basisvokabeln aus.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung.",
+        "double": true
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "b0a77e8c-0013-4a3c-b987-5dc8e65a0eb7",
+          "role": "learner",
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "736b8d7d-daeb-4373-ba11-2061c74416f1",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e14c26e3-0cda-4045-981f-273694d05f63",
+          "role": "buddy",
+          "text": "Ich hab dir 20 Schulwörter vorbereitet und frage dich von Deutsch nach Englisch ab.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "b0a77e8c-0013-4a3c-b987-5dc8e65a0eb7",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "c295a726-6c98-4d95-804a-863c6590ce85",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "school – Schule\nteacher – Lehrer/in\nstudent – Schüler/in\nclassroom – Klassenzimmer\nbook – Buch\nnotebook – Heft\npen – Stift\npencil – Bleistift\neraser – Radiergummi\ndesk – Schreibtisch\nchair – Stuhl\nblackboard – Tafel\nbag – Tasche\nlesson – Unterrichtsstunde\nhomework – Hausaufgaben\ntest – Test\nquestion – Frage\nanswer – Antwort\nschoolbag – Schulranzen\nsubject – Fach",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": true,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": "20ff91f4-384f-4f68-b00f-96ce58ff60db",
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [
+        {
+          "id": "036bb735-1301-4454-b0c5-b4751ef8f6bd",
+          "kind": "vocab",
+          "prompt": "desk",
+          "answer": "Schreibtisch",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "06553d93-f666-4868-89b7-aa07504a7a5a",
+          "kind": "vocab",
+          "prompt": "school",
+          "answer": "Schule",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "074102d9-8edd-4042-adf2-e620a80b459c",
+          "kind": "vocab",
+          "prompt": "student",
+          "answer": "Schüler/in",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "1051474f-bc14-4026-82b4-28881931563e",
+          "kind": "vocab",
+          "prompt": "eraser",
+          "answer": "Radiergummi",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "254c20a8-84ba-49a1-97cc-834ac279161e",
+          "kind": "vocab",
+          "prompt": "book",
+          "answer": "Buch",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "25c1cb8b-b297-45a1-8ebf-4275ea73d54c",
+          "kind": "vocab",
+          "prompt": "Schreibtisch",
+          "answer": "desk",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "284b8ad5-da3a-49ab-87b6-24d5c83ae26a",
+          "kind": "vocab",
+          "prompt": "test",
+          "answer": "Test",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "2ddfc4fd-c95c-4cc5-b68b-7ead25403323",
+          "kind": "vocab",
+          "prompt": "Schüler/in",
+          "answer": "student",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "38d1b697-e0da-445d-b669-35bec7b5cdfd",
+          "kind": "vocab",
+          "prompt": "Klassenzimmer",
+          "answer": "classroom",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "3d9625f0-3d1c-438f-9dbe-2d7a1d01106f",
+          "kind": "vocab",
+          "prompt": "Tafel",
+          "answer": "blackboard",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "4dd94437-853a-49dd-b1df-89a20ff5ac9b",
+          "kind": "vocab",
+          "prompt": "bag",
+          "answer": "Tasche",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "4dea9be4-fd26-4811-8787-931605e4dc1b",
+          "kind": "vocab",
+          "prompt": "question",
+          "answer": "Frage",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "4f0bea5b-07ab-4255-acb8-66f3e5c0a1c4",
+          "kind": "vocab",
+          "prompt": "teacher",
+          "answer": "Lehrer/in",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "50c7ee6f-c188-4fc1-a483-53be8c0635ee",
+          "kind": "vocab",
+          "prompt": "pen",
+          "answer": "Stift",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "51a0be6a-8c91-4c6c-87e3-6c5b22a52331",
+          "kind": "vocab",
+          "prompt": "Tasche",
+          "answer": "bag",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "53ebf897-5c54-45a2-801a-47a6fd757de6",
+          "kind": "vocab",
+          "prompt": "Schule",
+          "answer": "school",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "582a8994-35dc-4683-8cdd-740c667aab37",
+          "kind": "vocab",
+          "prompt": "Stuhl",
+          "answer": "chair",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "5f3aecac-78f0-4fb0-a562-d7f82021e489",
+          "kind": "vocab",
+          "prompt": "notebook",
+          "answer": "Heft",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "647a7908-c651-4fa5-b958-4d42a8bc8707",
+          "kind": "vocab",
+          "prompt": "homework",
+          "answer": "Hausaufgaben",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "6ae7f168-bce9-4bf5-b5eb-380c28c596f7",
+          "kind": "vocab",
+          "prompt": "Antwort",
+          "answer": "answer",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "6b827edf-bdd7-4f06-adf2-b5d59f9caa1e",
+          "kind": "vocab",
+          "prompt": "Radiergummi",
+          "answer": "eraser",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "73558246-b98d-44fb-8ddb-01cffda1049d",
+          "kind": "vocab",
+          "prompt": "classroom",
+          "answer": "Klassenzimmer",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "7f405f15-085e-42b8-ac2c-2f620082bd02",
+          "kind": "vocab",
+          "prompt": "Bleistift",
+          "answer": "pencil",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "86ae25ee-4895-4969-87dc-936e11f942ea",
+          "kind": "vocab",
+          "prompt": "Heft",
+          "answer": "notebook",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "8c209ca5-627e-4540-a533-dba120749751",
+          "kind": "vocab",
+          "prompt": "answer",
+          "answer": "Antwort",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "91333d63-8bf0-422e-9ff4-c199ad3e36e3",
+          "kind": "vocab",
+          "prompt": "Test",
+          "answer": "test",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "9597dc2e-d4d5-4271-9ed3-333fc3a64b60",
+          "kind": "vocab",
+          "prompt": "Fach",
+          "answer": "subject",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "9b7ec797-92d2-4b1e-a75d-518c89c9b1bd",
+          "kind": "vocab",
+          "prompt": "Frage",
+          "answer": "question",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "a01628b4-64d2-4b06-9638-6e53c6a46aa0",
+          "kind": "vocab",
+          "prompt": "Hausaufgaben",
+          "answer": "homework",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "a1e151e3-c093-4b53-b431-7905dbc8ed4d",
+          "kind": "vocab",
+          "prompt": "Buch",
+          "answer": "book",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "a466cf36-be89-4c69-87f7-9d762b460a5b",
+          "kind": "vocab",
+          "prompt": "Stift",
+          "answer": "pen",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "a7874126-a4a1-43a9-bde6-4f30f2885560",
+          "kind": "vocab",
+          "prompt": "blackboard",
+          "answer": "Tafel",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "aa3d99e5-b8c1-4ddc-a75d-d8cfef8a4f61",
+          "kind": "vocab",
+          "prompt": "Unterrichtsstunde",
+          "answer": "lesson",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "bb8014c1-91a3-424d-801d-4911171c9a79",
+          "kind": "vocab",
+          "prompt": "pencil",
+          "answer": "Bleistift",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "bceb0d1c-d2a5-4eb2-8604-bb9099791ada",
+          "kind": "vocab",
+          "prompt": "subject",
+          "answer": "Fach",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "d6cf73c1-657b-47a1-b563-3578c5ce35f2",
+          "kind": "vocab",
+          "prompt": "schoolbag",
+          "answer": "Schulranzen",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "e38942aa-62d3-4ed4-9d54-b2439149aeaa",
+          "kind": "vocab",
+          "prompt": "chair",
+          "answer": "Stuhl",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "e6e56b4f-fc7f-4921-9806-eb807cece874",
+          "kind": "vocab",
+          "prompt": "lesson",
+          "answer": "Unterrichtsstunde",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "fc90e9a9-f4eb-4e1c-af7c-90216e068c46",
+          "kind": "vocab",
+          "prompt": "Schulranzen",
+          "answer": "schoolbag",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "fd19f458-b0c9-49c0-97b8-ad023d4c9de8",
+          "kind": "vocab",
+          "prompt": "Lehrer/in",
+          "answer": "teacher",
+          "prompt_lang": "de",
+          "lang": "en"
+        }
+      ],
+      "settings": {
+        "learner_id": "b1ed6ded-d1f6-40d7-93e9-c70525bcdfed",
+        "timezone": "Europe/Berlin",
+        "contact_enabled": false,
+        "contact_changed_by": "account_holder",
+        "contact_changed_at": "2026-10-24T10:00:00.000Z",
+        "quiet_start": "20:00",
+        "quiet_end": "07:00",
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null,
+        "opt_in_prompt_hidden_until": null,
+        "context_version": 4,
+        "last_seen_at": "2026-10-24T10:00:00.000Z",
+        "check_lease_token": null,
+        "check_lease_until": null,
+        "version": 1,
+        "created_at": "2026-10-24T17:27:45.051Z",
+        "updated_at": "2026-10-24T17:27:59.381Z",
+        "phone_only_important": false,
+        "voice": "warm",
+        "voice_speed": 0
+      },
+      "sessions": [
+        {
+          "id": "20ff91f4-384f-4f68-b00f-96ce58ff60db",
+          "client_request_id": "c295a726-6c98-4d95-804a-863c6590ce85"
+        }
+      ],
+      "steps": []
+    },
+    "goal": {
+      "id": "twenty-in-chat",
+      "issue": 940,
+      "wants": "20 bilingual vocabulary pairs immediately in chat",
+      "messages": [
+        "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen.",
+        "Denk du dir Basisvokabeln aus.",
+        "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung."
+      ],
+      "expect": "chat-vocab",
+      "count": 20
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "vocabulary.count|vocab|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "double": true
+      },
+      {
+        "type": "tap",
+        "offer": 1,
+        "double": false
+      },
+      {
+        "type": "answer",
+        "text": "dog",
+        "double": false
+      },
+      {
+        "type": "answer",
+        "text": "cat",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "b0a77e8c-0013-4a3c-b987-5dc8e65a0eb7",
+          "role": "learner",
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "736b8d7d-daeb-4373-ba11-2061c74416f1",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e14c26e3-0cda-4045-981f-273694d05f63",
+          "role": "buddy",
+          "text": "Ich hab dir 20 Schulwörter vorbereitet und frage dich von Deutsch nach Englisch ab.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "b0a77e8c-0013-4a3c-b987-5dc8e65a0eb7",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "c295a726-6c98-4d95-804a-863c6590ce85",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "school – Schule\nteacher – Lehrer/in\nstudent – Schüler/in\nclassroom – Klassenzimmer\nbook – Buch\nnotebook – Heft\npen – Stift\npencil – Bleistift\neraser – Radiergummi\ndesk – Schreibtisch\nchair – Stuhl\nblackboard – Tafel\nbag – Tasche\nlesson – Unterrichtsstunde\nhomework – Hausaufgaben\ntest – Test\nquestion – Frage\nanswer – Antwort\nschoolbag – Schulranzen\nsubject – Fach",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": true,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": "20ff91f4-384f-4f68-b00f-96ce58ff60db",
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "edb18cd7-3321-4ec0-a41b-e421d1057329",
+          "role": "learner",
+          "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "114d2aa6-6f0f-4e80-a974-9f4f5ca3c5db",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "6d9104c0-4cd9-4206-8647-c946c323cf36",
+          "role": "buddy",
+          "text": "Klar — wir lernen englische Vokabeln. Wenn du willst, kannst du direkt mit den Wörtern aus der Übung anfangen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "edb18cd7-3321-4ec0-a41b-e421d1057329",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "acabc4cb-d722-4356-a373-5344df0a0c8e",
+              "status": "applied",
+              "undoable": true,
+              "summary": {
+                "kind": "goal",
+                "tool": "remember",
+                "memory_id": "c8f8b65b-0079-44dd-80b1-33ad4e2b4d42",
+                "statement": "Sie möchte englische Vokabeln lernen.",
+                "valid_until": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "1a0e8d2f-2e5b-47db-abab-0f17de890d79",
+          "role": "learner",
+          "text": "Denk du dir Basisvokabeln aus.",
+          "status": "failed",
+          "failure_code": "invalid",
+          "client_message_id": "462a425d-e14b-4649-81c9-15adaa0eff15",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "1fab9927-f4df-4821-8535-5f9e530c90f1",
+          "role": "learner",
+          "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung.",
+          "status": "failed",
+          "failure_code": "invalid",
+          "client_message_id": "4c510a83-a4cd-4bb1-99ec-56fcc6e9a42b",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [
+        {
+          "id": "036bb735-1301-4454-b0c5-b4751ef8f6bd",
+          "kind": "vocab",
+          "prompt": "desk",
+          "answer": "Schreibtisch",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "06553d93-f666-4868-89b7-aa07504a7a5a",
+          "kind": "vocab",
+          "prompt": "school",
+          "answer": "Schule",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "074102d9-8edd-4042-adf2-e620a80b459c",
+          "kind": "vocab",
+          "prompt": "student",
+          "answer": "Schüler/in",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "1051474f-bc14-4026-82b4-28881931563e",
+          "kind": "vocab",
+          "prompt": "eraser",
+          "answer": "Radiergummi",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "254c20a8-84ba-49a1-97cc-834ac279161e",
+          "kind": "vocab",
+          "prompt": "book",
+          "answer": "Buch",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "25c1cb8b-b297-45a1-8ebf-4275ea73d54c",
+          "kind": "vocab",
+          "prompt": "Schreibtisch",
+          "answer": "desk",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "284b8ad5-da3a-49ab-87b6-24d5c83ae26a",
+          "kind": "vocab",
+          "prompt": "test",
+          "answer": "Test",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "2ddfc4fd-c95c-4cc5-b68b-7ead25403323",
+          "kind": "vocab",
+          "prompt": "Schüler/in",
+          "answer": "student",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "38d1b697-e0da-445d-b669-35bec7b5cdfd",
+          "kind": "vocab",
+          "prompt": "Klassenzimmer",
+          "answer": "classroom",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "3d9625f0-3d1c-438f-9dbe-2d7a1d01106f",
+          "kind": "vocab",
+          "prompt": "Tafel",
+          "answer": "blackboard",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "4dd94437-853a-49dd-b1df-89a20ff5ac9b",
+          "kind": "vocab",
+          "prompt": "bag",
+          "answer": "Tasche",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "4dea9be4-fd26-4811-8787-931605e4dc1b",
+          "kind": "vocab",
+          "prompt": "question",
+          "answer": "Frage",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "4f0bea5b-07ab-4255-acb8-66f3e5c0a1c4",
+          "kind": "vocab",
+          "prompt": "teacher",
+          "answer": "Lehrer/in",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "50c7ee6f-c188-4fc1-a483-53be8c0635ee",
+          "kind": "vocab",
+          "prompt": "pen",
+          "answer": "Stift",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "51a0be6a-8c91-4c6c-87e3-6c5b22a52331",
+          "kind": "vocab",
+          "prompt": "Tasche",
+          "answer": "bag",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "53ebf897-5c54-45a2-801a-47a6fd757de6",
+          "kind": "vocab",
+          "prompt": "Schule",
+          "answer": "school",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "582a8994-35dc-4683-8cdd-740c667aab37",
+          "kind": "vocab",
+          "prompt": "Stuhl",
+          "answer": "chair",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "5f3aecac-78f0-4fb0-a562-d7f82021e489",
+          "kind": "vocab",
+          "prompt": "notebook",
+          "answer": "Heft",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "647a7908-c651-4fa5-b958-4d42a8bc8707",
+          "kind": "vocab",
+          "prompt": "homework",
+          "answer": "Hausaufgaben",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "6ae7f168-bce9-4bf5-b5eb-380c28c596f7",
+          "kind": "vocab",
+          "prompt": "Antwort",
+          "answer": "answer",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "6b827edf-bdd7-4f06-adf2-b5d59f9caa1e",
+          "kind": "vocab",
+          "prompt": "Radiergummi",
+          "answer": "eraser",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "73558246-b98d-44fb-8ddb-01cffda1049d",
+          "kind": "vocab",
+          "prompt": "classroom",
+          "answer": "Klassenzimmer",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "7f405f15-085e-42b8-ac2c-2f620082bd02",
+          "kind": "vocab",
+          "prompt": "Bleistift",
+          "answer": "pencil",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "86ae25ee-4895-4969-87dc-936e11f942ea",
+          "kind": "vocab",
+          "prompt": "Heft",
+          "answer": "notebook",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "8c209ca5-627e-4540-a533-dba120749751",
+          "kind": "vocab",
+          "prompt": "answer",
+          "answer": "Antwort",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "91333d63-8bf0-422e-9ff4-c199ad3e36e3",
+          "kind": "vocab",
+          "prompt": "Test",
+          "answer": "test",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "9597dc2e-d4d5-4271-9ed3-333fc3a64b60",
+          "kind": "vocab",
+          "prompt": "Fach",
+          "answer": "subject",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "9b7ec797-92d2-4b1e-a75d-518c89c9b1bd",
+          "kind": "vocab",
+          "prompt": "Frage",
+          "answer": "question",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "a01628b4-64d2-4b06-9638-6e53c6a46aa0",
+          "kind": "vocab",
+          "prompt": "Hausaufgaben",
+          "answer": "homework",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "a1e151e3-c093-4b53-b431-7905dbc8ed4d",
+          "kind": "vocab",
+          "prompt": "Buch",
+          "answer": "book",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "a466cf36-be89-4c69-87f7-9d762b460a5b",
+          "kind": "vocab",
+          "prompt": "Stift",
+          "answer": "pen",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "a7874126-a4a1-43a9-bde6-4f30f2885560",
+          "kind": "vocab",
+          "prompt": "blackboard",
+          "answer": "Tafel",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "aa3d99e5-b8c1-4ddc-a75d-d8cfef8a4f61",
+          "kind": "vocab",
+          "prompt": "Unterrichtsstunde",
+          "answer": "lesson",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "bb8014c1-91a3-424d-801d-4911171c9a79",
+          "kind": "vocab",
+          "prompt": "pencil",
+          "answer": "Bleistift",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "bceb0d1c-d2a5-4eb2-8604-bb9099791ada",
+          "kind": "vocab",
+          "prompt": "subject",
+          "answer": "Fach",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "d6cf73c1-657b-47a1-b563-3578c5ce35f2",
+          "kind": "vocab",
+          "prompt": "schoolbag",
+          "answer": "Schulranzen",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "e38942aa-62d3-4ed4-9d54-b2439149aeaa",
+          "kind": "vocab",
+          "prompt": "chair",
+          "answer": "Stuhl",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "e6e56b4f-fc7f-4921-9806-eb807cece874",
+          "kind": "vocab",
+          "prompt": "lesson",
+          "answer": "Unterrichtsstunde",
+          "prompt_lang": "en",
+          "lang": "de"
+        },
+        {
+          "id": "fc90e9a9-f4eb-4e1c-af7c-90216e068c46",
+          "kind": "vocab",
+          "prompt": "Schulranzen",
+          "answer": "schoolbag",
+          "prompt_lang": "de",
+          "lang": "en"
+        },
+        {
+          "id": "fd19f458-b0c9-49c0-97b8-ad023d4c9de8",
+          "kind": "vocab",
+          "prompt": "Lehrer/in",
+          "answer": "teacher",
+          "prompt_lang": "de",
+          "lang": "en"
+        }
+      ],
+      "settings": {
+        "learner_id": "b1ed6ded-d1f6-40d7-93e9-c70525bcdfed",
+        "timezone": "Europe/Berlin",
+        "contact_enabled": false,
+        "contact_changed_by": "account_holder",
+        "contact_changed_at": "2026-10-24T10:00:00.000Z",
+        "quiet_start": "20:00",
+        "quiet_end": "07:00",
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null,
+        "opt_in_prompt_hidden_until": null,
+        "context_version": 8,
+        "last_seen_at": "2026-10-24T10:00:00.000Z",
+        "check_lease_token": null,
+        "check_lease_until": null,
+        "version": 1,
+        "created_at": "2026-10-24T17:27:45.051Z",
+        "updated_at": "2026-10-24T17:28:14.448Z",
+        "phone_only_important": false,
+        "voice": "warm",
+        "voice_speed": 0
+      },
+      "sessions": [
+        {
+          "id": "20ff91f4-384f-4f68-b00f-96ce58ff60db",
+          "client_request_id": "c295a726-6c98-4d95-804a-863c6590ce85"
+        }
+      ],
+      "steps": []
+    },
+    "goal": {
+      "id": "vocab-not-cloze",
+      "issue": 940,
+      "wants": "Five English animal vocabulary pairs; quiz German to English, never cloze exercises",
+      "messages": [
+        "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+      ],
+      "expect": "vocab",
+      "count": 5
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Denk du dir Basisvokabeln aus.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung.",
+        "double": true
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "goal.start|offer|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Deutsch und Englisch.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ich möchte die Vokabeln gerne auf Deutsch → Englisch üben, bitte.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Das Thema für die 20 Vokabeln soll \"Tiere\" sein, bitte.",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "learner_id": "596056db-c311-4ead-bb8c-e53b040cc3cb",
+        "timezone": "Europe/Berlin",
+        "contact_enabled": false,
+        "contact_changed_by": "account_holder",
+        "contact_changed_at": "2026-10-24T10:00:00.000Z",
+        "quiet_start": "20:00",
+        "quiet_end": "07:00",
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null,
+        "opt_in_prompt_hidden_until": null,
+        "context_version": 1,
+        "last_seen_at": "2026-10-24T10:00:00.000Z",
+        "check_lease_token": null,
+        "check_lease_until": null,
+        "version": 1,
+        "created_at": "2026-10-24T17:28:45.412Z",
+        "updated_at": "2026-10-24T17:28:45.416Z",
+        "phone_only_important": false,
+        "voice": "warm",
+        "voice_speed": 0
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "clarification-chain",
+      "issue": 938,
+      "wants": "A vocabulary request continues after answering the language question",
+      "messages": [
+        "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "Deutsch und Englisch."
+      ],
+      "expect": "offer"
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "picture.present|picture|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Am besten komplett mit Bild.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ich kann dir ein echtes Bild vom menschlichen Skelett zeigen. Möchtest du, dass ich dir ein Bild aus dem Internet suche und zeige?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen?",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "a32a7f69-947f-4f20-a5a2-7c76dd04a307",
+          "role": "learner",
+          "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "c77dd218-637f-4cf2-a6c8-4079bf302004",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "289e5250-bf6c-4d17-a731-26140460f5a4",
+          "role": "buddy",
+          "text": "Klar — worum geht’s bei den Vokabeln?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Englisch",
+            "Französisch",
+            "ein anderes Fach"
+          ],
+          "reply_to_id": "a32a7f69-947f-4f20-a5a2-7c76dd04a307",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "f061b8d5-30ff-4414-a688-c349777fc523",
+          "role": "learner",
+          "text": "Deutsch und Englisch.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "d1acbc72-b652-4982-989c-60caab5086f4",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "d58d2230-73da-41b3-99f9-eaaca23e976f",
+          "role": "buddy",
+          "text": "Klar — willst du die Vokabeln auf **Deutsch → Englisch**, **Englisch → Deutsch** oder **beides** üben?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Deutsch → Englisch",
+            "Englisch → Deutsch",
+            "beides"
+          ],
+          "reply_to_id": "f061b8d5-30ff-4414-a688-c349777fc523",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e4df3dd4-6674-45c1-abcb-2fb35a21366a",
+          "role": "learner",
+          "text": "Ich möchte die Vokabeln gerne auf Deutsch → Englisch üben, bitte.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "9aff32eb-104b-45a6-b45a-fc1cae7463c9",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "d53de255-6885-4f8d-91e5-5178b00d69de",
+          "role": "buddy",
+          "text": "Alles klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Schule",
+            "Essen",
+            "Tiere",
+            "Freizeit"
+          ],
+          "reply_to_id": "e4df3dd4-6674-45c1-abcb-2fb35a21366a",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "768dbae4-8d49-48e8-8a38-fbb834ad0ffd",
+          "role": "learner",
+          "text": "Das Thema für die 20 Vokabeln soll \"Tiere\" sein, bitte.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "fd8907b4-16e0-444a-a9b7-ed5790ce3ae5",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "8c08e813-3f24-45cb-bef2-800d540506e2",
+          "role": "buddy",
+          "text": "Ich kann daraus noch keinen Vokabeltest bauen, weil ich dafür die Wortpaare brauche. Schick mir bitte die Vokabeln als Liste, dann mache ich dir daraus den Test.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "768dbae4-8d49-48e8-8a38-fbb834ad0ffd",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "learner_id": "596056db-c311-4ead-bb8c-e53b040cc3cb",
+        "timezone": "Europe/Berlin",
+        "contact_enabled": false,
+        "contact_changed_by": "account_holder",
+        "contact_changed_at": "2026-10-24T10:00:00.000Z",
+        "quiet_start": "20:00",
+        "quiet_end": "07:00",
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null,
+        "opt_in_prompt_hidden_until": null,
+        "context_version": 9,
+        "last_seen_at": "2026-10-24T10:00:00.000Z",
+        "check_lease_token": null,
+        "check_lease_until": null,
+        "version": 1,
+        "created_at": "2026-10-24T17:28:45.412Z",
+        "updated_at": "2026-10-24T17:28:57.429Z",
+        "phone_only_important": false,
+        "voice": "warm",
+        "voice_speed": 0
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "with-picture",
+      "issue": 934,
+      "wants": "A real picture of the skeleton",
+      "messages": [
+        "Erkläre mir das menschliche Skelett.",
+        "Am besten komplett mit Bild."
+      ],
+      "expect": "picture"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Deutsch und Englisch.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ich möchte die Vokabeln gerne auf Deutsch → Englisch üben, bitte.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Das Thema für die 20 Vokabeln soll \"Tiere\" sein, bitte.",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "summary.condensation|summary|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett.",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "learner_id": "681ca332-8d9f-4696-a17a-833a52b800b1",
+        "timezone": "Europe/Berlin",
+        "contact_enabled": true,
+        "contact_changed_by": "account_holder",
+        "contact_changed_at": "2026-10-24T10:00:00.000Z",
+        "quiet_start": "20:00",
+        "quiet_end": "07:00",
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null,
+        "opt_in_prompt_hidden_until": null,
+        "context_version": 1,
+        "last_seen_at": "2026-10-24T10:00:00.000Z",
+        "check_lease_token": null,
+        "check_lease_until": null,
+        "version": 1,
+        "created_at": "2026-10-24T17:29:52.295Z",
+        "updated_at": "2026-10-24T17:29:52.300Z",
+        "phone_only_important": false,
+        "voice": "warm",
+        "voice_speed": 0
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "summary-not-repeat",
+      "issue": 937,
+      "wants": "A structured condensation of the conversation",
+      "messages": [
+        "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "Mach mir bitte eine kurze Zusammenfassung davon."
+      ],
+      "expect": "summary"
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "reminder.next-step|reminder|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "double": false
+      },
+      {
+        "type": "tick"
+      },
+      {
+        "type": "message",
+        "text": "Ich erinnere dich jetzt daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Übungstext oder eine Aufgabe dazu gebe?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Hier ist ein kurzer Übungstext auf Englisch:\n\n\"The cat is sitting on the mat. It is sunny outside. The cat likes to play with a ball.\"\n\nBitte beantworte die Frage: What is the cat doing?",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "3dad21d8-7a52-4383-a375-91631b75b24f",
+          "role": "learner",
+          "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "a0d926a1-2385-4f78-9488-6d17308fae0a",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "19894fdd-d677-4a28-bce2-40ad5eac5966",
+          "role": "buddy",
+          "text": "Klar — das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt dem Körper Form und Halt, schützt wichtige Organe und hilft zusammen mit Muskeln, Sehnen und Gelenken bei jeder Bewegung.\n\nGanz grob hat es drei Hauptaufgaben: **stützen**, **schützen** und **Bewegung ermöglichen**. Die Schädelknochen schützen das Gehirn, die Rippen schützen Herz und Lunge, und die Wirbelsäule trägt den Körper und hält ihn aufrecht. In den Knochen liegt außerdem das Knochenmark, wo neue Blutzellen gebildet werden.\n\nDas Skelett besteht aus vielen Knochen, die an Gelenken miteinander verbunden sind. Gelenke sind so etwas wie bewegliche Verbindungen: Manche bewegen sich fast gar nicht, andere sehr viel. Im",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "3dad21d8-7a52-4383-a375-91631b75b24f",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e6f3dbf1-3b3d-4c72-810c-406b0e7cf1be",
+          "role": "learner",
+          "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "9c639c19-9d47-4aac-b845-6226a1e68cdd",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "6f5731d7-da02-47f3-b03e-3b631239fc3c",
+          "role": "buddy",
+          "text": "Das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe wie Gehirn, Herz und Lunge und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden im Knochenmark neue Blutzellen gebildet.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "e6f3dbf1-3b3d-4c72-810c-406b0e7cf1be",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "7224dd31-20ba-48bb-a386-3df7308dac17",
+          "role": "learner",
+          "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "e47a0e85-c8bc-4008-bc8b-4557c49ba8a6",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "50b5e61c-d394-4a13-81a7-0d9959d2d5bc",
+          "role": "buddy",
+          "text": "Ja, das ist eine sehr gute, klare Zusammenfassung. Wenn du magst, kann ich dir daraus auch noch eine ganz kurze Lernkarte oder drei Übungsfragen machen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "7224dd31-20ba-48bb-a386-3df7308dac17",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "a0caca86-7a4a-47d0-9f84-e53ce242d40b",
+          "role": "learner",
+          "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "3027cd91-db44-463c-bd23-cbc531aa31d3",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "078ce3cc-b8d2-4c72-a1e3-c2ba9cc14a3c",
+          "role": "buddy",
+          "text": "**Lernkarte: Das menschliche Skelett**\n- gibt dem Körper Halt und Form\n- schützt wichtige Organe\n- hilft bei der Bewegung\n- im Knochenmark werden neue Blutzellen gebildet",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "a0caca86-7a4a-47d0-9f84-e53ce242d40b",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "learner_id": "681ca332-8d9f-4696-a17a-833a52b800b1",
+        "timezone": "Europe/Berlin",
+        "contact_enabled": true,
+        "contact_changed_by": "account_holder",
+        "contact_changed_at": "2026-10-24T10:00:00.000Z",
+        "quiet_start": "20:00",
+        "quiet_end": "07:00",
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null,
+        "opt_in_prompt_hidden_until": null,
+        "context_version": 9,
+        "last_seen_at": "2026-10-24T10:00:00.000Z",
+        "check_lease_token": null,
+        "check_lease_until": null,
+        "version": 1,
+        "created_at": "2026-10-24T17:29:52.295Z",
+        "updated_at": "2026-10-24T17:30:02.138Z",
+        "phone_only_important": false,
+        "voice": "warm",
+        "voice_speed": 0
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "reminder-next-step",
+      "issue": 941,
+      "wants": "Remind me in five minutes to practise English, with content and a valid next step",
+      "messages": [
+        "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+      ],
+      "expect": "reminder"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett.",
+        "double": false
+      }
+    ]
+  }
+]

@@ -1,0 +1,852 @@
+{
+  "goal": {
+    "id": "reminder-next-step",
+    "issue": 941,
+    "wants": "Reminder with content and a valid next step",
+    "messages": [
+      "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+    ],
+    "expect": "reminder"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "18b210fd-da49-40b5-a953-05befbf41779",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "66e4e686-decd-475e-b62b-bed1fb70ecfd",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ca18e0dd-7164-4e49-8398-32935216400f",
+        "role": "buddy",
+        "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "wichtigste Knochen",
+          "Aufbau eines Knochens",
+          "Gelenke"
+        ],
+        "reply_to_id": "18b210fd-da49-40b5-a953-05befbf41779",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ec3a342-dcec-49ce-84a7-433feb74b07b",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "697b1710-0e22-41c4-ab80-2a57374841e5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6ea60eff-2aa2-4579-aeb8-0ec376781fff",
+        "role": "buddy",
+        "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "9ec3a342-dcec-49ce-84a7-433feb74b07b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb329f44-3c99-4cb0-9621-c8ecba780fd4",
+        "role": "learner",
+        "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7bb609a8-dd5b-44c0-95bd-6f4086addf0b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d32ab9d0-0de0-4d27-bc34-68b200234ffe",
+        "role": "buddy",
+        "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "eb329f44-3c99-4cb0-9621-c8ecba780fd4",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1d55fa71-934b-4779-afb4-3667c0297262",
+        "role": "learner",
+        "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "48efa06c-b309-4ac4-b2ec-a1ca3b69fccf",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "73a43e5f-664a-416d-8663-7eba1ff0ae5d",
+        "role": "buddy",
+        "text": "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1d55fa71-934b-4779-afb4-3667c0297262",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": true,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "18b210fd-da49-40b5-a953-05befbf41779",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "66e4e686-decd-475e-b62b-bed1fb70ecfd",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ca18e0dd-7164-4e49-8398-32935216400f",
+        "role": "buddy",
+        "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "wichtigste Knochen",
+          "Aufbau eines Knochens",
+          "Gelenke"
+        ],
+        "reply_to_id": "18b210fd-da49-40b5-a953-05befbf41779",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ec3a342-dcec-49ce-84a7-433feb74b07b",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "697b1710-0e22-41c4-ab80-2a57374841e5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6ea60eff-2aa2-4579-aeb8-0ec376781fff",
+        "role": "buddy",
+        "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "9ec3a342-dcec-49ce-84a7-433feb74b07b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb329f44-3c99-4cb0-9621-c8ecba780fd4",
+        "role": "learner",
+        "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7bb609a8-dd5b-44c0-95bd-6f4086addf0b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d32ab9d0-0de0-4d27-bc34-68b200234ffe",
+        "role": "buddy",
+        "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "eb329f44-3c99-4cb0-9621-c8ecba780fd4",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1d55fa71-934b-4779-afb4-3667c0297262",
+        "role": "learner",
+        "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "48efa06c-b309-4ac4-b2ec-a1ca3b69fccf",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "73a43e5f-664a-416d-8663-7eba1ff0ae5d",
+        "role": "buddy",
+        "text": "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1d55fa71-934b-4779-afb4-3667c0297262",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c7e1b566-affe-4102-b26c-ad095e65c52a",
+        "role": "learner",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "11e7076e-c934-4b40-8e4c-099a204bfa0c",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0c7da39b-9260-406b-86d0-532ff162e15a",
+        "role": "buddy",
+        "text": "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der App an.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c7e1b566-affe-4102-b26c-ad095e65c52a",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "a27d6ccc-e7fc-41b4-a12f-2858d75dfc33",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "d9f1c09e-4696-4f70-864c-6cf1011f0922",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "be2159bd-0d9d-467e-bc1b-9c02f26dcac4",
+        "role": "buddy",
+        "text": "Wie verabredet: Englisch üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "118f9dea-a937-4209-a283-2a2e364e2dbe",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Wie verabredet: Englisch üben.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "d9f1c09e-4696-4f70-864c-6cf1011f0922",
+          "title": "Englisch üben",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "1cd86c65-5da4-4410-b2df-f03ea7be8f6e",
+        "role": "learner",
+        "text": "okay buddy — bitte stell mir die erinnerung jetzt ein (nicht nur als „wie verabredet“). soll das wirklich in 5 minuten sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "10cdc820-a896-425c-8258-32403db77f28",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "17be10cd-707d-4760-b8e0-52ec7e2fb22e",
+        "role": "buddy",
+        "text": "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt in der App an.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1cd86c65-5da4-4410-b2df-f03ea7be8f6e",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "6031ef1b-41c9-43d6-9007-3791a204b52c",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:11",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "56c861fc-c3fc-4aa5-9dbd-2a8239fc2f77",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:06:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "dbb39be2-1721-4f71-8098-63df2965f060",
+        "role": "learner",
+        "text": "ja—aber ich seh hier keine option zum einstellen/planen von erinnerungen. sag mir bitte genau wo ich tippen soll, damit die erinnerung wirklich in 5 minuten kommt (in der app auf welchem bildschirm/menüpunkt).",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "247bf5d4-0343-4678-9455-259c601d60d0",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "43020ec9-a45d-454a-aa43-30381355e331",
+        "role": "buddy",
+        "text": "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt, was du dort antippst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "dbb39be2-1721-4f71-8098-63df2965f060",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": true,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      },
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren."
+          },
+          {
+            "who": "learner",
+            "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum)."
+          },
+          {
+            "who": "buddy",
+            "text": "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich erinn",
+            "Ich erinnere",
+            "Ich erinnere dich",
+            "Ich erinnere dich in",
+            "Ich erinnere dich in ",
+            "Ich erinnere dich in 5",
+            "Ich erinnere dich in 5 Minuten",
+            "Ich erinnere dich in 5 Minuten daran",
+            "Ich erinnere dich in 5 Minuten daran.",
+            "Ich erinnere dich in 5 Minuten daran. Die",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der App",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der App an",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der App an.",
+            "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der App an."
+          ],
+          "ms": 1466,
+          "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+          "id": "11e7076e-c934-4b40-8e4c-099a204bfa0c"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tick"
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren."
+          },
+          {
+            "who": "learner",
+            "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum)."
+          },
+          {
+            "who": "buddy",
+            "text": "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der App an."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "okay buddy — bitte stell mir die erinnerung jetzt ein (nicht nur als „wie verabredet“). soll das wirklich in 5 minuten sein?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren."
+          },
+          {
+            "who": "learner",
+            "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum)."
+          },
+          {
+            "who": "buddy",
+            "text": "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der App an."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja —",
+            "Ja — ich",
+            "Ja — ich stelle",
+            "Ja — ich stelle sie",
+            "Ja — ich stelle sie jetzt",
+            "Ja — ich stelle sie jetzt für",
+            "Ja — ich stelle sie jetzt für in",
+            "Ja — ich stelle sie jetzt für in ",
+            "Ja — ich stelle sie jetzt für in 5",
+            "Ja — ich stelle sie jetzt für in 5 Minuten",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein.",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt in",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt in der",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt in der App",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt in der App an",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt in der App an.",
+            "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt in der App an."
+          ],
+          "ms": 2878,
+          "text": "okay buddy — bitte stell mir die erinnerung jetzt ein (nicht nur als „wie verabredet“). soll das wirklich in 5 minuten sein?",
+          "id": "10cdc820-a896-425c-8258-32403db77f28"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "ja—aber ich seh hier keine option zum einstellen/planen von erinnerungen. sag mir bitte genau wo ich tippen soll, damit die erinnerung wirklich in 5 minuten kommt (in der app auf welchem bildschirm/menüpunkt).",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren."
+          },
+          {
+            "who": "learner",
+            "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum)."
+          },
+          {
+            "who": "buddy",
+            "text": "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich erinnere dich in 5 Minuten daran. Die Erinnerung kommt nur in der App an."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "okay buddy — bitte stell mir die erinnerung jetzt ein (nicht nur als „wie verabredet“). soll das wirklich in 5 minuten sein?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — ich stelle sie jetzt für in 5 Minuten ein. Sie kommt in der App an."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ö",
+            "Öff",
+            "Öffne",
+            "Öffne in",
+            "Öffne in der",
+            "Öffne in der App",
+            "Öffne in der App den",
+            "Öffne in der App den Bereich",
+            "Öffne in der App den Bereich **",
+            "Öffne in der App den Bereich **E",
+            "Öffne in der App den Bereich **Einstellungen",
+            "Öffne in der App den Bereich **Einstellungen**",
+            "Öffne in der App den Bereich **Einstellungen**;",
+            "Öffne in der App den Bereich **Einstellungen**; dort",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw.",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt an",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen.",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du mag",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst,",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt,",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt, was",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt, was du",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt, was du dort",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt, was du dort ant",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt, was du dort antipp",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt, was du dort antippst",
+            "Öffne in der App den Bereich **Einstellungen**; dort kannst du die Erinnerung bzw. den Kontakt anpassen. Wenn du magst, sage ich dir danach Schritt für Schritt, was du dort antippst."
+          ],
+          "ms": 2688,
+          "text": "ja—aber ich seh hier keine option zum einstellen/planen von erinnerungen. sag mir bitte genau wo ich tippen soll, damit die erinnerung wirklich in 5 minuten kommt (in der app auf welchem bildschirm/menüpunkt).",
+          "id": "247bf5d4-0343-4678-9455-259c601d60d0"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "reminder.next-step",
+      "evidence": "[{\"id\":\"be2159bd-0d9d-467e-bc1b-9c02f26dcac4\",\"role\":\"buddy\",\"text\":\"Wie verabredet: Englisch üben.\",\"status\":\"done\",\"failure_code\":null,\"client_message_id\":null,\"options\":null,\"reply_to_id\":null,\"outreach\":{\"id\":\"118f9dea-a937-4209-a283-2a2e364e2dbe\",\"kind\":\"reminder\",\"origin\":\"agreed\",\"title\":\"Buddy\",\"body\":\"Wie verabredet: Englisch üben.\",\"why\":null,\"status\":\"in_app\",\"send_at\":\"2026-10-24T10:06:00.000Z\",\"sent_at\":null,\"opened_at\":\"2026-10-24T10:06:00.000Z\",\"created_at\":\"2026-10-24T10:06:00.000Z\"},\"actions\":[],\"roleplay_feedback\":null,\"announces\":{\"step_id\":\"d9f1c09e-4696-4f70-864c-6cf1011f0922\",\"title\":\"Englisch üben\",\"question_count\":0,\"est_minutes\":5,\"outcome\":{\"state\":\"closed\"}},\"created_at\":\"2026-10-24T10:06:00.000Z\"}]",
+      "kind": "reminder",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "contradicting-reminder-next-step",
+  "persona": {
+    "id": "contradicting",
+    "age": 12,
+    "locale": "de",
+    "style": "Competent reader, informal lowercase spelling",
+    "behaviour": "Contradicts Buddy when dissatisfied"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "okay buddy — bitte stell mir die erinnerung jetzt ein (nicht nur als „wie verabredet“). soll das wirklich in 5 minuten sein?",
+        "double": false
+      },
+      "frustration": 2,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "ja—aber ich seh hier keine option zum einstellen/planen von erinnerungen. sag mir bitte genau wo ich tippen soll, damit die erinnerung wirklich in 5 minuten kommt (in der app auf welchem bildschirm/menüpunkt).",
+        "double": false
+      },
+      "frustration": 2,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+      "double": false
+    }
+  ]
+}
