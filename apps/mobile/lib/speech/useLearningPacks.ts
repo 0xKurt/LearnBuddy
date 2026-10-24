@@ -3,6 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { foreignLanguage } from './voice.js';
+import { packNetworkAllowed } from './packDownload.js';
 
 /** Preparation follows learning content, before any speaking screen needs the pack. */
 export function useLearningPacks(home: BuddyHome | undefined): void {
@@ -31,7 +32,7 @@ export function useLearningPacks(home: BuddyHome | undefined): void {
     void prepare();
     // A pack deferred on mobile data can start when Wi-Fi arrives, without reopening a screen.
     const unsubscribe = NetInfo.addEventListener((net) => {
-      if (net.isConnected === true && net.details?.isConnectionExpensive === false) void prepare();
+      if (packNetworkAllowed(net)) void prepare();
     });
     return () => {
       active = false;
