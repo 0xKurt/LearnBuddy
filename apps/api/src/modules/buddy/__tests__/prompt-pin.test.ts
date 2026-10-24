@@ -29,26 +29,26 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
   it('is byte for byte what it was before the domain registered its part', () => {
     const p = buddyPrompt();
     expect([p.turnSystem.length, sha(p.turnSystem)]).toEqual([
-      24606,
-      '811cecc7d440c1f5e4b6cd1f7317d623c298244a7c5f65203c6876d26082d899',
+      24997,
+      'a3c58d010a8ceb9c59de3b818c2f4f4dc3c3fdb9f1d7b286c55847d55a2500e6',
     ]);
     expect([p.checkSystem.length, sha(p.checkSystem)]).toEqual([
-      7335,
-      '1258a0f019dee4481655422e80c16c01d13bcc5aebbbe48c01b8ff6dbc5b423b',
+      7500,
+      'f2c57faa352b90583e95b2dded81ab7bf2cecd28b05eaf9ddb9dcdde2e460e1e',
     ]);
     expect(sha(p.turnSchema)).toBe(
-      '60ebd4c332c219c23fc0badf968be5b8a3514cce6c997e301a41f460b1f5017b',
+      '5f7394d9279a7491ecb9287d2b01659058e9ef2e6d0d2ff80feecd5b13ce1131',
     );
     expect(sha(p.turnStepSchema)).toBe(
-      'df3eb67ed61e789011b212d58abf5a83f1a093c2cfdc3f95b47cf0fa570e695c',
+      '634f44a5609a87481d2e84c8308b2fcd9aa53e9c5b9f3d6f12dc209fb6d590de',
     );
     expect(sha(p.checkSchema)).toBe(
-      '137db5f43ac591de092f6fb2e579514c21adcdc27e50a61dcad7656a45dddffb',
+      'c7f16d4ac3a52a053b380d8199e62a4c95a3b2509c005676040f6ee1b0260a17',
     );
     expect(sha(p.checkStepSchema)).toBe(
-      '71c169c4b9fa524d188a62c899668186d34d04795f06bf79992b875c565a7888',
+      'b0051046f4f0c1836f88e88132574316a9d03ce473081aacf7dafab46b31566f',
     );
-    expect(p.version).toBe('buddy.8b460a67');
+    expect(p.version).toBe('buddy.e85cf21d');
   });
 
   it('is built once: every call hands out the same prompt', () => {

@@ -252,6 +252,23 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
       [id],
     );
 
+  it('repairs code fences in roleplay chat without publishing the rejected line', async () => {
+    const { l } = await started();
+    env.llm.script(
+      'buddy_turn',
+      { json: line('```text\nmenu\n```') },
+      { json: line('Would you like some tea?') },
+    );
+    const res = await say(l, 'Can I see the menu?');
+    expect(res.body.status).toBe('done');
+    expect(env.llm.callsFor('buddy_turn')).toHaveLength(3);
+    const replies = await env.db.query<{ text: string }>(
+      "select text from buddy_messages where learner_id = $1 and role = 'buddy'",
+      [l.learnerId],
+    );
+    expect(replies.some((r) => r.text.includes('```'))).toBe(false);
+  });
+
   it('starts only on her words and never in her own app language', async () => {
     const l = await onboard(env, { relation: 'child', name: 'Mia', birthDate: '2013-05-04' });
     let repair = '';

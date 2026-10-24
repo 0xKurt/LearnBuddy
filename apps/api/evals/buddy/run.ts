@@ -10,6 +10,7 @@
 // BUDDY_EVAL_OUT=run.json writes every answer down with its cost, so two prompt
 // versions can be compared case by case — a check that still passes can still have
 // got worse (issue #80). Read two such files with evals/buddy/compare.ts.
+// BUDDY_EVAL_DEBUG=1 prints per-run decisions and semantic verdicts for diagnosis.
 // The measured turn is streamed like the app's; every case records its model rounds, thought
 // tokens and the time to the first reply Buddy could speak (issue #651).
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
@@ -28,12 +29,14 @@ import { BlockAudit } from './blockaudit.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
 import { CASES as BASE_CASES, type Outcome } from './cases.js';
+import { PICTURE_CASES } from './pictureCases.js';
 import { DAY_CASES } from './dayCases.js';
 import { judgeRuns, runsFor } from './repeat.js';
 import { bumpContext } from '../../src/modules/buddy/plan.js';
+import { evalJudge } from '../judge.js';
 
 /** Every case: the turns, and the DaySpec cases of the day list (#687). */
-const CASES = [...BASE_CASES, ...DAY_CASES];
+const CASES = [...BASE_CASES, ...DAY_CASES, ...PICTURE_CASES];
 
 // Buddy's prompt is built from what the learning domain registers (issue #107).
 registerLearning();
@@ -48,6 +51,8 @@ const transcript: Array<{
   reply: string | null;
   options: string[] | null;
   tools: string[];
+  pictures: Outcome['pictures'];
+  pictureReview: Outcome['pictureReview'];
   calls: number;
   costMicros: number;
   inputTokens: number;
@@ -145,6 +150,7 @@ async function main(): Promise<void> {
     throw new Error('Set a configured LLM_BACKEND and its provider configuration');
   if (!(await testDatabaseAvailable())) throw new Error('No local Postgres (LB_TEST_DATABASE_URL)');
   const gateway = llmGateway(config);
+  const examiner = evalJudge(config);
   // What each STATE section costs and whether an answer pointed back at it (issue #168).
   // Off by default: with no audit registered the request is byte-identical (blockaudit.ts).
   const blockOut = process.env.BUDDY_BLOCK_AUDIT;
@@ -258,6 +264,12 @@ async function main(): Promise<void> {
               [l.learnerId],
             )
           ).map((a) => a.tool),
+          pictures: (
+            await env.db.query<{ result: { figure: unknown; labels: string[] } }>(
+              "select result from buddy_actions where learner_id = $1 and tool = 'show_figure' order by seq",
+              [l.learnerId],
+            )
+          ).map((r) => r.result),
           goals: await env.db.query(
             `select g.title, g.kind, g.due_date, g.status, g.outcome, s.kind as subject_kind
              from buddy_goals g left join subjects s on s.id = g.subject_id where g.learner_id = $1`,
@@ -311,6 +323,22 @@ async function main(): Promise<void> {
             )
           ).map((r) => r.tool),
         };
+        const review =
+          c.review && outcome.status === 'done' ? await c.review(examiner, outcome) : null;
+        if (review) outcome.pictureReview = review.verdict;
+        if (process.env.BUDDY_EVAL_DEBUG)
+          console.info(
+            JSON.stringify({
+              id: c.id,
+              run,
+              reply: outcome.reply,
+              review: review?.verdict,
+              decisions: await env.db.query(
+                'select output, errors from buddy_decisions where learner_id = $1 order by created_at, attempt',
+                [l.learnerId],
+              ),
+            }),
+          );
         const problems =
           outcome.status === 'done'
             ? c.check(outcome)
@@ -348,6 +376,14 @@ async function main(): Promise<void> {
                 coalesce(array_agg(distinct model), '{}') as models
            from llm_calls`,
         );
+        if (review) {
+          cost.micros += review.usage.costMicros;
+          cost.calls += 1;
+          cost.input += review.usage.inputTokens;
+          cost.cached += review.usage.cachedTokens;
+          cost.thought += review.usage.thoughtTokens;
+          cost.models.push(review.usage.model);
+        }
         costMicros += cost.micros;
         inputTokens += cost.input;
         cachedTokens += cost.cached;
@@ -416,6 +452,8 @@ async function main(): Promise<void> {
       reply: outcome.reply,
       options: outcome.options,
       tools: outcome.tools,
+      pictures: outcome.pictures,
+      pictureReview: outcome.pictureReview,
       calls: caseCost.calls,
       costMicros: caseCost.micros,
       inputTokens: caseCost.input,

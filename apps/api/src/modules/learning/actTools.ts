@@ -19,6 +19,7 @@ import {
   VocabDirection as VocabDirectionSchema,
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
+import { CHAT_FIGURE_TOOL } from './chatFigure.js';
 
 import {
   DaySpecSchema,
@@ -443,4 +444,5 @@ export const LEARNING_ACT_TOOLS: readonly (ActToolEntry & { name: keyof DomainAc
       offer: true,
     },
   },
+  CHAT_FIGURE_TOOL,
 ];

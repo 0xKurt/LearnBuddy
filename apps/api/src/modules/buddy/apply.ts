@@ -16,6 +16,7 @@ import { canonicalTopicKey, type Aliases } from './context.js';
 import type { AnyAction, Outreach } from './decision.js';
 import type { LookBackFact } from './lookback.js';
 import { OUTREACH_STEP_STATES, planOutreach, type OutreachPlan } from './delivery.js';
+import { replyFormatErrors } from './replyFormat.js';
 import { bumpContext } from './plan.js';
 import { LIMITS, loadSettings, TURN_STALL_MS, type SettingsRow } from './state.js';
 import { runAct } from './registry.js';
@@ -129,6 +130,8 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         throw new SupersededClaim();
       }
       if (settings.context_version !== input.contextVersion) throw new StaleDecision();
+      const formatErrors = input.reply ? replyFormatErrors(input.reply.text) : [];
+      if (formatErrors.length) throw new ToolRejection(formatErrors.join('; '));
       if (input.scene) await input.scene.apply(tx, input.now);
 
       const outcomes: Array<{ action: AnyAction; outcome: ToolOutcome }> = [];

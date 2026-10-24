@@ -32,6 +32,36 @@ export const PARABOLA_WORDS = 'Je größer a, desto schmaler wird die Parabel.';
 const QUESTION = 'Was passiert mit dem Graphen von f(x) = a·x², wenn a größer wird?';
 
 export function scriptExplainFigure(): void {
+  scriptTurns(
+    {
+      when: /Zeig mir das Skelett mit Bild/i,
+      answer: says('Hier erkennst du die wichtigsten Teile des Skeletts.', [
+        {
+          tool: 'show_figure',
+          args: {
+            drawing: 'skeleton',
+            n: ['skull', 'spine', 'ribcage', 'pelvis', 'humerus', 'femur'],
+            parts: null,
+            filled: null,
+          },
+        },
+      ]),
+    },
+    {
+      when: /Zeig mir drei Viertel mit Kreisbild/i,
+      answer: says('Drei der vier gleich großen Teile sind gefärbt.', [
+        {
+          tool: 'show_figure',
+          args: {
+            drawing: 'fraction_circle',
+            n: [],
+            parts: 4,
+            filled: 3,
+          },
+        },
+      ]),
+    },
+  );
   scriptTurns({
     when: /streckfaktor/i,
     answer: says('Gern – eine Frage zum Streckfaktor, danach erkläre ich es dir mit Bild.', [

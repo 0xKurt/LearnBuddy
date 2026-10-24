@@ -1,0 +1,118 @@
+{
+  "promptVersion": "buddy.e85cf21d",
+  "ranAt": "2026-10-24T19:04:53.664Z",
+  "models": ["gpt-5.4-mini-2026-03-17"],
+  "costMicros": 160650,
+  "inputTokens": 178154,
+  "cachedTokens": 170880,
+  "cases": [
+    {
+      "id": "de_anatomy_picture",
+      "ok": true,
+      "problems": [],
+      "reply": "Schau auf die Beschriftung: Der Schädel schützt das Gehirn, Brustkorb und Brustbein schützen die Organe, die Wirbelsäule stützt den Körper und das Becken trägt den Oberkörper.",
+      "options": null,
+      "tools": ["show_figure"],
+      "pictures": [
+        {
+          "tool": "show_figure",
+          "figure": {
+            "d": "skeleton",
+            "n": ["skull", "collarbone", "sternum", "ribcage", "spine", "pelvis"],
+            "ask": 0,
+            "type": "schematic"
+          },
+          "labels": [
+            "1. Schädel",
+            "2. Schlüsselbein",
+            "3. Brustbein",
+            "4. Brustkorb",
+            "5. Wirbelsäule",
+            "6. Becken"
+          ]
+        }
+      ],
+      "calls": 6,
+      "costMicros": 64066,
+      "inputTokens": 71244,
+      "cachedTokens": 67072,
+      "thoughtTokens": 445,
+      "latenciesMs": [1477, 1778, 1387, 1548, 2611, 1686],
+      "rounds": [2, 2, 2],
+      "firstSpeakableMs": [3038, 2691, 3980]
+    },
+    {
+      "id": "de_maths_picture",
+      "ok": true,
+      "problems": [],
+      "reply": "Hier siehst du einen Kreis in 4 gleich große Teile geteilt, und 3 davon sind gefärbt — das ist drei Viertel.",
+      "options": null,
+      "tools": ["show_figure"],
+      "pictures": [
+        {
+          "tool": "show_figure",
+          "figure": {
+            "type": "fraction",
+            "shape": "circle",
+            "fractions": [
+              {
+                "parts": 4,
+                "filled": 3
+              }
+            ]
+          },
+          "labels": []
+        }
+      ],
+      "calls": 3,
+      "costMicros": 30732,
+      "inputTokens": 34644,
+      "cachedTokens": 34176,
+      "thoughtTokens": 154,
+      "latenciesMs": [1711, 1697, 1727],
+      "rounds": [1, 1, 1],
+      "firstSpeakableMs": [1451, 1483, 1463]
+    },
+    {
+      "id": "de_picture_followup",
+      "ok": true,
+      "problems": [],
+      "reply": "Hier ist das Skelett mit den wichtigsten Teilen beschriftet.",
+      "options": null,
+      "tools": ["show_figure"],
+      "pictures": [
+        {
+          "tool": "show_figure",
+          "figure": {
+            "d": "skeleton",
+            "n": ["skull", "spine", "ribcage", "pelvis", "humerus", "femur"],
+            "ask": 0,
+            "type": "schematic"
+          },
+          "labels": [
+            "1. Schädel",
+            "2. Wirbelsäule",
+            "3. Brustkorb",
+            "4. Becken",
+            "5. Oberarmknochen",
+            "6. Oberschenkelknochen"
+          ]
+        }
+      ],
+      "pictureReview": {
+        "adds_missing_context": true,
+        "repeats_explanation": false,
+        "why": "The reply uses the provided picture and adds visual orientation by naming the labeled skeleton parts, which fits the request for an image without re-explaining the function of the skeleton.",
+        "reply": "Hier ist das Skelett mit den wichtigsten Teilen beschriftet."
+      },
+      "calls": 9,
+      "costMicros": 65852,
+      "inputTokens": 72266,
+      "cachedTokens": 69632,
+      "thoughtTokens": 510,
+      "latenciesMs": [1368, 1629, 1394, 1669, 1902, 2719],
+      "rounds": [2, 2, 2],
+      "firstSpeakableMs": [2776, 2811, 1784]
+    }
+  ]
+}

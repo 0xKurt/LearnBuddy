@@ -51,6 +51,37 @@ describe('the field order the guard depends on', () => {
 });
 
 describe('replyProgress', () => {
+  it.each([1, 3, 11])(
+    'never publishes a labelled drawing across chunks of %i characters',
+    (width) => {
+      for (const text of [
+        'Hier ist das Bild:\n   O <- Kopf\n  /|\\ <- Arme\n   | <- Rumpf\n  / \\ <- Beine',
+        'Hier ist das Bild:\n```text\n O\n/|\\\n```',
+        'Hier ist das Bild: ```text\n O\n/|\\\n```',
+        '  O <- Kopf\n /|\\ <- Arme\n  | <- Rumpf',
+        'Hier ist das Bild:\n┌── Kopf ──┐\n│         │\n└─────────┘',
+      ]) {
+        const raw = JSON.stringify({ actions: [], reply: text });
+        for (let end = 1; end <= raw.length; end += width) {
+          const progress = replyProgress(raw.slice(0, end), NONE);
+          if (progress?.speakable)
+            expect(progress.text).not.toMatch(/Kopf|Arme|Rumpf|Beine|\n|[|\\`┌│└]/);
+        }
+        expect(replyProgress(raw, NONE)?.speakable).toBe(false);
+      }
+    },
+  );
+
+  it.each(['```text\n O\n```', '~~~text\n O\n~~~', '┌──┐\n│  │\n└──┘'])(
+    'withholds unsupported drawing syntax: %s',
+    (text) => {
+      expect(replyProgress(JSON.stringify({ actions: [], reply: text }), NONE)).toMatchObject({
+        text: '',
+        speakable: false,
+      });
+    },
+  );
+
   it('lets a reply that changes nothing be spoken while it is written', () => {
     const raw = answer([]);
     const cut = raw.slice(0, raw.indexOf('los'));

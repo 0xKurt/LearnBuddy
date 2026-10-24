@@ -10,6 +10,7 @@
 // reads a reply aloud only once it is validated and stored, after the provider's final
 // safety verdict (audit M-52).
 
+import { replyFormatErrors, visibleReplyPrefix } from './replyFormat.js';
 import { repairLatexEscapes } from '../../llm/latex.js';
 import { partialString } from '../../llm/partial.js';
 import { ACT_TOOLS, REPLY_MAX, turnActionSchema } from './registry.js';
@@ -36,11 +37,16 @@ export function replyProgress(raw: string, aliases: ReadonlySet<string>): ReplyP
   // Only text that can pass validation is shown early: a reply over the schema's limit is
   // withdrawn later, so it is never shown while written (audit repro-28).
   const fits = reply.text.trim().length <= REPLY_MAX;
+  const visible = visibleReplyPrefix(reply.text, reply.done);
   // The same LaTeX repair as the stored reply, so "\times" never shows as TAB + "imes"
   // while it is written (p2-streamed-reply-unrepaired-latex-escapes).
   return {
-    text: repairLatexEscapes(reply.text),
-    speakable: fits && changesNothing(raw, aliases),
+    text: repairLatexEscapes(visible),
+    speakable:
+      visible.length > 0 &&
+      fits &&
+      replyFormatErrors(reply.text).length === 0 &&
+      changesNothing(raw, aliases),
     done: reply.done,
   };
 }

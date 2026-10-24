@@ -3,6 +3,7 @@
 // without it; it never imports the domain. Every place filled here is checked by
 // components/learn/__tests__/register.test.tsx: none missing, none filled twice.
 
+import { lazy, Suspense } from 'react';
 import { MAX_PDF_MB, pollAfterMs, type AnswerRequest } from '@learnbuddy/shared-types/contracts';
 
 import { ProfileLibrarySubjects } from '../../components/library/ProfileLibrarySubjects.js';
@@ -89,7 +90,18 @@ function RunningMath(props: InlineTextProps) {
   return <MathText {...props} inlineFractions />;
 }
 
+const ChatFigureCard = lazy(() => import('../../components/learn/ChatFigureCard.js'));
+
 export function registerLearning(): void {
+  addActionCard(
+    'show_figure',
+    (picture) => (
+      <Suspense fallback={null}>
+        <ChatFigureCard picture={picture} />
+      </Suspense>
+    ),
+    () => false,
+  );
   messageListen.fill(ListenButton);
   // ── The chat: Buddy's offers to start something, always shown, one tap starts it …
   addActionCard(

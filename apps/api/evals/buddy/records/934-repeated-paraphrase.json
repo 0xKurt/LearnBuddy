@@ -1,0 +1,36 @@
+{
+  "source": "Failed EU live follow-up, prompt buddy.839cd2d5, run 1, 2026-10-24",
+  "cases": [
+    {
+      "id": "de_picture_followup",
+      "tools": ["show_figure"],
+      "pictures": [
+        {
+          "tool": "show_figure",
+          "figure": {
+            "d": "skeleton",
+            "n": ["skull", "collarbone", "ribcage", "sternum", "spine", "pelvis"],
+            "ask": 0,
+            "type": "schematic"
+          },
+          "labels": [
+            "1. Schädel",
+            "2. Schlüsselbein",
+            "3. Brustkorb",
+            "4. Brustbein",
+            "5. Wirbelsäule",
+            "6. Becken"
+          ]
+        }
+      ],
+      "reply": "Klar — hier ist das Skelett mit den wichtigsten Teilen. Schau auf den Schädel, die Wirbelsäule, den Brustkorb und das Becken: Sie geben dem Körper Form, Schutz und Stabilität. Die Knochen in Armen und Beinen machen Bewegung möglich, zum Beispiel Greifen, Gehen und Laufen.",
+      "pictureReview": {
+        "adds_missing_context": true,
+        "repeats_explanation": true,
+        "why": "Die Antwort bezieht sich auf das Bild und nennt sichtbare Teile mit Orientierung, aber sie wiederholt im Kern die vorherige Erklärung der Funktionen von Schädel, Wirbelsäule, Brustkorb und Beinen statt vor allem neue Bildkontexte zu liefern.",
+        "reply": "Klar — hier ist das Skelett mit den wichtigsten Teilen. Schau auf den Schädel, die Wirbelsäule, den Brustkorb und das Becken: Sie geben dem Körper Form, Schutz und Stabilität. Die Knochen in Armen und Beinen machen Bewegung möglich, zum Beispiel Greifen, Gehen und Laufen."
+      }
+    }
+  ],
+  "reviewCostMicros": 724
+}
