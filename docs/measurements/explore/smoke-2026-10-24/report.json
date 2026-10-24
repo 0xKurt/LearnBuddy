@@ -1,0 +1,3258 @@
+{
+  "build": "ef5703876c00ac33fa8fd0245a707be07d9e43e6",
+  "mode": "smoke",
+  "models": {
+    "buddy": "gpt-5.4-mini",
+    "explorer": "gpt-4.1-mini"
+  },
+  "expected": 2,
+  "completed": 2,
+  "aborted": null,
+  "passed": false,
+  "limits": {
+    "maxSteps": 5,
+    "maxUsd": 1,
+    "maxMs": 2100000
+  },
+  "economics": {
+    "confirmed": 3,
+    "receiptUsd": 0.1677930900000001,
+    "upperUsd": 0.4447789999999998,
+    "usdPerEuro": 1.1193,
+    "costEuro": 0.3973724649334404,
+    "confirmedPerEuro": 7.549592044588438
+  },
+  "humanCalibration": {
+    "ready": false,
+    "calibration": 0,
+    "holdout": 0,
+    "falseAlarmRate": null,
+    "missRate": null
+  },
+  "humanSample": [],
+  "findings": [
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "photo",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "offer.startable",
+      "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+      "kind": "vocab",
+      "route": "/practice/topic",
+      "category": "app"
+    },
+    {
+      "invariant": "vocabulary.direction",
+      "evidence": "[[\"en\",\"de\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"en\",\"de\"]]",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "replays": [
+    {
+      "key": "goal.start|photo|/buddy/messages",
+      "attempt": 1,
+      "reproduced": true,
+      "findings": [
+        {
+          "invariant": "goal.start",
+          "evidence": "No offer started a nonempty session",
+          "kind": "photo",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ],
+      "error": null,
+      "actions": [
+        {
+          "type": "photo"
+        },
+        {
+          "type": "message",
+          "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+          "double": true
+        },
+        {
+          "type": "message",
+          "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+          "double": false
+        },
+        {
+          "type": "message",
+          "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "photo"
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [],
+          "taps": [],
+          "findings": [],
+          "response": {
+            "id": "1ae1b891-eb35-4a25-80e3-6ae77b317f1d",
+            "title": "Brüche kürzen",
+            "status": "ready",
+            "failure_reason": null,
+            "photos_deleted": false,
+            "item_count": 2,
+            "speak_count": 0,
+            "purpose": "study",
+            "source": "sheet",
+            "session_id": null,
+            "session_status": null,
+            "page_problems": [],
+            "items_incomplete": false,
+            "not_practicable": [],
+            "photo_count": 1,
+            "merged_into": null,
+            "subject_name": "Mathematik",
+            "goal_id": null,
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+            "double": true
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "K",
+                "Klar",
+                "Klar —",
+                "Klar — ich",
+                "Klar — ich hab",
+                "Klar — ich hab dir",
+                "Klar — ich hab dir die",
+                "Klar — ich hab dir die Ü",
+                "Klar — ich hab dir die Übung",
+                "Klar — ich hab dir die Übung zu",
+                "Klar — ich hab dir die Übung zu deinem",
+                "Klar — ich hab dir die Übung zu deinem Blatt",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet.",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öff",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier,",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier, dann",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier, dann kannst",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier, dann kannst du",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier, dann kannst du direkt",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier, dann kannst du direkt anfangen",
+                "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier, dann kannst du direkt anfangen."
+              ],
+              "ms": 1716,
+              "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+              "id": "5d104ef4-185d-4f2f-bcfa-db9f6b7c05e0"
+            },
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [],
+              "ms": 9,
+              "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+              "id": "5d104ef4-185d-4f2f-bcfa-db9f6b7c05e0"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+              },
+              {
+                "who": "learner",
+                "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+              },
+              {
+                "who": "buddy",
+                "text": "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier, dann kannst du direkt anfangen."
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "",
+                "Auf",
+                "Auf dem",
+                "Auf dem Blatt",
+                "Auf dem Blatt steht",
+                "Auf dem Blatt steht:",
+                "Auf dem Blatt steht: „",
+                "Auf dem Blatt steht: „Br",
+                "Auf dem Blatt steht: „Brüche",
+                "Auf dem Blatt steht: „Brüche kür",
+                "Auf dem Blatt steht: „Brüche kürzen",
+                "Auf dem Blatt steht: „Brüche kürzen“",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beisp",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen ",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 =",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = ",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und ",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 =",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = ",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3.",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Ü",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung:",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kür",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze ",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/12",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/12 und",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/12 und ",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/12 und 8",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/12 und 8/",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/12 und 8/12",
+                "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/12 und 8/12."
+              ],
+              "ms": 3005,
+              "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+              "id": "cc80d7dc-02da-43c2-9492-c42c16a2056a"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+              },
+              {
+                "who": "learner",
+                "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+              },
+              {
+                "who": "buddy",
+                "text": "Klar — ich hab dir die Übung zu deinem Blatt schon vorbereitet. Öffne sie hier, dann kannst du direkt anfangen."
+              },
+              {
+                "who": "learner",
+                "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?"
+              },
+              {
+                "who": "buddy",
+                "text": "Auf dem Blatt steht: „Brüche kürzen“ mit den Beispielen 6/8 = 3/4 und 12/18 = 2/3. Danach kommt die Übung: Kürze 9/12 und 8/12."
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "Ich",
+                "Ich hel",
+                "Ich helfe",
+                "Ich helfe dir",
+                "Ich helfe dir dabei",
+                "Ich helfe dir dabei,",
+                "Ich helfe dir dabei, den",
+                "Ich helfe dir dabei, den Br",
+                "Ich helfe dir dabei, den Bruch",
+                "Ich helfe dir dabei, den Bruch ",
+                "Ich helfe dir dabei, den Bruch 9",
+                "Ich helfe dir dabei, den Bruch 9/",
+                "Ich helfe dir dabei, den Bruch 9/12",
+                "Ich helfe dir dabei, den Bruch 9/12 zu",
+                "Ich helfe dir dabei, den Bruch 9/12 zu kür",
+                "Ich helfe dir dabei, den Bruch 9/12 zu kürzen",
+                "Ich helfe dir dabei, den Bruch 9/12 zu kürzen.",
+                "",
+                "Ich",
+                "Ich hab",
+                "Ich hab dir",
+                "Ich hab dir dazu",
+                "Ich hab dir dazu Hilfe",
+                "Ich hab dir dazu Hilfe vorbereitet",
+                "Ich hab dir dazu Hilfe vorbereitet."
+              ],
+              "ms": 6487,
+              "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+              "id": "1f1e57b8-5a08-4f82-8fa5-5d22a7dd1697"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        }
+      ]
+    },
+    {
+      "key": "goal.start|photo|/buddy/messages",
+      "attempt": 2,
+      "reproduced": true,
+      "findings": [
+        {
+          "invariant": "goal.start",
+          "evidence": "No offer started a nonempty session",
+          "kind": "photo",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ],
+      "error": null,
+      "actions": [
+        {
+          "type": "photo"
+        },
+        {
+          "type": "message",
+          "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+          "double": true
+        },
+        {
+          "type": "message",
+          "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+          "double": false
+        },
+        {
+          "type": "message",
+          "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "photo"
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [],
+          "taps": [],
+          "findings": [],
+          "response": {
+            "id": "1ee3bd61-f15b-4532-8a1d-ccbe96b7c926",
+            "title": "Brüche kürzen",
+            "status": "ready",
+            "failure_reason": null,
+            "photos_deleted": false,
+            "item_count": 2,
+            "speak_count": 0,
+            "purpose": "study",
+            "source": "sheet",
+            "session_id": null,
+            "session_status": null,
+            "page_problems": [],
+            "items_incomplete": false,
+            "not_practicable": [],
+            "photo_count": 1,
+            "merged_into": null,
+            "subject_name": "Mathematik",
+            "goal_id": null,
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+            "double": true
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "K",
+                "Klar",
+                "Klar —",
+                "Klar — ich",
+                "Klar — ich öff",
+                "Klar — ich öffne",
+                "Klar — ich öffne dir",
+                "Klar — ich öffne dir die",
+                "Klar — ich öffne dir die Ü",
+                "Klar — ich öffne dir die Übung",
+                "Klar — ich öffne dir die Übung zu",
+                "Klar — ich öffne dir die Übung zu „",
+                "Klar — ich öffne dir die Übung zu „Br",
+                "Klar — ich öffne dir die Übung zu „Brüche",
+                "Klar — ich öffne dir die Übung zu „Brüche kür",
+                "Klar — ich öffne dir die Übung zu „Brüche kürzen",
+                "Klar — ich öffne dir die Übung zu „Brüche kürzen“.",
+                "Klar — ich öffne dir die Übung zu „Brüche kürzen“."
+              ],
+              "ms": 1184,
+              "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+              "id": "1a69c153-2c81-4336-99cf-cc2f0c50188f"
+            },
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [],
+              "ms": 9,
+              "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+              "id": "1a69c153-2c81-4336-99cf-cc2f0c50188f"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+              },
+              {
+                "who": "learner",
+                "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+              },
+              {
+                "who": "buddy",
+                "text": "Klar — ich öffne dir die Übung zu „Brüche kürzen“."
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "",
+                "Auf",
+                "Auf dem",
+                "Auf dem Blatt",
+                "Auf dem Blatt steht",
+                "Auf dem Blatt steht bei",
+                "Auf dem Blatt steht bei der",
+                "Auf dem Blatt steht bei der Ü",
+                "Auf dem Blatt steht bei der Übung",
+                "Auf dem Blatt steht bei der Übung:",
+                "Auf dem Blatt steht bei der Übung: „",
+                "Auf dem Blatt steht bei der Übung: „K",
+                "Auf dem Blatt steht bei der Übung: „Kür",
+                "Auf dem Blatt steht bei der Übung: „Kürze",
+                "Auf dem Blatt steht bei der Übung: „Kürze ",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/12",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und ",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12.“",
+                "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12.“"
+              ],
+              "ms": 2836,
+              "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+              "id": "c1d2af4b-f8f7-4952-8872-f4f8c3c1534c"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+              },
+              {
+                "who": "learner",
+                "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+              },
+              {
+                "who": "buddy",
+                "text": "Klar — ich öffne dir die Übung zu „Brüche kürzen“."
+              },
+              {
+                "who": "learner",
+                "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?"
+              },
+              {
+                "who": "buddy",
+                "text": "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12.“"
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "G",
+                "Gern",
+                "Gern —",
+                "Gern — such",
+                "Gern — such eine",
+                "Gern — such eine Zahl",
+                "Gern — such eine Zahl,",
+                "Gern — such eine Zahl, die",
+                "Gern — such eine Zahl, die ",
+                "Gern — such eine Zahl, die 9",
+                "Gern — such eine Zahl, die 9 und",
+                "Gern — such eine Zahl, die 9 und ",
+                "Gern — such eine Zahl, die 9 und 12",
+                "Gern — such eine Zahl, die 9 und 12 beide",
+                "Gern — such eine Zahl, die 9 und 12 beide te",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt.",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen,",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stück",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke sch",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schne",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest:",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du te",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch diesel",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl.",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl. Welche",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl. Welche Zahl",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl. Welche Zahl könnte",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl. Welche Zahl könnte das",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl. Welche Zahl könnte das sein",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl. Welche Zahl könnte das sein?",
+                "Gern — such eine Zahl, die 9 und 12 beide teilt. Wie bei einem Kuchen, den du in gleich große Stücke schneidest: Du teilst oben und unten durch dieselbe Zahl. Welche Zahl könnte das sein?"
+              ],
+              "ms": 2115,
+              "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+              "id": "d82a872f-336b-4d02-a5c3-73c85000e325"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        }
+      ]
+    },
+    {
+      "key": "goal.start|photo|/buddy/messages",
+      "attempt": 3,
+      "reproduced": true,
+      "findings": [
+        {
+          "invariant": "goal.start",
+          "evidence": "No offer started a nonempty session",
+          "kind": "photo",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ],
+      "error": null,
+      "actions": [
+        {
+          "type": "photo"
+        },
+        {
+          "type": "message",
+          "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+          "double": true
+        },
+        {
+          "type": "message",
+          "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+          "double": false
+        },
+        {
+          "type": "message",
+          "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "photo"
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [],
+          "taps": [],
+          "findings": [],
+          "response": {
+            "id": "2f3ec939-9793-429a-83b9-ee971e9e92a7",
+            "title": "Brüche kürzen",
+            "status": "ready",
+            "failure_reason": null,
+            "photos_deleted": false,
+            "item_count": 2,
+            "speak_count": 0,
+            "purpose": "study",
+            "source": "sheet",
+            "session_id": null,
+            "session_status": null,
+            "page_problems": [],
+            "items_incomplete": false,
+            "not_practicable": [],
+            "photo_count": 1,
+            "merged_into": null,
+            "subject_name": "Mathematik",
+            "goal_id": null,
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+            "double": true
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Wenn du magst, fang jetzt mit der Übung zu Brüche kürzen an und löse einfach die erste Aufgabe. Danach kannst du direkt weitermachen."
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "K",
+                "Klar",
+                "Klar —",
+                "Klar — ich",
+                "Klar — ich ze",
+                "Klar — ich zeige",
+                "Klar — ich zeige dir",
+                "Klar — ich zeige dir die",
+                "Klar — ich zeige dir die Ü",
+                "Klar — ich zeige dir die Übung",
+                "Klar — ich zeige dir die Übung zu",
+                "Klar — ich zeige dir die Übung zu Br",
+                "Klar — ich zeige dir die Übung zu Brüche",
+                "Klar — ich zeige dir die Übung zu Brüche kür",
+                "Klar — ich zeige dir die Übung zu Brüche kürzen",
+                "Klar — ich zeige dir die Übung zu Brüche kürzen direkt",
+                "Klar — ich zeige dir die Übung zu Brüche kürzen direkt hier",
+                "Klar — ich zeige dir die Übung zu Brüche kürzen direkt hier."
+              ],
+              "ms": 1442,
+              "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+              "id": "7571ff1b-0a63-4cc1-9ed9-edf7b88ca41d"
+            },
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [],
+              "ms": 9,
+              "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+              "id": "7571ff1b-0a63-4cc1-9ed9-edf7b88ca41d"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Wenn du magst, fang jetzt mit der Übung zu Brüche kürzen an und löse einfach die erste Aufgabe. Danach kannst du direkt weitermachen."
+              },
+              {
+                "who": "learner",
+                "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+              },
+              {
+                "who": "buddy",
+                "text": "Klar — ich zeige dir die Übung zu Brüche kürzen direkt hier."
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "",
+                "Auf",
+                "Auf dem",
+                "Auf dem Blatt",
+                "Auf dem Blatt steht",
+                "Auf dem Blatt steht als",
+                "Auf dem Blatt steht als Ü",
+                "Auf dem Blatt steht als Übung",
+                "Auf dem Blatt steht als Übung:",
+                "Auf dem Blatt steht als Übung: „",
+                "Auf dem Blatt steht als Übung: „K",
+                "Auf dem Blatt steht als Übung: „Kür",
+                "Auf dem Blatt steht als Übung: „Kürze",
+                "Auf dem Blatt steht als Übung: „Kürze ",
+                "Auf dem Blatt steht als Übung: „Kürze 9",
+                "Auf dem Blatt steht als Übung: „Kürze 9/",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und ",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“.",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst,",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst, machen",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst, machen wir",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst, machen wir direkt",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst, machen wir direkt die",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst, machen wir direkt die erste",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst, machen wir direkt die erste zusammen",
+                "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst, machen wir direkt die erste zusammen."
+              ],
+              "ms": 4082,
+              "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+              "id": "a91d54cb-c781-4a8d-9f6f-3dbce20e69cc"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "message",
+            "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": ""
+              },
+              {
+                "who": "buddy",
+                "text": "Wenn du magst, fang jetzt mit der Übung zu Brüche kürzen an und löse einfach die erste Aufgabe. Danach kannst du direkt weitermachen."
+              },
+              {
+                "who": "learner",
+                "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+              },
+              {
+                "who": "buddy",
+                "text": "Klar — ich zeige dir die Übung zu Brüche kürzen direkt hier."
+              },
+              {
+                "who": "learner",
+                "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?"
+              },
+              {
+                "who": "buddy",
+                "text": "Auf dem Blatt steht als Übung: „Kürze 9/12 und 8/12“. Wenn du willst, machen wir direkt die erste zusammen."
+              }
+            ],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "Te",
+                "Teile",
+                "Teile Z",
+                "Teile Zähler",
+                "Teile Zähler und",
+                "Teile Zähler und Nen",
+                "Teile Zähler und Nenner",
+                "Teile Zähler und Nenner durch",
+                "Teile Zähler und Nenner durch die",
+                "Teile Zähler und Nenner durch die größte",
+                "Teile Zähler und Nenner durch die größte Zahl",
+                "Teile Zähler und Nenner durch die größte Zahl,",
+                "Teile Zähler und Nenner durch die größte Zahl, die",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest te",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt.",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei ",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und ",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das ",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 —",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — prob",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus und",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus und sag",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus und sag mir",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus und sag mir,",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus und sag mir, was",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus und sag mir, was du",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus und sag mir, was du bekommst",
+                "Teile Zähler und Nenner durch die größte Zahl, die beide ohne Rest teilt. Bei 9 und 12 ist das 3 — probier das mal aus und sag mir, was du bekommst."
+              ],
+              "ms": 1794,
+              "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+              "id": "31d67d8d-463f-45eb-8c1c-2a0bc7e2e35b"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        }
+      ]
+    },
+    {
+      "key": "offer.startable|vocab|/practice/topic",
+      "attempt": 1,
+      "reproduced": true,
+      "findings": [
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        },
+        {
+          "invariant": "vocabulary.direction",
+          "evidence": "[[\"de\",\"en\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"de\",\"en\"]]",
+          "kind": "vocab",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ],
+      "error": null,
+      "actions": [
+        {
+          "type": "message",
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "Ich",
+                "Ich bere",
+                "Ich bereite",
+                "Ich bereite dir",
+                "Ich bereite dir Englisch",
+                "Ich bereite dir Englisch-V",
+                "Ich bereite dir Englisch-Vok",
+                "Ich bereite dir Englisch-Vokabel",
+                "Ich bereite dir Englisch-Vokabeln",
+                "Ich bereite dir Englisch-Vokabeln zum",
+                "Ich bereite dir Englisch-Vokabeln zum Thema",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor,",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor, zum",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor, zum Übers",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor, zum Übersetzen",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor, zum Übersetzen von",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor, zum Übersetzen von Deutsch",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor, zum Übersetzen von Deutsch nach",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor, zum Übersetzen von Deutsch nach Englisch",
+                "Ich bereite dir Englisch-Vokabeln zum Thema Tiere vor, zum Übersetzen von Deutsch nach Englisch.",
+                "",
+                "Ich",
+                "Ich habe",
+                "Ich habe dir",
+                "Ich habe dir ",
+                "Ich habe dir 5",
+                "Ich habe dir 5 Tiere",
+                "Ich habe dir 5 Tiere zum",
+                "Ich habe dir 5 Tiere zum Ü",
+                "Ich habe dir 5 Tiere zum Üben",
+                "Ich habe dir 5 Tiere zum Üben vorbereitet",
+                "Ich habe dir 5 Tiere zum Üben vorbereitet,",
+                "Ich habe dir 5 Tiere zum Üben vorbereitet, von",
+                "Ich habe dir 5 Tiere zum Üben vorbereitet, von Deutsch",
+                "Ich habe dir 5 Tiere zum Üben vorbereitet, von Deutsch nach",
+                "Ich habe dir 5 Tiere zum Üben vorbereitet, von Deutsch nach Englisch",
+                "Ich habe dir 5 Tiere zum Üben vorbereitet, von Deutsch nach Englisch.",
+                "Ich habe dir 5 Tiere zum Üben vorbereitet, von Deutsch nach Englisch."
+              ],
+              "ms": 7600,
+              "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+              "id": "4e097ab7-9c34-44ba-82cc-97300dcbed7a"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich habe dir 5 Tiere zum Üben vorbereitet, von Deutsch nach Englisch."
+              }
+            ],
+            "offers": [
+              {
+                "label": "Hund – dog\nKatze – cat\nPferd – horse\nVogel – bird\nFisch – fish",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "1b070807-ff1e-4578-808f-d9609e8faa18",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich habe dir 5 Tiere zum Üben vorbereitet, von Deutsch nach Englisch."
+              }
+            ],
+            "offers": [
+              {
+                "label": "Hund – dog\nKatze – cat\nPferd – horse\nVogel – bird\nFisch – fish",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "1b070807-ff1e-4578-808f-d9609e8faa18",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich habe dir 5 Tiere zum Üben vorbereitet, von Deutsch nach Englisch."
+              }
+            ],
+            "offers": [
+              {
+                "label": "Hund – dog\nKatze – cat\nPferd – horse\nVogel – bird\nFisch – fish",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "1b070807-ff1e-4578-808f-d9609e8faa18",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "offer.startable|vocab|/practice/topic",
+      "attempt": 2,
+      "reproduced": true,
+      "findings": [
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        },
+        {
+          "invariant": "vocabulary.direction",
+          "evidence": "[[\"en\",\"de\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"en\",\"de\"]]",
+          "kind": "vocab",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ],
+      "error": null,
+      "actions": [
+        {
+          "type": "message",
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "Ich",
+                "Ich bere",
+                "Ich bereite",
+                "Ich bereite dir",
+                "Ich bereite dir V",
+                "Ich bereite dir Vok",
+                "Ich bereite dir Vokabel",
+                "Ich bereite dir Vokabeln",
+                "Ich bereite dir Vokabeln zum",
+                "Ich bereite dir Vokabeln zum Thema",
+                "Ich bereite dir Vokabeln zum Thema Tiere",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor,",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor, von",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor, von Deutsch",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor, von Deutsch nach",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor, von Deutsch nach Englisch",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor, von Deutsch nach Englisch.",
+                "",
+                "Ich",
+                "Ich bere",
+                "Ich bereite",
+                "Ich bereite dir",
+                "Ich bereite dir V",
+                "Ich bereite dir Vok",
+                "Ich bereite dir Vokabel",
+                "Ich bereite dir Vokabeltraining",
+                "Ich bereite dir Vokabeltraining zum",
+                "Ich bereite dir Vokabeltraining zum Thema",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor."
+              ],
+              "ms": 7084,
+              "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+              "id": "dac233be-ea9a-43ca-ada8-19d8477d07a3"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich bereite dir Vokabeltraining zum Thema Tiere vor."
+              }
+            ],
+            "offers": [
+              {
+                "label": "der Hund – dog\ndie Katze – cat\nder Elefant – elephant\nder Vogel – bird\nder Fisch – fish",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "8791b3d9-49ad-4fac-aeea-2acf3f174819",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich bereite dir Vokabeltraining zum Thema Tiere vor."
+              }
+            ],
+            "offers": [
+              {
+                "label": "der Hund – dog\ndie Katze – cat\nder Elefant – elephant\nder Vogel – bird\nder Fisch – fish",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "8791b3d9-49ad-4fac-aeea-2acf3f174819",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich bereite dir Vokabeltraining zum Thema Tiere vor."
+              }
+            ],
+            "offers": [
+              {
+                "label": "der Hund – dog\ndie Katze – cat\nder Elefant – elephant\nder Vogel – bird\nder Fisch – fish",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "8791b3d9-49ad-4fac-aeea-2acf3f174819",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "offer.startable|vocab|/practice/topic",
+      "attempt": 3,
+      "reproduced": false,
+      "findings": [],
+      "error": "simulator: offer index no longer visible",
+      "actions": [
+        {
+          "type": "message",
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "Ich",
+                "Ich bere",
+                "Ich bereite",
+                "Ich bereite dir",
+                "Ich bereite dir ",
+                "Ich bereite dir 5",
+                "Ich bereite dir 5 Tier",
+                "Ich bereite dir 5 Tier-V",
+                "Ich bereite dir 5 Tier-Vok",
+                "Ich bereite dir 5 Tier-Vokabel",
+                "Ich bereite dir 5 Tier-Vokabeln",
+                "Ich bereite dir 5 Tier-Vokabeln von",
+                "Ich bereite dir 5 Tier-Vokabeln von Deutsch",
+                "Ich bereite dir 5 Tier-Vokabeln von Deutsch nach",
+                "Ich bereite dir 5 Tier-Vokabeln von Deutsch nach Englisch",
+                "Ich bereite dir 5 Tier-Vokabeln von Deutsch nach Englisch vor",
+                "Ich bereite dir 5 Tier-Vokabeln von Deutsch nach Englisch vor.",
+                "Ich bereite dir 5 Tier-Vokabeln von Deutsch nach Englisch vor.",
+                "",
+                "So",
+                "So kann",
+                "So kann ich",
+                "So kann ich das",
+                "So kann ich das hier",
+                "So kann ich das hier nicht",
+                "So kann ich das hier nicht direkt",
+                "So kann ich das hier nicht direkt starten",
+                "So kann ich das hier nicht direkt starten,",
+                "So kann ich das hier nicht direkt starten, weil",
+                "So kann ich das hier nicht direkt starten, weil ich",
+                "So kann ich das hier nicht direkt starten, weil ich dafür",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wort",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpa",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche.",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte ",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer engl",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übers",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung,",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung, dann",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung, dann frage",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung, dann frage ich",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung, dann frage ich dich",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung, dann frage ich dich genau",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung, dann frage ich dich genau so",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung, dann frage ich dich genau so ab",
+                "So kann ich das hier nicht direkt starten, weil ich dafür die Wortpaare brauche. Schreib mir bitte 5 deutsche Wörter mit ihrer englischen Übersetzung, dann frage ich dich genau so ab."
+              ],
+              "ms": 5187,
+              "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+              "id": "aa8d06a5-7a7b-4a33-8b35-1feda652a732"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        }
+      ]
+    },
+    {
+      "key": "vocabulary.direction|vocab|/buddy/messages",
+      "attempt": 1,
+      "reproduced": false,
+      "findings": [],
+      "error": "simulator: offer index no longer visible",
+      "actions": [
+        {
+          "type": "message",
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "K",
+                "Klar",
+                "Klar —",
+                "Klar — ich",
+                "Klar — ich bere",
+                "Klar — ich bereite",
+                "Klar — ich bereite dir",
+                "Klar — ich bereite dir ",
+                "Klar — ich bereite dir 5",
+                "Klar — ich bereite dir 5 Tier",
+                "Klar — ich bereite dir 5 Tier-W",
+                "Klar — ich bereite dir 5 Tier-Wörter",
+                "Klar — ich bereite dir 5 Tier-Wörter von",
+                "Klar — ich bereite dir 5 Tier-Wörter von Deutsch",
+                "Klar — ich bereite dir 5 Tier-Wörter von Deutsch nach",
+                "Klar — ich bereite dir 5 Tier-Wörter von Deutsch nach Englisch",
+                "Klar — ich bereite dir 5 Tier-Wörter von Deutsch nach Englisch vor",
+                "Klar — ich bereite dir 5 Tier-Wörter von Deutsch nach Englisch vor."
+              ],
+              "ms": 3586,
+              "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+              "id": "a730bb1f-21cc-4c96-bf2f-4af175616911"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        }
+      ]
+    },
+    {
+      "key": "vocabulary.direction|vocab|/buddy/messages",
+      "attempt": 2,
+      "reproduced": true,
+      "findings": [
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        },
+        {
+          "invariant": "vocabulary.direction",
+          "evidence": "[[\"en\",\"de\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"de\",\"en\"]]",
+          "kind": "vocab",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ],
+      "error": null,
+      "actions": [
+        {
+          "type": "message",
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "Ich",
+                "Ich bere",
+                "Ich bereite",
+                "Ich bereite dir",
+                "Ich bereite dir V",
+                "Ich bereite dir Vok",
+                "Ich bereite dir Vokabel",
+                "Ich bereite dir Vokabeltraining",
+                "Ich bereite dir Vokabeltraining zum",
+                "Ich bereite dir Vokabeltraining zum Thema",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor,",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die engl",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die englischen",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die englischen Wörter",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die englischen Wörter zu",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die englischen Wörter zu den",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die englischen Wörter zu den deutschen",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die englischen Wörter zu den deutschen sag",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die englischen Wörter zu den deutschen sagst",
+                "Ich bereite dir Vokabeltraining zum Thema Tiere vor, bei dem du die englischen Wörter zu den deutschen sagst.",
+                "",
+                "Ich",
+                "Ich habe",
+                "Ich habe dir",
+                "Ich habe dir ",
+                "Ich habe dir 5",
+                "Ich habe dir 5 engl",
+                "Ich habe dir 5 englische",
+                "Ich habe dir 5 englische Tier",
+                "Ich habe dir 5 englische Tierw",
+                "Ich habe dir 5 englische Tierwörter",
+                "Ich habe dir 5 englische Tierwörter zum",
+                "Ich habe dir 5 englische Tierwörter zum Ab",
+                "Ich habe dir 5 englische Tierwörter zum Abfragen",
+                "Ich habe dir 5 englische Tierwörter zum Abfragen vorbereitet",
+                "Ich habe dir 5 englische Tierwörter zum Abfragen vorbereitet."
+              ],
+              "ms": 6714,
+              "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+              "id": "3ed7b3c5-53fc-4d9c-bb7d-ac370137707c"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich habe dir 5 englische Tierwörter zum Abfragen vorbereitet."
+              }
+            ],
+            "offers": [
+              {
+                "label": "der Hund – dog\ndie Katze – cat\nder Vogel – bird\nder Fisch – fish\ndas Pferd – horse",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "a526deb0-b605-4e6d-acc1-c657dafa6b81",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich habe dir 5 englische Tierwörter zum Abfragen vorbereitet."
+              }
+            ],
+            "offers": [
+              {
+                "label": "der Hund – dog\ndie Katze – cat\nder Vogel – bird\nder Fisch – fish\ndas Pferd – horse",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "a526deb0-b605-4e6d-acc1-c657dafa6b81",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich habe dir 5 englische Tierwörter zum Abfragen vorbereitet."
+              }
+            ],
+            "offers": [
+              {
+                "label": "der Hund – dog\ndie Katze – cat\nder Vogel – bird\nder Fisch – fish\ndas Pferd – horse",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "a526deb0-b605-4e6d-acc1-c657dafa6b81",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "vocabulary.direction|vocab|/buddy/messages",
+      "attempt": 3,
+      "reproduced": true,
+      "findings": [
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        },
+        {
+          "invariant": "vocabulary.direction",
+          "evidence": "[[\"en\",\"de\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"de\",\"en\"]]",
+          "kind": "vocab",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ],
+      "error": null,
+      "actions": [
+        {
+          "type": "message",
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        },
+        {
+          "type": "tap",
+          "offer": 0,
+          "double": false
+        }
+      ],
+      "trace": [
+        {
+          "action": {
+            "type": "message",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+            "double": false
+          },
+          "observation": {
+            "conversation": [],
+            "offers": [],
+            "question": null
+          },
+          "turns": [
+            {
+              "http": 200,
+              "status": "done",
+              "code": null,
+              "replies": [
+                "",
+                "Ich",
+                "Ich habe",
+                "Ich habe dir",
+                "Ich habe dir V",
+                "Ich habe dir Vok",
+                "Ich habe dir Vokabel",
+                "Ich habe dir Vokabeln",
+                "Ich habe dir Vokabeln zu",
+                "Ich habe dir Vokabeln zu T",
+                "Ich habe dir Vokabeln zu Tieren",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet,",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet, und",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet, und zwar",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet, und zwar von",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet, und zwar von Deutsch",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet, und zwar von Deutsch nach",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet, und zwar von Deutsch nach Englisch",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet, und zwar von Deutsch nach Englisch.",
+                "Ich habe dir Vokabeln zu Tieren vorbereitet, und zwar von Deutsch nach Englisch. ",
+                "",
+                "Ich",
+                "Ich bere",
+                "Ich bereite",
+                "Ich bereite dir",
+                "Ich bereite dir V",
+                "Ich bereite dir Vok",
+                "Ich bereite dir Vokabel",
+                "Ich bereite dir Vokabeln",
+                "Ich bereite dir Vokabeln zum",
+                "Ich bereite dir Vokabeln zum Thema",
+                "Ich bereite dir Vokabeln zum Thema Tiere",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor:",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch →",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch,",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, ",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter,",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne L",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne Lück",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne Lückent",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne Lückentex",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne Lückentexte",
+                "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne Lückentexte."
+              ],
+              "ms": 7131,
+              "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+              "id": "a5f29405-8951-4fa7-8635-453f135e2cf3"
+            }
+          ],
+          "taps": [],
+          "findings": []
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne Lückentexte."
+              }
+            ],
+            "offers": [
+              {
+                "label": "cat – Katze\ndog – Hund\nhorse – Pferd\nbird – Vogel\nfish – Fisch",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "f48c83fa-42c6-48ce-9657-06fa61a9f539",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne Lückentexte."
+              }
+            ],
+            "offers": [
+              {
+                "label": "cat – Katze\ndog – Hund\nhorse – Pferd\nbird – Vogel\nfish – Fisch",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "f48c83fa-42c6-48ce-9657-06fa61a9f539",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        },
+        {
+          "action": {
+            "type": "tap",
+            "offer": 0,
+            "double": false
+          },
+          "observation": {
+            "conversation": [
+              {
+                "who": "learner",
+                "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+              },
+              {
+                "who": "buddy",
+                "text": "Ich bereite dir Vokabeln zum Thema Tiere vor: Deutsch → Englisch, 5 Wörter, ohne Lückentexte."
+              }
+            ],
+            "offers": [
+              {
+                "label": "cat – Katze\ndog – Hund\nhorse – Pferd\nbird – Vogel\nfish – Fisch",
+                "kind": "vocab"
+              }
+            ],
+            "question": null
+          },
+          "turns": [],
+          "taps": [
+            {
+              "action": "f48c83fa-42c6-48ce-9657-06fa61a9f539",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "http": 422,
+              "session": null,
+              "error": {
+                "error": {
+                  "code": "invalid_input",
+                  "message": "Invalid request",
+                  "details": {
+                    "issues": [
+                      {
+                        "path": "figures",
+                        "message": "Array must contain at least 1 element(s)"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "findings": [
+            {
+              "invariant": "offer.startable",
+              "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+              "kind": "vocab",
+              "route": "/practice/topic",
+              "category": "app"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "receipts": [
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 17,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 1754,
+        "latencyMs": 663
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 7366,
+        "outputTokens": 640,
+        "thoughtTokens": 0,
+        "cachedTokens": 6016,
+        "costMicros": 9245,
+        "latencyMs": 2902
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1898,
+        "outputTokens": 17,
+        "thoughtTokens": 18,
+        "cachedTokens": 1536,
+        "costMicros": 1740,
+        "latencyMs": 722
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3597,
+        "outputTokens": 163,
+        "thoughtTokens": 892,
+        "cachedTokens": 2688,
+        "costMicros": 8190,
+        "latencyMs": 5711
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3640,
+        "outputTokens": 149,
+        "thoughtTokens": 950,
+        "cachedTokens": 3456,
+        "costMicros": 8444,
+        "latencyMs": 6490
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12462,
+        "outputTokens": 78,
+        "thoughtTokens": 24,
+        "cachedTokens": 10880,
+        "costMicros": 10787,
+        "latencyMs": 1437
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 392,
+        "outputTokens": 44,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 228,
+        "latencyMs": 734
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12431,
+        "outputTokens": 62,
+        "thoughtTokens": 82,
+        "cachedTokens": 10880,
+        "costMicros": 10969,
+        "latencyMs": 1459
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12583,
+        "outputTokens": 80,
+        "thoughtTokens": 55,
+        "cachedTokens": 12288,
+        "costMicros": 11050,
+        "latencyMs": 1563
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 461,
+        "outputTokens": 67,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 292,
+        "latencyMs": 970
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12621,
+        "outputTokens": 110,
+        "thoughtTokens": 93,
+        "cachedTokens": 10880,
+        "costMicros": 11418,
+        "latencyMs": 1839
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 456,
+        "outputTokens": 65,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 287,
+        "latencyMs": 804
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 456,
+        "outputTokens": 63,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 284,
+        "latencyMs": 720
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11608,
+        "outputTokens": 106,
+        "thoughtTokens": 54,
+        "cachedTokens": 10880,
+        "costMicros": 10369,
+        "latencyMs": 1695
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11725,
+        "outputTokens": 121,
+        "thoughtTokens": 175,
+        "cachedTokens": 11392,
+        "costMicros": 11139,
+        "latencyMs": 2383
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 377,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 376,
+        "latencyMs": 504
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2327,
+        "outputTokens": 435,
+        "thoughtTokens": 0,
+        "cachedTokens": 2176,
+        "costMicros": 4074,
+        "latencyMs": 2055
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 436,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 220,
+        "latencyMs": 759
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 436,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 220,
+        "latencyMs": 568
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 436,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 220,
+        "latencyMs": 602
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 17,
+        "thoughtTokens": 0,
+        "cachedTokens": 1664,
+        "costMicros": 1754,
+        "latencyMs": 649
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 7366,
+        "outputTokens": 598,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 9038,
+        "latencyMs": 3144
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1898,
+        "outputTokens": 17,
+        "thoughtTokens": 23,
+        "cachedTokens": 0,
+        "costMicros": 1764,
+        "latencyMs": 784
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3597,
+        "outputTokens": 64,
+        "thoughtTokens": 245,
+        "cachedTokens": 3456,
+        "costMicros": 4498,
+        "latencyMs": 2223
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12450,
+        "outputTokens": 79,
+        "thoughtTokens": 74,
+        "cachedTokens": 6784,
+        "costMicros": 11029,
+        "latencyMs": 1684
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12420,
+        "outputTokens": 62,
+        "thoughtTokens": 103,
+        "cachedTokens": 10880,
+        "costMicros": 11064,
+        "latencyMs": 1631
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12572,
+        "outputTokens": 104,
+        "thoughtTokens": 30,
+        "cachedTokens": 6784,
+        "costMicros": 11036,
+        "latencyMs": 1345
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12626,
+        "outputTokens": 103,
+        "thoughtTokens": 148,
+        "cachedTokens": 10880,
+        "costMicros": 11659,
+        "latencyMs": 2117
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12732,
+        "outputTokens": 98,
+        "thoughtTokens": 144,
+        "cachedTokens": 10880,
+        "costMicros": 11702,
+        "latencyMs": 1858
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 361,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 363,
+        "latencyMs": 517
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 561,
+        "outputTokens": 14,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 533,
+        "latencyMs": 633
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3911,
+        "outputTokens": 174,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 4088,
+        "latencyMs": 1323
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 17,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 1754,
+        "latencyMs": 662
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 7366,
+        "outputTokens": 592,
+        "thoughtTokens": 0,
+        "cachedTokens": 7040,
+        "costMicros": 9008,
+        "latencyMs": 2899
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1892,
+        "outputTokens": 17,
+        "thoughtTokens": 17,
+        "cachedTokens": 0,
+        "costMicros": 1730,
+        "latencyMs": 769
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3597,
+        "outputTokens": 59,
+        "thoughtTokens": 259,
+        "cachedTokens": 3456,
+        "costMicros": 4542,
+        "latencyMs": 2321
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12450,
+        "outputTokens": 71,
+        "thoughtTokens": 16,
+        "cachedTokens": 12288,
+        "costMicros": 10702,
+        "latencyMs": 1160
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12411,
+        "outputTokens": 56,
+        "thoughtTokens": 72,
+        "cachedTokens": 10880,
+        "costMicros": 10873,
+        "latencyMs": 1409
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12563,
+        "outputTokens": 67,
+        "thoughtTokens": 47,
+        "cachedTokens": 10880,
+        "costMicros": 10929,
+        "latencyMs": 1395
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12587,
+        "outputTokens": 99,
+        "thoughtTokens": 136,
+        "cachedTokens": 10880,
+        "costMicros": 11548,
+        "latencyMs": 2093
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2023,
+        "outputTokens": 17,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 1754,
+        "latencyMs": 609
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 7366,
+        "outputTokens": 553,
+        "thoughtTokens": 0,
+        "cachedTokens": 7040,
+        "costMicros": 8815,
+        "latencyMs": 2913
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "figures",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1892,
+        "outputTokens": 17,
+        "thoughtTokens": 20,
+        "cachedTokens": 0,
+        "costMicros": 1745,
+        "latencyMs": 860
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_check",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 3597,
+        "outputTokens": 165,
+        "thoughtTokens": 484,
+        "cachedTokens": 0,
+        "costMicros": 6181,
+        "latencyMs": 4396
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12467,
+        "outputTokens": 71,
+        "thoughtTokens": 50,
+        "cachedTokens": 12288,
+        "costMicros": 10885,
+        "latencyMs": 1418
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12429,
+        "outputTokens": 68,
+        "thoughtTokens": 211,
+        "cachedTokens": 10880,
+        "costMicros": 11635,
+        "latencyMs": 2455
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12581,
+        "outputTokens": 76,
+        "thoughtTokens": 99,
+        "cachedTokens": 10880,
+        "costMicros": 11246,
+        "latencyMs": 1595
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12615,
+        "outputTokens": 86,
+        "thoughtTokens": 71,
+        "cachedTokens": 10880,
+        "costMicros": 11185,
+        "latencyMs": 1773
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11608,
+        "outputTokens": 106,
+        "thoughtTokens": 12,
+        "cachedTokens": 11392,
+        "costMicros": 10161,
+        "latencyMs": 1297
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11725,
+        "outputTokens": 123,
+        "thoughtTokens": 366,
+        "cachedTokens": 10880,
+        "costMicros": 12094,
+        "latencyMs": 3599
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 375,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 374,
+        "latencyMs": 577
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2325,
+        "outputTokens": 430,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 4047,
+        "latencyMs": 2081
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11608,
+        "outputTokens": 102,
+        "thoughtTokens": 92,
+        "cachedTokens": 11392,
+        "costMicros": 10537,
+        "latencyMs": 1907
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11725,
+        "outputTokens": 121,
+        "thoughtTokens": 182,
+        "cachedTokens": 11520,
+        "costMicros": 11173,
+        "latencyMs": 2439
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 376,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 375,
+        "latencyMs": 582
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2326,
+        "outputTokens": 433,
+        "thoughtTokens": 0,
+        "cachedTokens": 2176,
+        "costMicros": 4063,
+        "latencyMs": 2106
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11608,
+        "outputTokens": 102,
+        "thoughtTokens": 139,
+        "cachedTokens": 11392,
+        "costMicros": 10770,
+        "latencyMs": 2024
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11725,
+        "outputTokens": 83,
+        "thoughtTokens": 297,
+        "cachedTokens": 11392,
+        "costMicros": 11555,
+        "latencyMs": 3121
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11608,
+        "outputTokens": 110,
+        "thoughtTokens": 139,
+        "cachedTokens": 11392,
+        "costMicros": 10810,
+        "latencyMs": 2348
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 360,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 362,
+        "latencyMs": 525
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2311,
+        "outputTokens": 36,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 2085,
+        "latencyMs": 678
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11608,
+        "outputTokens": 110,
+        "thoughtTokens": 83,
+        "cachedTokens": 10880,
+        "costMicros": 10532,
+        "latencyMs": 2049
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11725,
+        "outputTokens": 124,
+        "thoughtTokens": 133,
+        "cachedTokens": 11520,
+        "costMicros": 10946,
+        "latencyMs": 1839
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 376,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 375,
+        "latencyMs": 549
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2326,
+        "outputTokens": 430,
+        "thoughtTokens": 0,
+        "cachedTokens": 2176,
+        "costMicros": 4048,
+        "latencyMs": 2231
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11608,
+        "outputTokens": 104,
+        "thoughtTokens": 55,
+        "cachedTokens": 11392,
+        "costMicros": 10364,
+        "latencyMs": 1503
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11725,
+        "outputTokens": 131,
+        "thoughtTokens": 205,
+        "cachedTokens": 11520,
+        "costMicros": 11337,
+        "latencyMs": 2815
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 371,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 371,
+        "latencyMs": 602
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2321,
+        "outputTokens": 428,
+        "thoughtTokens": 0,
+        "cachedTokens": 2176,
+        "costMicros": 4034,
+        "latencyMs": 2162
+      },
+      "reservedUsd": 0
+    }
+  ],
+  "runs": [
+    "young-reader-photo-to-practice",
+    "dictating-vocab-not-cloze"
+  ],
+  "coverageGaps": [
+    "Device audio quality requires controlled recording and human listening.",
+    "Short/mixed-language text cannot be reliably language-classified.",
+    "Human calibration remains unverified until supplied labels pass the calibration gate.",
+    "Standalone speech quality and all free-text paths need separate safeguarding probes."
+  ],
+  "interpretation": {
+    "status": "diagnostic-only",
+    "excludeFromConfirmedFindings": true,
+    "reason": "This run predates the corrected mobile offer adapter; additional actor/predicate limitations are documented in child-explorer-pilot-2026-10-24.md. Original observations and counters preserved."
+  }
+}

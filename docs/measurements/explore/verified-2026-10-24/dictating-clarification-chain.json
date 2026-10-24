@@ -1,0 +1,549 @@
+{
+  "goal": {
+    "id": "clarification-chain",
+    "issue": 938,
+    "wants": "A vocabulary request continues after answering the language question",
+    "messages": [
+      "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "Deutsch und Englisch."
+    ],
+    "expect": "offer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "9f250321-b68d-4473-9b57-e5e9e655857e",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:32:19.093Z",
+      "updated_at": "2026-10-24T17:32:19.096Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "9af66518-fc43-4288-8aa8-0b783f2d9a8c",
+        "role": "learner",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b3e1c89f-5eae-47ec-83f8-8e5d8d4292af",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7965d73a-e5b6-449c-9799-f9b761d43505",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Englisch",
+          "Französisch",
+          "ein anderes Fach",
+          "aus einem bestimmten Thema"
+        ],
+        "reply_to_id": "9af66518-fc43-4288-8aa8-0b783f2d9a8c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2bc65455-7385-44cd-a412-44dcb5493816",
+        "role": "learner",
+        "text": "Deutsch und Englisch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "4fb42447-8c2b-49e6-bae0-300ab3c43ce6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2ff13f15-e3c3-4a63-b9d4-8eea57dca18b",
+        "role": "buddy",
+        "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Deutsch → Englisch",
+          "Englisch → Deutsch",
+          "gemischt"
+        ],
+        "reply_to_id": "2bc65455-7385-44cd-a412-44dcb5493816",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4f3749b8-dc93-4f8f-8237-8e6fbfadf6e1",
+        "role": "learner",
+        "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2518eb8d-786d-4bef-b8be-41618688c844",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3ad96af3-70b7-4f67-9715-19d9d8aac430",
+        "role": "buddy",
+        "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Schule",
+          "Tiere",
+          "Essen",
+          "Alltag"
+        ],
+        "reply_to_id": "4f3749b8-dc93-4f8f-8237-8e6fbfadf6e1",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ac5daec0-a2bb-49b9-b510-f095d77437d9",
+        "role": "learner",
+        "text": "Ich möchte Vokabeln zum Thema Alltag, bitte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "809538f7-2bdc-4bb3-976f-f7e4015187a7",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5e2e1298-d5c7-4249-b17a-305b23b3d59f",
+        "role": "buddy",
+        "text": "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ac5daec0-a2bb-49b9-b510-f095d77437d9",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "9f250321-b68d-4473-9b57-e5e9e655857e",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 9,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:32:19.093Z",
+      "updated_at": "2026-10-24T17:32:34.171Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — zu",
+            "Klar — zu welchem",
+            "Klar — zu welchem Thema",
+            "Klar — zu welchem Thema oder",
+            "Klar — zu welchem Thema oder aus",
+            "Klar — zu welchem Thema oder aus welchem",
+            "Klar — zu welchem Thema oder aus welchem Fach",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die ",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die 20",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 V",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vok",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabel",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?",
+            "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?"
+          ],
+          "ms": 2352,
+          "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+          "id": "b3e1c89f-5eae-47ec-83f8-8e5d8d4292af"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Deutsch und Englisch.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Me",
+            "Meinst",
+            "Meinst du",
+            "Meinst du V",
+            "Meinst du Vok",
+            "Meinst du Vokabel",
+            "Meinst du Vokabeln",
+            "Meinst du Vokabeln von",
+            "Meinst du Vokabeln von Deutsch",
+            "Meinst du Vokabeln von Deutsch nach",
+            "Meinst du Vokabeln von Deutsch nach Englisch",
+            "Meinst du Vokabeln von Deutsch nach Englisch,",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gem",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?",
+            "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?"
+          ],
+          "ms": 1998,
+          "text": "Deutsch und Englisch.",
+          "id": "4fb42447-8c2b-49e6-bae0-300ab3c43ce6"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — zu",
+            "Klar — zu welchem",
+            "Klar — zu welchem Thema",
+            "Klar — zu welchem Thema sollen",
+            "Klar — zu welchem Thema sollen die",
+            "Klar — zu welchem Thema sollen die ",
+            "Klar — zu welchem Thema sollen die 20",
+            "Klar — zu welchem Thema sollen die 20 V",
+            "Klar — zu welchem Thema sollen die 20 Vok",
+            "Klar — zu welchem Thema sollen die 20 Vokabel",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein,",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule,",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere,",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?",
+            "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?"
+          ],
+          "ms": 3021,
+          "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch.",
+          "id": "2518eb8d-786d-4bef-b8be-41618688c844"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich möchte Vokabeln zum Thema Alltag, bitte.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema oder aus welchem Fach sollen die 20 Vokabeln sein?"
+          },
+          {
+            "who": "learner",
+            "text": "Deutsch und Englisch."
+          },
+          {
+            "who": "buddy",
+            "text": "Meinst du Vokabeln von Deutsch nach Englisch, von Englisch nach Deutsch oder gemischt?"
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein, zum Beispiel Schule, Tiere, Essen oder Alltag?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich bere",
+            "Ich bereite",
+            "Ich bereite dir",
+            "Ich bereite dir einen",
+            "Ich bereite dir einen gem",
+            "Ich bereite dir einen gemisch",
+            "Ich bereite dir einen gemischten",
+            "Ich bereite dir einen gemischten V",
+            "Ich bereite dir einen gemischten Vok",
+            "Ich bereite dir einen gemischten Vokabel",
+            "Ich bereite dir einen gemischten Vokabeltest",
+            "Ich bereite dir einen gemischten Vokabeltest zum",
+            "Ich bereite dir einen gemischten Vokabeltest zum Thema",
+            "Ich bereite dir einen gemischten Vokabeltest zum Thema Alltag",
+            "Ich bereite dir einen gemischten Vokabeltest zum Thema Alltag vor",
+            "Ich bereite dir einen gemischten Vokabeltest zum Thema Alltag vor.",
+            "",
+            "Damit",
+            "Damit kann",
+            "Damit kann ich",
+            "Damit kann ich hier",
+            "Damit kann ich hier noch",
+            "Damit kann ich hier noch keinen",
+            "Damit kann ich hier noch keinen ",
+            "Damit kann ich hier noch keinen 20",
+            "Damit kann ich hier noch keinen 20er",
+            "Damit kann ich hier noch keinen 20er-V",
+            "Damit kann ich hier noch keinen 20er-Vok",
+            "Damit kann ich hier noch keinen 20er-Vokabel",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten —",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die V",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vok",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabel",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpa",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst,",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „W",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort –",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übers",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“.",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotograf",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt,",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test",
+            "Damit kann ich hier noch keinen 20er-Vokabeltest starten — ich brauche die Vokabelpaare selbst, also jeweils „Wort – Übersetzung“. Schreib sie mir hier rein oder fotografier ein Blatt, dann mache ich dir daraus einen Test."
+          ],
+          "ms": 5940,
+          "text": "Ich möchte Vokabeln zum Thema Alltag, bitte.",
+          "id": "809538f7-2bdc-4bb3-976f-f7e4015187a7"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "offer",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "dictating-clarification-chain",
+  "persona": {
+    "id": "dictating",
+    "age": 10,
+    "locale": "de",
+    "style": "Dictates long sentences with recognition mistakes",
+    "behaviour": "Changes topic then returns to original wish"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich möchte gemischte Vokabeln, bitte. Also sowohl Deutsch nach Englisch als auch Englisch nach Deutsch.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich möchte Vokabeln zum Thema Alltag, bitte.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

@@ -1,0 +1,557 @@
+{
+  "goal": {
+    "id": "photo-to-practice",
+    "issue": 944,
+    "wants": "Practice based on my photographed fractions worksheet",
+    "messages": [
+      "Ich möchte die Aufgaben auf meinem Blatt üben."
+    ],
+    "expect": "photo"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "c0cc185e-9f56-427d-9026-d27a42849048",
+        "role": "learner",
+        "text": "",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "sheet": {
+          "material_id": "088394f1-288e-41c5-b03f-44828eed8ee9",
+          "pages": 1,
+          "stage": "ready"
+        },
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3843ff93-9702-4f6c-9fb5-d9bbbb4d8d94",
+        "role": "buddy",
+        "text": "Wenn du magst, fang jetzt mit der ersten Aufgabe an. Nimm dir dafür nur ein paar Minuten und arbeite Schritt für Schritt.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "80be0e1f-1768-489f-ad8b-464ae0057a33",
+          "kind": "checkin",
+          "origin": "buddy",
+          "title": "Brüche kürzen ist bereit",
+          "body": "Wenn du magst, fang jetzt mit der ersten Aufgabe an. Nimm dir dafür nur ein paar Minuten und arbeite Schritt für Schritt.",
+          "why": "Die Übung ist schon vorbereitet und kann direkt genutzt werden.",
+          "status": "in_app",
+          "send_at": null,
+          "sent_at": null,
+          "opened_at": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "ba03d787-a479-4f67-b7ee-7bd49ff362ec",
+          "title": "Brüche kürzen",
+          "question_count": 2,
+          "est_minutes": 5,
+          "outcome": null
+        },
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4f76e948-a559-43f2-b87b-b6c39ba39f92",
+        "role": "learner",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f376ad91-d18b-4153-ad98-2d0e5471ce5d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aebf3884-4c68-4092-a9f4-3e9b5923ad69",
+        "role": "buddy",
+        "text": "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner Nachricht und leg los.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "4f76e948-a559-43f2-b87b-b6c39ba39f92",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "421bc1d7-e836-41eb-9768-a94ac5a31ed9",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "tool": "show_ready",
+              "ready": true,
+              "title": "Brüche kürzen",
+              "outcome": null,
+              "step_id": "ba03d787-a479-4f67-b7ee-7bd49ff362ec",
+              "est_minutes": 5,
+              "question_count": 2
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "16a86a50-aa2b-408b-970a-ada2189837fa",
+        "role": "learner",
+        "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8054c3d0-5bc7-43f1-9cd6-1c95aa13d004",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "bb680442-ea72-4bf6-9d44-fd3d5e91f182",
+        "role": "buddy",
+        "text": "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste zusammen Schritt für Schritt durch.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "16a86a50-aa2b-408b-970a-ada2189837fa",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cf8aa4fe-54d5-4751-bd65-fc88d9be8db3",
+        "role": "learner",
+        "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "02231f93-b1c3-45b9-aedd-63b8a9fbe692",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "872142eb-2cf2-45da-81d7-2ba798211ec4",
+        "role": "buddy",
+        "text": "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner. Welche Zahl könnte das sein?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "3",
+          "2",
+          "4",
+          "1"
+        ],
+        "reply_to_id": "cf8aa4fe-54d5-4751-bd65-fc88d9be8db3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "23adcc50-7888-4294-9b6a-f2a230d4b682",
+        "kind": "formula",
+        "prompt": "Kürze $\\frac{9}{12}$.",
+        "answer": "$\\frac{3}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "a566c482-76e6-45a2-8b10-c587801ac011",
+        "kind": "formula",
+        "prompt": "Kürze $\\frac{8}{12}$.",
+        "answer": "$\\frac{2}{3}$",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Brüche kürzen",
+        "state": "prepared",
+        "agreed": false
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "photo"
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [],
+      "taps": [],
+      "findings": [],
+      "response": {
+        "id": "088394f1-288e-41c5-b03f-44828eed8ee9",
+        "title": "Brüche kürzen",
+        "status": "ready",
+        "failure_reason": null,
+        "photos_deleted": false,
+        "item_count": 2,
+        "speak_count": 0,
+        "purpose": "study",
+        "source": "sheet",
+        "session_id": null,
+        "session_status": null,
+        "page_problems": [],
+        "items_incomplete": false,
+        "not_practicable": [],
+        "photo_count": 1,
+        "merged_into": null,
+        "subject_name": "Mathematik",
+        "goal_id": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "double": true
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": ""
+          },
+          {
+            "who": "buddy",
+            "text": "Wenn du magst, fang jetzt mit der ersten Aufgabe an. Nimm dir dafür nur ein paar Minuten und arbeite Schritt für Schritt."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich hab",
+            "Ich hab das",
+            "Ich hab das Ü",
+            "Ich hab das Üben",
+            "Ich hab das Üben auf",
+            "Ich hab das Üben auf deinem",
+            "Ich hab das Üben auf deinem Blatt",
+            "Ich hab das Üben auf deinem Blatt für",
+            "Ich hab das Üben auf deinem Blatt für dich",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet.",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tip",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner Nachricht",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner Nachricht und",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner Nachricht und leg",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner Nachricht und leg los",
+            "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner Nachricht und leg los."
+          ],
+          "ms": 1465,
+          "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+          "id": "f376ad91-d18b-4153-ad98-2d0e5471ce5d"
+        },
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [],
+          "ms": 10,
+          "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+          "id": "f376ad91-d18b-4153-ad98-2d0e5471ce5d"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": ""
+          },
+          {
+            "who": "buddy",
+            "text": "Wenn du magst, fang jetzt mit der ersten Aufgabe an. Nimm dir dafür nur ein paar Minuten und arbeite Schritt für Schritt."
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner Nachricht und leg los."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "",
+            "Auf",
+            "Auf dem",
+            "Auf dem Blatt",
+            "Auf dem Blatt steht",
+            "Auf dem Blatt steht bei",
+            "Auf dem Blatt steht bei der",
+            "Auf dem Blatt steht bei der Ü",
+            "Auf dem Blatt steht bei der Übung",
+            "Auf dem Blatt steht bei der Übung:",
+            "Auf dem Blatt steht bei der Übung: „",
+            "Auf dem Blatt steht bei der Übung: „K",
+            "Auf dem Blatt steht bei der Übung: „Kür",
+            "Auf dem Blatt steht bei der Übung: „Kürze",
+            "Auf dem Blatt steht bei der Übung: „Kürze ",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und ",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“.",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst,",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste zusammen",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste zusammen Schritt",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste zusammen Schritt für",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste zusammen Schritt für Schritt",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste zusammen Schritt für Schritt durch",
+            "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste zusammen Schritt für Schritt durch."
+          ],
+          "ms": 3057,
+          "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+          "id": "8054c3d0-5bc7-43f1-9cd6-1c95aa13d004"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": ""
+          },
+          {
+            "who": "buddy",
+            "text": "Wenn du magst, fang jetzt mit der ersten Aufgabe an. Nimm dir dafür nur ein paar Minuten und arbeite Schritt für Schritt."
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich hab das Üben auf deinem Blatt für dich geöffnet. Tippe einfach auf den Start unter meiner Nachricht und leg los."
+          },
+          {
+            "who": "learner",
+            "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?"
+          },
+          {
+            "who": "buddy",
+            "text": "Auf dem Blatt steht bei der Übung: „Kürze 9/12 und 8/12“. Wenn du willst, gehen wir die erste zusammen Schritt für Schritt durch."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich hel",
+            "Ich helfe",
+            "Ich helfe dir",
+            "Ich helfe dir gern",
+            "Ich helfe dir gern beim",
+            "Ich helfe dir gern beim Re",
+            "Ich helfe dir gern beim Rechnen",
+            "Ich helfe dir gern beim Rechnen,",
+            "Ich helfe dir gern beim Rechnen, aber",
+            "Ich helfe dir gern beim Rechnen, aber die",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schre",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin.",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an,",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl ",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch ",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 te",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt —",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Br",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner.",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner. Welche",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner. Welche Zahl",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner. Welche Zahl könnte",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner. Welche Zahl könnte das",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner. Welche Zahl könnte das sein",
+            "Ich helfe dir gern beim Rechnen, aber die Lösung schreibe ich dir nicht einfach hin. Schau dir an, welche Zahl sowohl 9 als auch 12 teilt — damit wird der Bruch kleiner. Welche Zahl könnte das sein?"
+          ],
+          "ms": 1863,
+          "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+          "id": "02231f93-b1c3-45b9-aedd-63b8a9fbe692"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "photo",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "young-reader-photo-to-practice",
+  "persona": {
+    "id": "young-reader",
+    "age": 8,
+    "locale": "de",
+    "style": "Reads slowly; very short phonetic spelling",
+    "behaviour": "Impatient, taps twice when waiting"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

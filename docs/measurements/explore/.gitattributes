@@ -1,0 +1,2 @@
+# Full machine-produced transcripts remain available without obscuring the tooling diff.
+*.json linguist-generated=true

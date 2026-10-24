@@ -1,0 +1,570 @@
+{
+  "goal": {
+    "id": "learning-001",
+    "issue": 106,
+    "wants": "Understand fractions from zero, and a promise up front that it will not be the way the teacher said it.",
+    "messages": [
+      "erklär mal brüche aber einfach"
+    ],
+    "expect": "answer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+        "role": "learner",
+        "text": "erklär mal brüche aber einfach",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "b7025bfa-9156-4a9e-9755-decfabe31adb",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e9a0f581-a66b-4b3d-8e5d-a485c60d2b00",
+        "role": "buddy",
+        "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "lesen",
+          "vergleichen",
+          "rechnen"
+        ],
+        "reply_to_id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+        "role": "learner",
+        "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e7167f0f-7c93-4ff9-9c88-6d314bcb2938",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "db66ce7d-d611-43e9-a3f6-61d4082fc493",
+        "role": "buddy",
+        "text": "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Wasser",
+          "Pizza",
+          "Kuchen"
+        ],
+        "reply_to_id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+        "role": "learner",
+        "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e0fb7202-41f4-4dc1-a3ce-d86a00c8e020",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b8019583-fc67-4768-ae53-4f55642a09e9",
+        "role": "buddy",
+        "text": "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Ja, mit Pizza",
+          "Ja, mit Wasser",
+          "Nein, noch ein anderes Beispiel"
+        ],
+        "reply_to_id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "erklär mal brüche aber einfach",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Ein",
+            "Klar: Ein Br",
+            "Klar: Ein Bruch",
+            "Klar: Ein Bruch ist",
+            "Klar: Ein Bruch ist wie",
+            "Klar: Ein Bruch ist wie ein",
+            "Klar: Ein Bruch ist wie ein Kuchen",
+            "Klar: Ein Bruch ist wie ein Kuchen,",
+            "Klar: Ein Bruch ist wie ein Kuchen, der",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stück",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke gete",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist.",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Ob",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht,",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stück",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast,",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten,",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen gete",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde —",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$:",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier.",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Mö",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du,",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich ze",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige,",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Br",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder ver",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergle",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?",
+            "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?"
+          ],
+          "ms": 1317,
+          "text": "erklär mal brüche aber einfach",
+          "id": "b7025bfa-9156-4a9e-9755-decfabe31adb"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — stell",
+            "Klar — stell dir",
+            "Klar — stell dir einen",
+            "Klar — stell dir einen Sch",
+            "Klar — stell dir einen Schok",
+            "Klar — stell dir einen Schokorie",
+            "Klar — stell dir einen Schokoriegel",
+            "Klar — stell dir einen Schokoriegel vor",
+            "Klar — stell dir einen Schokoriegel vor,",
+            "Klar — stell dir einen Schokoriegel vor, der",
+            "Klar — stell dir einen Schokoriegel vor, der in",
+            "Klar — stell dir einen Schokoriegel vor, der in ",
+            "Klar — stell dir einen Schokoriegel vor, der in 4",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stück",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke gete",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist.",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt:",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast ",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen ",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 St",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken,",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon;",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt:",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast ",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von ",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 St",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken,",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen R",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel.",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Mö",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza",
+            "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?"
+          ],
+          "ms": 1410,
+          "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+          "id": "e7167f0f-7c93-4ff9-9c88-6d314bcb2938"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?"
+          },
+          {
+            "who": "learner",
+            "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Der",
+            "Der Str",
+            "Der Strich",
+            "Der Strich in",
+            "Der Strich in $",
+            "Der Strich in $\\frac",
+            "Der Strich in $\\frac{",
+            "Der Strich in $\\frac{0",
+            "Der Strich in $\\frac{0}{",
+            "Der Strich in $\\frac{0}{4",
+            "Der Strich in $\\frac{0}{4}$",
+            "Der Strich in $\\frac{0}{4}$ und",
+            "Der Strich in $\\frac{0}{4}$ und $",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Tr",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trenn",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie:",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stück",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke,",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast,",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stück",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen.",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon ",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von ",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da —",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur ",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch,",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an.",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen",
+            "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen?"
+          ],
+          "ms": 1382,
+          "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+          "id": "e0fb7202-41f4-4dc1-a3ce-d86a00c8e020"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "execution.error",
+      "kind": "answer",
+      "route": "/explorer",
+      "evidence": "simulator: no current question",
+      "category": "simulator"
+    }
+  ],
+  "id": "new-german-learning-001",
+  "persona": {
+    "id": "new-german",
+    "age": 13,
+    "locale": "de",
+    "style": "Arabic first language, beginner German",
+    "behaviour": "Misunderstands terminology, asks for clarification"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "hint"
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "error": "simulator: no current question",
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": null
+    },
+    "disputed": [
+      "faithful"
+    ],
+    "clean": false
+  }
+}

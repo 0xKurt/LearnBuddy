@@ -1,0 +1,157 @@
+[
+  {
+    "invariant": "goal.start|photo|/buddy/messages",
+    "actions": [
+      {
+        "type": "photo"
+      },
+      {
+        "type": "message",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Lass uns mit der ersten Aufgabe auf deinem Arbeitsblatt anfangen. Was steht dort?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Lass uns die erste Aufgabe zusammen machen. Kürze den Bruch 9/12. Überlege, durch welche Zahl du Zähler und Nenner teilen kannst, damit der Bruch kleiner wird.",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "photo-to-practice",
+      "issue": 944,
+      "wants": "Practice based on my photographed fractions worksheet",
+      "messages": [
+        "Ich möchte die Aufgaben auf meinem Blatt üben."
+      ],
+      "expect": "photo"
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "offer.startable|vocab|/practice/topic",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "vocab-not-cloze",
+      "issue": 940,
+      "wants": "Vocabulary cards, never cloze exercises",
+      "messages": [
+        "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+      ],
+      "expect": "vocab",
+      "count": 5
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "vocabulary.direction|vocab|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "vocab-not-cloze",
+      "issue": 940,
+      "wants": "Vocabulary cards, never cloze exercises",
+      "messages": [
+        "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+      ],
+      "expect": "vocab",
+      "count": 5
+    },
+    "requiredPrefix": []
+  }
+]

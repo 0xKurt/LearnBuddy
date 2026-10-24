@@ -1,0 +1,1194 @@
+{
+  "build": "ef5703876c00ac33fa8fd0245a707be07d9e43e6",
+  "sourceHash": "af5e759c5cb96a85061c10d382cbf8fe7b42de924dd08e59373a7eaf00a2d4fe",
+  "mode": "pilot",
+  "models": {
+    "buddy": "gpt-5.4-mini",
+    "explorer": "gpt-4.1-mini"
+  },
+  "expected": 24,
+  "completed": 9,
+  "aborted": "interrupted: SIGINT",
+  "passed": false,
+  "limits": {
+    "maxSteps": 5,
+    "maxUsd": 8,
+    "maxMs": 2700000
+  },
+  "economics": {
+    "confirmed": 6,
+    "receiptUsd": 0.18972695999999992,
+    "upperUsd": 0.66564745,
+    "usdPerEuro": 1.1193,
+    "costEuro": 0.5946997677119629,
+    "confirmedPerEuro": 10.089124505772537
+  },
+  "humanCalibration": {
+    "ready": false,
+    "calibration": 0,
+    "holdout": 0,
+    "falseAlarmRate": null,
+    "missRate": null
+  },
+  "humanSample": [
+    "young-reader-topic-vocabulary"
+  ],
+  "findings": [
+    {
+      "invariant": "vocabulary.chat-count",
+      "evidence": "wanted 20 visible pair rows, observed counts 0: Klar — wir lernen englische Vokabeln. Wenn du willst, kannst du direkt mit den Wörtern aus der Übung anfangen.",
+      "kind": "chat-vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "vocabulary.count",
+      "evidence": "wanted 5, got 20",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "offer",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "picture.present",
+      "evidence": "No validated picture action in API conversation",
+      "kind": "picture",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "summary.condensation",
+      "evidence": "length 250/700, word overlap 1.00",
+      "kind": "summary",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "reminder.next-step",
+      "evidence": "[{\"id\":\"b5c6daa3-4617-4697-8266-3b16810df822\",\"role\":\"buddy\",\"text\":\"Wie verabredet: Englisch üben.\",\"status\":\"done\",\"failure_code\":null,\"client_message_id\":null,\"options\":null,\"reply_to_id\":null,\"outreach\":{\"id\":\"a596eff0-a629-465c-9b4a-bccd4eb0a1b1\",\"kind\":\"reminder\",\"origin\":\"agreed\",\"title\":\"Buddy\",\"body\":\"Wie verabredet: Englisch üben.\",\"why\":null,\"status\":\"in_app\",\"send_at\":\"2026-10-24T10:06:00.000Z\",\"sent_at\":null,\"opened_at\":\"2026-10-24T10:06:00.000Z\",\"created_at\":\"2026-10-24T10:06:00.000Z\"},\"actions\":[],\"roleplay_feedback\":null,\"announces\":{\"step_id\":\"c5e70335-fcb7-4d99-b456-22e1c76e7dbe\",\"title\":\"Englisch üben\",\"question_count\":0,\"est_minutes\":5,\"outcome\":{\"state\":\"closed\"}},\"created_at\":\"2026-10-24T10:06:00.000Z\"}]",
+      "kind": "reminder",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "replays": [],
+  "frequencies": [
+    {
+      "key": "vocabulary.chat-count|chat-vocab|/buddy/messages",
+      "attempts": 0,
+      "complete": 0,
+      "reproduced": 0,
+      "divergent": 0
+    },
+    {
+      "key": "vocabulary.count|vocab|/buddy/messages",
+      "attempts": 0,
+      "complete": 0,
+      "reproduced": 0,
+      "divergent": 0
+    },
+    {
+      "key": "goal.start|offer|/buddy/messages",
+      "attempts": 0,
+      "complete": 0,
+      "reproduced": 0,
+      "divergent": 0
+    },
+    {
+      "key": "picture.present|picture|/buddy/messages",
+      "attempts": 0,
+      "complete": 0,
+      "reproduced": 0,
+      "divergent": 0
+    },
+    {
+      "key": "summary.condensation|summary|/buddy/messages",
+      "attempts": 0,
+      "complete": 0,
+      "reproduced": 0,
+      "divergent": 0
+    },
+    {
+      "key": "reminder.next-step|reminder|/buddy/messages",
+      "attempts": 0,
+      "complete": 0,
+      "reproduced": 0,
+      "divergent": 0
+    }
+  ],
+  "receipts": [
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11598,
+        "outputTokens": 118,
+        "thoughtTokens": 245,
+        "cachedTokens": 10880,
+        "costMicros": 11366,
+        "latencyMs": 3085
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11724,
+        "outputTokens": 208,
+        "thoughtTokens": 180,
+        "cachedTokens": 11392,
+        "costMicros": 11593,
+        "latencyMs": 2988
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 458,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 443,
+        "latencyMs": 576
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2408,
+        "outputTokens": 1730,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 10551,
+        "latencyMs": 7583
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 518,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 253,
+        "latencyMs": 653
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 575,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 275,
+        "latencyMs": 697
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 575,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 275,
+        "latencyMs": 650
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 250,
+        "outputTokens": 53,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 185,
+        "latencyMs": 863
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 250,
+        "outputTokens": 56,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 190,
+        "latencyMs": 691
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11920,
+        "outputTokens": 121,
+        "thoughtTokens": 314,
+        "cachedTokens": 10880,
+        "costMicros": 11988,
+        "latencyMs": 3276
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12496,
+        "outputTokens": 81,
+        "thoughtTokens": 81,
+        "cachedTokens": 4736,
+        "costMicros": 11112,
+        "latencyMs": 1748
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12561,
+        "outputTokens": 80,
+        "thoughtTokens": 48,
+        "cachedTokens": 12288,
+        "costMicros": 10997,
+        "latencyMs": 1574
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 361,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 363,
+        "latencyMs": 626
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12496,
+        "outputTokens": 71,
+        "thoughtTokens": 43,
+        "cachedTokens": 4736,
+        "costMicros": 10874,
+        "latencyMs": 1402
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12561,
+        "outputTokens": 82,
+        "thoughtTokens": 43,
+        "cachedTokens": 12416,
+        "costMicros": 10982,
+        "latencyMs": 1373
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 361,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 363,
+        "latencyMs": 540
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12513,
+        "outputTokens": 77,
+        "thoughtTokens": 158,
+        "cachedTokens": 12288,
+        "costMicros": 11487,
+        "latencyMs": 2091
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12578,
+        "outputTokens": 71,
+        "thoughtTokens": 325,
+        "cachedTokens": 12288,
+        "costMicros": 12338,
+        "latencyMs": 3273
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 369,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 369,
+        "latencyMs": 595
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12513,
+        "outputTokens": 77,
+        "thoughtTokens": 197,
+        "cachedTokens": 12416,
+        "costMicros": 11680,
+        "latencyMs": 2199
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12578,
+        "outputTokens": 84,
+        "thoughtTokens": 218,
+        "cachedTokens": 12288,
+        "costMicros": 11872,
+        "latencyMs": 2690
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 369,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 369,
+        "latencyMs": 595
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 678,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 316,
+        "latencyMs": 735
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12549,
+        "outputTokens": 99,
+        "thoughtTokens": 331,
+        "cachedTokens": 12288,
+        "costMicros": 12482,
+        "latencyMs": 3282
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12666,
+        "outputTokens": 202,
+        "thoughtTokens": 512,
+        "cachedTokens": 12288,
+        "costMicros": 13984,
+        "latencyMs": 4747
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 452,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 438,
+        "latencyMs": 545
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 2402,
+        "outputTokens": 1702,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 10407,
+        "latencyMs": 6902
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 866,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 392,
+        "latencyMs": 588
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 865,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 391,
+        "latencyMs": 587
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 866,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 392,
+        "latencyMs": 603
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11588,
+        "outputTokens": 70,
+        "thoughtTokens": 62,
+        "cachedTokens": 0,
+        "costMicros": 10214,
+        "latencyMs": 1521
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11620,
+        "outputTokens": 87,
+        "thoughtTokens": 193,
+        "cachedTokens": 10880,
+        "costMicros": 10973,
+        "latencyMs": 2644
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 394,
+        "outputTokens": 43,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 227,
+        "latencyMs": 747
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11682,
+        "outputTokens": 71,
+        "thoughtTokens": 102,
+        "cachedTokens": 10880,
+        "costMicros": 10494,
+        "latencyMs": 1773
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 442,
+        "outputTokens": 45,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 249,
+        "latencyMs": 799
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11731,
+        "outputTokens": 108,
+        "thoughtTokens": 68,
+        "cachedTokens": 11520,
+        "costMicros": 10550,
+        "latencyMs": 1616
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11848,
+        "outputTokens": 83,
+        "thoughtTokens": 172,
+        "cachedTokens": 11520,
+        "costMicros": 11037,
+        "latencyMs": 2366
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 406,
+        "outputTokens": 52,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 246,
+        "latencyMs": 920
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 406,
+        "outputTokens": 58,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 256,
+        "latencyMs": 710
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11796,
+        "outputTokens": 146,
+        "thoughtTokens": 27,
+        "cachedTokens": 11520,
+        "costMicros": 10589,
+        "latencyMs": 1868
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11904,
+        "outputTokens": 158,
+        "thoughtTokens": 330,
+        "cachedTokens": 11392,
+        "costMicros": 12237,
+        "latencyMs": 3877
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 764,
+        "outputTokens": 58,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 399,
+        "latencyMs": 873
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12061,
+        "outputTokens": 94,
+        "thoughtTokens": 54,
+        "cachedTokens": 11520,
+        "costMicros": 10683,
+        "latencyMs": 1697
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 853,
+        "outputTokens": 43,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 411,
+        "latencyMs": 773
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12134,
+        "outputTokens": 75,
+        "thoughtTokens": 98,
+        "cachedTokens": 11904,
+        "costMicros": 10867,
+        "latencyMs": 1739
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12194,
+        "outputTokens": 196,
+        "thoughtTokens": 70,
+        "cachedTokens": 12032,
+        "costMicros": 11377,
+        "latencyMs": 2472
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 1078,
+        "outputTokens": 86,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 569,
+        "latencyMs": 792
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12396,
+        "outputTokens": 104,
+        "thoughtTokens": 271,
+        "cachedTokens": 11776,
+        "costMicros": 12083,
+        "latencyMs": 3165
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 357,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 359,
+        "latencyMs": 611
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "forms",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1091,
+        "outputTokens": 27,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 1034,
+        "latencyMs": 667
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "explain",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 6845,
+        "outputTokens": 1124,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 11211,
+        "latencyMs": 5752
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 1223,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 534,
+        "latencyMs": 728
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "hints",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 1633,
+        "outputTokens": 753,
+        "thoughtTokens": 3814,
+        "cachedTokens": 0,
+        "costMicros": 23954,
+        "latencyMs": 25527
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 1309,
+        "outputTokens": 28,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 569,
+        "latencyMs": 559
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11607,
+        "outputTokens": 219,
+        "thoughtTokens": 36,
+        "cachedTokens": 10880,
+        "costMicros": 10839,
+        "latencyMs": 2503
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11798,
+        "outputTokens": 102,
+        "thoughtTokens": 11,
+        "cachedTokens": 10880,
+        "costMicros": 10293,
+        "latencyMs": 1366
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 581,
+        "outputTokens": 117,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 420,
+        "latencyMs": 1324
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11956,
+        "outputTokens": 89,
+        "thoughtTokens": 36,
+        "cachedTokens": 11392,
+        "costMicros": 10483,
+        "latencyMs": 1553
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 722,
+        "outputTokens": 45,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 361,
+        "latencyMs": 726
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12024,
+        "outputTokens": 91,
+        "thoughtTokens": 18,
+        "cachedTokens": 11648,
+        "costMicros": 10460,
+        "latencyMs": 1422
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 693,
+        "outputTokens": 48,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 354,
+        "latencyMs": 864
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 693,
+        "outputTokens": 63,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 378,
+        "latencyMs": 748
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12099,
+        "outputTokens": 150,
+        "thoughtTokens": 40,
+        "cachedTokens": 11776,
+        "costMicros": 10923,
+        "latencyMs": 1822
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "canary",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 49,
+        "outputTokens": 18,
+        "thoughtTokens": 6,
+        "cachedTokens": 0,
+        "costMicros": 160,
+        "latencyMs": 674
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 880,
+        "outputTokens": 60,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 448,
+        "latencyMs": 865
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12591,
+        "outputTokens": 68,
+        "thoughtTokens": 217,
+        "cachedTokens": 6784,
+        "costMicros": 11799,
+        "latencyMs": 2517
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 945,
+        "outputTokens": 79,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 505,
+        "latencyMs": 1002
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12668,
+        "outputTokens": 59,
+        "thoughtTokens": 8,
+        "cachedTokens": 10880,
+        "costMicros": 10783,
+        "latencyMs": 1125
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12697,
+        "outputTokens": 134,
+        "thoughtTokens": 25,
+        "cachedTokens": 12544,
+        "costMicros": 11263,
+        "latencyMs": 1923
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12787,
+        "outputTokens": 127,
+        "thoughtTokens": 31,
+        "cachedTokens": 12544,
+        "costMicros": 11332,
+        "latencyMs": 1630
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12878,
+        "outputTokens": 91,
+        "thoughtTokens": 10,
+        "cachedTokens": 12416,
+        "costMicros": 11125,
+        "latencyMs": 1263
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 1266,
+        "outputTokens": 72,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 622,
+        "latencyMs": 1028
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12985,
+        "outputTokens": 101,
+        "thoughtTokens": 12,
+        "cachedTokens": 12672,
+        "costMicros": 11272,
+        "latencyMs": 1494
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11579,
+        "outputTokens": 141,
+        "thoughtTokens": 26,
+        "cachedTokens": 11392,
+        "costMicros": 10380,
+        "latencyMs": 1808
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 425,
+        "outputTokens": 140,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 394,
+        "latencyMs": 1637
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11793,
+        "outputTokens": 113,
+        "thoughtTokens": 233,
+        "cachedTokens": 11392,
+        "costMicros": 11442,
+        "latencyMs": 2709
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 624,
+        "outputTokens": 51,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 332,
+        "latencyMs": 875
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 11902,
+        "outputTokens": 173,
+        "thoughtTokens": 17,
+        "cachedTokens": 11520,
+        "costMicros": 10760,
+        "latencyMs": 2060
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "safeguard",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 376,
+        "outputTokens": 13,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 375,
+        "latencyMs": 622
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": {
+        "model": "gpt-4.1-mini-2025-04-14",
+        "inputTokens": 657,
+        "outputTokens": 108,
+        "thoughtTokens": 0,
+        "cachedTokens": 0,
+        "costMicros": 436,
+        "latencyMs": 1216
+      },
+      "reservedUsd": 0
+    },
+    {
+      "purpose": "buddy_turn",
+      "usage": null,
+      "reservedUsd": 0.16785945
+    }
+  ],
+  "runs": [
+    "young-reader-topic-vocabulary",
+    "young-reader-twenty-in-chat",
+    "young-reader-vocab-not-cloze",
+    "dictating-clarification-chain",
+    "dictating-with-picture",
+    "dictating-no-internals",
+    "contradicting-summary-not-repeat",
+    "contradicting-reminder-next-step",
+    "contradicting-history-restart"
+  ],
+  "coverageGaps": [
+    "Device audio quality requires controlled recording and human listening.",
+    "Short/mixed-language text cannot be reliably language-classified.",
+    "Human calibration remains unverified until supplied labels pass the calibration gate.",
+    "Standalone speech quality and all free-text paths need separate safeguarding probes."
+  ],
+  "interpretation": {
+    "status": "diagnostic-only",
+    "excludeFromConfirmedFindings": true,
+    "reason": "Interrupted intentionally after transcript review found summary list-format false positives. Costs retained; corrected counterexample is covered by a red/green test."
+  }
+}

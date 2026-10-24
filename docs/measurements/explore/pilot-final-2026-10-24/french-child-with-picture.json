@@ -1,0 +1,812 @@
+{
+  "goal": {
+    "id": "with-picture",
+    "issue": 934,
+    "wants": "A real picture of the skeleton",
+    "messages": [
+      "Erkläre mir das menschliche Skelett.",
+      "Am besten komplett mit Bild."
+    ],
+    "expect": "picture"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "role": "learner",
+        "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "69a692e6-e98d-4665-a2f1-3da1834cb4d5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "41a5610d-4fe9-447c-95f4-9f992522f1e4",
+        "role": "buddy",
+        "text": "Oui — sur quel vocabulaire veux-tu être testée ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "anglais",
+          "allemand",
+          "une leçon précise",
+          "des mots d’un thème"
+        ],
+        "reply_to_id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "role": "learner",
+        "text": "Allemand et anglais.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ae3e9989-7c34-4520-9a51-b8c0dbc809f5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e17b59e1-a0bf-4553-89a9-c5058152cf83",
+        "role": "buddy",
+        "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "école",
+          "maison",
+          "animaux",
+          "je ne sais pas"
+        ],
+        "reply_to_id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "role": "learner",
+        "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "921f7d80-685e-4045-a3b1-36e119a4b534",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e52f0f51-e2fe-409e-9bf2-5e74ed61d82b",
+        "role": "buddy",
+        "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "animaux",
+          "nourriture",
+          "objets de la maison"
+        ],
+        "reply_to_id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "f624d3a1-2410-48fe-a934-e1a725a00aa8",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 7,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:43:48.258Z",
+      "updated_at": "2026-10-24T17:43:54.600Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "role": "learner",
+        "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "69a692e6-e98d-4665-a2f1-3da1834cb4d5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "41a5610d-4fe9-447c-95f4-9f992522f1e4",
+        "role": "buddy",
+        "text": "Oui — sur quel vocabulaire veux-tu être testée ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "anglais",
+          "allemand",
+          "une leçon précise",
+          "des mots d’un thème"
+        ],
+        "reply_to_id": "9b553922-5f91-48ff-9035-ebe4e1b4ddb6",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "role": "learner",
+        "text": "Allemand et anglais.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ae3e9989-7c34-4520-9a51-b8c0dbc809f5",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e17b59e1-a0bf-4553-89a9-c5058152cf83",
+        "role": "buddy",
+        "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "école",
+          "maison",
+          "animaux",
+          "je ne sais pas"
+        ],
+        "reply_to_id": "95e3cab9-9657-4c4a-9fd2-5847a9cb652f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "role": "learner",
+        "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "921f7d80-685e-4045-a3b1-36e119a4b534",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e52f0f51-e2fe-409e-9bf2-5e74ed61d82b",
+        "role": "buddy",
+        "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "animaux",
+          "nourriture",
+          "objets de la maison"
+        ],
+        "reply_to_id": "11808214-5c6e-4300-b296-b2e97449c4c3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb00e9d6-717e-4a47-b64f-64520e34e225",
+        "role": "learner",
+        "text": "Explique-moi le squelette humain.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9792096f-1f96-4bbb-9e36-221f0194ce11",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "8f09536c-9a39-41ae-a714-c1deef7749bf",
+        "role": "buddy",
+        "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Oui, les principales parties",
+          "Oui, les os les plus importants",
+          "Oui, mais très simple"
+        ],
+        "reply_to_id": "eb00e9d6-717e-4a47-b64f-64520e34e225",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4b90e6af-acc3-47e6-b9fa-c6f65a9769d3",
+        "role": "learner",
+        "text": "De préférence en entier avec une image.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8f4a566f-5967-4988-b76f-379929a3594d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3ab150f2-727f-4406-9d29-597f70fd5cee",
+        "role": "buddy",
+        "text": "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "un schéma simple",
+          "os par os",
+          "les grandes parties seulement"
+        ],
+        "reply_to_id": "4b90e6af-acc3-47e6-b9fa-c6f65a9769d3",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "684a9014-3a2f-482a-aa66-0732fcca70da",
+        "role": "learner",
+        "text": "Peux-tu me montrer une vraie photo du squelette humain ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "286671e7-f3db-4382-91b1-845f095a509b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eb15586e-6720-46b8-ae80-2c7d10b9e2ce",
+        "role": "buddy",
+        "text": "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "684a9014-3a2f-482a-aa66-0732fcca70da",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "f624d3a1-2410-48fe-a934-e1a725a00aa8",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 13,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:43:48.258Z",
+      "updated_at": "2026-10-24T17:44:04.248Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Explique-moi le squelette humain.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Le",
+            "Le sque",
+            "Le squelette",
+            "Le squelette humain",
+            "Le squelette humain,",
+            "Le squelette humain, c",
+            "Le squelette humain, c’est",
+            "Le squelette humain, c’est comme",
+            "Le squelette humain, c’est comme l",
+            "Le squelette humain, c’est comme l’",
+            "Le squelette humain, c’est comme l’arm",
+            "Le squelette humain, c’est comme l’armature",
+            "Le squelette humain, c’est comme l’armature d",
+            "Le squelette humain, c’est comme l’armature d’une",
+            "Le squelette humain, c’est comme l’armature d’une maison",
+            "Le squelette humain, c’est comme l’armature d’une maison :",
+            "Le squelette humain, c’est comme l’armature d’une maison : il",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps deb",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout,",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organ",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur,",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bou",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles.",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os,",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reli",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articul",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations,",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des char",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charni",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières.",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’ex",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du sque",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette",
+            "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?"
+          ],
+          "ms": 1864,
+          "text": "Explique-moi le squelette humain.",
+          "id": "9792096f-1f96-4bbb-9e36-221f0194ce11"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "De préférence en entier avec une image.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi le squelette humain."
+          },
+          {
+            "who": "buddy",
+            "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Bien",
+            "Bien sûr",
+            "Bien sûr.",
+            "Bien sûr. Le",
+            "Bien sûr. Le sque",
+            "Bien sûr. Le squelette",
+            "Bien sûr. Le squelette humain",
+            "Bien sûr. Le squelette humain,",
+            "Bien sûr. Le squelette humain, c",
+            "Bien sûr. Le squelette humain, c’est",
+            "Bien sûr. Le squelette humain, c’est l",
+            "Bien sûr. Le squelette humain, c’est l’ensemble",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui sout",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps,",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la char",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charp",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison :",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient deb",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout,",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organ",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bou",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles.",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en ",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties :",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête,",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tr",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\n",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’«",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image »,",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit sch",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux,",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’ex",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os.",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préf",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel",
+            "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?"
+          ],
+          "ms": 2730,
+          "text": "De préférence en entier avec une image.",
+          "id": "8f4a566f-5967-4988-b76f-379929a3594d"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Peux-tu me montrer une vraie photo du squelette humain ?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Oui — sur quel vocabulaire veux-tu être testée ?"
+          },
+          {
+            "who": "learner",
+            "text": "Allemand et anglais."
+          },
+          {
+            "who": "buddy",
+            "text": "D’accord — sur quel thème ou quelles listes de mots veux-tu être testée en allemand et en anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr — tu peux choisir par exemple : animaux, nourriture, objets de la maison ou l’école. Lequel tu veux pour l’allemand et l’anglais ?"
+          },
+          {
+            "who": "learner",
+            "text": "Explique-moi le squelette humain."
+          },
+          {
+            "who": "buddy",
+            "text": "Le squelette humain, c’est comme l’armature d’une maison : il tient le corps debout, protège des organes importants comme le cerveau et le cœur, et aide à bouger avec les muscles. Il y a beaucoup d’os, reliés entre eux par des articulations, comme des charnières. Tu veux que je t’explique les principales parties du squelette ?"
+          },
+          {
+            "who": "learner",
+            "text": "De préférence en entier avec une image."
+          },
+          {
+            "who": "buddy",
+            "text": "Bien sûr. Le squelette humain, c’est l’ensemble des os qui soutient le corps, un peu comme la charpente d’une maison : il te tient debout, protège les organes importants et aide à bouger avec les muscles. On peut le voir en 3 grandes parties : la tête, le tronc et les membres.\n\nPour l’« image », je peux te faire un petit schéma très simple en texte si tu veux, ou t’expliquer os par os. Tu préfères lequel ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Je",
+            "Je ne",
+            "Je ne peux",
+            "Je ne peux pas",
+            "Je ne peux pas te",
+            "Je ne peux pas te montrer",
+            "Je ne peux pas te montrer une",
+            "Je ne peux pas te montrer une vraie",
+            "Je ne peux pas te montrer une vraie photo",
+            "Je ne peux pas te montrer une vraie photo ici",
+            "Je ne peux pas te montrer une vraie photo ici,",
+            "Je ne peux pas te montrer une vraie photo ici, mais",
+            "Je ne peux pas te montrer une vraie photo ici, mais je",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un sch",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du sque",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties",
+            "Je ne peux pas te montrer une vraie photo ici, mais je peux te faire un schéma simple du squelette ou t’aider à apprendre ses grandes parties."
+          ],
+          "ms": 2116,
+          "text": "Peux-tu me montrer une vraie photo du squelette humain ?",
+          "id": "286671e7-f3db-4382-91b1-845f095a509b"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "picture.present",
+      "evidence": "No validated picture action in API conversation",
+      "kind": "picture",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "french-child-with-picture",
+  "persona": {
+    "id": "french-child",
+    "age": 11,
+    "locale": "fr",
+    "style": "French first language, weak reader",
+    "behaviour": "Impatient and easily discouraged"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Peux-tu me montrer une vraie photo du squelette humain ?",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Peux-tu me préparer un test de 20 mots de vocabulaire ?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Allemand et anglais.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Peux-tu me donner un thème ou une liste de mots pour le test en allemand et en anglais ? Par exemple, les animaux, la nourriture, ou les objets de la maison.",
+      "double": false
+    }
+  ]
+}

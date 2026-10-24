@@ -1,0 +1,813 @@
+{
+  "goal": {
+    "id": "reminder-next-step",
+    "issue": 941,
+    "wants": "Remind me in five minutes to practise English, with content and a valid next step",
+    "messages": [
+      "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+    ],
+    "expect": "reminder"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "3dad21d8-7a52-4383-a375-91631b75b24f",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a0d926a1-2385-4f78-9488-6d17308fae0a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "19894fdd-d677-4a28-bce2-40ad5eac5966",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt dem Körper Form und Halt, schützt wichtige Organe und hilft zusammen mit Muskeln, Sehnen und Gelenken bei jeder Bewegung.\n\nGanz grob hat es drei Hauptaufgaben: **stützen**, **schützen** und **Bewegung ermöglichen**. Die Schädelknochen schützen das Gehirn, die Rippen schützen Herz und Lunge, und die Wirbelsäule trägt den Körper und hält ihn aufrecht. In den Knochen liegt außerdem das Knochenmark, wo neue Blutzellen gebildet werden.\n\nDas Skelett besteht aus vielen Knochen, die an Gelenken miteinander verbunden sind. Gelenke sind so etwas wie bewegliche Verbindungen: Manche bewegen sich fast gar nicht, andere sehr viel. Im",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "3dad21d8-7a52-4383-a375-91631b75b24f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e6f3dbf1-3b3d-4c72-810c-406b0e7cf1be",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9c639c19-9d47-4aac-b845-6226a1e68cdd",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6f5731d7-da02-47f3-b03e-3b631239fc3c",
+        "role": "buddy",
+        "text": "Das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe wie Gehirn, Herz und Lunge und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden im Knochenmark neue Blutzellen gebildet.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e6f3dbf1-3b3d-4c72-810c-406b0e7cf1be",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7224dd31-20ba-48bb-a386-3df7308dac17",
+        "role": "learner",
+        "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e47a0e85-c8bc-4008-bc8b-4557c49ba8a6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "50b5e61c-d394-4a13-81a7-0d9959d2d5bc",
+        "role": "buddy",
+        "text": "Ja, das ist eine sehr gute, klare Zusammenfassung. Wenn du magst, kann ich dir daraus auch noch eine ganz kurze Lernkarte oder drei Übungsfragen machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "7224dd31-20ba-48bb-a386-3df7308dac17",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a0caca86-7a4a-47d0-9f84-e53ce242d40b",
+        "role": "learner",
+        "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3027cd91-db44-463c-bd23-cbc531aa31d3",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "078ce3cc-b8d2-4c72-a1e3-c2ba9cc14a3c",
+        "role": "buddy",
+        "text": "**Lernkarte: Das menschliche Skelett**\n- gibt dem Körper Halt und Form\n- schützt wichtige Organe\n- hilft bei der Bewegung\n- im Knochenmark werden neue Blutzellen gebildet",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "a0caca86-7a4a-47d0-9f84-e53ce242d40b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "681ca332-8d9f-4696-a17a-833a52b800b1",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 9,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:29:52.295Z",
+      "updated_at": "2026-10-24T17:30:02.138Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "3dad21d8-7a52-4383-a375-91631b75b24f",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a0d926a1-2385-4f78-9488-6d17308fae0a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "19894fdd-d677-4a28-bce2-40ad5eac5966",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt dem Körper Form und Halt, schützt wichtige Organe und hilft zusammen mit Muskeln, Sehnen und Gelenken bei jeder Bewegung.\n\nGanz grob hat es drei Hauptaufgaben: **stützen**, **schützen** und **Bewegung ermöglichen**. Die Schädelknochen schützen das Gehirn, die Rippen schützen Herz und Lunge, und die Wirbelsäule trägt den Körper und hält ihn aufrecht. In den Knochen liegt außerdem das Knochenmark, wo neue Blutzellen gebildet werden.\n\nDas Skelett besteht aus vielen Knochen, die an Gelenken miteinander verbunden sind. Gelenke sind so etwas wie bewegliche Verbindungen: Manche bewegen sich fast gar nicht, andere sehr viel. Im",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "3dad21d8-7a52-4383-a375-91631b75b24f",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e6f3dbf1-3b3d-4c72-810c-406b0e7cf1be",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9c639c19-9d47-4aac-b845-6226a1e68cdd",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6f5731d7-da02-47f3-b03e-3b631239fc3c",
+        "role": "buddy",
+        "text": "Das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe wie Gehirn, Herz und Lunge und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden im Knochenmark neue Blutzellen gebildet.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e6f3dbf1-3b3d-4c72-810c-406b0e7cf1be",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7224dd31-20ba-48bb-a386-3df7308dac17",
+        "role": "learner",
+        "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e47a0e85-c8bc-4008-bc8b-4557c49ba8a6",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "50b5e61c-d394-4a13-81a7-0d9959d2d5bc",
+        "role": "buddy",
+        "text": "Ja, das ist eine sehr gute, klare Zusammenfassung. Wenn du magst, kann ich dir daraus auch noch eine ganz kurze Lernkarte oder drei Übungsfragen machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "7224dd31-20ba-48bb-a386-3df7308dac17",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a0caca86-7a4a-47d0-9f84-e53ce242d40b",
+        "role": "learner",
+        "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3027cd91-db44-463c-bd23-cbc531aa31d3",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "078ce3cc-b8d2-4c72-a1e3-c2ba9cc14a3c",
+        "role": "buddy",
+        "text": "**Lernkarte: Das menschliche Skelett**\n- gibt dem Körper Halt und Form\n- schützt wichtige Organe\n- hilft bei der Bewegung\n- im Knochenmark werden neue Blutzellen gebildet",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "a0caca86-7a4a-47d0-9f84-e53ce242d40b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c596470d-2ec2-4975-8b23-84356d4fa569",
+        "role": "learner",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "8c0be02a-0d77-44d5-a82d-231032cf607d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "80b842d0-b2c9-4612-a118-f23948bc0f2d",
+        "role": "buddy",
+        "text": "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der App an.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c596470d-2ec2-4975-8b23-84356d4fa569",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "c807d955-263b-4311-a2fb-e72553de1b10",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "c5e70335-fcb7-4d99-b456-22e1c76e7dbe",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b5c6daa3-4617-4697-8266-3b16810df822",
+        "role": "buddy",
+        "text": "Wie verabredet: Englisch üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "a596eff0-a629-465c-9b4a-bccd4eb0a1b1",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Wie verabredet: Englisch üben.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "c5e70335-fcb7-4d99-b456-22e1c76e7dbe",
+          "title": "Englisch üben",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "547d6593-bebd-4c35-8e21-2a723cc98909",
+        "role": "learner",
+        "text": "Ich erinnere dich jetzt daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Übungstext oder eine Aufgabe dazu gebe?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "1748a238-ff2b-4a32-ba40-e1320bb0e64a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "c4b9314b-cfa3-4118-9304-452aa6847def",
+        "role": "buddy",
+        "text": "Ja, gern — gib mir einen kurzen Übungstext oder eine kleine Aufgabe.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "547d6593-bebd-4c35-8e21-2a723cc98909",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "8beaff57-8f70-4163-9159-7f9ad115ea69",
+        "role": "learner",
+        "text": "Hier ist ein kurzer Übungstext auf Englisch:\n\n\"The cat is sitting on the mat. It is sunny outside. The cat likes to play with a ball.\"\n\nBitte beantworte die Frage: What is the cat doing?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "e971b45c-ddcf-41a1-80a7-f1183db3508a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "f74f05d6-5852-4de6-939a-bb789a1bf7e3",
+        "role": "buddy",
+        "text": "The cat is sitting on the mat.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8beaff57-8f70-4163-9159-7f9ad115ea69",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "681ca332-8d9f-4696-a17a-833a52b800b1",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 18,
+      "last_seen_at": "2026-10-24T10:06:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:29:52.295Z",
+      "updated_at": "2026-10-24T17:30:12.430Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt dem Körper Form und Halt, schützt wichtige Organe und hilft zusammen mit Muskeln, Sehnen und Gelenken bei jeder Bewegung.\n\nGanz grob hat es drei Hauptaufgaben: **stützen**, **schützen** und **Bewegung ermöglichen**. Die Schädelknochen schützen das Gehirn, die Rippen schützen Herz und Lunge, und die Wirbelsäule trägt den Körper und hält ihn aufrecht. In den Knochen liegt außerdem das Knochenmark, wo neue Blutzellen gebildet werden.\n\nDas Skelett besteht aus vielen Knochen, die an Gelenken miteinander verbunden sind. Gelenke sind so etwas wie bewegliche Verbindungen: Manche bewegen sich fast gar nicht, andere sehr viel. Im"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe wie Gehirn, Herz und Lunge und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden im Knochenmark neue Blutzellen gebildet."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine sehr gute, klare Zusammenfassung. Wenn du magst, kann ich dir daraus auch noch eine ganz kurze Lernkarte oder drei Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "**Lernkarte: Das menschliche Skelett**\n- gibt dem Körper Halt und Form\n- schützt wichtige Organe\n- hilft bei der Bewegung\n- im Knochenmark werden neue Blutzellen gebildet"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich erinn",
+            "Ich erinnere",
+            "Ich erinnere dich",
+            "Ich erinnere dich in",
+            "Ich erinnere dich in ",
+            "Ich erinnere dich in 5",
+            "Ich erinnere dich in 5 Minuten",
+            "Ich erinnere dich in 5 Minuten daran",
+            "Ich erinnere dich in 5 Minuten daran.",
+            "Ich erinnere dich in 5 Minuten daran. Die",
+            "Ich erinnere dich in 5 Minuten daran. Die Nachricht",
+            "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt",
+            "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in",
+            "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der",
+            "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der App",
+            "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der App an",
+            "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der App an.",
+            "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der App an."
+          ],
+          "ms": 1844,
+          "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+          "id": "8c0be02a-0d77-44d5-a82d-231032cf607d"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tick"
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt dem Körper Form und Halt, schützt wichtige Organe und hilft zusammen mit Muskeln, Sehnen und Gelenken bei jeder Bewegung.\n\nGanz grob hat es drei Hauptaufgaben: **stützen**, **schützen** und **Bewegung ermöglichen**. Die Schädelknochen schützen das Gehirn, die Rippen schützen Herz und Lunge, und die Wirbelsäule trägt den Körper und hält ihn aufrecht. In den Knochen liegt außerdem das Knochenmark, wo neue Blutzellen gebildet werden.\n\nDas Skelett besteht aus vielen Knochen, die an Gelenken miteinander verbunden sind. Gelenke sind so etwas wie bewegliche Verbindungen: Manche bewegen sich fast gar nicht, andere sehr viel. Im"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe wie Gehirn, Herz und Lunge und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden im Knochenmark neue Blutzellen gebildet."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine sehr gute, klare Zusammenfassung. Wenn du magst, kann ich dir daraus auch noch eine ganz kurze Lernkarte oder drei Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "**Lernkarte: Das menschliche Skelett**\n- gibt dem Körper Halt und Form\n- schützt wichtige Organe\n- hilft bei der Bewegung\n- im Knochenmark werden neue Blutzellen gebildet"
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der App an."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich erinnere dich jetzt daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Übungstext oder eine Aufgabe dazu gebe?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt dem Körper Form und Halt, schützt wichtige Organe und hilft zusammen mit Muskeln, Sehnen und Gelenken bei jeder Bewegung.\n\nGanz grob hat es drei Hauptaufgaben: **stützen**, **schützen** und **Bewegung ermöglichen**. Die Schädelknochen schützen das Gehirn, die Rippen schützen Herz und Lunge, und die Wirbelsäule trägt den Körper und hält ihn aufrecht. In den Knochen liegt außerdem das Knochenmark, wo neue Blutzellen gebildet werden.\n\nDas Skelett besteht aus vielen Knochen, die an Gelenken miteinander verbunden sind. Gelenke sind so etwas wie bewegliche Verbindungen: Manche bewegen sich fast gar nicht, andere sehr viel. Im"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe wie Gehirn, Herz und Lunge und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden im Knochenmark neue Blutzellen gebildet."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine sehr gute, klare Zusammenfassung. Wenn du magst, kann ich dir daraus auch noch eine ganz kurze Lernkarte oder drei Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "**Lernkarte: Das menschliche Skelett**\n- gibt dem Körper Halt und Form\n- schützt wichtige Organe\n- hilft bei der Bewegung\n- im Knochenmark werden neue Blutzellen gebildet"
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der App an."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja,",
+            "Ja, gern",
+            "Ja, gern —",
+            "Ja, gern — gib",
+            "Ja, gern — gib mir",
+            "Ja, gern — gib mir einen",
+            "Ja, gern — gib mir einen kurzen",
+            "Ja, gern — gib mir einen kurzen Ü",
+            "Ja, gern — gib mir einen kurzen Übung",
+            "Ja, gern — gib mir einen kurzen Übungst",
+            "Ja, gern — gib mir einen kurzen Übungstext",
+            "Ja, gern — gib mir einen kurzen Übungstext oder",
+            "Ja, gern — gib mir einen kurzen Übungstext oder eine",
+            "Ja, gern — gib mir einen kurzen Übungstext oder eine kleine",
+            "Ja, gern — gib mir einen kurzen Übungstext oder eine kleine Aufgabe",
+            "Ja, gern — gib mir einen kurzen Übungstext oder eine kleine Aufgabe."
+          ],
+          "ms": 2541,
+          "text": "Ich erinnere dich jetzt daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Übungstext oder eine Aufgabe dazu gebe?",
+          "id": "1748a238-ff2b-4a32-ba40-e1320bb0e64a"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Hier ist ein kurzer Übungstext auf Englisch:\n\n\"The cat is sitting on the mat. It is sunny outside. The cat likes to play with a ball.\"\n\nBitte beantworte die Frage: What is the cat doing?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt dem Körper Form und Halt, schützt wichtige Organe und hilft zusammen mit Muskeln, Sehnen und Gelenken bei jeder Bewegung.\n\nGanz grob hat es drei Hauptaufgaben: **stützen**, **schützen** und **Bewegung ermöglichen**. Die Schädelknochen schützen das Gehirn, die Rippen schützen Herz und Lunge, und die Wirbelsäule trägt den Körper und hält ihn aufrecht. In den Knochen liegt außerdem das Knochenmark, wo neue Blutzellen gebildet werden.\n\nDas Skelett besteht aus vielen Knochen, die an Gelenken miteinander verbunden sind. Gelenke sind so etwas wie bewegliche Verbindungen: Manche bewegen sich fast gar nicht, andere sehr viel. Im"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das feste Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe wie Gehirn, Herz und Lunge und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden im Knochenmark neue Blutzellen gebildet."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine sehr gute, klare Zusammenfassung. Wenn du magst, kann ich dir daraus auch noch eine ganz kurze Lernkarte oder drei Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "**Lernkarte: Das menschliche Skelett**\n- gibt dem Körper Halt und Form\n- schützt wichtige Organe\n- hilft bei der Bewegung\n- im Knochenmark werden neue Blutzellen gebildet"
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich erinnere dich in 5 Minuten daran. Die Nachricht kommt in der App an."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "Ich erinnere dich jetzt daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Übungstext oder eine Aufgabe dazu gebe?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, gern — gib mir einen kurzen Übungstext oder eine kleine Aufgabe."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "The",
+            "The cat",
+            "The cat is",
+            "The cat is sitting",
+            "The cat is sitting on",
+            "The cat is sitting on the",
+            "The cat is sitting on the mat",
+            "The cat is sitting on the mat."
+          ],
+          "ms": 1146,
+          "text": "Hier ist ein kurzer Übungstext auf Englisch:\n\n\"The cat is sitting on the mat. It is sunny outside. The cat likes to play with a ball.\"\n\nBitte beantworte die Frage: What is the cat doing?",
+          "id": "e971b45c-ddcf-41a1-80a7-f1183db3508a"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "reminder.next-step",
+      "evidence": "[{\"id\":\"b5c6daa3-4617-4697-8266-3b16810df822\",\"role\":\"buddy\",\"text\":\"Wie verabredet: Englisch üben.\",\"status\":\"done\",\"failure_code\":null,\"client_message_id\":null,\"options\":null,\"reply_to_id\":null,\"outreach\":{\"id\":\"a596eff0-a629-465c-9b4a-bccd4eb0a1b1\",\"kind\":\"reminder\",\"origin\":\"agreed\",\"title\":\"Buddy\",\"body\":\"Wie verabredet: Englisch üben.\",\"why\":null,\"status\":\"in_app\",\"send_at\":\"2026-10-24T10:06:00.000Z\",\"sent_at\":null,\"opened_at\":\"2026-10-24T10:06:00.000Z\",\"created_at\":\"2026-10-24T10:06:00.000Z\"},\"actions\":[],\"roleplay_feedback\":null,\"announces\":{\"step_id\":\"c5e70335-fcb7-4d99-b456-22e1c76e7dbe\",\"title\":\"Englisch üben\",\"question_count\":0,\"est_minutes\":5,\"outcome\":{\"state\":\"closed\"}},\"created_at\":\"2026-10-24T10:06:00.000Z\"}]",
+      "kind": "reminder",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "contradicting-reminder-next-step",
+  "persona": {
+    "id": "contradicting",
+    "age": 12,
+    "locale": "de",
+    "style": "Competent reader, informal lowercase spelling",
+    "behaviour": "Contradicts Buddy when dissatisfied"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich erinnere dich jetzt daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Übungstext oder eine Aufgabe dazu gebe?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Hier ist ein kurzer Übungstext auf Englisch:\n\n\"The cat is sitting on the mat. It is sunny outside. The cat likes to play with a ball.\"\n\nBitte beantworte die Frage: What is the cat doing?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Hier ist eine strukturierte Zusammenfassung des Gesprächs:\n\n1. Das menschliche Skelett ist das feste Gerüst des Körpers.\n2. Es gibt dem Körper Form und Halt.\n3. Es schützt wichtige Organe wie Gehirn, Herz und Lunge.\n4. Es ermöglicht Bewegung zusammen mit Muskeln, Sehnen und Gelenken.\n5. Das Knochenmark in den Knochen produziert neue Blutzellen.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Mach mir bitte eine ganz kurze Lernkarte mit den wichtigsten Punkten zum menschlichen Skelett.",
+      "double": false
+    }
+  ]
+}

@@ -1,0 +1,646 @@
+{
+  "goal": {
+    "id": "reminder-next-step",
+    "issue": 941,
+    "wants": "Remind me in five minutes to practise English, with content and a valid next step",
+    "messages": [
+      "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+    ],
+    "expect": "reminder"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "a9933070-01cf-4707-8860-56724dea2fdb",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7fd81c86-ba3d-4e76-bafd-ae5355913b06",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1c144dda-70dc-4da2-b214-662ccc1021d4",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "a9933070-01cf-4707-8860-56724dea2fdb",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "52e5e634-1392-420b-80bf-fed3377f7f7b",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5ff4e862-3979-47e4-b863-306b020cf44b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b3e15d00-4595-4379-a3f3-e5585d0a2e9e",
+        "role": "buddy",
+        "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "52e5e634-1392-420b-80bf-fed3377f7f7b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6a1f251d-010c-48bf-9e30-f6a72920c454",
+        "role": "learner",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "df86e5f8-81fc-41d9-9e3c-95aad5d68641",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "696e19c6-7f8d-470c-8b1c-7ccca6384d1b",
+        "role": "buddy",
+        "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "6a1f251d-010c-48bf-9e30-f6a72920c454",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "cdb42a6f-b6eb-4131-b15b-823472a838ed",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 7,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:41:13.777Z",
+      "updated_at": "2026-10-24T17:41:21.368Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "a9933070-01cf-4707-8860-56724dea2fdb",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7fd81c86-ba3d-4e76-bafd-ae5355913b06",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1c144dda-70dc-4da2-b214-662ccc1021d4",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "a9933070-01cf-4707-8860-56724dea2fdb",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "52e5e634-1392-420b-80bf-fed3377f7f7b",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5ff4e862-3979-47e4-b863-306b020cf44b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b3e15d00-4595-4379-a3f3-e5585d0a2e9e",
+        "role": "buddy",
+        "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "52e5e634-1392-420b-80bf-fed3377f7f7b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6a1f251d-010c-48bf-9e30-f6a72920c454",
+        "role": "learner",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "df86e5f8-81fc-41d9-9e3c-95aad5d68641",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "696e19c6-7f8d-470c-8b1c-7ccca6384d1b",
+        "role": "buddy",
+        "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "6a1f251d-010c-48bf-9e30-f6a72920c454",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "aa8059b7-a3c2-4bec-88ad-77b6cb60db44",
+        "role": "learner",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "94caf4bf-a13f-4bd7-ad0d-155774d33ad8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2c53c022-e07c-4dca-91fd-3d1bbf212ffd",
+        "role": "buddy",
+        "text": "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "aa8059b7-a3c2-4bec-88ad-77b6cb60db44",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "7eae0d31-3245-4276-a2cd-02896dab085d",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "21ebfa10-6a66-4d43-9365-abbd3889b670",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f4328be4-22ab-4b8f-8ef2-f8b93c10a203",
+        "role": "buddy",
+        "text": "Wie verabredet: Englisch üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "bd4bb8cc-b9b6-41b5-9d3e-39d9dee3776e",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Wie verabredet: Englisch üben.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "21ebfa10-6a66-4d43-9365-abbd3889b670",
+          "title": "Englisch üben",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "149efb3f-8d0c-48ac-a513-449a4f10bc52",
+        "role": "learner",
+        "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "73057822-9799-49f4-8aee-8bf3b3d89a6a",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "3b903348-4d37-4369-9b34-d8ce6eeb8f89",
+        "role": "buddy",
+        "text": "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "kurzer Text",
+          "Vokabeln"
+        ],
+        "reply_to_id": "149efb3f-8d0c-48ac-a513-449a4f10bc52",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "cdb42a6f-b6eb-4131-b15b-823472a838ed",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 14,
+      "last_seen_at": "2026-10-24T10:06:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:41:13.777Z",
+      "updated_at": "2026-10-24T17:41:33.834Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Alles",
+            "Alles klar",
+            "Alles klar —",
+            "Alles klar — ich",
+            "Alles klar — ich erinn",
+            "Alles klar — ich erinnere",
+            "Alles klar — ich erinnere dich",
+            "Alles klar — ich erinnere dich in",
+            "Alles klar — ich erinnere dich in ",
+            "Alles klar — ich erinnere dich in 5",
+            "Alles klar — ich erinnere dich in 5 Minuten",
+            "Alles klar — ich erinnere dich in 5 Minuten hier",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran.",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht,",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-K",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist.",
+            "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist."
+          ],
+          "ms": 1983,
+          "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+          "id": "94caf4bf-a13f-4bd7-ad0d-155774d33ad8"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tick"
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das stabile Gerüst eines Hauses: Es gibt dem Körper Form, schützt wichtige Organe und hilft dir, dich zu bewegen. Es besteht aus vielen Knochen, die an Gelenken zusammenkommen; zusammen mit Muskeln, Sehnen und Bändern macht das erst das Laufen, Greifen und Springen möglich.\n\nDie wichtigsten Aufgaben sind: Stützen, Schutz und Bewegung. Der Schädel schützt das Gehirn, der Brustkorb schützt Herz und Lunge, und die Wirbelsäule trägt den Körper und macht ihn zugleich beweglich. In den Knochen steckt außerdem Knochenmark: Dort werden neue Blutzellen gebildet, und die Knochen speichern Mineralstoffe wie Calcium.\n\nEin erwachsenes Skelett hat ungefähr 206 Knön—"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett ist das Gerüst des Körpers. Es schützt wichtige Organe, gibt Form und hilft zusammen mit Muskeln und Gelenken bei der Bewegung. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, genau so war es. Wenn du magst, kann ich dir daraus auch noch eine Mini-Lernkarte oder ein paar Übungsfragen machen."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Alles klar — ich erinnere dich in 5 Minuten hier in der App daran. Auf dein Handy kommt es nicht, weil dort kein Push-Kanal aktiv ist."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich bere",
+            "Ich bereite",
+            "Ich bereite dir",
+            "Ich bereite dir lieber",
+            "Ich bereite dir lieber eine",
+            "Ich bereite dir lieber eine kurze",
+            "Ich bereite dir lieber eine kurze Englisch",
+            "Ich bereite dir lieber eine kurze Englisch-V",
+            "Ich bereite dir lieber eine kurze Englisch-Vok",
+            "Ich bereite dir lieber eine kurze Englisch-Vokabel",
+            "Ich bereite dir lieber eine kurze Englisch-Vokabelü",
+            "Ich bereite dir lieber eine kurze Englisch-Vokabelübung",
+            "Ich bereite dir lieber eine kurze Englisch-Vokabelübung vor",
+            "Ich bereite dir lieber eine kurze Englisch-Vokabelübung vor.",
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — wir",
+            "Klar — wir machen",
+            "Klar — wir machen mit",
+            "Klar — wir machen mit Englisch",
+            "Klar — wir machen mit Englisch weiter",
+            "Klar — wir machen mit Englisch weiter.",
+            "Klar — wir machen mit Englisch weiter. Mö",
+            "Klar — wir machen mit Englisch weiter. Möchtest",
+            "Klar — wir machen mit Englisch weiter. Möchtest du",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder V",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vok",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabel",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln ü",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben?",
+            "Klar — wir machen mit Englisch weiter. Möchtest du lieber einen kurzen Text lesen oder Vokabeln üben?"
+          ],
+          "ms": 6832,
+          "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?",
+          "id": "73057822-9799-49f4-8aee-8bf3b3d89a6a"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "reminder.next-step",
+      "evidence": "[{\"id\":\"f4328be4-22ab-4b8f-8ef2-f8b93c10a203\",\"role\":\"buddy\",\"text\":\"Wie verabredet: Englisch üben.\",\"status\":\"done\",\"failure_code\":null,\"client_message_id\":null,\"options\":null,\"reply_to_id\":null,\"outreach\":{\"id\":\"bd4bb8cc-b9b6-41b5-9d3e-39d9dee3776e\",\"kind\":\"reminder\",\"origin\":\"agreed\",\"title\":\"Buddy\",\"body\":\"Wie verabredet: Englisch üben.\",\"why\":null,\"status\":\"in_app\",\"send_at\":\"2026-10-24T10:06:00.000Z\",\"sent_at\":null,\"opened_at\":\"2026-10-24T10:06:00.000Z\",\"created_at\":\"2026-10-24T10:06:00.000Z\"},\"actions\":[],\"roleplay_feedback\":null,\"announces\":{\"step_id\":\"21ebfa10-6a66-4d43-9365-abbd3889b670\",\"title\":\"Englisch üben\",\"question_count\":0,\"est_minutes\":5,\"outcome\":{\"state\":\"closed\"}},\"created_at\":\"2026-10-24T10:06:00.000Z\"}]",
+      "kind": "reminder",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "contradicting-reminder-next-step",
+  "persona": {
+    "id": "contradicting",
+    "age": 12,
+    "locale": "de",
+    "style": "Competent reader, informal lowercase spelling",
+    "behaviour": "Contradicts Buddy when dissatisfied"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Jetzt ist es Zeit, Englisch zu üben! Möchtest du, dass ich dir einen kurzen Text zum Lesen gebe oder lieber ein paar Vokabeln zum Lernen?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": true
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Du hast nach ausführlichen Informationen über das menschliche Skelett gefragt. Buddy hat erklärt, dass das Skelett dem Körper Form gibt, wichtige Organe schützt und zusammen mit Muskeln und Gelenken Bewegung ermöglicht. Außerdem werden in den Knochen Blutzellen gebildet und Mineralstoffe gespeichert. Auf deine Bitte hin hat Buddy eine kurze Zusammenfassung gegeben, die diese Punkte knapp zusammenfasst.",
+      "double": false
+    }
+  ]
+}

@@ -1,0 +1,333 @@
+{
+  "goal": {
+    "id": "learning-002",
+    "issue": 106,
+    "wants": "The same thing along a different road — not the same sentences louder.",
+    "messages": [
+      "das versteh ich immer noch nicht kannst dus nochmal anders sagen"
+    ],
+    "expect": "answer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "a8b029b9-63d1-4507-9f41-72a555240974",
+        "role": "learner",
+        "text": "Ciao! Vuoi capire le frazioni partendo dallo zero. Io però ti chiedo di spiegarmelo in modo diverso da come l’ha detto l’insegnante: facciamola con esempi semplici e concreti, senza “parole difficili”. Da dove vuoi iniziare: 0/1 oppure 1/2?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "cfd0e51c-ddca-47c7-ad7b-a9cffbf1378c",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "89651a8f-05c3-4e2e-ba9a-0b6343ac1456",
+        "role": "buddy",
+        "text": "Partiamo da **1/2**: immagina una pizza tagliata in **2 pezzi uguali**. Se ne prendi **1 pezzo**, hai preso **una metà**; cioè **1/2** significa “1 parte su 2 uguali”. Ti va se nel prossimo messaggio facciamo anche **0/1** e vediamo perché è un caso un po’ speciale?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Sì, facciamolo",
+          "No, restiamo su 1/2",
+          "Vai avanti tu"
+        ],
+        "reply_to_id": "a8b029b9-63d1-4507-9f41-72a555240974",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1e11ad6e-9150-4733-9d9e-e5c7702448ac",
+        "role": "learner",
+        "text": "Va bene, proviamo 0/1 e 1/2 insieme. Spiegami 0/1 con un esempio concreto, tipo una cosa divisa in 1 parte sola, e dimmi anche cosa significa “0 parti” in quel caso.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3c4a04f9-89dd-4d57-8b99-c55a0442897b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6b95acd6-7122-48d7-bb6d-cd7b9271dccb",
+        "role": "buddy",
+        "text": "Certo: pensa a **una barretta di cioccolato intera** che non è stata tagliata in pezzi. Se la dividi in **1 parte sola**, quella parte è tutta la barretta: **1/1**. \n\n**0/1** vuol dire invece: la barretta è divisa in 1 parte, ma tu ne prendi **0**. Quindi non hai preso niente: è come dire “zero pezzi su un pezzo totale”.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1e11ad6e-9150-4733-9d9e-e5c7702448ac",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3d28b541-3c3a-4989-9b93-b691e9fb7383",
+        "role": "learner",
+        "text": "Ok, quindi mi confermi: 0/1 non è “0 diviso 1” come un’operazione, ma significa “ho 0 parti su 1 parte uguale”? Facciamo un esempio chiarissimo: se ho una barretta divisa in 1 solo pezzo, i “0” cosa rappresentano? (Tipo: non prendo nessun pezzetto, giusto?)",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ad77cda7-c668-466e-9b1c-ca98a044d9ab",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b1c6d595-7f4c-4053-96d0-c5c07fc93b27",
+        "role": "buddy",
+        "text": "Sì, giusto: in questo caso i “0” rappresentano che non prendi nessun pezzetto. Quindi 0/1 vuol dire “0 parti prese su 1 parte uguale totale”: il pezzo esiste, ma tu non ne hai preso nessuno.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "3d28b541-3c3a-4989-9b93-b691e9fb7383",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e989a56b-c4d0-4830-a7c6-021b7c337038",
+        "role": "learner",
+        "text": "Perfetto. Ora facciamo un controllo con un esempio ancora più concreto: immagina la barretta divisa in 1 pezzo uguale (quindi tutto il pezzo è “1/1”). Se tu dici 0/1, cosa succede alla barretta nel disegno: la prendi tutta, la lasci tutta, oppure ne prendi un pezzettino impossibile? Rispondimi solo con “la lasci tutta” o “la prendi tutta”.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "4774a8d4-f6cc-433e-8fa3-fa2756e6a7b1",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a91a5a86-771b-45aa-ab08-e1636c8233bb",
+        "role": "buddy",
+        "text": "la lasci tutta",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e989a56b-c4d0-4830-a7c6-021b7c337038",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "a8b029b9-63d1-4507-9f41-72a555240974",
+        "role": "learner",
+        "text": "Ciao! Vuoi capire le frazioni partendo dallo zero. Io però ti chiedo di spiegarmelo in modo diverso da come l’ha detto l’insegnante: facciamola con esempi semplici e concreti, senza “parole difficili”. Da dove vuoi iniziare: 0/1 oppure 1/2?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "cfd0e51c-ddca-47c7-ad7b-a9cffbf1378c",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "89651a8f-05c3-4e2e-ba9a-0b6343ac1456",
+        "role": "buddy",
+        "text": "Partiamo da **1/2**: immagina una pizza tagliata in **2 pezzi uguali**. Se ne prendi **1 pezzo**, hai preso **una metà**; cioè **1/2** significa “1 parte su 2 uguali”. Ti va se nel prossimo messaggio facciamo anche **0/1** e vediamo perché è un caso un po’ speciale?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Sì, facciamolo",
+          "No, restiamo su 1/2",
+          "Vai avanti tu"
+        ],
+        "reply_to_id": "a8b029b9-63d1-4507-9f41-72a555240974",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1e11ad6e-9150-4733-9d9e-e5c7702448ac",
+        "role": "learner",
+        "text": "Va bene, proviamo 0/1 e 1/2 insieme. Spiegami 0/1 con un esempio concreto, tipo una cosa divisa in 1 parte sola, e dimmi anche cosa significa “0 parti” in quel caso.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3c4a04f9-89dd-4d57-8b99-c55a0442897b",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6b95acd6-7122-48d7-bb6d-cd7b9271dccb",
+        "role": "buddy",
+        "text": "Certo: pensa a **una barretta di cioccolato intera** che non è stata tagliata in pezzi. Se la dividi in **1 parte sola**, quella parte è tutta la barretta: **1/1**. \n\n**0/1** vuol dire invece: la barretta è divisa in 1 parte, ma tu ne prendi **0**. Quindi non hai preso niente: è come dire “zero pezzi su un pezzo totale”.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1e11ad6e-9150-4733-9d9e-e5c7702448ac",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3d28b541-3c3a-4989-9b93-b691e9fb7383",
+        "role": "learner",
+        "text": "Ok, quindi mi confermi: 0/1 non è “0 diviso 1” come un’operazione, ma significa “ho 0 parti su 1 parte uguale”? Facciamo un esempio chiarissimo: se ho una barretta divisa in 1 solo pezzo, i “0” cosa rappresentano? (Tipo: non prendo nessun pezzetto, giusto?)",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ad77cda7-c668-466e-9b1c-ca98a044d9ab",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b1c6d595-7f4c-4053-96d0-c5c07fc93b27",
+        "role": "buddy",
+        "text": "Sì, giusto: in questo caso i “0” rappresentano che non prendi nessun pezzetto. Quindi 0/1 vuol dire “0 parti prese su 1 parte uguale totale”: il pezzo esiste, ma tu non ne hai preso nessuno.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "3d28b541-3c3a-4989-9b93-b691e9fb7383",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e989a56b-c4d0-4830-a7c6-021b7c337038",
+        "role": "learner",
+        "text": "Perfetto. Ora facciamo un controllo con un esempio ancora più concreto: immagina la barretta divisa in 1 pezzo uguale (quindi tutto il pezzo è “1/1”). Se tu dici 0/1, cosa succede alla barretta nel disegno: la prendi tutta, la lasci tutta, oppure ne prendi un pezzettino impossibile? Rispondimi solo con “la lasci tutta” o “la prendi tutta”.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "4774a8d4-f6cc-433e-8fa3-fa2756e6a7b1",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a91a5a86-771b-45aa-ab08-e1636c8233bb",
+        "role": "buddy",
+        "text": "la lasci tutta",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e989a56b-c4d0-4830-a7c6-021b7c337038",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [],
+  "findings": [
+    {
+      "invariant": "answer.present",
+      "evidence": "",
+      "kind": "answer",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "execution.error",
+      "kind": "answer",
+      "route": "/explorer",
+      "evidence": "simulator: no current question",
+      "category": "simulator"
+    }
+  ],
+  "id": "italian-parent-learning-002",
+  "persona": {
+    "id": "italian-parent",
+    "age": 38,
+    "locale": "it",
+    "style": "Italian-speaking parent preparing practice for child",
+    "behaviour": "Checks details, corrects assumptions",
+    "parent": true
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "answer",
+        "text": "la lasci tutta",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Ciao! Vuoi capire le frazioni partendo dallo zero. Io però ti chiedo di spiegarmelo in modo diverso da come l’ha detto l’insegnante: facciamola con esempi semplici e concreti, senza “parole difficili”. Da dove vuoi iniziare: 0/1 oppure 1/2?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Va bene, proviamo 0/1 e 1/2 insieme. Spiegami 0/1 con un esempio concreto, tipo una cosa divisa in 1 parte sola, e dimmi anche cosa significa “0 parti” in quel caso.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ok, quindi mi confermi: 0/1 non è “0 diviso 1” come un’operazione, ma significa “ho 0 parti su 1 parte uguale”? Facciamo un esempio chiarissimo: se ho una barretta divisa in 1 solo pezzo, i “0” cosa rappresentano? (Tipo: non prendo nessun pezzetto, giusto?)",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Perfetto. Ora facciamo un controllo con un esempio ancora più concreto: immagina la barretta divisa in 1 pezzo uguale (quindi tutto il pezzo è “1/1”). Se tu dici 0/1, cosa succede alla barretta nel disegno: la prendi tutta, la lasci tutta, oppure ne prendi un pezzettino impossibile? Rispondimi solo con “la lasci tutta” o “la prendi tutta”.",
+      "double": false
+    }
+  ],
+  "error": "simulator: no current question"
+}

@@ -1,0 +1,2616 @@
+[
+  {
+    "invariant": "vocabulary.count|vocab|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "topic-vocabulary",
+      "issue": 940,
+      "wants": "20 English school vocabulary pairs, German to English practice",
+      "messages": [
+        "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+      ],
+      "expect": "vocab",
+      "count": 20
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "execution.error|vocab|/explorer",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "topic-vocabulary",
+      "issue": 940,
+      "wants": "20 English school vocabulary pairs, German to English practice",
+      "messages": [
+        "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+      ],
+      "expect": "vocab",
+      "count": 20
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "vocabulary.chat-count|chat-vocab|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+          "role": "learner",
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "5329a352-40ff-47d0-8c39-a927e52fc7dc",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "f8e6693c-20aa-49d9-9a3b-1c7cfe9b8482",
+          "role": "buddy",
+          "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "2306b8af-18aa-4d83-928a-5117ee851ea2",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "20 englische Basisvokabeln zum Thema Schule; abfrage von Deutsch nach Englisch",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": false,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": null,
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+          "role": "learner",
+          "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "d67c160d-fcc7-4678-a8b6-30332e52a980",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "9ad2fe7e-f8b5-4b71-b8a8-40af9d2c43bf",
+          "role": "buddy",
+          "text": "Schule = ?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "twenty-in-chat",
+      "issue": 940,
+      "wants": "20 bilingual vocabulary pairs immediately in chat",
+      "messages": [
+        "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten."
+      ],
+      "expect": "chat-vocab",
+      "count": 20
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "execution.error|chat-vocab|/explorer",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+          "role": "learner",
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "5329a352-40ff-47d0-8c39-a927e52fc7dc",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "f8e6693c-20aa-49d9-9a3b-1c7cfe9b8482",
+          "role": "buddy",
+          "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "2306b8af-18aa-4d83-928a-5117ee851ea2",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "20 englische Basisvokabeln zum Thema Schule; abfrage von Deutsch nach Englisch",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": false,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": null,
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+          "role": "learner",
+          "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "d67c160d-fcc7-4678-a8b6-30332e52a980",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "9ad2fe7e-f8b5-4b71-b8a8-40af9d2c43bf",
+          "role": "buddy",
+          "text": "Schule = ?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "twenty-in-chat",
+      "issue": 940,
+      "wants": "20 bilingual vocabulary pairs immediately in chat",
+      "messages": [
+        "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten."
+      ],
+      "expect": "chat-vocab",
+      "count": 20
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "offer.startable|vocab|/practice/topic",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Okay! Hier sind 5 Tier-Wörter (nur Karteikarten, keine Lücken): Katze = cat, Hund = dog, Vogel = bird, Fisch = fish, Maus = mouse. Frag mich jetzt bitte eins nach dem andern von Deutsch nach Englisch.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, frag mich bitte jetzt eins nach dem andern von Deutsch nach Englisch. Erste Frage: Katze = ?",
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+          "role": "learner",
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "5329a352-40ff-47d0-8c39-a927e52fc7dc",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "f8e6693c-20aa-49d9-9a3b-1c7cfe9b8482",
+          "role": "buddy",
+          "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "2306b8af-18aa-4d83-928a-5117ee851ea2",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "20 englische Basisvokabeln zum Thema Schule; abfrage von Deutsch nach Englisch",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": false,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": null,
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+          "role": "learner",
+          "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "d67c160d-fcc7-4678-a8b6-30332e52a980",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "9ad2fe7e-f8b5-4b71-b8a8-40af9d2c43bf",
+          "role": "buddy",
+          "text": "Schule = ?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "ea4267a5-4f48-4148-b599-fd9f1c21c72e",
+          "role": "learner",
+          "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "66a6abfb-e54b-4688-916c-83f383f57369",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "ae077dc5-d6e5-48b8-9db9-7e420ecb0e4b",
+          "role": "buddy",
+          "text": "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines Quiz daraus machen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "ea4267a5-4f48-4148-b599-fd9f1c21c72e",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "d0e3be28-9504-474d-8a0b-27de919b175d",
+          "role": "learner",
+          "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "36ec1ca2-1489-47fb-979e-fa869e067fc4",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "fb3da2d2-8cae-4a14-98a2-61116c3e704f",
+          "role": "buddy",
+          "text": "Was ist „school“ auf Deutsch? Schreib es kurz.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "d0e3be28-9504-474d-8a0b-27de919b175d",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "vocab-not-cloze",
+      "issue": 940,
+      "wants": "Vocabulary cards, never cloze exercises",
+      "messages": [
+        "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+      ],
+      "expect": "vocab",
+      "count": 5
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "vocabulary.direction|vocab|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Okay! Hier sind 5 Tier-Wörter (nur Karteikarten, keine Lücken): Katze = cat, Hund = dog, Vogel = bird, Fisch = fish, Maus = mouse. Frag mich jetzt bitte eins nach dem andern von Deutsch nach Englisch.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, frag mich bitte jetzt eins nach dem andern von Deutsch nach Englisch. Erste Frage: Katze = ?",
+        "double": false
+      },
+      {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+          "role": "learner",
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "5329a352-40ff-47d0-8c39-a927e52fc7dc",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "f8e6693c-20aa-49d9-9a3b-1c7cfe9b8482",
+          "role": "buddy",
+          "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "2306b8af-18aa-4d83-928a-5117ee851ea2",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "20 englische Basisvokabeln zum Thema Schule; abfrage von Deutsch nach Englisch",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": false,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": null,
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+          "role": "learner",
+          "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "d67c160d-fcc7-4678-a8b6-30332e52a980",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "9ad2fe7e-f8b5-4b71-b8a8-40af9d2c43bf",
+          "role": "buddy",
+          "text": "Schule = ?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "ea4267a5-4f48-4148-b599-fd9f1c21c72e",
+          "role": "learner",
+          "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "66a6abfb-e54b-4688-916c-83f383f57369",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "ae077dc5-d6e5-48b8-9db9-7e420ecb0e4b",
+          "role": "buddy",
+          "text": "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines Quiz daraus machen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "ea4267a5-4f48-4148-b599-fd9f1c21c72e",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "d0e3be28-9504-474d-8a0b-27de919b175d",
+          "role": "learner",
+          "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "36ec1ca2-1489-47fb-979e-fa869e067fc4",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "fb3da2d2-8cae-4a14-98a2-61116c3e704f",
+          "role": "buddy",
+          "text": "Was ist „school“ auf Deutsch? Schreib es kurz.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "d0e3be28-9504-474d-8a0b-27de919b175d",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "vocab-not-cloze",
+      "issue": 940,
+      "wants": "Vocabulary cards, never cloze exercises",
+      "messages": [
+        "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+      ],
+      "expect": "vocab",
+      "count": 5
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+        "double": true
+      },
+      {
+        "type": "message",
+        "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "goal.start|offer|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "clarification-chain",
+      "issue": 938,
+      "wants": "A vocabulary request continues after answering the language question",
+      "messages": [
+        "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+      ],
+      "expect": "offer"
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "picture.present|picture|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Am besten komplett mit Bild.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+          "role": "learner",
+          "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "0354e1a0-bb4a-4c84-80f0-9942f5df716e",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "5260d893-21ba-4983-ae7f-ba4b631c322f",
+          "role": "buddy",
+          "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Englisch",
+            "Französisch",
+            "Sachthema"
+          ],
+          "reply_to_id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "0e572321-8664-4fa5-85d5-23f9ab64f5d1",
+          "role": "learner",
+          "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+          "status": "done",
+          "failure_code": "invalid",
+          "client_message_id": "33266285-5b12-4205-8bee-0ee2941c57e6",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+          "role": "learner",
+          "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "56a1c55f-4920-4e9b-b85c-cfdbb5b1a434",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "0cab745f-7302-42d3-ac6c-996a2e1c5998",
+          "role": "buddy",
+          "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "7d8beee6-88a1-4f7a-b46f-5c591d3e9e2f",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "Basisvokabeln Deutsch–Englisch mit einer Lückenübung",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": false,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": null,
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+          "role": "learner",
+          "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "a4b17535-6eb4-4eb9-a9df-0b4b3f00ec0e",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "c876205d-b3c1-47fe-8559-ef7ab8932f49",
+          "role": "buddy",
+          "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "26602f14-564e-477c-be86-73a45287b78c",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "Basiswörter Deutsch–Englisch mit Lücken",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": false,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": null,
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "with-picture",
+      "issue": 934,
+      "wants": "A real picture of the skeleton",
+      "messages": [
+        "Erkläre mir das menschliche Skelett.",
+        "Am besten komplett mit Bild."
+      ],
+      "expect": "picture"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "execution.error|clean|/explorer",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, ich erkläre dir ausführlich, wie ich dir beim Lernen helfe: Du sagst mir erst, was du lernen willst (z.B. Thema und was du schon kannst). Dann mache ich daraus eine kindgerechte Erklärung in kleinen Schritten, mit Beispielen. Danach machen wir eine Übung: Ich kann dir zum Beispiel Fragen stellen oder einen Lückentext geben, und du antwortest. Wenn du etwas falsch machst, sage ich dir nicht nur „falsch“, sondern ich erkläre kurz, warum, und wir üben genau den Teil nochmal. Wenn du willst, können wir auch Karteikarten machen (Wort auf Deutsch und Englisch/aber du sagst mir, was du brauchst). Und wenn du müde wirst, können wir kurz eine Mini-Pause machen mit einer kleinen Aufgabe oder einem Rätsel, damit du wieder mehr Energie hast.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Super! Dann machen wir jetzt eine Lernübung mit Lücken: \n1) Skelett (englisch) = _____\n( Schreib die richtige Lösung in Englisch.)",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+          "role": "learner",
+          "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "0354e1a0-bb4a-4c84-80f0-9942f5df716e",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "5260d893-21ba-4983-ae7f-ba4b631c322f",
+          "role": "buddy",
+          "text": "Klar — zu welchem Thema sollen die 20 Vokabeln sein?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Englisch",
+            "Französisch",
+            "Sachthema"
+          ],
+          "reply_to_id": "8f249cd8-3048-44b8-9ece-771c18f6c719",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "0e572321-8664-4fa5-85d5-23f9ab64f5d1",
+          "role": "learner",
+          "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+          "status": "done",
+          "failure_code": "invalid",
+          "client_message_id": "33266285-5b12-4205-8bee-0ee2941c57e6",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+          "role": "learner",
+          "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "56a1c55f-4920-4e9b-b85c-cfdbb5b1a434",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "0cab745f-7302-42d3-ac6c-996a2e1c5998",
+          "role": "buddy",
+          "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Basiswörtern und Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "8d0e8043-66d0-4469-bc76-c431d2e3f725",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "7d8beee6-88a1-4f7a-b46f-5c591d3e9e2f",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "Basisvokabeln Deutsch–Englisch mit einer Lückenübung",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": false,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": null,
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+          "role": "learner",
+          "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "a4b17535-6eb4-4eb9-a9df-0b4b3f00ec0e",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "c876205d-b3c1-47fe-8559-ef7ab8932f49",
+          "role": "buddy",
+          "text": "Ich bereite dir eine Deutsch–Englisch‑Vokabelübung mit Lücken vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "e3665cd6-720f-4b49-ad02-a20eb27799b1",
+          "outreach": null,
+          "actions": [
+            {
+              "id": "26602f14-564e-477c-be86-73a45287b78c",
+              "status": "applied",
+              "undoable": false,
+              "summary": {
+                "kind": "vocab",
+                "text": "Basiswörter Deutsch–Englisch mit Lücken",
+                "tool": "offer_learning",
+                "figures": [],
+                "goal_id": null,
+                "minutes": null,
+                "direction": "produce",
+                "startable": false,
+                "difficulty": null,
+                "material_id": null,
+                "pictures_shown": null,
+                "running_session_id": null,
+                "finished_session_id": null
+              },
+              "created_at": "2026-10-24T10:00:00.000Z"
+            }
+          ],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "9ff7e759-6f96-4401-8396-b72cc1ec5bcb",
+          "role": "learner",
+          "text": "Erkläre mir das menschliche Skelett.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "b3ff16c5-46de-4338-aa49-bdc259c1247e",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "8a5b0091-d3c1-4dd0-83a4-b2b23bb4ca6f",
+          "role": "buddy",
+          "text": "Klar: Das menschliche Skelett ist wie ein Gerüst im Haus. Es gibt dem Körper Halt, schützt wichtige Organe wie das Gehirn und das Herz und hilft zusammen mit den Muskeln beim Bewegen. Willst du dazu noch die wichtigsten Knochen kennenlernen?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Ja, bitte.",
+            "Nur die wichtigsten Knochen.",
+            "Erst mal nicht."
+          ],
+          "reply_to_id": "9ff7e759-6f96-4401-8396-b72cc1ec5bcb",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "aeba0129-c584-4258-a46c-c23b0d553b6f",
+          "role": "learner",
+          "text": "Am besten komplett mit Bild.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "e2fb20cf-fa53-4a32-8dba-c025e7dd37ca",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "71e31e70-dcfd-4105-b333-6c4e160717f3",
+          "role": "buddy",
+          "text": "Klar — ich kann dir kein echtes Bild zeigen, aber ich kann dir ein einfaches Übersichtsbild in Text machen: \n\nKopf = Schädel\nHals = Wirbelsäule\nBrustkorb = Rippen\nMitte = Becken\nArme und Beine = lange Knochen für Bewegung\n\nSo sieht das Gerüst ungefähr aus:\n\n   Schädel\n     |\n   Wirbelsäule\n  /   |    \\\nArm  Rippen  Arm\n  \\    |    /\n     Becken\n    /     \\\n Bein     Bein\n\nDas Skelett hält dich aufrecht, schützt dein Inneres und arbeitet mit den Muskeln zusammen wie ein Team. Wenn du willst, erkläre ich dir als Nächstes die wichtigsten Knochen am Körper der Reihe nach.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "aeba0129-c584-4258-a46c-c23b0d553b6f",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "1959b4b4-39e2-4544-a0de-72d36dbb6af5",
+          "role": "learner",
+          "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "5200d19e-ec9f-4f83-a502-9df5d39dd16d",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "47ed267e-9dd6-4578-8a44-21f35f7df3e1",
+          "role": "buddy",
+          "text": "Ich kann dir hier keinen Link oder eine Webseite zeigen, aber ich kann dir das Skelett im Chat erklären oder dir ein Lernbild in einfacher Skizze machen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "1959b4b4-39e2-4544-a0de-72d36dbb6af5",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e06dd670-f009-4f4a-a8a8-4c5c3087668f",
+          "role": "learner",
+          "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "bce58c61-18d6-4bea-bf25-f030a84b81c1",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "62dfd1c9-870c-428e-bed2-0c8c60bdc636",
+          "role": "buddy",
+          "text": "Ich kann dir keinen direkten Link oder eine Website geben, aber ich kann dir hier ein einfaches Lernbild vom Skelett machen oder es dir Schritt für Schritt erklären.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "e06dd670-f009-4f4a-a8a8-4c5c3087668f",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "no-internals",
+      "issue": 934,
+      "wants": "Readable child-facing explanation, no internal protocol",
+      "messages": [
+        "Erklär mir bitte ausführlich wie du mir beim Lernen hilfst."
+      ],
+      "expect": "clean"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Deutsch und Englisch. Denk dir Basisvokabeln aus.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Thema egal, bitte mach die 20 Basiswörter auf Deutsch und Englisch, und danach gib mir bitte noch eine neue Vokabelabfrage weiter, also so eine Übungsliste mit Lücken.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, dann mach bitte jetzt sofort die nächste Vokabelübung mit Lücken: Gib mir 20 Basiswörter Deutsch→Englisch (jeweils ein Wort), und danach stell mir eine neue Abfrage mit Lücken: Ich sehe nur die Lücke „_____“ und du sagst mir die richtige Form, wenn ich antworte. Los!",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Erkläre mir das menschliche Skelett.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Am besten komplett mit Bild.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Kannst du mir bitte ein echtes Bild vom menschlichen Skelett zeigen? Zum Beispiel einen Link oder eine Seite mit einem richtigen Foto.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Gib mir bitte eine kurze, echte Bildquelle (z.B. eine bekannte Website oder einen Suchbegriff) für ein menschliches Skelettfoto, damit ich es direkt öffnen kann.",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "summary.condensation|summary|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": true,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "summary-not-repeat",
+      "issue": 937,
+      "wants": "A structured condensation of the conversation",
+      "messages": [
+        "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "Mach mir bitte eine kurze Zusammenfassung davon."
+      ],
+      "expect": "summary"
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "reminder.next-step|reminder|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "double": false
+      },
+      {
+        "type": "tick"
+      },
+      {
+        "type": "message",
+        "text": "okay buddy — bitte stell mir die erinnerung jetzt ein (nicht nur als „wie verabredet“). soll das wirklich in 5 minuten sein?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "ja—aber ich seh hier keine option zum einstellen/planen von erinnerungen. sag mir bitte genau wo ich tippen soll, damit die erinnerung wirklich in 5 minuten kommt (in der app auf welchem bildschirm/menüpunkt).",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "18b210fd-da49-40b5-a953-05befbf41779",
+          "role": "learner",
+          "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "66e4e686-decd-475e-b62b-bed1fb70ecfd",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "ca18e0dd-7164-4e49-8398-32935216400f",
+          "role": "buddy",
+          "text": "Klar — stell dir das Skelett wie das stabile Gerüst eines Hauses vor: Es gibt dem Körper Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Dazu arbeiten Knochen, Gelenke und Knorpel zusammen: Knochen sind die festen Teile, Gelenke sind die beweglichen Verbindungen, und Knorpel wirkt wie ein weiches Polster an manchen Stellen. Willst du zuerst die wichtigsten Knochen lernen, den Aufbau eines Knochens verstehen oder wissen, wie Gelenke funktionieren?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "wichtigste Knochen",
+            "Aufbau eines Knochens",
+            "Gelenke"
+          ],
+          "reply_to_id": "18b210fd-da49-40b5-a953-05befbf41779",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "9ec3a342-dcec-49ce-84a7-433feb74b07b",
+          "role": "learner",
+          "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "697b1710-0e22-41c4-ab80-2a57374841e5",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "6ea60eff-2aa2-4579-aeb8-0ec376781fff",
+          "role": "buddy",
+          "text": "Klar: Das menschliche Skelett ist das stabile Gerüst des Körpers. Es gibt Form und Halt, schützt wichtige Organe und ermöglicht zusammen mit Gelenken und Muskeln die Bewegung.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "9ec3a342-dcec-49ce-84a7-433feb74b07b",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "eb329f44-3c99-4cb0-9621-c8ecba780fd4",
+          "role": "learner",
+          "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "7bb609a8-dd5b-44c0-95bd-6f4086addf0b",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "d32ab9d0-0de0-4d27-bc34-68b200234ffe",
+          "role": "buddy",
+          "text": "Ja, genau so passt es. Wenn du willst, kann ich es dir noch in 1 Satz oder als Lernkarte umformulieren.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "eb329f44-3c99-4cb0-9621-c8ecba780fd4",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "1d55fa71-934b-4779-afb4-3667c0297262",
+          "role": "learner",
+          "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "48efa06c-b309-4ac4-b2ec-a1ca3b69fccf",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "73a43e5f-664a-416d-8663-7eba1ff0ae5d",
+          "role": "buddy",
+          "text": "- Das Skelett ist das stabile Gerüst des Körpers.\n- Es gibt Form und Halt.\n- Es schützt wichtige Organe.\n- Zusammen mit Gelenken und Muskeln ermöglicht es Bewegung.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "1d55fa71-934b-4779-afb4-3667c0297262",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": true,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "reminder-next-step",
+      "issue": 941,
+      "wants": "Reminder with content and a valid next step",
+      "messages": [
+        "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+      ],
+      "expect": "reminder"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "kurz zusammengefasst: das menschliche skelett ist das stabile gerüst vom körper. es gibt form und halt, schützt wichtige organe und hilft zusammen mit gelenken und muskeln bei der bewegung.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "okay, das ist schon richtig. mach bitte jetzt eine wirklich strukturierte kondensation in 3–4 punkten (ohne weiteres drumherum).",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "execution.error|answer|/explorer",
+    "actions": [
+      {
+        "type": "message",
+        "text": "erklär mal brüche aber einfach",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "learning-001",
+      "issue": 106,
+      "wants": "Understand fractions from zero, and a promise up front that it will not be the way the teacher said it.",
+      "messages": [
+        "erklär mal brüche aber einfach"
+      ],
+      "expect": "answer"
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "goal.start|photo|/buddy/messages",
+    "actions": [
+      {
+        "type": "photo"
+      },
+      {
+        "type": "message",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+          "role": "learner",
+          "text": "erklär mal brüche aber einfach",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "b7025bfa-9156-4a9e-9755-decfabe31adb",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e9a0f581-a66b-4b3d-8e5d-a485c60d2b00",
+          "role": "buddy",
+          "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "lesen",
+            "vergleichen",
+            "rechnen"
+          ],
+          "reply_to_id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+          "role": "learner",
+          "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "e7167f0f-7c93-4ff9-9c88-6d314bcb2938",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "db66ce7d-d611-43e9-a3f6-61d4082fc493",
+          "role": "buddy",
+          "text": "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Wasser",
+            "Pizza",
+            "Kuchen"
+          ],
+          "reply_to_id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+          "role": "learner",
+          "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "e0fb7202-41f4-4dc1-a3ce-d86a00c8e020",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "b8019583-fc67-4768-ae53-4f55642a09e9",
+          "role": "buddy",
+          "text": "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Ja, mit Pizza",
+            "Ja, mit Wasser",
+            "Nein, noch ein anderes Beispiel"
+          ],
+          "reply_to_id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "78aed472-acf6-4d59-8932-7ff6d201f46f",
+          "role": "learner",
+          "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "cc816a9e-2c0f-4315-99a9-b4f3dc956b4c",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "82e48188-c74c-41df-9977-9c326771579e",
+          "role": "buddy",
+          "text": "Klar. Denk an eine Tafel Schokolade mit 4 gleich großen Stücken: Der Strich bei $\\frac{3}{4}$ ist wie ein Zaun zwischen „oben“ und „unten“ — oben steht, wie viele Stücke du nimmst, unten steht, in wie viele Stücke die ganze Schokolade geteilt ist. Bei $\\frac{3}{4}$ sind 3 Stücke da und 1 Stück fehlt noch, deshalb ist es fast ganz.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "78aed472-acf6-4d59-8932-7ff6d201f46f",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "334a643e-428a-45ed-94e2-7706346ed1f4",
+          "role": "learner",
+          "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "0f3f863f-1f69-47e1-a78b-0eca816a53f2",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "1ef98886-edc8-4f57-92ef-a88a7c6494e1",
+          "role": "buddy",
+          "text": "Ja — mit dem Strich meine ich die Linie zwischen oben und unten, also die Trennlinie im Bruch. Oben steht: wie viele Teile du hast. Unten steht: in wie viele gleich große Teile das Ganze geteilt ist.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "334a643e-428a-45ed-94e2-7706346ed1f4",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "03584a8d-cadc-4afa-b20f-69e404d9b687",
+          "role": "learner",
+          "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "8ca684ad-81d6-429d-ab00-81c6ce30a875",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e1163121-8b09-47da-a59b-6300e7c5d03d",
+          "role": "buddy",
+          "text": "Ja — in Brüchen ist das „/“ eigentlich nur eine Schreibweise für die Bruchlinie. Es meint: „oben gehört zu unten“ oder „oben von unten“ — nicht einfach nur eine Rechenaufgabe. Deshalb heißt $\\frac{3}{4}$: 3 von 4 gleich großen Teilen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "03584a8d-cadc-4afa-b20f-69e404d9b687",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "09eeaee6-73bd-4b4b-8a75-763aa315eb7d",
+          "role": "learner",
+          "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "6ae7901e-f50d-4d47-bf29-eb0933cdf77a",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "0104258f-f2f1-404b-96a3-758c5eb63d49",
+          "role": "buddy",
+          "text": "Klar: **„Oben zeigt, wie viele du hast; unten zeigt, woraus das Ganze besteht.“**\n\nFür $\\frac{3}{4}$ heißt das: **3 von 4 gleich großen Teilen**.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "09eeaee6-73bd-4b4b-8a75-763aa315eb7d",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "photo-to-practice",
+      "issue": 944,
+      "wants": "Practice based on my photographed fractions worksheet",
+      "messages": [
+        "Ich möchte die Aufgaben auf meinem Blatt üben."
+      ],
+      "expect": "photo"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "erklär mal brüche aber einfach",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "execution.error|photo|/explorer",
+    "actions": [
+      {
+        "type": "photo"
+      },
+      {
+        "type": "message",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+          "role": "learner",
+          "text": "erklär mal brüche aber einfach",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "b7025bfa-9156-4a9e-9755-decfabe31adb",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e9a0f581-a66b-4b3d-8e5d-a485c60d2b00",
+          "role": "buddy",
+          "text": "Klar: Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt ist. Oben steht, wie viele Stücke du hast, unten, in wie viele Teile der ganze Kuchen geteilt wurde — zum Beispiel bedeutet $\\frac{1}{4}$: ein Teil von vier. Möchtest du, dass ich dir gleich zeige, wie man Brüche liest oder vergleicht?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "lesen",
+            "vergleichen",
+            "rechnen"
+          ],
+          "reply_to_id": "201ca583-f2d6-47e0-be15-c8b480fdcaf8",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+          "role": "learner",
+          "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "e7167f0f-7c93-4ff9-9c88-6d314bcb2938",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "db66ce7d-d611-43e9-a3f6-61d4082fc493",
+          "role": "buddy",
+          "text": "Klar — stell dir einen Schokoriegel vor, der in 4 gleich große Stücke geteilt ist. $\\frac{0}{4}$ heißt: Du hast 0 von diesen 4 Stücken, also nichts davon; $\\frac{3}{4}$ heißt: Du hast 3 von 4 Stücken, also fast den ganzen Riegel. Möchtest du noch ein Beispiel mit Wasser oder Pizza?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Wasser",
+            "Pizza",
+            "Kuchen"
+          ],
+          "reply_to_id": "73139e42-fa34-4698-8989-d28a3d0ebf2d",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+          "role": "learner",
+          "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "e0fb7202-41f4-4dc1-a3ce-d86a00c8e020",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "b8019583-fc67-4768-ae53-4f55642a09e9",
+          "role": "buddy",
+          "text": "Der Strich in $\\frac{0}{4}$ und $\\frac{3}{4}$ ist einfach die Trennlinie: oben steht die Zahl für die Stücke, die du hast, unten die Zahl für alle gleich großen Stücke zusammen. Bei $\\frac{3}{4}$ sind schon 3 von 4 Teilen da — nur 1 Teil fehlt noch, deshalb fühlt es sich „fast ganz“ an. Soll ich dir das noch mit einer Pizza in einem Bild im Kopf zeigen?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "Ja, mit Pizza",
+            "Ja, mit Wasser",
+            "Nein, noch ein anderes Beispiel"
+          ],
+          "reply_to_id": "8d6b75a0-cc53-4782-b514-4e17b0cf7d5b",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "78aed472-acf6-4d59-8932-7ff6d201f46f",
+          "role": "learner",
+          "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "cc816a9e-2c0f-4315-99a9-b4f3dc956b4c",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "82e48188-c74c-41df-9977-9c326771579e",
+          "role": "buddy",
+          "text": "Klar. Denk an eine Tafel Schokolade mit 4 gleich großen Stücken: Der Strich bei $\\frac{3}{4}$ ist wie ein Zaun zwischen „oben“ und „unten“ — oben steht, wie viele Stücke du nimmst, unten steht, in wie viele Stücke die ganze Schokolade geteilt ist. Bei $\\frac{3}{4}$ sind 3 Stücke da und 1 Stück fehlt noch, deshalb ist es fast ganz.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "78aed472-acf6-4d59-8932-7ff6d201f46f",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "334a643e-428a-45ed-94e2-7706346ed1f4",
+          "role": "learner",
+          "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "0f3f863f-1f69-47e1-a78b-0eca816a53f2",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "1ef98886-edc8-4f57-92ef-a88a7c6494e1",
+          "role": "buddy",
+          "text": "Ja — mit dem Strich meine ich die Linie zwischen oben und unten, also die Trennlinie im Bruch. Oben steht: wie viele Teile du hast. Unten steht: in wie viele gleich große Teile das Ganze geteilt ist.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "334a643e-428a-45ed-94e2-7706346ed1f4",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "03584a8d-cadc-4afa-b20f-69e404d9b687",
+          "role": "learner",
+          "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "8ca684ad-81d6-429d-ab00-81c6ce30a875",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "e1163121-8b09-47da-a59b-6300e7c5d03d",
+          "role": "buddy",
+          "text": "Ja — in Brüchen ist das „/“ eigentlich nur eine Schreibweise für die Bruchlinie. Es meint: „oben gehört zu unten“ oder „oben von unten“ — nicht einfach nur eine Rechenaufgabe. Deshalb heißt $\\frac{3}{4}$: 3 von 4 gleich großen Teilen.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "03584a8d-cadc-4afa-b20f-69e404d9b687",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "09eeaee6-73bd-4b4b-8a75-763aa315eb7d",
+          "role": "learner",
+          "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "6ae7901e-f50d-4d47-bf29-eb0933cdf77a",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "0104258f-f2f1-404b-96a3-758c5eb63d49",
+          "role": "buddy",
+          "text": "Klar: **„Oben zeigt, wie viele du hast; unten zeigt, woraus das Ganze besteht.“**\n\nFür $\\frac{3}{4}$ heißt das: **3 von 4 gleich großen Teilen**.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": null,
+          "reply_to_id": "09eeaee6-73bd-4b4b-8a75-763aa315eb7d",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "photo-to-practice",
+      "issue": 944,
+      "wants": "Practice based on my photographed fractions worksheet",
+      "messages": [
+        "Ich möchte die Aufgaben auf meinem Blatt üben."
+      ],
+      "expect": "photo"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "erklär mal brüche aber einfach",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, aber ich verspreche: nicht wie mein Lehrer es sagte. Kannst du Brüche mit einem anderen Beispiel erklären? Zum Beispiel mit 0/4 und 3/4.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ja, gerne. Kannst du mir kurz erklären: Was bedeutet der Strich bei 0/4 und 3/4? Und woran erkenne ich bei 3/4, welcher Teil „fast ganz“ ist?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, nochmal ganz anders: 0/4 und 3/4 sind **Anteile**.\n\n- **0/4**: Es gibt insgesamt **4 gleich große Teile**. Du nimmst davon **0 Teile** → also **keins** davon.\n- **3/4**: Insgesamt **4 Teile**. Du nimmst **3 Teile** → also **3 von 4** Teilen.\n\nWenn du „fast ganz“ sagst, heißt das bei 3/4: **es fehlt nur 1 von 4 Teilen**.\n\nKann ich dich kurz fragen: Meinst du mit „der Strich“ das **Bruchzeichen /** oder die **Linie oben-unten**?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ah danke! Dann: Bei 0/4 steht oben 0 und unten 4.\nKannst du mir bitte sagen, was Bruchzeichen „/“ genau bedeutet – ist das nur zum Schreiben, oder heißt es „geteilt durch“? (Und warum schreibt man dann 3/4 so?)",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Okay, danke! Noch eine kurze Frage: Wenn „/“ nicht „geteilt durch“ heißt, wie kann ich mir dann merken, dass es bei 3/4 immer „3 von 4“ bedeutet? Kannst du mir einen Mini-Merksatz auf Deutsch sagen?",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "double.message|chat|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": true,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "summary-not-repeat",
+      "issue": 937,
+      "wants": "A structured condensation of the conversation",
+      "messages": [
+        "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "Mach mir bitte eine kurze Zusammenfassung davon."
+      ],
+      "expect": "summary"
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "execution.error|summary|/explorer",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": true,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "summary-not-repeat",
+      "issue": 937,
+      "wants": "A structured condensation of the conversation",
+      "messages": [
+        "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "Mach mir bitte eine kurze Zusammenfassung davon."
+      ],
+      "expect": "summary"
+    },
+    "requiredPrefix": []
+  },
+  {
+    "invariant": "reminder.delivered|reminder|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas.",
+        "double": false
+      },
+      {
+        "type": "tick"
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": true,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "reminder-next-step",
+      "issue": 941,
+      "wants": "Reminder with content and a valid next step",
+      "messages": [
+        "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+      ],
+      "expect": "reminder"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "execution.error|reminder|/explorer",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas.",
+        "double": false
+      },
+      {
+        "type": "tick"
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": true,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "reminder-next-step",
+      "issue": 941,
+      "wants": "Reminder with content and a valid next step",
+      "messages": [
+        "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+      ],
+      "expect": "reminder"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+        "double": false
+      }
+    ]
+  },
+  {
+    "invariant": "execution.error|history|/explorer",
+    "actions": [],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:06:00.000Z",
+      "messages": [
+        {
+          "id": "a31de482-aaab-449f-9e11-8cc1e7437bab",
+          "role": "learner",
+          "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas.",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": "2453c1b4-d503-4ee0-a51e-96f6c5ced31c",
+          "options": null,
+          "reply_to_id": null,
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        {
+          "id": "1be2fd35-d079-412e-b059-fe583b08ecbe",
+          "role": "buddy",
+          "text": "Claro — ¿sobre qué tema es?",
+          "status": "done",
+          "failure_code": null,
+          "client_message_id": null,
+          "options": [
+            "mate",
+            "inglés",
+            "historia",
+            "ciencia"
+          ],
+          "reply_to_id": "a31de482-aaab-449f-9e11-8cc1e7437bab",
+          "outreach": null,
+          "actions": [],
+          "roleplay_feedback": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        }
+      ],
+      "items": [],
+      "settings": {
+        "contact_enabled": true,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "history-restart",
+      "issue": 937,
+      "wants": "Full server conversation after switching mode and restarting",
+      "messages": [
+        "Erkläre mir Brüche.",
+        "Wie addiere ich sie?",
+        "Fass das bitte zusammen."
+      ],
+      "expect": "history"
+    },
+    "requiredPrefix": [
+      {
+        "type": "message",
+        "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Puedo ayudarte, pero ¿cuál es el tema o la tarea exacta? Dame también qué te piden hacer y si ya tienes alguna respuesta para corregir. Si quieres, te doy un hint antes de que respondas.",
+        "double": false
+      },
+      {
+        "type": "tick"
+      }
+    ]
+  },
+  {
+    "invariant": "answer.present|answer|/buddy/messages",
+    "actions": [
+      {
+        "type": "message",
+        "text": "Ciao! Vuoi capire le frazioni partendo dallo zero. Io però ti chiedo di spiegarmelo in modo diverso da come l’ha detto l’insegnante: facciamola con esempi semplici e concreti, senza “parole difficili”. Da dove vuoi iniziare: 0/1 oppure 1/2?",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Va bene, proviamo 0/1 e 1/2 insieme. Spiegami 0/1 con un esempio concreto, tipo una cosa divisa in 1 parte sola, e dimmi anche cosa significa “0 parti” in quel caso.",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Ok, quindi mi confermi: 0/1 non è “0 diviso 1” come un’operazione, ma significa “ho 0 parti su 1 parte uguale”? Facciamo un esempio chiarissimo: se ho una barretta divisa in 1 solo pezzo, i “0” cosa rappresentano? (Tipo: non prendo nessun pezzetto, giusto?)",
+        "double": false
+      },
+      {
+        "type": "message",
+        "text": "Perfetto. Ora facciamo un controllo con un esempio ancora più concreto: immagina la barretta divisa in 1 pezzo uguale (quindi tutto il pezzo è “1/1”). Se tu dici 0/1, cosa succede alla barretta nel disegno: la prendi tutta, la lasci tutta, oppure ne prendi un pezzettino impossibile? Rispondimi solo con “la lasci tutta” o “la prendi tutta”.",
+        "double": false
+      }
+    ],
+    "minimisation": "first witnessed failing prefix; not deletion-minimal",
+    "review": {
+      "status": "pending",
+      "reviewers": [],
+      "expectationVerified": false
+    },
+    "initial": {
+      "at": "2026-10-24T10:00:00.000Z",
+      "messages": [],
+      "items": [],
+      "settings": {
+        "contact_enabled": false,
+        "preferred_start": "15:00",
+        "preferred_end": "18:30",
+        "avoid_weekdays": [],
+        "paused_until": null
+      },
+      "sessions": [],
+      "steps": []
+    },
+    "goal": {
+      "id": "learning-001",
+      "issue": 106,
+      "wants": "Understand fractions from zero, and a promise up front that it will not be the way the teacher said it.",
+      "messages": [
+        "erklär mal brüche aber einfach"
+      ],
+      "expect": "answer"
+    },
+    "requiredPrefix": []
+  }
+]

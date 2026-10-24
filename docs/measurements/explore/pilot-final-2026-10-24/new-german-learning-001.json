@@ -1,0 +1,468 @@
+{
+  "goal": {
+    "id": "learning-001",
+    "issue": 106,
+    "wants": "Understand fractions from zero, and a promise up front that it will not be the way the teacher said it.",
+    "messages": [
+      "erklär mal brüche aber einfach"
+    ],
+    "expect": "answer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "456b4a18-31d7-417c-8192-c523f290dae6",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:41:39.560Z",
+      "updated_at": "2026-10-24T17:41:39.563Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "09f8451a-6545-46bf-9f2d-8e6bd1744bbc",
+        "role": "learner",
+        "text": "erklär mal brüche aber einfach",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2d284a6f-fd86-4c79-928a-e328b835ccc8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c18ddc7d-e56a-4ed7-91e0-c3c4929bb99b",
+        "role": "buddy",
+        "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "mit Pizza",
+          "mit Schokolade",
+          "mit Geld"
+        ],
+        "reply_to_id": "09f8451a-6545-46bf-9f2d-8e6bd1744bbc",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e08b8e84-65bc-44fa-bb67-c1bde4b4d20b",
+        "role": "learner",
+        "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "35dee15b-3e68-46a8-ad10-ed9e4ebc0d59",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7d15c64c-fc84-480f-baee-c170fc41efdf",
+        "role": "buddy",
+        "text": "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e08b8e84-65bc-44fa-bb67-c1bde4b4d20b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ed38eda-e0f2-4a24-b1f3-60a2c3e52aef",
+        "role": "learner",
+        "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "cf33dc90-da50-4608-8603-87736fca9527",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2699fa29-2909-4105-a532-e21958f95c43",
+        "role": "buddy",
+        "text": "Am liebsten würde ich erst sehen, wie man Brüche addiert.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "9ed38eda-e0f2-4a24-b1f3-60a2c3e52aef",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "456b4a18-31d7-417c-8192-c523f290dae6",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 7,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:41:39.560Z",
+      "updated_at": "2026-10-24T17:41:47.155Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "erklär mal brüche aber einfach",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Ein",
+            "Klar: Ein Br",
+            "Klar: Ein Bruch",
+            "Klar: Ein Bruch ist",
+            "Klar: Ein Bruch ist wie",
+            "Klar: Ein Bruch ist wie ein",
+            "Klar: Ein Bruch ist wie ein Stück",
+            "Klar: Ein Bruch ist wie ein Stück von",
+            "Klar: Ein Bruch ist wie ein Stück von einer",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza.",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Ob",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht,",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stück",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast,",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht,",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza gete",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist.",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$:",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: ",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von ",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen.",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfach",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?",
+            "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?"
+          ],
+          "ms": 1774,
+          "text": "erklär mal brüche aber einfach",
+          "id": "2d284a6f-fd86-4c79-928a-e328b835ccc8"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Stell",
+            "Klar: Stell dir",
+            "Klar: Stell dir vor",
+            "Klar: Stell dir vor,",
+            "Klar: Stell dir vor, eine",
+            "Klar: Stell dir vor, eine Pizza",
+            "Klar: Stell dir vor, eine Pizza wird",
+            "Klar: Stell dir vor, eine Pizza wird in",
+            "Klar: Stell dir vor, eine Pizza wird in ",
+            "Klar: Stell dir vor, eine Pizza wird in 4",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stück",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke gete",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt.",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du ",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück is",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst,",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza —",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viert",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel.",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du ",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stück",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke is",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst,",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$,",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte.",
+            "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte."
+          ],
+          "ms": 1591,
+          "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!",
+          "id": "35dee15b-3e68-46a8-ad10-ed9e4ebc0d59"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?"
+          },
+          {
+            "who": "learner",
+            "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Am",
+            "Am liebsten",
+            "Am liebsten würde",
+            "Am liebsten würde ich",
+            "Am liebsten würde ich erst",
+            "Am liebsten würde ich erst sehen",
+            "Am liebsten würde ich erst sehen,",
+            "Am liebsten würde ich erst sehen, wie",
+            "Am liebsten würde ich erst sehen, wie man",
+            "Am liebsten würde ich erst sehen, wie man Br",
+            "Am liebsten würde ich erst sehen, wie man Brüche",
+            "Am liebsten würde ich erst sehen, wie man Brüche add",
+            "Am liebsten würde ich erst sehen, wie man Brüche addiert",
+            "Am liebsten würde ich erst sehen, wie man Brüche addiert."
+          ],
+          "ms": 2307,
+          "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?",
+          "id": "cf33dc90-da50-4608-8603-87736fca9527"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "new-german-learning-001",
+  "persona": {
+    "id": "new-german",
+    "age": 13,
+    "locale": "de",
+    "style": "Arabic first language, beginner German",
+    "behaviour": "Misunderstands terminology, asks for clarification"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

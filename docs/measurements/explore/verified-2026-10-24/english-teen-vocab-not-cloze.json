@@ -1,0 +1,1791 @@
+{
+  "goal": {
+    "id": "vocab-not-cloze",
+    "issue": 940,
+    "wants": "Five English animal vocabulary pairs; quiz German to English, never cloze exercises",
+    "messages": [
+      "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+    ],
+    "expect": "vocab",
+    "count": 5
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "fa1db394-dba7-4aa4-8e3e-01a43b660440",
+        "role": "learner",
+        "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5e2456d5-c37f-43c0-a31d-7969dde1d8f3",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "13ef5548-b520-4f60-872f-905250a50519",
+        "role": "buddy",
+        "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "fa1db394-dba7-4aa4-8e3e-01a43b660440",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "075445bd-2037-4125-bb3e-52d2dfbfa187",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "basic English school vocabulary words, German to English",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c5c09844-2723-4df7-8bf1-9eb83d7f7dda",
+        "role": "learner",
+        "text": "Let's start the quiz! What's the English word for 'Buch'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "c8539941-ddd2-4b37-8b55-0d3a1bdfc871",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4f37f268-1dee-4329-9e2b-7fc0988f8f94",
+        "role": "buddy",
+        "text": "Book.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c5c09844-2723-4df7-8bf1-9eb83d7f7dda",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cde11c82-611e-45c0-bdcf-817d0eae5d4c",
+        "role": "learner",
+        "text": "What's the English word for 'Stift'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fe6d6854-bc27-4058-858e-53554f25e0f2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5dfe6659-8802-4ac4-b7f6-2bbde21507b1",
+        "role": "buddy",
+        "text": "pen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cde11c82-611e-45c0-bdcf-817d0eae5d4c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f96bcefa-c3d5-4e9c-a07d-f47496620878",
+        "role": "learner",
+        "text": "What's the English word for 'Tafel'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "dbb3cb5f-1291-42ae-b603-97d0e5170a16",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0f337b35-69af-481e-88c1-6c1181e2729b",
+        "role": "buddy",
+        "text": "blackboard.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "f96bcefa-c3d5-4e9c-a07d-f47496620878",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4fff9b05-94a4-4844-91c6-314b0fd13de3",
+        "role": "learner",
+        "text": "I am a German child learning English vocabulary.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7f7297a7-cb03-4329-b0b5-8b39f3bb0fc4",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "02257258-352a-4948-8d1a-c8c60e61ee18",
+        "role": "buddy",
+        "text": "Got it — I’ll keep that in mind for our English vocab practice.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "4fff9b05-94a4-4844-91c6-314b0fd13de3",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "c7fa2050-44d6-4ed6-9e50-3ec1dacc3ebf",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "kind": "fact",
+              "tool": "remember",
+              "memory_id": "5bbcc38e-9f95-4153-afcc-1748108bb734",
+              "statement": "She is learning English vocabulary.",
+              "valid_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "44111254-8641-4777-9a0f-5ee2b53cd26b",
+        "role": "learner",
+        "text": "Please choose basic vocabulary yourself.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3ea67b85-41f3-424b-adea-dc7f57d43c3e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eaafaae1-d5ec-450d-b031-5883c3fde650",
+        "role": "buddy",
+        "text": "Got it — I’ll pick the basic words for you in our vocab practice.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "44111254-8641-4777-9a0f-5ee2b53cd26b",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "0e385121-e816-4a35-aeb3-4bd66c510d13",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "kind": "preference",
+              "tool": "remember",
+              "memory_id": "8ae8700c-1d6b-4de6-a250-47ecfd3ec76c",
+              "statement": "She wants basic vocabulary chosen by me.",
+              "valid_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5d6bf9f1-4280-4801-996c-b88938b9f001",
+        "role": "learner",
+        "text": "Send me 20 words with their German translations here in the chat.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "de817ffa-655b-4bda-acd8-f67e1363ce68",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4ea7eaba-be31-42a0-860c-6b323569ee32",
+        "role": "buddy",
+        "text": "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "5d6bf9f1-4280-4801-996c-b88938b9f001",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "16074a25-cb8e-42f3-948a-4a803e1a0200",
+        "role": "learner",
+        "text": "Let's start the quiz! What's the English word for 'Bleistift'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a82d3550-bc58-4a72-8936-8d6e1136b123",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e68dfafd-4112-457f-af53-5d1e51389ba6",
+        "role": "buddy",
+        "text": "pencil.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "16074a25-cb8e-42f3-948a-4a803e1a0200",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "ce39ca1a-b0b9-4312-8254-92ff505c2769",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 18,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:35:13.186Z",
+      "updated_at": "2026-10-24T17:35:34.221Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "fa1db394-dba7-4aa4-8e3e-01a43b660440",
+        "role": "learner",
+        "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5e2456d5-c37f-43c0-a31d-7969dde1d8f3",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "13ef5548-b520-4f60-872f-905250a50519",
+        "role": "buddy",
+        "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "fa1db394-dba7-4aa4-8e3e-01a43b660440",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "075445bd-2037-4125-bb3e-52d2dfbfa187",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "basic English school vocabulary words, German to English",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c5c09844-2723-4df7-8bf1-9eb83d7f7dda",
+        "role": "learner",
+        "text": "Let's start the quiz! What's the English word for 'Buch'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "c8539941-ddd2-4b37-8b55-0d3a1bdfc871",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4f37f268-1dee-4329-9e2b-7fc0988f8f94",
+        "role": "buddy",
+        "text": "Book.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c5c09844-2723-4df7-8bf1-9eb83d7f7dda",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cde11c82-611e-45c0-bdcf-817d0eae5d4c",
+        "role": "learner",
+        "text": "What's the English word for 'Stift'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fe6d6854-bc27-4058-858e-53554f25e0f2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5dfe6659-8802-4ac4-b7f6-2bbde21507b1",
+        "role": "buddy",
+        "text": "pen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cde11c82-611e-45c0-bdcf-817d0eae5d4c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f96bcefa-c3d5-4e9c-a07d-f47496620878",
+        "role": "learner",
+        "text": "What's the English word for 'Tafel'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "dbb3cb5f-1291-42ae-b603-97d0e5170a16",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0f337b35-69af-481e-88c1-6c1181e2729b",
+        "role": "buddy",
+        "text": "blackboard.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "f96bcefa-c3d5-4e9c-a07d-f47496620878",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4fff9b05-94a4-4844-91c6-314b0fd13de3",
+        "role": "learner",
+        "text": "I am a German child learning English vocabulary.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7f7297a7-cb03-4329-b0b5-8b39f3bb0fc4",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "02257258-352a-4948-8d1a-c8c60e61ee18",
+        "role": "buddy",
+        "text": "Got it — I’ll keep that in mind for our English vocab practice.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "4fff9b05-94a4-4844-91c6-314b0fd13de3",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "c7fa2050-44d6-4ed6-9e50-3ec1dacc3ebf",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "kind": "fact",
+              "tool": "remember",
+              "memory_id": "5bbcc38e-9f95-4153-afcc-1748108bb734",
+              "statement": "She is learning English vocabulary.",
+              "valid_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "44111254-8641-4777-9a0f-5ee2b53cd26b",
+        "role": "learner",
+        "text": "Please choose basic vocabulary yourself.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3ea67b85-41f3-424b-adea-dc7f57d43c3e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eaafaae1-d5ec-450d-b031-5883c3fde650",
+        "role": "buddy",
+        "text": "Got it — I’ll pick the basic words for you in our vocab practice.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "44111254-8641-4777-9a0f-5ee2b53cd26b",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "0e385121-e816-4a35-aeb3-4bd66c510d13",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "kind": "preference",
+              "tool": "remember",
+              "memory_id": "8ae8700c-1d6b-4de6-a250-47ecfd3ec76c",
+              "statement": "She wants basic vocabulary chosen by me.",
+              "valid_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5d6bf9f1-4280-4801-996c-b88938b9f001",
+        "role": "learner",
+        "text": "Send me 20 words with their German translations here in the chat.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "de817ffa-655b-4bda-acd8-f67e1363ce68",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4ea7eaba-be31-42a0-860c-6b323569ee32",
+        "role": "buddy",
+        "text": "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "5d6bf9f1-4280-4801-996c-b88938b9f001",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "16074a25-cb8e-42f3-948a-4a803e1a0200",
+        "role": "learner",
+        "text": "Let's start the quiz! What's the English word for 'Bleistift'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a82d3550-bc58-4a72-8936-8d6e1136b123",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e68dfafd-4112-457f-af53-5d1e51389ba6",
+        "role": "buddy",
+        "text": "pencil.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "16074a25-cb8e-42f3-948a-4a803e1a0200",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ca7fed72-b1ba-4131-9c1f-390798aef81a",
+        "role": "learner",
+        "text": "I want to practise English animal vocabulary. Make up 5 words and quiz me from German to English. No fill-in-the-blank exercises.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9a6df15e-50e7-4e76-a4fc-69696dab1ea9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b07f7ba8-3733-4a99-b57c-a63db43f543b",
+        "role": "buddy",
+        "text": "I’ve set up a 5-word animal vocab quiz for German to English.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ca7fed72-b1ba-4131-9c1f-390798aef81a",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "a1b3518d-0955-4bcf-9e7a-5de6e58e31eb",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "cat – Katze\ndog – Hund\nhorse – Pferd\nbird – Vogel\nfish – Fisch",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "92a50f02-801f-416a-b42a-11ffe39b740a",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e78d9045-15a3-489a-897c-d0f84398aaad",
+        "role": "learner",
+        "text": "What's the English word for 'Katze'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "d665a25d-94ae-4e2b-9ab7-1abc4cd240f9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f8cd92df-321e-441f-9751-8d34042b8790",
+        "role": "buddy",
+        "text": "cat.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e78d9045-15a3-489a-897c-d0f84398aaad",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "1459e849-8914-4190-a8ca-7eb3886305f4",
+        "kind": "vocab",
+        "prompt": "fish",
+        "answer": "Fisch",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "14b512ec-0105-4812-ba5a-f374e047c122",
+        "kind": "vocab",
+        "prompt": "dog",
+        "answer": "Hund",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "1b26a4b0-2e6a-412c-945c-1121bf0b1439",
+        "kind": "vocab",
+        "prompt": "cat",
+        "answer": "Katze",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "3133ffd4-393f-4914-8b5a-818d3cf2f816",
+        "kind": "vocab",
+        "prompt": "Hund",
+        "answer": "dog",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "348c7714-8313-48bd-adc3-cec2bae61fdb",
+        "kind": "vocab",
+        "prompt": "horse",
+        "answer": "Pferd",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "38e517b7-1600-48d0-8a83-c9d521fd4e62",
+        "kind": "vocab",
+        "prompt": "Pferd",
+        "answer": "horse",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "64a0385c-2322-4f98-a574-360a28db1116",
+        "kind": "vocab",
+        "prompt": "Katze",
+        "answer": "cat",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "81263de6-8389-43f1-ae4d-b4a32514ba86",
+        "kind": "vocab",
+        "prompt": "Vogel",
+        "answer": "bird",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "bd2c5223-ef47-4b1d-8000-7e34ac042421",
+        "kind": "vocab",
+        "prompt": "Fisch",
+        "answer": "fish",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "cb75606a-2056-47f7-88a7-0a02eb6e9d53",
+        "kind": "vocab",
+        "prompt": "bird",
+        "answer": "Vogel",
+        "prompt_lang": "en",
+        "lang": "de"
+      }
+    ],
+    "settings": {
+      "learner_id": "ce39ca1a-b0b9-4312-8254-92ff505c2769",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 23,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:35:13.186Z",
+      "updated_at": "2026-10-24T17:35:44.153Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "92a50f02-801f-416a-b42a-11ffe39b740a",
+        "client_request_id": "a1b3518d-0955-4bcf-9e7a-5de6e58e31eb"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "I want to practise English animal vocabulary. Make up 5 words and quiz me from German to English. No fill-in-the-blank exercises.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Buch'?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Stift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pen."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Tafel'?"
+          },
+          {
+            "who": "buddy",
+            "text": "blackboard."
+          },
+          {
+            "who": "learner",
+            "text": "I am a German child learning English vocabulary."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll keep that in mind for our English vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Please choose basic vocabulary yourself."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll pick the basic words for you in our vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Send me 20 words with their German translations here in the chat."
+          },
+          {
+            "who": "buddy",
+            "text": "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Bleistift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pencil."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "I",
+            "I’ve",
+            "I’ve prepared",
+            "I’ve prepared a",
+            "I’ve prepared a short",
+            "I’ve prepared a short animal",
+            "I’ve prepared a short animal vocabulary",
+            "I’ve prepared a short animal vocabulary quiz",
+            "I’ve prepared a short animal vocabulary quiz for",
+            "I’ve prepared a short animal vocabulary quiz for you",
+            "I’ve prepared a short animal vocabulary quiz for you,",
+            "I’ve prepared a short animal vocabulary quiz for you, German",
+            "I’ve prepared a short animal vocabulary quiz for you, German to",
+            "I’ve prepared a short animal vocabulary quiz for you, German to English",
+            "I’ve prepared a short animal vocabulary quiz for you, German to English.",
+            "",
+            "I",
+            "I’ve",
+            "I’ve set",
+            "I’ve set up",
+            "I’ve set up a",
+            "I’ve set up a ",
+            "I’ve set up a 5",
+            "I’ve set up a 5-word",
+            "I’ve set up a 5-word animal",
+            "I’ve set up a 5-word animal vocab",
+            "I’ve set up a 5-word animal vocab quiz",
+            "I’ve set up a 5-word animal vocab quiz for",
+            "I’ve set up a 5-word animal vocab quiz for German",
+            "I’ve set up a 5-word animal vocab quiz for German to",
+            "I’ve set up a 5-word animal vocab quiz for German to English",
+            "I’ve set up a 5-word animal vocab quiz for German to English."
+          ],
+          "ms": 6869,
+          "text": "I want to practise English animal vocabulary. Make up 5 words and quiz me from German to English. No fill-in-the-blank exercises.",
+          "id": "9a6df15e-50e7-4e76-a4fc-69696dab1ea9"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Buch'?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Stift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pen."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Tafel'?"
+          },
+          {
+            "who": "buddy",
+            "text": "blackboard."
+          },
+          {
+            "who": "learner",
+            "text": "I am a German child learning English vocabulary."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll keep that in mind for our English vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Please choose basic vocabulary yourself."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll pick the basic words for you in our vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Send me 20 words with their German translations here in the chat."
+          },
+          {
+            "who": "buddy",
+            "text": "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Bleistift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pencil."
+          },
+          {
+            "who": "learner",
+            "text": "I want to practise English animal vocabulary. Make up 5 words and quiz me from German to English. No fill-in-the-blank exercises."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a 5-word animal vocab quiz for German to English."
+          }
+        ],
+        "offers": [
+          {
+            "label": "cat – Katze\ndog – Hund\nhorse – Pferd\nbird – Vogel\nfish – Fisch",
+            "kind": "vocab"
+          }
+        ],
+        "question": null
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "a1b3518d-0955-4bcf-9e7a-5de6e58e31eb",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "92a50f02-801f-416a-b42a-11ffe39b740a",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Animals",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "64a0385c-2322-4f98-a574-360a28db1116",
+                  "kind": "vocab",
+                  "prompt": "Katze",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "fish",
+                    "dog",
+                    "horse",
+                    "cat"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "3133ffd4-393f-4914-8b5a-818d3cf2f816",
+                  "kind": "vocab",
+                  "prompt": "Hund",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "bird",
+                    "fish",
+                    "dog",
+                    "cat"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "38e517b7-1600-48d0-8a83-c9d521fd4e62",
+                  "kind": "vocab",
+                  "prompt": "Pferd",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "fish",
+                    "cat",
+                    "dog",
+                    "horse"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "81263de6-8389-43f1-ae4d-b4a32514ba86",
+                  "kind": "vocab",
+                  "prompt": "Vogel",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "fish",
+                    "cat",
+                    "dog",
+                    "bird"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "bd2c5223-ef47-4b1d-8000-7e34ac042421",
+                  "kind": "vocab",
+                  "prompt": "Fisch",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "dog",
+                    "fish",
+                    "horse",
+                    "bird"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "64a0385c-2322-4f98-a574-360a28db1116",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "What's the English word for 'Katze'?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Buch'?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Stift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pen."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Tafel'?"
+          },
+          {
+            "who": "buddy",
+            "text": "blackboard."
+          },
+          {
+            "who": "learner",
+            "text": "I am a German child learning English vocabulary."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll keep that in mind for our English vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Please choose basic vocabulary yourself."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll pick the basic words for you in our vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Send me 20 words with their German translations here in the chat."
+          },
+          {
+            "who": "buddy",
+            "text": "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Bleistift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pencil."
+          },
+          {
+            "who": "learner",
+            "text": "I want to practise English animal vocabulary. Make up 5 words and quiz me from German to English. No fill-in-the-blank exercises."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a 5-word animal vocab quiz for German to English."
+          }
+        ],
+        "offers": [
+          {
+            "label": "cat – Katze\ndog – Hund\nhorse – Pferd\nbird – Vogel\nfish – Fisch",
+            "kind": "vocab"
+          }
+        ],
+        "question": {
+          "prompt": "Katze",
+          "choices": null
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "cat",
+            "cat."
+          ],
+          "ms": 1400,
+          "text": "What's the English word for 'Katze'?",
+          "id": "d665a25d-94ae-4e2b-9ab7-1abc4cd240f9"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Buch'?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Stift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pen."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Tafel'?"
+          },
+          {
+            "who": "buddy",
+            "text": "blackboard."
+          },
+          {
+            "who": "learner",
+            "text": "I am a German child learning English vocabulary."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll keep that in mind for our English vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Please choose basic vocabulary yourself."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll pick the basic words for you in our vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Send me 20 words with their German translations here in the chat."
+          },
+          {
+            "who": "buddy",
+            "text": "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Bleistift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pencil."
+          },
+          {
+            "who": "learner",
+            "text": "I want to practise English animal vocabulary. Make up 5 words and quiz me from German to English. No fill-in-the-blank exercises."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a 5-word animal vocab quiz for German to English."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Katze'?"
+          },
+          {
+            "who": "buddy",
+            "text": "cat."
+          }
+        ],
+        "offers": [
+          {
+            "label": "cat – Katze\ndog – Hund\nhorse – Pferd\nbird – Vogel\nfish – Fisch",
+            "kind": "vocab"
+          }
+        ],
+        "question": {
+          "prompt": "Katze",
+          "choices": null
+        }
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "a1b3518d-0955-4bcf-9e7a-5de6e58e31eb",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "92a50f02-801f-416a-b42a-11ffe39b740a",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Animals",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "64a0385c-2322-4f98-a574-360a28db1116",
+                  "kind": "vocab",
+                  "prompt": "Katze",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "fish",
+                    "dog",
+                    "horse",
+                    "cat"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "3133ffd4-393f-4914-8b5a-818d3cf2f816",
+                  "kind": "vocab",
+                  "prompt": "Hund",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "bird",
+                    "fish",
+                    "dog",
+                    "cat"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "38e517b7-1600-48d0-8a83-c9d521fd4e62",
+                  "kind": "vocab",
+                  "prompt": "Pferd",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "fish",
+                    "cat",
+                    "dog",
+                    "horse"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "81263de6-8389-43f1-ae4d-b4a32514ba86",
+                  "kind": "vocab",
+                  "prompt": "Vogel",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "fish",
+                    "cat",
+                    "dog",
+                    "bird"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "bd2c5223-ef47-4b1d-8000-7e34ac042421",
+                  "kind": "vocab",
+                  "prompt": "Fisch",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Animals",
+                  "origin": "typed",
+                  "lang": "en",
+                  "prompt_lang": "de",
+                  "subject_kind": "other_language",
+                  "figure": null,
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": [
+                    "dog",
+                    "fish",
+                    "horse",
+                    "bird"
+                  ],
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "64a0385c-2322-4f98-a574-360a28db1116",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "english-teen-vocab-not-cloze",
+  "persona": {
+    "id": "english-teen",
+    "age": 15,
+    "locale": "en",
+    "style": "English first language, fluent reader, terse slang",
+    "behaviour": "Sends occasional nonsense, then returns to goal"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "What's the English word for 'Katze'?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Let's start the quiz! What's the English word for 'Buch'?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "What's the English word for 'Stift'?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "What's the English word for 'Tafel'?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "I am a German child learning English vocabulary.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Please choose basic vocabulary yourself.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Send me 20 words with their German translations here in the chat.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Let's start the quiz! What's the English word for 'Bleistift'?",
+      "double": false
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+appId: com.learnbuddy.app.dev
+---
+- stopApp
+- launchApp:
+    clearState: false
+- assertVisible:
+    id: composer
+- tapOn:
+    id: composer
+- inputText: 'Erklaer mir Brueche'
+- tapOn: Senden
+- extendedWaitUntil:
+    visible:
+      text: '.*Bruch.*'
+    timeout: 30000
+- tapOn: Mit Buddy sprechen
+- assertVisible: Gespräch
+- tapOn: Tastatur
+- assertVisible:
+    id: composer
+- assertVisible: '.*Erklaer mir Brueche.*'
+- assertVisible: '.*Bruch.*'
+- stopApp
+- launchApp:
+    clearState: false
+- assertVisible: '.*Erklaer mir Brueche.*'
+- assertVisible: '.*Bruch.*'
+- takeScreenshot: explorer-history-after-talk

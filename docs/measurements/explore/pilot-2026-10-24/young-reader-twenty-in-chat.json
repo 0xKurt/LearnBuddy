@@ -1,0 +1,631 @@
+{
+  "goal": {
+    "id": "twenty-in-chat",
+    "issue": 940,
+    "wants": "20 bilingual vocabulary pairs immediately in chat",
+    "messages": [
+      "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten."
+    ],
+    "expect": "chat-vocab",
+    "count": 20
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+        "role": "learner",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5329a352-40ff-47d0-8c39-a927e52fc7dc",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f8e6693c-20aa-49d9-9a3b-1c7cfe9b8482",
+        "role": "buddy",
+        "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "2306b8af-18aa-4d83-928a-5117ee851ea2",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "20 englische Basisvokabeln zum Thema Schule; abfrage von Deutsch nach Englisch",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+        "role": "learner",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "d67c160d-fcc7-4678-a8b6-30332e52a980",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ad2fe7e-f8b5-4b71-b8a8-40af9d2c43bf",
+        "role": "buddy",
+        "text": "Schule = ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+        "role": "learner",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5329a352-40ff-47d0-8c39-a927e52fc7dc",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f8e6693c-20aa-49d9-9a3b-1c7cfe9b8482",
+        "role": "buddy",
+        "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ef6c3483-57ab-45f5-93ac-261598666efe",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "2306b8af-18aa-4d83-928a-5117ee851ea2",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "20 englische Basisvokabeln zum Thema Schule; abfrage von Deutsch nach Englisch",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+        "role": "learner",
+        "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "d67c160d-fcc7-4678-a8b6-30332e52a980",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ad2fe7e-f8b5-4b71-b8a8-40af9d2c43bf",
+        "role": "buddy",
+        "text": "Schule = ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e5ecdaa4-aa2e-404a-82a9-a425fe941145",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ea4267a5-4f48-4148-b599-fd9f1c21c72e",
+        "role": "learner",
+        "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "66a6abfb-e54b-4688-916c-83f383f57369",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ae077dc5-d6e5-48b8-9db9-7e420ecb0e4b",
+        "role": "buddy",
+        "text": "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines Quiz daraus machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "ea4267a5-4f48-4148-b599-fd9f1c21c72e",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d0e3be28-9504-474d-8a0b-27de919b175d",
+        "role": "learner",
+        "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "36ec1ca2-1489-47fb-979e-fa869e067fc4",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "fb3da2d2-8cae-4a14-98a2-61116c3e704f",
+        "role": "buddy",
+        "text": "Was ist „school“ auf Deutsch? Schreib es kurz.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "d0e3be28-9504-474d-8a0b-27de919b175d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+        "double": true
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Schule = ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — hier",
+            "Klar — hier sind",
+            "Klar — hier sind ",
+            "Klar — hier sind 20",
+            "Klar — hier sind 20 engl",
+            "Klar — hier sind 20 englische",
+            "Klar — hier sind 20 englische Schul",
+            "Klar — hier sind 20 englische Schulw",
+            "Klar — hier sind 20 englische Schulwörter",
+            "Klar — hier sind 20 englische Schulwörter mit",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übers",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer /",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehr",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler /",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Sch",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schü",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klass",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenz",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Sch",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibt",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch /",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – St",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – He",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – B",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleist",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – K",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli /",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / St",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. er",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Rad",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radier",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radierg",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Line",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schul",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulran",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen /",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / R",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Haus",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausauf",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterricht",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsst",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test /",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassen",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – T",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schul",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Haus",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausauf",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgaben",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenhe",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20.",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break –",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\n",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst,",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines Quiz",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines Quiz daraus",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines Quiz daraus machen",
+            "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines Quiz daraus machen."
+          ],
+          "ms": 1681,
+          "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+          "id": "66a6abfb-e54b-4688-916c-83f383f57369"
+        },
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [],
+          "ms": 9,
+          "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten.",
+          "id": "66a6abfb-e54b-4688-916c-83f383f57369"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir 20 englische Schulwörter zum Abfragen von Deutsch nach Englisch vor.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Schule = ?"
+          },
+          {
+            "who": "learner",
+            "text": "Sende mir bitte hier im Chat 20 englische Vokabeln zum Thema Schule mit deutscher Übersetzung. Keine Übung starten."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — hier sind 20 englische Schulwörter mit deutscher Übersetzung:\n\n1. school – Schule\n2. teacher – Lehrer / Lehrerin\n3. student – Schüler / Schülerin\n4. classroom – Klassenzimmer\n5. desk – Schreibtisch / Tisch\n6. chair – Stuhl\n7. book – Buch\n8. notebook – Heft\n9. pencil – Bleistift\n10. pen – Kuli / Stift\n11. eraser – Radiergummi\n12. ruler – Lineal\n13. backpack – Schulranzen / Rucksack\n14. homework – Hausaufgaben\n15. lesson – Unterrichtsstunde\n16. test – Test / Klassenarbeit\n17. board – Tafel\n18. subject – Schulfach\n19. homework diary – Hausaufgabenheft\n20. break – Pause\n\nWenn du willst, kann ich dir danach auch direkt ein kleines Quiz daraus machen."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Was",
+            "Was ist",
+            "Was ist „",
+            "Was ist „school",
+            "Was ist „school“",
+            "Was ist „school“ auf",
+            "Was ist „school“ auf Deutsch",
+            "Was ist „school“ auf Deutsch?",
+            "Was ist „school“ auf Deutsch? Schreib",
+            "Was ist „school“ auf Deutsch? Schreib es",
+            "Was ist „school“ auf Deutsch? Schreib es kurz",
+            "Was ist „school“ auf Deutsch? Schreib es kurz."
+          ],
+          "ms": 1233,
+          "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+          "id": "36ec1ca2-1489-47fb-979e-fa869e067fc4"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "vocabulary.chat-count",
+      "evidence": "wanted 20 visible pair rows, got 0: Was ist „school“ auf Deutsch? Schreib es kurz.",
+      "kind": "chat-vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "execution.error",
+      "kind": "chat-vocab",
+      "route": "/explorer",
+      "evidence": "simulator: no current question",
+      "category": "simulator"
+    }
+  ],
+  "id": "young-reader-twenty-in-chat",
+  "persona": {
+    "id": "young-reader",
+    "age": 8,
+    "locale": "de",
+    "style": "Reads slowly; very short phonetic spelling",
+    "behaviour": "Impatient, taps twice when waiting"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "okay, frage mich jetzt bitte eins nach dem andern: Was ist „school“ auf Deutsch? (schrei-b es kurz)",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "answer",
+        "text": "Schu-le",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+      "double": true
+    },
+    {
+      "type": "message",
+      "text": "Okay, ich mache es jetzt selbst. Frage mich bitte zuerst: „Schule“ = ?",
+      "double": false
+    }
+  ],
+  "error": "simulator: no current question"
+}

@@ -1,0 +1,22 @@
+appId: com.learnbuddy.app.dev
+---
+- runScript: bootstrap.js
+- openLink:
+    link: 'learnbuddy://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8094'
+- extendedWaitUntil:
+    visible: E-Mail
+    timeout: 60000
+- tapOn: Anmelden
+- tapOn: E-Mail
+- inputText: ${output.email}
+- tapOn:
+    text: Passwort
+    index: 0
+- inputText: ${output.password}
+- hideKeyboard
+- tapOn:
+    id: auth-primary
+- extendedWaitUntil:
+    visible:
+      id: composer
+    timeout: 30000

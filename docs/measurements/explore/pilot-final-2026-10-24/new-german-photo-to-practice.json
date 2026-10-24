@@ -1,0 +1,1519 @@
+{
+  "goal": {
+    "id": "photo-to-practice",
+    "issue": 944,
+    "wants": "Practice based on my photographed fractions worksheet",
+    "messages": [
+      "Ich möchte die Aufgaben auf meinem Blatt üben."
+    ],
+    "expect": "photo"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "09f8451a-6545-46bf-9f2d-8e6bd1744bbc",
+        "role": "learner",
+        "text": "erklär mal brüche aber einfach",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2d284a6f-fd86-4c79-928a-e328b835ccc8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c18ddc7d-e56a-4ed7-91e0-c3c4929bb99b",
+        "role": "buddy",
+        "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "mit Pizza",
+          "mit Schokolade",
+          "mit Geld"
+        ],
+        "reply_to_id": "09f8451a-6545-46bf-9f2d-8e6bd1744bbc",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e08b8e84-65bc-44fa-bb67-c1bde4b4d20b",
+        "role": "learner",
+        "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "35dee15b-3e68-46a8-ad10-ed9e4ebc0d59",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7d15c64c-fc84-480f-baee-c170fc41efdf",
+        "role": "buddy",
+        "text": "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e08b8e84-65bc-44fa-bb67-c1bde4b4d20b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ed38eda-e0f2-4a24-b1f3-60a2c3e52aef",
+        "role": "learner",
+        "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "cf33dc90-da50-4608-8603-87736fca9527",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2699fa29-2909-4105-a532-e21958f95c43",
+        "role": "buddy",
+        "text": "Am liebsten würde ich erst sehen, wie man Brüche addiert.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "9ed38eda-e0f2-4a24-b1f3-60a2c3e52aef",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a8c16d6d-1bc0-4d3c-a872-489dc6224741",
+        "role": "learner",
+        "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "254033d4-5ca7-4f7a-817d-1673e46101ac",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6981fb36-43f7-4f39-a397-df6d79c3e0e2",
+        "role": "buddy",
+        "text": "Ja — denk an Brüche wie an Stücke von derselben Pizza. Wenn beide Pizzas gleich eingeteilt sind, darfst du die Stücke einfach zusammenzählen: aus $\\frac{1}{4}$ und $\\frac{2}{4}$ wird $\\frac{3}{4}$.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "a8c16d6d-1bc0-4d3c-a872-489dc6224741",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1b128fa3-d91a-447a-bc1c-f4b56c6c47f1",
+        "role": "learner",
+        "text": "Okay, ich erkläre es anders: Stell dir vor, du hast zwei Pizzas, beide in 4 Stücke geteilt. Du hast 1 Stück von der ersten Pizza und 2 Stücke von der zweiten Pizza. Weil beide Pizzas gleich eingeteilt sind, kannst du die Stücke zusammenzählen: 1 Stück plus 2 Stücke sind 3 Stücke von 4. Also $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$. Möchtest du, dass ich dir ein Bild dazu mache?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9539bf30-2cd5-484d-887f-875d67c5a789",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b94a3d81-4141-4541-976f-7f1fdb97e5dd",
+        "role": "buddy",
+        "text": "Ja, gern — ein Bild hilft oft. Stell dir 4 gleich große Pizzastücke vor: 1 Stück von der einen und 2 Stücke von der anderen ergeben zusammen 3 Stücke, also \u000b$\\frac{3}{4}$\u000b.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1b128fa3-d91a-447a-bc1c-f4b56c6c47f1",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b697809d-29bd-4a37-b117-aa55a5c845e8",
+        "role": "learner",
+        "text": "Kannst du mir bitte ein Bild mit Pizzastücken zeigen, das zeigt, wie man $\\frac{1}{4}$ und $\\frac{2}{4}$ zusammenzählt? Ich möchte es besser verstehen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "aeb18562-6004-4836-b6c4-9bb19f1a9100",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "511ca171-037e-480b-8104-ff7bae73bd70",
+        "role": "buddy",
+        "text": "Ich bereite dir eine kleine Übung mit Bruch-Bildern vor, damit du \u0001/4 und \u0012/4 als Pizzastücke sehen kannst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "b697809d-29bd-4a37-b117-aa55a5c845e8",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "94bc9d41-fcac-433b-872e-0259cb94cab0",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "practice",
+              "text": "Brüche mit Pizzastücken verstehen: \u0001/4 und \u0012/4 zusammenzählen",
+              "tool": "offer_learning",
+              "figures": [
+                "fraction"
+              ],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": true,
+              "running_session_id": "6dfa9ba5-62bb-472e-8147-3a9f8e1c2bdd",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "27a45627-66e3-4e09-b2dc-cd7c91084b44",
+        "kind": "short",
+        "prompt": "Wie viel ist $\\frac{2}{4} + \\frac{1}{4}$?",
+        "answer": "$\\frac{3}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "4115cc04-b646-4912-8dd9-5bcd95374218",
+        "kind": "short",
+        "prompt": "Welche beiden Brüche passen zu einer ganzen Pizza?",
+        "answer": "$\\frac{2}{4}$ und $\\frac{2}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "52efc1cf-4483-4e71-9c57-2b9681b48561",
+        "kind": "multiple_choice",
+        "prompt": "Welche Summe ist gleich $\\frac{3}{4}$?",
+        "answer": "$\\frac{1}{4} + \\frac{2}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "72ac953f-7560-4089-a4cd-fe086bb930c2",
+        "kind": "multiple_choice",
+        "prompt": "Welche Rechnung ist größer als $\\frac{3}{4}$?",
+        "answer": "$\\frac{1}{2} + \\frac{1}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "9d857b3f-cdfc-4ef8-a7fb-2b739731ff6a",
+        "kind": "multiple_choice",
+        "prompt": "Welche Brüche ergeben zusammen eine ganze Pizza?",
+        "answer": "$\\frac{1}{4} + \\frac{3}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "c4b3482d-6020-4df7-b9a0-bbfd60286b73",
+        "kind": "numeric",
+        "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+        "answer": "$\\frac{3}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "cc0a4559-10e5-420b-a895-3c8a05238e08",
+        "kind": "long",
+        "prompt": "Erkläre kurz, warum $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$ ist.",
+        "answer": "Die Nenner sind gleich, also werden nur die Zähler addiert: $1 + 2 = 3$.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "e518a616-8d18-441b-9016-bb61ed026b38",
+        "kind": "short",
+        "prompt": "Wie viele Viertel sind ein halber Pizza?",
+        "answer": "2",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "456b4a18-31d7-417c-8192-c523f290dae6",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 15,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:41:39.560Z",
+      "updated_at": "2026-10-24T17:42:08.342Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "6dfa9ba5-62bb-472e-8147-3a9f8e1c2bdd",
+        "client_request_id": "94bc9d41-fcac-433b-872e-0259cb94cab0"
+      }
+    ],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "09f8451a-6545-46bf-9f2d-8e6bd1744bbc",
+        "role": "learner",
+        "text": "erklär mal brüche aber einfach",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2d284a6f-fd86-4c79-928a-e328b835ccc8",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c18ddc7d-e56a-4ed7-91e0-c3c4929bb99b",
+        "role": "buddy",
+        "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "mit Pizza",
+          "mit Schokolade",
+          "mit Geld"
+        ],
+        "reply_to_id": "09f8451a-6545-46bf-9f2d-8e6bd1744bbc",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e08b8e84-65bc-44fa-bb67-c1bde4b4d20b",
+        "role": "learner",
+        "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "35dee15b-3e68-46a8-ad10-ed9e4ebc0d59",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7d15c64c-fc84-480f-baee-c170fc41efdf",
+        "role": "buddy",
+        "text": "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "e08b8e84-65bc-44fa-bb67-c1bde4b4d20b",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9ed38eda-e0f2-4a24-b1f3-60a2c3e52aef",
+        "role": "learner",
+        "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "cf33dc90-da50-4608-8603-87736fca9527",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "2699fa29-2909-4105-a532-e21958f95c43",
+        "role": "buddy",
+        "text": "Am liebsten würde ich erst sehen, wie man Brüche addiert.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "9ed38eda-e0f2-4a24-b1f3-60a2c3e52aef",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "a8c16d6d-1bc0-4d3c-a872-489dc6224741",
+        "role": "learner",
+        "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "254033d4-5ca7-4f7a-817d-1673e46101ac",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6981fb36-43f7-4f39-a397-df6d79c3e0e2",
+        "role": "buddy",
+        "text": "Ja — denk an Brüche wie an Stücke von derselben Pizza. Wenn beide Pizzas gleich eingeteilt sind, darfst du die Stücke einfach zusammenzählen: aus $\\frac{1}{4}$ und $\\frac{2}{4}$ wird $\\frac{3}{4}$.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "a8c16d6d-1bc0-4d3c-a872-489dc6224741",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "1b128fa3-d91a-447a-bc1c-f4b56c6c47f1",
+        "role": "learner",
+        "text": "Okay, ich erkläre es anders: Stell dir vor, du hast zwei Pizzas, beide in 4 Stücke geteilt. Du hast 1 Stück von der ersten Pizza und 2 Stücke von der zweiten Pizza. Weil beide Pizzas gleich eingeteilt sind, kannst du die Stücke zusammenzählen: 1 Stück plus 2 Stücke sind 3 Stücke von 4. Also $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$. Möchtest du, dass ich dir ein Bild dazu mache?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "9539bf30-2cd5-484d-887f-875d67c5a789",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b94a3d81-4141-4541-976f-7f1fdb97e5dd",
+        "role": "buddy",
+        "text": "Ja, gern — ein Bild hilft oft. Stell dir 4 gleich große Pizzastücke vor: 1 Stück von der einen und 2 Stücke von der anderen ergeben zusammen 3 Stücke, also \u000b$\\frac{3}{4}$\u000b.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1b128fa3-d91a-447a-bc1c-f4b56c6c47f1",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b697809d-29bd-4a37-b117-aa55a5c845e8",
+        "role": "learner",
+        "text": "Kannst du mir bitte ein Bild mit Pizzastücken zeigen, das zeigt, wie man $\\frac{1}{4}$ und $\\frac{2}{4}$ zusammenzählt? Ich möchte es besser verstehen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "aeb18562-6004-4836-b6c4-9bb19f1a9100",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "511ca171-037e-480b-8104-ff7bae73bd70",
+        "role": "buddy",
+        "text": "Ich bereite dir eine kleine Übung mit Bruch-Bildern vor, damit du \u0001/4 und \u0012/4 als Pizzastücke sehen kannst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "b697809d-29bd-4a37-b117-aa55a5c845e8",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "94bc9d41-fcac-433b-872e-0259cb94cab0",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "practice",
+              "text": "Brüche mit Pizzastücken verstehen: \u0001/4 und \u0012/4 zusammenzählen",
+              "tool": "offer_learning",
+              "figures": [
+                "fraction"
+              ],
+              "goal_id": null,
+              "minutes": null,
+              "direction": null,
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": true,
+              "running_session_id": "6dfa9ba5-62bb-472e-8147-3a9f8e1c2bdd",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0c75d6df-365e-41c4-8cab-d26730f0c4c8",
+        "role": "learner",
+        "text": "",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "sheet": {
+          "material_id": "6db8bca0-27cd-47a2-bdba-489c5610b72c",
+          "pages": 1,
+          "stage": "ready"
+        },
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "45c90256-8bbf-4aeb-b15a-ea928082d5a6",
+        "role": "buddy",
+        "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück).",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "0ce820ee-9acf-4d6f-9724-a985ead30966",
+          "kind": "result",
+          "origin": "buddy",
+          "title": "Buddy",
+          "body": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück).",
+          "why": null,
+          "status": "in_app",
+          "send_at": null,
+          "sent_at": null,
+          "opened_at": null,
+          "created_at": "2026-10-24T10:00:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "97859009-7e3c-41e0-bb51-c707aaed37d6",
+          "title": "Brüche kürzen",
+          "question_count": 2,
+          "est_minutes": 5,
+          "outcome": null
+        },
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "9a5d4336-87df-4624-add6-c149af2b0c83",
+        "role": "learner",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "0008eff5-f069-4a5f-916b-4912cc6fa0a4",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0d0177ec-3d9a-4e4b-9c78-73457fe443c0",
+        "role": "buddy",
+        "text": "Klar — ich hab dir die Übung zu „Brüche kürzen“ geöffnet.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "9a5d4336-87df-4624-add6-c149af2b0c83",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "faac0120-2196-491a-b7de-fca419468163",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "tool": "show_ready",
+              "ready": true,
+              "title": "Brüche kürzen",
+              "outcome": null,
+              "step_id": "97859009-7e3c-41e0-bb51-c707aaed37d6",
+              "est_minutes": 5,
+              "question_count": 2
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "27a45627-66e3-4e09-b2dc-cd7c91084b44",
+        "kind": "short",
+        "prompt": "Wie viel ist $\\frac{2}{4} + \\frac{1}{4}$?",
+        "answer": "$\\frac{3}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "39f71410-b5b3-45ed-bf26-e5ade9f176db",
+        "kind": "numeric",
+        "prompt": "Kürze $\\frac{8}{12}$.",
+        "answer": "0.6666666667",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "4115cc04-b646-4912-8dd9-5bcd95374218",
+        "kind": "short",
+        "prompt": "Welche beiden Brüche passen zu einer ganzen Pizza?",
+        "answer": "$\\frac{2}{4}$ und $\\frac{2}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "52efc1cf-4483-4e71-9c57-2b9681b48561",
+        "kind": "multiple_choice",
+        "prompt": "Welche Summe ist gleich $\\frac{3}{4}$?",
+        "answer": "$\\frac{1}{4} + \\frac{2}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "72ac953f-7560-4089-a4cd-fe086bb930c2",
+        "kind": "multiple_choice",
+        "prompt": "Welche Rechnung ist größer als $\\frac{3}{4}$?",
+        "answer": "$\\frac{1}{2} + \\frac{1}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "9d857b3f-cdfc-4ef8-a7fb-2b739731ff6a",
+        "kind": "multiple_choice",
+        "prompt": "Welche Brüche ergeben zusammen eine ganze Pizza?",
+        "answer": "$\\frac{1}{4} + \\frac{3}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "b5aaead7-6134-4e44-b0d9-6de34bed5572",
+        "kind": "numeric",
+        "prompt": "Kürze $\\frac{9}{12}$.",
+        "answer": "0.75",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "c4b3482d-6020-4df7-b9a0-bbfd60286b73",
+        "kind": "numeric",
+        "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+        "answer": "$\\frac{3}{4}$",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "cc0a4559-10e5-420b-a895-3c8a05238e08",
+        "kind": "long",
+        "prompt": "Erkläre kurz, warum $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$ ist.",
+        "answer": "Die Nenner sind gleich, also werden nur die Zähler addiert: $1 + 2 = 3$.",
+        "prompt_lang": "de",
+        "lang": null
+      },
+      {
+        "id": "e518a616-8d18-441b-9016-bb61ed026b38",
+        "kind": "short",
+        "prompt": "Wie viele Viertel sind ein halber Pizza?",
+        "answer": "2",
+        "prompt_lang": "de",
+        "lang": null
+      }
+    ],
+    "settings": {
+      "learner_id": "456b4a18-31d7-417c-8192-c523f290dae6",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 23,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:41:39.560Z",
+      "updated_at": "2026-10-24T17:43:05.951Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [
+      {
+        "id": "6dfa9ba5-62bb-472e-8147-3a9f8e1c2bdd",
+        "client_request_id": "94bc9d41-fcac-433b-872e-0259cb94cab0"
+      }
+    ],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Brüche kürzen",
+        "state": "prepared",
+        "agreed": false
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "photo"
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?"
+          },
+          {
+            "who": "learner",
+            "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte."
+          },
+          {
+            "who": "learner",
+            "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?"
+          },
+          {
+            "who": "buddy",
+            "text": "Am liebsten würde ich erst sehen, wie man Brüche addiert."
+          },
+          {
+            "who": "learner",
+            "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — denk an Brüche wie an Stücke von derselben Pizza. Wenn beide Pizzas gleich eingeteilt sind, darfst du die Stücke einfach zusammenzählen: aus $\\frac{1}{4}$ und $\\frac{2}{4}$ wird $\\frac{3}{4}$."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, ich erkläre es anders: Stell dir vor, du hast zwei Pizzas, beide in 4 Stücke geteilt. Du hast 1 Stück von der ersten Pizza und 2 Stücke von der zweiten Pizza. Weil beide Pizzas gleich eingeteilt sind, kannst du die Stücke zusammenzählen: 1 Stück plus 2 Stücke sind 3 Stücke von 4. Also $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$. Möchtest du, dass ich dir ein Bild dazu mache?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, gern — ein Bild hilft oft. Stell dir 4 gleich große Pizzastücke vor: 1 Stück von der einen und 2 Stücke von der anderen ergeben zusammen 3 Stücke, also \u000b$\\frac{3}{4}$\u000b."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein Bild mit Pizzastücken zeigen, das zeigt, wie man $\\frac{1}{4}$ und $\\frac{2}{4}$ zusammenzählt? Ich möchte es besser verstehen."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine kleine Übung mit Bruch-Bildern vor, damit du \u0001/4 und \u0012/4 als Pizzastücke sehen kannst."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Brüche mit Pizzastücken verstehen: \u0001/4 und \u0012/4 zusammenzählen",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Wie viele Viertel sind ein halber Pizza?",
+          "choices": null
+        }
+      },
+      "turns": [],
+      "taps": [],
+      "findings": [],
+      "response": {
+        "id": "6db8bca0-27cd-47a2-bdba-489c5610b72c",
+        "title": "Brüche kürzen",
+        "status": "ready",
+        "failure_reason": null,
+        "photos_deleted": false,
+        "item_count": 2,
+        "speak_count": 0,
+        "purpose": "study",
+        "source": "sheet",
+        "session_id": null,
+        "session_status": null,
+        "page_problems": [],
+        "items_incomplete": false,
+        "not_practicable": [],
+        "photo_count": 1,
+        "merged_into": null,
+        "subject_name": "Mathematik",
+        "goal_id": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?"
+          },
+          {
+            "who": "learner",
+            "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte."
+          },
+          {
+            "who": "learner",
+            "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?"
+          },
+          {
+            "who": "buddy",
+            "text": "Am liebsten würde ich erst sehen, wie man Brüche addiert."
+          },
+          {
+            "who": "learner",
+            "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — denk an Brüche wie an Stücke von derselben Pizza. Wenn beide Pizzas gleich eingeteilt sind, darfst du die Stücke einfach zusammenzählen: aus $\\frac{1}{4}$ und $\\frac{2}{4}$ wird $\\frac{3}{4}$."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, ich erkläre es anders: Stell dir vor, du hast zwei Pizzas, beide in 4 Stücke geteilt. Du hast 1 Stück von der ersten Pizza und 2 Stücke von der zweiten Pizza. Weil beide Pizzas gleich eingeteilt sind, kannst du die Stücke zusammenzählen: 1 Stück plus 2 Stücke sind 3 Stücke von 4. Also $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$. Möchtest du, dass ich dir ein Bild dazu mache?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, gern — ein Bild hilft oft. Stell dir 4 gleich große Pizzastücke vor: 1 Stück von der einen und 2 Stücke von der anderen ergeben zusammen 3 Stücke, also \u000b$\\frac{3}{4}$\u000b."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein Bild mit Pizzastücken zeigen, das zeigt, wie man $\\frac{1}{4}$ und $\\frac{2}{4}$ zusammenzählt? Ich möchte es besser verstehen."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine kleine Übung mit Bruch-Bildern vor, damit du \u0001/4 und \u0012/4 als Pizzastücke sehen kannst."
+          },
+          {
+            "who": "learner",
+            "text": ""
+          },
+          {
+            "who": "buddy",
+            "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Brüche mit Pizzastücken verstehen: \u0001/4 und \u0012/4 zusammenzählen",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Wie viele Viertel sind ein halber Pizza?",
+          "choices": null
+        }
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar —",
+            "Klar — ich",
+            "Klar — ich hab",
+            "Klar — ich hab dir",
+            "Klar — ich hab dir die",
+            "Klar — ich hab dir die Ü",
+            "Klar — ich hab dir die Übung",
+            "Klar — ich hab dir die Übung zu",
+            "Klar — ich hab dir die Übung zu „",
+            "Klar — ich hab dir die Übung zu „Br",
+            "Klar — ich hab dir die Übung zu „Brüche",
+            "Klar — ich hab dir die Übung zu „Brüche kür",
+            "Klar — ich hab dir die Übung zu „Brüche kürzen",
+            "Klar — ich hab dir die Übung zu „Brüche kürzen“",
+            "Klar — ich hab dir die Übung zu „Brüche kürzen“ geöffnet",
+            "Klar — ich hab dir die Übung zu „Brüche kürzen“ geöffnet."
+          ],
+          "ms": 1478,
+          "text": "Ich möchte die Aufgaben auf meinem Blatt üben.",
+          "id": "0008eff5-f069-4a5f-916b-4912cc6fa0a4"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "erklär mal brüche aber einfach"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Ein Bruch ist wie ein Stück von einer Pizza. Oben steht, wie viele Stücke du hast, unten steht, in wie viele gleich große Teile die ganze Pizza geteilt ist. Zum Beispiel heißt $\\frac{1}{4}$: 1 von 4 gleich großen Teilen. Soll ich dir gleich ein ganz einfaches Beispiel machen?"
+          },
+          {
+            "who": "learner",
+            "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Stell dir vor, eine Pizza wird in 4 gleich große Stücke geteilt. Wenn du 1 Stück isst, dann ist das $\\frac{1}{4}$ der Pizza — also ein Viertel. Wenn du 2 Stücke isst, sind das $\\frac{2}{4}$, also die Hälfte."
+          },
+          {
+            "who": "learner",
+            "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?"
+          },
+          {
+            "who": "buddy",
+            "text": "Am liebsten würde ich erst sehen, wie man Brüche addiert."
+          },
+          {
+            "who": "learner",
+            "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — denk an Brüche wie an Stücke von derselben Pizza. Wenn beide Pizzas gleich eingeteilt sind, darfst du die Stücke einfach zusammenzählen: aus $\\frac{1}{4}$ und $\\frac{2}{4}$ wird $\\frac{3}{4}$."
+          },
+          {
+            "who": "learner",
+            "text": "Okay, ich erkläre es anders: Stell dir vor, du hast zwei Pizzas, beide in 4 Stücke geteilt. Du hast 1 Stück von der ersten Pizza und 2 Stücke von der zweiten Pizza. Weil beide Pizzas gleich eingeteilt sind, kannst du die Stücke zusammenzählen: 1 Stück plus 2 Stücke sind 3 Stücke von 4. Also $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$. Möchtest du, dass ich dir ein Bild dazu mache?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, gern — ein Bild hilft oft. Stell dir 4 gleich große Pizzastücke vor: 1 Stück von der einen und 2 Stücke von der anderen ergeben zusammen 3 Stücke, also \u000b$\\frac{3}{4}$\u000b."
+          },
+          {
+            "who": "learner",
+            "text": "Kannst du mir bitte ein Bild mit Pizzastücken zeigen, das zeigt, wie man $\\frac{1}{4}$ und $\\frac{2}{4}$ zusammenzählt? Ich möchte es besser verstehen."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir eine kleine Übung mit Bruch-Bildern vor, damit du \u0001/4 und \u0012/4 als Pizzastücke sehen kannst."
+          },
+          {
+            "who": "learner",
+            "text": ""
+          },
+          {
+            "who": "buddy",
+            "text": "Deine Fragen zu „Brüche kürzen“ sind fertig (2 Stück)."
+          },
+          {
+            "who": "learner",
+            "text": "Ich möchte die Aufgaben auf meinem Blatt üben."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich hab dir die Übung zu „Brüche kürzen“ geöffnet."
+          }
+        ],
+        "offers": [
+          {
+            "label": "Brüche mit Pizzastücken verstehen: \u0001/4 und \u0012/4 zusammenzählen",
+            "kind": "practice"
+          }
+        ],
+        "question": {
+          "prompt": "Wie viele Viertel sind ein halber Pizza?",
+          "choices": null
+        }
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "94bc9d41-fcac-433b-872e-0259cb94cab0",
+          "kind": "practice",
+          "route": "/practice/topic",
+          "http": 201,
+          "session": {
+            "id": "6dfa9ba5-62bb-472e-8147-3a9f8e1c2bdd",
+            "mode": "practice",
+            "reveal_allowed": true,
+            "status": "active",
+            "title": "Brüche mit Pizza",
+            "card_pass": false,
+            "card_pass_offered": false,
+            "drill": null,
+            "preparing": false,
+            "timer": null,
+            "items": [
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "e518a616-8d18-441b-9016-bb61ed026b38",
+                  "kind": "short",
+                  "prompt": "Wie viele Viertel sind ein halber Pizza?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 4,
+                        "filled": 2
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "52efc1cf-4483-4e71-9c57-2b9681b48561",
+                  "kind": "multiple_choice",
+                  "prompt": "Welche Summe ist gleich $\\frac{3}{4}$?",
+                  "choices": [
+                    "$\\frac{1}{4} + \\frac{1}{4}$",
+                    "$\\frac{1}{4} + \\frac{2}{4}$",
+                    "$\\frac{2}{4} + \\frac{2}{4}$"
+                  ],
+                  "unit": null,
+                  "topic": "Brüche",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 4,
+                        "filled": 3
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "27a45627-66e3-4e09-b2dc-cd7c91084b44",
+                  "kind": "short",
+                  "prompt": "Wie viel ist $\\frac{2}{4} + \\frac{1}{4}$?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 4,
+                        "filled": 2
+                      },
+                      {
+                        "parts": 4,
+                        "filled": 1
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "9d857b3f-cdfc-4ef8-a7fb-2b739731ff6a",
+                  "kind": "multiple_choice",
+                  "prompt": "Welche Brüche ergeben zusammen eine ganze Pizza?",
+                  "choices": [
+                    "$\\frac{1}{4} + $\\frac{2}{4}$",
+                    "$\\frac{1}{4} + \\frac{3}{4}$",
+                    "$\\frac{2}{4} + \\frac{2}{4}$"
+                  ],
+                  "unit": null,
+                  "topic": "Brüche",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 4,
+                        "filled": 4
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "c4b3482d-6020-4df7-b9a0-bbfd60286b73",
+                  "kind": "numeric",
+                  "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 4,
+                        "filled": 2
+                      },
+                      {
+                        "parts": 4,
+                        "filled": 1
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "4115cc04-b646-4912-8dd9-5bcd95374218",
+                  "kind": "short",
+                  "prompt": "Welche beiden Brüche passen zu einer ganzen Pizza?",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 4,
+                        "filled": 2
+                      },
+                      {
+                        "parts": 4,
+                        "filled": 2
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "cc0a4559-10e5-420b-a895-3c8a05238e08",
+                  "kind": "long",
+                  "prompt": "Erkläre kurz, warum $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$ ist.",
+                  "choices": null,
+                  "unit": null,
+                  "topic": "Brüche",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 4,
+                        "filled": 1
+                      },
+                      {
+                        "parts": 4,
+                        "filled": 2
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              },
+              {
+                "item": {
+                  "pronunciation_plan": null,
+                  "id": "72ac953f-7560-4089-a4cd-fe086bb930c2",
+                  "kind": "multiple_choice",
+                  "prompt": "Welche Rechnung ist größer als $\\frac{3}{4}$?",
+                  "choices": [
+                    "$\\frac{1}{4} + \\frac{1}{4}$",
+                    "$\\frac{1}{2} + \\frac{1}{4}$",
+                    "$\\frac{1}{4} + \\frac{3}{4}$"
+                  ],
+                  "unit": null,
+                  "topic": "Brüche",
+                  "origin": "buddy",
+                  "lang": null,
+                  "prompt_lang": "de",
+                  "subject_kind": "math",
+                  "figure": {
+                    "type": "fraction",
+                    "shape": "bar",
+                    "fractions": [
+                      {
+                        "parts": 4,
+                        "filled": 3
+                      }
+                    ]
+                  },
+                  "choice_figures": null,
+                  "image": null,
+                  "tap_choices": null,
+                  "surface": null,
+                  "tap": false,
+                  "task_view": null,
+                  "listen": null,
+                  "tones": null,
+                  "passage": null,
+                  "task_part": null,
+                  "read_aloud": true
+                },
+                "status": "open",
+                "attempts": 0,
+                "hints_used": 0,
+                "hints_left": 0,
+                "hint_available": true,
+                "hint_offered": false,
+                "reveal_available": false,
+                "deferred": false,
+                "answer": null,
+                "listen_transcript": null,
+                "explanation": null,
+                "why": null
+              }
+            ],
+            "turns": [],
+            "current_item_id": "e518a616-8d18-441b-9016-bb61ed026b38",
+            "summary": null
+          },
+          "error": null
+        }
+      ],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "photo.source",
+      "evidence": "No started item belongs to uploaded material; source=2, started=8",
+      "kind": "photo",
+      "route": "/practice/topic",
+      "category": "app"
+    }
+  ],
+  "id": "new-german-photo-to-practice",
+  "persona": {
+    "id": "new-german",
+    "age": 13,
+    "locale": "de",
+    "style": "Arabic first language, beginner German",
+    "behaviour": "Misunderstands terminology, asks for clarification"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "erklär mal brüche aber einfach",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Ja, bitte mach ein einfaches Beispiel mit Pizza-Stücken!",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Super! Möchtest du, dass ich dir erkläre, wie man Brüche addiert, oder lieber, wie man sie mit Zahlen vergleicht?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "das versteh ich immer noch nicht kannst dus nochmal anders sagen",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Okay, ich erkläre es anders: Stell dir vor, du hast zwei Pizzas, beide in 4 Stücke geteilt. Du hast 1 Stück von der ersten Pizza und 2 Stücke von der zweiten Pizza. Weil beide Pizzas gleich eingeteilt sind, kannst du die Stücke zusammenzählen: 1 Stück plus 2 Stücke sind 3 Stücke von 4. Also $\\frac{1}{4} + \\frac{2}{4} = \\frac{3}{4}$. Möchtest du, dass ich dir ein Bild dazu mache?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Kannst du mir bitte ein Bild mit Pizzastücken zeigen, das zeigt, wie man $\\frac{1}{4}$ und $\\frac{2}{4}$ zusammenzählt? Ich möchte es besser verstehen.",
+      "double": false
+    },
+    {
+      "type": "tap",
+      "offer": 0,
+      "double": true
+    }
+  ]
+}

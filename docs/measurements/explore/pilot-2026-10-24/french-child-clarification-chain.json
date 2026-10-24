@@ -1,0 +1,697 @@
+{
+  "goal": {
+    "id": "clarification-chain",
+    "issue": 938,
+    "wants": "A vocabulary request continues after answering the language question",
+    "messages": [
+      "Kannst du mir einen Test mit 20 Vokabeln zusammenstellen?",
+      "Deutsch und Englisch. Denk dir Basisvokabeln aus."
+    ],
+    "expect": "offer"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "32b48f15-c4ee-4f0d-9afa-99a1e4e6c630",
+        "role": "learner",
+        "text": "Je suis prêt. Quelle est la question ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "79e1e6b3-9518-4043-85c1-e6a3bd13b43c",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "172d917c-e69a-4b98-9bf7-cd2445eac210",
+        "role": "buddy",
+        "text": "Je suis là 🙂 Tu veux qu’on travaille sur quoi ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "un exercice",
+          "une leçon",
+          "un contrôle",
+          "autre"
+        ],
+        "reply_to_id": "32b48f15-c4ee-4f0d-9afa-99a1e4e6c630",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cf0cd1dd-591c-4c1f-a140-cdef668828db",
+        "role": "learner",
+        "text": "On peut continuer avec du vocabulaire ! Dis-moi le mot et je réponds.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "24a80e3c-c51c-4927-82d2-19294dd341ba",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e91dc739-ae13-4d13-b7e5-a9c9e2f9d81e",
+        "role": "buddy",
+        "text": "Oui, on peut 🙂 Sur quel thème tu veux le vocabulaire ?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "l’école",
+          "les animaux",
+          "la maison",
+          "les couleurs"
+        ],
+        "reply_to_id": "cf0cd1dd-591c-4c1f-a140-cdef668828db",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "7c59da0f-8a2a-4cda-9856-3c57b089656e",
+        "role": "learner",
+        "text": "Le thème, c’est la nourriture. Donne-moi un mot et la phrase, et je réponds 😊",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "01861261-d26a-4d9a-9350-8f074b4d9396",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5681f52c-a25c-4d92-bb93-2a2d54ee6463",
+        "role": "buddy",
+        "text": "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et je te lance ça.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "7c59da0f-8a2a-4cda-9856-3c57b089656e",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "3118663d-ed66-4b9f-a76a-5ee8a5f2904a",
+        "role": "learner",
+        "text": "D’accord 🙂 Voilà une petite liste : pomme – apple, fromage – cheese, pain – bread. À toi !",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a5c4841e-d677-4c0e-9573-66e8440e6a36",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "6875c40c-84a6-4398-aea5-c46d767be774",
+        "role": "buddy",
+        "text": "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais travailler mot par mot 😊",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "3118663d-ed66-4b9f-a76a-5ee8a5f2904a",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "22c8b0d6-0367-4b37-8c28-ff7d9c6cae72",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "pomme – apple, fromage – cheese, pain – bread",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "b4b5dae5-5dec-4a3f-8511-3439e8d4403b",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "159b3509-200f-4fee-86e5-aa35817e8310",
+        "kind": "vocab",
+        "prompt": "apple",
+        "answer": "pomme",
+        "prompt_lang": "en",
+        "lang": "fr"
+      },
+      {
+        "id": "4c9856aa-ecc5-4dad-93e6-1a5f4e7f4660",
+        "kind": "vocab",
+        "prompt": "bread",
+        "answer": "pain",
+        "prompt_lang": "en",
+        "lang": "fr"
+      },
+      {
+        "id": "76b55f16-804a-4516-aa3b-290829243560",
+        "kind": "vocab",
+        "prompt": "fromage",
+        "answer": "cheese",
+        "prompt_lang": "fr",
+        "lang": "en"
+      },
+      {
+        "id": "84968837-51db-4d62-bf86-960dfa031ec6",
+        "kind": "vocab",
+        "prompt": "pomme",
+        "answer": "apple",
+        "prompt_lang": "fr",
+        "lang": "en"
+      },
+      {
+        "id": "cb784f7e-26a4-4d4d-acb2-93b1da6a949a",
+        "kind": "vocab",
+        "prompt": "cheese",
+        "answer": "fromage",
+        "prompt_lang": "en",
+        "lang": "fr"
+      },
+      {
+        "id": "ccaceeff-cfa7-4cae-93f7-f341cbe18e30",
+        "kind": "vocab",
+        "prompt": "pain",
+        "answer": "bread",
+        "prompt_lang": "fr",
+        "lang": "en"
+      }
+    ],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [
+      {
+        "id": "b4b5dae5-5dec-4a3f-8511-3439e8d4403b",
+        "client_request_id": "22c8b0d6-0367-4b37-8c28-ff7d9c6cae72"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Je suis prêt. Quelle est la question ?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Je",
+            "Je suis",
+            "Je suis là",
+            "Je suis là 🙂",
+            "Je suis là 🙂 Tu",
+            "Je suis là 🙂 Tu veux",
+            "Je suis là 🙂 Tu veux qu",
+            "Je suis là 🙂 Tu veux qu’on",
+            "Je suis là 🙂 Tu veux qu’on travaille",
+            "Je suis là 🙂 Tu veux qu’on travaille sur",
+            "Je suis là 🙂 Tu veux qu’on travaille sur quoi",
+            "Je suis là 🙂 Tu veux qu’on travaille sur quoi ?",
+            "Je suis là 🙂 Tu veux qu’on travaille sur quoi ?"
+          ],
+          "ms": 1169,
+          "text": "Je suis prêt. Quelle est la question ?",
+          "id": "79e1e6b3-9518-4043-85c1-e6a3bd13b43c"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "On peut continuer avec du vocabulaire ! Dis-moi le mot et je réponds.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Je suis prêt. Quelle est la question ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je suis là 🙂 Tu veux qu’on travaille sur quoi ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Oui",
+            "Oui,",
+            "Oui, on",
+            "Oui, on peut",
+            "Oui, on peut 🙂",
+            "Oui, on peut 🙂 Sur",
+            "Oui, on peut 🙂 Sur quel",
+            "Oui, on peut 🙂 Sur quel thème",
+            "Oui, on peut 🙂 Sur quel thème tu",
+            "Oui, on peut 🙂 Sur quel thème tu veux",
+            "Oui, on peut 🙂 Sur quel thème tu veux le",
+            "Oui, on peut 🙂 Sur quel thème tu veux le vocab",
+            "Oui, on peut 🙂 Sur quel thème tu veux le vocabulaire",
+            "Oui, on peut 🙂 Sur quel thème tu veux le vocabulaire ?",
+            "Oui, on peut 🙂 Sur quel thème tu veux le vocabulaire ?"
+          ],
+          "ms": 1334,
+          "text": "On peut continuer avec du vocabulaire ! Dis-moi le mot et je réponds.",
+          "id": "24a80e3c-c51c-4927-82d2-19294dd341ba"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Le thème, c’est la nourriture. Donne-moi un mot et la phrase, et je réponds 😊",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Je suis prêt. Quelle est la question ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je suis là 🙂 Tu veux qu’on travaille sur quoi ?"
+          },
+          {
+            "who": "learner",
+            "text": "On peut continuer avec du vocabulaire ! Dis-moi le mot et je réponds."
+          },
+          {
+            "who": "buddy",
+            "text": "Oui, on peut 🙂 Sur quel thème tu veux le vocabulaire ?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Je",
+            "Je te",
+            "Je te prépare",
+            "Je te prépare du",
+            "Je te prépare du vocab",
+            "Je te prépare du vocabulaire",
+            "Je te prépare du vocabulaire sur",
+            "Je te prépare du vocabulaire sur la",
+            "Je te prépare du vocabulaire sur la nourriture",
+            "Je te prépare du vocabulaire sur la nourriture.",
+            "",
+            "Je",
+            "Je peux",
+            "Je peux le",
+            "Je peux le faire",
+            "Je peux le faire,",
+            "Je peux le faire, mais",
+            "Je peux le faire, mais j",
+            "Je peux le faire, mais j’ai",
+            "Je peux le faire, mais j’ai besoin",
+            "Je peux le faire, mais j’ai besoin des",
+            "Je peux le faire, mais j’ai besoin des mots",
+            "Je peux le faire, mais j’ai besoin des mots eux",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions.",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. En",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme «",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot –",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction »",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille,",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et je",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et je te",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et je te lance",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et je te lance ça",
+            "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et je te lance ça."
+          ],
+          "ms": 3630,
+          "text": "Le thème, c’est la nourriture. Donne-moi un mot et la phrase, et je réponds 😊",
+          "id": "01861261-d26a-4d9a-9350-8f074b4d9396"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "D’accord 🙂 Voilà une petite liste : pomme – apple, fromage – cheese, pain – bread. À toi !",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Je suis prêt. Quelle est la question ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je suis là 🙂 Tu veux qu’on travaille sur quoi ?"
+          },
+          {
+            "who": "learner",
+            "text": "On peut continuer avec du vocabulaire ! Dis-moi le mot et je réponds."
+          },
+          {
+            "who": "buddy",
+            "text": "Oui, on peut 🙂 Sur quel thème tu veux le vocabulaire ?"
+          },
+          {
+            "who": "learner",
+            "text": "Le thème, c’est la nourriture. Donne-moi un mot et la phrase, et je réponds 😊"
+          },
+          {
+            "who": "buddy",
+            "text": "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et je te lance ça."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Je",
+            "Je t",
+            "Je t’ai",
+            "Je t’ai prépar",
+            "Je t’ai préparé",
+            "Je t’ai préparé du",
+            "Je t’ai préparé du vocab",
+            "Je t’ai préparé du vocabulaire",
+            "Je t’ai préparé du vocabulaire sur",
+            "Je t’ai préparé du vocabulaire sur la",
+            "Je t’ai préparé du vocabulaire sur la nourriture",
+            "Je t’ai préparé du vocabulaire sur la nourriture.",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais travailler",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais travailler mot",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais travailler mot par",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais travailler mot par mot",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais travailler mot par mot 😊",
+            "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais travailler mot par mot 😊"
+          ],
+          "ms": 3344,
+          "text": "D’accord 🙂 Voilà une petite liste : pomme – apple, fromage – cheese, pain – bread. À toi !",
+          "id": "a5c4841e-d677-4c0e-9573-66e8440e6a36"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": true
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Je suis prêt. Quelle est la question ?"
+          },
+          {
+            "who": "buddy",
+            "text": "Je suis là 🙂 Tu veux qu’on travaille sur quoi ?"
+          },
+          {
+            "who": "learner",
+            "text": "On peut continuer avec du vocabulaire ! Dis-moi le mot et je réponds."
+          },
+          {
+            "who": "buddy",
+            "text": "Oui, on peut 🙂 Sur quel thème tu veux le vocabulaire ?"
+          },
+          {
+            "who": "learner",
+            "text": "Le thème, c’est la nourriture. Donne-moi un mot et la phrase, et je réponds 😊"
+          },
+          {
+            "who": "buddy",
+            "text": "Je peux le faire, mais j’ai besoin des mots eux-mêmes pour fabriquer les questions. Envoie-moi une petite liste comme « mot – traduction » ou prends la photo de ta feuille, et je te lance ça."
+          },
+          {
+            "who": "learner",
+            "text": "D’accord 🙂 Voilà une petite liste : pomme – apple, fromage – cheese, pain – bread. À toi !"
+          },
+          {
+            "who": "buddy",
+            "text": "Je t’ai préparé du vocabulaire sur la nourriture. Clique et je te le fais travailler mot par mot 😊"
+          }
+        ],
+        "offers": [
+          {
+            "label": "pomme – apple, fromage – cheese, pain – bread",
+            "kind": "vocab"
+          }
+        ],
+        "question": null
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "22c8b0d6-0367-4b37-8c28-ff7d9c6cae72",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "http": 422,
+          "session": null,
+          "error": {
+            "error": {
+              "code": "invalid_input",
+              "message": "Invalid request",
+              "details": {
+                "issues": [
+                  {
+                    "path": "figures",
+                    "message": "Array must contain at least 1 element(s)"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "action": "22c8b0d6-0367-4b37-8c28-ff7d9c6cae72",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "http": 422,
+          "session": null,
+          "error": {
+            "error": {
+              "code": "invalid_input",
+              "message": "Invalid request",
+              "details": {
+                "issues": [
+                  {
+                    "path": "figures",
+                    "message": "Array must contain at least 1 element(s)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        },
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "offer.startable",
+      "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+      "kind": "vocab",
+      "route": "/practice/topic",
+      "category": "app"
+    },
+    {
+      "invariant": "offer.startable",
+      "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+      "kind": "vocab",
+      "route": "/practice/topic",
+      "category": "app"
+    },
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "offer",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "french-child-clarification-chain",
+  "persona": {
+    "id": "french-child",
+    "age": 11,
+    "locale": "fr",
+    "style": "French first language, weak reader",
+    "behaviour": "Impatient and easily discouraged"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Je suis prêt. Quelle est la question ?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "On peut continuer avec du vocabulaire ! Dis-moi le mot et je réponds.",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Le thème, c’est la nourriture. Donne-moi un mot et la phrase, et je réponds 😊",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "D’accord 🙂 Voilà une petite liste : pomme – apple, fromage – cheese, pain – bread. À toi !",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": false,
+      "understandable": true,
+      "faithful": false
+    },
+    "disputed": [],
+    "clean": false
+  }
+}

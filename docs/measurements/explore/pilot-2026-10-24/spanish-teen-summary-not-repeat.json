@@ -1,0 +1,135 @@
+{
+  "goal": {
+    "id": "summary-not-repeat",
+    "issue": 937,
+    "wants": "A structured condensation of the conversation",
+    "messages": [
+      "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "Mach mir bitte eine kurze Zusammenfassung davon."
+    ],
+    "expect": "summary"
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": true,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": true,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "failed",
+          "code": "internal",
+          "replies": [],
+          "ms": 2,
+          "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+          "id": "f9dd14a5-bfa7-4064-a249-33f24e4317f8"
+        }
+      ],
+      "taps": [],
+      "findings": [
+        {
+          "invariant": "double.message",
+          "evidence": "0 persisted messages",
+          "kind": "chat",
+          "route": "/buddy/messages",
+          "category": "app"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "double.message",
+      "evidence": "0 persisted messages",
+      "kind": "chat",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "summary.condensation",
+      "evidence": "length 0/0, word overlap 0.00",
+      "kind": "summary",
+      "route": "/buddy/messages",
+      "category": "app"
+    },
+    {
+      "invariant": "execution.error",
+      "kind": "summary",
+      "route": "/explorer",
+      "evidence": "simulator: no current question",
+      "category": "simulator"
+    }
+  ],
+  "id": "spanish-teen-summary-not-repeat",
+  "persona": {
+    "id": "spanish-teen",
+    "age": 16,
+    "locale": "es",
+    "style": "Spanish first language, strong reader, speech-like prose",
+    "behaviour": "Switches topic and requests a hint before answering"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Necesito una pista para condensa\u00160n estructurada de la conversaci\u00190n. \u00191Qu\u0000e informaci\u0000f3n o secciones quieres que incluya?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "hint"
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "error": "simulator: no current question",
+  "advisory": {
+    "agreed": {
+      "useful": false,
+      "understandable": false,
+      "faithful": false
+    },
+    "disputed": [],
+    "clean": false
+  }
+}

@@ -1,0 +1,1001 @@
+{
+  "goal": {
+    "id": "twenty-in-chat",
+    "issue": 940,
+    "wants": "20 bilingual vocabulary pairs immediately in chat",
+    "messages": [
+      "Ich bin ein deutsches Kind und möchte englische Vokabeln lernen.",
+      "Denk du dir Basisvokabeln aus.",
+      "Sende mir bitte hier im Chat 20 Vokabeln mit deutscher Übersetzung."
+    ],
+    "expect": "chat-vocab",
+    "count": 20
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "fa1db394-dba7-4aa4-8e3e-01a43b660440",
+        "role": "learner",
+        "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5e2456d5-c37f-43c0-a31d-7969dde1d8f3",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "13ef5548-b520-4f60-872f-905250a50519",
+        "role": "buddy",
+        "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "fa1db394-dba7-4aa4-8e3e-01a43b660440",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "075445bd-2037-4125-bb3e-52d2dfbfa187",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "basic English school vocabulary words, German to English",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c5c09844-2723-4df7-8bf1-9eb83d7f7dda",
+        "role": "learner",
+        "text": "Let's start the quiz! What's the English word for 'Buch'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "c8539941-ddd2-4b37-8b55-0d3a1bdfc871",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4f37f268-1dee-4329-9e2b-7fc0988f8f94",
+        "role": "buddy",
+        "text": "Book.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c5c09844-2723-4df7-8bf1-9eb83d7f7dda",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cde11c82-611e-45c0-bdcf-817d0eae5d4c",
+        "role": "learner",
+        "text": "What's the English word for 'Stift'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fe6d6854-bc27-4058-858e-53554f25e0f2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5dfe6659-8802-4ac4-b7f6-2bbde21507b1",
+        "role": "buddy",
+        "text": "pen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cde11c82-611e-45c0-bdcf-817d0eae5d4c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f96bcefa-c3d5-4e9c-a07d-f47496620878",
+        "role": "learner",
+        "text": "What's the English word for 'Tafel'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "dbb3cb5f-1291-42ae-b603-97d0e5170a16",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0f337b35-69af-481e-88c1-6c1181e2729b",
+        "role": "buddy",
+        "text": "blackboard.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "f96bcefa-c3d5-4e9c-a07d-f47496620878",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "ce39ca1a-b0b9-4312-8254-92ff505c2769",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 10,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:35:13.186Z",
+      "updated_at": "2026-10-24T17:35:23.899Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "fa1db394-dba7-4aa4-8e3e-01a43b660440",
+        "role": "learner",
+        "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5e2456d5-c37f-43c0-a31d-7969dde1d8f3",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "13ef5548-b520-4f60-872f-905250a50519",
+        "role": "buddy",
+        "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "fa1db394-dba7-4aa4-8e3e-01a43b660440",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "075445bd-2037-4125-bb3e-52d2dfbfa187",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "basic English school vocabulary words, German to English",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c5c09844-2723-4df7-8bf1-9eb83d7f7dda",
+        "role": "learner",
+        "text": "Let's start the quiz! What's the English word for 'Buch'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "c8539941-ddd2-4b37-8b55-0d3a1bdfc871",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4f37f268-1dee-4329-9e2b-7fc0988f8f94",
+        "role": "buddy",
+        "text": "Book.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c5c09844-2723-4df7-8bf1-9eb83d7f7dda",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "cde11c82-611e-45c0-bdcf-817d0eae5d4c",
+        "role": "learner",
+        "text": "What's the English word for 'Stift'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fe6d6854-bc27-4058-858e-53554f25e0f2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5dfe6659-8802-4ac4-b7f6-2bbde21507b1",
+        "role": "buddy",
+        "text": "pen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cde11c82-611e-45c0-bdcf-817d0eae5d4c",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f96bcefa-c3d5-4e9c-a07d-f47496620878",
+        "role": "learner",
+        "text": "What's the English word for 'Tafel'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "dbb3cb5f-1291-42ae-b603-97d0e5170a16",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "0f337b35-69af-481e-88c1-6c1181e2729b",
+        "role": "buddy",
+        "text": "blackboard.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "f96bcefa-c3d5-4e9c-a07d-f47496620878",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4fff9b05-94a4-4844-91c6-314b0fd13de3",
+        "role": "learner",
+        "text": "I am a German child learning English vocabulary.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7f7297a7-cb03-4329-b0b5-8b39f3bb0fc4",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "02257258-352a-4948-8d1a-c8c60e61ee18",
+        "role": "buddy",
+        "text": "Got it — I’ll keep that in mind for our English vocab practice.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "4fff9b05-94a4-4844-91c6-314b0fd13de3",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "c7fa2050-44d6-4ed6-9e50-3ec1dacc3ebf",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "kind": "fact",
+              "tool": "remember",
+              "memory_id": "5bbcc38e-9f95-4153-afcc-1748108bb734",
+              "statement": "She is learning English vocabulary.",
+              "valid_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "44111254-8641-4777-9a0f-5ee2b53cd26b",
+        "role": "learner",
+        "text": "Please choose basic vocabulary yourself.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3ea67b85-41f3-424b-adea-dc7f57d43c3e",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "eaafaae1-d5ec-450d-b031-5883c3fde650",
+        "role": "buddy",
+        "text": "Got it — I’ll pick the basic words for you in our vocab practice.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "44111254-8641-4777-9a0f-5ee2b53cd26b",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "0e385121-e816-4a35-aeb3-4bd66c510d13",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "kind": "preference",
+              "tool": "remember",
+              "memory_id": "8ae8700c-1d6b-4de6-a250-47ecfd3ec76c",
+              "statement": "She wants basic vocabulary chosen by me.",
+              "valid_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5d6bf9f1-4280-4801-996c-b88938b9f001",
+        "role": "learner",
+        "text": "Send me 20 words with their German translations here in the chat.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "de817ffa-655b-4bda-acd8-f67e1363ce68",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "4ea7eaba-be31-42a0-860c-6b323569ee32",
+        "role": "buddy",
+        "text": "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "5d6bf9f1-4280-4801-996c-b88938b9f001",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "16074a25-cb8e-42f3-948a-4a803e1a0200",
+        "role": "learner",
+        "text": "Let's start the quiz! What's the English word for 'Bleistift'?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "a82d3550-bc58-4a72-8936-8d6e1136b123",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "e68dfafd-4112-457f-af53-5d1e51389ba6",
+        "role": "buddy",
+        "text": "pencil.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "16074a25-cb8e-42f3-948a-4a803e1a0200",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "ce39ca1a-b0b9-4312-8254-92ff505c2769",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 18,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:35:13.186Z",
+      "updated_at": "2026-10-24T17:35:34.221Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "I am a German child learning English vocabulary.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Buch'?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Stift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pen."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Tafel'?"
+          },
+          {
+            "who": "buddy",
+            "text": "blackboard."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Got",
+            "Got it",
+            "Got it —",
+            "Got it — I",
+            "Got it — I’ll",
+            "Got it — I’ll keep",
+            "Got it — I’ll keep that",
+            "Got it — I’ll keep that in",
+            "Got it — I’ll keep that in mind",
+            "Got it — I’ll keep that in mind for",
+            "Got it — I’ll keep that in mind for our",
+            "Got it — I’ll keep that in mind for our English",
+            "Got it — I’ll keep that in mind for our English vocab",
+            "Got it — I’ll keep that in mind for our English vocab practice",
+            "Got it — I’ll keep that in mind for our English vocab practice.",
+            "Got it — I’ll keep that in mind for our English vocab practice."
+          ],
+          "ms": 1976,
+          "text": "I am a German child learning English vocabulary.",
+          "id": "7f7297a7-cb03-4329-b0b5-8b39f3bb0fc4"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Please choose basic vocabulary yourself.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Buch'?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Stift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pen."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Tafel'?"
+          },
+          {
+            "who": "buddy",
+            "text": "blackboard."
+          },
+          {
+            "who": "learner",
+            "text": "I am a German child learning English vocabulary."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll keep that in mind for our English vocab practice."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Got",
+            "Got it",
+            "Got it —",
+            "Got it — I",
+            "Got it — I’ll",
+            "Got it — I’ll pick",
+            "Got it — I’ll pick the",
+            "Got it — I’ll pick the basic",
+            "Got it — I’ll pick the basic words",
+            "Got it — I’ll pick the basic words for",
+            "Got it — I’ll pick the basic words for you",
+            "Got it — I’ll pick the basic words for you in",
+            "Got it — I’ll pick the basic words for you in our",
+            "Got it — I’ll pick the basic words for you in our vocab",
+            "Got it — I’ll pick the basic words for you in our vocab practice",
+            "Got it — I’ll pick the basic words for you in our vocab practice.",
+            "Got it — I’ll pick the basic words for you in our vocab practice."
+          ],
+          "ms": 1522,
+          "text": "Please choose basic vocabulary yourself.",
+          "id": "3ea67b85-41f3-424b-adea-dc7f57d43c3e"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Send me 20 words with their German translations here in the chat.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Buch'?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Stift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pen."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Tafel'?"
+          },
+          {
+            "who": "buddy",
+            "text": "blackboard."
+          },
+          {
+            "who": "learner",
+            "text": "I am a German child learning English vocabulary."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll keep that in mind for our English vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Please choose basic vocabulary yourself."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll pick the basic words for you in our vocab practice."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Of",
+            "Of course",
+            "Of course —",
+            "Of course — here",
+            "Of course — here are",
+            "Of course — here are ",
+            "Of course — here are 20",
+            "Of course — here are 20 basic",
+            "Of course — here are 20 basic school",
+            "Of course — here are 20 basic school words",
+            "Of course — here are 20 basic school words:",
+            "Of course — here are 20 basic school words:\n",
+            "Of course — here are 20 basic school words:\n-",
+            "Of course — here are 20 basic school words:\n- book",
+            "Of course — here are 20 basic school words:\n- book —",
+            "Of course — here are 20 basic school words:\n- book — Buch",
+            "Of course — here are 20 basic school words:\n- book — Buch\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — St",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — B",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleist",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — He",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Sch",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibt",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — St",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer /",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehr",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler /",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Sch",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schü",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Line",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- er",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Rad",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radier",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radierg",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — T",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n-",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework —",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Haus",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausauf",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\n",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want,",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next",
+            "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next."
+          ],
+          "ms": 2592,
+          "text": "Send me 20 words with their German translations here in the chat.",
+          "id": "de817ffa-655b-4bda-acd8-f67e1363ce68"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Let's start the quiz! What's the English word for 'Bleistift'?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve set up a quick vocab round with 20 basic school words: German to English.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Let's start the quiz! What's the English word for 'Buch'?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Stift'?"
+          },
+          {
+            "who": "buddy",
+            "text": "pen."
+          },
+          {
+            "who": "learner",
+            "text": "What's the English word for 'Tafel'?"
+          },
+          {
+            "who": "buddy",
+            "text": "blackboard."
+          },
+          {
+            "who": "learner",
+            "text": "I am a German child learning English vocabulary."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll keep that in mind for our English vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Please choose basic vocabulary yourself."
+          },
+          {
+            "who": "buddy",
+            "text": "Got it — I’ll pick the basic words for you in our vocab practice."
+          },
+          {
+            "who": "learner",
+            "text": "Send me 20 words with their German translations here in the chat."
+          },
+          {
+            "who": "buddy",
+            "text": "Of course — here are 20 basic school words:\n- book — Buch\n- pen — Stift\n- pencil — Bleistift\n- notebook — Heft\n- desk — Schreibtisch\n- chair — Stuhl\n- table — Tisch\n- school — Schule\n- teacher — Lehrer / Lehrerin\n- student — Schüler / Schülerin\n- class — Klasse\n- bag — Tasche\n- ruler — Lineal\n- eraser — Radiergummi\n- paper — Papier\n- board — Tafel\n- lesson — Unterricht\n- window — Fenster\n- door — Tür\n- homework — Hausaufgaben\n\nIf you want, I can quiz you on them next."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "p",
+            "pencil",
+            "pencil."
+          ],
+          "ms": 1149,
+          "text": "Let's start the quiz! What's the English word for 'Bleistift'?",
+          "id": "a82d3550-bc58-4a72-8936-8d6e1136b123"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "english-teen-twenty-in-chat",
+  "persona": {
+    "id": "english-teen",
+    "age": 15,
+    "locale": "en",
+    "style": "English first language, fluent reader, terse slang",
+    "behaviour": "Sends occasional nonsense, then returns to goal"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Let's start the quiz! What's the English word for 'Bleistift'?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Let's start the quiz! What's the English word for 'Buch'?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "What's the English word for 'Stift'?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "What's the English word for 'Tafel'?",
+      "double": false
+    }
+  ]
+}

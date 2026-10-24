@@ -1,0 +1,357 @@
+{
+  "goal": {
+    "id": "topic-vocabulary",
+    "issue": 940,
+    "wants": "20 English school vocabulary pairs, German to English practice",
+    "messages": [
+      "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+    ],
+    "expect": "vocab",
+    "count": 20
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "dffd841e-1b40-44ee-857f-8e67d10102bc",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:43:06.992Z",
+      "updated_at": "2026-10-24T17:43:07.000Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "cfd14998-f134-4a63-9118-0d141d62076e",
+        "role": "learner",
+        "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ec958957-1f0f-400f-ab81-0cd412afd411",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f3c90c75-c295-4228-a537-1a6699367334",
+        "role": "buddy",
+        "text": "I’ve prepared a German-to-English vocabulary round with 20 basic school words.\n\nI couldn’t prepare this exercise.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cfd14998-f134-4a63-9118-0d141d62076e",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "639ee961-f5c9-4074-a6e5-fda4e5d5db61",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "basic English school vocabulary words; quiz from German to English",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "370bd1e0-f09c-46df-b52f-20ccad6abfc1",
+        "role": "learner",
+        "text": "Alright, I'll quiz you on 20 basic German-to-English school vocabulary words. Ready? Here's the first one: 'Buch'. What's the English word?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "7e4f4a82-45f0-4cde-b3b1-4a44b4ecd348",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "35134190-5f17-482c-b673-bc56a74bc85e",
+        "role": "buddy",
+        "text": "Book.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "370bd1e0-f09c-46df-b52f-20ccad6abfc1",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "f8a85265-fbab-4874-8a6e-6039f926b6fd",
+        "role": "learner",
+        "text": "Cool, let's keep going! Next word: 'Stift'. What's the English word?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "2a2d26bd-2af6-47bd-8516-196443864190",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "b52889fb-5e60-46d4-be9b-5ca797987bf6",
+        "role": "buddy",
+        "text": "Pen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "f8a85265-fbab-4874-8a6e-6039f926b6fd",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "dffd841e-1b40-44ee-857f-8e67d10102bc",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 8,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:43:06.992Z",
+      "updated_at": "2026-10-24T17:43:14.604Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "I",
+            "I’ve",
+            "I’ve prepared",
+            "I’ve prepared a",
+            "I’ve prepared a German",
+            "I’ve prepared a German-to",
+            "I’ve prepared a German-to-English",
+            "I’ve prepared a German-to-English vocabulary",
+            "I’ve prepared a German-to-English vocabulary round",
+            "I’ve prepared a German-to-English vocabulary round with",
+            "I’ve prepared a German-to-English vocabulary round with ",
+            "I’ve prepared a German-to-English vocabulary round with 20",
+            "I’ve prepared a German-to-English vocabulary round with 20 basic",
+            "I’ve prepared a German-to-English vocabulary round with 20 basic school",
+            "I’ve prepared a German-to-English vocabulary round with 20 basic school words",
+            "I’ve prepared a German-to-English vocabulary round with 20 basic school words."
+          ],
+          "ms": 3062,
+          "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English.",
+          "id": "ec958957-1f0f-400f-ab81-0cd412afd411"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Alright, I'll quiz you on 20 basic German-to-English school vocabulary words. Ready? Here's the first one: 'Buch'. What's the English word?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve prepared a German-to-English vocabulary round with 20 basic school words.\n\nI couldn’t prepare this exercise."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Book",
+            "Book."
+          ],
+          "ms": 1555,
+          "text": "Alright, I'll quiz you on 20 basic German-to-English school vocabulary words. Ready? Here's the first one: 'Buch'. What's the English word?",
+          "id": "7e4f4a82-45f0-4cde-b3b1-4a44b4ecd348"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Cool, let's keep going! Next word: 'Stift'. What's the English word?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Make up 20 basic English school vocabulary words. Quiz me from German to English."
+          },
+          {
+            "who": "buddy",
+            "text": "I’ve prepared a German-to-English vocabulary round with 20 basic school words.\n\nI couldn’t prepare this exercise."
+          },
+          {
+            "who": "learner",
+            "text": "Alright, I'll quiz you on 20 basic German-to-English school vocabulary words. Ready? Here's the first one: 'Buch'. What's the English word?"
+          },
+          {
+            "who": "buddy",
+            "text": "Book."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Pen",
+            "Pen."
+          ],
+          "ms": 1134,
+          "text": "Cool, let's keep going! Next word: 'Stift'. What's the English word?",
+          "id": "2a2d26bd-2af6-47bd-8516-196443864190"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "vocabulary.count",
+      "evidence": "wanted 20, got 0",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "english-teen-topic-vocabulary",
+  "persona": {
+    "id": "english-teen",
+    "age": 15,
+    "locale": "en",
+    "style": "English first language, fluent reader, terse slang",
+    "behaviour": "Sends occasional nonsense, then returns to goal"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Alright, I'll quiz you on 20 basic German-to-English school vocabulary words. Ready? Here's the first one: 'Buch'. What's the English word?",
+        "double": false
+      },
+      "frustration": 1,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Cool, let's keep going! Next word: 'Stift'. What's the English word?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

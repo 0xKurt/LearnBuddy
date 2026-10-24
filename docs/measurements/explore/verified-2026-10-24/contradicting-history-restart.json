@@ -1,0 +1,1419 @@
+{
+  "goal": {
+    "id": "history-restart",
+    "issue": 937,
+    "wants": "Full server conversation after switching mode and restarting",
+    "messages": [
+      "Erkläre mir Brüche.",
+      "Wie addiere ich sie?",
+      "Fass das bitte zusammen."
+    ],
+    "expect": "history"
+  },
+  "initial": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "8bdb2460-27ba-418e-bcf2-e908eb8ffc75",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ab29584a-90c3-4d6d-aeac-79295de08fe2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "efa7bc6d-ebdd-492d-81e1-2d0fa2a3d324",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Teile",
+          "Aufgaben",
+          "beides nacheinander"
+        ],
+        "reply_to_id": "8bdb2460-27ba-418e-bcf2-e908eb8ffc75",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "786b5b17-85b7-4f67-9ffb-099fff21d825",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "94aefb76-861c-4f62-9cb8-37217f7a61f9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "65b6aeb5-a3dc-4d82-a9dc-4fab060b005e",
+        "role": "buddy",
+        "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "786b5b17-85b7-4f67-9ffb-099fff21d825",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c19f8d8c-9978-43ce-853b-d3957fd55b0d",
+        "role": "learner",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "311b56f1-c1a5-44f4-9018-38bad13ccc58",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5cb2d441-4a2a-4780-aeea-1097d897c913",
+        "role": "buddy",
+        "text": "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c19f8d8c-9978-43ce-853b-d3957fd55b0d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c07d14fe-cc92-41ad-a492-f7265533883d",
+        "role": "learner",
+        "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "054a8402-8333-469a-a0ef-5d0a1004ef19",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "741425ae-f4d1-445f-af2e-13b601b32494",
+        "role": "buddy",
+        "text": "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c07d14fe-cc92-41ad-a492-f7265533883d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d325e184-7c69-4a83-8f35-eac38005c14c",
+        "role": "learner",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fd3faf19-6f0b-41cc-b7f5-db2f519b1f1d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "21b1a1b7-afe2-48db-8045-03cc7a87db3c",
+        "role": "buddy",
+        "text": "Klar — ich erinnere dich in 5 Minuten daran. Die Erinnerung erscheint hier in der App, nicht als Push-Nachricht.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "d325e184-7c69-4a83-8f35-eac38005c14c",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "018029d1-45c4-4a68-a6eb-45f5ebb97623",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "ed2a1cfa-56bb-44f3-81d0-d07bb28fbeb3",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "06bc198f-3895-43a7-887e-51e304db3dd4",
+        "role": "buddy",
+        "text": "Wie verabredet: Englisch üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "ff913625-f732-4e88-b1ab-5b7f0321cf00",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Wie verabredet: Englisch üben.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "ed2a1cfa-56bb-44f3-81d0-d07bb28fbeb3",
+          "title": "Englisch üben",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "25839a78-247a-4ee6-a848-533ccf2cb820",
+        "role": "learner",
+        "text": "Ich erinnere dich jetzt in 5 Minuten daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Inhalt zum Üben und einen nächsten Schritt vorschlage?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fea17eea-2b51-4dd7-9842-b0a8021c0c75",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "716948e1-8820-486a-9b47-16ed0bc6cf9b",
+        "role": "buddy",
+        "text": "Ja — die Übung ist schon bereit, und ich kann dir direkt einen kurzen Einstieg dazu machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "25839a78-247a-4ee6-a848-533ccf2cb820",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "37446748-aecc-4009-ba3a-3590225e21de",
+        "role": "learner",
+        "text": "Bitte erinnere mich jetzt in 5 Minuten daran, Englisch zu üben, und gib mir dazu einen kurzen Übungsinhalt und einen nächsten Schritt.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3813a5e2-fd07-437a-abcc-565c2d39bdd0",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "fd085408-7792-4b8d-8ef9-b7eaf4db8d22",
+        "role": "buddy",
+        "text": "Klar — ich erinnere dich in 5 Minuten hier in der App. Übungsinhalt: Lies einen kurzen englischen Satz und sag danach auf Deutsch, was er bedeutet. Nächster Schritt: Schreib mir dann den Satz, den du üben willst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "37446748-aecc-4009-ba3a-3590225e21de",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "b00f0090-2c83-4c6a-9334-b95345bfb607",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:11",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "5462a59a-21e2-4356-bde0-6e0cf47a6b46",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:06:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "e84b356b-ebfe-41ca-8580-2a3a0e6d5e64",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 18,
+      "last_seen_at": "2026-10-24T10:06:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:33:15.614Z",
+      "updated_at": "2026-10-24T17:33:37.982Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      },
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "final": {
+    "at": "2026-10-24T10:06:00.000Z",
+    "messages": [
+      {
+        "id": "8bdb2460-27ba-418e-bcf2-e908eb8ffc75",
+        "role": "learner",
+        "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ab29584a-90c3-4d6d-aeac-79295de08fe2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "efa7bc6d-ebdd-492d-81e1-2d0fa2a3d324",
+        "role": "buddy",
+        "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Teile",
+          "Aufgaben",
+          "beides nacheinander"
+        ],
+        "reply_to_id": "8bdb2460-27ba-418e-bcf2-e908eb8ffc75",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "786b5b17-85b7-4f67-9ffb-099fff21d825",
+        "role": "learner",
+        "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "94aefb76-861c-4f62-9cb8-37217f7a61f9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "65b6aeb5-a3dc-4d82-a9dc-4fab060b005e",
+        "role": "buddy",
+        "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "786b5b17-85b7-4f67-9ffb-099fff21d825",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c19f8d8c-9978-43ce-853b-d3957fd55b0d",
+        "role": "learner",
+        "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "311b56f1-c1a5-44f4-9018-38bad13ccc58",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "5cb2d441-4a2a-4780-aeea-1097d897c913",
+        "role": "buddy",
+        "text": "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c19f8d8c-9978-43ce-853b-d3957fd55b0d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "c07d14fe-cc92-41ad-a492-f7265533883d",
+        "role": "learner",
+        "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "054a8402-8333-469a-a0ef-5d0a1004ef19",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "741425ae-f4d1-445f-af2e-13b601b32494",
+        "role": "buddy",
+        "text": "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "c07d14fe-cc92-41ad-a492-f7265533883d",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d325e184-7c69-4a83-8f35-eac38005c14c",
+        "role": "learner",
+        "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fd3faf19-6f0b-41cc-b7f5-db2f519b1f1d",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "21b1a1b7-afe2-48db-8045-03cc7a87db3c",
+        "role": "buddy",
+        "text": "Klar — ich erinnere dich in 5 Minuten daran. Die Erinnerung erscheint hier in der App, nicht als Push-Nachricht.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "d325e184-7c69-4a83-8f35-eac38005c14c",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "018029d1-45c4-4a68-a6eb-45f5ebb97623",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:05",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "ed2a1cfa-56bb-44f3-81d0-d07bb28fbeb3",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "06bc198f-3895-43a7-887e-51e304db3dd4",
+        "role": "buddy",
+        "text": "Wie verabredet: Englisch üben.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": null,
+        "outreach": {
+          "id": "ff913625-f732-4e88-b1ab-5b7f0321cf00",
+          "kind": "reminder",
+          "origin": "agreed",
+          "title": "Buddy",
+          "body": "Wie verabredet: Englisch üben.",
+          "why": null,
+          "status": "in_app",
+          "send_at": "2026-10-24T10:06:00.000Z",
+          "sent_at": null,
+          "opened_at": "2026-10-24T10:06:00.000Z",
+          "created_at": "2026-10-24T10:06:00.000Z"
+        },
+        "actions": [],
+        "roleplay_feedback": null,
+        "announces": {
+          "step_id": "ed2a1cfa-56bb-44f3-81d0-d07bb28fbeb3",
+          "title": "Englisch üben",
+          "question_count": 0,
+          "est_minutes": 5,
+          "outcome": {
+            "state": "closed"
+          }
+        },
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "25839a78-247a-4ee6-a848-533ccf2cb820",
+        "role": "learner",
+        "text": "Ich erinnere dich jetzt in 5 Minuten daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Inhalt zum Üben und einen nächsten Schritt vorschlage?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fea17eea-2b51-4dd7-9842-b0a8021c0c75",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "716948e1-8820-486a-9b47-16ed0bc6cf9b",
+        "role": "buddy",
+        "text": "Ja — die Übung ist schon bereit, und ich kann dir direkt einen kurzen Einstieg dazu machen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "25839a78-247a-4ee6-a848-533ccf2cb820",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "37446748-aecc-4009-ba3a-3590225e21de",
+        "role": "learner",
+        "text": "Bitte erinnere mich jetzt in 5 Minuten daran, Englisch zu üben, und gib mir dazu einen kurzen Übungsinhalt und einen nächsten Schritt.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "3813a5e2-fd07-437a-abcc-565c2d39bdd0",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "fd085408-7792-4b8d-8ef9-b7eaf4db8d22",
+        "role": "buddy",
+        "text": "Klar — ich erinnere dich in 5 Minuten hier in der App. Übungsinhalt: Lies einen kurzen englischen Satz und sag danach auf Deutsch, was er bedeutet. Nächster Schritt: Schreib mir dann den Satz, den du üben willst.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "37446748-aecc-4009-ba3a-3590225e21de",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "b00f0090-2c83-4c6a-9334-b95345bfb607",
+            "status": "applied",
+            "undoable": true,
+            "summary": {
+              "date": "2026-10-24",
+              "time": "12:11",
+              "tool": "plan_step",
+              "title": "Englisch üben",
+              "agreed": true,
+              "repeat": null,
+              "step_id": "5462a59a-21e2-4356-bde0-6e0cf47a6b46",
+              "repeat_until": null
+            },
+            "created_at": "2026-10-24T10:06:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "4e84940a-b72b-4b19-9b3b-87e66ddfbb07",
+        "role": "learner",
+        "text": "Erkläre mir Brüche.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "5eb72399-b15b-404b-873a-fd0b3b46c6c2",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "8c3e5c7f-5aee-4668-b889-ba9a5136971e",
+        "role": "buddy",
+        "text": "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen Stücken.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "4e84940a-b72b-4b19-9b3b-87e66ddfbb07",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "9452c233-59b4-4731-83d5-3581ef62a4b7",
+        "role": "learner",
+        "text": "Wie addiere ich sie?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "57676719-0bf9-42ee-9378-695ca464c41f",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "812a7cba-42df-4d8a-8910-9f4a22715758",
+        "role": "buddy",
+        "text": "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz einfachen Beispiel zeigen?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": [
+          "Ja, mit einem Beispiel",
+          "Ja, ganz einfach",
+          "Nein, lieber ohne Beispiel"
+        ],
+        "reply_to_id": "9452c233-59b4-4731-83d5-3581ef62a4b7",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "8fb63aa9-22a8-4dd0-ad1e-90a76b197317",
+        "role": "learner",
+        "text": "Fass das bitte zusammen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "cab19b73-2325-4d57-a81f-788c5c984d5c",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "efe15682-2779-474c-a5e7-90fd5ef7d534",
+        "role": "buddy",
+        "text": "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die Zähler zusammenzählen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "8fb63aa9-22a8-4dd0-ad1e-90a76b197317",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "cf480308-1101-4530-967e-81439646ed8a",
+        "role": "learner",
+        "text": "Hier ist die vollständige Unterhaltung, die wir bisher hatten, nachdem du den Modus gewechselt und neu gestartet hast: \n\n1. Du hast mich gebeten, ausführlich über das menschliche Skelett zu erzählen.\n2. Ich habe erklärt, dass das Skelett wie ein Gerüst ist, das dem Körper Form gibt, ihn aufrecht hält und Organe schützt, und habe die wichtigsten Teile genannt.\n3. Du wolltest eine kurze Zusammenfassung, die ich dir gegeben habe.\n4. Du hast die Zusammenfassung nochmal selbst formuliert, und ich habe sie bestätigt.\n5. Du hast um eine noch kürzere Version gebeten, die ich dir gegeben habe.\n6. Du hast mich gebeten, dich in 5 Minuten an Englisch zu erinnern.\n7. Ich habe die Erinnerung bestätigt und sie dir nach 5 Minuten gegeben.\n8. Du hast gefragt, ob ich dir einen kurzen Übungsinhalt und nächsten Schritt zum Englischlernen vorschlagen möchte.\n9. Ich habe dir einen kurzen Übungsinhalt und nächsten Schritt gegeben.\n10. Du hast mich gebeten, Brüche zu erklären.\n11. Ich habe Brüche mit einem Kuchenbeispiel erklärt.\n12. Du hast gefragt, wie man Brüche addiert.\n13. Ich habe die Addition von Brüchen mit dem Kuchenbeispiel erklärt und angeboten, ein Beispiel zu zeigen.\n14. Du hast um eine Zusammenfassung gebeten.\n15. Ich habe die Zusammenfassung gegeben: Brüche kann man nur direkt addieren, wenn die Nenner gleich sind; dann addiert man die Zähler.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "ef0a91c2-27e3-452c-b9d1-2fc378ee0a79",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      },
+      {
+        "id": "6815722b-24ca-40eb-b55e-412afbf0d866",
+        "role": "buddy",
+        "text": "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel zum Addieren von Brüchen.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "cf480308-1101-4530-967e-81439646ed8a",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:06:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "e84b356b-ebfe-41ca-8580-2a3a0e6d5e64",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": true,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 26,
+      "last_seen_at": "2026-10-24T10:06:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:33:15.614Z",
+      "updated_at": "2026-10-24T17:33:49.077Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": [
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      },
+      {
+        "kind": "practice",
+        "title": "Englisch üben",
+        "state": "planned",
+        "agreed": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Erkläre mir Brüche.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen."
+          },
+          {
+            "who": "learner",
+            "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich erinnere dich in 5 Minuten daran. Die Erinnerung erscheint hier in der App, nicht als Push-Nachricht."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "Ich erinnere dich jetzt in 5 Minuten daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Inhalt zum Üben und einen nächsten Schritt vorschlage?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — die Übung ist schon bereit, und ich kann dir direkt einen kurzen Einstieg dazu machen."
+          },
+          {
+            "who": "learner",
+            "text": "Bitte erinnere mich jetzt in 5 Minuten daran, Englisch zu üben, und gib mir dazu einen kurzen Übungsinhalt und einen nächsten Schritt."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich erinnere dich in 5 Minuten hier in der App. Übungsinhalt: Lies einen kurzen englischen Satz und sag danach auf Deutsch, was er bedeutet. Nächster Schritt: Schreib mir dann den Satz, den du üben willst."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar.",
+            "Klar. Ein",
+            "Klar. Ein Br",
+            "Klar. Ein Bruch",
+            "Klar. Ein Bruch ist",
+            "Klar. Ein Bruch ist wie",
+            "Klar. Ein Bruch ist wie ein",
+            "Klar. Ein Bruch ist wie ein Kuchen",
+            "Klar. Ein Bruch ist wie ein Kuchen,",
+            "Klar. Ein Bruch ist wie ein Kuchen, der",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stück",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke gete",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird:",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die unter",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt,",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stück",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke gete",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde,",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt,",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon geme",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind.",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$:",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen St",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen Stücken",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen Stücken.",
+            "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen Stücken."
+          ],
+          "ms": 1782,
+          "text": "Erkläre mir Brüche.",
+          "id": "5eb72399-b15b-404b-873a-fd0b3b46c6c2"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Wie addiere ich sie?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen."
+          },
+          {
+            "who": "learner",
+            "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich erinnere dich in 5 Minuten daran. Die Erinnerung erscheint hier in der App, nicht als Push-Nachricht."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "Ich erinnere dich jetzt in 5 Minuten daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Inhalt zum Üben und einen nächsten Schritt vorschlage?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — die Übung ist schon bereit, und ich kann dir direkt einen kurzen Einstieg dazu machen."
+          },
+          {
+            "who": "learner",
+            "text": "Bitte erinnere mich jetzt in 5 Minuten daran, Englisch zu üben, und gib mir dazu einen kurzen Übungsinhalt und einen nächsten Schritt."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich erinnere dich in 5 Minuten hier in der App. Übungsinhalt: Lies einen kurzen englischen Satz und sag danach auf Deutsch, was er bedeutet. Nächster Schritt: Schreib mir dann den Satz, den du üben willst."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir Brüche."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen Stücken."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "D",
+            "Denk",
+            "Denk wieder",
+            "Denk wieder an",
+            "Denk wieder an den",
+            "Denk wieder an den Kuchen",
+            "Denk wieder an den Kuchen:",
+            "Denk wieder an den Kuchen: Br",
+            "Denk wieder an den Kuchen: Brüche",
+            "Denk wieder an den Kuchen: Brüche kannst",
+            "Denk wieder an den Kuchen: Brüche kannst du",
+            "Denk wieder an den Kuchen: Brüche kannst du nur",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammen",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenz",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen,",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stück",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind.",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „St",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stück",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen,",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen add",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren —",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große P",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizz",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzast",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammen",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenleg",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst.",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz einfachen",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz einfachen Beispiel",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz einfachen Beispiel zeigen",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz einfachen Beispiel zeigen?",
+            "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz einfachen Beispiel zeigen?"
+          ],
+          "ms": 1605,
+          "text": "Wie addiere ich sie?",
+          "id": "57676719-0bf9-42ee-9378-695ca464c41f"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Fass das bitte zusammen.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen."
+          },
+          {
+            "who": "learner",
+            "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich erinnere dich in 5 Minuten daran. Die Erinnerung erscheint hier in der App, nicht als Push-Nachricht."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "Ich erinnere dich jetzt in 5 Minuten daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Inhalt zum Üben und einen nächsten Schritt vorschlage?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — die Übung ist schon bereit, und ich kann dir direkt einen kurzen Einstieg dazu machen."
+          },
+          {
+            "who": "learner",
+            "text": "Bitte erinnere mich jetzt in 5 Minuten daran, Englisch zu üben, und gib mir dazu einen kurzen Übungsinhalt und einen nächsten Schritt."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich erinnere dich in 5 Minuten hier in der App. Übungsinhalt: Lies einen kurzen englischen Satz und sag danach auf Deutsch, was er bedeutet. Nächster Schritt: Schreib mir dann den Satz, den du üben willst."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir Brüche."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen Stücken."
+          },
+          {
+            "who": "learner",
+            "text": "Wie addiere ich sie?"
+          },
+          {
+            "who": "buddy",
+            "text": "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz einfachen Beispiel zeigen?"
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "K",
+            "Klar",
+            "Klar:",
+            "Klar: Br",
+            "Klar: Brüche",
+            "Klar: Brüche kann",
+            "Klar: Brüche kann man",
+            "Klar: Brüche kann man nur",
+            "Klar: Brüche kann man nur direkt",
+            "Klar: Brüche kann man nur direkt add",
+            "Klar: Brüche kann man nur direkt addieren",
+            "Klar: Brüche kann man nur direkt addieren,",
+            "Klar: Brüche kann man nur direkt addieren, wenn",
+            "Klar: Brüche kann man nur direkt addieren, wenn die",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind.",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nen",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen,",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die Z",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die Zähler",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die Zähler zusammen",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die Zähler zusammenz",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die Zähler zusammenzählen",
+            "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die Zähler zusammenzählen."
+          ],
+          "ms": 1933,
+          "text": "Fass das bitte zusammen.",
+          "id": "cab19b73-2325-4d57-a81f-788c5c984d5c"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Hier ist die vollständige Unterhaltung, die wir bisher hatten, nachdem du den Modus gewechselt und neu gestartet hast: \n\n1. Du hast mich gebeten, ausführlich über das menschliche Skelett zu erzählen.\n2. Ich habe erklärt, dass das Skelett wie ein Gerüst ist, das dem Körper Form gibt, ihn aufrecht hält und Organe schützt, und habe die wichtigsten Teile genannt.\n3. Du wolltest eine kurze Zusammenfassung, die ich dir gegeben habe.\n4. Du hast die Zusammenfassung nochmal selbst formuliert, und ich habe sie bestätigt.\n5. Du hast um eine noch kürzere Version gebeten, die ich dir gegeben habe.\n6. Du hast mich gebeten, dich in 5 Minuten an Englisch zu erinnern.\n7. Ich habe die Erinnerung bestätigt und sie dir nach 5 Minuten gegeben.\n8. Du hast gefragt, ob ich dir einen kurzen Übungsinhalt und nächsten Schritt zum Englischlernen vorschlagen möchte.\n9. Ich habe dir einen kurzen Übungsinhalt und nächsten Schritt gegeben.\n10. Du hast mich gebeten, Brüche zu erklären.\n11. Ich habe Brüche mit einem Kuchenbeispiel erklärt.\n12. Du hast gefragt, wie man Brüche addiert.\n13. Ich habe die Addition von Brüchen mit dem Kuchenbeispiel erklärt und angeboten, ein Beispiel zu zeigen.\n14. Du hast um eine Zusammenfassung gebeten.\n15. Ich habe die Zusammenfassung gegeben: Brüche kann man nur direkt addieren, wenn die Nenner gleich sind; dann addiert man die Zähler.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Erzähl mir ausführlich alles über das menschliche Skelett."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — das menschliche Skelett ist wie das Gerüst eines Hauses: Es gibt dem Körper Form und hält alles zusammen. Ohne es würdest du nicht aufrecht stehen können, und viele Organe wären nicht gut geschützt. Wenn du willst, gehen wir als Nächstes einmal die wichtigsten Teile durch: Schädel, Wirbelsäule, Brustkorb, Arme und Beine — oder lieber erst die Aufgaben des Skeletts?"
+          },
+          {
+            "who": "learner",
+            "text": "Mach mir bitte eine kurze Zusammenfassung davon."
+          },
+          {
+            "who": "buddy",
+            "text": "Das menschliche Skelett ist das Gerüst des Körpers: Es gibt ihm Form, hält ihn aufrecht und schützt wichtige Organe wie Gehirn, Herz und Lunge. Außerdem hilft es bei der Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "learner",
+            "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, das ist eine gute kurze Zusammenfassung. Wenn du willst, kann ich sie dir noch einfacher oder noch kürzer machen."
+          },
+          {
+            "who": "learner",
+            "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?"
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Das Skelett gibt dem Körper Form, schützt Organe und hilft bei der Bewegung."
+          },
+          {
+            "who": "learner",
+            "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich erinnere dich in 5 Minuten daran. Die Erinnerung erscheint hier in der App, nicht als Push-Nachricht."
+          },
+          {
+            "who": "buddy",
+            "text": "Wie verabredet: Englisch üben."
+          },
+          {
+            "who": "learner",
+            "text": "Ich erinnere dich jetzt in 5 Minuten daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Inhalt zum Üben und einen nächsten Schritt vorschlage?"
+          },
+          {
+            "who": "buddy",
+            "text": "Ja — die Übung ist schon bereit, und ich kann dir direkt einen kurzen Einstieg dazu machen."
+          },
+          {
+            "who": "learner",
+            "text": "Bitte erinnere mich jetzt in 5 Minuten daran, Englisch zu üben, und gib mir dazu einen kurzen Übungsinhalt und einen nächsten Schritt."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar — ich erinnere dich in 5 Minuten hier in der App. Übungsinhalt: Lies einen kurzen englischen Satz und sag danach auf Deutsch, was er bedeutet. Nächster Schritt: Schreib mir dann den Satz, den du üben willst."
+          },
+          {
+            "who": "learner",
+            "text": "Erkläre mir Brüche."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar. Ein Bruch ist wie ein Kuchen, der in gleich große Stücke geteilt wird: Die untere Zahl sagt, in wie viele Stücke geteilt wurde, und die obere Zahl sagt, wie viele davon gemeint sind. Zum Beispiel bedeutet $\\frac{1}{4}$: ein Stück von vier gleich großen Stücken."
+          },
+          {
+            "who": "learner",
+            "text": "Wie addiere ich sie?"
+          },
+          {
+            "who": "buddy",
+            "text": "Denk wieder an den Kuchen: Brüche kannst du nur direkt zusammenzählen, wenn die Stücke gleich groß sind. Also erst die „Stückgröße“ gleich machen, dann die oberen Zahlen addieren — wie wenn du nur gleich große Pizzastücke zusammenlegst. Soll ich dir das an einem ganz einfachen Beispiel zeigen?"
+          },
+          {
+            "who": "learner",
+            "text": "Fass das bitte zusammen."
+          },
+          {
+            "who": "buddy",
+            "text": "Klar: Brüche kann man nur direkt addieren, wenn die Teile gleich groß sind. Erst die Nenner gleich machen, dann die Zähler zusammenzählen."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja,",
+            "Ja, das",
+            "Ja, das stimmt",
+            "Ja, das stimmt so",
+            "Ja, das stimmt so.",
+            "Ja, das stimmt so. Wenn",
+            "Ja, das stimmt so. Wenn du",
+            "Ja, das stimmt so. Wenn du mag",
+            "Ja, das stimmt so. Wenn du magst",
+            "Ja, das stimmt so. Wenn du magst,",
+            "Ja, das stimmt so. Wenn du magst, machen",
+            "Ja, das stimmt so. Wenn du magst, machen wir",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfach",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel zum",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel zum Add",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel zum Addieren",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel zum Addieren von",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel zum Addieren von Brü",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel zum Addieren von Brüchen",
+            "Ja, das stimmt so. Wenn du magst, machen wir jetzt ein ganz einfaches Beispiel zum Addieren von Brüchen."
+          ],
+          "ms": 1701,
+          "text": "Hier ist die vollständige Unterhaltung, die wir bisher hatten, nachdem du den Modus gewechselt und neu gestartet hast: \n\n1. Du hast mich gebeten, ausführlich über das menschliche Skelett zu erzählen.\n2. Ich habe erklärt, dass das Skelett wie ein Gerüst ist, das dem Körper Form gibt, ihn aufrecht hält und Organe schützt, und habe die wichtigsten Teile genannt.\n3. Du wolltest eine kurze Zusammenfassung, die ich dir gegeben habe.\n4. Du hast die Zusammenfassung nochmal selbst formuliert, und ich habe sie bestätigt.\n5. Du hast um eine noch kürzere Version gebeten, die ich dir gegeben habe.\n6. Du hast mich gebeten, dich in 5 Minuten an Englisch zu erinnern.\n7. Ich habe die Erinnerung bestätigt und sie dir nach 5 Minuten gegeben.\n8. Du hast gefragt, ob ich dir einen kurzen Übungsinhalt und nächsten Schritt zum Englischlernen vorschlagen möchte.\n9. Ich habe dir einen kurzen Übungsinhalt und nächsten Schritt gegeben.\n10. Du hast mich gebeten, Brüche zu erklären.\n11. Ich habe Brüche mit einem Kuchenbeispiel erklärt.\n12. Du hast gefragt, wie man Brüche addiert.\n13. Ich habe die Addition von Brüchen mit dem Kuchenbeispiel erklärt und angeboten, ein Beispiel zu zeigen.\n14. Du hast um eine Zusammenfassung gebeten.\n15. Ich habe die Zusammenfassung gegeben: Brüche kann man nur direkt addieren, wenn die Nenner gleich sind; dann addiert man die Zähler.",
+          "id": "ef0a91c2-27e3-452c-b9d1-2fc378ee0a79"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [],
+  "id": "contradicting-history-restart",
+  "persona": {
+    "id": "contradicting",
+    "age": 12,
+    "locale": "de",
+    "style": "Competent reader, informal lowercase spelling",
+    "behaviour": "Contradicts Buddy when dissatisfied"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Hier ist die vollständige Unterhaltung, die wir bisher hatten, nachdem du den Modus gewechselt und neu gestartet hast: \n\n1. Du hast mich gebeten, ausführlich über das menschliche Skelett zu erzählen.\n2. Ich habe erklärt, dass das Skelett wie ein Gerüst ist, das dem Körper Form gibt, ihn aufrecht hält und Organe schützt, und habe die wichtigsten Teile genannt.\n3. Du wolltest eine kurze Zusammenfassung, die ich dir gegeben habe.\n4. Du hast die Zusammenfassung nochmal selbst formuliert, und ich habe sie bestätigt.\n5. Du hast um eine noch kürzere Version gebeten, die ich dir gegeben habe.\n6. Du hast mich gebeten, dich in 5 Minuten an Englisch zu erinnern.\n7. Ich habe die Erinnerung bestätigt und sie dir nach 5 Minuten gegeben.\n8. Du hast gefragt, ob ich dir einen kurzen Übungsinhalt und nächsten Schritt zum Englischlernen vorschlagen möchte.\n9. Ich habe dir einen kurzen Übungsinhalt und nächsten Schritt gegeben.\n10. Du hast mich gebeten, Brüche zu erklären.\n11. Ich habe Brüche mit einem Kuchenbeispiel erklärt.\n12. Du hast gefragt, wie man Brüche addiert.\n13. Ich habe die Addition von Brüchen mit dem Kuchenbeispiel erklärt und angeboten, ein Beispiel zu zeigen.\n14. Du hast um eine Zusammenfassung gebeten.\n15. Ich habe die Zusammenfassung gegeben: Brüche kann man nur direkt addieren, wenn die Nenner gleich sind; dann addiert man die Zähler.",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": true
+    }
+  ],
+  "prefix": [
+    {
+      "type": "message",
+      "text": "Erzähl mir ausführlich alles über das menschliche Skelett.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Mach mir bitte eine kurze Zusammenfassung davon.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Hier ist eine kurze Zusammenfassung des Gesprächs: Das menschliche Skelett ist das Gerüst des Körpers, das ihm Form gibt, ihn aufrecht hält und wichtige Organe schützt. Es unterstützt auch die Bewegung zusammen mit den Muskeln. Die wichtigsten Teile sind Schädel, Wirbelsäule, Brustkorb sowie Arme und Beine.",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Danke für die Zusammenfassung! Kannst du mir jetzt bitte eine noch kürzere Version davon machen?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Erinner mich in 5 Minuten daran, dass ich Englisch üben muss.",
+      "double": false
+    },
+    {
+      "type": "tick"
+    },
+    {
+      "type": "message",
+      "text": "Ich erinnere dich jetzt in 5 Minuten daran, Englisch zu üben. Möchtest du, dass ich dir auch gleich einen kurzen Inhalt zum Üben und einen nächsten Schritt vorschlage?",
+      "double": false
+    },
+    {
+      "type": "message",
+      "text": "Bitte erinnere mich jetzt in 5 Minuten daran, Englisch zu üben, und gib mir dazu einen kurzen Übungsinhalt und einen nächsten Schritt.",
+      "double": false
+    }
+  ]
+}

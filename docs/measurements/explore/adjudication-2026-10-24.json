@@ -1,0 +1,249 @@
+{
+  "productBase": "ef5703876c00ac33fa8fd0245a707be07d9e43e6",
+  "countUnit": "invariant + kind + route, not independent root causes",
+  "confirmed": [
+    {
+      "invariant": "vocabulary.count",
+      "evidence": "wanted 20, got 0",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app",
+      "source": "pilot-final-2026-10-24/report.json",
+      "sessions": [
+        "young-reader-topic-vocabulary",
+        "english-teen-topic-vocabulary"
+      ],
+      "replays": {
+        "key": "vocabulary.count|vocab|/buddy/messages",
+        "attempts": 3,
+        "complete": 3,
+        "reproduced": 1,
+        "divergent": 0
+      }
+    },
+    {
+      "invariant": "vocabulary.chat-count",
+      "evidence": "wanted 20 visible pair rows, observed counts 0,0: I’ve prepared a German-to-English vocabulary round with basic school words.",
+      "kind": "chat-vocab",
+      "route": "/buddy/messages",
+      "category": "app",
+      "source": "pilot-final-2026-10-24/report.json",
+      "sessions": [
+        "young-reader-twenty-in-chat",
+        "english-teen-twenty-in-chat"
+      ],
+      "replays": {
+        "key": "vocabulary.chat-count|chat-vocab|/buddy/messages",
+        "attempts": 3,
+        "complete": 1,
+        "reproduced": 0,
+        "divergent": 2
+      }
+    },
+    {
+      "invariant": "vocabulary.direction",
+      "evidence": "[[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"],[\"en\",\"de\"]]",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app",
+      "source": "pilot-final-2026-10-24/report.json",
+      "sessions": [
+        "young-reader-vocab-not-cloze"
+      ],
+      "replays": {
+        "key": "vocabulary.direction|vocab|/buddy/messages",
+        "attempts": 3,
+        "complete": 3,
+        "reproduced": 2,
+        "divergent": 0
+      }
+    },
+    {
+      "invariant": "picture.present",
+      "evidence": "No validated picture action in API conversation",
+      "kind": "picture",
+      "route": "/buddy/messages",
+      "category": "app",
+      "source": "pilot-final-2026-10-24/report.json",
+      "sessions": [
+        "dictating-with-picture",
+        "french-child-with-picture"
+      ],
+      "replays": {
+        "key": "picture.present|picture|/buddy/messages",
+        "attempts": 3,
+        "complete": 3,
+        "reproduced": 3,
+        "divergent": 0
+      }
+    },
+    {
+      "invariant": "reminder.next-step",
+      "evidence": "[{\"id\":\"d5603765-e02c-45a5-aeab-3077def6855f\",\"role\":\"buddy\",\"text\":\"Como acordamos: practicar inglés.\",\"status\":\"done\",\"failure_code\":null,\"client_message_id\":null,\"options\":null,\"reply_to_id\":null,\"outreach\":{\"id\":\"9b5e1c9e-28a3-4df6-be44-119367be5a2e\",\"kind\":\"reminder\",\"origin\":\"agreed\",\"title\":\"Buddy\",\"body\":\"Como acordamos: practicar inglés.\",\"why\":null,\"status\":\"in_app\",\"send_at\":\"2026-10-24T10:06:00.000Z\",\"sent_at\":null,\"opened_at\":\"2026-10-24T10:06:00.000Z\",\"created_at\":\"2026-10-24T10:06:00.000Z\"},\"actions\":[],\"roleplay_feedback\":null,\"announces\":{\"step_id\":\"6d111012-0bce-427f-b000-7142ff981909\",\"title\":\"practicar inglés\",\"question_count\":0,\"est_minutes\":5,\"outcome\":{\"state\":\"closed\"}},\"created_at\":\"2026-10-24T10:06:00.000Z\"}]",
+      "kind": "reminder",
+      "route": "/buddy/messages",
+      "category": "app",
+      "source": "pilot-final-2026-10-24/report.json",
+      "sessions": [
+        "contradicting-reminder-next-step",
+        "spanish-teen-reminder-next-step"
+      ],
+      "replays": {
+        "key": "reminder.next-step|reminder|/buddy/messages",
+        "attempts": 3,
+        "complete": 3,
+        "reproduced": 3,
+        "divergent": 0
+      }
+    },
+    {
+      "invariant": "goal.start",
+      "evidence": "No offer started a nonempty session",
+      "kind": "offer",
+      "route": "/buddy/messages",
+      "category": "app",
+      "source": "pilot-final-2026-10-24/report.json",
+      "sessions": [
+        "french-child-clarification-chain"
+      ],
+      "replays": {
+        "key": "goal.start|offer|/buddy/messages",
+        "attempts": 3,
+        "complete": 3,
+        "reproduced": 3,
+        "divergent": 0
+      }
+    },
+    {
+      "invariant": "text.code-fence",
+      "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+      "kind": "chat",
+      "route": "/buddy/messages",
+      "category": "app",
+      "source": "retained-fence-2026-10-24/report.json",
+      "sessions": [
+        "dictating-with-picture"
+      ],
+      "replays": {
+        "key": "text.code-fence|chat|/buddy/messages",
+        "attempts": 3,
+        "complete": 2,
+        "reproduced": 0,
+        "divergent": 1
+      }
+    },
+    {
+      "invariant": "text.code-fence",
+      "evidence": "Klar — stell dir das Skelett wie das „Gerüst“ von dir vor: Es hält deinen Körper aufrecht, schützt Herz und Lunge und hilft dir beim Bewegen.\n\nGanz grob sieht es so aus:\n\n```\n        Schädel\n          |\n   Schultergürtel\n      /     \\\n   Arm       Arm\n      \\     /\n        Brustkorb\n          |\n        Wirbelsäule\n          |\n       Becken\n      /     \\\n   Bein       Bein\n     |         |\n   Fuß        Fuß\n```\n\nWichtige Teile sind der Schädel, der Brustkorb, die Wirbelsäule, das Becken und die Knochen in Armen und Beinen. Gelenke sind die Stellen, an denen sich Knochen bewegen können — wie Scharniere an einer Tür.\n\nMöchtest du als Nächstes den Brustkorb, die Wirbelsäule oder die Gelenke ganz",
+      "kind": "stream",
+      "route": "/buddy/messages",
+      "category": "app",
+      "source": "retained-fence-2026-10-24/report.json",
+      "sessions": [
+        "dictating-with-picture"
+      ],
+      "replays": {
+        "key": "text.code-fence|stream|/buddy/messages",
+        "attempts": 3,
+        "complete": 2,
+        "reproduced": 0,
+        "divergent": 1
+      }
+    }
+  ],
+  "excluded": [
+    {
+      "key": "goal.start|photo|/buddy/messages",
+      "reason": "Simulator omitted the existing prepared-step card contract; fixed with red/green API test and six fresh live photo checks."
+    },
+    {
+      "key": "photo.source|photo|/practice/topic",
+      "reason": "Simulator omitted the existing prepared-step card contract; fixed with red/green API test and six fresh live photo checks."
+    }
+  ],
+  "photoVerification": {
+    "sessions": 6,
+    "expected": 6,
+    "passed": true,
+    "report": "photo-verified-2026-10-24/report.json"
+  },
+  "costs": [
+    {
+      "file": "explore/final-2026-10-24/report.json",
+      "upperUsd": 0.66564745,
+      "receiptEstimateUsd": 0.18972695999999992
+    },
+    {
+      "file": "explore/owner-exact-chain.json",
+      "upperUsd": 0.08199000000000001,
+      "receiptEstimateUsd": 0.02363064
+    },
+    {
+      "file": "explore/owner-main-corrected.json",
+      "upperUsd": 0.230587,
+      "receiptEstimateUsd": 0.08544822
+    },
+    {
+      "file": "explore/owner-main-remaining.json",
+      "upperUsd": 0.041897,
+      "receiptEstimateUsd": 0.008725365
+    },
+    {
+      "file": "explore/owner-main.json",
+      "upperUsd": 0.19877399999999998,
+      "receiptEstimateUsd": 0.089848935
+    },
+    {
+      "file": "explore/photo-repair-de-2026-10-24/report.json",
+      "upperUsd": 0.27708900000000003,
+      "receiptEstimateUsd": 0.118550355
+    },
+    {
+      "file": "explore/photo-verified-2026-10-24/report.json",
+      "upperUsd": 0.18070699999999998,
+      "receiptEstimateUsd": 0.07699956000000002
+    },
+    {
+      "file": "explore/pilot-2026-10-24/report.json",
+      "upperUsd": 3.8855150000000007,
+      "receiptEstimateUsd": 1.1529173699999997
+    },
+    {
+      "file": "explore/pilot-final-2026-10-24/report.json",
+      "upperUsd": 3.218643999999999,
+      "receiptEstimateUsd": 1.0222657049999992
+    },
+    {
+      "file": "explore/retained-fence-2026-10-24/report.json",
+      "upperUsd": 0.299945,
+      "receiptEstimateUsd": 0.08656312499999999
+    },
+    {
+      "file": "explore/smoke-2026-10-24/report.json",
+      "upperUsd": 0.4447789999999998,
+      "receiptEstimateUsd": 0.1677930900000001
+    },
+    {
+      "file": "explore/verified-2026-10-24/report.json",
+      "upperUsd": 4.803087,
+      "receiptEstimateUsd": 0.310760455
+    }
+  ],
+  "totals": {
+    "upperUsd": 14.328661449999998,
+    "receiptEstimateUsd": 3.333229779999999,
+    "extraUncertainReservationUsd": 4,
+    "upperEuro": 12.801448628607165,
+    "confirmedFindings": 8,
+    "confirmedPerEuro": 0.6249292741856218
+  },
+  "releasePassed": false,
+  "humanCalibration": {
+    "ready": false,
+    "calibration": 0,
+    "holdout": 0,
+    "falseAlarmRate": null,
+    "missRate": null
+  },
+  "device": "device-2026-10-24.json"
+}

@@ -1,0 +1,34 @@
+appId: com.learnbuddy.app.dev
+---
+- stopApp
+- launchApp:
+    clearState: false
+- tapOn: Einstellungen
+- tapOn: Meer
+- assertVisible:
+    text: Meer
+    checked: true
+- tapOn: Dunkel
+- assertVisible:
+    text: Dunkel
+    selected: true
+- back
+- assertVisible:
+    id: composer
+- stopApp
+- launchApp:
+    clearState: false
+- tapOn: Einstellungen
+- assertVisible:
+    text: Meer
+    checked: true
+- assertVisible:
+    text: Dunkel
+    selected: true
+- takeScreenshot: explorer-dark
+- tapOn: Hell
+- assertVisible:
+    text: Hell
+    selected: true
+- takeScreenshot: explorer-light
+- back

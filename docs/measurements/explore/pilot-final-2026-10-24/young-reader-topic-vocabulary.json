@@ -1,0 +1,383 @@
+{
+  "goal": {
+    "id": "topic-vocabulary",
+    "issue": 940,
+    "wants": "20 English school vocabulary pairs, German to English practice",
+    "messages": [
+      "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+    ],
+    "expect": "vocab",
+    "count": 20
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "learner_id": "a463099d-32f5-4151-b683-6153ca4b02c0",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 1,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:38:42.155Z",
+      "updated_at": "2026-10-24T17:38:42.160Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "1acb6c27-b598-4d31-8274-8968eb485d66",
+        "role": "learner",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "f188057f-a5cf-448a-8d6c-3d0155d1dd31",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "ba1df169-e51b-46ba-9aaa-93e16c87e975",
+        "role": "buddy",
+        "text": "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch.\n\nDie Übung konnte ich leider nicht vorbereiten.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "1acb6c27-b598-4d31-8274-8968eb485d66",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "0ad4f875-a7a4-4e6f-88ad-6deb54099244",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "20 englische Basisvokabeln zum Thema Schule, Abfrage von Deutsch nach Englisch",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": false,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": null,
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "d28c411e-f7ea-41e5-9a4c-cef669d5a775",
+        "role": "learner",
+        "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\".",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "1bb66454-3480-4f15-a313-a2484d2b6cc9",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "edad0315-3381-489f-a939-1bf793813661",
+        "role": "buddy",
+        "text": "Ja, ich bin bereit. Buch = book.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "d28c411e-f7ea-41e5-9a4c-cef669d5a775",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "def3a4f9-fe01-454d-9d1e-57e99cab7e51",
+        "role": "learner",
+        "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "fd3180f7-d908-40e4-af98-6f6011550114",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "995e4927-1c2d-4ee9-94cd-39ca0205bf5f",
+        "role": "buddy",
+        "text": "Tafel = board.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "def3a4f9-fe01-454d-9d1e-57e99cab7e51",
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [],
+    "settings": {
+      "learner_id": "a463099d-32f5-4151-b683-6153ca4b02c0",
+      "timezone": "Europe/Berlin",
+      "contact_enabled": false,
+      "contact_changed_by": "account_holder",
+      "contact_changed_at": "2026-10-24T10:00:00.000Z",
+      "quiet_start": "20:00",
+      "quiet_end": "07:00",
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null,
+      "opt_in_prompt_hidden_until": null,
+      "context_version": 8,
+      "last_seen_at": "2026-10-24T10:00:00.000Z",
+      "check_lease_token": null,
+      "check_lease_until": null,
+      "version": 1,
+      "created_at": "2026-10-24T17:38:42.155Z",
+      "updated_at": "2026-10-24T17:38:50.664Z",
+      "phone_only_important": false,
+      "voice": "warm",
+      "voice_speed": 0
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+        "double": true
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich bere",
+            "Ich bereite",
+            "Ich bereite dir",
+            "Ich bereite dir ",
+            "Ich bereite dir 20",
+            "Ich bereite dir 20 Schul",
+            "Ich bereite dir 20 Schul-W",
+            "Ich bereite dir 20 Schul-Wörter",
+            "Ich bereite dir 20 Schul-Wörter zum",
+            "Ich bereite dir 20 Schul-Wörter zum Ü",
+            "Ich bereite dir 20 Schul-Wörter zum Üben",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor —",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor — du",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übers",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch",
+            "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch."
+          ],
+          "ms": 3537,
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "id": "f188057f-a5cf-448a-8d6c-3d0155d1dd31"
+        },
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [],
+          "ms": 10,
+          "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab.",
+          "id": "f188057f-a5cf-448a-8d6c-3d0155d1dd31"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\".",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ja",
+            "Ja,",
+            "Ja, ich",
+            "Ja, ich bin",
+            "Ja, ich bin bereit",
+            "Ja, ich bin bereit.",
+            "Ja, ich bin bereit. Buch",
+            "Ja, ich bin bereit. Buch =",
+            "Ja, ich bin bereit. Buch = book",
+            "Ja, ich bin bereit. Buch = book."
+          ],
+          "ms": 1765,
+          "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\".",
+          "id": "1bb66454-3480-4f15-a313-a2484d2b6cc9"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?",
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Denk dir bitte 20 englische Basisvokabeln zum Thema Schule aus. Frag mich von Deutsch nach Englisch ab."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich bereite dir 20 Schul-Wörter zum Üben vor — du übersetzt von Deutsch nach Englisch.\n\nDie Übung konnte ich leider nicht vorbereiten."
+          },
+          {
+            "who": "learner",
+            "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\"."
+          },
+          {
+            "who": "buddy",
+            "text": "Ja, ich bin bereit. Buch = book."
+          }
+        ],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "T",
+            "Tafel",
+            "Tafel =",
+            "Tafel = board",
+            "Tafel = board."
+          ],
+          "ms": 1072,
+          "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?",
+          "id": "fd3180f7-d908-40e4-af98-6f6011550114"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "vocabulary.count",
+      "evidence": "wanted 20, got 0",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "young-reader-topic-vocabulary",
+  "persona": {
+    "id": "young-reader",
+    "age": 8,
+    "locale": "de",
+    "style": "Reads slowly; very short phonetic spelling",
+    "behaviour": "Impatient, taps twice when waiting"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich gebe dir jetzt 20 deutsche Schulwörter, und du sagst mir das englische Wort dazu. Bist du bereit? Hier kommt das erste Wort: \"Buch\".",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "message",
+        "text": "Super! Hier kommt das nächste Wort: \"Tafel\". Wie heißt das auf Englisch?",
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": [],
+  "advisory": {
+    "agreed": {
+      "useful": true,
+      "understandable": true,
+      "faithful": true
+    },
+    "disputed": [],
+    "clean": true
+  }
+}

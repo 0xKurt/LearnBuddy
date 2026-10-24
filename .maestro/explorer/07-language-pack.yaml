@@ -1,0 +1,20 @@
+# The existing development menu exposes the pronunciation lab; no product test route is added.
+appId: com.learnbuddy.app.dev
+---
+- stopApp
+- launchApp:
+    clearState: false
+- pressKey: MENU
+- tapOn: 'Vosk pronunciation'
+- runFlow:
+    when:
+      visible: Sprachpaket fehlt
+    commands:
+      - tapOn: Sprachpaket laden
+- extendedWaitUntil:
+    visible: Sprachpaket bereit
+    timeout: 180000
+- assertNotVisible: Auf diesem Gerät nicht verfügbar
+- assertNotVisible: Sprachpaket konnte nicht geladen werden
+- takeScreenshot: explorer-language-pack
+- tapOn: Schließen

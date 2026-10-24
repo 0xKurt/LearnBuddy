@@ -48,6 +48,7 @@
     "@vitest/coverage-v8": "^2.1.9",
     "dotenv": "^17.4.2",
     "fast-check": "^4.10.2",
+    "franc-min": "^6.2.0",
     "minimatch": "10.2.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",

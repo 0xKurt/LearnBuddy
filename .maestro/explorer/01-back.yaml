@@ -1,0 +1,22 @@
+# Local synthetic account only. Android system Back must leave the screen without a crash.
+appId: com.learnbuddy.app.dev
+---
+- stopApp
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: composer
+    timeout: 30000
+- tapOn: Einstellungen
+- assertVisible: Aussehen
+- back
+- assertVisible:
+    id: composer
+- tapOn: Mit Buddy sprechen
+- assertVisible: Gespräch
+- back
+- assertVisible:
+    id: composer
+- assertNotVisible: Gespräch
+- takeScreenshot: explorer-back

@@ -1,0 +1,486 @@
+{
+  "goal": {
+    "id": "vocab-not-cloze",
+    "issue": 940,
+    "wants": "Vocabulary cards, never cloze exercises",
+    "messages": [
+      "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+    ],
+    "expect": "vocab",
+    "count": 5
+  },
+  "initial": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [],
+    "items": [],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [],
+    "steps": []
+  },
+  "final": {
+    "at": "2026-10-24T10:00:00.000Z",
+    "messages": [
+      {
+        "id": "d1166e4a-e0b1-40fd-b2c4-923675635da3",
+        "role": "learner",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": "41aef295-bc0b-4281-a9af-8e94c51ff0a1",
+        "options": null,
+        "reply_to_id": null,
+        "outreach": null,
+        "actions": [],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      },
+      {
+        "id": "595992c2-ac7e-494e-89e7-386728201d07",
+        "role": "buddy",
+        "text": "Ich habe dir 5 Tierwörter für Englisch vorbereitet.",
+        "status": "done",
+        "failure_code": null,
+        "client_message_id": null,
+        "options": null,
+        "reply_to_id": "d1166e4a-e0b1-40fd-b2c4-923675635da3",
+        "outreach": null,
+        "actions": [
+          {
+            "id": "5fbe176e-70e8-49f0-85f5-df2561b022f0",
+            "status": "applied",
+            "undoable": false,
+            "summary": {
+              "kind": "vocab",
+              "text": "der Hund – dog\ndie Katze – cat\nder Elefant – elephant\nder Löwe – lion\nder Vogel – bird",
+              "tool": "offer_learning",
+              "figures": [],
+              "goal_id": null,
+              "minutes": null,
+              "direction": "produce",
+              "startable": true,
+              "difficulty": null,
+              "material_id": null,
+              "pictures_shown": null,
+              "running_session_id": "6351d3b0-681f-4b4a-9e79-244398c34581",
+              "finished_session_id": null
+            },
+            "created_at": "2026-10-24T10:00:00.000Z"
+          }
+        ],
+        "roleplay_feedback": null,
+        "created_at": "2026-10-24T10:00:00.000Z"
+      }
+    ],
+    "items": [
+      {
+        "id": "029924f7-54fc-40d1-8458-9fd5919620f7",
+        "kind": "vocab",
+        "prompt": "lion",
+        "answer": "der Löwe",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "144add56-2e19-4980-ac6a-75cd8f08eb34",
+        "kind": "vocab",
+        "prompt": "bird",
+        "answer": "der Vogel",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "a3759993-c793-4906-b433-8f603fbd7d09",
+        "kind": "vocab",
+        "prompt": "der Löwe",
+        "answer": "lion",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "aa2b4b7f-b7a3-4a88-adab-d377f7bdaa48",
+        "kind": "vocab",
+        "prompt": "der Vogel",
+        "answer": "bird",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "b1fbe59b-2e4c-4c6f-9188-352248e58b94",
+        "kind": "vocab",
+        "prompt": "der Elefant",
+        "answer": "elephant",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "d692f45f-7687-4f0e-b9f5-ea4a1d122858",
+        "kind": "vocab",
+        "prompt": "der Hund",
+        "answer": "dog",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "e081419f-da5b-4bb8-8cb9-135c83cbae3f",
+        "kind": "vocab",
+        "prompt": "cat",
+        "answer": "die Katze",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "e3823087-ef2b-403c-9972-2f34f3471650",
+        "kind": "vocab",
+        "prompt": "die Katze",
+        "answer": "cat",
+        "prompt_lang": "de",
+        "lang": "en"
+      },
+      {
+        "id": "ec1f0946-21cf-4aab-8f6c-7eb46a1ba7f0",
+        "kind": "vocab",
+        "prompt": "dog",
+        "answer": "der Hund",
+        "prompt_lang": "en",
+        "lang": "de"
+      },
+      {
+        "id": "fbd1d775-0794-4b78-9e80-ce3365a35eeb",
+        "kind": "vocab",
+        "prompt": "elephant",
+        "answer": "der Elefant",
+        "prompt_lang": "en",
+        "lang": "de"
+      }
+    ],
+    "settings": {
+      "contact_enabled": false,
+      "preferred_start": "15:00",
+      "preferred_end": "18:30",
+      "avoid_weekdays": [],
+      "paused_until": null
+    },
+    "sessions": [
+      {
+        "id": "6351d3b0-681f-4b4a-9e79-244398c34581",
+        "client_request_id": "5fbe176e-70e8-49f0-85f5-df2561b022f0"
+      }
+    ],
+    "steps": []
+  },
+  "steps": [
+    {
+      "action": {
+        "type": "message",
+        "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+        "double": false
+      },
+      "observation": {
+        "conversation": [],
+        "offers": [],
+        "question": null
+      },
+      "turns": [
+        {
+          "http": 200,
+          "status": "done",
+          "code": null,
+          "replies": [
+            "",
+            "Ich",
+            "Ich bere",
+            "Ich bereite",
+            "Ich bereite dir",
+            "Ich bereite dir V",
+            "Ich bereite dir Vok",
+            "Ich bereite dir Vokabel",
+            "Ich bereite dir Vokabeltraining",
+            "Ich bereite dir Vokabeltraining zu",
+            "Ich bereite dir Vokabeltraining zu T",
+            "Ich bereite dir Vokabeltraining zu Tieren",
+            "Ich bereite dir Vokabeltraining zu Tieren vor",
+            "Ich bereite dir Vokabeltraining zu Tieren vor –",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf Deutsch",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf Deutsch nach",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf Deutsch nach Englisch",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf Deutsch nach Englisch,",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf Deutsch nach Englisch, ohne",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf Deutsch nach Englisch, ohne L",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf Deutsch nach Englisch, ohne Lücken",
+            "Ich bereite dir Vokabeltraining zu Tieren vor – auf Deutsch nach Englisch, ohne Lücken.",
+            "",
+            "Ich",
+            "Ich habe",
+            "Ich habe dir",
+            "Ich habe dir ",
+            "Ich habe dir 5",
+            "Ich habe dir 5 Tier",
+            "Ich habe dir 5 Tierw",
+            "Ich habe dir 5 Tierwörter",
+            "Ich habe dir 5 Tierwörter für",
+            "Ich habe dir 5 Tierwörter für Englisch",
+            "Ich habe dir 5 Tierwörter für Englisch vorbereitet",
+            "Ich habe dir 5 Tierwörter für Englisch vorbereitet."
+          ],
+          "ms": 6687,
+          "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte.",
+          "id": "41aef295-bc0b-4281-a9af-8e94c51ff0a1"
+        }
+      ],
+      "taps": [],
+      "findings": []
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich habe dir 5 Tierwörter für Englisch vorbereitet."
+          }
+        ],
+        "offers": [
+          {
+            "label": "der Hund – dog\ndie Katze – cat\nder Elefant – elephant\nder Löwe – lion\nder Vogel – bird",
+            "kind": "vocab"
+          }
+        ],
+        "question": null
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "5fbe176e-70e8-49f0-85f5-df2561b022f0",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "http": 422,
+          "session": null,
+          "error": {
+            "error": {
+              "code": "invalid_input",
+              "message": "Invalid request",
+              "details": {
+                "issues": [
+                  {
+                    "path": "figures",
+                    "message": "Array must contain at least 1 element(s)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        }
+      ]
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich habe dir 5 Tierwörter für Englisch vorbereitet."
+          }
+        ],
+        "offers": [
+          {
+            "label": "der Hund – dog\ndie Katze – cat\nder Elefant – elephant\nder Löwe – lion\nder Vogel – bird",
+            "kind": "vocab"
+          }
+        ],
+        "question": null
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "5fbe176e-70e8-49f0-85f5-df2561b022f0",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "http": 422,
+          "session": null,
+          "error": {
+            "error": {
+              "code": "invalid_input",
+              "message": "Invalid request",
+              "details": {
+                "issues": [
+                  {
+                    "path": "figures",
+                    "message": "Array must contain at least 1 element(s)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        }
+      ]
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "observation": {
+        "conversation": [
+          {
+            "who": "learner",
+            "text": "Ich will englische Vokabeln üben, Thema Tiere. Denk dir 5 Wörter aus und frag mich von Deutsch nach Englisch ab. Keine Lückentexte."
+          },
+          {
+            "who": "buddy",
+            "text": "Ich habe dir 5 Tierwörter für Englisch vorbereitet."
+          }
+        ],
+        "offers": [
+          {
+            "label": "der Hund – dog\ndie Katze – cat\nder Elefant – elephant\nder Löwe – lion\nder Vogel – bird",
+            "kind": "vocab"
+          }
+        ],
+        "question": null
+      },
+      "turns": [],
+      "taps": [
+        {
+          "action": "5fbe176e-70e8-49f0-85f5-df2561b022f0",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "http": 422,
+          "session": null,
+          "error": {
+            "error": {
+              "code": "invalid_input",
+              "message": "Invalid request",
+              "details": {
+                "issues": [
+                  {
+                    "path": "figures",
+                    "message": "Array must contain at least 1 element(s)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "invariant": "offer.startable",
+          "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+          "kind": "vocab",
+          "route": "/practice/topic",
+          "category": "app"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "invariant": "offer.startable",
+      "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+      "kind": "vocab",
+      "route": "/practice/topic",
+      "category": "app"
+    },
+    {
+      "invariant": "offer.startable",
+      "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+      "kind": "vocab",
+      "route": "/practice/topic",
+      "category": "app"
+    },
+    {
+      "invariant": "offer.startable",
+      "evidence": "{\"error\":{\"code\":\"invalid_input\",\"message\":\"Invalid request\",\"details\":{\"issues\":[{\"path\":\"figures\",\"message\":\"Array must contain at least 1 element(s)\"}]}}}",
+      "kind": "vocab",
+      "route": "/practice/topic",
+      "category": "app"
+    },
+    {
+      "invariant": "vocabulary.direction",
+      "evidence": "[[\"en\",\"de\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"de\",\"en\"],[\"en\",\"de\"],[\"en\",\"de\"]]",
+      "kind": "vocab",
+      "route": "/buddy/messages",
+      "category": "app"
+    }
+  ],
+  "id": "dictating-vocab-not-cloze",
+  "persona": {
+    "id": "dictating",
+    "age": 10,
+    "locale": "de",
+    "style": "Dictates long sentences with recognition mistakes",
+    "behaviour": "Changes topic then returns to original wish"
+  },
+  "impressions": [
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    },
+    {
+      "action": {
+        "type": "tap",
+        "offer": 0,
+        "double": false
+      },
+      "frustration": 0,
+      "thinksGoalMet": false
+    }
+  ],
+  "prefix": []
+}
