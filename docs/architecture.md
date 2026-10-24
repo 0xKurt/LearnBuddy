@@ -7446,3 +7446,29 @@ explanations, low for narrow decisions. Other model families receive no unsuppor
 The existing RichText/InlineText renderer supports headings, emphasis and lists in native and web
 chat; HTML, images and links remain inert text. markdownPlain is shared by copying, accessibility
 and speech. Tables are outside this subset. Library review: issue #937.
+
+### Figures in Buddy replies
+
+A picture requested for an explanation belongs in the conversation, not in a practice offer
+(#934). The learning domain registers `show_figure`, with the existing schematic and fraction
+contracts. Before a schematic, `schematic_parts` supplies the library's real parts through the
+existing lookup loop; it is offered only on the turn surface. The compact turn arguments choose
+a drawing, library labels or a fraction numerator and denominator; code constructs the shared
+figure. This preserves the existing 20-property schema reserve. The handler checks whole
+drawings, numerical consistency and library parts before the fenced decision stores its action.
+Schematic labels are resolved from the library in the learner's language. The chat reuses the
+practice figure and zoom; unsupported picture kinds are explained honestly. The prompt separates
+explanations from practice offers, including the domain rule about picture wishes: only a
+practice request routes those wishes into future questions. Follow-ups add the requested medium to the preceding answer;
+the card carries the content and the reply helps read its labels. That scope also appears on the
+generated reply field, because the system rule alone did not reliably prevent a repeated lesson.
+
+Chat replies reject code fences and text drawings in code and receive the existing single repair
+round. Streaming withholds those formats and incomplete fence delimiters before publication.
+Only the first prose line streams speculatively; following lines and drawing-like starts wait for
+the completed reply, so a labelled drawing cannot leak before its later lines identify it.
+The picture-follow-up eval uses the existing fixed examiner to judge meaning against the previous
+answer; its recorded verdict is bound to the reviewed reply and includes a paraphrased repetition
+as a negative control. It does not infer repetition from a word list or sentence length.
+Day/Until field conventions are stated once in the common prompt instead of repeated in each
+schema branch, keeping the picture act within the existing prompt and schema budgets.

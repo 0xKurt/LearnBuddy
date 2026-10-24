@@ -40,14 +40,14 @@ const alias = (prefix: string, what: string) =>
   z
     .string()
     .regex(new RegExp(`^${prefix}\\d{1,3}$`), `must be a ${what} alias like ${prefix}1`)
-    .describe(`${what} alias from STATE, e.g. ${prefix}1`);
+    .describe(`${what} alias (${prefix}N)`);
 
 export const GoalRef = alias('g', 'goal');
 /** A goal from STATE, or the test planned with plan_exam earlier in the same answer. */
 export const GoalTarget = z
   .string()
   .regex(/^(g\d{1,3}|new)$/, 'must be a goal alias like g1, or "new"')
-  .describe('g1 from STATE, or "new" = the test plan_exam made earlier in this answer');
+  .describe('goal alias; new = plan_exam in this answer');
 const StepRef = alias('st', 'step');
 /** A step from STATE, or the practice/step created earlier in the same answer. */
 const StepTarget = z
@@ -69,23 +69,27 @@ const MemoryRef = alias('m', 'memory');
 export const MaterialRef = alias('sh', 'sheet');
 export const SubjectRef = alias('f', 'subject');
 
-export const Quote = z.string().min(1).max(300).describe('her exact words');
+export const Quote = z.string().min(1).max(300);
 
 // Days and durations as the learner described them; the server computes the date
 // (hard rule 2). The model sees ONE flat object per spec — a kind plus the fields
 // that kind uses — and code turns it into the exact union below. A union of four
 // shapes, repeated in eight tools, cost ~7 000 input tokens per Buddy turn on
 // Gemini 3.x, which bills the response schema (docs/architecture.md §Model calls).
-const flatField = <T extends z.ZodTypeAny>(t: T, what: string) =>
-  t.nullable().optional().describe(what);
+const flatField = <T extends z.ZodTypeAny>(t: T, what?: string) =>
+  what ? t.nullable().optional().describe(what) : t.nullable().optional();
+
+/** Calendar field units, sent once rather than on every repeated DaySpec. */
+export const DAY_FIELD_CONVENTIONS =
+  'Day fields: date = YYYY-MM-DD; days 0 = today; weekday 1–7 = Monday–Sunday; weeks_ahead 0 = next occurrence. Until: days 0 = tonight; weeks_ahead 0 = this Sunday.';
 
 const FlatDay = z.object({
   // The rule for choosing a kind stands once in the prompt (#667); here only the form.
   kind: z.enum(['date', 'in_days', 'weekday', 'unknown']),
-  date: flatField(z.string().regex(/^\d{4}-\d{2}-\d{2}$/), 'YYYY-MM-DD'),
-  days: flatField(z.number().int().min(0).max(366), '0 = today'),
-  weekday: flatField(z.number().int().min(1).max(7), 'kind weekday: 1 = Monday … 7 = Sunday'),
-  weeks_ahead: flatField(z.number().int().min(0).max(8), '0 = the next such weekday'),
+  date: flatField(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+  days: flatField(z.number().int().min(0).max(366)),
+  weekday: flatField(z.number().int().min(1).max(7)),
+  weeks_ahead: flatField(z.number().int().min(0).max(8)),
 });
 
 type DaySpecOut =
@@ -116,11 +120,8 @@ export const DaySpecSchema = FlatDay.transform((d, ctx): DaySpecOut => {
 
 const FlatUntil = z.object({
   kind: z.enum(['end_of_day', 'end_of_week', 'through', 'unknown']),
-  days: flatField(z.number().int().min(0).max(60), 'end_of_day: 0 = until tonight'),
-  weeks_ahead: flatField(
-    z.number().int().min(0).max(8),
-    'kind end_of_week: 0 = until Sunday of this week',
-  ),
+  days: flatField(z.number().int().min(0).max(60)),
+  weeks_ahead: flatField(z.number().int().min(0).max(8)),
   day: flatField(DaySpecSchema, 'through: the last day'),
 });
 

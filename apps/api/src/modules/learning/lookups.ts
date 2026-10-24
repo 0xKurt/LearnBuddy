@@ -4,6 +4,8 @@
 // section of the prompt from them, in this order (pinned by buddy/__tests__/prompt-pin.test.ts).
 
 import { z } from 'zod';
+import { SCHEMATIC_DRAWINGS } from '@learnbuddy/shared-types/contracts';
+import { FIGURE_NAMES } from '@learnbuddy/shared-math';
 
 import { searchMaterials } from '../buddy/connectors/material.js';
 import { findQuestions, recentResults } from '../buddy/connectors/practice.js';
@@ -12,6 +14,18 @@ import { defineLookup } from '../buddy/lookups.js';
 const Query = z.string().trim().min(2).max(120);
 
 export const LEARNING_LOOKUPS = [
+  defineLookup({
+    name: 'schematic_parts',
+    description:
+      'Before show_figure with a library drawing, read its available parts here; use only returned part ids in n.',
+    args: z.object({ drawing: z.enum(SCHEMATIC_DRAWINGS) }),
+    surfaces: ['turn'],
+    run: async (_c, a) =>
+      FIGURE_NAMES.pictures[a.drawing].parts.map((p) => ({
+        part: p.id,
+        names: { de: p.de, en: p.en, fr: p.fr, es: p.es, it: p.it },
+      })),
+  }),
   defineLookup({
     name: 'search_material',
     description:

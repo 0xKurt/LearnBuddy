@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { buddyContracts, GoalBrief } from './buddy.js';
 import { IsoDateTime, LocalDate, Uuid } from './common.js';
 import { DrillCarry, DrillLine, DrillRange, DrillRow } from './drill.js';
-import { ModelFigureType } from './figure.js';
+import { FractionFigure, ModelFigureType } from './figure.js';
 import {
   DifficultyWish,
   PageProblem,
@@ -17,6 +17,7 @@ import {
   UnclearSpot,
   VocabDirection,
 } from './learning.js';
+import { SchematicFigure } from './schematic.js';
 import { RehearsalKind, RehearsalView, TalkFormat, TalkStage } from './talk.js';
 
 // ─────────────── a roleplay in a foreign language (issue #244) ───────────────
@@ -73,7 +74,26 @@ export const PracticeOutcome = z.discriminatedUnion('state', [
 ]);
 export type PracticeOutcome = z.infer<typeof PracticeOutcome>;
 
+/** A small, checked subset for explanations in the chat; no separate renderer. */
+export const ChatFigure = z.discriminatedUnion('type', [
+  SchematicFigure.extend({
+    n: z
+      .array(z.string().trim().min(1).max(40))
+      .min(1)
+      .max(6)
+      .describe('part ids returned by schematic_parts'),
+    ask: z.literal(0),
+  }),
+  FractionFigure,
+]);
+export type ChatFigure = z.infer<typeof ChatFigure>;
+
 const LEARNING_ACTIONS = [
+  z.object({
+    tool: z.literal('show_figure'),
+    figure: ChatFigure,
+    labels: z.array(z.string()).max(6),
+  }),
   z.object({
     tool: z.literal('prepare_practice'),
     step_id: Uuid,

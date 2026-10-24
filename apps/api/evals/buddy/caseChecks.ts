@@ -4,6 +4,8 @@
 
 import type { TestEnv, Learner } from '../../src/testing/harness.js';
 import type { Repeat } from './repeat.js';
+import type { LlmGateway, LlmUsage } from '../../src/llm/gateway.js';
+import type { PictureReview } from './pictureReview.js';
 
 /** A recording card whose passage carries these words of her sheet (#636), not one made up. */
 export const onSheet =
@@ -17,6 +19,8 @@ export type Outcome = {
   reply: string | null;
   options: string[] | null;
   tools: string[];
+  pictures?: Array<{ figure: unknown; labels: string[] }>;
+  pictureReview?: PictureReview;
   goals: Array<{
     title: string;
     kind: string;
@@ -95,6 +99,10 @@ export type Case = {
   message: string;
   /** Returns the violated expectations (empty = pass). */
   check: (o: Outcome) => string[];
+  review?: (
+    examiner: LlmGateway,
+    outcome: Outcome,
+  ) => Promise<{ verdict: PictureReview; usage: LlmUsage }>;
   /**
    * Run this case several times on a fresh database each, and fail it when more than
    * `maxFailures` runs fail (issue #225, `repeat.ts`). For a case whose failure is rare but

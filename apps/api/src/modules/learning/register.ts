@@ -42,6 +42,7 @@ import { registerPrivacyTables } from '../identity/privacyTables.js';
 import { registerJobKinds, registerTickWork } from '../scheduler/registry.js';
 import { LEARNING_SECTIONS, levelOf, renderLearning } from './context.js';
 import { dressThread, lastActed, learningHome, pollAfter } from './home.js';
+import { runShowFigure } from './chatFigure.js';
 import { LEARNING_ACT_TOOLS } from './actTools.js';
 import { formsOffIssues } from './config.js';
 import { learningCheck } from './check.js';
@@ -125,6 +126,7 @@ export function registerLearning(): void {
   // model reads them, each at its place among the core's (cut 7b), and their code.
   registerActTools(LEARNING_ACT_TOOLS);
   registerActHandlers({
+    show_figure: runShowFigure,
     prepare_practice: runPreparePractice,
     request_material: runRequestMaterial,
     delete_material: runDeleteMaterial,

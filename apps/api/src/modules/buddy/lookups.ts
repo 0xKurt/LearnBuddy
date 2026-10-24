@@ -76,17 +76,18 @@ const MAX_LOOKUPS_PER_STEP = 3;
 const MAX_RESULT_CHARS = 6000;
 
 /** The `lookups` field of a step answer; empty = answer now. Built from what is registered. */
-export function lookupsField() {
+export function lookupsField(surface: Surface = 'turn') {
+  const available = registry.filter((l) => l.surfaces.includes(surface));
   // A Buddy whose domain registered none (issue #107): the field stays, always empty — the
   // decisions keep their order, and no tool is offered that nothing runs.
-  if (registry.length === 0)
+  if (available.length === 0)
     return z
       .array(z.object({}).strict())
       .max(0)
       .describe('Always empty: there is nothing to look up.');
   // Offered flat, like the act tools (calls.ts, #726).
   const offered = flatUnion(
-    registry.map((l) => z.object({ tool: z.literal(l.name), args: l.args })),
+    available.map((l) => z.object({ tool: z.literal(l.name), args: l.args })),
   );
   return z
     .array(offered)

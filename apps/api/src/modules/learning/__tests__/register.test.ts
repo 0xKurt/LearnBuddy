@@ -39,7 +39,7 @@ import { registerLearning } from '../register.js';
  */
 const BOUNDARIES = '../../../../../../tools/guards/boundaries.config.mjs';
 const guard = (await import(BOUNDARIES)) as { DOMAIN_TOOLS: string[]; DOMAIN_ROUTES: string[] };
-const DOMAIN_LOOKUPS = ['search_material', 'practice_history', 'find_questions'];
+const DOMAIN_LOOKUPS = ['schematic_parts', 'search_material', 'practice_history', 'find_questions'];
 const DOMAIN_TOOLS = guard.DOMAIN_TOOLS.filter((t) => !DOMAIN_LOOKUPS.includes(t));
 
 describe('the learning domain in the core', () => {
@@ -79,6 +79,7 @@ describe('the learning domain in the core', () => {
       'offer_learning',
       'offer_rehearsal',
       'open_area',
+      'show_figure',
       'start_roleplay',
     ]);
     expect(toolsWith('prepares')).toEqual(['prepare_practice']);

@@ -44,6 +44,7 @@ registerLearning();
 describe('the learning domain fills every place of the core (issue #107)', () => {
   it('brings a card for each of its tools into the chat', () => {
     expect(cardTools()).toEqual([
+      'show_figure',
       'offer_learning',
       'show_ready',
       'offer_drill',

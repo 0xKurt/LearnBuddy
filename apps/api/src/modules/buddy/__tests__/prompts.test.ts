@@ -29,7 +29,7 @@ import { NotPracticableForm } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { toJsonSchema } from '../../../llm/json-schema.js';
-import { SchoolYear } from '../decision.js';
+import { DAY_FIELD_CONVENTIONS, SchoolYear } from '../decision.js';
 import { lookupsField } from '../lookups.js';
 import { registerLearning } from '../../learning/register.js';
 import { buddyPrompt } from '../prompts.js';
@@ -151,7 +151,10 @@ const GERMAN_LETTERS = /[äöüßÄÖÜ]/;
  * `deliberate` are the passages that must name a language and are asserted present elsewhere;
  * they are cut out first, so a word is only reported where it was not meant to be.
  */
-function literalIn(text: string, deliberate: readonly string[] = [SCHOOL_SYSTEMS]): string {
+function literalIn(
+  text: string,
+  deliberate: readonly string[] = [SCHOOL_SYSTEMS, DAY_FIELD_CONVENTIONS],
+): string {
   let scanned = text;
   for (const passage of deliberate) scanned = scanned.split(passage).join(' ');
   for (const word of NOT_IN_THE_PROMPT) {
@@ -244,8 +247,6 @@ const SCHOOL_YEAR_OPTIONS = JSON.stringify(toJsonSchema(SchoolYear));
  * stay, by exact string, and every day word beyond these three passages still fails.
  */
 const ISO_WEEKDAY_NUMBERING: readonly string[] = [
-  'kind weekday: 1 = Monday … 7 = Sunday',
-  'kind end_of_week: 0 = until Sunday of this week',
   'Full new list of weekdays without messages (1 = Monday)',
 ];
 
@@ -274,6 +275,8 @@ describe('the response schema is written for no one language either', () => {
   });
 
   it('keeps the weekday numbering the server cannot guess', () => {
+    expect(TURN_SYSTEM).toContain(DAY_FIELD_CONVENTIONS);
+    expect(CHECK_SYSTEM).toContain(DAY_FIELD_CONVENTIONS);
     const turn = JSON.stringify(TURN_STEP_SCHEMA);
     for (const anchor of ISO_WEEKDAY_NUMBERING) expect(turn).toContain(inJson(anchor));
   });
@@ -304,10 +307,11 @@ describe('the prompt names the exercise forms Buddy has no exercise for', () => 
     );
   });
 
-  it('takes a picture she asks to see as a wish for the questions, never as drawing (#724)', () => {
+  it('separates practice picture wishes from immediate explanatory pictures (#724, #934)', () => {
     // The device: "Für das Zeichnen von Kreisbildern habe ich kein eigenes Aufgabenformat", and
     // the practice of the same answer served pie charts.
     expect(TURN_SYSTEM).toContain('Nor is answering from a picture the app draws in the question');
-    expect(TURN_SYSTEM).toContain('(offer_learning pictures), never something to decline');
+    expect(TURN_SYSTEM).toContain('picture wishes in practice requests shape the questions');
+    expect(TURN_SYSTEM).toContain('Pictures for explanations use show_figure now');
   });
 });

@@ -56,6 +56,7 @@ describe('act tools: the core and what a domain adds (#107, cut 7b)', () => {
       'schedule_check',
       'offer_learning',
       'offer_drill',
+      'show_figure',
       'open_area',
       'start_roleplay',
       'plan_talk',

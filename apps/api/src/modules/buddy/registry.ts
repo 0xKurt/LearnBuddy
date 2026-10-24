@@ -361,12 +361,15 @@ export function turnDecisionForModel(tools: readonly ToolName[] = toolsFor('turn
     also_asked: AlsoAsked,
     // Flat calls (calls.ts): one property less per tool than the `{ tool, args }` code validates.
     actions: z.array(modelUnionOf(tools)).max(6),
-    // The rule for the reply stands in the prompt once; here only what the field holds (#667).
+    // Follow-up scope belongs beside the generated field too: the system rule alone repeated
+    // the lesson in live picture turns (#934), like the concern field before #225.
     reply: z
       .string()
       .trim()
       .max(REPLY_MAX)
-      .describe('your answer in her language; empty only when concern is true'),
+      .describe(
+        'Your answer in her language; empty only when concern is true. Picture follow-ups add the image to an already-read explanation: one sentence orienting to its labels, no repeated facts, analogies or comprehension question.',
+      ),
     options: Options,
     asks_permission: z
       .boolean()

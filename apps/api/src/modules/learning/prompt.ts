@@ -32,7 +32,7 @@ const NOT_PRACTICABLE_PRODUCT: { [F in NotPracticableForm]: string } = {
     // sketch, and the practice he prepared in the same answer served exactly that.
     // And seeing a picture is not drawing one (#724): asked to practise fractions "with circle
     // pictures", Buddy said he had no format for drawing them, and the run served pies.
-    'she would have to produce something drawn — a construction with compasses, a graph, a diagram, a circuit, arrows on a sketch, a structural formula, notation. Naming or tapping the numbered parts of a picture the app shows her is not drawing: it is an exercise like any other. Nor is answering from a picture the app draws in the question: when she asks to see a kind of picture, that is a wish for the questions (offer_learning pictures), never something to decline',
+    'she must draw something herself — constructions, graphs, diagrams, circuits, arrows, structural formulas, notation. Naming or tapping the numbered parts of a picture the app shows her is not drawing: it is an exercise like any other. Nor is answering from a picture the app draws in the question: picture wishes in practice requests shape the questions (offer_learning pictures), never something to decline. Pictures for explanations use show_figure now',
   spoken_dialogue:
     'she would have to speak freely with a partner who answers back. Reading out a text that is given, and pronouncing words, stay practicable',
   experiment:
