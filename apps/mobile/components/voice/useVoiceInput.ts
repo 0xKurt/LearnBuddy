@@ -15,6 +15,9 @@
 // The microphone is only ever started by a tap (toggle); nothing here starts
 // it by itself. Whatever is being read aloud stops when she starts speaking.
 
+import type { ConversationPronunciation } from '@learnbuddy/shared-types/contracts';
+import { checkConversationPronunciation } from '../../lib/speech/conversationPronunciation.js';
+import { pronunciationPacks } from '../../lib/speech/pronunciation.js';
 import type { MicState } from '../../lib/speech/talkState.js';
 import type { TranscribeRequest } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
@@ -59,7 +62,7 @@ type Options = {
   /** answer: the question being answered, so a short answer is heard in context. */
   context?: string | null;
   /** The understood text (never empty). */
-  onText: (text: string) => void;
+  onText: (text: string, pronunciation?: ConversationPronunciation) => void;
   /**
    * Conversation: listening ends by itself when she pauses — on the device, and on the
    * recording path wherever the recorder measures her level (`endsByItself`).
@@ -113,9 +116,9 @@ export function useVoiceInput({
   latest.current = { purpose, lang, context, onText };
 
   /** The understood text goes to the screen, and a screen reader hears it (audit M-80). */
-  function deliver(text: string): void {
+  function deliver(text: string, pronunciation?: ConversationPronunciation): void {
     announce(text);
-    latest.current.onText(text);
+    latest.current.onText(text, pronunciation);
     // From the end of her dictation to its words in the field (#649).
     reacted('transcribe');
   }
@@ -232,8 +235,18 @@ export function useVoiceInput({
 
   const device = useDeviceRecognition({
     maxMs: DEVICE_DICTATION_MS,
-    onText: (text) => {
-      if (guard.current()) deliver(text);
+    onText: async (text, uri) => {
+      if (!guard.current()) return;
+      const token = guard.begin();
+      setTranscribing(true);
+      const pronunciation =
+        uri && untilPause
+          ? await checkConversationPronunciation(text, latest.current.lang ?? i18n.language, uri)
+          : undefined;
+      if (mounted.current && guard.holds(token)) {
+        setTranscribing(false);
+        deliver(text, pronunciation);
+      }
     },
     // The phone can't do this language after all: the same tap goes on as a recording.
     onFallback: () => void rec.start(),
@@ -275,18 +288,26 @@ export function useVoiceInput({
   }
 
   async function begin(): Promise<void> {
-    guard.begin();
+    const token = guard.begin();
     const locale = voiceLocale(latest.current.lang ?? i18n.language);
     setChoosing(true);
     const engine = await engineFor(locale, latest.current.purpose);
     if (!mounted.current) return;
-    if (!guard.current()) {
+    if (!guard.holds(token)) {
       setChoosing(false);
       return;
     }
-    setChoosing(false);
-    if (engine === 'device') await device.start(locale, { untilPause });
-    else await rec.start();
+    if (engine === 'device') {
+      const pack = untilPause
+        ? await pronunciationPacks.state(latest.current.lang ?? i18n.language)
+        : null;
+      if (!mounted.current || !guard.holds(token)) return;
+      setChoosing(false);
+      await device.start(locale, { untilPause, recordAudio: pack?.state === 'ready' });
+    } else {
+      setChoosing(false);
+      await rec.start();
+    }
   }
 
   function toggle(): void {
@@ -312,6 +333,7 @@ export function useVoiceInput({
     dropped('transcribe');
     guard.cancel();
     setChoosing(false);
+    setTranscribing(false);
     setHeard('');
     if (onDevice) device.stop();
     else void rec.cancel();

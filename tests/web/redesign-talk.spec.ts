@@ -76,7 +76,7 @@ for (const look of SCREEN_LOOKS)
       await page.getByRole('button', { name: 'Tastatur' }).last().click();
       await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
       await expect(
-        page.getByRole('switch', { name: 'Vorlesen', exact: true }).last(),
+        page.getByRole('switch', { name: 'Anhören', exact: true }).last(),
       ).not.toBeChecked();
       await page.unroute('**/v1/voice/speech');
     });

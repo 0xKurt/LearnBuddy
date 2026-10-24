@@ -5652,9 +5652,27 @@ unsicher`. Preparation generates `confusions` as structured output; Zod and code
   Vosk before recording. The pinned native module/plugin is preserved by `app.config.ts`.
   iOS remains developer-only; Expo Go/web and missing plans/modules use the audio gateway.
   Both sentence practice and word rehearsal use one submission function and one status component.
-  First use downloads EN/DE/FR/ES/IT packs from alphacephei with honest download/verification/
+  First use downloads EN/DE/FR/ES/IT packs only on a connected, explicitly unmetered network
+  or after one explicit confirmation for that archive (size shown; refusals are remembered for
+  the app run, consent across restarts). Disconnected devices wait. Failed downloads back
+  off across mounts: 1 minute, doubling to at most 1 hour, reset after success.
+  Packs come from alphacephei with honest download/verification/
   extraction states; byte count, SHA-256 and bounded extraction precede atomic publication.
   During download/failure the labelled online path remains usable. No model files are bundled.
+  **Conversation and roleplay (#896):** the phone recognizer's complete transcript fixes the
+  target words (up to the shared 40-word bound). Matching prepared competitors can be reused;
+  without preparation the grammar contains only those words and `[unk]`. When a verified pack
+  is ready and the recognizer supports recording (Android 13+ / supported iOS), it temporarily
+  retains the same recording for the shared Vosk checker,
+  then deletes it. No audio is uploaded for this check, including on uncertainty or failure.
+  The message request carries bounded `pronunciation: { plan, evidence }` separately from the
+  unchanged text; targets must match the complete transcript. The server uses the practice
+  grader and supplies only confirmed word verdicts as structured context to either turn path.
+  No new model-output properties are added. Missing modules/packs, oversized takes and failures
+  leave ordinary transcription/conversation unchanged. Safeguarding still reads the original
+  transcript; a constrained recognition result never replaces it. Evidence is ephemeral to the
+  newly claimed turn (including its context retries), not stored in the message: replay or
+  scheduler recovery cannot attach a different recording to an already stored message.
   **Disclosed hybrid fallback:** every uncertain word or sentence, missing pack or local decoder
   failure sends the original recording through `purpose: pronounce`, never a transcript model.
   Confident local results send only evidence. Cancellation sends neither. The complete sentence

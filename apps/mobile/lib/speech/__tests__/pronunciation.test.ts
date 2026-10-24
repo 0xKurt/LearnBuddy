@@ -5,6 +5,7 @@ import { checkedPronunciationPlan } from '@learnbuddy/shared-types/contracts';
 const bridge = vi.hoisted(() => ({ checkPcm: vi.fn(), releaseCheckModel: vi.fn() }));
 const ready = vi.hoisted(() => vi.fn());
 vi.stubGlobal('__DEV__', false);
+vi.mock('../packDownload.js', () => ({ mayDownloadPack: async () => true }));
 vi.mock('react-native', () => ({ Platform: { OS: 'android' } }));
 vi.mock('../voskNative.js', () => ({
   nativeVosk: () => bridge,

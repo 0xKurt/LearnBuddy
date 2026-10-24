@@ -65,7 +65,13 @@ describe('language pack lifecycle', () => {
     const files = storage();
     const unavailable = new PronunciationPacks(files, () => false);
     expect(await unavailable.install('en', vi.fn())).toEqual({ state: 'unavailable' });
-    expect(await new PronunciationPacks(files, () => true).state('ru')).toEqual({
+    expect(
+      await new PronunciationPacks(
+        files,
+        () => true,
+        async () => true,
+      ).state('ru'),
+    ).toEqual({
       state: 'unavailable',
     });
     expect(files.install).not.toHaveBeenCalled();
@@ -74,7 +80,13 @@ describe('language pack lifecycle', () => {
     'installs a pinned official %s pack',
     async (language) => {
       const files = storage();
-      expect(await new PronunciationPacks(files, () => true).install(language, vi.fn())).toEqual({
+      expect(
+        await new PronunciationPacks(
+          files,
+          () => true,
+          async () => true,
+        ).install(language, vi.fn()),
+      ).toEqual({
         state: 'ready',
         path: '/verified',
       });
@@ -93,12 +105,50 @@ describe('language pack lifecycle', () => {
       phase({ state: 'verifying' });
       throw new Error('checksum');
     };
-    const packs = new PronunciationPacks(files, () => true);
+    const packs = new PronunciationPacks(
+      files,
+      () => true,
+      async () => true,
+    );
     const phases = vi.fn();
     expect(await packs.install('en', phases)).toEqual({ state: 'failed' });
     expect(await packs.state('en')).toEqual({ state: 'failed' });
     expect(await packs.remove('en')).toEqual({ state: 'missing' });
     expect(files.remove).toHaveBeenCalledOnce();
     expect(phases.mock.calls.flat()).not.toContainEqual({ state: 'ready' });
+  });
+});
+
+describe('pack download policy', () => {
+  it('does not download on a metered or unknown network', async () => {
+    const install = vi.fn(async () => '/pack');
+    const packs = new PronunciationPacks(
+      { ready: async () => null, install, remove: async () => {} },
+      () => true,
+      async () => false,
+    );
+    expect(await packs.install('en', vi.fn())).toEqual({ state: 'missing' });
+    expect(install).not.toHaveBeenCalled();
+  });
+  it('backs off across mounts, doubles the delay and resets after success', async () => {
+    let now = 0;
+    const install = vi.fn().mockRejectedValue(new Error('offline'));
+    const packs = new PronunciationPacks(
+      { ready: async () => null, install, remove: async () => {} },
+      () => true,
+      async () => true,
+      () => now,
+    );
+    await packs.install('en', vi.fn());
+    await packs.install('en', vi.fn());
+    expect(install).toHaveBeenCalledTimes(1);
+    now = 60_000;
+    await packs.install('en', vi.fn());
+    now = 120_000;
+    await packs.install('en', vi.fn());
+    expect(install).toHaveBeenCalledTimes(2);
+    now = 180_000;
+    install.mockResolvedValue('/pack');
+    expect(await packs.install('en', vi.fn())).toEqual({ state: 'ready', path: '/pack' });
   });
 });
