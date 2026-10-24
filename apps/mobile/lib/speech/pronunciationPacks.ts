@@ -46,9 +46,12 @@ export type PackStorage = {
 export class PronunciationPacks {
   private phases = new Map<string, PackState>();
   private running = new Map<string, Promise<PackState>>();
+  private failures = new Map<string, { count: number; retryAt: number }>();
   constructor(
     private storage: PackStorage,
     private available: () => boolean,
+    private mayDownload: (pack: PronunciationPack) => Promise<boolean> = async () => false,
+    private now: () => number = Date.now,
   ) {}
   async state(language: string): Promise<PackState> {
     const pack = pronunciationPack(language);
@@ -71,16 +74,28 @@ export class PronunciationPacks {
       this.phases.set(language, state);
       phase(state);
     };
-    report({ state: 'downloading' });
-    const run = this.storage
-      .install(pack, report)
-      .then(
-        (path): PackState => ({ state: 'ready', path }),
-        (): PackState => ({ state: 'failed' }),
-      )
+    const failure = this.failures.get(language);
+    if (failure && this.now() < failure.retryAt) return Promise.resolve({ state: 'failed' });
+    const run = (async (): Promise<PackState> => {
+      try {
+        if (!(await this.mayDownload(pack))) return { state: 'missing' };
+        report({ state: 'downloading' });
+        const path = await this.storage.install(pack, report);
+        this.failures.delete(language);
+        this.phases.delete(language);
+        return { state: 'ready', path };
+      } catch {
+        const count = Math.min((failure?.count ?? 0) + 1, 11);
+        this.failures.set(language, {
+          count,
+          retryAt: this.now() + Math.min(60_000 * 2 ** (count - 1), 3_600_000),
+        });
+        return { state: 'failed' };
+      }
+    })()
       .then((state) => {
         report(state);
-        if (state.state === 'ready') this.phases.delete(language);
+        if (state.state === 'ready' || state.state === 'missing') this.phases.delete(language);
         return state;
       })
       .finally(() => this.running.delete(language));

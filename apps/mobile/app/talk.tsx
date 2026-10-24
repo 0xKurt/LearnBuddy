@@ -26,6 +26,8 @@
 // chat, where the feedback stands. The microphone stays: here it is how a turn ends in the
 // browser and how she interrupts him.
 
+import type { ConversationPronunciation } from '@learnbuddy/shared-types/contracts';
+import { useLocalPronunciation } from '../lib/speech/usePronunciation.js';
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -110,13 +112,14 @@ export default function TalkScreen() {
   const [middle, setMiddle] = useState<number | null>(null);
   const open = useRef(true);
 
-  // While a scene runs (a roleplay, issue #244) she speaks its language, and the mic listens in it.
+  // The scene language drives phone recognition, Vosk's pack and Buddy's voice.
   const sceneLang = useSceneLanguage();
+  useLocalPronunciation(sceneLang);
   const voice = useVoiceInput({
     purpose: 'message',
     lang: sceneLang,
     untilPause: true,
-    onText: (text) => void answer(text),
+    onText: (text, pronunciation) => void answer(text, pronunciation),
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
@@ -148,7 +151,7 @@ export default function TalkScreen() {
     else start();
   }
 
-  async function answer(text: string): Promise<void> {
+  async function answer(text: string, pronunciation?: ConversationPronunciation): Promise<void> {
     void playCue('done');
     const id = newId();
     setPending({ id, text });
@@ -202,23 +205,30 @@ export default function TalkScreen() {
       } else setPhase((p) => (p === 'speaking' ? 'paused' : p));
     };
     try {
-      const res = await sendMessageStreamed(text, id, null, (e) => {
-        if (stale()) return;
-        if (e.round !== round) {
-          // A new attempt replaces what was shown — and what was already said of it.
-          round = e.round;
-          setLive(null);
-          along.speaker?.cancel();
-          along.speaker = null;
-          spokenEnd = null;
-        }
-        if (!e.speakable) return;
-        setLive(e.text);
-        // Speaking starts with the first finished sentence, not with the stored answer
-        // (owner decision 28.09., issue #65): `speakable` means this answer changes
-        // nothing and carries no safeguarding — the rest waits, as before (audit M-52).
-        speakAlong().feed(e.text, e.done);
-      });
+      const res = await sendMessageStreamed(
+        text,
+        id,
+        null,
+        (e) => {
+          if (stale()) return;
+          if (e.round !== round) {
+            // A new attempt replaces what was shown — and what was already said of it.
+            round = e.round;
+            setLive(null);
+            along.speaker?.cancel();
+            along.speaker = null;
+            spokenEnd = null;
+          }
+          if (!e.speakable) return;
+          setLive(e.text);
+          // Speaking starts with the first finished sentence, not with the stored answer
+          // (owner decision 28.09., issue #65): `speakable` means this answer changes
+          // nothing and carries no safeguarding — the rest waits, as before (audit M-52).
+          speakAlong().feed(e.text, e.done);
+        },
+        undefined,
+        pronunciation,
+      );
       // Her tap on "Gespräch beenden" may have been answered while this turn was on its way:
       // the home it brings back is then the older one, with the scene still running, and is
       // not written over the newer (lib/api/homeCache.ts `writeHome`, the context fence).

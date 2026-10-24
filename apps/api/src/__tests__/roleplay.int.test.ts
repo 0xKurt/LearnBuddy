@@ -13,6 +13,10 @@
 // requires live verification in Claude Code session (needs a running Postgres; the model is scripted)
 
 import { randomUUID } from 'node:crypto';
+import {
+  conversationPronunciationPlan,
+  type ConversationPronunciation,
+} from '@learnbuddy/shared-types/contracts';
 
 import type {
   ActionSummary,
@@ -69,12 +73,32 @@ const line = (reply: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-async function say(l: Learner, text: string, id: string = randomUUID()) {
+async function say(
+  l: Learner,
+  text: string,
+  id: string = randomUUID(),
+  pronunciation?: ConversationPronunciation,
+) {
   const res = await l.api.post<SendMessageResponse>('/buddy/messages', {
     client_message_id: id,
     text,
+    pronunciation,
   });
   return res;
+}
+
+function localWords(text: string): ConversationPronunciation {
+  const plan = conversationPronunciationPlan(text, 'en')!;
+  return {
+    plan,
+    evidence: {
+      source: 'vosk',
+      heard: text,
+      elapsed_ms: 10,
+      unavailable: [],
+      words: plan.words.map((w) => ({ heard: w.expected.toLowerCase(), confidence: 1 })),
+    },
+  };
 }
 
 function roleplayCard(home: BuddyHome) {
@@ -135,6 +159,92 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     });
     return { l, id: card!.roleplay_id };
   }
+
+  it.each([false, true])(
+    'carries code-graded local words into a turn (roleplay=%s), without changing her text',
+    async (inRole) => {
+      const l = inRole ? (await started()).l : await onboard(env);
+      const text = 'Three trees.';
+      const pronunciation = {
+        plan: {
+          version: 1,
+          language: 'en',
+          words: [
+            { expected: 'Three', confusions: ['free'] },
+            { expected: 'trees', confusions: [] },
+          ],
+        },
+        evidence: {
+          source: 'vosk',
+          heard: 'three trees',
+          elapsed_ms: 20,
+          words: [
+            { heard: 'three', confidence: 1 },
+            { heard: 'trees', confidence: 0.2 },
+          ],
+          unavailable: [],
+        },
+      };
+      env.llm.script('buddy_turn', (req: LlmRequest) => {
+        const contents = JSON.stringify(req.contents);
+        expect(contents).toContain('Three trees.');
+        expect(contents).toContain('PRONUNCIATION');
+        expect(contents).toContain('passt');
+        expect(contents).not.toContain('unsicher');
+        expect(contents).not.toContain('audio_base64');
+        return inRole ? line('Welcome!') : turn({ reply: 'Alles klar.' });
+      });
+      const body = { client_message_id: randomUUID(), text, pronunciation };
+      expect((await l.api.post<SendMessageResponse>('/buddy/messages', body)).body.status).toBe(
+        'done',
+      );
+      const stored = await env.db.one<{ text: string }>(
+        'select text from buddy_messages where learner_id = $1 and client_message_id = $2',
+        [l.learnerId, body.client_message_id],
+      );
+      expect(stored.text).toBe(text);
+      const calls = env.llm.calls.length;
+      expect((await l.api.post<SendMessageResponse>('/buddy/messages', body)).body.status).toBe(
+        'done',
+      );
+      expect(env.llm.calls).toHaveLength(calls);
+    },
+  );
+
+  it.each([false, true])(
+    'keeps the distress fallback on the original transcript with local evidence (roleplay=%s)',
+    async (inRole) => {
+      const l = inRole ? (await started()).l : await onboard(env);
+      const text = 'Ich habe Angst';
+      env.llm.script('buddy_turn', { error: new LlmError('unavailable', 'outage') });
+      env.llm.script('safeguard', (req: LlmRequest) => {
+        expect(JSON.stringify(req.contents)).toContain(text);
+        expect(JSON.stringify(req.contents)).not.toContain('PRONUNCIATION');
+        return { concern: true };
+      });
+      const res = await l.api.post<SendMessageResponse>('/buddy/messages', {
+        client_message_id: randomUUID(),
+        text,
+        pronunciation: {
+          plan: {
+            version: 1,
+            language: 'de',
+            words: text.split(' ').map((expected) => ({ expected, confusions: [] })),
+          },
+          evidence: {
+            source: 'vosk',
+            heard: 'ich',
+            elapsed_ms: 1,
+            words: [{ heard: 'ich', confidence: 0.1 }],
+            unavailable: [],
+          },
+        },
+      });
+      expect(res.body.status).toBe('done');
+      expect(res.body.home.thread.at(-1)?.text).not.toContain('outage');
+      expect(env.llm.callsFor('safeguard')).toHaveLength(1);
+    },
+  );
 
   const turnsOf = async (id: string) =>
     await env.db.one<{ turns: number; status: string; ended_reason: string | null }>(
@@ -433,18 +543,20 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     let calls = 0;
     env.llm.script(
       'buddy_turn',
-      async () => {
+      async (req: LlmRequest) => {
+        expect(ScriptedGateway.textOf(req)).toContain('PRONUNCIATION');
         calls++;
         // Something changed while the model wrote (a setting tapped elsewhere).
         await bumpContext(env.db, l.learnerId);
         return line('First try.');
       },
-      () => {
+      (req: LlmRequest) => {
+        expect(ScriptedGateway.textOf(req)).toContain('PRONUNCIATION');
         calls++;
         return line('Second try.');
       },
     );
-    const res = await say(l, 'Hello there!');
+    const res = await say(l, 'Hello there!', randomUUID(), localWords('Hello there!'));
     expect(res.body.status).toBe('done');
     expect(calls).toBe(2);
     expect((await turnsOf(id)).turns).toBe(1);
@@ -464,8 +576,23 @@ describe.skipIf(!dbReady)('roleplay in a foreign language', () => {
     const before = env.llm.callsFor('buddy_turn').length;
     let release!: (v: unknown) => void;
     const stuck = new Promise((r) => (release = r));
-    env.llm.script('buddy_turn', () => stuck, { json: line('Recovered line.') });
-    const first = say(l, 'Hi, a lemonade please.');
+    env.llm.script(
+      'buddy_turn',
+      (req: LlmRequest) => {
+        expect(ScriptedGateway.textOf(req)).toContain('PRONUNCIATION');
+        return stuck;
+      },
+      (req: LlmRequest) => {
+        expect(ScriptedGateway.textOf(req)).not.toContain('PRONUNCIATION');
+        return line('Recovered line.');
+      },
+    );
+    const first = say(
+      l,
+      'Hi, a lemonade please.',
+      randomUUID(),
+      localWords('Hi, a lemonade please.'),
+    );
     await waitFor(() => env.llm.callsFor('buddy_turn').length > before);
     env.clock.minutes(4);
     await tick(env);

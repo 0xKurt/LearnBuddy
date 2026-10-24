@@ -12,6 +12,8 @@
 // scheduler (or a client retry) takes over with a new token, and the old
 // runner can no longer publish or fail the turn.
 
+import type { ConversationPronunciation } from '@learnbuddy/shared-types/contracts';
+import { pronunciationContext } from './conversationPronunciation.js';
 import { randomUUID } from 'node:crypto';
 
 import type { Deps } from '../../deps.js';
@@ -49,7 +51,13 @@ export { TURN_STALL_MS };
 
 export type TurnOutcome = { status: 'done' | 'processing' | 'failed'; errorCode: string | null };
 
-export type ClaimedMessage = { id: string; text: string; created_at: Date; claim_token: string };
+export type ClaimedMessage = {
+  pronunciation?: ConversationPronunciation;
+  id: string;
+  text: string;
+  created_at: Date;
+  claim_token: string;
+};
 
 type StoredMessage = {
   id: string;
@@ -76,7 +84,12 @@ export type OnReply = (round: number, progress: ReplyProgress, applied?: 'applie
 export async function receiveLearnerMessage(
   deps: Deps,
   learner: TurnLearner,
-  input: { clientMessageId: string; text: string; replyToId: string | null },
+  input: {
+    clientMessageId: string;
+    text: string;
+    replyToId: string | null;
+    pronunciation?: ConversationPronunciation;
+  },
   onReply?: OnReply,
 ): Promise<TurnOutcome> {
   const now = deps.now();
@@ -113,7 +126,7 @@ export async function receiveLearnerMessage(
           [learner.id, input.replyToId, now],
         );
       }
-      return { ...row, claim_token: token };
+      return { ...row, claim_token: token, pronunciation: input.pronunciation };
     });
   } catch (err) {
     if (!isUniqueViolation(err)) throw err;
@@ -308,7 +321,8 @@ async function decideTurn(
             : null;
     }
     const contents: LlmMessage[] = buildContents(
-      preInjected ? `${ctx.state}\n\n${preInjected}` : ctx.state,
+      (preInjected ? `${ctx.state}\n\n${preInjected}` : ctx.state) +
+        pronunciationContext(message.pronunciation),
       dialogue,
       repairErrors ? repairMessage(repairErrors) : undefined,
     );

@@ -1,3 +1,4 @@
+import { mayDownloadPack } from './packDownload.js';
 import type {
   PronunciationPlan,
   PronunciationAudio,
@@ -17,6 +18,7 @@ const localPronunciationAvailable = () =>
 export const pronunciationPacks = new PronunciationPacks(
   pronunciationPackStorage,
   localPronunciationAvailable,
+  mayDownloadPack,
 );
 
 /** The recorder discloses this hybrid path before recording. Uncertainty sends original audio. */

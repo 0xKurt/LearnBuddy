@@ -13,7 +13,7 @@ export type DeviceFailure = 'empty' | 'failed';
 
 export function useDeviceRecognition(_: {
   maxMs: number;
-  onText: (text: string) => void;
+  onText: (text: string, audioUri?: string) => void | Promise<void>;
   onFallback: () => void;
   onFailed: (why: DeviceFailure) => void;
 }) {
@@ -22,7 +22,10 @@ export function useDeviceRecognition(_: {
     heard: '',
     level: 0,
     elapsedMs: 0,
-    start: async (_lang: string, _opts: { untilPause?: boolean } = {}): Promise<void> => {},
+    start: async (
+      _lang: string,
+      _opts: { untilPause?: boolean; recordAudio?: boolean } = {},
+    ): Promise<void> => {},
     stop: (): void => {},
   };
 }
