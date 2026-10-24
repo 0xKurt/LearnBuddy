@@ -1,0 +1,533 @@
+{
+  "source": "https://github.com/jimbozhang/speechocean762",
+  "revision": "613968e3b0b789fc33936fb5eba1973176ba7d11",
+  "license": "CC-BY-4.0",
+  "attribution": "Junbo Zhang, Zhiwen Zhang, Yongqing Wang, Zhiyong Yan, Qiong Song, Yukai Huang, Ke Li, Daniel Povey and Yujun Wang. SpeechOcean762, Interspeech 2021. https://arxiv.org/abs/2104.01378",
+  "samples": [
+    {
+      "id": "000240010",
+      "age": 25,
+      "target": "IT WAS GOOD FOR ME",
+      "reference_accuracy": [10, 10, 10, 10, 10],
+      "grammar": ["it", "was", "good", "for", "me", "[unk]"],
+      "observed": [
+        {
+          "conf": 1,
+          "end": 0.75,
+          "start": 0.54,
+          "word": "it"
+        },
+        {
+          "conf": 1,
+          "end": 0.96,
+          "start": 0.75,
+          "word": "was"
+        },
+        {
+          "conf": 1,
+          "end": 1.23,
+          "start": 0.96,
+          "word": "good"
+        },
+        {
+          "conf": 1,
+          "end": 1.44,
+          "start": 1.23,
+          "word": "for"
+        },
+        {
+          "conf": 1,
+          "end": 1.71,
+          "start": 1.44,
+          "word": "me"
+        }
+      ],
+      "result": {
+        "source": "vosk",
+        "elapsed_ms": 0,
+        "words": [
+          {
+            "expected": "IT",
+            "heard": "it",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "WAS",
+            "heard": "was",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "GOOD",
+            "heard": "good",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "FOR",
+            "heard": "for",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "ME",
+            "heard": "me",
+            "confidence": 1,
+            "verdict": "passt"
+          }
+        ],
+        "overall": "passt"
+      }
+    },
+    {
+      "id": "000240031",
+      "age": 25,
+      "target": "WE HAVE CLIMBED ONE STEP UP THE LADDER",
+      "reference_accuracy": [10, 10, 10, 10, 10, 10, 10, 10],
+      "grammar": ["we", "have", "climbed", "one", "step", "up", "the", "ladder", "[unk]"],
+      "observed": [
+        {
+          "conf": 1,
+          "end": 0.72,
+          "start": 0.54,
+          "word": "we"
+        },
+        {
+          "conf": 1,
+          "end": 0.99,
+          "start": 0.72,
+          "word": "have"
+        },
+        {
+          "conf": 1,
+          "end": 1.44,
+          "start": 1.02,
+          "word": "climbed"
+        },
+        {
+          "conf": 1,
+          "end": 1.68,
+          "start": 1.44,
+          "word": "one"
+        },
+        {
+          "conf": 1,
+          "end": 2.13,
+          "start": 1.68,
+          "word": "step"
+        },
+        {
+          "conf": 1,
+          "end": 2.43,
+          "start": 2.22,
+          "word": "up"
+        },
+        {
+          "conf": 1,
+          "end": 2.55,
+          "start": 2.43,
+          "word": "the"
+        },
+        {
+          "conf": 1,
+          "end": 3,
+          "start": 2.55,
+          "word": "ladder"
+        }
+      ],
+      "result": {
+        "source": "vosk",
+        "elapsed_ms": 0,
+        "words": [
+          {
+            "expected": "WE",
+            "heard": "we",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "HAVE",
+            "heard": "have",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "CLIMBED",
+            "heard": "climbed",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "ONE",
+            "heard": "one",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "STEP",
+            "heard": "step",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "UP",
+            "heard": "up",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "THE",
+            "heard": "the",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "LADDER",
+            "heard": "ladder",
+            "confidence": 1,
+            "verdict": "passt"
+          }
+        ],
+        "overall": "passt"
+      }
+    },
+    {
+      "id": "001200098",
+      "age": 19,
+      "target": "THIS WAS ONE OF OUR BETTER GAMES",
+      "reference_accuracy": [10, 3, 10, 10, 8, 10, 10],
+      "grammar": ["this", "was", "one", "of", "our", "better", "games", "[unk]"],
+      "observed": [
+        {
+          "conf": 1,
+          "end": 0.9,
+          "start": 0.57,
+          "word": "this"
+        },
+        {
+          "conf": 1,
+          "end": 1.2,
+          "start": 0.93,
+          "word": "was"
+        },
+        {
+          "conf": 1,
+          "end": 1.550666,
+          "start": 1.2,
+          "word": "one"
+        },
+        {
+          "conf": 0.844437,
+          "end": 1.74,
+          "start": 1.56,
+          "word": "of"
+        },
+        {
+          "conf": 0.844437,
+          "end": 1.95,
+          "start": 1.74,
+          "word": "our"
+        },
+        {
+          "conf": 1,
+          "end": 2.22,
+          "start": 1.95,
+          "word": "better"
+        },
+        {
+          "conf": 1,
+          "end": 2.79,
+          "start": 2.22,
+          "word": "games"
+        }
+      ],
+      "result": {
+        "source": "vosk",
+        "elapsed_ms": 0,
+        "words": [
+          {
+            "expected": "THIS",
+            "heard": "this",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "WAS",
+            "heard": "was",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "ONE",
+            "heard": "one",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "OF",
+            "heard": "of",
+            "confidence": 0.844437,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "OUR",
+            "heard": "our",
+            "confidence": 0.844437,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "BETTER",
+            "heard": "better",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "GAMES",
+            "heard": "games",
+            "confidence": 1,
+            "verdict": "passt"
+          }
+        ],
+        "overall": "unsicher"
+      }
+    },
+    {
+      "id": "003060186",
+      "age": 21,
+      "target": "YES GOOD MORNING TO YOU TOO",
+      "reference_accuracy": [10, 10, 5, 10, 10, 10],
+      "grammar": ["yes", "good", "morning", "to", "you", "too", "[unk]"],
+      "observed": [
+        {
+          "conf": 1,
+          "end": 1.11,
+          "start": 0.78,
+          "word": "yes"
+        },
+        {
+          "conf": 1,
+          "end": 2.4,
+          "start": 1.11,
+          "word": "[unk]"
+        },
+        {
+          "conf": 0.650247,
+          "end": 2.88,
+          "start": 2.43,
+          "word": "[unk]"
+        }
+      ],
+      "result": {
+        "source": "vosk",
+        "elapsed_ms": 0,
+        "words": [
+          {
+            "expected": "YES",
+            "heard": "yes",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "GOOD",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "MORNING",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "TO",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "YOU",
+            "heard": "[unk]",
+            "confidence": 1,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "TOO",
+            "heard": "[unk]",
+            "confidence": 0.650247,
+            "verdict": "unsicher"
+          }
+        ],
+        "overall": "unsicher"
+      }
+    },
+    {
+      "id": "003060002",
+      "age": 21,
+      "target": "JUST SET HOOK AND PUT THE PRESSURE",
+      "reference_accuracy": [10, 3, 3, 10, 10, 3, 5],
+      "grammar": ["just", "set", "hook", "and", "put", "the", "pressure", "[unk]"],
+      "observed": [
+        {
+          "conf": 1,
+          "end": 2.837916,
+          "start": 1.300269,
+          "word": "[unk]"
+        },
+        {
+          "conf": 0.930556,
+          "end": 3.51,
+          "start": 2.88,
+          "word": "pressure"
+        }
+      ],
+      "result": {
+        "source": "vosk",
+        "elapsed_ms": 0,
+        "words": [
+          {
+            "expected": "JUST",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "SET",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "HOOK",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "AND",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "PUT",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "THE",
+            "heard": "[unk]",
+            "confidence": 1,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "PRESSURE",
+            "heard": "pressure",
+            "confidence": 0.930556,
+            "verdict": "unsicher"
+          }
+        ],
+        "overall": "unsicher"
+      }
+    },
+    {
+      "id": "003060025",
+      "age": 21,
+      "target": "BUT THE STREETS WERE RELATIVELY CALM SATURDAY MORNING",
+      "reference_accuracy": [10, 10, 3, 8, 3, 5, 5, 5],
+      "grammar": [
+        "but",
+        "the",
+        "streets",
+        "were",
+        "relatively",
+        "calm",
+        "saturday",
+        "morning",
+        "[unk]"
+      ],
+      "observed": [
+        {
+          "conf": 1,
+          "end": 4.41,
+          "start": 1.709485,
+          "word": "[unk]"
+        },
+        {
+          "conf": 1,
+          "end": 5.22,
+          "start": 4.47,
+          "word": "saturday"
+        },
+        {
+          "conf": 1,
+          "end": 5.76,
+          "start": 5.22,
+          "word": "morning"
+        }
+      ],
+      "result": {
+        "source": "vosk",
+        "elapsed_ms": 0,
+        "words": [
+          {
+            "expected": "BUT",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "THE",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "STREETS",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "WERE",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "RELATIVELY",
+            "heard": null,
+            "confidence": 0,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "CALM",
+            "heard": "[unk]",
+            "confidence": 1,
+            "verdict": "unsicher"
+          },
+          {
+            "expected": "SATURDAY",
+            "heard": "saturday",
+            "confidence": 1,
+            "verdict": "passt"
+          },
+          {
+            "expected": "MORNING",
+            "heard": "morning",
+            "confidence": 1,
+            "verdict": "passt"
+          }
+        ],
+        "overall": "unsicher"
+      }
+    }
+  ],
+  "method": "Same six adult recordings as the earlier audio benchmark; target-only grammar plus [unk], no generated competitors, no hosted calls. Actual shared grader; elapsed_ms=0 because latency was not measured here. Full-utterance fallback when any word is uncertain.",
+  "summary": {
+    "accepted": 2,
+    "fallback": 4
+  }
+}

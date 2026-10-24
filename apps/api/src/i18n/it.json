@@ -100,7 +100,6 @@
       "punctuation": "Quasi – ricontrolla la punteggiatura in «{{word}}»."
     },
     "had_enough": "Va bene, per oggi può bastare. Puoi chiudere l’esercizio, oppure facciamo insieme un esempio piccolo. Dimmi tu.",
-    "heard_retry": "Non ti ho sentito bene. Riprova un po' più forte e più vicino al telefono.",
     "help_final_answer": "Sembra giusto! Adesso scrivimi il tuo risultato finale, come lo chiede l'esercizio.",
     "help_solved": "Grande – l'hai risolto in autonomia!",
     "help_step": "Andiamo passo per passo: cosa ti dà l'esercizio e cosa bisogna trovare?",
@@ -552,7 +551,11 @@
       }
     },
     "not_usable": "Non sono riuscito a preparare questo esercizio.",
-    "prepare_failed": "La preparazione non è riuscita. Puoi riprovare."
+    "prepare_failed": "La preparazione non è riuscita. Puoi riprovare.",
+    "pronunciation_passt": "Sembra corretto.",
+    "pronunciation_fast": "Quasi — riascolta le parole segnate.",
+    "pronunciation_nochmal": "Ascolta le parole segnate e riprova.",
+    "pronunciation_unsicher": "Non posso valutarlo con certezza. Ascolta e confronta."
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."

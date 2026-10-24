@@ -9,6 +9,9 @@ overrides:
   protobufjs: '>=7.6.1'
 
 patchedDependencies:
+  react-native-vosk@2.1.7:
+    hash: 1b36fd261ee9642b0284fc03f10ed0709a6cc009a72e83a7a354f786c83ec64d
+    path: patches/react-native-vosk@2.1.7.patch
   react-native-web@0.21.2:
     hash: 405ee50c1ee39bc6b57039ea28ef79758ee6d734d495738f5fcbbf3742310c86
     path: patches/react-native-web@0.21.2.patch
@@ -174,6 +177,9 @@ importers:
       '@learnbuddy/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
       '@react-native-async-storage/async-storage':
         specifier: 2.2.0
         version: 2.2.0(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))
@@ -276,6 +282,9 @@ importers:
       expo-updates:
         specifier: ~29.0.20
         version: 29.0.20(expo@54.0.37)(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       i18next:
         specifier: ^24.0.5
         version: 24.2.3(typescript@5.9.3)
@@ -312,6 +321,9 @@ importers:
       react-native-svg:
         specifier: 15.12.1
         version: 15.12.1(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
+      react-native-vosk:
+        specifier: 2.1.7
+        version: 2.1.7(patch_hash=1b36fd261ee9642b0284fc03f10ed0709a6cc009a72e83a7a354f786c83ec64d)(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
       react-native-web:
         specifier: ~0.21.0
         version: 0.21.2(patch_hash=405ee50c1ee39bc6b57039ea28ef79758ee6d734d495738f5fcbbf3742310c86)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1881,6 +1893,10 @@ packages:
     peerDependencies:
       '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
       '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
+
+  '@noble/hashes@2.4.0':
+    resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
+    engines: {node: '>= 20.19.0'}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -4257,6 +4273,9 @@ packages:
     resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
     engines: {node: ^12.20 || >= 14.13}
 
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
+
   file-entry-cache@8.0.0:
     resolution: {integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==}
     engines: {node: '>=16.0.0'}
@@ -5880,6 +5899,13 @@ packages:
 
   react-native-svg@15.12.1:
     resolution: {integrity: sha512-vCuZJDf8a5aNC2dlMovEv4Z0jjEUET53lm/iILFnFewa15b4atjVxU6Wirm6O9y6dEsdjDZVD7Q3QM4T1wlI8g==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
+  react-native-vosk@2.1.7:
+    resolution: {integrity: sha512-3nBxUzzIgOt+YaR0gYy3TSwZJQoIkCKjrFRDLJJF0RJtohZRsKwZy2UqW7Myc0InihvX9OiB3hrYSrFpiGr5VA==}
+    engines: {node: '>= 18.0.0'}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -8673,6 +8699,8 @@ snapshots:
       '@tybys/wasm-util': 0.10.4
     optional: true
 
+  '@noble/hashes@2.4.0': {}
+
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -11213,6 +11241,8 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.3.3
 
+  fflate@0.8.3: {}
+
   file-entry-cache@8.0.0:
     dependencies:
       flat-cache: 4.0.1
@@ -13138,6 +13168,11 @@ snapshots:
       react: 19.1.0
       react-native: 0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0)
       warn-once: 0.1.1
+
+  react-native-vosk@2.1.7(patch_hash=1b36fd261ee9642b0284fc03f10ed0709a6cc009a72e83a7a354f786c83ec64d)(react-native@0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
+    dependencies:
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.1.17)(react@19.1.0)
 
   react-native-web@0.21.2(patch_hash=405ee50c1ee39bc6b57039ea28ef79758ee6d734d495738f5fcbbf3742310c86)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:

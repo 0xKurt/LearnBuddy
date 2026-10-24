@@ -26,6 +26,7 @@ import * as hints from '../practice/hints.js';
 import * as reexplain from '../practice/reexplain.js';
 import * as setProfiles from '../practice/setProfiles.js';
 import * as speak from '../practice/speak.js';
+import * as pronunciation from '../practice/pronunciation.js';
 import * as tutor from '../practice/tutor.js';
 import * as workPhoto from '../practice/workPhoto.js';
 
@@ -241,10 +242,19 @@ export function learningSchemas(): SentSchema[] {
       purpose: 'pronounce',
       profile: 'one word',
       tier: 'smart',
-      promptVersion: `${speak.PRONOUNCE_PROMPT_VERSION}-word`,
+      promptVersion: speak.PRONOUNCE_PROMPT_VERSION,
       system: speak.WORD_SYSTEM,
       schema: speak.WORD_SCHEMA,
       where: 'practice/speak.ts',
+    },
+    {
+      purpose: 'tutor',
+      profile: 'pronunciation tip',
+      tier: 'fast',
+      promptVersion: pronunciation.TIP_PROMPT_VERSION,
+      system: pronunciation.TIP_SYSTEM,
+      schema: pronunciation.TIP_SCHEMA,
+      where: 'practice/pronunciation.ts',
     },
     {
       purpose: 'transcribe',

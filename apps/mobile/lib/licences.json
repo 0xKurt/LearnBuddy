@@ -31,328 +31,334 @@
       "text": 4
     },
     {
+      "name": "@noble/hashes",
+      "version": "2.4.0",
+      "licence": "MIT",
+      "text": 5
+    },
+    {
       "name": "@radix-ui/react-compose-refs",
       "version": "1.1.2",
       "licence": "MIT",
-      "text": 5
+      "text": 6
     },
     {
       "name": "@radix-ui/react-slot",
       "version": "1.2.0",
       "licence": "MIT",
-      "text": 5
+      "text": 6
     },
     {
       "name": "@react-native-async-storage/async-storage",
       "version": "2.2.0",
       "licence": "MIT",
-      "text": 6
+      "text": 7
     },
     {
       "name": "@react-native-community/netinfo",
       "version": "11.4.1",
       "licence": "MIT",
-      "text": 6
+      "text": 7
     },
     {
       "name": "@react-native/assets-registry",
       "version": "0.81.5",
       "licence": "MIT",
-      "text": 5
+      "text": 6
     },
     {
       "name": "@react-native/js-polyfills",
       "version": "0.81.5",
       "licence": "MIT",
-      "text": 5
+      "text": 6
     },
     {
       "name": "@react-native/normalize-colors",
       "version": "0.81.5",
       "licence": "MIT",
-      "text": 5
+      "text": 6
     },
     {
       "name": "@react-native/virtualized-lists",
       "version": "0.81.5",
       "licence": "MIT",
-      "text": 5
+      "text": 6
     },
     {
       "name": "@react-navigation/bottom-tabs",
       "version": "7.16.1",
       "licence": "MIT",
-      "text": 7
+      "text": 8
     },
     {
       "name": "@react-navigation/core",
       "version": "7.17.4",
       "licence": "MIT",
-      "text": 7
+      "text": 8
     },
     {
       "name": "@react-navigation/elements",
       "version": "2.9.18",
       "licence": "MIT",
-      "text": 7
+      "text": 8
     },
     {
       "name": "@react-navigation/native",
       "version": "7.2.4",
       "licence": "MIT",
-      "text": 7
+      "text": 8
     },
     {
       "name": "@react-navigation/native-stack",
       "version": "7.15.1",
       "licence": "MIT",
-      "text": 7
+      "text": 8
     },
     {
       "name": "@react-navigation/routers",
       "version": "7.5.5",
       "licence": "MIT",
-      "text": 7
+      "text": 8
     },
     {
       "name": "@sentry-internal/browser-utils",
       "version": "10.12.0",
       "licence": "MIT",
-      "text": 8
+      "text": 9
     },
     {
       "name": "@sentry-internal/feedback",
       "version": "10.12.0",
       "licence": "MIT",
-      "text": 9
+      "text": 10
     },
     {
       "name": "@sentry-internal/replay",
       "version": "10.12.0",
       "licence": "MIT",
-      "text": 10
+      "text": 11
     },
     {
       "name": "@sentry-internal/replay-canvas",
       "version": "10.12.0",
       "licence": "MIT",
-      "text": 11
+      "text": 12
     },
     {
       "name": "@sentry/browser",
       "version": "10.12.0",
       "licence": "MIT",
-      "text": 12
+      "text": 13
     },
     {
       "name": "@sentry/core",
       "version": "10.12.0",
       "licence": "MIT",
-      "text": 12
+      "text": 13
     },
     {
       "name": "@sentry/react",
       "version": "10.12.0",
       "licence": "MIT",
-      "text": 12
+      "text": 13
     },
     {
       "name": "@sentry/react-native",
       "version": "7.2.0",
       "licence": "MIT",
-      "text": 13
+      "text": 14
     },
     {
       "name": "@shopify/flash-list",
       "version": "2.0.2",
       "licence": "MIT",
-      "text": 14
+      "text": 15
     },
     {
       "name": "@supabase/auth-js",
       "version": "2.105.4",
       "licence": "MIT",
-      "text": 15
+      "text": 16
     },
     {
       "name": "@supabase/functions-js",
       "version": "2.105.4",
       "licence": "MIT",
-      "text": 16
+      "text": 17
     },
     {
       "name": "@supabase/phoenix",
       "version": "0.4.2",
       "licence": "MIT",
-      "text": 17
+      "text": 18
     },
     {
       "name": "@supabase/postgrest-js",
       "version": "2.105.4",
       "licence": "MIT",
-      "text": 16
+      "text": 17
     },
     {
       "name": "@supabase/realtime-js",
       "version": "2.105.4",
       "licence": "MIT",
-      "text": 16
+      "text": 17
     },
     {
       "name": "@supabase/storage-js",
       "version": "2.105.4",
       "licence": "MIT",
-      "text": 16
+      "text": 17
     },
     {
       "name": "@supabase/supabase-js",
       "version": "2.105.4",
       "licence": "MIT",
-      "text": 16
+      "text": 17
     },
     {
       "name": "@tanstack/query-core",
       "version": "5.100.10",
       "licence": "MIT",
-      "text": 18
+      "text": 19
     },
     {
       "name": "@tanstack/react-query",
       "version": "5.100.10",
       "licence": "MIT",
-      "text": 18
+      "text": 19
     },
     {
       "name": "@ungap/structured-clone",
       "version": "1.3.1",
       "licence": "ISC",
-      "text": 19
+      "text": 20
     },
     {
       "name": "abort-controller",
       "version": "3.0.0",
       "licence": "MIT",
-      "text": 20
+      "text": 21
     },
     {
       "name": "assert",
       "version": "2.1.0",
       "licence": "MIT",
-      "text": 21
+      "text": 22
     },
     {
       "name": "available-typed-arrays",
       "version": "1.0.7",
       "licence": "MIT",
-      "text": 22
+      "text": 23
     },
     {
       "name": "base64-js",
       "version": "1.5.1",
       "licence": "MIT",
-      "text": 23
+      "text": 24
     },
     {
       "name": "buffer",
       "version": "5.7.1",
       "licence": "MIT",
-      "text": 24
+      "text": 25
     },
     {
       "name": "call-bind",
       "version": "1.0.9",
       "licence": "MIT",
-      "text": 25
+      "text": 26
     },
     {
       "name": "call-bind-apply-helpers",
       "version": "1.0.2",
       "licence": "MIT",
-      "text": 26
+      "text": 27
     },
     {
       "name": "call-bound",
       "version": "1.0.4",
       "licence": "MIT",
-      "text": 26
+      "text": 27
     },
     {
       "name": "color",
       "version": "4.2.3",
       "licence": "MIT",
-      "text": 27
+      "text": 28
     },
     {
       "name": "color-convert",
       "version": "2.0.1",
       "licence": "MIT",
-      "text": 28
+      "text": 29
     },
     {
       "name": "color-name",
       "version": "1.1.4",
       "licence": "MIT",
-      "text": 29
+      "text": 30
     },
     {
       "name": "color-string",
       "version": "1.9.1",
       "licence": "MIT",
-      "text": 30
+      "text": 31
     },
     {
       "name": "decode-uri-component",
       "version": "0.2.2",
       "licence": "MIT",
-      "text": 31
+      "text": 32
     },
     {
       "name": "define-data-property",
       "version": "1.1.4",
       "licence": "MIT",
-      "text": 32
+      "text": 33
     },
     {
       "name": "define-properties",
       "version": "1.2.1",
       "licence": "MIT",
-      "text": 33
+      "text": 34
     },
     {
       "name": "dunder-proto",
       "version": "1.0.1",
       "licence": "MIT",
-      "text": 34
+      "text": 35
     },
     {
       "name": "es-define-property",
       "version": "1.0.1",
       "licence": "MIT",
-      "text": 26
+      "text": 27
     },
     {
       "name": "es-errors",
       "version": "1.3.0",
       "licence": "MIT",
-      "text": 26
+      "text": 27
     },
     {
       "name": "es-object-atoms",
       "version": "1.1.1",
       "licence": "MIT",
-      "text": 26
+      "text": 27
     },
     {
       "name": "escape-string-regexp",
       "version": "4.0.0",
       "licence": "MIT",
-      "text": 35
+      "text": 36
     },
     {
       "name": "event-target-shim",
       "version": "5.0.1",
       "licence": "MIT",
-      "text": 36
+      "text": 37
     },
     {
       "name": "expo",
@@ -490,7 +496,7 @@
       "name": "expo-share-intent",
       "version": "5.1.1",
       "licence": "MIT",
-      "text": 37
+      "text": 38
     },
     {
       "name": "expo-speech",
@@ -502,7 +508,7 @@
       "name": "expo-speech-recognition",
       "version": "3.1.3",
       "licence": "MIT",
-      "text": 38
+      "text": 39
     },
     {
       "name": "expo-splash-screen",
@@ -538,457 +544,475 @@
       "name": "fast-deep-equal",
       "version": "3.1.3",
       "licence": "MIT",
-      "text": 39
+      "text": 40
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "licence": "MIT",
+      "text": 41
     },
     {
       "name": "filter-obj",
       "version": "1.1.0",
       "licence": "MIT",
-      "text": 40
+      "text": 42
     },
     {
       "name": "for-each",
       "version": "0.3.5",
       "licence": "MIT",
-      "text": 41
+      "text": 43
     },
     {
       "name": "function-bind",
       "version": "1.1.2",
       "licence": "MIT",
-      "text": 42
+      "text": 44
     },
     {
       "name": "generator-function",
       "version": "2.0.1",
       "licence": "MIT",
-      "text": 43
+      "text": 45
     },
     {
       "name": "get-intrinsic",
       "version": "1.3.0",
       "licence": "MIT",
-      "text": 25
+      "text": 26
     },
     {
       "name": "get-proto",
       "version": "1.0.1",
       "licence": "MIT",
-      "text": 44
+      "text": 46
     },
     {
       "name": "gopd",
       "version": "1.2.0",
       "licence": "MIT",
-      "text": 45
+      "text": 47
     },
     {
       "name": "has-property-descriptors",
       "version": "1.0.2",
       "licence": "MIT",
-      "text": 46
+      "text": 48
     },
     {
       "name": "has-symbols",
       "version": "1.1.0",
       "licence": "MIT",
-      "text": 47
+      "text": 49
     },
     {
       "name": "has-tostringtag",
       "version": "1.0.2",
       "licence": "MIT",
-      "text": 48
+      "text": 50
     },
     {
       "name": "hasown",
       "version": "2.0.4",
       "licence": "MIT",
-      "text": 49
+      "text": 51
     },
     {
       "name": "hoist-non-react-statics",
       "version": "3.3.2",
       "licence": "BSD-3-Clause",
-      "text": 50
+      "text": 52
     },
     {
       "name": "html-parse-stringify",
       "version": "3.0.1",
       "licence": "MIT",
-      "text": 51
+      "text": 53
     },
     {
       "name": "i18next",
       "version": "24.2.3",
       "licence": "MIT",
-      "text": 52
+      "text": 54
     },
     {
       "name": "iceberg-js",
       "version": "0.8.1",
       "licence": "MIT",
-      "text": 53
+      "text": 55
     },
     {
       "name": "ieee754",
       "version": "1.2.1",
       "licence": "BSD-3-Clause",
-      "text": 54
+      "text": 56
     },
     {
       "name": "inherits",
       "version": "2.0.4",
       "licence": "ISC",
-      "text": 55
+      "text": 57
     },
     {
       "name": "invariant",
       "version": "2.2.4",
       "licence": "MIT",
-      "text": 56
+      "text": 58
     },
     {
       "name": "is-arguments",
       "version": "1.2.0",
       "licence": "MIT",
-      "text": 57
+      "text": 59
     },
     {
       "name": "is-arrayish",
       "version": "0.3.4",
       "licence": "MIT",
-      "text": 58
+      "text": 60
     },
     {
       "name": "is-callable",
       "version": "1.2.7",
       "licence": "MIT",
-      "text": 59
+      "text": 61
     },
     {
       "name": "is-generator-function",
       "version": "1.1.2",
       "licence": "MIT",
-      "text": 57
+      "text": 59
     },
     {
       "name": "is-nan",
       "version": "1.3.2",
       "licence": "MIT",
-      "text": 57
+      "text": 59
     },
     {
       "name": "is-regex",
       "version": "1.2.1",
       "licence": "MIT",
-      "text": 57
+      "text": 59
     },
     {
       "name": "is-typed-array",
       "version": "1.1.15",
       "licence": "MIT",
-      "text": 59
+      "text": 61
     },
     {
       "name": "jpeg-js",
       "version": "0.4.4",
       "licence": "BSD-3-Clause",
-      "text": 60
+      "text": 62
     },
     {
       "name": "math-intrinsics",
       "version": "1.1.0",
       "licence": "MIT",
-      "text": 34
+      "text": 35
     },
     {
       "name": "memoize-one",
       "version": "5.2.1",
       "licence": "MIT",
-      "text": 61
+      "text": 63
     },
     {
       "name": "nanoid",
       "version": "3.3.12",
       "licence": "MIT",
-      "text": 62
+      "text": 64
     },
     {
       "name": "nullthrows",
       "version": "1.1.1",
       "licence": "MIT",
-      "text": 63
+      "text": 65
     },
     {
       "name": "object-is",
       "version": "1.1.6",
       "licence": "MIT",
-      "text": 57
+      "text": 59
     },
     {
       "name": "object-keys",
       "version": "1.1.1",
       "licence": "MIT",
-      "text": 64
+      "text": 66
     },
     {
       "name": "object.assign",
       "version": "4.1.7",
       "licence": "MIT",
-      "text": 65
+      "text": 67
     },
     {
       "name": "possible-typed-array-names",
       "version": "1.1.0",
       "licence": "MIT",
-      "text": 26
+      "text": 27
     },
     {
       "name": "promise",
       "version": "8.3.0",
       "licence": "MIT",
-      "text": 66
+      "text": 68
     },
     {
       "name": "punycode",
       "version": "2.3.1",
       "licence": "MIT",
-      "text": 67
+      "text": 69
     },
     {
       "name": "query-string",
       "version": "7.1.3",
       "licence": "MIT",
-      "text": 68
+      "text": 70
     },
     {
       "name": "react",
       "version": "19.1.0",
       "licence": "MIT",
-      "text": 69
+      "text": 71
     },
     {
       "name": "react-dom",
       "version": "19.1.0",
       "licence": "MIT",
-      "text": 69
+      "text": 71
     },
     {
       "name": "react-freeze",
       "version": "1.0.4",
       "licence": "MIT",
-      "text": 70
+      "text": 72
     },
     {
       "name": "react-i18next",
       "version": "15.7.4",
       "licence": "MIT",
-      "text": 52
+      "text": 54
     },
     {
       "name": "react-is",
       "version": "16.13.1",
       "licence": "MIT",
-      "text": 71
+      "text": 73
     },
     {
       "name": "react-is",
       "version": "19.2.6",
       "licence": "MIT",
-      "text": 69
+      "text": 71
     },
     {
       "name": "react-native",
       "version": "0.81.5",
       "licence": "MIT",
-      "text": 69
+      "text": 71
     },
     {
       "name": "react-native-audio-api",
       "version": "0.12.2",
       "licence": "MIT",
-      "text": 72
+      "text": 74
     },
     {
       "name": "react-native-gesture-handler",
       "version": "2.28.0",
       "licence": "MIT",
-      "text": 73
+      "text": 75
     },
     {
       "name": "react-native-is-edge-to-edge",
       "version": "1.3.1",
       "licence": "MIT",
-      "text": 74
+      "text": 76
     },
     {
       "name": "react-native-reanimated",
       "version": "4.1.7",
       "licence": "MIT",
-      "text": 73
+      "text": 75
     },
     {
       "name": "react-native-safe-area-context",
       "version": "5.6.2",
       "licence": "MIT",
-      "text": 75
+      "text": 77
     },
     {
       "name": "react-native-screens",
       "version": "4.16.0",
       "licence": "MIT",
-      "text": 76
+      "text": 78
     },
     {
       "name": "react-native-svg",
       "version": "15.12.1",
       "licence": "MIT",
-      "text": 77
+      "text": 79
+    },
+    {
+      "name": "react-native-vosk",
+      "version": "2.1.7",
+      "licence": "MIT",
+      "text": 80
     },
     {
       "name": "react-native-web",
       "version": "0.21.2",
       "licence": "MIT",
-      "text": 78
+      "text": 81
     },
     {
       "name": "react-native-worklets",
       "version": "0.5.1",
       "licence": "MIT",
-      "text": 79
+      "text": 82
     },
     {
       "name": "regenerator-runtime",
       "version": "0.13.11",
       "licence": "MIT",
-      "text": 80
+      "text": 83
     },
     {
       "name": "safe-regex-test",
       "version": "1.1.0",
       "licence": "MIT",
-      "text": 45
+      "text": 47
     },
     {
       "name": "scheduler",
       "version": "0.26.0",
       "licence": "MIT",
-      "text": 69
+      "text": 71
     },
     {
       "name": "semver",
       "version": "7.8.0",
       "licence": "ISC",
-      "text": 81
+      "text": 84
+    },
+    {
+      "name": "semver",
+      "version": "7.8.5",
+      "licence": "ISC",
+      "text": 84
     },
     {
       "name": "set-function-length",
       "version": "1.2.2",
       "licence": "MIT",
-      "text": 49
+      "text": 51
     },
     {
       "name": "simple-swizzle",
       "version": "0.2.4",
       "licence": "MIT",
-      "text": 82
+      "text": 85
     },
     {
       "name": "split-on-first",
       "version": "1.1.0",
       "licence": "MIT",
-      "text": 83
+      "text": 86
     },
     {
       "name": "stacktrace-parser",
       "version": "0.1.11",
       "licence": "MIT",
-      "text": 84
+      "text": 87
     },
     {
       "name": "strict-uri-encode",
       "version": "2.0.0",
       "licence": "MIT",
-      "text": 85
+      "text": 88
     },
     {
       "name": "tslib",
       "version": "2.8.1",
       "licence": "0BSD",
-      "text": 86
+      "text": 89
     },
     {
       "name": "use-latest-callback",
       "version": "0.2.6",
       "licence": "MIT",
-      "text": 87
+      "text": 90
     },
     {
       "name": "use-sync-external-store",
       "version": "1.6.0",
       "licence": "MIT",
-      "text": 69
+      "text": 71
     },
     {
       "name": "util",
       "version": "0.12.5",
       "licence": "MIT",
-      "text": 21
+      "text": 22
     },
     {
       "name": "vexflow",
       "version": "4.2.5",
       "licence": "MIT",
-      "text": 88
+      "text": 91
     },
     {
       "name": "void-elements",
       "version": "3.1.0",
       "licence": "MIT",
-      "text": 89
+      "text": 92
     },
     {
       "name": "warn-once",
       "version": "0.1.1",
       "licence": "MIT",
-      "text": 90
+      "text": 93
     },
     {
       "name": "webidl-conversions",
       "version": "5.0.0",
       "licence": "BSD-2-Clause",
-      "text": 91
+      "text": 94
     },
     {
       "name": "whatwg-fetch",
       "version": "3.6.20",
       "licence": "MIT",
-      "text": 92
+      "text": 95
     },
     {
       "name": "whatwg-url-without-unicode",
       "version": "8.0.0-3",
       "licence": "MIT",
-      "text": 93
+      "text": 96
     },
     {
       "name": "which-typed-array",
       "version": "1.1.20",
       "licence": "MIT",
-      "text": 59
+      "text": 61
     },
     {
       "name": "zod",
       "version": "3.25.76",
       "licence": "MIT",
-      "text": 94
+      "text": 97
     },
     {
       "name": "zustand",
       "version": "5.0.13",
       "licence": "MIT",
-      "text": 95
+      "text": 98
     }
   ],
   "texts": [
@@ -997,6 +1021,7 @@
     "MIT License\n\nCopyright (c) Expo\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and\nassociated documentation files (the \"Software\"), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the\nfollowing conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial\nportions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\nLIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO\nEVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\nIN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE\nUSE OR OTHER DEALINGS IN THE SOFTWARE.",
     "MIT License\n\nCopyright (c) 650 Industries, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and\nassociated documentation files (the \"Software\"), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the\nfollowing conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial\nportions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\nLIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO\nEVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\nIN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE\nUSE OR OTHER DEALINGS IN THE SOFTWARE.",
     "MIT License\n\nCopyright (c) 2019 James Ide\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
+    "The MIT License (MIT)\n\nCopyright (c) 2022 Paul Miller (https://paulmillr.com)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the “Software”), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.",
     "MIT License\n\nCopyright (c) <year> <copyright holders>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and\nassociated documentation files (the \"Software\"), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the\nfollowing conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial\nportions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT\nLIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO\nEVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\nIN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE\nUSE OR OTHER DEALINGS IN THE SOFTWARE.",
     "MIT License\n\nCopyright (c) 2015-present, Facebook, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "MIT License\n\nCopyright (c) 2017 React Navigation Contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
@@ -1032,6 +1057,7 @@
     "MIT License\n\nCopyright (c) 2023 Evan Bacon\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "MIT License\n\nCopyright (c) 2024 jamsch\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "MIT License\n\nCopyright (c) 2017 Evgeny Poberezkin\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
+    "MIT License\n\nCopyright (c) 2026 Arjun Barrett\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "The MIT License (MIT)\n\nCopyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.",
     "The MIT License (MIT)\n\nCopyright (c) 2012 Raynos.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "Copyright (c) 2013 Raynos.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.",
@@ -1070,6 +1096,7 @@
     "MIT License\n\nCopyright (c) 2019 Th3rd Wave\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "The MIT License (MIT)\n\nCopyright (c) 2018 Software Mansion <swmansion.com>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "The MIT License (MIT)\n\nCopyright (c) [2015-2016] [Horcrux]\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
+    "MIT License\n\nCopyright (c) 2024 riderodd\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "MIT License\n\nCopyright (c) Nicolas Gallagher.\nCopyright (c) Meta Platforms, Inc. and affiliates.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "MIT License\n\nCopyright (c) 2024 nobody\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",
     "MIT License\n\nCopyright (c) 2014-present, Facebook, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.",

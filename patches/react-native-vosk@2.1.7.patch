@@ -1,0 +1,247 @@
+diff --git a/android/src/main/java/com/vosk/VoskCheck.kt b/android/src/main/java/com/vosk/VoskCheck.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..0ef49f012258ec8a43a1c808ac580fa136881faf
+--- /dev/null
++++ b/android/src/main/java/com/vosk/VoskCheck.kt
+@@ -0,0 +1,70 @@
++package com.vosk
++
++// requires live verification on a real iPhone / Android phone
++import android.util.Base64
++import com.facebook.react.bridge.Promise
++import com.sun.jna.NativeLibrary
++import org.json.JSONArray
++import org.json.JSONObject
++import org.vosk.Model
++import org.vosk.Recognizer
++import java.util.concurrent.Executors
++
++/** Serial, bounded PCM checks; never opens a microphone or network connection. */
++internal class VoskCheck {
++  private val queue = Executors.newSingleThreadExecutor()
++  private var model: Model? = null
++  private var loadedPath: String? = null
++
++  fun check(path: String, encoded: String, grammar: String, promise: Promise) {
++    queue.execute {
++      try {
++        require(encoded.length <= 1280000 && path.startsWith("/"))
++        val pcm = Base64.decode(encoded, Base64.NO_WRAP)
++        require(pcm.isNotEmpty() && pcm.size % 2 == 0 && pcm.size <= 960000)
++        if (loadedPath != path) {
++          model?.close(); model = null; loadedPath = null
++          model = Model(path); loadedPath = path
++        }
++        val loaded = requireNotNull(model)
++        val requested = JSONArray(grammar)
++        require(requested.length() in 1..241)
++        val missing = JSONArray()
++        val accepted = JSONArray()
++        val findWord = NativeLibrary.getInstance("vosk").getFunction("vosk_model_find_word")
++        for (i in 0 until requested.length()) {
++          val word = requested.getString(i)
++          require(word.length in 1..60)
++          if (word == "[unk]" || findWord.invokeInt(arrayOf(loaded.pointer, word)) >= 0) {
++            accepted.put(word)
++          } else { missing.put(word) }
++        }
++        require((0 until accepted.length()).any { accepted.getString(it) == "[unk]" })
++        val words = JSONArray()
++        fun collect(raw: String) {
++          val segment = JSONObject(raw).optJSONArray("result") ?: return
++          for (i in 0 until segment.length()) words.put(segment.getJSONObject(i))
++        }
++        Recognizer(loaded, 16000.0f, accepted.toString()).use { rec ->
++          rec.setWords(true)
++          var offset = 0
++          while (offset < pcm.size) {
++            val end = minOf(offset + 8000, pcm.size)
++            val chunk = pcm.copyOfRange(offset, end)
++            if (rec.acceptWaveForm(chunk, chunk.size)) collect(rec.result)
++            offset = end
++          }
++          collect(rec.finalResult)
++        }
++        promise.resolve(JSONObject().put("words", words).put("unavailable", missing).toString())
++      } catch (e: Exception) { promise.reject("vosk_check", "Offline check unavailable", e) }
++    }
++  }
++  fun release(promise: Promise) {
++    queue.execute { model?.close(); model = null; loadedPath = null; promise.resolve(null) }
++  }
++  fun close() {
++    queue.execute { model?.close(); model = null; loadedPath = null }
++    queue.shutdown()
++  }
++}
+diff --git a/android/src/main/java/com/vosk/VoskModule.kt b/android/src/main/java/com/vosk/VoskModule.kt
+index c2c4d64938e8da3bd5396c3c7178024d4e90cb6c..635f7f8ce4022217236e090e6d76271272514c8d 100644
+--- a/android/src/main/java/com/vosk/VoskModule.kt
++++ b/android/src/main/java/com/vosk/VoskModule.kt
+@@ -20,6 +20,13 @@ import com.vosk.NativeVoskSpec
+ class VoskModule(reactContext: ReactApplicationContext) :
+         NativeVoskSpec(reactContext), RecognitionListener {
+ 
++  private val checker = VoskCheck()
++  override fun checkPcm(path: String, pcm: String, grammar: String, promise: Promise) {
++    checker.check(path, pcm, grammar, promise)
++  }
++  override fun releaseCheckModel(promise: Promise) { checker.release(promise) }
++  override fun invalidate() { checker.close(); super.invalidate() }
++
+   private var model: Model? = null
+   private var speechService: SpeechService? = null
+   private var context: ReactApplicationContext? = reactContext
+diff --git a/ios/RNVoskCheck.h b/ios/RNVoskCheck.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..6a46d1f5b33aa277abd0838cf6573002f909c4a5
+--- /dev/null
++++ b/ios/RNVoskCheck.h
+@@ -0,0 +1,7 @@
++#import <Foundation/Foundation.h>
++#import <React/RCTBridgeModule.h>
++@interface RNVoskCheck : NSObject
++- (void)check:(NSString *)path pcm:(NSString *)pcm grammar:(NSString *)grammar
++      resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject;
++- (void)releaseModel:(RCTPromiseResolveBlock)resolve;
++@end
+diff --git a/ios/RNVoskCheck.mm b/ios/RNVoskCheck.mm
+new file mode 100644
+index 0000000000000000000000000000000000000000..d328abc6ac113f95a4f40ea870df5963358b7c16
+--- /dev/null
++++ b/ios/RNVoskCheck.mm
+@@ -0,0 +1,71 @@
++// requires live verification on a real iPhone / Android phone
++#import "RNVoskCheck.h"
++#import "RNVoskModel.h"
++#import "Vosk-API.h"
++
++@implementation RNVoskCheck {
++  dispatch_queue_t _queue;
++  RNVoskModel *_model;
++  NSString *_path;
++}
++- (instancetype)init {
++  if ((self = [super init])) _queue = dispatch_queue_create("vosk.check", DISPATCH_QUEUE_SERIAL);
++  return self;
++}
++- (void)check:(NSString *)path pcm:(NSString *)encoded grammar:(NSString *)grammar
++      resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
++  dispatch_async(_queue, ^{
++    @try {
++      NSData *pcm = encoded.length <= 1280000 ? [[NSData alloc] initWithBase64EncodedString:encoded options:0] : nil;
++      if (!pcm || pcm.length == 0 || pcm.length % 2 || pcm.length > 960000 || ![path hasPrefix:@"/"]) {
++        reject(@"vosk_check", @"Invalid PCM or model path", nil); return;
++      }
++      if (![self->_path isEqualToString:path]) {
++        self->_model = nil; self->_path = nil;
++        NSError *error = nil;
++        self->_model = [[RNVoskModel alloc] initWithName:path error:&error];
++        if (!self->_model.model || error) { reject(@"vosk_check", @"Model unavailable", error); return; }
++        self->_path = path;
++      }
++      id requested = [NSJSONSerialization JSONObjectWithData:[grammar dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil];
++      if (![requested isKindOfClass:[NSArray class]] || [requested count] < 1 || [requested count] > 241) {
++        reject(@"vosk_check", @"Invalid grammar", nil); return;
++      }
++      NSMutableArray *missing = [NSMutableArray new], *accepted = [NSMutableArray new];
++      for (id word in requested) {
++        if (![word isKindOfClass:[NSString class]] || [word length] < 1 || [word length] > 60) {
++          reject(@"vosk_check", @"Invalid grammar word", nil); return;
++        }
++        if ([word isEqualToString:@"[unk]"] || vosk_model_find_word(self->_model.model, [word UTF8String]) >= 0) [accepted addObject:word];
++        else [missing addObject:word];
++      }
++      if (![accepted containsObject:@"[unk]"]) { reject(@"vosk_check", @"Missing unknown token", nil); return; }
++      NSData *json = [NSJSONSerialization dataWithJSONObject:accepted options:0 error:nil];
++      NSString *grm = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
++      VoskRecognizer *rec = vosk_recognizer_new_grm(self->_model.model, 16000, grm.UTF8String);
++      if (!rec) { reject(@"vosk_check", @"Recognizer unavailable", nil); return; }
++      NSMutableArray *words = [NSMutableArray new];
++      void (^collect)(const char *) = ^(const char *raw) {
++        if (!raw) return;
++        NSData *data = [[NSString stringWithUTF8String:raw] dataUsingEncoding:NSUTF8StringEncoding];
++        NSDictionary *result = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
++        if ([result[@"result"] isKindOfClass:[NSArray class]]) [words addObjectsFromArray:result[@"result"]];
++      };
++      @try {
++        vosk_recognizer_set_words(rec, 1);
++        const char *bytes = (const char *)pcm.bytes;
++        for (NSUInteger at = 0; at < pcm.length; at += 8000) {
++          int count = (int)MIN((NSUInteger)8000, pcm.length - at);
++          if (vosk_recognizer_accept_waveform(rec, bytes + at, count)) collect(vosk_recognizer_result(rec));
++        }
++        collect(vosk_recognizer_final_result(rec));
++      } @finally { vosk_recognizer_free(rec); }
++      NSData *output = [NSJSONSerialization dataWithJSONObject:@{@"words": words, @"unavailable": missing} options:0 error:nil];
++      resolve([[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
++    } @catch (NSException *exception) { reject(@"vosk_check", @"Offline check unavailable", nil); }
++  });
++}
++- (void)releaseModel:(RCTPromiseResolveBlock)resolve {
++  dispatch_async(_queue, ^{ self->_model = nil; self->_path = nil; resolve(nil); });
++}
++@end
+diff --git a/ios/Vosk.mm b/ios/Vosk.mm
+index 4556403d00596ffe8d187845b45470020774ee26..1eee378b12e6452eac33c0c4aa97d1e8729ca2f1 100644
+--- a/ios/Vosk.mm
++++ b/ios/Vosk.mm
+@@ -1,4 +1,5 @@
+ #import "Vosk.h"
++#import "RNVoskCheck.h"
+ #import "RNVoskModel.h"
+ #import "Vosk-API.h"
+ #import <AVFoundation/AVFoundation.h>
+@@ -9,6 +10,7 @@
+ static void *kVoskProcessingQueueKey = &kVoskProcessingQueueKey;
+ 
+ @implementation Vosk {
++  RNVoskCheck *_checker;
+   // État interne migré depuis Swift
+   RNVoskModel *_Nullable _currentModel;
+   VoskRecognizer *_Nullable _recognizer;
+@@ -27,8 +29,18 @@ static void *kVoskProcessingQueueKey = &kVoskProcessingQueueKey;
+ }
+ RCT_EXPORT_MODULE()
+ 
++// requires live verification on a real iPhone / Android phone
++- (void)checkPcm:(NSString *)path pcm:(NSString *)pcm grammar:(NSString *)grammar
++        resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
++  [_checker check:path pcm:pcm grammar:grammar resolve:resolve reject:reject];
++}
++- (void)releaseCheckModel:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
++  [_checker releaseModel:resolve];
++}
++
+ - (instancetype)init {
+   if ((self = [super init])) {
++    _checker = [RNVoskCheck new];
+     _processingQueue =
+         dispatch_queue_create("recognizerQueue", DISPATCH_QUEUE_SERIAL);
+     dispatch_queue_set_specific(_processingQueue, kVoskProcessingQueueKey,
+diff --git a/react-native-vosk.podspec b/react-native-vosk.podspec
+index 081cc59ec7f4f8233baca2fec263b31795c26415..6ddb8f5bbc55220f39c0db2cd0dacd70b160098a 100644
+--- a/react-native-vosk.podspec
++++ b/react-native-vosk.podspec
+@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
+   s.platforms    = { :ios => min_ios_version_supported }
+   s.source       = { :git => "https://github.com/riderodd/react-native-vosk.git", :tag => "#{s.version}" }
+ 
+-  s.source_files = "ios/**/*.{h,m,mm,cpp}", "ios/vosk-model-spk-0.4/*"
++  s.source_files = "ios/**/*.{h,m,mm,cpp}"
+   s.private_header_files = "ios/**/*.h"
+   s.frameworks = "Accelerate", "AVFoundation"
+   s.library = "c++"
+diff --git a/src/NativeVosk.ts b/src/NativeVosk.ts
+index fe1dce5d39043d6e0b013c90757ef0ce504a38b4..8144a09aa1692d18b8fee2b3676d171aafc5a6da 100644
+--- a/src/NativeVosk.ts
++++ b/src/NativeVosk.ts
+@@ -14,6 +14,8 @@ export type VoskOptions = {
+ };
+ 
+ export interface Spec extends TurboModule {
++  checkPcm: (path: string, pcm: string, grammar: string) => Promise<string>;
++  releaseCheckModel: () => Promise<void>;
+   loadModel: (path: string) => Promise<void>;
+   unload: () => void;
+ 

@@ -56,6 +56,7 @@ export function kindIn(kinds: readonly string[], kind: string): boolean {
  * these kinds leaves out (a run's profile, `setProfiles.ts`; a listening question, `listen.ts`).
  */
 export function unusedItemFields(kinds: readonly string[]): {
+  confusions?: true;
   rubric?: true;
   asks_reason?: true;
   tolerance?: true;
@@ -67,6 +68,7 @@ export function unusedItemFields(kinds: readonly string[]): {
 } {
   const none = (some: readonly string[]) => !kinds.some((k) => kindIn(some, k));
   return {
+    ...(none(['speak']) ? { confusions: true } : {}),
     ...(none(RUBRIC_KINDS) ? { rubric: true } : {}),
     ...(none(REASON_KINDS) ? { asks_reason: true } : {}),
     ...(none(TOLERANCE_KINDS) ? { tolerance: true } : {}),

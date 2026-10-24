@@ -29,3 +29,4 @@ export * from './dictation.js';
 export * from './drill.js';
 export * from './workPhoto.js';
 export * from './learning.js';
+export * from './pronunciation.js';

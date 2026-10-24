@@ -49,6 +49,7 @@ export type PracticeLearner = {
 };
 
 export type ItemRow = {
+  pronunciation_plan?: unknown;
   id: string;
   kind: ItemKind;
   prompt: string;

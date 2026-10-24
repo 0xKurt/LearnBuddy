@@ -1,0 +1,5247 @@
+{
+  "machine": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "runs": 3,
+  "models": [
+    {
+      "name": "vosk-model-small-fr-0.22",
+      "load_ms": 155.92,
+      "oov": [],
+      "grammar": [
+        "je",
+        "m'appelle",
+        "léna",
+        "et",
+        "j'habite",
+        "à",
+        "berlin",
+        "mange",
+        "habite",
+        "[unk]"
+      ]
+    },
+    {
+      "name": "vosk-model-small-en-us-0.15",
+      "load_ms": 169.94,
+      "oov": [],
+      "grammar": [
+        "i",
+        "think",
+        "sink",
+        "thing",
+        "three",
+        "free",
+        "tree",
+        "birds",
+        "births",
+        "fly",
+        "through",
+        "true",
+        "threw",
+        "the",
+        "a",
+        "trees",
+        "tries",
+        "[unk]"
+      ]
+    },
+    {
+      "name": "vosk-model-small-de-0.15",
+      "load_ms": 225.42,
+      "oov": [],
+      "grammar": [
+        "ich",
+        "isch",
+        "trinke",
+        "trinken",
+        "heute",
+        "häute",
+        "kaltes",
+        "kalte",
+        "wasser",
+        "was",
+        "messer",
+        "[unk]"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "language": "fr",
+      "condition": "good",
+      "target": "Je m'appelle Léna et j'habite à Berlin.",
+      "spoken": "Je m'appelle Léna et j'habite à Berlin.",
+      "duration_s": 2.3889375,
+      "pcm_sha256": "04d236447d416bd58a371a1e1613e19117dc61deba06678179fb47ef3f6b6d3b",
+      "free": {
+        "median_ms": 1175.12,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 0.994486,
+                "end": 0.609177,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.53196,
+                "end": 0.867796,
+                "start": 0.609177,
+                "word": "léa"
+              },
+              {
+                "conf": 0.640774,
+                "end": 0.947831,
+                "start": 0.867796,
+                "word": "et"
+              },
+              {
+                "conf": 0.632557,
+                "end": 1.404591,
+                "start": 0.99,
+                "word": "l'arbitre"
+              },
+              {
+                "conf": 0.899703,
+                "end": 1.71,
+                "start": 1.404591,
+                "word": "harbert"
+              },
+              {
+                "conf": 0.525089,
+                "end": 2.01,
+                "start": 1.71,
+                "word": "là"
+              }
+            ],
+            "text": "je m'appelle léa et l'arbitre harbert là",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 1101.8607079749927,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 0.994486,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 0.53196,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.640774,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "l'arbitre",
+                  "confidence": 0.632557,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "à",
+                  "heard": "harbert",
+                  "confidence": 0.899703,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "là",
+                  "confidence": 0.525089,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 35.55,
+            "decode_ms": 1101.86,
+            "post_recording_ms": 1140.8
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 0.994391,
+                "end": 0.609128,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.534254,
+                "end": 0.867819,
+                "start": 0.609128,
+                "word": "léa"
+              },
+              {
+                "conf": 0.645326,
+                "end": 0.947862,
+                "start": 0.867819,
+                "word": "et"
+              },
+              {
+                "conf": 0.613381,
+                "end": 1.404247,
+                "start": 0.99,
+                "word": "l'arbitre"
+              },
+              {
+                "conf": 0.899321,
+                "end": 1.71,
+                "start": 1.404247,
+                "word": "harbert"
+              },
+              {
+                "conf": 0.525551,
+                "end": 2.01,
+                "start": 1.71,
+                "word": "là"
+              }
+            ],
+            "text": "je m'appelle léa et l'arbitre harbert là",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 1135.7247080886737,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 0.994391,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 0.534254,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.645326,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "l'arbitre",
+                  "confidence": 0.613381,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "à",
+                  "heard": "harbert",
+                  "confidence": 0.899321,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "là",
+                  "confidence": 0.525551,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.82,
+            "decode_ms": 1135.72,
+            "post_recording_ms": 1175.12
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 0.994443,
+                "end": 0.608769,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.54959,
+                "end": 0.867244,
+                "start": 0.608769,
+                "word": "léa"
+              },
+              {
+                "conf": 0.638816,
+                "end": 0.947121,
+                "start": 0.867244,
+                "word": "et"
+              },
+              {
+                "conf": 0.608181,
+                "end": 1.404179,
+                "start": 0.99,
+                "word": "l'arbitre"
+              },
+              {
+                "conf": 0.893076,
+                "end": 1.71,
+                "start": 1.404179,
+                "word": "harbert"
+              },
+              {
+                "conf": 0.521743,
+                "end": 2.01,
+                "start": 1.71,
+                "word": "là"
+              }
+            ],
+            "text": "je m'appelle léa et l'arbitre harbert là",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 1157.2886250214651,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 0.994443,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 0.54959,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.638816,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "l'arbitre",
+                  "confidence": 0.608181,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "à",
+                  "heard": "harbert",
+                  "confidence": 0.893076,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "là",
+                  "confidence": 0.521743,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 37.5,
+            "decode_ms": 1157.29,
+            "post_recording_ms": 1195.32
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 54.17,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.601899,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.923567,
+                "end": 0.892038,
+                "start": 0.601899,
+                "word": "léna"
+              },
+              {
+                "conf": 0.695607,
+                "end": 0.979634,
+                "start": 0.892038,
+                "word": "et"
+              },
+              {
+                "conf": 0.98894,
+                "end": 1.409286,
+                "start": 0.99,
+                "word": "j'habite"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.98,
+                "start": 1.5,
+                "word": "berlin"
+              }
+            ],
+            "text": "je m'appelle léna et j'habite berlin",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.7760000070557,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léna",
+                  "confidence": 0.923567,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.695607,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "j'habite",
+                  "confidence": 0.98894,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "à",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "berlin",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 42.52,
+            "decode_ms": 13.78,
+            "post_recording_ms": 56.72
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.601959,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.921113,
+                "end": 0.891901,
+                "start": 0.601959,
+                "word": "léna"
+              },
+              {
+                "conf": 0.693581,
+                "end": 0.979456,
+                "start": 0.891901,
+                "word": "et"
+              },
+              {
+                "conf": 0.985646,
+                "end": 1.384913,
+                "start": 0.99,
+                "word": "j'habite"
+              },
+              {
+                "conf": 0.501556,
+                "end": 1.495778,
+                "start": 1.384913,
+                "word": "à"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.98,
+                "start": 1.5,
+                "word": "berlin"
+              }
+            ],
+            "text": "je m'appelle léna et j'habite à berlin",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.834416982717812,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léna",
+                  "confidence": 0.921113,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.693581,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "j'habite",
+                  "confidence": 0.985646,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "à",
+                  "heard": "à",
+                  "confidence": 0.501556,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "berlin",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.91,
+            "decode_ms": 13.83,
+            "post_recording_ms": 54.17
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.60198,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.920255,
+                "end": 0.891945,
+                "start": 0.60198,
+                "word": "léna"
+              },
+              {
+                "conf": 0.692331,
+                "end": 0.979513,
+                "start": 0.891945,
+                "word": "et"
+              },
+              {
+                "conf": 0.983953,
+                "end": 1.386147,
+                "start": 0.99,
+                "word": "j'habite"
+              },
+              {
+                "conf": 0.462376,
+                "end": 1.495699,
+                "start": 1.386147,
+                "word": "à"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.98,
+                "start": 1.5,
+                "word": "berlin"
+              }
+            ],
+            "text": "je m'appelle léna et j'habite à berlin",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.247124967165291,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léna",
+                  "confidence": 0.920255,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.692331,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "j'habite",
+                  "confidence": 0.983953,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "à",
+                  "heard": "à",
+                  "confidence": 0.462376,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "berlin",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.04,
+            "decode_ms": 13.25,
+            "post_recording_ms": 51.77
+          }
+        ]
+      }
+    },
+    {
+      "language": "fr",
+      "condition": "german-accent",
+      "target": "Je m'appelle Léna et j'habite à Berlin.",
+      "spoken": "Je m'appelle Léna et j'habite à Berlin.",
+      "duration_s": 4.3621875,
+      "pcm_sha256": "a60f30f54fbe56d98f37728326730520ee54eb2d36a7651ab682aa14f27b0a71",
+      "free": {
+        "median_ms": 4767.33,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 0.615697,
+                "end": 0.21,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 0.999852,
+                "end": 0.84,
+                "start": 0.36,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.998764,
+                "end": 1.41,
+                "start": 0.93,
+                "word": "léa"
+              },
+              {
+                "conf": 0.643238,
+                "end": 1.590312,
+                "start": 1.414676,
+                "word": "et"
+              },
+              {
+                "conf": 0.227041,
+                "end": 1.92,
+                "start": 1.71,
+                "word": "george"
+              },
+              {
+                "conf": 0.663064,
+                "end": 2.52,
+                "start": 2.01,
+                "word": "hamilton"
+              },
+              {
+                "conf": 0.465733,
+                "end": 2.813087,
+                "start": 2.606413,
+                "word": "a"
+              },
+              {
+                "conf": 0.142494,
+                "end": 3.27,
+                "start": 2.813087,
+                "word": "avez"
+              },
+              {
+                "conf": 0.367043,
+                "end": 3.99,
+                "start": 3.27468,
+                "word": "smiley"
+              }
+            ],
+            "text": "je m'appelle léa et george hamilton a avez smiley",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 3672.014291980304,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 0.615697,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 0.999852,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 0.998764,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.643238,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "a",
+                  "confidence": 0.465733,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "à",
+                  "heard": "avez",
+                  "confidence": 0.142494,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "smiley",
+                  "confidence": 0.367043,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.38,
+            "decode_ms": 3672.01,
+            "post_recording_ms": 3711.15
+          },
+          {
+            "words": [
+              {
+                "conf": 0.610118,
+                "end": 0.21,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.84,
+                "start": 0.36,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.41,
+                "start": 0.93,
+                "word": "léa"
+              },
+              {
+                "conf": 0.643845,
+                "end": 1.590269,
+                "start": 1.414093,
+                "word": "et"
+              },
+              {
+                "conf": 0.207994,
+                "end": 1.92,
+                "start": 1.71,
+                "word": "george"
+              },
+              {
+                "conf": 0.699247,
+                "end": 2.55,
+                "start": 2.01,
+                "word": "hamilton"
+              },
+              {
+                "conf": 0.496226,
+                "end": 2.846416,
+                "start": 2.607327,
+                "word": "a"
+              },
+              {
+                "conf": 0.152798,
+                "end": 3.27,
+                "start": 2.858349,
+                "word": "avez"
+              },
+              {
+                "conf": 0.392287,
+                "end": 3.99,
+                "start": 3.274375,
+                "word": "smiley"
+              }
+            ],
+            "text": "je m'appelle léa et george hamilton a avez smiley",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 6099.407500005327,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 0.610118,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.643845,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "a",
+                  "confidence": 0.496226,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "à",
+                  "heard": "avez",
+                  "confidence": 0.152798,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "smiley",
+                  "confidence": 0.392287,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 73.22,
+            "decode_ms": 6099.41,
+            "post_recording_ms": 6174.0
+          },
+          {
+            "words": [
+              {
+                "conf": 0.598729,
+                "end": 0.21,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.84,
+                "start": 0.36,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.41,
+                "start": 0.93,
+                "word": "léa"
+              },
+              {
+                "conf": 0.659936,
+                "end": 1.59047,
+                "start": 1.415313,
+                "word": "et"
+              },
+              {
+                "conf": 0.240308,
+                "end": 1.92,
+                "start": 1.71,
+                "word": "george"
+              },
+              {
+                "conf": 0.67792,
+                "end": 2.52,
+                "start": 2.01,
+                "word": "hamilton"
+              },
+              {
+                "conf": 0.465041,
+                "end": 2.871465,
+                "start": 2.640019,
+                "word": "a"
+              },
+              {
+                "conf": 0.357454,
+                "end": 3.99,
+                "start": 3.275539,
+                "word": "smiley"
+              }
+            ],
+            "text": "je m'appelle léa et george hamilton a smiley",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 4637.486833031289,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 0.598729,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.659936,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "hamilton",
+                  "confidence": 0.67792,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": "a",
+                  "confidence": 0.465041,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "smiley",
+                  "confidence": 0.357454,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 129.3,
+            "decode_ms": 4637.49,
+            "post_recording_ms": 4767.33
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 65.26,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 0.513595,
+                "end": 0.060417,
+                "start": 0.004437,
+                "word": "[unk]"
+              },
+              {
+                "conf": 0.778679,
+                "end": 0.36,
+                "start": 0.101644,
+                "word": "et"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.84,
+                "start": 0.36,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.52,
+                "start": 2.01,
+                "word": "habite"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.867281,
+                "start": 2.637155,
+                "word": "à"
+              },
+              {
+                "conf": 0.962235,
+                "end": 3.84,
+                "start": 2.972802,
+                "word": "[unk]"
+              }
+            ],
+            "text": "[unk] et m'appelle habite à [unk]",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 23.054416989907622,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "et",
+                  "confidence": 0.778679,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "et",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "habite",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": "à",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "[unk]",
+                  "confidence": 0.962235,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 43.02,
+            "decode_ms": 23.05,
+            "post_recording_ms": 66.49
+          },
+          {
+            "words": [
+              {
+                "conf": 0.517597,
+                "end": 0.087579,
+                "start": 0.004615,
+                "word": "[unk]"
+              },
+              {
+                "conf": 0.789639,
+                "end": 0.36,
+                "start": 0.117733,
+                "word": "et"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.84,
+                "start": 0.36,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.52,
+                "start": 2.01,
+                "word": "habite"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.86439,
+                "start": 2.632614,
+                "word": "à"
+              },
+              {
+                "conf": 0.955515,
+                "end": 3.84,
+                "start": 2.965132,
+                "word": "[unk]"
+              }
+            ],
+            "text": "[unk] et m'appelle habite à [unk]",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 22.66029198653996,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "et",
+                  "confidence": 0.789639,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "et",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "habite",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": "à",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "[unk]",
+                  "confidence": 0.955515,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.72,
+            "decode_ms": 22.66,
+            "post_recording_ms": 61.76
+          },
+          {
+            "words": [
+              {
+                "conf": 0.520002,
+                "end": 0.060445,
+                "start": 0.004523,
+                "word": "[unk]"
+              },
+              {
+                "conf": 0.784856,
+                "end": 0.36,
+                "start": 0.104494,
+                "word": "et"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.84,
+                "start": 0.36,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.804077,
+                "end": 1.41,
+                "start": 0.93,
+                "word": "léna"
+              },
+              {
+                "conf": 0.753072,
+                "end": 1.591393,
+                "start": 1.421622,
+                "word": "et"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.52,
+                "start": 2.01,
+                "word": "habite"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.863709,
+                "start": 2.629584,
+                "word": "à"
+              },
+              {
+                "conf": 0.973281,
+                "end": 3.84,
+                "start": 2.96967,
+                "word": "[unk]"
+              }
+            ],
+            "text": "[unk] et m'appelle léna et habite à [unk]",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 26.511042029596865,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "et",
+                  "confidence": 0.784856,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léna",
+                  "confidence": 0.804077,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.753072,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "habite",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": "à",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "[unk]",
+                  "confidence": 0.973281,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.32,
+            "decode_ms": 26.51,
+            "post_recording_ms": 65.26
+          }
+        ]
+      }
+    },
+    {
+      "language": "fr",
+      "condition": "wrong-word",
+      "target": "Je m'appelle Léna et j'habite à Berlin.",
+      "spoken": "Je m'appelle Léna et je mange à Berlin.",
+      "duration_s": 2.41175,
+      "pcm_sha256": "18ebbccc3d7054992a40d1739eac2b9df56bcfd7bfd16b3e4f31359bdb99f7f3",
+      "free": {
+        "median_ms": 1093.89,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 0.98374,
+                "end": 0.61049,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.428845,
+                "end": 0.857876,
+                "start": 0.61049,
+                "word": "léa"
+              },
+              {
+                "conf": 0.567252,
+                "end": 0.934874,
+                "start": 0.857876,
+                "word": "et"
+              },
+              {
+                "conf": 0.887332,
+                "end": 1.17,
+                "start": 0.991187,
+                "word": "je"
+              },
+              {
+                "conf": 0.82302,
+                "end": 1.410041,
+                "start": 1.17,
+                "word": "mange"
+              },
+              {
+                "conf": 0.766193,
+                "end": 1.739868,
+                "start": 1.410995,
+                "word": "harbert"
+              },
+              {
+                "conf": 0.554022,
+                "end": 2.04,
+                "start": 1.739868,
+                "word": "là"
+              }
+            ],
+            "text": "je m'appelle léa et je mange harbert là",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 1057.9167500836775,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 0.98374,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 0.428845,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.567252,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "mange",
+                  "confidence": 0.82302,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": "harbert",
+                  "confidence": 0.766193,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "là",
+                  "confidence": 0.554022,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 37.21,
+            "decode_ms": 1057.92,
+            "post_recording_ms": 1095.62
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 0.98273,
+                "end": 0.611125,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.413692,
+                "end": 0.854672,
+                "start": 0.611125,
+                "word": "léa"
+              },
+              {
+                "conf": 0.561728,
+                "end": 0.930648,
+                "start": 0.854672,
+                "word": "et"
+              },
+              {
+                "conf": 0.903219,
+                "end": 1.17,
+                "start": 0.991206,
+                "word": "je"
+              },
+              {
+                "conf": 0.819689,
+                "end": 1.410071,
+                "start": 1.17,
+                "word": "mange"
+              },
+              {
+                "conf": 0.76608,
+                "end": 1.739859,
+                "start": 1.411723,
+                "word": "harbert"
+              },
+              {
+                "conf": 0.553557,
+                "end": 2.04,
+                "start": 1.739859,
+                "word": "là"
+              }
+            ],
+            "text": "je m'appelle léa et je mange harbert là",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 1053.680874989368,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 0.98273,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 0.413692,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.561728,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "mange",
+                  "confidence": 0.819689,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": "harbert",
+                  "confidence": 0.76608,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "là",
+                  "confidence": 0.553557,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.78,
+            "decode_ms": 1053.68,
+            "post_recording_ms": 1093.89
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 0.982482,
+                "end": 0.610868,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.408476,
+                "end": 0.857185,
+                "start": 0.610868,
+                "word": "léa"
+              },
+              {
+                "conf": 0.543276,
+                "end": 0.933961,
+                "start": 0.857185,
+                "word": "et"
+              },
+              {
+                "conf": 0.88847,
+                "end": 1.17,
+                "start": 0.991216,
+                "word": "je"
+              },
+              {
+                "conf": 0.824988,
+                "end": 1.410065,
+                "start": 1.17,
+                "word": "mange"
+              },
+              {
+                "conf": 0.758875,
+                "end": 1.73987,
+                "start": 1.410932,
+                "word": "harbert"
+              },
+              {
+                "conf": 0.550419,
+                "end": 2.04,
+                "start": 1.73987,
+                "word": "là"
+              }
+            ],
+            "text": "je m'appelle léa et je mange harbert là",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 1050.1717920415103,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 0.982482,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léa",
+                  "confidence": 0.408476,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.543276,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "mange",
+                  "confidence": 0.824988,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": "harbert",
+                  "confidence": 0.758875,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "là",
+                  "confidence": 0.550419,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.03,
+            "decode_ms": 1050.17,
+            "post_recording_ms": 1089.59
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 53.01,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.601818,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.926824,
+                "end": 0.892753,
+                "start": 0.601818,
+                "word": "léna"
+              },
+              {
+                "conf": 0.715095,
+                "end": 0.980566,
+                "start": 0.892753,
+                "word": "et"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.17,
+                "start": 0.99,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.471891,
+                "start": 1.17,
+                "word": "mange"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.01,
+                "start": 1.50937,
+                "word": "berlin"
+              }
+            ],
+            "text": "je m'appelle léna et je mange berlin",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.839291990734637,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léna",
+                  "confidence": 0.926824,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.715095,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "mange",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "berlin",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.36,
+            "decode_ms": 13.84,
+            "post_recording_ms": 55.57
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.60165,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.933626,
+                "end": 0.893304,
+                "start": 0.60165,
+                "word": "léna"
+              },
+              {
+                "conf": 0.722198,
+                "end": 0.981284,
+                "start": 0.893304,
+                "word": "et"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.17,
+                "start": 0.99,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.471488,
+                "start": 1.17,
+                "word": "mange"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.01,
+                "start": 1.509504,
+                "word": "berlin"
+              }
+            ],
+            "text": "je m'appelle léna et je mange berlin",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.740833033807576,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léna",
+                  "confidence": 0.933626,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.722198,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "mange",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "berlin",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.26,
+            "decode_ms": 13.74,
+            "post_recording_ms": 52.39
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.60182,
+                "start": 0.18,
+                "word": "m'appelle"
+              },
+              {
+                "conf": 0.926753,
+                "end": 0.892706,
+                "start": 0.60182,
+                "word": "léna"
+              },
+              {
+                "conf": 0.716694,
+                "end": 0.980505,
+                "start": 0.892706,
+                "word": "et"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.17,
+                "start": 0.99,
+                "word": "je"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.471087,
+                "start": 1.17,
+                "word": "mange"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.01,
+                "start": 1.509638,
+                "word": "berlin"
+              }
+            ],
+            "text": "je m'appelle léna et je mange berlin",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.823250075802207,
+              "words": [
+                {
+                  "expected": "Je",
+                  "heard": "je",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "m'appelle",
+                  "heard": "m'appelle",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Léna",
+                  "heard": "léna",
+                  "confidence": 0.926753,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "et",
+                  "heard": "et",
+                  "confidence": 0.716694,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "j'habite",
+                  "heard": "mange",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "à",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Berlin",
+                  "heard": "berlin",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.8,
+            "decode_ms": 13.82,
+            "post_recording_ms": 53.01
+          }
+        ]
+      }
+    },
+    {
+      "language": "en",
+      "condition": "good",
+      "target": "I think three birds fly through the trees.",
+      "spoken": "I think three birds fly through the trees.",
+      "duration_s": 3.063625,
+      "pcm_sha256": "b097b9a5ca49f22c855e766fff17da38d16ffe850179473cbad5d83a9c5e3d50",
+      "free": {
+        "median_ms": 541.46,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 0.383313,
+                "end": 0.182289,
+                "start": 0.0,
+                "word": "the"
+              },
+              {
+                "conf": 0.785472,
+                "end": 0.57,
+                "start": 0.182289,
+                "word": "think"
+              },
+              {
+                "conf": 0.771843,
+                "end": 0.87,
+                "start": 0.57629,
+                "word": "free"
+              },
+              {
+                "conf": 0.672008,
+                "end": 1.23,
+                "start": 0.87,
+                "word": "bird"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.37016,
+                "word": "fly"
+              },
+              {
+                "conf": 0.620879,
+                "end": 1.92,
+                "start": 1.68,
+                "word": "through"
+              },
+              {
+                "conf": 0.697795,
+                "end": 2.64,
+                "start": 1.92,
+                "word": "batteries"
+              }
+            ],
+            "text": "the think free bird fly through batteries",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 500.22862502373755,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": "the",
+                  "confidence": 0.383313,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.785472,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 0.771843,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "bird",
+                  "confidence": 0.672008,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "through",
+                  "confidence": 0.620879,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "the",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "batteries",
+                  "confidence": 0.697795,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.75,
+            "decode_ms": 500.23,
+            "post_recording_ms": 541.46
+          },
+          {
+            "words": [
+              {
+                "conf": 0.462126,
+                "end": 0.197548,
+                "start": 0.0,
+                "word": "the"
+              },
+              {
+                "conf": 0.63527,
+                "end": 0.57,
+                "start": 0.197548,
+                "word": "think"
+              },
+              {
+                "conf": 0.724917,
+                "end": 0.87,
+                "start": 0.580553,
+                "word": "free"
+              },
+              {
+                "conf": 0.605884,
+                "end": 1.23,
+                "start": 0.87,
+                "word": "bird"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.683988,
+                "start": 1.368177,
+                "word": "fly"
+              },
+              {
+                "conf": 0.627743,
+                "end": 1.92,
+                "start": 1.683988,
+                "word": "through"
+              },
+              {
+                "conf": 0.673891,
+                "end": 2.64,
+                "start": 1.92,
+                "word": "batteries"
+              }
+            ],
+            "text": "the think free bird fly through batteries",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 496.7493340373039,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": "the",
+                  "confidence": 0.462126,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.63527,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 0.724917,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "bird",
+                  "confidence": 0.605884,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "through",
+                  "confidence": 0.627743,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "the",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "batteries",
+                  "confidence": 0.673891,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.92,
+            "decode_ms": 496.75,
+            "post_recording_ms": 539.08
+          },
+          {
+            "words": [
+              {
+                "conf": 0.392176,
+                "end": 0.18817,
+                "start": 0.0,
+                "word": "the"
+              },
+              {
+                "conf": 0.76591,
+                "end": 0.57,
+                "start": 0.18817,
+                "word": "think"
+              },
+              {
+                "conf": 0.766373,
+                "end": 0.87,
+                "start": 0.576997,
+                "word": "free"
+              },
+              {
+                "conf": 0.766373,
+                "end": 1.23,
+                "start": 0.87,
+                "word": "bird"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.372991,
+                "word": "fly"
+              },
+              {
+                "conf": 0.621005,
+                "end": 1.92,
+                "start": 1.68,
+                "word": "through"
+              },
+              {
+                "conf": 0.66538,
+                "end": 2.67,
+                "start": 1.92,
+                "word": "batteries"
+              }
+            ],
+            "text": "the think free bird fly through batteries",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 514.7115408908576,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": "the",
+                  "confidence": 0.392176,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.76591,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 0.766373,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "bird",
+                  "confidence": 0.766373,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "through",
+                  "confidence": 0.621005,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "the",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "batteries",
+                  "confidence": 0.66538,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.91,
+            "decode_ms": 514.71,
+            "post_recording_ms": 556.12
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 56.96,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 0.770147,
+                "end": 0.57,
+                "start": 0.15,
+                "word": "think"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.87,
+                "start": 0.576896,
+                "word": "free"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.35,
+                "start": 0.87,
+                "word": "birds"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.35,
+                "word": "fly"
+              },
+              {
+                "conf": 0.78715,
+                "end": 1.89,
+                "start": 1.68,
+                "word": "free"
+              },
+              {
+                "conf": 0.425019,
+                "end": 2.04,
+                "start": 1.92,
+                "word": "the"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.67,
+                "start": 2.050348,
+                "word": "trees"
+              }
+            ],
+            "text": "think free birds fly free the trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 16.753167030401528,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.770147,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "birds",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "free",
+                  "confidence": 0.78715,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "the",
+                  "confidence": 0.425019,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.72,
+            "decode_ms": 16.75,
+            "post_recording_ms": 56.86
+          },
+          {
+            "words": [
+              {
+                "conf": 0.841674,
+                "end": 0.57,
+                "start": 0.15,
+                "word": "think"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.87,
+                "start": 0.57475,
+                "word": "free"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.35,
+                "start": 0.87,
+                "word": "birds"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.35,
+                "word": "fly"
+              },
+              {
+                "conf": 0.791409,
+                "end": 1.89,
+                "start": 1.68,
+                "word": "free"
+              },
+              {
+                "conf": 0.451521,
+                "end": 2.04,
+                "start": 1.92,
+                "word": "the"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.67,
+                "start": 2.04925,
+                "word": "trees"
+              }
+            ],
+            "text": "think free birds fly free the trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 17.316541983745992,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.841674,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "birds",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "free",
+                  "confidence": 0.791409,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "the",
+                  "confidence": 0.451521,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.27,
+            "decode_ms": 17.32,
+            "post_recording_ms": 56.96
+          },
+          {
+            "words": [
+              {
+                "conf": 0.727061,
+                "end": 0.57,
+                "start": 0.15,
+                "word": "think"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.87,
+                "start": 0.578188,
+                "word": "free"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.35,
+                "start": 0.87,
+                "word": "birds"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.35,
+                "word": "fly"
+              },
+              {
+                "conf": 0.778881,
+                "end": 1.89,
+                "start": 1.68,
+                "word": "free"
+              },
+              {
+                "conf": 0.443925,
+                "end": 2.04,
+                "start": 1.92,
+                "word": "the"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.67,
+                "start": 2.050232,
+                "word": "trees"
+              }
+            ],
+            "text": "think free birds fly free the trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 17.80599995981902,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.727061,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "birds",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "free",
+                  "confidence": 0.778881,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "the",
+                  "confidence": 0.443925,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.37,
+            "decode_ms": 17.81,
+            "post_recording_ms": 58.55
+          }
+        ]
+      }
+    },
+    {
+      "language": "en",
+      "condition": "german-accent",
+      "target": "I think three birds fly through the trees.",
+      "spoken": "I think three birds fly through the trees.",
+      "duration_s": 3.3545,
+      "pcm_sha256": "dbd2b43678c1d03136bad364f5556bf4a8053654f606b6714c2cf9b03f7c1ef8",
+      "free": {
+        "median_ms": 618.11,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.54,
+                "start": 0.06,
+                "word": "eating"
+              },
+              {
+                "conf": 0.625874,
+                "end": 0.895889,
+                "start": 0.63,
+                "word": "to"
+              },
+              {
+                "conf": 0.52194,
+                "end": 1.17,
+                "start": 0.96,
+                "word": "me"
+              },
+              {
+                "conf": 0.909097,
+                "end": 1.38,
+                "start": 1.17,
+                "word": "it's"
+              },
+              {
+                "conf": 0.909097,
+                "end": 1.71,
+                "start": 1.38,
+                "word": "flew"
+              },
+              {
+                "conf": 0.977152,
+                "end": 2.07,
+                "start": 1.71,
+                "word": "to"
+              },
+              {
+                "conf": 0.470756,
+                "end": 2.437801,
+                "start": 2.22,
+                "word": "the"
+              },
+              {
+                "conf": 0.316288,
+                "end": 2.97,
+                "start": 2.46,
+                "word": "place"
+              }
+            ],
+            "text": "eating to me it's flew to the place",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 577.8620829805732,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": "eating",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "think",
+                  "heard": "to",
+                  "confidence": 0.625874,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "three",
+                  "heard": "me",
+                  "confidence": 0.52194,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "it's",
+                  "confidence": 0.909097,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "flew",
+                  "confidence": 0.909097,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "through",
+                  "heard": "to",
+                  "confidence": 0.977152,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "the",
+                  "confidence": 0.470756,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "place",
+                  "confidence": 0.316288,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.86,
+            "decode_ms": 577.86,
+            "post_recording_ms": 618.11
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.54,
+                "start": 0.03,
+                "word": "eating"
+              },
+              {
+                "conf": 0.619377,
+                "end": 0.873185,
+                "start": 0.63,
+                "word": "to"
+              },
+              {
+                "conf": 0.646802,
+                "end": 1.17,
+                "start": 0.96,
+                "word": "me"
+              },
+              {
+                "conf": 0.997011,
+                "end": 1.38,
+                "start": 1.17,
+                "word": "it's"
+              },
+              {
+                "conf": 0.830809,
+                "end": 1.71,
+                "start": 1.38,
+                "word": "flew"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.07,
+                "start": 1.71,
+                "word": "to"
+              },
+              {
+                "conf": 0.321566,
+                "end": 2.97,
+                "start": 2.46,
+                "word": "place"
+              }
+            ],
+            "text": "eating to me it's flew to place",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 610.5791250010952,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "eating",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "three",
+                  "heard": "to",
+                  "confidence": 0.619377,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "me",
+                  "confidence": 0.646802,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "it's",
+                  "confidence": 0.997011,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "through",
+                  "heard": "flew",
+                  "confidence": 0.830809,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "to",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "place",
+                  "confidence": 0.321566,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 43.92,
+            "decode_ms": 610.58,
+            "post_recording_ms": 654.91
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.54,
+                "start": 0.03,
+                "word": "eating"
+              },
+              {
+                "conf": 0.559361,
+                "end": 0.9,
+                "start": 0.63,
+                "word": "to"
+              },
+              {
+                "conf": 0.608729,
+                "end": 1.17,
+                "start": 0.96,
+                "word": "me"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.38,
+                "start": 1.17,
+                "word": "it's"
+              },
+              {
+                "conf": 0.833302,
+                "end": 1.71,
+                "start": 1.38,
+                "word": "flew"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.07,
+                "start": 1.71,
+                "word": "to"
+              },
+              {
+                "conf": 0.438354,
+                "end": 2.440711,
+                "start": 2.22,
+                "word": "the"
+              },
+              {
+                "conf": 0.386532,
+                "end": 2.97,
+                "start": 2.46,
+                "word": "place"
+              }
+            ],
+            "text": "eating to me it's flew to the place",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 545.6397089874372,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": "eating",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "think",
+                  "heard": "to",
+                  "confidence": 0.559361,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "three",
+                  "heard": "me",
+                  "confidence": 0.608729,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "it's",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "flew",
+                  "confidence": 0.833302,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "through",
+                  "heard": "to",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "the",
+                  "confidence": 0.438354,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "place",
+                  "confidence": 0.386532,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 42.36,
+            "decode_ms": 545.64,
+            "post_recording_ms": 588.43
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 65.71,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 1.987859,
+                "start": 0.0,
+                "word": "[unk]"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.97,
+                "start": 2.43,
+                "word": "trees"
+              }
+            ],
+            "text": "[unk] trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 23.664958076551557,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "three",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "birds",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "fly",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "through",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "the",
+                  "heard": "[unk]",
+                  "confidence": 1,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.53,
+            "decode_ms": 23.66,
+            "post_recording_ms": 64.53
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 1.972269,
+                "start": 0.0,
+                "word": "[unk]"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.97,
+                "start": 2.43,
+                "word": "trees"
+              }
+            ],
+            "text": "[unk] trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 25.665082968771458,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "three",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "birds",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "fly",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "through",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "the",
+                  "heard": "[unk]",
+                  "confidence": 1,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 43.08,
+            "decode_ms": 25.67,
+            "post_recording_ms": 69.1
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 1.959617,
+                "start": 0.0,
+                "word": "[unk]"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.97,
+                "start": 2.43,
+                "word": "trees"
+              }
+            ],
+            "text": "[unk] trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 24.782333057373762,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "three",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "birds",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "fly",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "through",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "the",
+                  "heard": "[unk]",
+                  "confidence": 1,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.59,
+            "decode_ms": 24.78,
+            "post_recording_ms": 65.71
+          }
+        ]
+      }
+    },
+    {
+      "language": "en",
+      "condition": "wrong-word",
+      "target": "I think three birds fly through the trees.",
+      "spoken": "I think three birds fly true the trees.",
+      "duration_s": 3.1796875,
+      "pcm_sha256": "270068b749be3ab9e023e86155970a381846d3b9f1abd4dd1e9b083dc5b14558",
+      "free": {
+        "median_ms": 590.66,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 0.412567,
+                "end": 0.196296,
+                "start": 0.0,
+                "word": "the"
+              },
+              {
+                "conf": 0.712012,
+                "end": 0.57,
+                "start": 0.196296,
+                "word": "think"
+              },
+              {
+                "conf": 0.723718,
+                "end": 0.87,
+                "start": 0.578509,
+                "word": "free"
+              },
+              {
+                "conf": 0.723718,
+                "end": 1.23,
+                "start": 0.87,
+                "word": "bird"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.371712,
+                "word": "fly"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.04,
+                "start": 1.68,
+                "word": "through"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.16,
+                "start": 2.07,
+                "word": "the"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.76,
+                "start": 2.16,
+                "word": "trees"
+              }
+            ],
+            "text": "the think free bird fly through the trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 549.135334091261,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": "the",
+                  "confidence": 0.412567,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.712012,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 0.723718,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "bird",
+                  "confidence": 0.723718,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "through",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "the",
+                  "heard": "the",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.05,
+            "decode_ms": 549.14,
+            "post_recording_ms": 590.66
+          },
+          {
+            "words": [
+              {
+                "conf": 0.384675,
+                "end": 0.188706,
+                "start": 0.0,
+                "word": "the"
+              },
+              {
+                "conf": 0.772806,
+                "end": 0.57,
+                "start": 0.188706,
+                "word": "think"
+              },
+              {
+                "conf": 0.699094,
+                "end": 0.87,
+                "start": 0.576855,
+                "word": "free"
+              },
+              {
+                "conf": 0.699094,
+                "end": 1.23,
+                "start": 0.87,
+                "word": "bird"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.370973,
+                "word": "fly"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.04,
+                "start": 1.68,
+                "word": "through"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.16,
+                "start": 2.07,
+                "word": "the"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.76,
+                "start": 2.16,
+                "word": "trees"
+              }
+            ],
+            "text": "the think free bird fly through the trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 515.7311669318005,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": "the",
+                  "confidence": 0.384675,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.772806,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 0.699094,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "bird",
+                  "confidence": 0.699094,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "through",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "the",
+                  "heard": "the",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.67,
+            "decode_ms": 515.73,
+            "post_recording_ms": 557.85
+          },
+          {
+            "words": [
+              {
+                "conf": 0.412591,
+                "end": 0.190519,
+                "start": 0.0,
+                "word": "the"
+              },
+              {
+                "conf": 0.723369,
+                "end": 0.57,
+                "start": 0.190519,
+                "word": "think"
+              },
+              {
+                "conf": 0.711915,
+                "end": 0.87,
+                "start": 0.578167,
+                "word": "free"
+              },
+              {
+                "conf": 0.711915,
+                "end": 1.23,
+                "start": 0.87,
+                "word": "bird"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.371357,
+                "word": "fly"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.04,
+                "start": 1.68,
+                "word": "through"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.16,
+                "start": 2.07,
+                "word": "the"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.76,
+                "start": 2.16,
+                "word": "trees"
+              }
+            ],
+            "text": "the think free bird fly through the trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 563.800459029153,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": "the",
+                  "confidence": 0.412591,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.723369,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 0.711915,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "bird",
+                  "confidence": 0.711915,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "through",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "the",
+                  "heard": "the",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 44.42,
+            "decode_ms": 563.8,
+            "post_recording_ms": 608.71
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 59.23,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 0.737224,
+                "end": 0.57,
+                "start": 0.15,
+                "word": "think"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.87,
+                "start": 0.577883,
+                "word": "free"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.35,
+                "start": 0.87,
+                "word": "birds"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.35,
+                "word": "fly"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.04,
+                "start": 1.68,
+                "word": "true"
+              },
+              {
+                "conf": 0.823569,
+                "end": 2.16,
+                "start": 2.07,
+                "word": "a"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.76,
+                "start": 2.16,
+                "word": "trees"
+              }
+            ],
+            "text": "think free birds fly true a trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 18.79837503656745,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.737224,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "birds",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "true",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "a",
+                  "confidence": 0.823569,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 42.72,
+            "decode_ms": 18.8,
+            "post_recording_ms": 61.94
+          },
+          {
+            "words": [
+              {
+                "conf": 0.853219,
+                "end": 0.57,
+                "start": 0.15,
+                "word": "think"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.87,
+                "start": 0.574403,
+                "word": "free"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.35,
+                "start": 0.87,
+                "word": "birds"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.35,
+                "word": "fly"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.04,
+                "start": 1.68,
+                "word": "true"
+              },
+              {
+                "conf": 0.812837,
+                "end": 2.16,
+                "start": 2.07,
+                "word": "a"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.76,
+                "start": 2.16,
+                "word": "trees"
+              }
+            ],
+            "text": "think free birds fly true a trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 18.050374928861856,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.853219,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "birds",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "true",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "a",
+                  "confidence": 0.812837,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.79,
+            "decode_ms": 18.05,
+            "post_recording_ms": 59.23
+          },
+          {
+            "words": [
+              {
+                "conf": 0.806488,
+                "end": 0.57,
+                "start": 0.15,
+                "word": "think"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.87,
+                "start": 0.575805,
+                "word": "free"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.35,
+                "start": 0.87,
+                "word": "birds"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.68,
+                "start": 1.35,
+                "word": "fly"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.04,
+                "start": 1.68,
+                "word": "true"
+              },
+              {
+                "conf": 0.819876,
+                "end": 2.16,
+                "start": 2.07,
+                "word": "a"
+              },
+              {
+                "conf": 1.0,
+                "end": 2.76,
+                "start": 2.16,
+                "word": "trees"
+              }
+            ],
+            "text": "think free birds fly true a trees",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 17.752957995980978,
+              "words": [
+                {
+                  "expected": "I",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "think",
+                  "heard": "think",
+                  "confidence": 0.806488,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "three",
+                  "heard": "free",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "birds",
+                  "heard": "birds",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "fly",
+                  "heard": "fly",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "through",
+                  "heard": "true",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "the",
+                  "heard": "a",
+                  "confidence": 0.819876,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "trees",
+                  "heard": "trees",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.4,
+            "decode_ms": 17.75,
+            "post_recording_ms": 58.73
+          }
+        ]
+      }
+    },
+    {
+      "language": "de",
+      "condition": "good",
+      "target": "Ich trinke heute kaltes Wasser.",
+      "spoken": "Ich trinke heute kaltes Wasser.",
+      "duration_s": 2.366125,
+      "pcm_sha256": "de27e6ad2c648108c9c1850d751515dd422fc06839675752ecb9e38a6e04ee4c",
+      "free": {
+        "median_ms": 380.56,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.187618,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.819509,
+                "end": 0.631239,
+                "start": 0.187618,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.353536,
+                "end": 0.99,
+                "start": 0.631239,
+                "word": "kreuz"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.53,
+                "start": 1.08,
+                "word": "kaltes"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.98,
+                "start": 1.53,
+                "word": "wasser"
+              }
+            ],
+            "text": "ich trinke kreuz kaltes wasser",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 338.96520896814764,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.819509,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "kreuz",
+                  "confidence": 0.353536,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "wasser",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.24,
+            "decode_ms": 338.97,
+            "post_recording_ms": 380.56
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.187648,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.818775,
+                "end": 0.632646,
+                "start": 0.187648,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.345553,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "heute"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.53,
+                "start": 1.060931,
+                "word": "kaltes"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.98,
+                "start": 1.53,
+                "word": "wasser"
+              }
+            ],
+            "text": "ich trinke heute kaltes wasser",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 328.21329205762595,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.818775,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "heute",
+                  "confidence": 0.345553,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "wasser",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.07,
+            "decode_ms": 328.21,
+            "post_recording_ms": 369.68
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.189259,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.779429,
+                "end": 0.63,
+                "start": 0.189259,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.386723,
+                "end": 0.99,
+                "start": 0.63,
+                "word": "kreuz"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.53,
+                "start": 1.08,
+                "word": "kaltes"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.98,
+                "start": 1.53,
+                "word": "wasser"
+              }
+            ],
+            "text": "ich trinke kreuz kaltes wasser",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 339.6599580300972,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.779429,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "kreuz",
+                  "confidence": 0.386723,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "wasser",
+                  "confidence": 1,
+                  "verdict": "passt"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.97,
+            "decode_ms": 339.66,
+            "post_recording_ms": 380.99
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 52.9,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.63,
+                "start": 0.18,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.5,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "häute"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.53,
+                "start": 1.08,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.662333,
+                "end": 1.98,
+                "start": 1.53,
+                "word": "wasser"
+              }
+            ],
+            "text": "ich trinke häute kaltes wasser",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.65129102487117,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "häute",
+                  "confidence": 0.5,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "wasser",
+                  "confidence": 0.662333,
+                  "verdict": "fast"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.31,
+            "decode_ms": 13.65,
+            "post_recording_ms": 55.28
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.63,
+                "start": 0.18,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.5,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "häute"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.53,
+                "start": 1.05,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.714244,
+                "end": 1.98,
+                "start": 1.53,
+                "word": "wasser"
+              }
+            ],
+            "text": "ich trinke häute kaltes wasser",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 12.59633305016905,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "häute",
+                  "confidence": 0.5,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "wasser",
+                  "confidence": 0.714244,
+                  "verdict": "fast"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.81,
+            "decode_ms": 12.6,
+            "post_recording_ms": 52.9
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.63,
+                "start": 0.18,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.5,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "häute"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.53,
+                "start": 1.08,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.638706,
+                "end": 1.98,
+                "start": 1.53,
+                "word": "wasser"
+              }
+            ],
+            "text": "ich trinke häute kaltes wasser",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.526375056244433,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "häute",
+                  "confidence": 0.5,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "wasser",
+                  "confidence": 0.638706,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.4,
+            "decode_ms": 13.53,
+            "post_recording_ms": 52.26
+          }
+        ]
+      }
+    },
+    {
+      "language": "de",
+      "condition": "english-accent",
+      "target": "Ich trinke heute kaltes Wasser.",
+      "spoken": "Ich trinke heute kaltes Wasser.",
+      "duration_s": 2.633,
+      "pcm_sha256": "2b4b7ed52c8757d3256f2fcb205bed5031c653047235c8bd64b7391680f77c92",
+      "free": {
+        "median_ms": 355.98,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.24,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.73216,
+                "start": 0.27,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.312705,
+                "end": 0.87,
+                "start": 0.81,
+                "word": "ich"
+              },
+              {
+                "conf": 0.736041,
+                "end": 1.56,
+                "start": 1.14,
+                "word": "glaub"
+              },
+              {
+                "conf": 0.906663,
+                "end": 1.65,
+                "start": 1.56,
+                "word": "s"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.77,
+                "start": 1.65,
+                "word": "u"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.98,
+                "start": 1.77,
+                "word": "a"
+              }
+            ],
+            "text": "ich trinke ich glaub s u a",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 288.5162499733269,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "s",
+                  "confidence": 0.906663,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "u",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "a",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.38,
+            "decode_ms": 288.52,
+            "post_recording_ms": 329.35
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.24,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.732643,
+                "start": 0.27,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.298119,
+                "end": 1.11,
+                "start": 0.81,
+                "word": "j"
+              },
+              {
+                "conf": 0.701881,
+                "end": 1.56,
+                "start": 1.14,
+                "word": "glaub"
+              },
+              {
+                "conf": 0.89862,
+                "end": 1.65,
+                "start": 1.56,
+                "word": "s"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.77,
+                "start": 1.65,
+                "word": "u"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.98,
+                "start": 1.77,
+                "word": "a"
+              }
+            ],
+            "text": "ich trinke j glaub s u a",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 309.9566249875352,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "s",
+                  "confidence": 0.89862,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "u",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "a",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 45.63,
+            "decode_ms": 309.96,
+            "post_recording_ms": 355.98
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.24,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.73524,
+                "start": 0.27,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.850133,
+                "end": 1.11,
+                "start": 0.827926,
+                "word": "j"
+              },
+              {
+                "conf": 0.850133,
+                "end": 1.38,
+                "start": 1.11,
+                "word": "k"
+              },
+              {
+                "conf": 0.850133,
+                "end": 1.492105,
+                "start": 1.38,
+                "word": "o"
+              },
+              {
+                "conf": 0.490322,
+                "end": 1.77,
+                "start": 1.65,
+                "word": "u"
+              },
+              {
+                "conf": 0.599758,
+                "end": 1.969052,
+                "start": 1.775474,
+                "word": "a"
+              }
+            ],
+            "text": "ich trinke j k o u a",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 323.2302500400692,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "o",
+                  "confidence": 0.850133,
+                  "verdict": "nochmal"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "u",
+                  "confidence": 0.490322,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "a",
+                  "confidence": 0.599758,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.24,
+            "decode_ms": 323.23,
+            "post_recording_ms": 364.91
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 54.88,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.24,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.567437,
+                "end": 0.75,
+                "start": 0.27,
+                "word": "trinke"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.65,
+                "start": 1.11,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.667013,
+                "end": 1.92,
+                "start": 1.74,
+                "word": "[unk]"
+              }
+            ],
+            "text": "ich trinke kaltes [unk]",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 14.174166950397193,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.567437,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "heute",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "[unk]",
+                  "confidence": 0.667013,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.34,
+            "decode_ms": 14.17,
+            "post_recording_ms": 54.88
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.24,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.603642,
+                "end": 0.75,
+                "start": 0.27,
+                "word": "trinke"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.65,
+                "start": 1.11,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.675655,
+                "end": 1.92,
+                "start": 1.74,
+                "word": "[unk]"
+              }
+            ],
+            "text": "ich trinke kaltes [unk]",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 14.29466693662107,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.603642,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "heute",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "[unk]",
+                  "confidence": 0.675655,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.99,
+            "decode_ms": 14.29,
+            "post_recording_ms": 54.6
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.24,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.601442,
+                "end": 0.75,
+                "start": 0.27,
+                "word": "trinke"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.65,
+                "start": 1.11,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.785305,
+                "end": 1.92,
+                "start": 1.74,
+                "word": "[unk]"
+              }
+            ],
+            "text": "ich trinke kaltes [unk]",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 14.749582973308861,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.601442,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "heute",
+                  "heard": null,
+                  "confidence": 0,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "[unk]",
+                  "confidence": 0.785305,
+                  "verdict": "unsicher"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 41.26,
+            "decode_ms": 14.75,
+            "post_recording_ms": 56.41
+          }
+        ]
+      }
+    },
+    {
+      "language": "de",
+      "condition": "wrong-word",
+      "target": "Ich trinke heute kaltes Wasser.",
+      "spoken": "Ich trinke heute kaltes Messer.",
+      "duration_s": 2.328625,
+      "pcm_sha256": "070f967374317723eba5537ab378672d48dad5caea7ebb0502627891f762897d",
+      "free": {
+        "median_ms": 343.69,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.189323,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.778564,
+                "end": 0.634624,
+                "start": 0.189323,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.317516,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "heute"
+              },
+              {
+                "conf": 0.520435,
+                "end": 1.501413,
+                "start": 1.08,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.906159,
+                "end": 1.95,
+                "start": 1.501413,
+                "word": "messer"
+              }
+            ],
+            "text": "ich trinke heute kaltes messer",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 312.62683297973126,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.778564,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "heute",
+                  "confidence": 0.317516,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 0.520435,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "messer",
+                  "confidence": 0.906159,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 38.91,
+            "decode_ms": 312.63,
+            "post_recording_ms": 351.91
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.189332,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.777928,
+                "end": 0.631879,
+                "start": 0.189332,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.499953,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "heute"
+              },
+              {
+                "conf": 0.372244,
+                "end": 1.501421,
+                "start": 1.08,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.97353,
+                "end": 1.95,
+                "start": 1.501421,
+                "word": "messer"
+              }
+            ],
+            "text": "ich trinke heute kaltes messer",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 303.15670801792294,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.777928,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "heute",
+                  "confidence": 0.499953,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 0.372244,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "messer",
+                  "confidence": 0.97353,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.2,
+            "decode_ms": 303.16,
+            "post_recording_ms": 343.69
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18876,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 0.792049,
+                "end": 0.633595,
+                "start": 0.18876,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.411713,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "heute"
+              },
+              {
+                "conf": 0.328878,
+                "end": 1.501374,
+                "start": 1.08,
+                "word": "kaltes"
+              },
+              {
+                "conf": 0.939372,
+                "end": 1.95,
+                "start": 1.502579,
+                "word": "messer"
+              }
+            ],
+            "text": "ich trinke heute kaltes messer",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 297.22154198680073,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 0.792049,
+                  "verdict": "fast"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "heute",
+                  "confidence": 0.411713,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 0.328878,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "messer",
+                  "confidence": 0.939372,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.57,
+            "decode_ms": 297.22,
+            "post_recording_ms": 338.15
+          }
+        ]
+      },
+      "constrained": {
+        "median_ms": 52.93,
+        "runs": [
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.63,
+                "start": 0.18,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.5,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "häute"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.5,
+                "start": 1.08,
+                "word": "kaltes"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.95,
+                "start": 1.5,
+                "word": "messer"
+              }
+            ],
+            "text": "ich trinke häute kaltes messer",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 12.546165962703526,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "häute",
+                  "confidence": 0.5,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "messer",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 40.05,
+            "decode_ms": 12.55,
+            "post_recording_ms": 52.93
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.63,
+                "start": 0.18,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.5,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "häute"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.5,
+                "start": 1.05,
+                "word": "kaltes"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.95,
+                "start": 1.5,
+                "word": "messer"
+              }
+            ],
+            "text": "ich trinke häute kaltes messer",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.311791000887752,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "häute",
+                  "confidence": 0.5,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "messer",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.58,
+            "decode_ms": 13.31,
+            "post_recording_ms": 53.24
+          },
+          {
+            "words": [
+              {
+                "conf": 1.0,
+                "end": 0.18,
+                "start": 0.0,
+                "word": "ich"
+              },
+              {
+                "conf": 1.0,
+                "end": 0.63,
+                "start": 0.18,
+                "word": "trinke"
+              },
+              {
+                "conf": 0.5,
+                "end": 1.05,
+                "start": 0.66,
+                "word": "häute"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.5,
+                "start": 1.05,
+                "word": "kaltes"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.95,
+                "start": 1.5,
+                "word": "messer"
+              }
+            ],
+            "text": "ich trinke häute kaltes messer",
+            "result": {
+              "source": "vosk",
+              "elapsed_ms": 13.021791935898364,
+              "words": [
+                {
+                  "expected": "Ich",
+                  "heard": "ich",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "trinke",
+                  "heard": "trinke",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "heute",
+                  "heard": "häute",
+                  "confidence": 0.5,
+                  "verdict": "unsicher"
+                },
+                {
+                  "expected": "kaltes",
+                  "heard": "kaltes",
+                  "confidence": 1,
+                  "verdict": "passt"
+                },
+                {
+                  "expected": "Wasser",
+                  "heard": "messer",
+                  "confidence": 1,
+                  "verdict": "nochmal"
+                }
+              ],
+              "overall": "unsicher"
+            },
+            "conversion_ms": 39.44,
+            "decode_ms": 13.02,
+            "post_recording_ms": 52.8
+          }
+        ]
+      }
+    }
+  ]
+}

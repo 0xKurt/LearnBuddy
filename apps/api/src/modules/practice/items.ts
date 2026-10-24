@@ -9,6 +9,7 @@
 
 import {
   ChartRead,
+  PronunciationConfusions,
   Figure as FigureSchema,
   MATH_NOTATION_RULE,
   ModelFigure,
@@ -25,14 +26,12 @@ import {
   type TaskPart,
   type StaffTask,
   type StructuredTask,
-  type VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
 import { compileExpression, parseCanonicalKey } from '@learnbuddy/shared-math';
 import { isDeepStrictEqual } from 'node:util';
 
 import { z } from 'zod';
 
-import type { Db } from '../../lib/db.js';
 import { CurriculumPointId } from '../curriculum/state.js';
 import { dollarMathField, dollarMathRuns, fractionChoice } from './dollarMath.js';
 import { figureHolds } from './figureCheck.js';
@@ -250,6 +249,11 @@ export const ItemDraft = z.object({
     .enum(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab', 'speak'])
     .describe(
       'vocab: prompt = word/phrase in prompt_lang, answer = translation in lang · speak: prompt = what to say aloud in lang',
+    ),
+  confusions: PronunciationConfusions.nullable()
+    .optional()
+    .describe(
+      'speak: sound confusions per prompt word, in order; [] if none. No homophones/target/phrases.',
     ),
   prompt: z.string().trim().min(1).max(600),
   answer: z
@@ -957,79 +961,4 @@ export type StoredItem = Omit<ItemDraft, 'figure' | 'kind' | 'rubric'> & {
  * language → the foreign word (what a class test asks for), null both, as before. Questions
  * that are not a vocabulary pair are never affected by it.
  */
-export async function insertItems(
-  db: Db,
-  src: ItemSource,
-  items: ReadonlyArray<StoredItem>,
-  direction: VocabDirection | null = null,
-): Promise<string[]> {
-  const ids: string[] = [];
-  const insert = async (it: StoredItem, asked = true) => {
-    const row = await db.one<{ id: string }>(
-      `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
-                          choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
-                          hints, worked_solution, tolerance, spelling, bar_task, task,
-                          curriculum_point, rubric, listen_task, staff_task, choice_figures, read_passage, tap,
-                          task_part, code_task)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32) returning id`,
-      [
-        src.learnerId,
-        src.materialId,
-        src.subjectId,
-        it.kind,
-        it.prompt,
-        it.answer,
-        it.accepted_answers,
-        it.unit,
-        it.choices,
-        it.correct_choice,
-        it.topic,
-        it.difficulty,
-        it.source_excerpt,
-        src.origin,
-        it.lang,
-        it.prompt_lang,
-        it.figure ? JSON.stringify(it.figure) : null,
-        it.hints,
-        it.worked_solution,
-        it.tolerance,
-        it.spelling,
-        it.bar_task ? JSON.stringify(it.bar_task) : null,
-        it.task ? JSON.stringify(it.task) : null,
-        it.curriculum_point,
-        it.rubric ? JSON.stringify(it.rubric) : null,
-        it.listen_task ? JSON.stringify(it.listen_task) : null,
-        it.staff_task ? JSON.stringify(it.staff_task) : null,
-        it.choice_figures ? JSON.stringify(it.choice_figures) : null,
-        it.read_passage ? JSON.stringify(it.read_passage) : null,
-        it.tap === true,
-        it.task_part ? JSON.stringify(it.task_part) : null,
-        it.code_task ? JSON.stringify(it.code_task) : null,
-      ],
-    );
-    if (asked) ids.push(row.id);
-  };
-  const pair = (it: StoredItem) => it.kind === 'vocab' && !!it.lang && !!it.prompt_lang;
-  for (const it of items) await insert(it, !(pair(it) && direction === 'produce'));
-  // The other direction of each pair comes after all first directions — asked right after
-  // its twin, the answer would still be on screen. Its alternatives are unknown; the tutor
-  // judges variants.
-  for (const it of items) {
-    if (!pair(it)) continue;
-    await insert(
-      {
-        ...it,
-        prompt: it.answer,
-        answer: it.prompt,
-        accepted_answers: [],
-        prompt_lang: it.lang,
-        lang: it.prompt_lang,
-        // Hints were written for the first direction.
-        hints: [],
-        worked_solution: null,
-      },
-      direction !== 'recognise',
-    );
-  }
-  return ids;
-}
+export { insertItems } from './insertItems.js';

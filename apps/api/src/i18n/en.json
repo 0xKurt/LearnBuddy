@@ -100,7 +100,6 @@
       "punctuation": "Almost – check the punctuation at “{{word}}”."
     },
     "had_enough": "Okay — that is enough for today if you want. You can end the practice, or we do one small example together. Just say which you would rather.",
-    "heard_retry": "I couldn't hear you well. Try again a bit louder and closer to the phone.",
     "help_final_answer": "That looks good! Now write down your final result – the way the task asks for it.",
     "help_solved": "Great – you solved that yourself!",
     "help_step": "Let's go step by step: what does the task give you, and what are you looking for?",
@@ -552,7 +551,11 @@
       }
     },
     "not_usable": "I couldn’t prepare this exercise.",
-    "prepare_failed": "Preparation did not work just now. You can try again."
+    "prepare_failed": "Preparation did not work just now. You can try again.",
+    "pronunciation_passt": "That sounds right.",
+    "pronunciation_fast": "Almost — listen to the marked words again.",
+    "pronunciation_nochmal": "Listen to the marked words and try them again.",
+    "pronunciation_unsicher": "I could not judge that reliably. Listen and compare."
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."

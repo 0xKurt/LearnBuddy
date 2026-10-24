@@ -2,7 +2,11 @@
 // key she may not see yet, the thread, and what is offered around each question. Read after
 // every change a request makes (`service.ts`, `setAside.ts`, `contest.ts`, the routes).
 
-import { PracticeTurnView, type SessionView } from '@learnbuddy/shared-types/contracts';
+import {
+  PronunciationPlan,
+  PracticeTurnView,
+  type SessionView,
+} from '@learnbuddy/shared-types/contracts';
 
 import type { Db } from '../../lib/db.js';
 import type { StorageGateway } from '../../storage/gateway.js';
@@ -73,7 +77,7 @@ export async function sessionView(
     `select si.item_id, si.position, si.status, si.attempts, si.hints_used, si.prepared_hints_used,
             si.first_try_correct, si.flagged_at, si.deferred_at, si.answered_by, si.disputed_at,
             i.id, i.kind, i.prompt, i.answer, i.accepted_answers, i.unit, i.choices, i.correct_choice,
-            i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
+            i.pronunciation_plan, i.topic, i.material_id, i.origin, i.lang, i.prompt_lang, i.figure, i.hints, i.worked_solution,
             i.bar_task, i.task, i.listen_task, i.staff_task, i.code_task, i.spelling, i.archived_at,
             i.choice_figures, i.read_passage, i.source_excerpt, i.tap, i.why, i.task_part,
             mi.storage_path as image_path, mi.width as image_width, mi.height as image_height,
@@ -186,6 +190,7 @@ export async function sessionView(
       item: {
         id: i.id,
         kind: i.kind,
+        pronunciation_plan: PronunciationPlan.safeParse(i.pronunciation_plan).data ?? null,
         prompt: i.prompt,
         choices: i.choices,
         // The options' pictures: data the app draws, never the key (that is the index) — read

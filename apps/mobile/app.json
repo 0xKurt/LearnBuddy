@@ -130,6 +130,12 @@
           "androidIntentFilters": ["image/*", "application/pdf"],
           "androidMultiIntentFilters": ["image/*", "application/pdf"]
         }
+      ],
+      [
+        "react-native-vosk",
+        {
+          "models": []
+        }
       ]
     ],
     "runtimeVersion": {

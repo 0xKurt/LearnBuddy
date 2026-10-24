@@ -100,7 +100,6 @@
       "punctuation": "Fast – schau nochmal auf die Satzzeichen bei „{{word}}“."
     },
     "had_enough": "Okay — für heute reicht es auch. Du kannst die Übung beenden, oder wir machen noch ein kleines Beispiel zusammen. Sag einfach, was dir lieber ist.",
-    "heard_retry": "Ich konnte dich nicht gut verstehen. Sprich nochmal etwas lauter und näher am Handy.",
     "help_final_answer": "Das sieht gut aus! Schreib mir jetzt noch dein Endergebnis – so, wie die Aufgabe es verlangt.",
     "help_solved": "Stark – das hast du selbst gelöst!",
     "help_step": "Lass uns Schritt für Schritt schauen: Was ist in der Aufgabe gegeben, und was wird gesucht?",
@@ -552,7 +551,11 @@
       }
     },
     "not_usable": "Die Übung konnte ich leider nicht vorbereiten.",
-    "prepare_failed": "Die Vorbereitung hat gerade nicht geklappt. Du kannst es noch einmal versuchen."
+    "prepare_failed": "Die Vorbereitung hat gerade nicht geklappt. Du kannst es noch einmal versuchen.",
+    "pronunciation_passt": "Das klingt passend.",
+    "pronunciation_fast": "Fast — hör dir die markierten Wörter nochmal an.",
+    "pronunciation_nochmal": "Hör dir die markierten Wörter an und probiere sie nochmal.",
+    "pronunciation_unsicher": "Das konnte ich nicht sicher beurteilen. Hör zu und vergleiche."
   },
   "contact": {
     "less_often": "Alles klar – aufs Handy schreibe ich dir ab jetzt nur noch, wenn's wirklich wichtig ist. Alles andere findest du hier. Ändern kannst du das in den Einstellungen."

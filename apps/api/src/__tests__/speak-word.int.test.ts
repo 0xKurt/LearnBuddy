@@ -11,6 +11,7 @@ import type {
 import { randomUUID as uuid } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { scriptPronunciationTip } from '../testing/pronunciation.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -78,15 +79,13 @@ describe.skipIf(!dbReady)('practising one word', () => {
     env.llm.script('pronounce', {
       json: {
         audible: true,
-        expected_ipa: 'ˈwɛðər',
-        heard_ipa: 'ˈvɛdɐ',
         heard: 'wedder',
-        ok: false,
-        tip: 'Das ‹th› ist die Zunge zwischen den Zähnen.',
+        words: [{ heard: 'wedder', confidence: 1 }],
       },
     });
     // "wedder" is not a word of the sentence, so it is read for distress first (#785).
     env.llm.script('safeguard', { json: { concern: false } });
+    scriptPronunciationTip(env, 1, 'Das ‹th› ist die Zunge zwischen den Zähnen.');
     const res = await say('weather');
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ audible: true, ok: false, heard: 'wedder', help: null });
@@ -108,11 +107,8 @@ describe.skipIf(!dbReady)('practising one word', () => {
     env.llm.script('pronounce', {
       json: {
         audible: false,
-        expected_ipa: 'ˈwɛðər',
-        heard_ipa: '',
         heard: '',
-        ok: false,
-        tip: 'sollte nicht erscheinen',
+        words: [],
       },
     });
     const res = await say('weather');
@@ -130,20 +126,17 @@ describe.skipIf(!dbReady)('practising one word', () => {
     env.llm.script('pronounce', {
       json: {
         audible: true,
-        expected_ipa: 'weather',
-        heard_ipa: 'wether',
         heard: 'The wether is nice today.',
-        overall: 'almost',
         words: [
-          { text: 'The', ok: true, tip: null },
-          { text: 'weather', ok: false, tip: 'Try th.' },
-          { text: 'is', ok: true, tip: null },
-          { text: 'nice', ok: true, tip: null },
-          { text: 'today', ok: true, tip: null },
+          { heard: 'The', confidence: 1 },
+          { heard: 'weather', confidence: 0.7 },
+          { heard: 'is', confidence: 1 },
+          { heard: 'nice', confidence: 1 },
+          { heard: 'today', confidence: 1 },
         ],
-        reply: 'Almost.',
       },
     });
+    scriptPronunciationTip(env, 5);
     const graded = await l.api.post<AnswerResponse>(`/practice/sessions/${sessionId}/speak`, {
       client_turn_id: uuid(),
       item_id: itemId,
@@ -170,13 +163,11 @@ describe.skipIf(!dbReady)('practising one word', () => {
       env.llm.script('pronounce', {
         json: {
           audible: true,
-          expected_ipa: 'weather',
-          heard_ipa: 'weather',
           heard: 'weather',
-          ok: true,
-          tip: null,
+          words: [{ heard: 'weather', confidence: 1 }],
         },
       });
+      scriptPronunciationTip(env, 1);
       expect((await say('weather')).status).toBe(200);
     }
     expect(await snapshot()).toEqual(before);
