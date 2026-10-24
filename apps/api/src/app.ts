@@ -30,6 +30,7 @@ import { registerLearning } from './modules/learning/register.js';
 import { hasContextProvider } from './modules/buddy/provider.js';
 import { withoutCode } from './modules/buddy/registry.js';
 import { missingMigrations } from './lib/migrations.js';
+import { migrationEvidence, parseExpectedMigrations } from './lib/migrationEvidence.js';
 import { schedulerHealth, type SchedulerHealth } from './modules/scheduler/health.js';
 import { runTick } from './modules/scheduler/tick.js';
 import { checkConfig } from './config.js';
@@ -172,6 +173,13 @@ export function createApp(deps: Deps): Hono<AppEnv> {
    * run without errors and no due work left waiting — plus parked jobs per kind (audit S-5).
    */
   api.get('/health', async (c) => {
+    const requested = c.req.queries('expect');
+    if (requested !== undefined) {
+      c.header('Cache-Control', 'no-store');
+      const expected = parseExpectedMigrations(requested);
+      const applied = await migrationEvidence(deps.db, expected);
+      return c.json({ expected, applied }, applied?.length === expected.length ? 200 : 503);
+    }
     let scheduler: SchedulerHealth | null = null;
     try {
       scheduler = await schedulerHealth(deps.db, deps.now());
