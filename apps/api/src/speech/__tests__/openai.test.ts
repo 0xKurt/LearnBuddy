@@ -31,6 +31,40 @@ describe('EU speech', () => {
     expect(() => openAISpeechFields.OPENAI_TTS_VOICES.parse('{broken')).toThrow();
     expect(() => openAISpeechFields.OPENAI_TTS_VOICES.parse('{"unknown":"ash"}')).toThrow();
   });
+  it('delivers the first chunk before the provider finishes, and retains the complete cache audio', async () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(c) {
+            controller = c;
+          },
+        }),
+        { headers: { 'content-type': 'audio/mpeg' } },
+      ),
+    );
+    const chunks: string[] = [];
+    const pending = new OpenAISpeech(
+      openAIClient(config, fetch),
+      { ...DEFAULT_OPENAI_VOICES, warm: 'ash' },
+      'tts-1',
+    ).synthesize({
+      ...input,
+      onAudio: async (chunk) => {
+        chunks.push(chunk.audio.toString());
+      },
+    });
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body))).toMatchObject({
+      model: 'tts-1',
+      voice: 'ash',
+    });
+    controller.enqueue(Buffer.from('first'));
+    await vi.waitFor(() => expect(chunks).toEqual(['first']));
+    controller.enqueue(Buffer.from('last'));
+    controller.close();
+    expect((await pending).audio.toString()).toBe('firstlast');
+  });
   it('requests MP3, preserves the speed steps, and separates its cache from the old provider', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()

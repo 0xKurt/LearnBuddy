@@ -44,6 +44,34 @@ async function validToken(): Promise<string | null> {
   return s.access_token;
 }
 
+/** A media player's authenticated GET; private speech text stays in headers, never URLs. */
+export async function speechSource(
+  input: unknown,
+): Promise<{ uri: string; headers: Record<string, string> }> {
+  return {
+    uri: `${ENV.API_URL}/v1/voice/speech`,
+    headers: {
+      ...requestHeaders(await validToken(), 'audio/mpeg'),
+      'x-speech-request': encodeURIComponent(JSON.stringify(input)),
+    },
+  };
+}
+
+function requestHeaders(
+  token: string | null,
+  accept: string,
+  body?: unknown,
+): Record<string, string> {
+  // The shared allowlist also drives CORS preflight.
+  const headers: { [H in AppRequestHeader]?: string } = { accept, 'x-timezone': deviceTimeZone() };
+  if (APP_VERSION) headers['x-app-version'] = APP_VERSION;
+  if (body !== undefined) headers['content-type'] = 'application/json';
+  if (token) headers.authorization = `Bearer ${token}`;
+  const admin = adminToken();
+  if (admin) headers['x-admin-token'] = admin;
+  return headers as Record<string, string>;
+}
+
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** This build's version: the API answers `update_required` when it is too old (audit M-69). */
@@ -65,16 +93,7 @@ async function authorised(
   stopped?: AbortSignal,
 ): Promise<Response> {
   const send = async (token: string | null): Promise<Response> => {
-    // Only listed headers: anything else fails the browser's CORS preflight.
-    const headers: { [H in AppRequestHeader]?: string } = {
-      accept,
-      'x-timezone': deviceTimeZone(),
-    };
-    if (APP_VERSION) headers['x-app-version'] = APP_VERSION;
-    if (body !== undefined) headers['content-type'] = 'application/json';
-    if (token) headers.authorization = `Bearer ${token}`;
-    const admin = adminToken();
-    if (admin) headers['x-admin-token'] = admin;
+    const headers = requestHeaders(token, accept, body);
     try {
       return await wd.race(
         fetchFn(`${ENV.API_URL}/v1${path}`, {

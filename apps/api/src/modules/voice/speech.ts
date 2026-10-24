@@ -19,7 +19,7 @@ import { sampleTexts } from '../../i18n/index.js';
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
 import { consume, limitError } from '../../lib/limits.js';
-import { rateFor, SpeechError } from '../../speech/gateway.js';
+import { rateFor, SpeechError, type SpeechInput } from '../../speech/gateway.js';
 
 /** How long synthesised audio is kept (docs/privacy.md). */
 const SPEECH_CACHE_MS = 24 * 3_600_000;
@@ -42,6 +42,7 @@ export async function synthesizeSpeech(
   deps: Deps,
   who: { accountId: string; learnerId: string },
   input: SpeechRequest,
+  stream: Pick<SpeechInput, 'onAudio' | 'signal'> = {},
 ): Promise<SpeechResponse> {
   if (!deps.speech.available) {
     throw new AppError('unavailable', 'Buddy’s own voice is not configured', {
@@ -117,6 +118,7 @@ export async function synthesizeSpeech(
         });
       });
   if (cached) {
+    await stream.onAudio?.(cached);
     await count({ outcome: shared ? 'shared' : 'cached' });
     return answer(cached.mime, cached.audio);
   }
@@ -125,6 +127,13 @@ export async function synthesizeSpeech(
   if (!budget.allowed) throw limitError(budget);
 
   let audio;
+  let emitted = false;
+  const onAudio: SpeechInput['onAudio'] = stream.onAudio
+    ? async (chunk) => {
+        emitted = true;
+        await stream.onAudio!(chunk);
+      }
+    : undefined;
   // How long the provider took: a measure of this call, never a decision (rule 7).
   const started = performance.now();
   const took = () => Math.round(performance.now() - started);
@@ -135,6 +144,8 @@ export async function synthesizeSpeech(
       voice,
       rate,
       timeoutMs: SPEECH_TIMEOUT_MS,
+      signal: stream.signal,
+      onAudio,
     });
   } catch (err) {
     if (err instanceof SpeechError) {
@@ -152,6 +163,9 @@ export async function synthesizeSpeech(
     }
     throw err;
   }
+  if (stream.signal?.aborted) throw new SpeechError('cancelled', 'Playback stopped');
+  // Providers without streaming still use the same cache and route.
+  if (!emitted) await stream.onAudio?.(audio);
   await count({ outcome: 'ok', latencyMs: took(), costMicros: audio.costMicros });
   if (shared) {
     await deps.db.query(

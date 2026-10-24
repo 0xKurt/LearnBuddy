@@ -11,9 +11,11 @@ import {
   type AppEnv,
 } from '../../http/context.js';
 import { streamed, wantsStream } from '../../http/stream.js';
-import { readBody } from '../../http/validate.js';
+import { check, readBody } from '../../http/validate.js';
 import { transcribe } from './service.js';
 import { synthesizeSpeech } from './speech.js';
+import { streamSpeech } from './speech-stream.js';
+import { AppError } from '../../lib/errors.js';
 
 export const voiceRoutes = new Hono<AppEnv>();
 voiceRoutes.use('*', requireUser, requireAccount, requireLearner);
@@ -33,6 +35,7 @@ voiceRoutes.post('/transcribe', async (c) => {
 /** Buddy's natural voice: one sentence → audio (ADR 0008). */
 voiceRoutes.post('/speech', async (c) => {
   const input = await readBody(c, SpeechRequest);
+  if ((c.req.header('accept') ?? '').includes('audio/')) return streamSpeech(c, input);
   return c.json(
     await synthesizeSpeech(
       depsOf(c),
@@ -40,4 +43,18 @@ voiceRoutes.post('/speech', async (c) => {
       input,
     ),
   );
+});
+
+/** Native media players make GET requests; private text and credentials stay out of URLs. */
+voiceRoutes.get('/speech', async (c) => {
+  let raw: unknown;
+  const header = c.req.header('x-speech-request');
+  if (!header || header.length > 12_000)
+    throw new AppError('invalid_input', 'Missing speech request');
+  try {
+    raw = JSON.parse(decodeURIComponent(header));
+  } catch {
+    throw new AppError('invalid_input', 'Invalid speech request');
+  }
+  return streamSpeech(c, check(SpeechRequest, raw));
 });

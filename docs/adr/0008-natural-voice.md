@@ -147,3 +147,45 @@ Before switching `SPEECH_BACKEND=google` on:
 - `set_voice` keeps working unchanged ("andere Stimme", "sprich langsamer").
 - Not verified live: how the four previews actually sound (the provider call itself is still
   unverified, §Live verification); the walkthrough runs with the phone voice.
+
+## Amendment 2026-10-24 — progressive playback (#921)
+
+The existing speech service keeps voice selection, speed, budgets and the 24-hour learner
+cache. The provider emits MP3 bytes through an awaited sink while retaining the complete
+file for the cache. Cancelled or truncated synthesis never creates a cache entry. The
+process-wide EU HTTP client remains reused (connection pooling; no extra warm-up synthesis).
+`tts-1` remains selected: `gpt-4o-tts`, although listed in the provider's EU data controls,
+returned 404 `model_not_found` with the configured project on 24 October. No automatic switch
+to an unlisted model is made; `tts-1` has no instruction support, so its voice mapping and
+speed remain unchanged.
+
+`POST /voice/speech` with `Accept: audio/mpeg` streams bytes; its JSON response remains for
+older apps and listening exercises. Native media players use authenticated `GET /voice/speech`
+with the same validated request encoded in `x-speech-request`. Neither text nor bearer tokens
+appear in URLs. Both paths require the account and learner, use the same budget and cache,
+and return `private, no-store, no-transform`. No media links or additional access tokens exist.
+Errors before the first audio keep the normal HTTP envelope; later failures terminate the
+stream, and the player's existing fallback reads the sentence.
+
+Expo Audio 1.1.1 already prepares progressive HTTP sources with headers on Android (its
+OkHttp/ExoPlayer path); no native dependency or build is added. A prepared, paused player is
+reused when its sentence starts. Browsers feed authenticated MP3 chunks to MediaSource,
+awaiting each append; browsers without MP3 MediaSource support and WAV responses keep a
+complete-file fallback. Stop releases the current and prefetched players and cancels network
+work. A growing stream's current duration is never treated as EOF.
+
+Measured EU first bytes for one short synthetic German sentence: MP3 **1.492 / 1.521 s**,
+Opus **1.438 s**, AAC **1.703 s**, PCM **1.531 s**, WAV **2.365 s**. These small samples do not
+establish a statistically significant format winner. MP3 uses the existing player and browser
+decoder without a new codec, framing or native module. The requested approximately one-second
+first sound is **not achieved** by these provider measurements. Android speaker timing and
+pronunciation quality still require a device check; byte arrival is not audible sound.
+
+Live local API → Chromium MediaSource benchmark (`apps/api/evals/tts/stream.ts`), using the
+real EU provider and isolated shared test Postgres: first response bytes **1315 / 3130 ms**,
+browser `playing` **1414 / 3137 ms**; a cached repeat was **4 ms / 21 ms**. The route's
+internal first-audio timestamps were **1307 / 3127 / 1 ms**. The two uncached calls cost
+**$0.001170**; all streaming measurements together cost **$0.005400**. This measures the
+transport and browser decoder, not acoustic speaker onset, the complete app UI, or the APK.
+No screen changed. The player queue waits for actual playback progress before requesting
+the next sentence, so preparation alone does not start competing synthesis requests.

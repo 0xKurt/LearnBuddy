@@ -63,6 +63,8 @@ for (const m of read(join(API, 'app.ts')).matchAll(/api\.(get|post)\('([^']*)'/g
 /** Routes the app does not call, and why. */
 const SERVER_ONLY: Record<string, string> = {
   'GET /health': 'monitoring',
+  'POST /voice/speech':
+    'older app builds request complete JSON audio; current builds use authenticated media GET, while POST also remains available for streaming API clients (#921)',
   'GET /materials/:p':
     'the app reads a sheet through GET /materials/:p/items; the plain resource read stays as the API surface the integration tests check tenancy and the 404 after erasure on',
   'POST /internal/tick': 'the scheduler (pg_cron) calls it every minute',
@@ -79,6 +81,9 @@ for (const f of files(join(MOBILE, 'lib'), /\.tsx?$/)) {
     /(?:request|streamRequest)\(\s*'(GET|POST|PUT|PATCH|DELETE)',\s*[`']([^`']+)[`']/g,
   ))
     appCalls.add(norm(m[1]!, m[2]!));
+  // Native media players consume authenticated URI sources instead of the JSON client.
+  for (const m of read(f).matchAll(/uri:\s*`\$\{ENV\.API_URL\}\/v1([^`]+)`/g))
+    appCalls.add(norm('GET', m[1]!));
 }
 
 // ─────────────── the app's source ───────────────
