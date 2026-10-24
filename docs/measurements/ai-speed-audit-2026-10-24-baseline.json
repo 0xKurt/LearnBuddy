@@ -1,0 +1,3950 @@
+[
+  {
+    "type": "setup",
+    "at": "2026-10-24T14:25:40.389Z",
+    "head": "187106266d14c564214de1a901bb507d9ff4cb75",
+    "node": "v22.23.3",
+    "endpoint": "https://eu.api.openai.com/v1",
+    "alreadySpent": 0.270613
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "chat",
+    "round": 1,
+    "attempts": 1,
+    "start": 1195.55175,
+    "end": 3387.92325,
+    "first": 2567.6445,
+    "systemChars": 24454,
+    "schemaChars": 25341,
+    "properties": 181,
+    "textChars": 1477,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 11584,
+      "outputTokens": 115,
+      "thoughtTokens": 11,
+      "cachedTokens": 0,
+      "costMicros": 10181,
+      "latencyMs": 2191
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 1161.27125,
+    "end": 3407.56525,
+    "stage": "chat",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 1495,
+    "sentenceMs": 1696,
+    "readyMs": null,
+    "replyCompleteMs": 1998,
+    "totalMs": 2246,
+    "split": {
+      "db": 37.0316279999995,
+      "model": 2192.231875,
+      "other": 17.03049700000065
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "chat",
+    "round": 2,
+    "attempts": 1,
+    "start": 3421.737458,
+    "end": 5315.705458,
+    "first": 4330.352166,
+    "systemChars": 24454,
+    "schemaChars": 25341,
+    "properties": 181,
+    "textChars": 1477,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 11584,
+      "outputTokens": 129,
+      "thoughtTokens": 11,
+      "cachedTokens": 11392,
+      "costMicros": 10250,
+      "latencyMs": 1894
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 3412.073375,
+    "end": 5341.897583,
+    "stage": "chat",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 1034,
+    "sentenceMs": 1528,
+    "readyMs": null,
+    "replyCompleteMs": 1692,
+    "totalMs": 1930,
+    "split": {
+      "db": 30.80300299999999,
+      "model": 1893.9092079999996,
+      "other": 5.111997000000429
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "chat",
+    "round": 3,
+    "attempts": 1,
+    "start": 5352.727125,
+    "end": 7517.129041,
+    "first": 6483.357541,
+    "systemChars": 24454,
+    "schemaChars": 25341,
+    "properties": 181,
+    "textChars": 1477,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 11584,
+      "outputTokens": 145,
+      "thoughtTokens": 18,
+      "cachedTokens": 11392,
+      "costMicros": 10364,
+      "latencyMs": 2164
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 5345.6435,
+    "end": 7529.920875,
+    "stage": "chat",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 1227,
+    "sentenceMs": 1749,
+    "readyMs": null,
+    "replyCompleteMs": 1970,
+    "totalMs": 2184,
+    "split": {
+      "db": 16.628122000002804,
+      "model": 2164.3646659999995,
+      "other": 3.284586999997373
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "chat",
+    "round": 4,
+    "attempts": 1,
+    "start": 7541.017583,
+    "end": 9682.54475,
+    "first": 8800.171541,
+    "systemChars": 24454,
+    "schemaChars": 25341,
+    "properties": 181,
+    "textChars": 1477,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 11584,
+      "outputTokens": 124,
+      "thoughtTokens": 26,
+      "cachedTokens": 11392,
+      "costMicros": 10300,
+      "latencyMs": 2141
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 7533.362083,
+    "end": 9707.605125,
+    "stage": "chat",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 1381,
+    "sentenceMs": 1667,
+    "readyMs": null,
+    "replyCompleteMs": 1888,
+    "totalMs": 2174,
+    "split": {
+      "db": 27.28170499999669,
+      "model": 2141.467375,
+      "other": 5.493962000003194
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "chat",
+    "round": 5,
+    "attempts": 1,
+    "start": 9719.4845,
+    "end": 11671.704708,
+    "first": 10744.387416,
+    "systemChars": 24454,
+    "schemaChars": 25341,
+    "properties": 181,
+    "textChars": 1477,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 11584,
+      "outputTokens": 135,
+      "thoughtTokens": 21,
+      "cachedTokens": 11392,
+      "costMicros": 10329,
+      "latencyMs": 1952
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 9711.5475,
+    "end": 11688.400916,
+    "stage": "chat",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 1133,
+    "sentenceMs": 1516,
+    "readyMs": null,
+    "replyCompleteMs": 1772,
+    "totalMs": 1977,
+    "split": {
+      "db": 19.838169999995444,
+      "model": 1952.1650419999987,
+      "other": 4.8502040000057605
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "topic",
+    "round": 1,
+    "attempts": 1,
+    "start": 11694.352291,
+    "end": 12363.070708,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 359,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 361,
+      "latencyMs": 669
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "topic",
+    "round": 1,
+    "attempts": 1,
+    "start": 12376.294,
+    "end": 13105.142625,
+    "first": null,
+    "systemChars": 3581,
+    "schemaChars": 701,
+    "properties": 2,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1093,
+      "outputTokens": 25,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1026,
+      "latencyMs": 729
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "explain",
+    "stage": "topic",
+    "round": 1,
+    "attempts": 1,
+    "start": 13117.492208,
+    "end": 20649.47625,
+    "first": 13799.755333,
+    "systemChars": 9090,
+    "schemaChars": 14887,
+    "properties": 88,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 5534,
+      "outputTokens": 1351,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 11253,
+      "latencyMs": 7532
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 11692.228916,
+    "end": 20673.345791,
+    "stage": "topic",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 8981,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 8981,
+    "split": {
+      "db": 22.33195700000215,
+      "model": 8932.086500999998,
+      "other": 26.69841699999961
+    },
+    "calls": [
+      "safeguard",
+      "forms",
+      "explain",
+      "hints"
+    ],
+    "responseSummary": {
+      "status": "active",
+      "preparing": false
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "topic",
+    "round": 1,
+    "attempts": 1,
+    "start": 20670.753875,
+    "end": 73272.418416,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 839,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1637,
+      "outputTokens": 0,
+      "thoughtTokens": 8000,
+      "cachedTokens": 0,
+      "costMicros": 40951,
+      "latencyMs": 52601
+    },
+    "error": "invalid_output"
+  },
+  {
+    "type": "cache",
+    "stage": "topic",
+    "round": 1,
+    "totalMs": 9
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "topic",
+    "round": 2,
+    "attempts": 1,
+    "start": 73290.222083,
+    "end": 73939.974375,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 359,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 361,
+      "latencyMs": 650
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "topic",
+    "round": 2,
+    "attempts": 1,
+    "start": 73945.641791,
+    "end": 74688.433291,
+    "first": null,
+    "systemChars": 3581,
+    "schemaChars": 701,
+    "properties": 2,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1093,
+      "outputTokens": 25,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1026,
+      "latencyMs": 743
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "explain",
+    "stage": "topic",
+    "round": 2,
+    "attempts": 1,
+    "start": 74701.371375,
+    "end": 82468.493708,
+    "first": 75347.095416,
+    "systemChars": 9090,
+    "schemaChars": 14887,
+    "properties": 88,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 5534,
+      "outputTokens": 1498,
+      "thoughtTokens": 0,
+      "cachedTokens": 5376,
+      "costMicros": 11981,
+      "latencyMs": 7767
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 73288.683833,
+    "end": 82479.703041,
+    "stage": "topic",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 9191,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 9191,
+    "split": {
+      "db": 14.222544999982347,
+      "model": 9160.491456999982,
+      "other": 16.30520600003365
+    },
+    "calls": [
+      "safeguard",
+      "forms",
+      "explain",
+      "hints"
+    ],
+    "responseSummary": {
+      "status": "active",
+      "preparing": false
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "topic",
+    "round": 2,
+    "attempts": 1,
+    "start": 82478.841875,
+    "end": 130536.997375,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 941,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1685,
+      "outputTokens": 0,
+      "thoughtTokens": 8000,
+      "cachedTokens": 0,
+      "costMicros": 40991,
+      "latencyMs": 48058
+    },
+    "error": "invalid_output"
+  },
+  {
+    "type": "cache",
+    "stage": "topic",
+    "round": 2,
+    "totalMs": 13
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "topic",
+    "round": 3,
+    "attempts": 1,
+    "start": 130558.232416,
+    "end": 131375.606833,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 359,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 361,
+      "latencyMs": 817
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "topic",
+    "round": 3,
+    "attempts": 1,
+    "start": 131391.655666,
+    "end": 132187.988333,
+    "first": null,
+    "systemChars": 3581,
+    "schemaChars": 701,
+    "properties": 2,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1093,
+      "outputTokens": 29,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1046,
+      "latencyMs": 796
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "explain",
+    "stage": "topic",
+    "round": 3,
+    "attempts": 1,
+    "start": 132191.545375,
+    "end": 138603.416833,
+    "first": 132955.831791,
+    "systemChars": 10495,
+    "schemaChars": 17573,
+    "properties": 106,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 6375,
+      "outputTokens": 1177,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 11086,
+      "latencyMs": 6412
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 130555.158375,
+    "end": 138622.181416,
+    "stage": "topic",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 8067,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 8067,
+    "split": {
+      "db": 26.83229200007918,
+      "model": 8026.5022490000265,
+      "other": 13.688499999901978
+    },
+    "calls": [
+      "safeguard",
+      "forms",
+      "explain",
+      "hints"
+    ],
+    "responseSummary": {
+      "status": "active",
+      "preparing": false
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "topic",
+    "round": 3,
+    "attempts": 1,
+    "start": 138621.2245,
+    "end": 189077.652083,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 660,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1554,
+      "outputTokens": 0,
+      "thoughtTokens": 8000,
+      "cachedTokens": 0,
+      "costMicros": 40883,
+      "latencyMs": 50456
+    },
+    "error": "invalid_output"
+  },
+  {
+    "type": "cache",
+    "stage": "topic",
+    "round": 3,
+    "totalMs": 12
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "topic",
+    "round": 4,
+    "attempts": 1,
+    "start": 189097.148916,
+    "end": 189748.594791,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 359,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 361,
+      "latencyMs": 651
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "topic",
+    "round": 4,
+    "attempts": 1,
+    "start": 189763.650166,
+    "end": 190443.079458,
+    "first": null,
+    "systemChars": 3581,
+    "schemaChars": 701,
+    "properties": 2,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1093,
+      "outputTokens": 30,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1051,
+      "latencyMs": 679
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "explain",
+    "stage": "topic",
+    "round": 4,
+    "attempts": 1,
+    "start": 190456.282125,
+    "end": 197011.218291,
+    "first": 191059.820583,
+    "systemChars": 10528,
+    "schemaChars": 17924,
+    "properties": 107,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 6489,
+      "outputTokens": 1309,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 11833,
+      "latencyMs": 6554
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 189095.585,
+    "end": 197029.707041,
+    "stage": "topic",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 7934,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 7934,
+    "split": {
+      "db": 21.91820599991479,
+      "model": 7886.6549159999995,
+      "other": 25.548919000080787
+    },
+    "calls": [
+      "safeguard",
+      "forms",
+      "explain",
+      "hints"
+    ],
+    "responseSummary": {
+      "status": "active",
+      "preparing": false
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "topic",
+    "round": 4,
+    "attempts": 1,
+    "start": 197028.790708,
+    "end": 233062.184666,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 544,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1522,
+      "outputTokens": 1276,
+      "thoughtTokens": 5178,
+      "cachedTokens": 0,
+      "costMicros": 33203,
+      "latencyMs": 36033
+    },
+    "error": null
+  },
+  {
+    "type": "cache",
+    "stage": "topic",
+    "round": 4,
+    "totalMs": 4
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "topic",
+    "round": 5,
+    "attempts": 1,
+    "start": 233091.476708,
+    "end": 233787.207791,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 359,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 361,
+      "latencyMs": 696
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "topic",
+    "round": 5,
+    "attempts": 1,
+    "start": 233801.627458,
+    "end": 234383.397166,
+    "first": null,
+    "systemChars": 3581,
+    "schemaChars": 701,
+    "properties": 2,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1093,
+      "outputTokens": 17,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 986,
+      "latencyMs": 582
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "explain",
+    "stage": "topic",
+    "round": 5,
+    "attempts": 1,
+    "start": 234393.319333,
+    "end": 241439.215875,
+    "first": 235011.362875,
+    "systemChars": 6587,
+    "schemaChars": 9966,
+    "properties": 57,
+    "textChars": 419,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3872,
+      "outputTokens": 1409,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 10169,
+      "latencyMs": 7046
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 233089.973708,
+    "end": 241458.928583,
+    "stage": "topic",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 8369,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 8369,
+    "split": {
+      "db": 22.44204500009073,
+      "model": 8324.227458999987,
+      "other": 22.285370999918086
+    },
+    "calls": [
+      "safeguard",
+      "forms",
+      "explain",
+      "hints"
+    ],
+    "responseSummary": {
+      "status": "active",
+      "preparing": false
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "topic",
+    "round": 5,
+    "attempts": 1,
+    "start": 241458.052916,
+    "end": 287492.227333,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 1242,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1740,
+      "outputTokens": 0,
+      "thoughtTokens": 8000,
+      "cachedTokens": 0,
+      "costMicros": 41036,
+      "latencyMs": 46034
+    },
+    "error": "invalid_output"
+  },
+  {
+    "type": "cache",
+    "stage": "topic",
+    "round": 5,
+    "totalMs": 12
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "tutor",
+    "round": 1,
+    "attempts": 1,
+    "start": 287517.741791,
+    "end": 288456.548083,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 391,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2405,
+      "outputTokens": 63,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 2296,
+      "latencyMs": 939
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 287510.865958,
+    "end": 288465.517,
+    "stage": "tutor",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 955,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 955,
+    "split": {
+      "db": 9.581621999910567,
+      "model": 938.801083999977,
+      "other": 6.268336000095587
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "tutor",
+    "round": 2,
+    "attempts": 1,
+    "start": 288472.943,
+    "end": 289280.164875,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 391,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2405,
+      "outputTokens": 57,
+      "thoughtTokens": 0,
+      "cachedTokens": 2304,
+      "costMicros": 2267,
+      "latencyMs": 807
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 288469.324041,
+    "end": 289295.691625,
+    "stage": "tutor",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 826,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 826,
+    "split": {
+      "db": 14.43987599981483,
+      "model": 807.2121669999906,
+      "other": 4.715541000186931
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "tutor",
+    "round": 3,
+    "attempts": 1,
+    "start": 289302.237041,
+    "end": 290128.905125,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 391,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2405,
+      "outputTokens": 59,
+      "thoughtTokens": 0,
+      "cachedTokens": 2304,
+      "costMicros": 2277,
+      "latencyMs": 827
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 289299.381125,
+    "end": 290145.461333,
+    "stage": "tutor",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 846,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 846,
+    "split": {
+      "db": 15.630247999797575,
+      "model": 826.656416999991,
+      "other": 3.7935430001816712
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "tutor",
+    "round": 4,
+    "attempts": 1,
+    "start": 290152.304833,
+    "end": 291004.190333,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 391,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2405,
+      "outputTokens": 57,
+      "thoughtTokens": 0,
+      "cachedTokens": 2304,
+      "costMicros": 2267,
+      "latencyMs": 852
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 290149.193208,
+    "end": 291021.135375,
+    "stage": "tutor",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 872,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 872,
+    "split": {
+      "db": 15.24883400008548,
+      "model": 851.8764999999548,
+      "other": 4.816832999989856
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "tutor",
+    "round": 5,
+    "attempts": 1,
+    "start": 291028.035,
+    "end": 291877.643708,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 391,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2405,
+      "outputTokens": 57,
+      "thoughtTokens": 0,
+      "cachedTokens": 2304,
+      "costMicros": 2267,
+      "latencyMs": 850
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 291024.944583,
+    "end": 291895.183166,
+    "stage": "tutor",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 870,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 870,
+    "split": {
+      "db": 16.477707000100054,
+      "model": 849.5995830000029,
+      "other": 4.161292999924626
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "hint",
+    "round": 1,
+    "attempts": 1,
+    "start": 291902.635708,
+    "end": 292798.557791,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 309,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2390,
+      "outputTokens": 61,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 2274,
+      "latencyMs": 896
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 291899.07575,
+    "end": 292805.045333,
+    "stage": "hint",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 906,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 906,
+    "split": {
+      "db": 7.1550879999413155,
+      "model": 895.9160830000183,
+      "other": 2.898412000038661
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "hint",
+    "round": 1,
+    "attempts": 1,
+    "start": 292806.202583,
+    "end": 300172.745416,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 208,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1368,
+      "outputTokens": 177,
+      "thoughtTokens": 909,
+      "cachedTokens": 0,
+      "costMicros": 6505,
+      "latencyMs": 7366
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "stage": "hints-background",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 7370.954499999993,
+    "totalMs": 7370.954499999993,
+    "split": {
+      "db": 3.1487500000512227,
+      "model": 7366.535000000033,
+      "other": 1.2707499999087304
+    },
+    "calls": [
+      "hints"
+    ]
+  },
+  {
+    "type": "endpoint",
+    "stage": "hint-prepared",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 9.90495799999917,
+    "totalMs": 9.90495799999917,
+    "split": {
+      "db": 6.902291000063997,
+      "model": 0,
+      "other": 3.0026669999351725
+    },
+    "calls": []
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "hint",
+    "round": 2,
+    "attempts": 1,
+    "start": 300194.976041,
+    "end": 301078.142416,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 309,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2390,
+      "outputTokens": 66,
+      "thoughtTokens": 0,
+      "cachedTokens": 2176,
+      "costMicros": 2299,
+      "latencyMs": 883
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 300191.180125,
+    "end": 301090.022333,
+    "stage": "hint",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 899,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 899,
+    "split": {
+      "db": 11.930957000004128,
+      "model": 883.1587089999812,
+      "other": 3.752541999972891
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "hint",
+    "round": 2,
+    "attempts": 1,
+    "start": 301091.727958,
+    "end": 307945.851,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 208,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1368,
+      "outputTokens": 167,
+      "thoughtTokens": 827,
+      "cachedTokens": 1152,
+      "costMicros": 6049,
+      "latencyMs": 6854
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "stage": "hints-background",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 6862.603208999964,
+    "totalMs": 6862.603208999964,
+    "split": {
+      "db": 6.442958999949042,
+      "model": 6854.111708000011,
+      "other": 2.0485420000040904
+    },
+    "calls": [
+      "hints"
+    ]
+  },
+  {
+    "type": "endpoint",
+    "stage": "hint-prepared",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 9.862750000029337,
+    "totalMs": 9.862750000029337,
+    "split": {
+      "db": 5.47133699990809,
+      "model": 0,
+      "other": 4.391413000121247
+    },
+    "calls": []
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "hint",
+    "round": 3,
+    "attempts": 1,
+    "start": 307971.393666,
+    "end": 309178.052291,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 309,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2390,
+      "outputTokens": 62,
+      "thoughtTokens": 0,
+      "cachedTokens": 2176,
+      "costMicros": 2279,
+      "latencyMs": 1207
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 307967.646666,
+    "end": 309192.97575,
+    "stage": "hint",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 1225,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1225,
+    "split": {
+      "db": 14.315415000193752,
+      "model": 1206.6497089999611,
+      "other": 4.363959999813233
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "hint",
+    "round": 3,
+    "attempts": 1,
+    "start": 309194.401708,
+    "end": 317661.61175,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 208,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1368,
+      "outputTokens": 179,
+      "thoughtTokens": 1024,
+      "cachedTokens": 1152,
+      "costMicros": 7084,
+      "latencyMs": 8467
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "stage": "hints-background",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 8469.444709000003,
+    "totalMs": 8469.444709000003,
+    "split": {
+      "db": 1.8195839999825694,
+      "model": 8467.20420800004,
+      "other": 0.42091699998127297
+    },
+    "calls": [
+      "hints"
+    ]
+  },
+  {
+    "type": "endpoint",
+    "stage": "hint-prepared",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 5.463208000001032,
+    "totalMs": 5.463208000001032,
+    "split": {
+      "db": 3.7519159999792464,
+      "model": 0,
+      "other": 1.7112920000217855
+    },
+    "calls": []
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "hint",
+    "round": 4,
+    "attempts": 1,
+    "start": 317675.839,
+    "end": 318546.725166,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 309,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2390,
+      "outputTokens": 68,
+      "thoughtTokens": 0,
+      "cachedTokens": 2176,
+      "costMicros": 2309,
+      "latencyMs": 871
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 317671.897041,
+    "end": 318559.677375,
+    "stage": "hint",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 888,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 888,
+    "split": {
+      "db": 11.682041000167374,
+      "model": 870.8791250000359,
+      "other": 5.219167999806814
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "hint",
+    "round": 4,
+    "attempts": 1,
+    "start": 318561.3015,
+    "end": 330496.279458,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 208,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1368,
+      "outputTokens": 211,
+      "thoughtTokens": 1604,
+      "cachedTokens": 1152,
+      "costMicros": 10113,
+      "latencyMs": 11935
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "stage": "hints-background",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 11939.689000000013,
+    "totalMs": 11939.689000000013,
+    "split": {
+      "db": 3.4214179999544285,
+      "model": 11934.970458999975,
+      "other": 1.2971230000839569
+    },
+    "calls": [
+      "hints"
+    ]
+  },
+  {
+    "type": "endpoint",
+    "stage": "hint-prepared",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 9.594541999977082,
+    "totalMs": 9.594541999977082,
+    "split": {
+      "db": 6.113707999989856,
+      "model": 0,
+      "other": 3.480833999987226
+    },
+    "calls": []
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "hint",
+    "round": 5,
+    "attempts": 1,
+    "start": 330519.955958,
+    "end": 331364.892666,
+    "first": null,
+    "systemChars": 8444,
+    "schemaChars": 1421,
+    "properties": 6,
+    "textChars": 309,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 2390,
+      "outputTokens": 68,
+      "thoughtTokens": 0,
+      "cachedTokens": 2176,
+      "costMicros": 2309,
+      "latencyMs": 845
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 330516.155166,
+    "end": 331378.628583,
+    "stage": "hint",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 862,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 862,
+    "split": {
+      "db": 12.533246999955736,
+      "model": 844.9256659999955,
+      "other": 5.014504000020679
+    },
+    "calls": [
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "hints",
+    "stage": "hint",
+    "round": 5,
+    "attempts": 1,
+    "start": 331380.484958,
+    "end": 338641.526083,
+    "first": null,
+    "systemChars": 2554,
+    "schemaChars": 2836,
+    "properties": 10,
+    "textChars": 208,
+    "thinking": "high",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1368,
+      "outputTokens": 178,
+      "thoughtTokens": 1025,
+      "cachedTokens": 1152,
+      "costMicros": 7084,
+      "latencyMs": 7261
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "stage": "hints-background",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 7268.329499999993,
+    "totalMs": 7268.329499999993,
+    "split": {
+      "db": 5.413626000110526,
+      "model": 7261.027916999999,
+      "other": 1.88795699988259
+    },
+    "calls": [
+      "hints"
+    ]
+  },
+  {
+    "type": "endpoint",
+    "stage": "hint-prepared",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 9.183499999984633,
+    "totalMs": 9.183499999984633,
+    "split": {
+      "db": 5.520332000043709,
+      "model": 0,
+      "other": 3.6631679999409243
+    },
+    "calls": []
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "essay",
+    "round": 1,
+    "attempts": 1,
+    "start": 338665.129666,
+    "end": 339326.717208,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 594,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 466,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 449,
+      "latencyMs": 662
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "essay",
+    "round": 1,
+    "attempts": 1,
+    "start": 338664.652291,
+    "end": 340741.618958,
+    "first": null,
+    "systemChars": 1934,
+    "schemaChars": 1988,
+    "properties": 8,
+    "textChars": 1689,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1231,
+      "outputTokens": 304,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 2521,
+      "latencyMs": 2077
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 338661.497041,
+    "end": 340748.241708,
+    "stage": "essay",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 2087,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 2087,
+    "split": {
+      "db": 6.829498999926727,
+      "model": 2076.959957999992,
+      "other": 2.9552100001019426
+    },
+    "calls": [
+      "tutor",
+      "safeguard"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "essay",
+    "round": 2,
+    "attempts": 1,
+    "start": 340755.691083,
+    "end": 341281.497583,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 594,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 466,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 449,
+      "latencyMs": 526
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "essay",
+    "round": 2,
+    "attempts": 1,
+    "start": 340755.201375,
+    "end": 343043.919541,
+    "first": null,
+    "systemChars": 1934,
+    "schemaChars": 1988,
+    "properties": 8,
+    "textChars": 1689,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1231,
+      "outputTokens": 307,
+      "thoughtTokens": 0,
+      "cachedTokens": 1024,
+      "costMicros": 2536,
+      "latencyMs": 2289
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 340751.958708,
+    "end": 343059.215125,
+    "stage": "essay",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 2307,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 2307,
+    "split": {
+      "db": 13.786669000168331,
+      "model": 2288.7083749999874,
+      "other": 4.761372999812011
+    },
+    "calls": [
+      "tutor",
+      "safeguard"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "essay",
+    "round": 3,
+    "attempts": 1,
+    "start": 343067.103083,
+    "end": 343625.403,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 594,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 466,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 449,
+      "latencyMs": 558
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "essay",
+    "round": 3,
+    "attempts": 1,
+    "start": 343066.691958,
+    "end": 345220.645125,
+    "first": null,
+    "systemChars": 1934,
+    "schemaChars": 1988,
+    "properties": 8,
+    "textChars": 1689,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1231,
+      "outputTokens": 320,
+      "thoughtTokens": 0,
+      "cachedTokens": 1024,
+      "costMicros": 2600,
+      "latencyMs": 2154
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 343063.498125,
+    "end": 345237.621458,
+    "stage": "essay",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 2174,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 2174,
+    "split": {
+      "db": 13.850795000093058,
+      "model": 2153.941541999986,
+      "other": 6.330995999916922
+    },
+    "calls": [
+      "tutor",
+      "safeguard"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "essay",
+    "round": 4,
+    "attempts": 1,
+    "start": 345245.499375,
+    "end": 345792.901458,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 594,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 466,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 449,
+      "latencyMs": 547
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "essay",
+    "round": 4,
+    "attempts": 1,
+    "start": 345245.0255,
+    "end": 347311.916375,
+    "first": null,
+    "systemChars": 1934,
+    "schemaChars": 1988,
+    "properties": 8,
+    "textChars": 1689,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1231,
+      "outputTokens": 307,
+      "thoughtTokens": 0,
+      "cachedTokens": 1024,
+      "costMicros": 2536,
+      "latencyMs": 2067
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 345242.028333,
+    "end": 347316.863958,
+    "stage": "essay",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 2075,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 2075,
+    "split": {
+      "db": 5.965541000012308,
+      "model": 2066.8847500000265,
+      "other": 1.9853339999099262
+    },
+    "calls": [
+      "tutor",
+      "safeguard"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "essay",
+    "round": 5,
+    "attempts": 1,
+    "start": 347323.47425,
+    "end": 348014.977208,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 594,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 466,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 449,
+      "latencyMs": 691
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "essay",
+    "round": 5,
+    "attempts": 1,
+    "start": 347323.033791,
+    "end": 349663.806875,
+    "first": null,
+    "systemChars": 1934,
+    "schemaChars": 1988,
+    "properties": 8,
+    "textChars": 1689,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 1231,
+      "outputTokens": 352,
+      "thoughtTokens": 0,
+      "cachedTokens": 1024,
+      "costMicros": 2758,
+      "latencyMs": 2341
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 347320.2735,
+    "end": 349673.364333,
+    "stage": "essay",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 2353,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 2353,
+    "split": {
+      "db": 8.976709000067785,
+      "model": 2340.765458000009,
+      "other": 3.348665999888908
+    },
+    "calls": [
+      "tutor",
+      "safeguard"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "safeguard",
+    "round": 1,
+    "attempts": 1,
+    "start": 349678.347,
+    "end": 350264.628625,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 58,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 361,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 363,
+      "latencyMs": 586
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 349676.710541,
+    "end": 350275.653291,
+    "stage": "safeguard",
+    "round": 1,
+    "status": "protected",
+    "firstMs": 599,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 599,
+    "split": {
+      "db": 6.988169000018388,
+      "model": 586.2723750000005,
+      "other": 5.6822059999685735
+    },
+    "calls": [
+      "safeguard"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "safeguard",
+    "round": 2,
+    "attempts": 1,
+    "start": 350283.128541,
+    "end": 350877.694625,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 58,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 361,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 363,
+      "latencyMs": 595
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 350281.251458,
+    "end": 350884.183083,
+    "stage": "safeguard",
+    "round": 2,
+    "status": "protected",
+    "firstMs": 603,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 603,
+    "split": {
+      "db": 4.637374999991152,
+      "model": 594.5590410000295,
+      "other": 3.7352090000058524
+    },
+    "calls": [
+      "safeguard"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "safeguard",
+    "round": 3,
+    "attempts": 1,
+    "start": 350893.965708,
+    "end": 351451.269958,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 58,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 361,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 363,
+      "latencyMs": 557
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 350891.897958,
+    "end": 351455.439583,
+    "stage": "safeguard",
+    "round": 3,
+    "status": "protected",
+    "firstMs": 564,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 564,
+    "split": {
+      "db": 3.5945859999628738,
+      "model": 557.2967499999795,
+      "other": 2.650289000070188
+    },
+    "calls": [
+      "safeguard"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "safeguard",
+    "round": 4,
+    "attempts": 1,
+    "start": 351465.635125,
+    "end": 352162.76775,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 58,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 361,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 363,
+      "latencyMs": 697
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 351462.186416,
+    "end": 352164.577916,
+    "stage": "safeguard",
+    "round": 4,
+    "status": "protected",
+    "firstMs": 702,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 702,
+    "split": {
+      "db": 3.091957999917213,
+      "model": 697.1270000000368,
+      "other": 2.1725420000148006
+    },
+    "calls": [
+      "safeguard"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "safeguard",
+    "stage": "safeguard",
+    "round": 5,
+    "attempts": 1,
+    "start": 352168.186,
+    "end": 352717.75825,
+    "first": null,
+    "systemChars": 1040,
+    "schemaChars": 472,
+    "properties": 1,
+    "textChars": 58,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 361,
+      "outputTokens": 13,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 363,
+      "latencyMs": 550
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 352166.901416,
+    "end": 352719.780041,
+    "stage": "safeguard",
+    "round": 5,
+    "status": "protected",
+    "firstMs": 553,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 553,
+    "split": {
+      "db": 2.0098350000334904,
+      "model": 549.567166999972,
+      "other": 1.301623000006657
+    },
+    "calls": [
+      "safeguard"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "transcribe",
+    "stage": "stt",
+    "round": 1,
+    "attempts": 2,
+    "start": 352725.060625,
+    "end": 354104.896208,
+    "first": 353890.664041,
+    "systemChars": 1668,
+    "schemaChars": 601,
+    "properties": 3,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-transcribe+gpt-5.4-mini-2026-03-17",
+      "inputTokens": 25514,
+      "outputTokens": 56,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1701,
+      "latencyMs": 1380
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 352722.114333,
+    "end": 354110.620166,
+    "stage": "stt",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 1206,
+    "sentenceMs": 1324,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1389,
+    "split": {
+      "db": 4.634000999911223,
+      "model": 1379.8240829999559,
+      "other": 4.047749000135809
+    },
+    "calls": [
+      "transcribe"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "transcribe",
+    "stage": "stt",
+    "round": 2,
+    "attempts": 2,
+    "start": 354117.383291,
+    "end": 355451.512833,
+    "first": 355217.377916,
+    "systemChars": 1668,
+    "schemaChars": 601,
+    "properties": 3,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-transcribe+gpt-5.4-mini-2026-03-17",
+      "inputTokens": 25514,
+      "outputTokens": 56,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1701,
+      "latencyMs": 1334
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 354114.902916,
+    "end": 355459.662125,
+    "stage": "stt",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 1144,
+    "sentenceMs": 1284,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1345,
+    "split": {
+      "db": 5.876248999964446,
+      "model": 1334.1182909999625,
+      "other": 4.76466900005471
+    },
+    "calls": [
+      "transcribe"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "transcribe",
+    "stage": "stt",
+    "round": 3,
+    "attempts": 2,
+    "start": 355471.161541,
+    "end": 356759.938875,
+    "first": 356541.073125,
+    "systemChars": 1668,
+    "schemaChars": 601,
+    "properties": 3,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-transcribe+gpt-5.4-mini-2026-03-17",
+      "inputTokens": 25514,
+      "outputTokens": 56,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1701,
+      "latencyMs": 1289
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 355467.203416,
+    "end": 356766.360208,
+    "stage": "stt",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 1103,
+    "sentenceMs": 1239,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1299,
+    "split": {
+      "db": 6.422831999952905,
+      "model": 1288.7644169999985,
+      "other": 3.969543000042904
+    },
+    "calls": [
+      "transcribe"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "transcribe",
+    "stage": "stt",
+    "round": 4,
+    "attempts": 2,
+    "start": 356778.80825,
+    "end": 359570.750541,
+    "first": 359262.971375,
+    "systemChars": 1668,
+    "schemaChars": 601,
+    "properties": 3,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-transcribe+gpt-5.4-mini-2026-03-17",
+      "inputTokens": 25514,
+      "outputTokens": 56,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1701,
+      "latencyMs": 2792
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 356775.328041,
+    "end": 359576.349458,
+    "stage": "stt",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 2530,
+    "sentenceMs": 2658,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 2801,
+    "split": {
+      "db": 4.653207999886945,
+      "model": 2791.9331660000025,
+      "other": 4.435043000092264
+    },
+    "calls": [
+      "transcribe"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "transcribe",
+    "stage": "stt",
+    "round": 5,
+    "attempts": 2,
+    "start": 359590.260166,
+    "end": 360988.435875,
+    "first": 360768.743208,
+    "systemChars": 1668,
+    "schemaChars": 601,
+    "properties": 3,
+    "textChars": 36,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-transcribe+gpt-5.4-mini-2026-03-17",
+      "inputTokens": 25514,
+      "outputTokens": 56,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 1701,
+      "latencyMs": 1398
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 359587.142083,
+    "end": 360989.859208,
+    "stage": "stt",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 1216,
+    "sentenceMs": 1352,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1403,
+    "split": {
+      "db": 2.4826260000118054,
+      "model": 1398.1707080000197,
+      "other": 2.0637909999932162
+    },
+    "calls": [
+      "transcribe"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "pronounce",
+    "stage": "speak",
+    "round": 1,
+    "attempts": 1,
+    "start": 360999.664541,
+    "end": 364732.918375,
+    "first": null,
+    "systemChars": 732,
+    "schemaChars": 457,
+    "properties": 5,
+    "textChars": 674,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-realtime-2.1",
+      "inputTokens": 712,
+      "outputTokens": 294,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "latencyMs": 3731,
+      "costMicros": 12466
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "speak",
+    "round": 1,
+    "attempts": 1,
+    "start": 364744.88475,
+    "end": 365599.780958,
+    "first": null,
+    "systemChars": 409,
+    "schemaChars": 288,
+    "properties": 2,
+    "textChars": 1345,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 513,
+      "outputTokens": 47,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 656,
+      "latencyMs": 855
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 360994.879041,
+    "end": 365611.561541,
+    "stage": "speak",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 3748,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 4617,
+    "split": {
+      "db": 19.218834000232164,
+      "model": 4588.1090420000255,
+      "other": 9.354623999737669
+    },
+    "calls": [
+      "pronounce",
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "pronounce",
+    "stage": "speak",
+    "round": 2,
+    "attempts": 1,
+    "start": 365618.772666,
+    "end": 368578.636,
+    "first": null,
+    "systemChars": 732,
+    "schemaChars": 457,
+    "properties": 5,
+    "textChars": 674,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-realtime-2.1",
+      "inputTokens": 712,
+      "outputTokens": 259,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "latencyMs": 2959,
+      "costMicros": 11542
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "speak",
+    "round": 2,
+    "attempts": 1,
+    "start": 368580.636375,
+    "end": 369377.331083,
+    "first": null,
+    "systemChars": 409,
+    "schemaChars": 288,
+    "properties": 2,
+    "textChars": 1345,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 513,
+      "outputTokens": 45,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 646,
+      "latencyMs": 797
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 365615.486333,
+    "end": 369394.299625,
+    "stage": "speak",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 2965,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 3779,
+    "split": {
+      "db": 17.372041000111494,
+      "model": 3756.541373999964,
+      "other": 4.899876999901608
+    },
+    "calls": [
+      "pronounce",
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "pronounce",
+    "stage": "speak",
+    "round": 3,
+    "attempts": 1,
+    "start": 369400.969708,
+    "end": 373181.991958,
+    "first": null,
+    "systemChars": 732,
+    "schemaChars": 457,
+    "properties": 5,
+    "textChars": 674,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-realtime-2.1",
+      "inputTokens": 712,
+      "outputTokens": 349,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "latencyMs": 3780,
+      "costMicros": 13918
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "speak",
+    "round": 3,
+    "attempts": 1,
+    "start": 373187.605708,
+    "end": 374000.123833,
+    "first": null,
+    "systemChars": 409,
+    "schemaChars": 288,
+    "properties": 2,
+    "textChars": 1345,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 513,
+      "outputTokens": 49,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 666,
+      "latencyMs": 812
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 369398.220958,
+    "end": 374011.892416,
+    "stage": "speak",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 3788,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 4614,
+    "split": {
+      "db": 15.17846100020688,
+      "model": 4593.518458999984,
+      "other": 4.974537999834865
+    },
+    "calls": [
+      "pronounce",
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "pronounce",
+    "stage": "speak",
+    "round": 4,
+    "attempts": 1,
+    "start": 374018.523458,
+    "end": 376871.033,
+    "first": null,
+    "systemChars": 732,
+    "schemaChars": 457,
+    "properties": 5,
+    "textChars": 674,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-realtime-2.1",
+      "inputTokens": 712,
+      "outputTokens": 273,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "latencyMs": 2850,
+      "costMicros": 11911
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "speak",
+    "round": 4,
+    "attempts": 1,
+    "start": 376879.619375,
+    "end": 377744.835458,
+    "first": null,
+    "systemChars": 409,
+    "schemaChars": 288,
+    "properties": 2,
+    "textChars": 1345,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 513,
+      "outputTokens": 47,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 656,
+      "latencyMs": 865
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 374015.568375,
+    "end": 377751.643625,
+    "stage": "speak",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 2862,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 3736,
+    "split": {
+      "db": 13.029455000010785,
+      "model": 3717.685582999955,
+      "other": 5.360212000086904
+    },
+    "calls": [
+      "pronounce",
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "call",
+    "purpose": "pronounce",
+    "stage": "speak",
+    "round": 5,
+    "attempts": 1,
+    "start": 377758.975708,
+    "end": 380719.933541,
+    "first": null,
+    "systemChars": 732,
+    "schemaChars": 457,
+    "properties": 5,
+    "textChars": 674,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-realtime-2.1",
+      "inputTokens": 712,
+      "outputTokens": 261,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "latencyMs": 2959,
+      "costMicros": 11595
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "tutor",
+    "stage": "speak",
+    "round": 5,
+    "attempts": 1,
+    "start": 380725.5415,
+    "end": 381578.067958,
+    "first": null,
+    "systemChars": 409,
+    "schemaChars": 288,
+    "properties": 2,
+    "textChars": 1291,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 477,
+      "outputTokens": 37,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 577,
+      "latencyMs": 852
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 377755.309916,
+    "end": 381594.565458,
+    "stage": "speak",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 2969,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 3839,
+    "split": {
+      "db": 19.077663999982178,
+      "model": 3813.4550409999792,
+      "other": 6.7228370000375435
+    },
+    "calls": [
+      "pronounce",
+      "tutor"
+    ],
+    "responseSummary": {}
+  },
+  {
+    "type": "endpoint",
+    "start": 381597.68475,
+    "end": 382724.620416,
+    "stage": "tts",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 1123,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1127,
+    "split": {
+      "db": 5.57129300001543,
+      "model": 1119.1333340000128,
+      "other": 2.2310389999765903
+    },
+    "calls": []
+  },
+  {
+    "type": "cache",
+    "stage": "tts",
+    "round": 1,
+    "totalMs": 4
+  },
+  {
+    "type": "endpoint",
+    "start": 382731.74575,
+    "end": 383937.893708,
+    "stage": "tts",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 1201,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1206,
+    "split": {
+      "db": 6.175373999867588,
+      "model": 1198.3015000000014,
+      "other": 1.6710840001469478
+    },
+    "calls": []
+  },
+  {
+    "type": "cache",
+    "stage": "tts",
+    "round": 2,
+    "totalMs": 3
+  },
+  {
+    "type": "endpoint",
+    "start": 383943.994708,
+    "end": 385137.536333,
+    "stage": "tts",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 1188,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1194,
+    "split": {
+      "db": 7.661581999913324,
+      "model": 1182.81829200004,
+      "other": 3.061751000059303
+    },
+    "calls": []
+  },
+  {
+    "type": "cache",
+    "stage": "tts",
+    "round": 3,
+    "totalMs": 4
+  },
+  {
+    "type": "endpoint",
+    "start": 385144.587125,
+    "end": 386390.695708,
+    "stage": "tts",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 1239,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1246,
+    "split": {
+      "db": 9.965790999936871,
+      "model": 1233.3381250000093,
+      "other": 2.804667000018526
+    },
+    "calls": []
+  },
+  {
+    "type": "cache",
+    "stage": "tts",
+    "round": 4,
+    "totalMs": 4
+  },
+  {
+    "type": "endpoint",
+    "start": 386397.360958,
+    "end": 387710.973541,
+    "stage": "tts",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 1310,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1314,
+    "split": {
+      "db": 5.688083000015467,
+      "model": 1306.180457999988,
+      "other": 1.7440419999766164
+    },
+    "calls": []
+  },
+  {
+    "type": "cache",
+    "stage": "tts",
+    "round": 5,
+    "totalMs": 8
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "photo",
+    "round": 1,
+    "attempts": 1,
+    "start": 387743.859041,
+    "end": 388919.914375,
+    "first": null,
+    "systemChars": 3234,
+    "schemaChars": 675,
+    "properties": 2,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3211,
+      "outputTokens": 18,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 2739,
+      "latencyMs": 1176
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "extraction",
+    "stage": "photo",
+    "round": 1,
+    "attempts": 1,
+    "start": 388927.555,
+    "end": 393333.482458,
+    "first": 389748.731791,
+    "systemChars": 13705,
+    "schemaChars": 18208,
+    "properties": 95,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 9372,
+      "outputTokens": 800,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 11692,
+      "latencyMs": 4406
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "figures",
+    "stage": "photo",
+    "round": 1,
+    "attempts": 1,
+    "start": 393341.376041,
+    "end": 394467.42575,
+    "first": null,
+    "systemChars": 2608,
+    "schemaChars": 798,
+    "properties": 6,
+    "textChars": 274,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3092,
+      "outputTokens": 17,
+      "thoughtTokens": 38,
+      "cachedTokens": 0,
+      "costMicros": 2824,
+      "latencyMs": 1126
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_check",
+    "stage": "photo",
+    "round": 1,
+    "attempts": 1,
+    "start": 393356.873625,
+    "end": 396199.683458,
+    "first": null,
+    "systemChars": 7335,
+    "schemaChars": 6025,
+    "properties": 48,
+    "textChars": 2226,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3588,
+      "outputTokens": 62,
+      "thoughtTokens": 303,
+      "cachedTokens": 0,
+      "costMicros": 4767,
+      "latencyMs": 2843
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 387725.343791,
+    "end": 396257.595208,
+    "stage": "photo",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 5577,
+    "sentenceMs": null,
+    "readyMs": 5632,
+    "replyCompleteMs": null,
+    "totalMs": 8532,
+    "split": {
+      "db": 40.58958700008225,
+      "model": 8440.239041999972,
+      "other": 51.422787999908905
+    },
+    "calls": [
+      "forms",
+      "extraction",
+      "figures",
+      "buddy_check"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "photo",
+    "round": 2,
+    "attempts": 1,
+    "start": 396279.291541,
+    "end": 397063.517291,
+    "first": null,
+    "systemChars": 3234,
+    "schemaChars": 675,
+    "properties": 2,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3211,
+      "outputTokens": 20,
+      "thoughtTokens": 0,
+      "cachedTokens": 2688,
+      "costMicros": 2749,
+      "latencyMs": 784
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "extraction",
+    "stage": "photo",
+    "round": 2,
+    "attempts": 1,
+    "start": 397074.560833,
+    "end": 404706.363916,
+    "first": 397920.587916,
+    "systemChars": 14941,
+    "schemaChars": 19538,
+    "properties": 107,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 9956,
+      "outputTokens": 1439,
+      "thoughtTokens": 0,
+      "cachedTokens": 1920,
+      "costMicros": 15337,
+      "latencyMs": 7632
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "figures",
+    "stage": "photo",
+    "round": 2,
+    "attempts": 1,
+    "start": 404724.477333,
+    "end": 405710.787208,
+    "first": null,
+    "systemChars": 2608,
+    "schemaChars": 798,
+    "properties": 6,
+    "textChars": 384,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3126,
+      "outputTokens": 17,
+      "thoughtTokens": 29,
+      "cachedTokens": 0,
+      "costMicros": 2807,
+      "latencyMs": 986
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_check",
+    "stage": "photo",
+    "round": 2,
+    "attempts": 1,
+    "start": 404733.574541,
+    "end": 407247.681541,
+    "first": null,
+    "systemChars": 7335,
+    "schemaChars": 6025,
+    "properties": 48,
+    "textChars": 2271,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3602,
+      "outputTokens": 54,
+      "thoughtTokens": 254,
+      "cachedTokens": 2688,
+      "costMicros": 4497,
+      "latencyMs": 2514
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 396270.596875,
+    "end": 407276.262875,
+    "stage": "photo",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 3860,
+    "sentenceMs": null,
+    "readyMs": 8471,
+    "replyCompleteMs": null,
+    "totalMs": 11006,
+    "split": {
+      "db": 38.28191899997182,
+      "model": 10939.183500000043,
+      "other": 28.20058100001188
+    },
+    "calls": [
+      "forms",
+      "extraction",
+      "figures",
+      "buddy_check"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "photo",
+    "round": 3,
+    "attempts": 1,
+    "start": 407298.483166,
+    "end": 408041.554708,
+    "first": null,
+    "systemChars": 3234,
+    "schemaChars": 675,
+    "properties": 2,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3211,
+      "outputTokens": 17,
+      "thoughtTokens": 0,
+      "cachedTokens": 2688,
+      "costMicros": 2734,
+      "latencyMs": 743
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "extraction",
+    "stage": "photo",
+    "round": 3,
+    "attempts": 1,
+    "start": 408053.432,
+    "end": 414368.253583,
+    "first": 409118.63725,
+    "systemChars": 13185,
+    "schemaChars": 14861,
+    "properties": 84,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 8554,
+      "outputTokens": 1116,
+      "thoughtTokens": 0,
+      "cachedTokens": 0,
+      "costMicros": 12582,
+      "latencyMs": 6314
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "figures",
+    "stage": "photo",
+    "round": 3,
+    "attempts": 1,
+    "start": 414384.089791,
+    "end": 415443.7325,
+    "first": null,
+    "systemChars": 2608,
+    "schemaChars": 798,
+    "properties": 6,
+    "textChars": 404,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3132,
+      "outputTokens": 17,
+      "thoughtTokens": 32,
+      "cachedTokens": 0,
+      "costMicros": 2827,
+      "latencyMs": 1060
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_check",
+    "stage": "photo",
+    "round": 3,
+    "attempts": 1,
+    "start": 414390.209083,
+    "end": 416482.989708,
+    "first": null,
+    "systemChars": 7335,
+    "schemaChars": 6025,
+    "properties": 48,
+    "textChars": 2271,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3602,
+      "outputTokens": 53,
+      "thoughtTokens": 188,
+      "cachedTokens": 3456,
+      "costMicros": 4165,
+      "latencyMs": 2093
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 407290.463458,
+    "end": 416548.151125,
+    "stage": "photo",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 3773,
+    "sentenceMs": null,
+    "readyMs": 7145,
+    "replyCompleteMs": null,
+    "totalMs": 9258,
+    "split": {
+      "db": 37.51170499972068,
+      "model": 9156.720792000007,
+      "other": 63.455170000263024
+    },
+    "calls": [
+      "forms",
+      "extraction",
+      "figures",
+      "buddy_check"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "photo",
+    "round": 4,
+    "attempts": 1,
+    "start": 416571.665166,
+    "end": 417324.930666,
+    "first": null,
+    "systemChars": 3234,
+    "schemaChars": 675,
+    "properties": 2,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3211,
+      "outputTokens": 18,
+      "thoughtTokens": 0,
+      "cachedTokens": 2688,
+      "costMicros": 2739,
+      "latencyMs": 753
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "extraction",
+    "stage": "photo",
+    "round": 4,
+    "attempts": 1,
+    "start": 417332.013666,
+    "end": 424118.60275,
+    "first": 418161.754541,
+    "systemChars": 13705,
+    "schemaChars": 18208,
+    "properties": 95,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 9372,
+      "outputTokens": 1227,
+      "thoughtTokens": 0,
+      "cachedTokens": 8832,
+      "costMicros": 13806,
+      "latencyMs": 6786
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "figures",
+    "stage": "photo",
+    "round": 4,
+    "attempts": 1,
+    "start": 424126.87525,
+    "end": 425030.7685,
+    "first": null,
+    "systemChars": 2608,
+    "schemaChars": 798,
+    "properties": 6,
+    "textChars": 390,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3129,
+      "outputTokens": 17,
+      "thoughtTokens": 24,
+      "cachedTokens": 0,
+      "costMicros": 2785,
+      "latencyMs": 904
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_check",
+    "stage": "photo",
+    "round": 4,
+    "attempts": 1,
+    "start": 424132.217291,
+    "end": 426028.370375,
+    "first": null,
+    "systemChars": 7335,
+    "schemaChars": 6025,
+    "properties": 48,
+    "textChars": 2271,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3602,
+      "outputTokens": 67,
+      "thoughtTokens": 133,
+      "cachedTokens": 3456,
+      "costMicros": 3962,
+      "latencyMs": 1896
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 416563.984916,
+    "end": 426067.846166,
+    "stage": "photo",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 3530,
+    "sentenceMs": null,
+    "readyMs": 7612,
+    "replyCompleteMs": null,
+    "totalMs": 9504,
+    "split": {
+      "db": 22.919788999890443,
+      "model": 9441.303793,
+      "other": 39.63766800012672
+    },
+    "calls": [
+      "forms",
+      "extraction",
+      "figures",
+      "buddy_check"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "forms",
+    "stage": "photo",
+    "round": 5,
+    "attempts": 1,
+    "start": 426085.659541,
+    "end": 426835.475291,
+    "first": null,
+    "systemChars": 3234,
+    "schemaChars": 675,
+    "properties": 2,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3211,
+      "outputTokens": 18,
+      "thoughtTokens": 0,
+      "cachedTokens": 2688,
+      "costMicros": 2739,
+      "latencyMs": 750
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "extraction",
+    "stage": "photo",
+    "round": 5,
+    "attempts": 1,
+    "start": 426843.943791,
+    "end": 434400.267458,
+    "first": 427602.799125,
+    "systemChars": 13705,
+    "schemaChars": 18208,
+    "properties": 95,
+    "textChars": 64,
+    "thinking": "off",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 9372,
+      "outputTokens": 1423,
+      "thoughtTokens": 0,
+      "cachedTokens": 8832,
+      "costMicros": 14776,
+      "latencyMs": 7556
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "figures",
+    "stage": "photo",
+    "round": 5,
+    "attempts": 1,
+    "start": 434407.24025,
+    "end": 435498.140666,
+    "first": null,
+    "systemChars": 2608,
+    "schemaChars": 798,
+    "properties": 6,
+    "textChars": 520,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3172,
+      "outputTokens": 17,
+      "thoughtTokens": 41,
+      "cachedTokens": 0,
+      "costMicros": 2904,
+      "latencyMs": 1091
+    },
+    "error": null
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_check",
+    "stage": "photo",
+    "round": 5,
+    "attempts": 1,
+    "start": 434411.562291,
+    "end": 436377.212875,
+    "first": null,
+    "systemChars": 7335,
+    "schemaChars": 6025,
+    "properties": 48,
+    "textChars": 2267,
+    "thinking": "medium",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 3601,
+      "outputTokens": 61,
+      "thoughtTokens": 174,
+      "cachedTokens": 2688,
+      "costMicros": 4135,
+      "latencyMs": 1966
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 426074.555833,
+    "end": 436393.204791,
+    "stage": "photo",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 5056,
+    "sentenceMs": null,
+    "readyMs": 8365,
+    "replyCompleteMs": null,
+    "totalMs": 10319,
+    "split": {
+      "db": 26.311417999735568,
+      "model": 10276.078791000065,
+      "other": 16.25874900020426
+    },
+    "calls": [
+      "forms",
+      "extraction",
+      "figures",
+      "buddy_check"
+    ]
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "roleplay",
+    "round": 1,
+    "attempts": 1,
+    "start": 436425.909125,
+    "end": 437387.827875,
+    "first": null,
+    "systemChars": 1634,
+    "schemaChars": 1236,
+    "properties": 5,
+    "textChars": 323,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 750,
+      "outputTokens": 58,
+      "thoughtTokens": 14,
+      "cachedTokens": 0,
+      "costMicros": 976,
+      "latencyMs": 962
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 436420.286791,
+    "end": 437408.466125,
+    "stage": "roleplay",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 988,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 988,
+    "split": {
+      "db": 21.27333299984457,
+      "model": 961.9093340000254,
+      "other": 4.996667000115849
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "roleplay",
+    "round": 2,
+    "attempts": 1,
+    "start": 437428.60875,
+    "end": 438699.4825,
+    "first": null,
+    "systemChars": 1634,
+    "schemaChars": 1236,
+    "properties": 5,
+    "textChars": 323,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 750,
+      "outputTokens": 57,
+      "thoughtTokens": 13,
+      "cachedTokens": 0,
+      "costMicros": 966,
+      "latencyMs": 1271
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 437424.474958,
+    "end": 438718.59025,
+    "stage": "roleplay",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 1294,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 1294,
+    "split": {
+      "db": 18.16162700037239,
+      "model": 1270.865000000049,
+      "other": 5.088664999580942
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "roleplay",
+    "round": 3,
+    "attempts": 1,
+    "start": 438738.833041,
+    "end": 439669.883875,
+    "first": null,
+    "systemChars": 1634,
+    "schemaChars": 1236,
+    "properties": 5,
+    "textChars": 323,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 750,
+      "outputTokens": 59,
+      "thoughtTokens": 16,
+      "cachedTokens": 0,
+      "costMicros": 990,
+      "latencyMs": 931
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 438735.013333,
+    "end": 439688.386333,
+    "stage": "roleplay",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 953,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 953,
+    "split": {
+      "db": 18.221085999975912,
+      "model": 931.0423750000191,
+      "other": 4.109538999968208
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "roleplay",
+    "round": 4,
+    "attempts": 1,
+    "start": 439709.011416,
+    "end": 440615.149166,
+    "first": null,
+    "systemChars": 1634,
+    "schemaChars": 1236,
+    "properties": 5,
+    "textChars": 323,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 750,
+      "outputTokens": 60,
+      "thoughtTokens": 11,
+      "cachedTokens": 0,
+      "costMicros": 971,
+      "latencyMs": 906
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 439704.988916,
+    "end": 440636.03925,
+    "stage": "roleplay",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 931,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 931,
+    "split": {
+      "db": 20.60779300017748,
+      "model": 906.1298330000136,
+      "other": 4.312707999779377
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "call",
+    "purpose": "buddy_turn",
+    "stage": "roleplay",
+    "round": 5,
+    "attempts": 1,
+    "start": 440658.315708,
+    "end": 441561.745166,
+    "first": null,
+    "systemChars": 1634,
+    "schemaChars": 1236,
+    "properties": 5,
+    "textChars": 323,
+    "thinking": "minimal",
+    "usage": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "inputTokens": 750,
+      "outputTokens": 53,
+      "thoughtTokens": 17,
+      "cachedTokens": 0,
+      "costMicros": 966,
+      "latencyMs": 903
+    },
+    "error": null
+  },
+  {
+    "type": "endpoint",
+    "start": 440654.190125,
+    "end": 441582.111333,
+    "stage": "roleplay",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 928,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 928,
+    "split": {
+      "db": 19.418041999917477,
+      "model": 903.4191660000361,
+      "other": 5.084000000031665
+    },
+    "calls": [
+      "buddy_turn"
+    ],
+    "responseSummary": {
+      "status": "done"
+    }
+  },
+  {
+    "type": "endpoint",
+    "start": 441584.960625,
+    "end": 442053.548333,
+    "stage": "embedding",
+    "round": 1,
+    "status": "ok",
+    "firstMs": 469,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 469,
+    "split": {
+      "db": 0,
+      "model": 467.73091699997894,
+      "other": 0.8567909999983385
+    },
+    "calls": []
+  },
+  {
+    "type": "endpoint",
+    "start": 442064.302791,
+    "end": 442311.874,
+    "stage": "embedding",
+    "round": 2,
+    "status": "ok",
+    "firstMs": 248,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 248,
+    "split": {
+      "db": 0,
+      "model": 247.0065000000177,
+      "other": 0.5647089999984019
+    },
+    "calls": []
+  },
+  {
+    "type": "endpoint",
+    "start": 442322.065,
+    "end": 442536.788541,
+    "stage": "embedding",
+    "round": 3,
+    "status": "ok",
+    "firstMs": 215,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 215,
+    "split": {
+      "db": 0,
+      "model": 213.82633300003363,
+      "other": 0.8972079999512061
+    },
+    "calls": []
+  },
+  {
+    "type": "endpoint",
+    "start": 442544.422541,
+    "end": 442824.422125,
+    "stage": "embedding",
+    "round": 4,
+    "status": "ok",
+    "firstMs": 280,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 280,
+    "split": {
+      "db": 0,
+      "model": 279.63979099999415,
+      "other": 0.3597929999814369
+    },
+    "calls": []
+  },
+  {
+    "type": "endpoint",
+    "start": 442829.31,
+    "end": 443046.782708,
+    "stage": "embedding",
+    "round": 5,
+    "status": "ok",
+    "firstMs": 217,
+    "sentenceMs": null,
+    "readyMs": null,
+    "replyCompleteMs": null,
+    "totalMs": 217,
+    "split": {
+      "db": 0,
+      "model": 216.87945800001035,
+      "other": 0.5932499999762513
+    },
+    "calls": []
+  }
+]

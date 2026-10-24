@@ -23,7 +23,7 @@ import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
 import { callModel, releaseCall, type Reservation } from '../../llm/call.js';
 import type { LlmMessage } from '../../llm/gateway.js';
-import { answerUpTo } from '../../llm/partial.js';
+import { firstQuestions } from './firstQuestions.js';
 import { bumpContext } from '../buddy/plan.js';
 import { requireSafeText } from '../buddy/distress.js';
 import { findOrCreateSubject } from '../learning/state.js';
@@ -37,14 +37,7 @@ import { prepareOpenedHints } from './open.js';
 import { recordOfferFailure } from './offerFailure.js';
 import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
-import {
-  availableLine,
-  chooseForms,
-  keepChosen,
-  keptAndLost,
-  offered,
-  type Keep,
-} from './formChoice.js';
+import { availableLine, chooseForms, keptAndLost, offered, type Keep } from './formChoice.js';
 import { formsOfSession, formsOfSheets, type KnownForms } from './formSources.js';
 import { choosingCatalogue } from './choosingCatalogue.js';
 import { runOfRequest } from './lifecycle.js';
@@ -451,7 +444,8 @@ async function generateSet(
   ground: Ground,
   now: Date,
   opts: {
-    onFirstItems?: (set: GeneratedSet) => void;
+    /** True only once enough questions survive preparation to start the run. */
+    onFirstItems?: (set: GeneratedSet) => boolean;
     /** The instant the call that writes the set starts, after any choice of forms (#665). */
     onMainStart?: (at: Date) => void;
   } = {},
@@ -460,24 +454,17 @@ async function generateSet(
   // The forms switched off in this environment are neither shown nor kept (#296).
   const off = deps.config.FORMS_OFF;
   const parseSet = parseSetFor(input.kind, sheets?.topics ?? null, off);
-  let handedOver = false;
   // What the answer may hold, once the forms are chosen (#627); null: anything.
   let keep: Keep | null = null;
   // Her allowance for this run, held before the choice of forms (#665).
   let reservation: Reservation | null = null;
   const onPartial = opts.onFirstItems
-    ? (rawSoFar: string) => {
-        if (handedOver) return;
-        const prefix = answerUpTo(rawSoFar, 'items', FIRST_BATCH);
-        if (prefix === null) return;
-        const parsed = parseSet.safeParse(keepChosen(prefix, keep));
-        // Fewer than asked for means a question was dropped as unusable: wait rather than start
-        // a run on two questions when three were written.
-        if (!parsed.success || !parsed.data.usable || parsed.data.items.length < FIRST_BATCH)
-          return;
-        handedOver = true;
-        opts.onFirstItems?.(parsed.data);
-      }
+    ? firstQuestions({
+        count: FIRST_BATCH,
+        parse: parseSet,
+        keep: () => keep,
+        accept: opts.onFirstItems,
+      })
     : undefined;
   try {
     const day = localParts(now, timezone).date;
@@ -836,7 +823,21 @@ async function prepareTopic(
   // 27 s while the call had 13 s left).
   let mainStartedAt = now;
   const whole = generateSet(deps, learner, input, ground, now, {
-    onFirstItems: early ? (set) => handOver(set) : undefined,
+    onFirstItems: early
+      ? (set) => {
+          const ready = preparedFrom(
+            set,
+            learner,
+            input,
+            !!sheets,
+            sheets?.topics ?? null,
+            deps.speech,
+          );
+          if (ready.items.length < FIRST_BATCH) return false;
+          handOver(set);
+          return true;
+        }
+      : undefined,
     onMainStart: (at) => {
       mainStartedAt = at;
     },
@@ -852,11 +853,8 @@ async function prepareTopic(
   );
 
   const head = await firstItems;
-  // The first questions as they would be stored. The schema let them through, but the checks
-  // that run before storing (`usableItems`, Regel 0) may still drop some — three graph
-  // questions whose graphs do not hold together are no start, and a run must not fail as "nothing
-  // to learn" while the questions after them are fine (found with issue #231). Then, as for a
-  // prefix that did not validate, the run starts on the finished answer.
+  // The accepted prefix has three questions that survived both parsing and preparation.
+  // Keep the final check here too: a short or unusable set still takes the ordinary path.
   const first = head
     ? preparedFrom(head, learner, input, !!sheets, sheets?.topics ?? null, deps.speech)
     : null;

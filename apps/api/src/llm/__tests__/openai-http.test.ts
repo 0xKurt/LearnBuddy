@@ -19,6 +19,25 @@ const config = loadConfig({
 });
 describe('direct HTTP gateway', () => {
   const createGateway = (fetch: typeof globalThis.fetch) => new OpenAIGateway(config, fetch);
+  it('does not reparse and publish unchanged text for metadata-only stream chunks', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      sse([
+        chunk('{"reply":"Hal'),
+        chunk(''),
+        chunk('lo"}'),
+        chunk('', 'stop'),
+        { choices: [], usage },
+      ]),
+    );
+    const onPartial = vi.fn();
+    const result = await createGateway(fetch).generate(request({ onPartial }));
+    expect(result.json).toEqual({ reply: 'Hallo' });
+    expect(result.usage.cachedTokens).toBe(600);
+    expect(onPartial.mock.calls.map(([text]) => text)).toEqual([
+      '{"reply":"Hal',
+      '{"reply":"Hallo"}',
+    ]);
+  });
   const smart = 'gpt-5.4-mini',
     fast = 'gpt-5.4-nano';
   it.each([
