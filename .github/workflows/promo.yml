@@ -9,9 +9,13 @@ on:
 
 jobs:
   record:
-    name: record the core loop (390×844, video)
+    name: record the core loop (390×844, video, ${{ matrix.lang }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [de, en]
     services:
       postgres:
         image: postgres:16
@@ -37,11 +41,53 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Record (web build against the dev stack)
+        env:
+          LB_PROMO_LANG: ${{ matrix.lang }}
         run: scripts/web-walkthrough.sh promo
       - name: Keep the recording and the scene marks
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: promo-recording
+          name: promo-recording-${{ matrix.lang }}
           path: test-results/web
+          if-no-files-found: error
+
+  narration:
+    name: narration in Buddy's voice (Chirp 3 HD, EU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The same service account as production, as repository secrets; without them the job
+    # ends with a plain message and the recordings are still made.
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+      GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Secrets present?
+        id: creds
+        run: |
+          if [ -n "$GOOGLE_APPLICATION_CREDENTIALS_JSON" ] && [ -n "$GOOGLE_CLOUD_PROJECT" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::GOOGLE_APPLICATION_CREDENTIALS_JSON / GOOGLE_CLOUD_PROJECT are not set — no narration this run."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: pnpm/action-setup@v4
+        if: steps.creds.outputs.ok == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.creds.outputs.ok == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: steps.creds.outputs.ok == 'true'
+      - name: Read the lines
+        if: steps.creds.outputs.ok == 'true'
+        run: pnpm --filter @learnbuddy/api exec tsx scripts/promo-narration.ts ../../promo/narration.json ../../test-results/narration
+      - name: Keep the narration
+        if: steps.creds.outputs.ok == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: promo-narration
+          path: test-results/narration
           if-no-files-found: error
