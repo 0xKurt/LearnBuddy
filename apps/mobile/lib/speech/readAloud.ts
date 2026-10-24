@@ -77,7 +77,7 @@ export function shortOpening(spoken: string): string[] {
  * How far a text has been cut into pieces: up to which character, which sentence number comes
  * next, and whether anything was read yet (the opening is shortened only once).
  */
-export type ReadingCursor = { upTo: number; at: number; started: boolean };
+export type ReadingCursor = { upTo: number; at: number; started: boolean; openingFrom?: number };
 export const READING_START: ReadingCursor = { upTo: 0, at: 0, started: false };
 
 /**
@@ -96,8 +96,12 @@ export function nextReadingParts(
   const parts: ReadingPart[] = [];
   let at = cursor.at;
   let started = cursor.started;
-  for (const sentence of r.parts) {
-    const spoken = chunkSpoken(transform(sentence));
+  for (const [position, sentence] of r.parts.entries()) {
+    const remainder =
+      position === 0 && cursor.openingFrom !== undefined
+        ? sentence.slice(cursor.openingFrom).trimStart()
+        : sentence;
+    const spoken = chunkSpoken(transform(remainder));
     const index = at++;
     const opening = spoken[0];
     if (opening === undefined) continue; // A sentence with nothing to say keeps its number.
@@ -108,7 +112,29 @@ export function nextReadingParts(
     started = true;
     parts.push({ at: index, spoken: [...shortOpening(opening), ...spoken.slice(1)] });
   }
-  return { parts, sentences: r.parts, cursor: { upTo: r.upTo, at, started } };
+  // Keep the sentence cursor at its start until punctuation arrives: read-along gets
+  // the whole sentence and its original index, while only its unspoken tail is fetched.
+  let openingFrom = r.parts.length ? undefined : cursor.openingFrom;
+  if (!done && !started && !r.parts.length && !text.slice(cursor.upTo).includes('$')) {
+    const unfinished = text.slice(cursor.upTo).trimStart();
+    const boundary = [...unfinished.slice(0, OPENING_MAX).matchAll(/[,;:—–]\s/g)].find(
+      (m) => m.index + m[0].length >= OPENING_MIN,
+    );
+    if (boundary) {
+      const stop = boundary.index + boundary[0].length;
+      const spoken = chunkSpoken(transform(unfinished.slice(0, stop).trim()));
+      if (spoken.length) {
+        parts.push({ at, spoken });
+        openingFrom = stop;
+        started = true;
+      }
+    }
+  }
+  return {
+    parts,
+    sentences: r.parts,
+    cursor: { upTo: r.upTo, at, started, ...(openingFrom !== undefined ? { openingFrom } : {}) },
+  };
 }
 
 /** The parts to read: every sentence with something to say, in order. */

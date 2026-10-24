@@ -80,12 +80,12 @@ export const FIXTURES = join(__dirname, '../../test-results/web/fixtures');
  * and the reading's end all happen as on a phone.
  */
 export async function voiceAsSilence(page: Page, ms: number): Promise<void> {
-  const audio = silence(ms).toString('base64');
+  const audio = silence(ms);
   await page.route('**/v1/voice/speech', (route) =>
     route.fulfill({
       status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ mime: 'audio/wav', audio_base64: audio, voice: 'warm', speed: 0 }),
+      contentType: 'audio/wav',
+      body: audio,
     }),
   );
 }

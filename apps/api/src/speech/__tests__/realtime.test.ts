@@ -8,7 +8,7 @@ import { realtimePcm } from '../audio-codec.js';
 import { ScriptedGateway } from '../../testing/fakes.js';
 import { OpenAISpeech } from '../openai.js';
 import { speechVoices } from '../openai-config.js';
-import { READ_ALOUD_INSTRUCTION } from '../realtime-speech.js';
+import { TTS_INSTRUCTION } from '../realtime-sessions.js';
 
 class Socket extends EventTarget {
   static instances: Socket[] = [];
@@ -177,12 +177,15 @@ it('reads with a fixed calm instruction, one EU response, a PCM-derived WAV and 
   });
   const socket = await opened();
   socket.emit({ type: 'session.updated', session: {} });
+  await vi.waitFor(() =>
+    expect(socket.sent.filter((e) => e.type === 'response.create')).toHaveLength(1),
+  );
   expect(socket.sent.filter((e) => e.type === 'response.create')).toHaveLength(1);
   expect(socket.sent[0]).toMatchObject({
     session: { tracing: null, audio: { output: { voice: 'marin', speed: 0.88 } } },
   });
   expect(socket.sent[1]).toMatchObject({
-    response: { conversation: 'none', instructions: `${READ_ALOUD_INSTRUCTION}\nLanguage: de-DE.` },
+    response: { conversation: 'none', instructions: `${TTS_INSTRUCTION}\nLanguage: de-DE.` },
   });
   socket.emit({
     type: 'response.output_audio.delta',
@@ -222,6 +225,9 @@ it('refuses an incomplete reading and preserves its paid receipt', async () => {
   });
   const rejected = expect(pending).rejects.toMatchObject({ kind: 'refused', costMicros: 999 });
   const socket = await opened();
+  await vi.waitFor(() =>
+    expect(socket.sent.filter((e) => e.type === 'response.create')).toHaveLength(1),
+  );
   socket.emit({
     type: 'response.output_audio.delta',
     delta: Buffer.alloc(4800).toString('base64'),

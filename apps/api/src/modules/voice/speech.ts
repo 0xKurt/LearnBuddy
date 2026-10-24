@@ -38,12 +38,11 @@ function isSampleText(text: string): boolean {
   return sampleTexts().some((s) => s.replace(/\s+/g, ' ').trim() === norm);
 }
 
-export async function synthesizeSpeech(
+export async function speechSettings(
   deps: Deps,
-  who: { accountId: string; learnerId: string },
-  input: SpeechRequest,
-  stream: Pick<SpeechInput, 'onAudio' | 'signal'> = {},
-): Promise<SpeechResponse> {
+  learnerId: string,
+  input: Omit<SpeechRequest, 'text'>,
+) {
   if (!deps.speech.available) {
     throw new AppError('unavailable', 'Buddy’s own voice is not configured', {
       reason: 'speech_off',
@@ -57,10 +56,20 @@ export async function synthesizeSpeech(
   }
   const settings = await deps.db.one<{ voice: VoiceName; voice_speed: number }>(
     `select voice, voice_speed from buddy_settings where learner_id = $1`,
-    [who.learnerId],
+    [learnerId],
   );
   const voice = input.voice ?? settings.voice;
   const rate = rateFor(settings.voice_speed, input.slow ?? false);
+  return { locale, voice, rate, speed: settings.voice_speed };
+}
+
+export async function synthesizeSpeech(
+  deps: Deps,
+  who: { accountId: string; learnerId: string },
+  input: SpeechRequest,
+  stream: Pick<SpeechInput, 'onAudio' | 'signal' | 'pcm'> = {},
+): Promise<SpeechResponse> {
+  const { locale, voice, rate, speed } = await speechSettings(deps, who.learnerId, input);
   const text = input.text.replace(/\s+/g, ' ').trim();
   const key = createHash('sha256')
     .update(JSON.stringify([deps.speech.voiceId(voice, locale), locale, rate, text]))
@@ -70,7 +79,7 @@ export async function synthesizeSpeech(
     mime,
     audio_base64: audio.toString('base64'),
     voice,
-    speed: settings.voice_speed,
+    speed,
   });
 
   // Shared caching only for the picker's fixed sample sentences, verified
@@ -130,6 +139,7 @@ export async function synthesizeSpeech(
   let emitted = false;
   const onAudio: SpeechInput['onAudio'] = stream.onAudio
     ? async (chunk) => {
+        if (chunk.mime === 'audio/pcm' && !stream.pcm) return;
         emitted = true;
         await stream.onAudio!(chunk);
       }
@@ -144,6 +154,8 @@ export async function synthesizeSpeech(
       voice,
       rate,
       timeoutMs: SPEECH_TIMEOUT_MS,
+      sessionKey: who.learnerId,
+      pcm: stream.pcm,
       signal: stream.signal,
       onAudio,
     });

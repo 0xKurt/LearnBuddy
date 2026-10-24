@@ -99,6 +99,9 @@ export const SpeechRequest = z.object({
   voice: VoiceName.optional(),
 });
 export type SpeechRequest = z.infer<typeof SpeechRequest>;
+/** Connection setup only: no text or generation. */
+export const SpeechPrepareRequest = SpeechRequest.omit({ text: true });
+export type SpeechPrepareRequest = z.infer<typeof SpeechPrepareRequest>;
 
 export const SpeechResponse = z.object({
   mime: z.enum(['audio/mpeg', 'audio/wav']),

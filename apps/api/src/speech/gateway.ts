@@ -19,8 +19,15 @@ export type SpeechInput = {
   timeoutMs: number;
   signal?: AbortSignal;
   /** Delivered in order as bytes arrive; awaiting the sink applies backpressure. */
-  onAudio?: (chunk: SpeechAudio) => Promise<void>;
+  onAudio?: (chunk: SpeechChunk) => Promise<void>;
+  /** Server-only scope for connection reuse; never transmitted to the provider. */
+  sessionKey?: string;
+  /** The consumer accepts raw PCM16 mono, 24 kHz. */
+  pcm?: boolean;
 };
+
+export type SpeechChunk = { mime: 'audio/pcm' | 'audio/mpeg' | 'audio/wav'; audio: Buffer };
+export type SpeechSessionInput = Omit<SpeechInput, 'text' | 'onAudio'>;
 
 export type SpeechAudio = {
   mime: 'audio/mpeg' | 'audio/wav';
@@ -71,6 +78,7 @@ export interface SpeechGateway {
   voiceId(voice: VoiceName, locale: string): string;
   /** The locale this provider reads `locale` in ("de-AT" → "de-DE"); null when it cannot. */
   localeFor(locale: string): string | null;
+  prepare?(input: SpeechSessionInput): Promise<void>;
   synthesize(input: SpeechInput): Promise<SpeechAudio>;
 }
 

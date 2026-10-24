@@ -31,8 +31,12 @@ export function audioUsage(
   const cost =
     model === 'gpt-realtime-2.1-mini'
       ? (audio * 10 + (inputTokens - audio) * 0.6 + textOut * 2.4 + audioOut * 20) * 1.1
-      : model === 'gpt-realtime-2.1'
-        ? (audio * 32 + (inputTokens - audio) * 4 + textOut * 24 + audioOut * 64) * 1.1
+      : model === 'gpt-realtime-2.1' || model === 'gpt-realtime-1.5'
+        ? (audio * 32 +
+            (inputTokens - audio) * 4 +
+            textOut * (model === 'gpt-realtime-1.5' ? 16 : 24) +
+            audioOut * 64) *
+          1.1
         : model === 'gpt-audio-1.5' || model === 'gpt-audio'
           ? audio * 32 + (inputTokens - audio) * 2.5 + outputTokens * 10
           : model === 'gpt-4o-mini-transcribe'

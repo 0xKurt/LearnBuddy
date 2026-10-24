@@ -156,3 +156,24 @@ describe('EU speech', () => {
     ).rejects.toMatchObject({ kind: 'timeout' });
   });
 });
+
+it('negotiates uncompressed PCM while storing a playable WAV', async () => {
+  const fetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockResolvedValue(
+      new Response(Buffer.alloc(960), { headers: { 'content-type': 'audio/pcm' } }),
+    );
+  const onAudio = vi.fn(async () => undefined);
+  const result = await new OpenAISpeech(openAIClient(config, fetch)).synthesize({
+    ...input,
+    pcm: true,
+    onAudio,
+  });
+  expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body))).toMatchObject({
+    response_format: 'pcm',
+    stream_format: 'audio',
+  });
+  expect(onAudio).toHaveBeenCalledWith({ mime: 'audio/pcm', audio: Buffer.alloc(960) });
+  expect(result.mime).toBe('audio/wav');
+  expect(result.audio.subarray(0, 4).toString()).toBe('RIFF');
+});

@@ -1,7 +1,7 @@
 // The authenticated speech route's byte transport. No successful response before real audio.
 import type { SpeechRequest } from '@learnbuddy/shared-types/contracts';
 import { depsOf, type AppContext } from '../../http/context.js';
-import type { SpeechAudio } from '../../speech/gateway.js';
+import type { SpeechChunk } from '../../speech/gateway.js';
 import { synthesizeSpeech } from './speech.js';
 
 export async function streamSpeech(c: AppContext, input: SpeechRequest): Promise<Response> {
@@ -12,9 +12,9 @@ export async function streamSpeech(c: AppContext, input: SpeechRequest): Promise
   const abort = () => gone.abort();
   c.req.raw.signal.addEventListener('abort', abort, { once: true });
   if (c.req.raw.signal.aborted) gone.abort();
-  let first!: (mime: SpeechAudio['mime']) => void;
+  let first!: (mime: SpeechChunk['mime']) => void;
   let failed!: (error: unknown) => void;
-  const headers = new Promise<SpeechAudio['mime']>((resolve, reject) => {
+  const headers = new Promise<SpeechChunk['mime']>((resolve, reject) => {
     first = resolve;
     failed = reject;
   });
@@ -29,6 +29,7 @@ export async function streamSpeech(c: AppContext, input: SpeechRequest): Promise
     input,
     {
       signal: gone.signal,
+      pcm: (c.req.header('accept') ?? '').includes('audio/pcm'),
       onAudio: async (chunk) => {
         if (!sent) {
           sent = true;

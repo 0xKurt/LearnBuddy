@@ -5,6 +5,7 @@ vi.mock('expo-audio', () => ({
   createAudioPlayer: players.create,
   setAudioModeAsync: vi.fn(async () => undefined),
 }));
+vi.mock('../pcmPlayer.js', () => ({ playPcm: vi.fn(() => null) }));
 vi.mock('react-native', () => ({ Platform: { OS: 'android' } }));
 import { playAudio, prepareAudio, releasePlayer } from '../naturalPlayer.js';
 

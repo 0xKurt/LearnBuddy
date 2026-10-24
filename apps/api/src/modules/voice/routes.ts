@@ -1,6 +1,10 @@
 // Voice HTTP surface. docs/architecture.md §Voice.
 
-import { SpeechRequest, TranscribeRequest } from '@learnbuddy/shared-types/contracts';
+import {
+  SpeechPrepareRequest,
+  SpeechRequest,
+  TranscribeRequest,
+} from '@learnbuddy/shared-types/contracts';
 import { Hono } from 'hono';
 
 import {
@@ -12,8 +16,9 @@ import {
 } from '../../http/context.js';
 import { streamed, wantsStream } from '../../http/stream.js';
 import { check, readBody } from '../../http/validate.js';
+import { consume, limitError } from '../../lib/limits.js';
 import { transcribe } from './service.js';
-import { synthesizeSpeech } from './speech.js';
+import { speechSettings, synthesizeSpeech } from './speech.js';
 import { streamSpeech } from './speech-stream.js';
 import { AppError } from '../../lib/errors.js';
 
@@ -57,4 +62,21 @@ voiceRoutes.get('/speech', async (c) => {
     throw new AppError('invalid_input', 'Invalid speech request');
   }
   return streamSpeech(c, check(SpeechRequest, raw));
+});
+
+// Wakes a bounded connection while the reply is still being written. No paid generation.
+voiceRoutes.post('/speech/prepare', async (c) => {
+  const input = await readBody(c, SpeechPrepareRequest);
+  const deps = depsOf(c);
+  if (!deps.speech.prepare) return c.json({ ready: false });
+  const budget = await consume(deps.db, 'speech', c.get('account').id, deps.now());
+  if (!budget.allowed) throw limitError(budget);
+  const settings = await speechSettings(deps, c.get('learner').id, input);
+  await deps.speech.prepare({
+    ...settings,
+    sessionKey: c.get('learner').id,
+    timeoutMs: 5000,
+    signal: c.req.raw.signal,
+  });
+  return c.json({ ready: true });
 });
