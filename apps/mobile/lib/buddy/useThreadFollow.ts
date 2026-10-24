@@ -25,6 +25,7 @@ export function useThreadFollow(
   const endScroll = useEndScroll(scroll);
   // Layout reports and last scroll-event dimensions serve different purposes.
   const measured = useRef({ view: 0, content: 0 });
+  const prependFrom = useRef<{ y: number; content: number } | null>(null);
   const reading = useRef<{ key: string | null; y: number; manual: boolean }>({
     key: null,
     y: 0,
@@ -113,12 +114,28 @@ export function useThreadFollow(
       setAtEnd(false);
       scroll.current?.scrollTo({ y: target, animated: false });
     },
+    /** Called immediately before older messages are inserted above the visible conversation. */
+    preserveForPrepend: () => {
+      endScroll.interrupt();
+      followEnd.current = false;
+      box.current.following = false;
+      setAtEnd(false);
+      prependFrom.current = { y: box.current.y, content: measured.current.content };
+    },
     onContentSizeChange: (_width: number, height: number) => {
       measured.current.content = height;
-      follow();
+      const before = prependFrom.current;
+      if (before && height !== before.content) {
+        prependFrom.current = null;
+        const y = Math.max(0, before.y + height - before.content);
+        box.current.y = y;
+        box.current.content = height;
+        scroll.current?.scrollTo({ y, animated: false });
+      } else follow();
     },
     /** She sent something: the next content brings her to the end. */
     followNext: () => {
+      prependFrom.current = null;
       reading.current = { key: null, y: 0, manual: false };
       followEnd.current = true;
     },

@@ -89,8 +89,8 @@ export function HomeThread({
           follow.onLayout(e);
           seen.check();
         }}
-        onContentSizeChange={() => {
-          follow.follow();
+        onContentSizeChange={(width, height) => {
+          follow.onContentSizeChange(width, height);
           seen.check();
         }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

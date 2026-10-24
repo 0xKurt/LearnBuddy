@@ -4,6 +4,7 @@
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 
+import { mergeThread } from '../threadMerge.js';
 import { keys } from './keys.js';
 
 /**
@@ -72,11 +73,28 @@ export function newerHome(
  * meets none.
  */
 export function writeHome(client: QueryClient, home: BuddyHome): boolean {
-  if (!newerHome(home, client.getQueryData<BuddyHome>(keys.home))) return false;
-  refreshProfileIfChanged(client, home, client.getQueryData<BuddyHome>(keys.home));
+  const held = client.getQueryData<BuddyHome>(keys.home);
+  if (!newerHome(home, held)) return false;
+  const next = retainConversation(home, held);
+  refreshProfileIfChanged(client, next, held);
   void client.cancelQueries({ queryKey: keys.home });
-  client.setQueryData(keys.home, home);
+  client.setQueryData(keys.home, next);
   void client.invalidateQueries({ queryKey: keys.memory, refetchType: 'none' });
   refreshSettings(client);
   return true;
+}
+
+/** Latest server window is authoritative; earlier visited messages survive spoken turns/polls. */
+export function retainConversation(incoming: BuddyHome, held: BuddyHome | undefined): BuddyHome {
+  if (!newerHome(incoming, held)) return held!;
+  if (!held || !incoming.thread_has_more || !incoming.thread.length) return incoming;
+  const first = incoming.thread[0]!;
+  const at = held.thread.findIndex((m) => m.id === first.id);
+  // Only join overlapping windows: otherwise the server pagination must fill the gap.
+  if (at < 0) return incoming;
+  return {
+    ...incoming,
+    thread: mergeThread(held.thread.slice(0, at), incoming.thread),
+    thread_has_more: held.thread_has_more,
+  };
 }

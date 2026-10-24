@@ -289,7 +289,7 @@ export function offerVariant(tools: readonly ToolName[]): string {
 }
 
 /** The longest reply that passes validation; a longer one is never shown or spoken early. */
-export const REPLY_MAX = 700;
+export const REPLY_MAX = 6000;
 
 const Concern = z
   .boolean()
