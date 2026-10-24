@@ -43,32 +43,36 @@ export async function learningHome(
   // One after the other: they share the snapshot's connection.
   const nowCard = await nowCardOf(deps, learnerId, state, today, now);
   const working = await workingOf(deps, learnerId, now);
-  const practicedToday = await practicedSince(deps, learnerId, startOfLocalDay(now, tz));
+  const learning = await learningStatus(deps, learnerId, startOfLocalDay(now, tz));
   const play = await activeRoleplay(deps.db, learnerId, now);
   return {
+    ...learning,
     now: nowCard,
     notice: noticeOf(state),
     working,
-    practiced_today: practicedToday,
     focus: focusLine(state),
     roleplay: play ? { id: play.id, language: play.language, scene: play.scene } : null,
   };
 }
 
-/**
- * Whether she worked on a practice question since `since`: answered, tried or looked at the
- * solution. A question skipped untouched (e.g. when a session is finished early) or taken out
- * as not fitting does not count.
- */
-async function practicedSince(deps: Deps, learnerId: string, since: Date): Promise<boolean> {
-  const row = await deps.db.maybeOne(
-    `select 1 from session_items si join practice_sessions ps on ps.id = si.session_id
-      where ps.learner_id = $1 and si.flagged_at is null and si.closed_at >= $2
-        and (si.status in ('correct', 'revealed', 'missed') or si.attempts > 0)
-      limit 1`,
+/** Practice activity and explicit learning languages share one snapshot round trip. */
+async function learningStatus(deps: Deps, learnerId: string, since: Date) {
+  return deps.db.one<{ practiced_today: boolean; learning_languages: string[] }>(
+    `select exists (
+       select 1 from session_items si join practice_sessions ps on ps.id = si.session_id
+       where ps.learner_id = $1 and si.flagged_at is null and si.closed_at >= $2
+         and (si.status in ('correct', 'revealed', 'missed') or si.attempts > 0)
+     ) as practiced_today,
+     array(select distinct language from (
+       select unnest(array[lang, case when kind = 'vocab' then prompt_lang end]) as language
+       from items where learner_id = $1 and archived_at is null
+       union
+       select case kind when 'english' then 'en' when 'french' then 'fr'
+         when 'spanish' then 'es' when 'german' then 'de' end
+       from subjects where learner_id = $1 and archived_at is null
+     ) learning where language is not null order by language) as learning_languages`,
     [learnerId, since],
   );
-  return row !== null;
 }
 
 /** A check the learner's own action started (their photos, their finished practice) that is due or running. */

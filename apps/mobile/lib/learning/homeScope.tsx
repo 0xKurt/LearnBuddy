@@ -14,6 +14,7 @@ import type { HomeLayout } from '../homeLayout.js';
 import { usePrefetchSession } from '../api/sessionQueries.js';
 import { useOnPhone } from '../buddy/useHomePhotos.js';
 import { drafts } from '../capture/draftStorage.js';
+import { useLearningPacks } from '../speech/useLearningPacks.js';
 
 /** One empty list for every "no photos": a fresh array each render would re-run the effect. */
 const NO_THUMBS: readonly string[] = [];
@@ -95,6 +96,9 @@ export function LearningHome({
   layout?: HomeLayout;
   children: ReactNode;
 }) {
+  useLearningPacks({
+    languages: [...(h?.learning_languages ?? []), ...(h?.roleplay ? [h.roleplay.language] : [])],
+  });
   usePrefetchSession(h?.now);
   const onBar = barPractice(h, layout);
   const value = useMemo(

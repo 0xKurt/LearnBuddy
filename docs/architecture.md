@@ -5659,14 +5659,24 @@ unsicher`. Preparation generates `confusions` as structured output; Zod and code
   Vosk before recording. The pinned native module/plugin is preserved by `app.config.ts`.
   iOS remains developer-only; Expo Go/web and missing plans/modules use the audio gateway.
   Both sentence practice and word rehearsal use one submission function and one status component.
-  First use downloads EN/DE/FR/ES/IT packs only on a connected, explicitly unmetered network
-  or after one explicit confirmation for that archive (size shown; refusals are remembered for
-  the app run, consent across restarts). Disconnected devices wait. Failed downloads back
-  off across mounts: 1 minute, doubling to at most 1 hour, reset after success.
+  `useLearningPacks` prepares a pack for every supported learning language (EN/DE/FR/ES/IT)
+  from active subjects and prepared exercises, not just the currently opened exercise (#931).
+  This preparation runs silently only on Wi-Fi / an explicitly unmetered connected network.
+  Home supplies these explicit learning languages; the active roleplay adds its scene language. The app filters out its
+  own language and retries waiting packs when an unmetered connection arrives. Unknown,
+  metered and disconnected networks wait without a dialog; old metered consent is ignored.
+  `isConnectionExpensive === undefined` deliberately means “wait”, not permission to download.
+  The same policy stays subscribed throughout each native transfer: switching to mobile data,
+  losing connectivity or losing the explicit unmetered status cancels the transfer. A cancelled
+  transfer never proceeds to verification/publication; its partial directory is removed only
+  after the native transfer settles, and its network listener is released on every exit.
+  Failed downloads back off across mounts: 1 minute, doubling to at most 1 hour.
   Packs come from alphacephei with honest download/verification/
   extraction states; byte count, SHA-256 and bounded extraction precede atomic publication.
   During download/failure the labelled online path remains usable. No model files are bundled.
-  **Conversation and roleplay (#896):** the phone recognizer's complete transcript fixes the
+  **Conversation and roleplay (#896):** only a scene language different from the app language
+  enables local pronunciation evaluation. Ordinary native-language conversation needs no pack.
+  For foreign-language learning, the phone recognizer's complete transcript fixes the
   target words (up to the shared 40-word bound). Matching prepared competitors can be reused;
   without preparation the grammar contains only those words and `[unk]`. When a verified pack
   is ready and the recognizer supports recording (Android 13+ / supported iOS), it temporarily

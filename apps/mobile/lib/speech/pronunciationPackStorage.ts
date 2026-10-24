@@ -4,6 +4,7 @@ import { Unzip, UnzipInflate } from 'fflate';
 import type { PackStorage, PronunciationPack } from './pronunciationPacks.js';
 import { nativeVosk } from './voskNative.js';
 import { modelEntry, verifyPackBytes } from './packArchive.js';
+import { downloadPack } from './packTransfer.js';
 
 const CHUNK = 64 * 1024;
 const MAX_UNPACKED = 250 * 1024 * 1024;
@@ -46,7 +47,7 @@ export const pronunciationPackStorage: PackStorage = {
     const open = new Set<FileHandle>();
     try {
       phase({ state: 'downloading' });
-      await File.downloadFileAsync(`https://alphacephei.com/vosk/models/${pack.name}.zip`, zip);
+      await downloadPack(`https://alphacephei.com/vosk/models/${pack.name}.zip`, zip.uri);
       phase({ state: 'verifying' });
       if (zip.size !== pack.bytes) throw new Error('model_size_mismatch');
       await verifyPackBytes(pack, chunks(zip));
