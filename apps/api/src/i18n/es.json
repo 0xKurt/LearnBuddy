@@ -550,7 +550,9 @@
         "crashed": "no puede seguir: ¿quizá una función se llama a sí misma sin fin?",
         "other": "Python informa de un error ({{name}})"
       }
-    }
+    },
+    "not_usable": "No he podido preparar este ejercicio.",
+    "prepare_failed": "La preparación no ha funcionado ahora. Puedes intentarlo de nuevo."
   },
   "contact": {
     "less_often": "Entendido: a partir de ahora solo te escribiré al móvil cuando sea realmente importante. Todo lo demás te espera aquí. Puedes cambiarlo en los ajustes."

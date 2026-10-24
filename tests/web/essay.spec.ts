@@ -104,6 +104,10 @@ async function look(page: Page, name: string): Promise<void> {
     await expect(question, `${tag} @kb: the question`).toBeInViewport();
     await page.getByLabel('Deine Antwort').blur();
     expect(await a11y(page, tag), `${tag}: accessibility`).toEqual([]);
+    // Return from the question we deliberately scrolled up to. A scheme change preserves
+    // that manual reading position since #640; it no longer remounts at the newest reply.
+    if ((await page.getByTestId('essay-feedback').count()) > 0)
+      await page.getByText('Erörterung – so steht dein Text').last().scrollIntoViewIfNeeded();
   }
   // She writes the next version right after this: the switch back lands first (#443).
   await setScheme(page, 'light');
@@ -139,8 +143,7 @@ const PAD = 'Das merke ich jeden Tag.';
 
 /**
  * The writing view (#525) at both phone sizes, light and dark: her text over the sheet's width,
- * at least twelve lines of it on the 390 × 844 phone. The view is the screen's own state and the
- * scheme switch rebuilds the tree (`setScheme`), so each scheme opens it anew.
+ * at least twelve lines of it on the 390 × 844 phone. Each scheme opens and closes the view.
  */
 async function writingView(page: Page, name: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {

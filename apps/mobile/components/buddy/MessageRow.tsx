@@ -6,7 +6,7 @@
 // took ~150 ms (dev JS) — every row, every formula, every time.
 
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
-import { isValidElement, memo, type ReactNode } from 'react';
+import { Fragment, isValidElement, memo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 
@@ -292,10 +292,12 @@ export const MessageRow = memo(function MessageRow({
         ) : null;
       })}
       {/* What a domain hangs under it: the start a background message announces (#632). */}
-      {messageExtra(m, 'soft').map((card, i) => (
-        <Entrance key={`extra-${i}`} animate={enters} index={1} style={CARD_WIDTH}>
+      {messageExtra(m, 'soft', (card) => (
+        <Entrance animate={enters} index={1} style={CARD_WIDTH}>
           {card}
         </Entrance>
+      )).map((card, i) => (
+        <Fragment key={`extra-${i}`}>{card}</Fragment>
       ))}
       {showActions && done.length > 0 ? (
         // The receipt and its way back are one piece, under the line's text (issue #191:

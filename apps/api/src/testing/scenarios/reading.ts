@@ -8,7 +8,7 @@
 
 import { scriptChecks } from './checks.js';
 import { scriptGenerations } from './generations.js';
-import { readingRules } from './rules.js';
+import { STUDY_READING, readingRules } from './rules.js';
 import { says, scriptTurns } from './turns.js';
 
 /** The story as printed: 20 lines of text in five paragraphs, so it scrolls in its box on every phone. */
@@ -124,7 +124,7 @@ export function scriptReading(): void {
   // Before the tour's rules: its photo is the same fixture, and the first matching rule wins.
   readingRules.add({
     when: /LEARNER: 11 years/,
-    system: /learner's study material/,
+    system: STUDY_READING,
     answer: () => ({
       is_learning_material: true,
       readable: true,

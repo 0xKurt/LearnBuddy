@@ -488,7 +488,7 @@ export type MessageView = z.infer<typeof MessageView>;
 export const BuddyHome = learning.BuddyHome;
 export type BuddyHome = z.infer<typeof BuddyHome>;
 
-/** How long an offer with a picture wish is waited for while its run is prepared (#859). */
+/** How long an offer is waited for while its run is prepared (#859/#913). */
 const PREPARING_MS = 2 * 60_000;
 
 type PolledMessage = {
@@ -497,14 +497,13 @@ type PolledMessage = {
   actions?: ReadonlyArray<{ summary: ActionSummary }>;
 };
 
-/** An offer whose card will say whether its run has a picture once it is prepared (#842, #859). */
+/** An offer whose prepared run or refusal has not arrived yet (#913). */
 function preparing(m: PolledMessage, now: Date): boolean {
   if (!m.created_at || now.getTime() - Date.parse(m.created_at) > PREPARING_MS) return false;
   return (m.actions ?? []).some(
     ({ summary: s }) =>
       s.tool === 'offer_learning' &&
-      (s.figures?.length ?? 0) > 0 &&
-      s.pictures_shown === null &&
+      s.running_session_id === null &&
       s.finished_session_id === null &&
       s.startable !== false,
   );
@@ -515,7 +514,7 @@ function preparing(m: PolledMessage, now: Date): boolean {
  * 1.5 s, Buddy at work or a turn in flight every 3 s, otherwise null (nothing in progress). One
  * rule for the server that sends it and the app that falls back on it. With `now` (the server):
  * also every 3 s for two minutes while an offer's run is prepared in the background, so its card's
- * picture line arrives without her tap (#859).
+ * outcome arrives without her tap, including a refusal without a picture wish (#859/#913).
  */
 export function pollAfterMs(
   home: Pick<BuddyHome, 'now' | 'working'> & { thread: ReadonlyArray<PolledMessage> },

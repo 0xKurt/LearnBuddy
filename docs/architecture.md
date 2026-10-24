@@ -688,7 +688,11 @@ summary plus undo data. Enforced here, not in the prompt:
     is kept (`buddy_actions.cannot_start_at`, migration 0066). The offer then stops standing in
     STATE (Buddy cannot point her at a dead card) and the thread serves it as
     `startable: false`, so `OfferCard.tsx` shows the quiet line straight away instead of letting
-    her tap and wait for it. Every other failure says nothing about the offer and is left alone;
+    her tap and wait for it. The same transaction corrects the associated reply to a factual
+    failure message and advances the context fence (#913, `practice/offerFailure.ts`): a claim
+    that something is prepared cannot survive its failed preparation. A transient failure also
+    corrects the reply, but keeps the offer retryable. Background preparation and a later tap
+    share this path; an existing session or another learner's offer is never overwritten;
 - a sheet the SEARCH found is reachable in the same turn (issue #153). STATE carries the ten
   newest and their aliases; everything older was findable and then unreachable, so Buddy could
   name a sheet he had just found and have nothing to point at. A `search_material` hit now
@@ -6379,7 +6383,10 @@ The home is read in one repeatable-read transaction (one snapshot): a job that c
 it is read (a page joining the homework session) shows either before or after, never an old
 card next to "nothing working" — the app polls closely only while something is working
 (`home-snapshot.int.test.ts`). How closely is the server's to say (#671): `poll_after_ms` —
-1500 while a sheet is read, 3000 while Buddy works or a turn is in flight, null otherwise (the app
+1500 while a sheet is read, 3000 while Buddy works or a turn is in flight, and for at most two
+minutes while any offered practice has no outcome yet (#859/#913). This includes offers without
+a picture wish: a refusal must correct the reply and card before her tap. A refused tap also
+invalidates the home immediately. Null otherwise (the app
 then asks once a minute), from `pollAfterMs` in the contracts, which an app on an older API uses
 itself. Every poll of the app (home, session, library) is spread by ±15 % so phones do not ask in
 step.
@@ -6415,7 +6422,12 @@ machen" beside it already says camera, and the disc took 46 pt of exactly that c
 issue #94) and, since issue #204, the prepared practice — the bar names it with its question
 count and its minutes, which is word for word what the `prepare_practice` receipt says, so that
 receipt's line leaves the thread while the bar stands (`preparedIn`). It stays in what can be
-taken back, and closing the bar brings the line back. Everything told rather than acted on stands at
+taken back, and closing the bar brings the line back. The same applies to an automatically
+announced practice card (#913): its title, count and start leave the thread while the bar carries
+them; after completion its duplicate result leaves the current home while the result card or
+greeting tells it. An absent card contributes no entrance container or spacing. History keeps
+the announcement's card. A read photo becomes the existing 48-pt card thumbnail, still opening
+its full-size source; while it is being read or has failed, the larger preview stays. Everything told rather than acted on stands at
 the end of the conversation as the thread's one card with its buttons (`components/buddy/ChatCard.tsx`,
 #599 — the same card every offer under a message is drawn with, design
 `components/practice/PracticeReady.jsx`; a receipt is a canvas chip under Buddy's line and
@@ -6514,6 +6526,14 @@ the run ends and the corner's sheet are hooks beside it (`usePracticeDrafts`, `u
 `useSessionEnd`, `useCornerConfirm` — one flow for "Frage passt nicht" and "Einspruch"); what the
 question shows is pure (`questionView`). The parts drawn are `QuestionProgress`, `ItemCard`,
 `QuestionThread`, `AnswerArea` and `NoQuestion` in `components/practice/`.
+Structured boards use the existing compact question typography and padding so their required
+cells keep room at 360×740 (#913). `BoardScroll` reports content exceeding its viewport;
+`AnswerShell` gives back the optional help row before cutting required answers, and restores it
+when the board and the row fit together. The measurement includes the space already given back,
+so folding cannot immediately undo itself. A dense pair tile reduces only vertical padding;
+its text and minimum touch target remain unchanged. Marking uses ordinary word spacing inside
+its 44 pt targets, keeping the longest supported sentence within its two rows.
+
 **The answer shell** (issue #310, `components/practice/AnswerShell.tsx`) holds an answer and its
 action in fixed slots: the free room, the answer, optional keys for what she types directly under
 it, and "Prüfen" (`CheckBar.tsx`, the practice adapter of the one Composer: the 40 pt pill in
@@ -6639,7 +6659,9 @@ once (`abandonStaleUploads`, run by the scheduler).
   app while one waits drops it.
 - **Instant start** (gaps.md #2, `lib/api/persist.ts`, `lib/api/deviceCache.ts`): the home and
   `/me` are kept on the device (AsyncStorage / localStorage, per user) and shown at once on the
-  next start as stale data that refreshes in the background. Only settled data is kept — no card
+  next start as stale data that refreshes in the background. Restored queries have `updatedAt: 0`
+  (#913): their freshness windows apply only after a server response, including `/me`'s five
+  minutes between screens. Only settled data is kept — no card
   on top, notice, decision, work in progress or message still being answered (CLAUDE.md rule 5);
   they come with the first refresh. Any end of the session removes every kept copy. A practice to
   go on with is loaded while its card is on screen (loaded, never started; `lib/api/sessionCache.ts`):
@@ -6794,7 +6816,10 @@ action, the blue waveform into a conversation (`onTalk`). "Stopp" while Buddy wr
 flashcard's "Umdrehen" are hosted in the same slot (`kind: 'own'`). The chat's composer
 (`components/buddy/Composer.tsx`) and a typed practice answer (`components/practice/TypedAnswer.tsx`,
 through the practice adapter `components/practice/CheckBar.tsx`) are the same box in the same pinned `components/lb/BottomBar.tsx`, with the same
-status line and character count (`FieldCount`). The math preview shows only while the line looks
+status line and character count (`FieldCount`). In tight keyboard room, Composer measures its
+field/keys/tools box and optional chips separately: the chips fold before the pinned bar exceeds
+half the visible height (#913). The field stays mounted, with every line, key and draft intact;
+the shortcuts return when they fit. The math preview shows only while the line looks
 different when set (`TypedMathPreview`): plain digits are never mirrored. Before #522 everything
 stood in one line beside the text and a "Senden" pill left her text a narrow column. A birth date is `components/auth/BirthDateFields.tsx` in the
 profile form and in the parents' correction. Guarded: `lb/one-text-field`
@@ -6821,7 +6846,10 @@ down to its smaller share and a question's drawing folds to one line that still 
 (`ZoomableFigure` `folded`, issue #379) — a box diagram does not shrink at all, and a drawing at
 its legible minimum left the field under the keyboard. The conversation under the card fades at
 its top edge whenever that edge lies inside a turn (`components/practice/ThreadBox.tsx`): with the
-keyboard up Buddy's reply ran under the card at a hard edge (#365). A lint rule (`eslint.config.mjs`, `no-restricted-syntax`) refuses the window's
+keyboard up Buddy's reply ran under the card at a hard edge (#365). At a zero-height cap the
+inner conversation is not laid out or reachable by keyboard/screenreader, while its measured
+need is retained for reopening (#913). Optional help also folds while her question has focus in
+tight room. A lint rule (`eslint.config.mjs`, `no-restricted-syntax`) refuses the window's
 height in `app/` and `components/`; the one exception is the sheet's slide-out offset
 (`components/lb/Sheet.tsx`), which should ignore the keyboard. **Tests:** the numbers in
 `lib/__tests__/keyboard.test.ts`; the layout in `tests/web/visible.spec.ts` at the room a keyboard
@@ -6874,6 +6902,13 @@ filled twice throws (in development Fast Refresh replaces it instead);
 `components/learn/__tests__/register.test.tsx` fails when a place is left empty or filled twice.
 
 ## Testing
+
+The browser's scripted model boots the learning-domain form chooser itself
+(`testing/scenarios/walkthrough.ts`, #913); Vitest's `setupFiles` must not be a hidden prerequisite.
+Generation rules ignore measured learning-gap context when selecting a scenario, while retaining
+the requested topic and source run. Choosing forms reads ahead without advancing a scenario's
+successive reading attempts. `walkthrough-generation.test.ts` exercises the bootstrap without
+the Vitest setup, changed request context and source-constrained repeat practice.
 
 CI keeps the full API suite on PG16 without pgvector and adds a focused PG17 job with the
 versioned `pgvector/pgvector` image (#862). It runs only `pgvector-migration.int.test.ts` and

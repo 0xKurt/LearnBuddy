@@ -60,7 +60,7 @@ type Props = {
   full?: boolean;
   /** Fill the height of its row too (two tiles side by side stay equally tall). */
   grow?: boolean;
-  /** Its words a step smaller, 15/20 (Tasks.jsx Pairs; a category's name beside two others). */
+  /** Its words 15/20 and a step's vertical padding smaller; full touch targets stay intact. */
   dense?: boolean;
   /**
    * A side of a pair: the taller step (Tasks.jsx Pairs: at least 64). A row: as tall as the
@@ -88,12 +88,18 @@ function place(shape: TileShape, full: boolean, grow: boolean): ViewStyle {
 }
 
 /** The piece's own box, by shape. `inset` is what a thicker frame takes from the padding. */
-function box(shape: TileShape, inset: number, grow: boolean, tall: boolean): ViewStyle {
+function box(
+  shape: TileShape,
+  inset: number,
+  grow: boolean,
+  tall: boolean,
+  dense: boolean,
+): ViewStyle {
   switch (shape) {
     case 'step':
       return {
         minHeight: tall ? BOARD.step.tall : BOARD.step.minHeight,
-        paddingVertical: BOARD.step.padY - inset,
+        paddingVertical: (dense ? BOARD.step.densePadY : BOARD.step.padY) - inset,
         paddingLeft: BOARD.step.padStart - inset,
         paddingRight: BOARD.step.padEnd - inset,
         gap: BOARD.step.gap,
@@ -187,7 +193,7 @@ export function Tile({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        ...box(shape, inset, grow, tall),
+        ...box(shape, inset, grow, tall, dense),
         backgroundColor: framed || state === 'picked' ? skin.bg : 'transparent',
         ...(framed
           ? {

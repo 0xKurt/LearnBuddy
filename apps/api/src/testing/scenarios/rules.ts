@@ -49,9 +49,9 @@ export class RuleBook {
   }
 
   /** Installs the dispatcher; call it once, after every scenario has added its rules. */
-  install(llm: ScriptedGateway): void {
+  install(llm: ScriptedGateway, textOf = ScriptedGateway.textOf): void {
     llm.byDefault(this.purpose, (req: LlmRequest) => {
-      const text = ScriptedGateway.textOf(req);
+      const text = textOf(req);
       const rule = this.rules.find(
         (r) => r.when.test(text) && (r.system === undefined || r.system.test(req.system)),
       );
@@ -65,11 +65,12 @@ export class RuleBook {
  * when she asks again. Round and round, so a spec run twice on one stack starts over at the
  * first. Only for a rule no other spec's request matches.
  */
-export function inTurn(...answers: unknown[]): () => unknown {
+export function inTurn(...answers: unknown[]): (req?: LlmRequest) => unknown {
   let next = 0;
-  return () => {
+  return (req) => {
     const answer = answers[next % answers.length];
-    next += 1;
+    // The fake chooser reads ahead; choosing forms must not consume the actual reading.
+    if (req?.purpose !== 'forms') next += 1;
     return answer;
   };
 }
@@ -86,6 +87,10 @@ export const hintRules = new RuleBook('hints', () => ({ items: [] }));
  * explain it by has its rule (#298); every other one gets the learning modes' words.
  */
 export const reexplainRules = new RuleBook('reexplain');
+/** The main reading and its compact form-choice catalogue describe the same purpose (#883). */
+export const STUDY_READING = /learner's study material|study material: prepare practice/;
+export const HOMEWORK_READING = /learner's homework|homework: preserve the tasks/;
+
 /** Reading a photographed sheet or homework (materials/reader.ts). */
 export const readingRules = new RuleBook('extraction');
 /** Judging a spoken sentence (practice/speak.ts). */

@@ -601,7 +601,8 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   await bothSchemes(page, '27-practice-voice-mode');
   // "Tastatur": back to the input bar, and silent again — she never switched Vorlesen on.
   await page.getByRole('button', { name: 'Tastatur' }).last().click();
-  await page.unroute('**/v1/voice/speech');
+  // Keep the same speech fixture for the conversation below too: the stack has no voice.
+  // Falling back to the headless browser's speech engine cannot exercise a completed reading.
   await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
   await expect(readAloud).toHaveAttribute('aria-checked', 'false');
   // Vorlesen on in practice, still on at Buddy: one setting, one switch, two heads.
@@ -676,7 +677,7 @@ const KEYBOARD = { 390: 336, 360: 300 } as const;
  * gets the focus back for each pass (the contrast check in `shot` may move it): the keyboard
  * and the math keys only show while she is typing.
  */
-async function pathShots(page: Page, name: string): Promise<void> {
+async function pathShots(page: Page, name: string, feedback = false): Promise<void> {
   const field = page.getByLabel('Deine Antwort');
   for (const scheme of ['light', 'dark'] as const) {
     await setScheme(page, scheme);
@@ -689,6 +690,9 @@ async function pathShots(page: Page, name: string): Promise<void> {
       await field.focus();
       await expect(page.getByRole('button', { name: 'Neue Zeile' })).toBeVisible();
       await settle(page);
+      // After Check the ordinary conversation follows Buddy's feedback (#608/#640).
+      // She scrolls back to the question to work on her next version, with the field pinned.
+      if (feedback) await page.getByTestId('question-card').last().scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(SHOTS, `${name}-${scheme}-kb-${phone.width}.png`) });
       // With the keyboard up the task still shows above the pinned bar. A typed question stands
       // in the one scrolling practice body now (#608), which has no `scroll-question`: its card.
@@ -755,7 +759,7 @@ test('a written path: three lines in, the first broken step named (issue #221)',
       })
       .last(),
   ).toBeVisible();
-  await pathShots(page, '38-path-broke');
+  await pathShots(page, '38-path-broke', true);
 
   // She writes it again; a sound path is judged on the value it arrives at.
   await field.fill(corrected);

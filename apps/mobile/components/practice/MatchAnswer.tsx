@@ -35,6 +35,8 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
+import { formDensity } from '../../lib/keyboard.js';
+import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { speakMathText } from '../../lib/math/speak.js';
 import { BOARD, WORD_ROW } from '../../lib/theme/board.js';
 import { RADIUS } from '../../lib/theme/radius.js';
@@ -151,6 +153,8 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const words = useSpokenWords();
+  const seen = useVisibleHeight();
+  const compact = formDensity(seen.window, seen.overlap) !== 'roomy';
   const { text: kept, setText: keep } = useDraft(draftKey);
   const { links, held } = stateFrom(kept, view);
   const groups = view.form === 'groups';
@@ -223,6 +227,7 @@ export function MatchAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Ma
         state={isHeld ? 'picked' : 'tile'}
         tall
         grow
+        dense={compact}
         disabled={disabled}
         onPress={() => tap(id)}
         accessibilityLabel={

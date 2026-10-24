@@ -13,7 +13,7 @@ import {
   sendWorksheet,
   signUpMia,
 } from './coreLoop';
-import { shot } from './fit';
+import { bothSchemes, shot } from './fit';
 import { recordPerf } from './perf';
 
 test('core loop · practice: short practice, feedback remembered, the greeting after it', async ({
@@ -53,7 +53,7 @@ test('core loop · practice: short practice, feedback remembered, the greeting a
   await expect(card).toHaveCount(0);
   await expect(page.getByText('Geschafft!')).toBeVisible();
   await page.getByRole('button', { name: 'Mehr', exact: true }).click({ trial: true });
-  await shot(page, '12b-buddy-result-in-thread');
+  await bothSchemes(page, '12b-buddy-result-in-thread');
   await page.getByRole('button', { name: 'Ansehen' }).click();
   // The full summary again (the thread behind keeps its short version of the same words).
   await expect(

@@ -70,6 +70,8 @@ const Thumbs = createContext<HomeThumbs>(NONE);
 export type BarPractice = { step: string | null; session: string | null };
 const NOTHING_ON_BAR: BarPractice = { step: null, session: null };
 const OnBar = createContext<BarPractice>(NOTHING_ON_BAR);
+/** The result already told by this home's result card or its greeting. History has none. */
+const CurrentResult = createContext<string | null>(null);
 
 export function barPractice(h: BuddyHome | undefined, layout: HomeLayout | undefined): BarPractice {
   const now = h?.now;
@@ -101,7 +103,13 @@ export function LearningHome({
   );
   return (
     <Thumbs.Provider value={useThumbs(h)}>
-      <OnBar.Provider value={value}>{children}</OnBar.Provider>
+      <OnBar.Provider value={value}>
+        <CurrentResult.Provider
+          value={h?.now?.type === 'practice_result' ? h.now.session_id : null}
+        >
+          {children}
+        </CurrentResult.Provider>
+      </OnBar.Provider>
     </Thumbs.Provider>
   );
 }
@@ -109,6 +117,10 @@ export function LearningHome({
 /** What the bar on top starts or continues now (`BarPractice`). */
 export function useBarPractice(): BarPractice {
   return useContext(OnBar);
+}
+
+export function useCurrentResult(): string | null {
+  return useContext(CurrentResult);
 }
 
 /** What `LearningHome` found for this home's pages. */

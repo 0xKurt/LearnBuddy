@@ -9,14 +9,16 @@
 // react-native-web's `measure` reads).
 
 import type { ItemView } from '@learnbuddy/shared-types/contracts';
-import { act } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
+import { createRef } from 'react';
 import { View } from 'react-native';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { useScreenRoom } from '../../../lib/practice/screenRoom.js';
 import { renderInApp } from '../../../testing/render.js';
 import { FreeSpace, FreeSpaceReport } from '../FreeSpace.js';
 import { ThreadBox } from '../ThreadBox.js';
+import { Btn } from '../../lb/Btn.js';
 
 const ITEM = {
   id: '00000000-0000-4000-8000-0000000000aa',
@@ -80,6 +82,30 @@ async function settle() {
 }
 
 describe('the practice room after a resize (issue #484)', () => {
+  it('a box with no room removes its controls until the keyboard gives room back (#913)', () => {
+    const measured = { ref: createRef<View>(), onHeight: vi.fn() };
+    const draw = (cap: number) => (
+      <ThreadBox
+        cap={cap}
+        floor={0}
+        holds
+        tops={[0]}
+        followEnd={false}
+        box={measured}
+        onNeed={vi.fn()}
+        onParts={vi.fn()}
+      >
+        <Btn onPress={() => undefined}>Warum stimmt das?</Btn>
+      </ThreadBox>
+    );
+    const view = renderInApp(draw(120));
+    expect(screen.getByRole('button', { name: 'Warum stimmt das?' })).toBeTruthy();
+    view.rerender(draw(0));
+    expect(screen.queryByRole('button', { name: 'Warum stimmt das?' })).toBeNull();
+    view.rerender(draw(120));
+    expect(screen.getByRole('button', { name: 'Warum stimmt das?' })).toBeTruthy();
+  });
+
   it('takes the drawn box over a stale layout event: the "Tipp" row is whole or not drawn', async () => {
     const seen: Seen[] = [];
     const view = renderInApp(<Screen seen={seen} />);

@@ -3,6 +3,7 @@
 
 import {
   BuddyHome as BuddyHomeSchema,
+  ActionSummary,
   pollAfterMs,
   type BuddyHome,
 } from '@learnbuddy/shared-types/contracts';
@@ -18,6 +19,44 @@ const home = (over: Partial<BuddyHome>): BuddyHome =>
 const middle = () => 0.5;
 
 describe('home poll (#686, #671)', () => {
+  it('follows every pending preparation until its outcome, including offers without pictures', () => {
+    const now = new Date('2026-10-24T12:00:00Z');
+    const summary = ActionSummary.parse({
+      tool: 'offer_learning',
+      kind: 'practice',
+      text: 'Units',
+      goal_id: null,
+      material_id: null,
+      difficulty: null,
+      direction: null,
+      minutes: null,
+    });
+    const message = { status: 'done', created_at: now.toISOString(), actions: [{ summary }] };
+    const base = { now: null, working: null, thread: [message] };
+    expect(pollAfterMs(base, now)).toBe(3000);
+    expect(pollAfterMs(base, new Date(now.getTime() + 121_000))).toBeNull();
+    for (const outcome of [
+      { startable: false },
+      { running_session_id: '00000000-0000-4000-8000-000000000001' },
+      { finished_session_id: '00000000-0000-4000-8000-000000000001' },
+    ]) {
+      expect(
+        pollAfterMs(
+          {
+            ...base,
+            thread: [
+              {
+                ...message,
+                actions: [{ summary: ActionSummary.parse({ ...summary, ...outcome }) }],
+              },
+            ],
+          },
+          now,
+        ),
+      ).toBeNull();
+    }
+  });
+
   it('follows the pace the server sent', () => {
     expect(homePollMs(home({ poll_after_ms: 2000 }), middle)).toBe(2000);
     // Nothing in progress, says the server: once a minute — whatever the app would have guessed.

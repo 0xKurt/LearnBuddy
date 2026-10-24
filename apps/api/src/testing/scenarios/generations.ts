@@ -13,7 +13,7 @@
 // Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import type { ScriptedGateway } from '../fakes.js';
+import { ScriptedGateway } from '../fakes.js';
 import { RuleBook, type Rule } from './rules.js';
 
 export type GenerationRule = Rule;
@@ -32,5 +32,9 @@ export function scriptGenerations(...added: GenerationRule[]): void {
 
 /** Installs the dispatcher; call it once, after every scenario has added its rules. */
 export function installGenerations(llm: ScriptedGateway): void {
-  book.install(llm);
+  // Earlier measured topics are context, not the requested exercise (#885/#913). Keep the
+  // source sheet / previous run for rules that script a repeat, but never dispatch on gaps.
+  book.install(llm, (req) =>
+    ScriptedGateway.textOf(req).replace(/LEARNING GAPS[\s\S]*?(?=\nLEARNER'S TEXT:|$)/g, ''),
+  );
 }

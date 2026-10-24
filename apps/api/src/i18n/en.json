@@ -550,7 +550,9 @@
         "crashed": "it can't go on — does a function perhaps call itself endlessly?",
         "other": "Python reports an error ({{name}})"
       }
-    }
+    },
+    "not_usable": "I couldn’t prepare this exercise.",
+    "prepare_failed": "Preparation did not work just now. You can try again."
   },
   "contact": {
     "less_often": "Got it – from now on I'll only message your phone when it really matters. Everything else waits here. You can change this in settings."

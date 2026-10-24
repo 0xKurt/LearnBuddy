@@ -5,7 +5,7 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import { scriptGenerations } from './generations.js';
-import { inTurn, pronounceRules, readingRules } from './rules.js';
+import { STUDY_READING, HOMEWORK_READING, inTurn, pronounceRules, readingRules } from './rules.js';
 import { says, scriptTurns } from './turns.js';
 
 const remember = (statement: string, quote: string) => ({
@@ -210,17 +210,17 @@ export function scriptTour(): void {
   readingRules.add(
     {
       when: /Photo 1 of 1:\n\[user\] <image 800x1080>/,
-      system: /learner's study material/,
+      system: STUDY_READING,
       answer: inTurn(UNREADABLE, NOMEN_UND_VERBEN),
     },
     {
       when: /Photo 2 of 2:\n\[user\] <image 800x1080>/,
-      system: /learner's homework/,
+      system: HOMEWORK_READING,
       answer: () => HOMEWORK_SQUARE,
     },
     {
       when: /Photo 1 of 1:\n\[user\] <image 800x1080>/,
-      system: /learner's homework/,
+      system: HOMEWORK_READING,
       answer: () => HOMEWORK_RECTANGLE,
     },
   );

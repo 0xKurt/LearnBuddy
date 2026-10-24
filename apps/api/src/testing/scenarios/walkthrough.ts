@@ -5,6 +5,8 @@
 // Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
+// The browser has no Vitest setupFiles: install the same domain choice step here (#913).
+import '../domain.js';
 import type { ScriptedGateway } from '../fakes.js';
 import { scriptAsk } from './ask.js';
 import { scriptCards } from './cards.js';
@@ -27,6 +29,7 @@ import { scriptLearningModes } from './learning-modes.js';
 import { scriptListening } from './listening.js';
 import { scriptMark } from './mark.js';
 import { scriptPeriodic } from './periodic.js';
+import { scriptPreparationFailure } from './preparation.js';
 import { scriptPrimary } from './primary.js';
 import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
@@ -118,6 +121,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptFigures();
   scriptTrees();
   scriptPeriodic();
+  scriptPreparationFailure();
   scriptSolids();
   scriptEar();
   scriptCloze();

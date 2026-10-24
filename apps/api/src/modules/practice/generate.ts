@@ -33,6 +33,7 @@ import { CODE_RULES, codeItems } from './code.js';
 import { DICTATION_RULES, dictationItems, type DictationItem } from './dictation.js';
 import { ESSAY_RULES, essayItems } from './essayTask.js';
 import { prepareOpenedHints } from './open.js';
+import { recordOfferFailure } from './offerFailure.js';
 import { buddyReadingItems, READ_TEXT_RULES } from './readText.js';
 import { LISTEN_RULES, listenItems, noVoiceToReadIt } from './listen.js';
 import {
@@ -392,7 +393,11 @@ export async function startTopic(
   const key = `${learner.id}:${input.client_request_id}`;
   const running = inFlight.get(key);
   if (running) return running;
-  const started = prepareTopic(deps, learner, input);
+  // A joining tap waits for the corrected offer too, not just the failed model call.
+  const started = prepareTopic(deps, learner, input).catch(async (err: unknown) => {
+    await recordOfferFailure(deps, learner, input.client_request_id, err);
+    throw err;
+  });
   inFlight.set(key, started);
   try {
     return await started;

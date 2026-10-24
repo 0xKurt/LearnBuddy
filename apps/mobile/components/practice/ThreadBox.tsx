@@ -85,6 +85,7 @@ export function ThreadBox({
   /** The scroll view's own height as laid out, and its content's. */
   const view = useRef(0);
   const content = useRef(0);
+  const hidden = !unbounded && cap === 0;
   // Each part in its own slot, its top from the parts' heights (`useStackTops`, issue #403): the
   // step above it is none above the first drawn part and none at one that draws nothing (an empty
   // `ItemThread` before her first answer), as a column `gap` would not skip it.
@@ -101,6 +102,7 @@ export function ThreadBox({
   const tail = more ? EDGE_FADE : 0;
   /** Scrolls to where it rests (`threadRest`) and stands there. */
   function rest(animated: boolean) {
+    if (hidden) return;
     const offset = threadRest(content.current, view.current, true, readFrom);
     if (readFrom === undefined) scroll.current?.scrollToEnd({ animated: animated && !reduced });
     // A reply read from its top is jumped to: a smooth scroll there, while the box still grew
@@ -114,10 +116,10 @@ export function ThreadBox({
   restRef.current = rest;
   useEffect(() => {
     if (reduced && followEnd) restRef.current(false);
-  }, [reduced, followEnd]);
+  }, [reduced, followEnd, hidden]);
   useEffect(() => {
     if (followEnd && readFrom !== undefined) restRef.current(true);
-  }, [followEnd, readFrom]);
+  }, [followEnd, readFrom, hidden]);
   if (unbounded) {
     return (
       <View
@@ -154,9 +156,11 @@ export function ThreadBox({
         testID="scroll-thread"
         // Reachable by keyboard, so a long reply that holds no control (a long text's feedback,
         // #258) can still be scrolled without a pointer (axe: scrollable-region-focusable).
-        focusable
+        focusable={!hidden}
+        accessibilityElementsHidden={hidden}
+        importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
         style={[
-          { flexGrow: 0, flexShrink: 1 },
+          { flexGrow: 0, flexShrink: 1, display: hidden ? 'none' : 'flex' },
           fadeFull
             ? topEdgeMaskFrom(0, EDGE_FADE, tail)
             : holds || cut
@@ -165,6 +169,7 @@ export function ThreadBox({
         ]}
         scrollEventThrottle={64}
         onScroll={(e) => {
+          if (hidden) return;
           const { contentOffset, contentSize } = e.nativeEvent;
           content.current = Math.round(contentSize.height);
           setAt({ offset: Math.round(contentOffset.y), content: content.current });
@@ -172,11 +177,13 @@ export function ThreadBox({
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingHorizontal: SPACE.lg, paddingVertical: THREAD_PAD }}
         onContentSizeChange={(_, h) => {
+          if (hidden) return;
           content.current = Math.round(h);
           if (followEnd) rest(true);
           else setAt((a) => ({ ...a, content: content.current }));
         }}
         onLayout={(e) => {
+          if (hidden) return;
           view.current = Math.round(e.nativeEvent.layout.height);
           // The keyboard shrinks this view; keep the latest reply visible above it.
           if (followEnd) rest(false);
@@ -184,16 +191,26 @@ export function ThreadBox({
       >
         {/* One measured column: what the conversation truly holds, so the question knows what
             is spare. */}
-        <View onLayout={(e) => onNeed(Math.round(e.nativeEvent.layout.height) + 2 * THREAD_PAD)}>
+        <View
+          onLayout={(e) => {
+            if (!hidden) onNeed(Math.round(e.nativeEvent.layout.height) + 2 * THREAD_PAD);
+          }}
+        >
           {slots.map(({ key, part }, i) => (
-            <View key={key} style={{ marginTop: pieces[i]?.step ?? 0 }} onLayout={onHeight(key)}>
+            <View
+              key={key}
+              style={{ marginTop: pieces[i]?.step ?? 0 }}
+              onLayout={(e) => {
+                if (!hidden) onHeight(key)(e);
+              }}
+            >
               {part}
             </View>
           ))}
         </View>
       </ScrollView>
-      {fadeFull ? <TopEdgeFade /> : null}
-      {more ? <TopEdgeFade bottom /> : null}
+      {!hidden && fadeFull ? <TopEdgeFade /> : null}
+      {!hidden && more ? <TopEdgeFade bottom /> : null}
     </View>
   );
 }

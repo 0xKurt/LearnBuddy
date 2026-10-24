@@ -550,7 +550,9 @@
         "crashed": "non può andare avanti: forse una funzione chiama sé stessa all’infinito?",
         "other": "Python segnala un errore ({{name}})"
       }
-    }
+    },
+    "not_usable": "Non sono riuscito a preparare questo esercizio.",
+    "prepare_failed": "La preparazione non è riuscita. Puoi riprovare."
   },
   "contact": {
     "less_often": "Va bene: d'ora in poi ti scrivo sul telefono solo quando è davvero importante. Tutto il resto ti aspetta qui. Puoi cambiarlo nelle impostazioni."

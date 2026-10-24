@@ -13,13 +13,18 @@
 
 import { randomUUID } from 'node:crypto';
 
-import type { BuddyHome, SendMessageResponse } from '@learnbuddy/shared-types/contracts';
+import type {
+  BuddyHome,
+  SendMessageResponse,
+  SessionView,
+} from '@learnbuddy/shared-types/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { testDatabaseAvailable } from '../testing/database.js';
 import { ScriptedGateway } from '../testing/fakes.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 import { bumpContext } from '../modules/buddy/plan.js';
+import { LlmError } from '../llm/gateway.js';
 
 const dbReady = await testDatabaseAvailable();
 
@@ -290,7 +295,7 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
       'buddy_turn',
       turn({
         actions: [{ tool: 'offer_learning', args: { kind: 'vocab', text: typed, goal: null } }],
-        reply: 'Los geht es!',
+        reply: 'Ich habe deine Übungen vorbereitet.',
       }),
     );
     // The generator refuses: nothing it can make questions from (practice/generate.ts).
@@ -316,6 +321,17 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
 
     // The thread hands the app a card that is not a button any more.
     const home = await l.api.get<BuddyHome>('/buddy');
+    const reply = home.body.thread.find((m) =>
+      m.actions.some((a) => a.summary.tool === 'offer_learning'),
+    );
+    expect(reply?.text).toBe('Die Übung konnte ich leider nicht vorbereiten.');
+    expect(home.body.context_version).toBeGreaterThan(sent.home.context_version);
+    // Persisted too: history and the next model turn must not repeat the failed promise.
+    const stored = await env.db.one<{ text: string }>(
+      `select text from buddy_messages where id = $1 and learner_id = $2`,
+      [reply?.id, l.learnerId],
+    );
+    expect(stored.text).toBe(reply?.text);
     const offer = home.body.thread
       .flatMap((m) => m.actions)
       .find((a) => a.summary.tool === 'offer_learning');
@@ -329,6 +345,77 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
     });
     await say(l, 'und sonst?');
     expect(seen).not.toContain('## Already waiting for her');
+  });
+
+  it('an outage corrects the claim but keeps the same offer retryable', async () => {
+    const l = await onboard(env, { relation: 'child', name: 'Ina', birthDate: '2013-11-20' });
+    const text = 'la chambre – das Zimmer';
+    env.holdBackground();
+    env.llm.script(
+      'buddy_turn',
+      turn({
+        reply: 'Die Übung ist vorbereitet.',
+        actions: [{ tool: 'offer_learning', args: { kind: 'vocab', text } }],
+      }),
+    );
+    const sent = await say(l, `Frag mich diese Wörter ab: ${text}`);
+    const action = sent.home.thread
+      .flatMap((m) => m.actions)
+      .find((a) => a.summary.tool === 'offer_learning')!;
+    env.llm.byDefault('explain', { error: new LlmError('unavailable', 'offline') });
+    await env.flushBackground();
+    const failed = (await l.api.get<BuddyHome>('/buddy')).body.thread.find((m) =>
+      m.actions.some((a) => a.id === action.id),
+    );
+    expect(failed?.text).toBe(
+      'Die Vorbereitung hat gerade nicht geklappt. Du kannst es noch einmal versuchen.',
+    );
+    expect(failed?.actions[0]?.summary).toMatchObject({ startable: true });
+    env.llm.byDefault('explain', generated());
+    const retried = await l.api.post<SessionView>('/practice/topic', {
+      client_request_id: action.id,
+      kind: 'vocab',
+      text,
+    });
+    expect(retried.status).toBe(201);
+    expect(retried.body.items).toHaveLength(2); // The same word, in both directions.
+  });
+
+  it('a failed request with another learner’s offer id cannot change their reply or card', async () => {
+    const owner = await onboard(env, { relation: 'child', name: 'Eva', birthDate: '2013-11-20' });
+    const stranger = await onboard(env, {
+      relation: 'child',
+      name: 'Eli',
+      birthDate: '2013-11-20',
+    });
+    env.holdBackground();
+    env.llm.script(
+      'buddy_turn',
+      turn({
+        reply: 'Wir üben Größen.',
+        actions: [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Größen' } }],
+      }),
+    );
+    const sent = await say(owner, 'Ich will Größen üben');
+    const reply = sent.home.thread.find((m) =>
+      m.actions.some((a) => a.summary.tool === 'offer_learning'),
+    )!;
+    const id = reply.actions[0]!.id;
+    env.llm.script('explain', generated(false));
+    const failed = await stranger.api.post('/practice/topic', {
+      client_request_id: id,
+      kind: 'practice',
+      text: 'Größen',
+    });
+    expect(failed.status).toBe(422);
+    const unchanged = (await owner.api.get<BuddyHome>('/buddy')).body;
+    expect(unchanged.thread.find((m) => m.id === reply.id)).toEqual(reply);
+    expect(unchanged.context_version).toBe(sent.home.context_version);
+    env.llm.script('explain', generated(false));
+    await env.flushBackground();
+    expect(
+      (await owner.api.get<BuddyHome>('/buddy')).body.thread.find((m) => m.id === reply.id)?.text,
+    ).toBe('Die Übung konnte ich leider nicht vorbereiten.');
   });
 
   it('the card on top is the practice she asked for, not the older one', async () => {

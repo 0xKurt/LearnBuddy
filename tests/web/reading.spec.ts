@@ -110,14 +110,13 @@ test('a reading text: one text above every question, scrolling alone, folding aw
       await typed(page, 'mit dem Farrad');
       // Closed: the line the answer stood in, tinted and said in words.
       await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 2–3');
-      // Light only: switching the room rebuilds the screen, which moves on (see the choice).
+      // The closed state keeps the evidence beside her answer.
       await shot(page, '97-reading-short-closed');
     } else if (await on(CHOICE)) {
       seen.add(CHOICE);
       await textAndQuestion(page, CHOICE);
       await bothSchemes(page, '97-reading-choice', 'passage');
-      // Answered in the dark room, and the closed state shot there: switching the room rebuilds
-      // the screen, which then shows the next open question.
+      // Answered in the dark room, and the closed state shot there.
       await setScheme(page, 'dark');
       // An option is a radio she picks; "Prüfen" sends it (#608).
       await page.getByRole('radio', { name: 'ein Bauer mit seinem Traktor' }).click();
@@ -126,7 +125,10 @@ test('a reading text: one text above every question, scrolling alone, folding aw
       await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 9–10');
       await shot(page, '97-reading-choice-closed-dark');
       await setScheme(page, 'light');
-      // The rebuilt screen stands on the next open question: nothing to move on from.
+      // A theme switch preserves her place (#640). She advances explicitly; only then is the
+      // next question open, with no finished-answer action left over.
+      await expect(page.getByTestId('evidence')).toHaveText('Antwort in den Zeilen 9–10');
+      await page.getByRole('button', { name: 'Weiter' }).click();
       await expect(page.getByRole('button', { name: 'Weiter' })).toHaveCount(0);
     } else if (await on(TRUE_FALSE)) {
       seen.add(TRUE_FALSE);

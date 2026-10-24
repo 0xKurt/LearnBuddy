@@ -4,7 +4,7 @@
 // the server's stage; and Buddy's "Blatt bereit" carries the start of what it announces.
 
 import type { MessageView } from '@learnbuddy/shared-types/contracts';
-import { act, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { registerLearning } from '../../../lib/learning/register.js';
@@ -42,18 +42,26 @@ const thread = (messages: MessageView[]) =>
   renderInApp(<Conversation messages={messages} pending={null} busy={false} />);
 
 describe('her sheet in the thread (issue #632)', () => {
-  it('keeps the photo zoom button outside an image role and labels its thumbnail (#870)', () => {
-    const { container } = renderInApp(
-      <SheetBubble
-        uris={['blob:sheet']}
-        pages={1}
-        label="Du hast ein Foto geschickt"
-        line={{ text: 'Buddy liest es gerade …', tone: 'busy' }}
-      />,
-    );
-    expect(container.querySelector('[role="img"] button, [role="img"] [role="button"]')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Foto 1 von 1' })).toBeTruthy();
-  });
+  it.each(['busy', 'done'] as const)(
+    'keeps the %s photo reachable in the full viewer without nesting its button in an image role',
+    async (tone) => {
+      const { container } = renderInApp(
+        <SheetBubble
+          uris={['blob:sheet']}
+          pages={1}
+          label="Du hast ein Foto geschickt"
+          line={{ text: tone === 'done' ? 'Gelesen' : 'Buddy liest es gerade …', tone }}
+        />,
+      );
+      expect(
+        container.querySelector('[role="img"] button, [role="img"] [role="button"]'),
+      ).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Foto 1 von 1' }));
+      const close = await screen.findByRole('button', { name: 'Schließen' });
+      expect(close).toBeTruthy();
+      fireEvent.click(close);
+    },
+  );
 
   it('is her pages with where they stand, never an empty bubble', () => {
     thread([sent('reading', 2)]);

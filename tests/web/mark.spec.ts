@@ -70,7 +70,11 @@ async function finish(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Prüfen' }).click();
   await expect(page.getByText('Stimmt', { exact: false }).last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Geschafft!')).toBeVisible();
+  // A previous run's result remains in the mounted home behind this route. This run must
+  // reach its own summary heading, once and visible, before she can go back (#913).
+  const summary = page.getByRole('heading', { name: 'Geschafft!', exact: true });
+  await expect(summary).toHaveCount(1);
+  await expect(summary).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 }
 

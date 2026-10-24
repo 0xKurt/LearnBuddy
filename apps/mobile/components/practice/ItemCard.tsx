@@ -107,7 +107,9 @@ export function ItemCard({
       imageMaxHeight={caps.image}
       fromBuddy={item.origin === 'buddy'}
       minHeight={minHeight}
-      dense={form.staff !== null || item.figure?.type === 'code'}
+      // A structured board needs the same compact question as the staff: its tiles and the
+      // feedback must fit together, including the longest permitted matching/order tasks.
+      dense={form.structured || form.staff !== null || item.figure?.type === 'code'}
       answer={typed}
       // What she answers from: a reading text (#233), a task's situation (#297).
       stimulus={item}

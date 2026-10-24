@@ -42,7 +42,20 @@ for (const look of SCREEN_LOOKS) {
     await page.getByRole('button', { name: /umbenennen$/i }).click();
     await page.getByLabel('Name des Blatts').fill(LONG_TITLE);
     await screenShots(page, `material-title-${key}-rename`, true);
+    // Keep the real write in flight briefly: reloading on the click used to cancel it (#913).
+    await page.route('**/v1/materials/*', async (route) => {
+      if (route.request().method() === 'PATCH')
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      await route.continue();
+    });
+    const saved = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PATCH' &&
+        /\/materials\/[^/]+$/.test(new URL(response.url()).pathname),
+    );
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    expect((await saved).ok()).toBe(true);
+    await expect(page.getByLabel('Name des Blatts')).toBeHidden();
     await page.reload();
     const title = page.getByRole('heading', { name: LONG_TITLE, exact: true });
     await expect(title).toBeVisible();
