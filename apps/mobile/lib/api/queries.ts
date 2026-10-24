@@ -16,7 +16,6 @@ import { ApiError } from './client.js';
 import { refreshProfileIfChanged, writeHome } from './homeCache.js';
 import { keys } from './keys.js';
 import { getHome, getMe, getMemory, getSettings } from './endpoints.js';
-import { useLearningPacks } from '../speech/useLearningPacks.js';
 import { registry } from '../registry.js';
 
 export const queryClient = new QueryClient({
@@ -115,7 +114,6 @@ export const useHome = () => {
     subscribed: useOnScreen(),
     refetchInterval: (q) => homePollMs(q.state.data),
   });
-  useLearningPacks(query.data);
   return query;
 };
 

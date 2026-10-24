@@ -1,4 +1,3 @@
-import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import NetInfo from '@react-native-community/netinfo';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,11 +5,11 @@ import { foreignLanguage } from './voice.js';
 import { packNetworkAllowed } from './packDownload.js';
 
 /** Preparation follows learning content, before any speaking screen needs the pack. */
-export function useLearningPacks(home: BuddyHome | undefined): void {
+export function useLearningPacks({ languages: requested }: { languages: string[] }): void {
   const { i18n } = useTranslation();
   const languages = [
     ...new Set(
-      [...(home?.learning_languages ?? []), home?.roleplay?.language]
+      requested
         .map((lang) => foreignLanguage(lang, i18n.language))
         .filter((lang) => lang !== undefined),
     ),

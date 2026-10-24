@@ -1,6 +1,6 @@
 // requires live verification in Claude Code session (native pack storage and network replaced)
 import type { BuddyHome } from '@learnbuddy/shared-types/contracts';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 const fake = vi.hoisted(() => ({
   state: vi.fn(),
@@ -27,13 +27,11 @@ vi.mock('@react-native-community/netinfo', () => ({
 vi.mock('../../../lib/speech/pronunciation.js', () => ({
   pronunciationPacks: { state: fake.state, install: fake.install },
 }));
+vi.mock('../../../lib/api/sessionQueries.js', () => ({ usePrefetchSession: vi.fn() }));
+vi.mock('../../../lib/buddy/useHomePhotos.js', () => ({ useOnPhone: () => null }));
+import { LearningHome } from '../../../lib/learning/homeScope.js';
 import { mayDownloadPack } from '../../../lib/speech/packDownload.js';
 import { useLearningPacks } from '../../../lib/speech/useLearningPacks.js';
-const home = (languages: string[], roleplay?: string) =>
-  ({
-    learning_languages: languages,
-    roleplay: roleplay ? { language: roleplay } : null,
-  }) as BuddyHome;
 const download = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
@@ -45,12 +43,12 @@ beforeEach(() => {
   });
 });
 it('prepares a foreign-language pack from learning content before opening talk', async () => {
-  renderHook(() => useLearningPacks(home(['en', 'de', 'en'])));
+  renderHook(() => useLearningPacks({ languages: ['en', 'de', 'en'] }));
   await waitFor(() => expect(download).toHaveBeenCalledWith('en'));
   expect(fake.alert).not.toHaveBeenCalled();
 });
 it('ordinary German talk requires no pack', async () => {
-  renderHook(() => useLearningPacks(home(['de-DE'], 'de')));
+  renderHook(() => useLearningPacks({ languages: ['de-DE', 'de'] }));
   await act(async () => {});
   expect(fake.state).not.toHaveBeenCalled();
   expect(download).not.toHaveBeenCalled();
@@ -58,7 +56,7 @@ it('ordinary German talk requires no pack', async () => {
 });
 it('foreign roleplay waits silently for Wi-Fi and unsubscribes on leaving', async () => {
   fake.fetch.mockResolvedValue({ isConnected: true, details: { isConnectionExpensive: true } });
-  const { unmount } = renderHook(() => useLearningPacks(home([], 'fr')));
+  const { unmount } = renderHook(() => useLearningPacks({ languages: ['fr'] }));
   await waitFor(() => expect(fake.fetch).toHaveBeenCalled());
   expect(download).not.toHaveBeenCalled();
   expect(fake.alert).not.toHaveBeenCalled();
@@ -68,4 +66,13 @@ it('foreign roleplay waits silently for Wi-Fi and unsubscribes on leaving', asyn
   await waitFor(() => expect(download).toHaveBeenCalledWith('fr'));
   unmount();
   expect(fake.listener).toBeNull();
+});
+
+it('the registered learning home prepares content and roleplay languages as home arrives', async () => {
+  const { rerender } = render(<LearningHome h={undefined}>{null}</LearningHome>);
+  expect(fake.state).not.toHaveBeenCalled();
+  const h = { learning_languages: ['en'], roleplay: { language: 'fr' } } as BuddyHome;
+  rerender(<LearningHome h={h}>{null}</LearningHome>);
+  await waitFor(() => expect(download).toHaveBeenCalledWith('en'));
+  await waitFor(() => expect(download).toHaveBeenCalledWith('fr'));
 });
