@@ -1,0 +1,182 @@
+# Browser-Regressionen vom 24.10.2026 (#913)
+
+Quelle: Owner 23./24.10.: „Die App muss zuverlässig laufen. Alle Funktionen zuverlässig … Ich habe etwas Angst, dass es bereits verbaut wurde.“ Ausgangsbefund: die 34 übergebenen Fehler des noch laufenden Walkthroughs auf `b966f9ff`. Bearbeitung ausschließlich im zugewiesenen Worktree, Basis `879532cb`. Keine Live-Modellaufrufe, keine Produktionsänderung.
+
+## Ursachen
+
+| Kürzel | Klasse | Nachweis und Korrektur |
+| --- | --- | --- |
+| S1 | b – Szenario | #856 (`17b04203`) verlagerte die Formauswahl aus den Fakes ins Vitest-Setup. Der Browser lädt dieses Setup nicht: `forms` war ungeskriptet, der minimale Satz entfernte alle benötigten Formen/Abbildungen. Die Szenarien laden jetzt dieselbe Domain-Auswahl. Zusätzlich passen die Leseregeln auch auf den seit #883 verkürzten Auswahl-Prompt; das Vorauslesen verbraucht keine Lesung. |
+| S2 | b – Szenario | Seit #885 enthält der Generierungsaufruf gemessene Lernlücken. Breit passende Regeln wählten deshalb Malnehmen statt Dativ. Das Dispatching ignoriert den Lernlückenblock, behält aber Wunsch und Quelllauf. |
+| S3 | b – Szenario | „Mehr davon“ nach dem Arbeitsblatt kann nur dessen bekannte Formen nutzen. Die allgemeine Brüche-Antwort enthielt ausschließlich eine Abbildungsfrage und wurde vollständig verworfen. Der Wiederholungsaufruf bekommt jetzt sein eigenes Skript mit Aufgaben innerhalb der Quellformen. |
+| S4 | b – Ablaufskript | Die Aufsatzprüfung scrollte absichtlich zur Frage zurück und erwartete anschließend, dass ein Theme-Wechsel wieder zum Feedback springt. Seit #640 bleibt die manuelle Leseposition erhalten. Der Ablauf kehrt nach der geprüften Frage zum Feedback zurück. Auch die Leseprüfung geht jetzt ausdrücklich mit „Weiter“ zur nächsten Frage; beim Rechenweg scrollt der Ablauf nach dem Feedback zur Frage zurück; alle bisherigen Assertions bleiben erhalten, die erhaltene Belegstelle wird zusätzlich geprüft. |
+| T1 | c – zeitlicher Ablauf | Beim Umbenennen folgte `page.reload()` unmittelbar auf den Klick, vor Abschluss des PATCH. Mit 250 ms Verzögerung des echten PATCH reproduziert: Reload verliert den Namen. Die Prüfung wartet jetzt auf die erfolgreiche echte API-Antwort und das geschlossene Formular, bevor sie Persistenz nach Reload prüft. |
+| P1 | a – Produkt | Ein gescheitertes Angebot entzog nur der Karte den Start, während die Antwort weiter Erfolg behauptete. Der gemeinsame Vorbereitungspfad korrigiert Antwort und Kartenstatus in einer Transaktion unter dem Kontext-Lock. Vorübergehende Fehler lassen einen erneuten Versuch zu; bestehende Sitzungen und fremde Angebote bleiben unangetastet. Der Prompt trennt Angebot und nachgewiesene Vorbereitung. Auch Angebote ohne Bildwunsch werden bis zum Vorbereitungsergebnis zeitnah nachgeladen; ein gescheiterter Start aktualisiert die korrigierte Nachricht. |
+| P2 | a – Produkt | Seit den dauerhaften Ankündigungskarten (#852/#855) erschienen dieselben Aufgaben/Zeitangaben neben der Startleiste und zwei „Ansehen“-Aktionen für dasselbe Ergebnis. Automatische Ankündigungen überlassen die Karte der sichtbaren Leiste bzw. dem aktuellen Ergebnis. Verlauf und ausgeblendete Leiste behalten den Einstieg. Der nächste unveränderte Check zeigte zusätzlich 88 px Überlauf: die abgeschlossene Fotovorschau wird zur vorhandenen 48-pt-Kachel mit Vollbildzugang, und eine unsichtbare Karte erzeugt keinen Abstandsrahmen. |
+| P4 | a – Produkt | Seit #778 gilt `/me` fünf Minuten als frisch, beim Wiederherstellen wurde es jedoch nur eine Minute alt markiert. Der Neustart zeigte die gespeicherte Profilkopie ohne die zugesagte Hintergrundaktualisierung. `updatedAt: 0` erzwingt die Bestätigung nach jedem Restore; die Wiederverwendung zwischen Screens bleibt fünf Minuten lang erhalten. |
+| P3 | a – Produkt | Der Rechenweg-Komponist belegte mit drei Zeilen und Tastatur 255 pt, auf dem kleineren Telefon sind höchstens 220 pt verfügbar. Die optionalen Chips falten anhand der gemessenen Feldhöhe, bevor die Leiste mehr als die halbe sichtbare Höhe belegt; Entwurf, Schlüssel und 44-pt-Bedienflächen bleiben vollständig. |
+| P5 | a – Produkt | Eine auf null Höhe begrenzte Feedbackbox hielt ihre Kinder weiter im Layout und in der Tastatur-/Screenreader-Navigation. Die ganze innere Scrollfläche faltet bei null Platz; ihre Bedarfsmessung bleibt erhalten, damit sie wieder erscheinen kann. |
+| P6 | a – Produkt | Während einer Frage zur strukturierten Aufgabe faltete zwar das Brett, aber nicht die optionale Tipp-Zeile. Bei enger Tastaturhöhe wurden Kopfaktionen abgeschnitten. Auch der Fokus der Frage faltet die optionale Hilfe. |
+| P7 | a – Produkt | Die maximalen Reihenfolge-, Zuordnungs- und Lückentext-Aufgaben wurden unter Frage, Hilfe und Eingabefeld abgeschnitten. Die vorhandene kompakte Frage und kleinere Kachelabstände erhalten Schrift und Touch-Ziele. Gemessener Überlauf gibt zuerst die optionale Hilfe frei. Beim langen Satz zum Markieren verschob zu großer Wortinnenabstand das letzte Wort in eine dritte Zeile; ein normaler Wortabstand erhält sämtliche 44-pt-Ziele und die bisherige Zweizeilenprüfung. |
+| S5 | b – Ablaufskript | Nach einer zweiten Übung fand eine allgemeine Textsuche zusätzlich das Ergebnis der darunter gemounteten Startseite. Die Prüfung verlangt jetzt genau eine sichtbare Überschrift „Geschafft!“. |
+| S6 | b – Szenario | Der simulierte Transkribierer lieferte für jedes Audioteilstück denselben ganzen Satz. Ein Fortsetzungsaufruf mit bereits gesprochenem Kontext liefert keine Wiederholung; sonst wurde aus einem Satz eine doppelte, ungeskriptete Nachricht. Die simulierte Sprachausgabe bleibt auch für das anschließende Gespräch aktiv; zuvor entfernte der Ablauf sie und fiel auf die unzuverlässige Sprachausgabe des Headless-Browsers zurück. |
+
+P1 ist zusätzlich zu den einzelnen Spec-Ursachen relevant: das Diagramm-Beispiel zeigt zugleich den Szenariofehler S1 und die unzutreffende Produktantwort P1.
+
+## Die 34 übergebenen Fehler
+
+Die Zeilennummern bezeichnen den Ausgangsstand. **a** = Produkt, **b** = Szenario/Ablaufskript, **c** = nachgewiesener zeitlicher Ablauf. S4 benötigt keinen zusätzlichen Modellaufruf; hier war eine bewusst ausgeführte Navigation die veraltete Szenarioannahme.
+
+| Spec / Fall | Klasse | Ursache / Fix | Erneuter Lauf |
+| --- | --- | --- | --- |
+| `charts.spec.ts:100` · charts: every chart type drawn, read and judged by code | b | S1 | Erster gezielter Lauf grün |
+| `circuits.spec.ts:11` · circuits, logic gates and the colour wheel: read, answered, graded by code | b | S1 | Erster gezielter Lauf grün |
+| `core-loop-plan.spec.ts:15` · core loop · plan: a test, a photo → practice prepared by Buddy | a | P2 | Zweiter gezielter Lauf grün |
+| `core-loop-practice.spec.ts:19` · core loop · practice: short practice, feedback remembered, the greeting after it | a | P2 | Erster gezielter Lauf grün |
+| `diagrams.spec.ts:12` · diagrams: gaps in boxes with arrows, answered, graded by code | b | S1 | Erster gezielter Lauf grün |
+| `ear.spec.ts:13` · ear training: two notes heard, the interval named, graded by code (#445) | b | S1 | Erster gezielter Lauf grün |
+| `ear.spec.ts:106` · ear training: a heard rhythm tapped back, its timing measured by code (#445) | b | S1 | Erster gezielter Lauf grün |
+| `essay.spec.ts:178` · Lange Texte: she writes an essay, the draft survives, Buddy answers per key point (issue #258) | b | S4 | Erster gezielter Lauf grün |
+| `figures.spec.ts:12` · figures to scale and structural formulas: read, answered, graded by code | b | S1 | Erster gezielter Lauf grün |
+| `gallery.spec.ts:33` · code tasks: output, the failing line, a function and a query, run by the sandbox (#262) | a, b | S1, P5 | Zweiter gezielter Lauf grün |
+| `gallery.spec.ts:110` · tasks in parts with material: a table, a chart and a long source above the parts (#297) | b | S1 | Erster gezielter Lauf grün |
+| `grid.spec.ts:96` · drawing on a grid: points, a line, a mirror image, bars — checked by code (issue #249) | b | S1 | Erster gezielter Lauf grün |
+| `mark.spec.ts:77` · markieren: words, categories, commas and syllables, counted by code (issue #234) | a, b | S1, S5, P7 | Dritter gezielter Lauf grün |
+| `modes.spec.ts:112` · learning modes: explain, homework help without the solution, practice with math | a, b | S1, P6 | Zweiter gezielter Lauf grün |
+| `modes.spec.ts:511` · learning modes: reading aloud and talking — at a question, with Buddy, on the talk screen (#386) | b | S1, S6 | Dritter gezielter Lauf grün |
+| `modes.spec.ts:707` · a written path: three lines in, the first broken step named (issue #221) | a, b | P3, S4 | Dritter gezielter Lauf grün |
+| `modes.spec.ts:823` · an order: tap in order, tap again to take back (issue #228) | a, b | S1, P7 | Zweiter gezielter Lauf grün |
+| `modes.spec.ts:906` · a table to fill in: Enter walks the gaps, each cell checked on its own (issue #230) | b | S1 | Erster gezielter Lauf grün |
+| `modes.spec.ts:973` · zuordnen at its largest: pairs as rows, things into groups (issues #229, #524) | a, b | S1, P7 | Zweiter gezielter Lauf grün |
+| `modes.spec.ts:1093` · pictures as options: four graphs two by two, a tap answers, holding opens one large (issue #231) | b | S1 | Erster gezielter Lauf grün |
+| `modes.spec.ts:1145` · note lines: read four, then write one — set with a tap on the line, no arrow keys (#275, #599) | b | S1 | Erster gezielter Lauf grün |
+| `modes.spec.ts:1367` · formulas: math keys page by page, the new notation drawn, only the sign over whole numbers (issue #239) | b | S1 | Erster gezielter Lauf grün |
+| `modes.spec.ts:1507` · a cloze: five gaps typed, a word bank, the longest that fits; each gap checked by the rules (issue #232) | a, b | S1, P7 | Zweiter gezielter Lauf grün |
+| `periodic.spec.ts:12` · periodic table: read, answered, graded by code | b | S1 | Erster gezielter Lauf grün |
+| `primary-figures.spec.ts:40` · primary-school figures: read, answered, graded by code | b | S1 | Erster gezielter Lauf grün |
+| `reading.spec.ts:79` · a reading text: one text above every question, scrolling alone, folding away | b | S1, S4 | Zweiter gezielter Lauf grün |
+| `redesign-done.spec.ts:11` · done pastell light | b | S3 | Erster gezielter Lauf grün |
+| `redesign-done.spec.ts:11` · done pastell dark | b | S3 | Erster gezielter Lauf grün |
+| `redesign-done.spec.ts:11` · done ocean light | b | S3 | Erster gezielter Lauf grün |
+| `redesign-done.spec.ts:11` · done ocean dark | b | S3 | Erster gezielter Lauf grün |
+| `redesign-material-title.spec.ts:9` · Material complete title: ocean light | c | T1 | Erster gezielter Lauf grün |
+| `redesign-practice-body.spec.ts:92` · ordinary scrolling body and pinned real help: pastell light | b | S2 | Erster gezielter Lauf grün |
+| `redesign-practice-body.spec.ts:92` · ordinary scrolling body and pinned real help: pastell dark | b | S2 | Erster gezielter Lauf grün |
+| `redesign-practice-body.spec.ts:92` · ordinary scrolling body and pinned real help: ocean light | b | S2 | Im gezielten Lauf grün |
+
+## Spätere Fehler des Ausgangslaufs
+
+Der Ausgangslauf lief während der Analyse weiter und endete ohne Abschlusszählung nach Fall 180 von 281. Zusätzlich aufgezeichnet:
+
+| Spec / Fälle | Klasse | Ursache / Fix | Erneuter Lauf |
+| --- | --- | --- | --- |
+| `redesign-practice-body.spec.ts` · ocean dark | b | S2 | Im vollständigen Endlauf zu prüfen (Ergebnis im PR-Nachweis) |
+| `redesign-practice-feedback.spec.ts` · vier Themes | b | S1, keine Frage nach verworfener Diagrammform | Im vollständigen Endlauf zu prüfen (Ergebnis im PR-Nachweis) |
+| `redesign-practice-screen.spec.ts` · vier Themes | b | S1, keine Diagrammfrage nach verweigerter Vorbereitung | Im vollständigen Endlauf zu prüfen (Ergebnis im PR-Nachweis) |
+| `redesign-practice.spec.ts` · vier Themes | b | S1, Codefrage außerhalb der minimalen Formauswahl | Im vollständigen Endlauf zu prüfen (Ergebnis im PR-Nachweis) |
+| `redesign-profile-view.spec.ts` · drei aufgezeichnete Themes, vier werden geprüft | a | P4, kein `/me` nach Reload | Alle vier Varianten im gezielten Lauf grün |
+
+## Rot → Grün
+
+- Unveränderte Browserprüfungen im eigenen Worktree vor den Korrekturen: Diagramme, Kernablauf Plan, Kernablauf Üben und Fertig ocean light – **4 fehlgeschlagen**.
+- Neue isolierte Szenarioprüfung ohne Vitest-Domain-Setup: **3 fehlgeschlagen**, danach **3 bestanden** (Formauswahl, Lernlücken-Kontext, Wiederholung).
+- Angebotstest mit falscher Vorbereitungsbehauptung: **1 fehlgeschlagen / 7 bestanden**, danach **8 bestanden**; zusätzliche Tests decken Wiederholung nach Ausfall und fremde Angebots-IDs ab.
+- Ankündigungskarten: **2 fehlgeschlagen / 5 bestanden**, danach **7 bestanden**.
+- Wiederhergestelltes Profil: **1 fehlgeschlagen / 1 bestanden**, danach **2 bestanden**. Vorher kein `/me`-Aufruf nach Restore, danach Aktualisierung bei sofort sichtbarer gespeicherter Kopie.
+- Umbenennen bei verzögertem echtem PATCH: **1 fehlgeschlagen**, wenn nur geklickt und sofort neu geladen wird. danach im gezielten Browserlauf bestanden.
+- Feedbackbox ohne Raum: **1 fehlgeschlagen / 1 bestanden**, danach **2 bestanden**.
+- Optionale Hilfe beim Fragen mit Tastatur: **1 fehlgeschlagen / 4 bestanden**, danach **5 bestanden**.
+- Transkription von Fortsetzungen: **1 fehlgeschlagen / 7 bestanden**, danach **8 bestanden**.
+- Polling eines Angebots ohne Bildwunsch: **1 fehlgeschlagen / 5 bestanden**, danach **6 bestanden**.
+- Nachricht nach verweigertem Start neu laden: **1 fehlgeschlagen**, danach **1 bestanden**.
+- Aktueller fokussierter Stand: **21 API-Tests**, **21 Karten-/Foto-/Profiltests** und **14 Layout-/Abfragetests bestanden**; API- und App-Typecheck grün.
+- Erster gezielter Browserlauf mit den 34 ursprünglichen Fällen, vier Profilvarianten und dem neuen Fehlerfall: **28 bestanden / 11 fehlgeschlagen**, 36,2 Minuten. Die weiteren Fehler lagen hinter den zuerst korrigierten Abbrüchen und sind oben klassifiziert.
+- Plan-Ablauf nach kompakter Fotovorschau und entferntem Leerrahmen: **1 bestanden**, 35,1 Sekunden.
+- Zweiter gezielter Browserlauf: **8 bestanden / 3 fehlgeschlagen**, 13,6 Minuten. Übrig blieben der lange Markiersatz, der Sprachablauf und der Rücksprung zur Frage beim Rechenweg.
+- Dritter gezielter Browserlauf: **4 bestanden / 0 fehlgeschlagen**, 4,6 Minuten (Markieren, Sprachgespräch, Rechenweg, verschärfter Vorbereitungsfehler mit Sichtbarkeitsprüfung nach Reload). Damit sind **alle 34 Ausgangsfälle** in den gezielten Läufen grün; zusätzlich alle vier Profilvarianten und der neue Vorbereitungsfehler.
+- Der vollständige Endlauf folgt auf die Commit-Hooks. Seine endgültige Zählung und der geprüfte Head stehen im PR-Nachweis zu #913; dieser Bericht hält die Ursachen und die gezielten Rot-Grün-Belege fest.
+
+## Grenzen
+
+Der Browser verwendet die echte Web-App, API und den gemeinsamen lokalen Postgres mit geskriptetem Modell. Keine Aussage zur Qualität echter Modellantworten, Mikrofon-/Audioqualität oder nativen Geräten. Kosten für Live-Modelle: 0 USD. Die vollständige ursprüngliche Prüfung lief beim Beginn der Untersuchung noch; spätere Fehler werden separat erfasst.
+
+## Fortsetzung nach dem vollständigen Lauf auf 1408d40c
+
+Der vom Owner beendete Lauf ergab **260 bestanden, 12 fehlgeschlagen, 10 bestehende Auslassungen**
+(282 Fälle). Die Fortsetzung untersucht jeden dieser zwölf Fälle; keine Assertion wird gelockert.
+
+| Fälle | Klasse | Belegte Ursache und Korrektur |
+| --- | --- | --- |
+| `redesign-profile-parent` · pastell dark, ocean dark (2) | c – Übergang | Der gewählte Wert steht bereits im Formular, während `Sheet` den Picker mit `DURATION.base` ausblendet und noch gemountet hält. Die Textsuche fand deshalb Formular und Radio. Der Ablauf wartet auf das entfernte Radio; Schrift- und Vollständigkeitsprüfungen bleiben unverändert. Alle vier Themes im gezielten Lauf bestanden. |
+| `redesign-talk` · 360, 390 (2) | b – Ablaufskript | Zwei verschiedene Angebote stehen korrekt im Gespräch: „Mathearbeit Brüche“ vom Foto und das ausdrücklich gewünschte „Brüche vergleichen“. Der Ablauf identifiziert die Karte über diesen Titel und prüft ihren eindeutigen Start statt sämtliche Starts des Gesprächs gleichzusetzen. Beide Größen bestanden. |
+| `select-all` (1) | b – Ablaufskript | Beim zweiten Ergebnis findet die reine Textsuche zusätzlich „Geschafft!“ auf der dahinter gemounteten Startseite. Die Prüfung verlangt die sichtbare Ergebnisüberschrift wie die bereits korrigierten Abläufe S5. Gezielt bestanden. |
+| `solids` · Netze/Würfelgebäude (1) | a – Layout | Der unveränderte Geometriecheck meldet nach Resize 27 px Abstand zwischen Frage und Antwort (höchstens 24 erlaubt). Der zusätzliche Lauf scheitert bereits an 13 px Bildschirmüberlauf. Der Wrapper hält über `minHeight` einen verzögerten Inhaltshöhenwert und beeinflusst damit die erneute Abbildungsgröße. Er folgt jetzt direkt seinem nicht schrumpfenden Inhalt; der gespiegelte Zustand und sein Messcallback entfallen. |
+| `tap-figures` · Gradnetz, Zeichnungen #462 (2) | a – Layout | Das ganze Tappbrett überschreitet nicht seinen eigenen Rahmen, drückt aber die Leiste 13 px unter den Bildschirm. `AnswerShell` ignorierte den negativen freien Platz bei der Entscheidung über die optionale Hilfe. Der gemessene Spaltenüberlauf lässt jetzt die Hilfe weichen; Brett, Entwurf und Prüfen bleiben ganz. Neuer Komponententest vorher rot, danach grün. |
+| `tour` (1) | b – Ablaufskript | Nach Entfernen des Entwurfs blieb das bereits gesendete, gelesene Foto korrekt im Gespräch. Die globale Bildsuche zählte es mit. Die Prüfung bezieht sich jetzt ausdrücklich auf den Composer; der Verlauf wird nicht gelöscht. Der nächste Durchlauf erreicht danach ein zweites, korrekt erhaltenes Angebot neben „Nomen“; dort identifiziert der gemeinsame Kartenhelfer die verlangte Übung. |
+| `work-photo` (1) | b – Ablaufskript | Der Foto-Knopf öffnet das vorhandene Anhangmenü. Der Ablauf wartete auf einen Dateidialog, ohne „Aus der Galerie“ zu wählen. Er bedient jetzt diesen Menüpunkt. |
+| `written` · Fehlerdetektiv, schriftliches Rechnen (2) | a – Ergebnisaktion | Das abgeschlossene Angebot und die aktuelle Ergebniskarte öffnen dieselbe Sitzung mit je einem „Ansehen“. `FinishedOffer` überlässt die Aktion dem aktuellen Ergebnis; andere Ergebnisse und Verlauf ohne diese Karte behalten ihren Zugang. Neuer Komponententest vorher rot, danach grün. Bei der dritten Rechnung muss der Ablauf zusätzlich die aktuelle Ergebniskarte bestimmen; ein älteres Ergebnis behält zu Recht seinen Zugang. Der unveränderte Einmaligkeitscheck für „Geschafft!“ bleibt bestehen. |
+
+Zusätzliche isolierte Produktnachweise: **2 fehlgeschlagen / 12 bestanden → 14 bestanden** in
+`oneStart.test.tsx` und `AnswerShellTools.test.tsx` (Logs in `.cache/red-remaining-unit.log` und
+`.cache/green-remaining-unit.log`). Die erste Browserfortsetzung steht in `.cache/walk-remaining-1.log`.
+
+Erste gezielte Browserfortsetzung: **11 bestanden / 3 fehlgeschlagen**, 14,0 Minuten. Alle vier
+Profilvarianten, beide Talk-Größen, Select-all, beide Tappzeichnungen, Rechenwegfoto und
+Fehlerdetektiv sind grün. Die drei weiterführenden Fehler sind oben ergänzt und werden nach der
+Korrektur separat erneut geprüft. Die zweite Fortsetzung steht in `.cache/walk-remaining-2.log`.
+
+Zweite gezielte Browserfortsetzung: **6 bestanden / 0 fehlgeschlagen**, 8,7 Minuten (beide
+Talk-Größen, vollständiger Solids-Ablauf, vollständige Tour und beide Written-Fälle). Damit sind
+**alle zwölf übergebenen Fehler** erneut grün. Der Würfel-Abstand beträgt nach der Korrektur
+0 px bei beiden Telefonen in beiden Themes; der bisherige 13-px-Überlauf ist ebenfalls weg.
+Der vollständige Endlauf folgt mit identischem Produkt- und Testcode, Log `.cache/walk-final.log`.
+
+
+## Gegenprüfung im ersten Endlauf
+
+Der erste vollständige Versuch wurde bei **67 bestanden / 1 fehlgeschlagen / 3 ausgelassen**
+angehalten, um einen neu aufgedeckten Fehler vor dem abschließenden Neustart zu korrigieren
+(`.cache/walk-full-interrupted.log`). `reading.spec.ts:79` meldete in beiden Themes bei 360 px
+„Zeile 19 …: 38 of 44 pt“. Die neue Überlaufbehandlung faltete die Hilfe auch bei einer
+schrumpfbaren, scrollbar erlaubten Belegstellenliste; diese nahm den frei gewordenen Platz wieder
+ein und ließ die nächste Zeile teilweise erscheinen. Negativer Spaltenraum faltet die Hilfe nun
+nur bei Brettern mit `keeps="whole"`; schrumpfbare Bretter behalten den bisherigen Weg, während
+echter gemeldeter Brettüberlauf weiter berücksichtigt wird.
+
+Der neue Gegenbeweis im Komponententest ergab **1 fehlgeschlagen / 6 bestanden → 7 bestanden**
+(`.cache/red-scrollable-help.log`, `.cache/walk-reading-regression.log`). Der unveränderte
+Leseablauf ist anschließend vollständig grün. Er wird gemeinsam mit Solids und beiden
+Tappzeichnungen geprüft, bevor der vollständige Endlauf neu startet. Keine Assertion geändert.
+
+Gemeinsame Gegenprüfung: **4 Browserfälle bestanden / 0 fehlgeschlagen**, 8,9 Minuten
+(Lesen, Solids, Gradnetz, Zeichnungen #462), zusätzlich **7 Layout-Komponententests bestanden**.
+Damit bleiben alle zwölf ursprünglichen Restfälle grün; auch die zusätzliche Leseregression ist
+vor dem Neustart des Endlaufs behoben.
+
+
+## Vollständiger Lauf auf 52a48378
+
+Der vollständige Lauf endete nach **2,4 Stunden mit 271 bestanden / 1 fehlgeschlagen /
+10 bestehenden Auslassungen** (`.cache/walk-full-52a48378.log`). Alle zwölf übergebenen Restfälle
+und der zusätzlich abgesicherte Leseablauf bestanden darin.
+
+Der einzige weitere Fehler war `modes.spec.ts` · „reading aloud and talking“: Der Ablauf wartete
+nach Empfang der Antwort-Header zuerst auf die kurz sichtbare eigene Äußerung und danach auf
+Buddys Antwort. Die geskriptete Antwort konnte die eigene Zeile bereits ersetzen, bevor die erste
+Prüfung sie sah. Diese Prüfung fand dann erst die nächste geskriptete Aufnahme nach 15 Sekunden;
+deren neue Wörter hatten die Antwort wieder verdrängt. Belege: Beide Nachrichten stehen korrekt
+im lokalen Test-Postgres (Antwort um `04:55:38.700Z`); der Fehler-Screenshot entstand um
+`04:56:14.845Z`, also nach dem nächsten 15-Sekunden-Audioteil und dem anschließenden
+20-Sekunden-Assertion-Timeout. Der Screenshot zeigt die erneut laufende Aufnahme mit ihren
+Wörtern. Die eigenständige Prüfung des Vorlese-/Wiederaufnahmezyklus bestand im selben Lauf.
+
+Der Ablauf prüft dieselben eigenen Wörter jetzt während der Aufnahme, bevor er sie abschickt,
+statt nach den Antwort-Headern. Er wartet auf dieses sichtbare Ereignis statt pauschal 1500 ms.
+Die Prüfung von Stream-Header, sichtbarer Antwort und gespeicherten eigenen Wörtern bleibt
+unverändert. Dies ist eine belegte Reihenfolge im Ablaufskript; keine Produktänderung.
+
+Gezielte Gegenprüfung mit Trace: **1 bestanden / 0 fehlgeschlagen**, 1,6 Minuten
+(`.cache/walk-voice-timing.log`, `.cache/voice-timing-green-trace.zip`). Die Trace zeigt die
+Reihenfolge ausdrücklich: eigene Wörter nach 11,4 Sekunden Wartezeit sichtbar, anschließend
+Aufnahme beendet, Antwortprüfung 30 ms später erfolgreich; dieselben eigenen Wörter stehen nach
+Beenden des Gesprächs weiterhin im Chat. Keine Prüfung wurde entfernt oder abgeschwächt.

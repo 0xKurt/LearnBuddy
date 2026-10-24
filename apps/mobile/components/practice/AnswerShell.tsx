@@ -22,6 +22,7 @@ import { useSettled } from '../../lib/useSettled.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
 import { AskRoute, CheckBar, type CheckAction } from './CheckBar.js';
 import { FreeSpace } from './FreeSpace.js';
+import { BoardOverflow } from './BoardScroll.js';
 
 type Props = {
   /** The form: what she taps, places or types in (none: a closed question, a spoken one). */
@@ -73,13 +74,27 @@ export function AnswerShell({
   const compact = formDensity(seen.window, seen.overlap) !== 'roomy';
   const ask = useContext(AskRoute);
   const flow = useContext(AnswerFlow);
+  const spare = useContext(PictureRoom) ?? 0;
+  const [boardOverflow, setBoardOverflow] = useSettled(0, 'answerOverflow');
+  const [helpHeight, setHelpHeight] = useSettled(0, 'answerHelp');
+  const gaveHelp = useRef(false);
+  // Include the room already returned by the folded row, so it does not immediately unfold
+  // when the last answer cell starts fitting. As the board shrinks, the free room restores it.
+  // A scrollable board can absorb column pressure itself. Only a whole board needs the
+  // optional row to yield to column overflow; otherwise the expanding list consumes that row.
+  const boardRoom = keeps === 'whole' ? spare : Math.max(0, spare);
+  const foldForBoard = boardOverflow - boardRoom + (gaveHelp.current ? helpHeight : 0) > 1;
+  gaveHelp.current = foldForBoard;
   const typedUnderBoard = answer !== null && 'field' in action && action.field !== undefined;
   const typing = typedUnderBoard && action.typing === true;
   // Typed fields may have no answer board. While she edits in the tight keyboard room,
   // the optional hint row folds; the full source, keys and Check retain their minimum sizes.
   const toolsFolded =
-    (boardEditing || ('field' in action && action.field !== undefined && action.typing === true)) &&
-    formDensity(seen.window, seen.overlap) === 'tight';
+    foldForBoard ||
+    ((ask.focused ||
+      boardEditing ||
+      ('field' in action && action.field !== undefined && action.typing === true)) &&
+      formDensity(seen.window, seen.overlap) === 'tight');
   const { onFocused } = ask;
   useEffect(() => {
     if (!typedUnderBoard) return;
@@ -110,7 +125,7 @@ export function AnswerShell({
             paddingTop: compact ? SPACE.xs : SPACE.md,
           }}
         >
-          {kept ?? answer}
+          <BoardOverflow.Provider value={setBoardOverflow}>{kept ?? answer}</BoardOverflow.Provider>
         </View>
       )}
       {flow.thread}
@@ -118,6 +133,9 @@ export function AnswerShell({
       {flow.tools ? (
         <View
           testID="answer-help"
+          onLayout={(e) => {
+            if (!toolsFolded) setHelpHeight(Math.round(e.nativeEvent.layout.height));
+          }}
           style={{
             display: toolsFolded ? 'none' : 'flex',
             paddingHorizontal: SPACE.lg,

@@ -550,7 +550,9 @@
         "crashed": "il ne peut pas continuer — une fonction s’appelle-t-elle elle-même sans fin ?",
         "other": "Python signale une erreur ({{name}})"
       }
-    }
+    },
+    "not_usable": "Je n’ai pas pu préparer cet exercice.",
+    "prepare_failed": "La préparation n’a pas abouti. Tu peux réessayer."
   },
   "contact": {
     "less_often": "C'est noté – désormais, je ne t'écris sur ton téléphone que si c'est vraiment important. Le reste t'attend ici. Tu peux changer ça dans les réglages."

@@ -7,7 +7,7 @@
 // Test tooling only.
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
-import { readingRules } from './rules.js';
+import { STUDY_READING, readingRules } from './rules.js';
 
 const question = (prompt: string, answer: string, topic: string, kind = 'numeric') => ({
   kind,
@@ -32,7 +32,7 @@ export function scriptSources(): void {
   readingRules.add(
     {
       when: /LEARNER: 14 years/,
-      system: /learner's study material/,
+      system: STUDY_READING,
       answer: () => ({
         is_learning_material: true,
         readable: true,
@@ -57,7 +57,7 @@ export function scriptSources(): void {
     },
     {
       when: /LEARNER: 15 years/,
-      system: /learner's study material/,
+      system: STUDY_READING,
       answer: () => ({
         is_learning_material: true,
         readable: true,

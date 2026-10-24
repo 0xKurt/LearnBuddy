@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 
 import { freshEmail, homePositions, signUpMia, worksheetJpeg } from './coreLoop';
-import { overflows, partHeight, settle, shot } from './fit';
+import { bothSchemes, overflows, partHeight, settle, shot } from './fit';
 import { expectSeen } from './seen';
 
 test('core loop · plan: a test, a photo → practice prepared by Buddy', async ({ page }) => {
@@ -102,7 +102,7 @@ test('core loop · plan: a test, a photo → practice prepared by Buddy', async 
   await expect(
     page.getByText('Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.'),
   ).toBeInViewport();
-  await shot(page, '09-buddy-prepared');
+  await bothSchemes(page, '09-buddy-prepared');
 
   // ── The state issue #204 is measured on: a test entered, a photo sent, practice ready ──
   // The owner on the promo footage: "schau dass die screens nicht ueberladen sind und alles

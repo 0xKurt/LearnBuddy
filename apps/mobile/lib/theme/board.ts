@@ -34,6 +34,7 @@ export const BOARD = {
     padStart: PRACTICE.optionPaddingStart,
     padEnd: PRACTICE.optionPaddingEnd,
     padY: SPACE.sm,
+    densePadY: SPACE.xs,
     gap: SPACE.md,
     badge: PRACTICE.badgeSize,
     mark: PRACTICE.badgeIcon,
@@ -54,7 +55,7 @@ export const BOARD = {
   /** A gap of a cloze. */
   slot: { height: GAP, minWidth: 72, pad: 10 },
   /** A marked word in running text (components/practice/Answers.jsx MarkText). */
-  mark: { radius: 6, underline: 2 },
+  mark: { radius: 6, underline: 2, wordPad: SPACE.xs / 2 },
   /** A group's card (Tasks.jsx Groups): the dashed ring while it can take what she holds. */
   group: { ring: UI.selectedBorder },
   /** A table (Tasks.jsx FillTable): the head's padding, a row's height, a cell's padding. */

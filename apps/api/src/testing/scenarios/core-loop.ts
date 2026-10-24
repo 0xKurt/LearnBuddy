@@ -5,7 +5,8 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 import { scriptChecks } from './checks.js';
-import { readingRules, tutorRules } from './rules.js';
+import { scriptGenerations } from './generations.js';
+import { STUDY_READING, readingRules, tutorRules } from './rules.js';
 import { latestLearnerText, quoteFrom, scriptTurns } from './turns.js';
 
 export const DEMO_WORKSHEET = {
@@ -69,6 +70,31 @@ export const DEMO_WORKSHEET = {
 };
 
 export function scriptCoreLoop(): void {
+  // "Mehr davon" after this worksheet: its known forms are plain questions. The general
+  // fractions scenario contains a drawing, which this source run never offered (#913).
+  scriptGenerations({
+    when: /LEARNER'S TEXT:\n[^\n]*\(Mathearbeit Brüche\)$/i,
+    answer: () => ({
+      usable: true,
+      title: 'Brüche weiter üben',
+      subject: DEMO_WORKSHEET.subject,
+      items: [
+        {
+          ...DEMO_WORKSHEET.items[0],
+          prompt: 'Kürze 9/12 und gib das Ergebnis als Dezimalzahl an.',
+          difficulty: 3,
+          source_excerpt: null,
+        },
+        {
+          ...DEMO_WORKSHEET.items[0],
+          prompt: 'Kürze 8/20 und gib das Ergebnis als Dezimalzahl an.',
+          difficulty: 3,
+          answer: '0.4',
+          source_excerpt: null,
+        },
+      ],
+    }),
+  });
   scriptTurns({
     when: /^Erinnere mich morgen um 16 Uhr an Brüche\.$/i,
     answer: (req) => ({
@@ -150,7 +176,7 @@ export function scriptCoreLoop(): void {
   // first sheet anyone reads: run alone, tour.spec.ts would take it (#350).
   readingRules.add({
     when: /<image 1280x1600>/,
-    system: /learner's study material/,
+    system: STUDY_READING,
     answer: () => DEMO_WORKSHEET,
   });
   // 3 · Buddy acts on the ready material — keyed by the check's trigger, the worksheet above

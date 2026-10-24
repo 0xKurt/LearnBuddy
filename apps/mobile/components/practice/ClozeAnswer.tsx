@@ -21,7 +21,7 @@
 import type { ClozeTaskView } from '@learnbuddy/shared-types/contracts';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { type ScrollView, Text, View } from 'react-native';
 
 import { useDraft } from '../../lib/drafts.js';
 import { WORD_ROW } from '../../lib/theme/board.js';
@@ -34,6 +34,7 @@ import { Slot, slotWidth } from '../lb/Slot.js';
 import { Tile } from '../lb/Tile.js';
 import { MathText } from '../math/MathText.js';
 import { AnswerShell } from './AnswerShell.js';
+import { BoardScroll } from './BoardScroll.js';
 import type { FormProps } from './formProps.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 
@@ -238,7 +239,7 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Cl
             gap: SPACE.md,
           }}
         >
-          <ScrollView
+          <BoardScroll
             ref={scroller}
             testID="cloze-text"
             // Scrolled, the text fades out under the question instead of a half line standing
@@ -287,7 +288,7 @@ export function ClozeAnswer({ view, draftKey, disabled, onSubmit }: FormProps<Cl
                 )}
               </View>
             ))}
-          </ScrollView>
+          </BoardScroll>
           {scrolled ? <TopEdgeFade /> : null}
           {bank ? (
             <View testID="cloze-bank" style={WORD_ROW}>

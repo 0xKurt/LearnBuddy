@@ -66,11 +66,10 @@ import { LineText } from './PassagePanel.js';
 import type { FormProps } from './formProps.js';
 
 /**
- * A word's tile: its own padding (`Btn bare`), the smallest step — the tiles touch, so this is the
- * air between two words of the sentence (`markRows` in the contract counts with it) — and never
- * narrower than a touch target.
+ * Two touching tiles leave one normal text-space between longer words. Each short word still
+ * keeps its full touch target. The contract's older, larger estimate stays conservative (#913).
  */
-const WORD_PAD = SPACE.xs;
+const WORD_PAD = BOARD.mark.wordPad;
 /**
  * The surface the letters of a word stand on, and the paper panel of a text's words (Extra.jsx
  * `mark`: paper, the card's corners). Both keep the side padding the contract's width model counts

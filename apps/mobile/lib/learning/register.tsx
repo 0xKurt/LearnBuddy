@@ -135,8 +135,8 @@ export function registerLearning(): void {
   // … and her sheet sent through the chat: her pages and where they stand (issue #632).
   messageCards.add('sheet', (m) => (m.sheet ? <SentSheet sheet={m.sheet} /> : null));
   // Under Buddy's background message: the start of the practice it announces (issue #632).
-  messageExtras.add('announces', (m, quiet) =>
-    m.announces ? <ReadyCard ready={m.announces} quiet={quiet} /> : null,
+  messageExtras.add('announces', (m, quiet, wrap) =>
+    m.announces ? <ReadyCard ready={m.announces} quiet={quiet} announced wrap={wrap} /> : null,
   );
   readAlong.fill(ReadAlongBubble);
   profileSubjects.fill(ProfileLibrarySubjects);

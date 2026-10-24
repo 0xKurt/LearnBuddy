@@ -123,7 +123,7 @@ describe('the board’s measures', () => {
   });
 
   it('marks a word with a 6 pt corner and a 2 pt line (Answers.jsx MarkText)', () => {
-    expect(BOARD.mark).toEqual({ radius: 6, underline: 2 });
+    expect(BOARD.mark).toEqual({ radius: 6, underline: 2, wordPad: 2 });
   });
 });
 

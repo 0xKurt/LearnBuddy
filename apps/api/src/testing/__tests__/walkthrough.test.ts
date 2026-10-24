@@ -9,6 +9,10 @@ import { ACT_SCHEMAS } from '../../modules/buddy/decision.js';
 import { describe, expect, it } from 'vitest';
 
 import type { LlmPurpose, LlmRequest } from '../../llm/gateway.js';
+import { toJsonSchema } from '../../llm/json-schema.js';
+import { EXTRACTION_SCHEMA } from '../../modules/materials/sources.js';
+import { readingCatalogue } from '../../modules/materials/readingPrompt.js';
+import { choiceFor, offered } from '../../modules/practice/formChoice.js';
 import { EXTRACT_SYSTEM, HOMEWORK_SYSTEM } from '../../modules/materials/extract.js';
 import { WORK_SYSTEM } from '../../modules/practice/workPhoto.js';
 import { SYSTEM as VOICE_SYSTEM } from '../../modules/voice/service.js';
@@ -109,6 +113,15 @@ function walkthroughModel(): ScriptedGateway {
 const llm = walkthroughModel();
 
 describe('the walkthrough model (spec-order independence, #350)', () => {
+  it('scripts silence after the fake microphone’s one utterance, rather than repeating each chunk', async () => {
+    const first = await answer(llm, SAMPLES.heard);
+    expect(first).toEqual({ heard_speech: true, text: 'Was steht diese Woche an?' });
+    const continuation = request('transcribe', VOICE_SYSTEM, {
+      text: "MODE: MESSAGE\nEXPECTED LANGUAGE: de\nSPOKEN JUST BEFORE (the same dictation's earlier pieces; context only, never write it again): Was steht diese Woche an?",
+    });
+    expect(await answer(llm, continuation)).toEqual({ heard_speech: false, text: '' });
+  });
+
   it('holds no queued answer: every answer is chosen by what the request says', () => {
     // A queue is exactly what leaked between specs. Use a rule (scenarios/rules.ts, turns.ts).
     expect(llm.pending()).toBe(0);
@@ -153,6 +166,15 @@ describe('the walkthrough model (spec-order independence, #350)', () => {
   it("reads the tour's sheet as unreadable first and readable when asked again", async () => {
     // Its own turn order, reached only by the tour's photo — the core loop's sheet never shifts it.
     const tourSheet = sheet(EXTRACT_SYSTEM, 800, 1080);
+    const choice = {
+      ...tourSheet,
+      system: readingCatalogue(offered(EXTRACTION_SCHEMA), false),
+      purpose: 'forms' as const,
+      promptVersion: 'forms-extraction.test',
+      schema: toJsonSchema(choiceFor(EXTRACTION_SCHEMA)),
+    };
+    // Choosing the forms reads the fixture ahead; it must not consume the unreadable attempt.
+    expect(await answer(llm, choice)).toEqual({ forms: [], figures: [] });
     await answer(llm, SAMPLES.coreLoopSheet);
     expect(await answer(llm, tourSheet)).toMatchObject({ readable: false });
     await answer(llm, SAMPLES.coreLoopSheet);

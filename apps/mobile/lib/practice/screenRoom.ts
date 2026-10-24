@@ -77,7 +77,6 @@ export function useScreenRoom() {
   /** Where the conversation's parts start — the help chips, a card under the replies (#403). */
   const [partTops, setPartTops] = useState<readonly number[]>([]);
   const [threadNeed, setThreadNeed] = useSettled(0, 'threadNeed');
-  const [questionContentHeight, setQuestionContentHeight] = useSettled(0, 'questionContent');
   /** The question card as laid out, and its own height before it grew (issue #96). */
   const [cardHeight, setCardHeight] = useSettled(0, 'cardHeight');
   const [natural, setNatural] = useState<{ key: string; height: number } | null>(null);
@@ -257,8 +256,6 @@ export function useScreenRoom() {
     /** The card's box (`cardRef`) and where its drawings report their sizing (`figureSizing`). */
     cardRef,
     figureSizing: figures.value,
-    questionContentHeight,
-    setQuestionContentHeight,
     /** The conversation's box and the free room after the answer and tutor feedback (`RoomPart`). */
     thread,
     free,

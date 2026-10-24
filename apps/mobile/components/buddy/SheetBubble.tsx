@@ -55,6 +55,7 @@ export function SheetBubble({ uris, pages, label, line }: Props) {
             key={i}
             uri={uris[i] ?? null}
             label={t('photo_label', { index: i + 1, total: pages })}
+            compact={line?.tone === 'done'}
           />
         ))}
       </View>
@@ -87,9 +88,20 @@ export function SendingSheetBubble({ sheet }: { sheet: SendingSheet }) {
 }
 
 /** One page: the shadow outside, the clipping inside (Android, components/buddy/AttachStrip.tsx). */
-function SheetPage({ uri, label }: { uri: string | null; label: string }) {
+function SheetPage({
+  uri,
+  label,
+  compact,
+}: {
+  uri: string | null;
+  label: string;
+  compact: boolean;
+}) {
   const { palette } = useTheme();
-  const frame = { width: PAGE.width, height: PAGE.height, borderRadius: RADIUS.md };
+  // Once read, the photo is a way back to her source. The existing card tile keeps it
+  // tappable without pushing the short conversation and its prepared practice away (#913).
+  const size = compact ? { width: CHAT.card.tile, height: CHAT.card.tile } : PAGE;
+  const frame = { width: size.width, height: size.height, borderRadius: RADIUS.md };
   return (
     <View style={[frame, { backgroundColor: palette.paper }, SHADOW.soft]}>
       <View style={[frame, { overflow: 'hidden', backgroundColor: palette.paper }]}>
@@ -98,7 +110,11 @@ function SheetPage({ uri, label }: { uri: string | null; label: string }) {
         <View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={{ paddingHorizontal: PAGE.padX, paddingVertical: PAGE.padY, gap: PAGE.ruleGap }}
+          style={{
+            paddingHorizontal: compact ? SPACE.sm : PAGE.padX,
+            paddingVertical: compact ? SPACE.sm : PAGE.padY,
+            gap: compact ? SPACE.xs : PAGE.ruleGap,
+          }}
         >
           {PAGE.rules.map((width, i) => (
             <View
@@ -118,8 +134,8 @@ function SheetPage({ uri, label }: { uri: string | null; label: string }) {
               <Image
                 source={{ uri }}
                 accessibilityLabel={label}
-                style={{ width: PAGE.width, height: PAGE.height }}
-                contentFit="cover"
+                style={{ width: size.width, height: size.height }}
+                contentFit={compact ? 'contain' : 'cover'}
               />
             </ZoomablePhoto>
           </View>

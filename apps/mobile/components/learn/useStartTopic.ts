@@ -94,6 +94,9 @@ export function useStartTopic() {
       if (mounted.current) setState({ status: 'idle' });
       return session;
     } catch (err) {
+      // The server corrected a failed offer's reply and card together (#913). Fetch both;
+      // changing only this card's local state left Buddy's success claim above the refusal.
+      if (requestId) void queryClient.invalidateQueries({ queryKey: keys.home });
       if (mounted.current) {
         setState(
           err instanceof ApiError && err.reason === 'not_usable'

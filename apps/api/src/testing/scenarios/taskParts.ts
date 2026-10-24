@@ -10,7 +10,7 @@
 
 import { scriptChecks } from './checks.js';
 import { scriptGenerations } from './generations.js';
-import { readingRules, tutorRules } from './rules.js';
+import { STUDY_READING, readingRules, tutorRules } from './rules.js';
 import { judgedBy } from './teachBack.js';
 import { says, scriptTurns } from './turns.js';
 
@@ -213,7 +213,7 @@ export function poolSheet(task: unknown = poolTask()) {
 function scriptPhotographedTask(): void {
   readingRules.add({
     when: /LEARNER: 9 years/,
-    system: /learner's study material/,
+    system: STUDY_READING,
     answer: () => poolSheet(),
   });
   scriptChecks({

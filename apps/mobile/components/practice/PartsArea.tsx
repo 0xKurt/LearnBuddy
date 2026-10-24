@@ -5,7 +5,7 @@
 // clears both axes. Ordinary vertical scroll-parts remains strict.
 
 import { useMemo, type ReactNode } from 'react';
-import { ScrollView } from 'react-native';
+import { BoardScroll } from './BoardScroll.js';
 import {
   FormFrameContext,
   useFormFrameClearance,
@@ -49,7 +49,7 @@ export function PartsArea({
   );
   return (
     <FormFrameContext.Provider value={registration}>
-      <ScrollView
+      <BoardScroll
         ref={scroll}
         testID={
           horizontal
@@ -73,7 +73,7 @@ export function PartsArea({
         }}
       >
         {children}
-      </ScrollView>
+      </BoardScroll>
     </FormFrameContext.Provider>
   );
 }

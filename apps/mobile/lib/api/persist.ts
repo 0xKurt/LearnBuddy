@@ -19,8 +19,9 @@ const WRITE_AFTER_MS = 1500;
 export async function restoreCache(userId: string): Promise<void> {
   const stored = fromStored(await readCache(cacheKey(userId)).catch(() => null), userId);
   if (!stored || currentSession()?.user_id !== userId) return;
-  // Stored as old as it is: every screen that shows it refetches at once.
-  const updatedAt = Math.min(stored.saved_at, Date.now() - 60_000);
+  // A restored copy always needs confirmation, even when /me's freshness window grows.
+  // One minute old stopped being stale when /me began sharing five fresh minutes (#913).
+  const updatedAt = 0;
   if (stored.me && queryClient.getQueryData(keys.me) === undefined)
     queryClient.setQueryData(keys.me, stored.me, { updatedAt });
   if (stored.home && queryClient.getQueryData(keys.home) === undefined)

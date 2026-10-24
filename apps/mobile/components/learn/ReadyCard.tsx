@@ -8,12 +8,13 @@
 
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { startStep } from '../../lib/api/learningEndpoints.js';
 import { seedSession } from '../../lib/api/sessionQueries.js';
 import { useHomeAct } from '../../lib/buddy/useHomeAct.js';
-import { useBarPractice } from '../../lib/learning/homeScope.js';
+import { useBarPractice, useCurrentResult } from '../../lib/learning/homeScope.js';
 import { PracticeReady } from '../buddy/ChatCard.js';
 import { quietVariant, type Quiet } from '../buddy/extensions.js';
 import { FinishedOffer } from './FinishedOffer.js';
@@ -28,17 +29,37 @@ type Ready = Pick<
   'step_id' | 'title' | 'question_count' | 'est_minutes' | 'outcome'
 >;
 
-export function ReadyCard({ ready, quiet = 'primary' }: { ready: Ready; quiet?: Quiet }) {
+export function ReadyCard({
+  ready,
+  quiet = 'primary',
+  announced = false,
+  wrap,
+}: {
+  ready: Ready;
+  quiet?: Quiet;
+  announced?: boolean;
+  /** An announcement only adds its entrance and spacing while its card exists. */
+  wrap?: (card: ReactNode) => ReactNode;
+}) {
   const { t } = useTranslation(['learn', 'buddy']);
   const { busy, act } = useHomeAct();
   // The bar on top starts or continues this very practice: the one control stays there (#846).
   const onBar = useBarPractice();
+  const result = useCurrentResult();
   const label = t(`learn:${KIND_LABEL.practice}`);
   const outcome = ready.outcome;
+  // A background announcement adds no second card for the practice already shown on this
+  // home. Its words and undo remain; history (no home context) keeps the card (#913).
+  if (
+    announced &&
+    (onBar.step === ready.step_id || (outcome?.state === 'done' && result === outcome.session_id))
+  )
+    return null;
+  const show = (card: ReactNode) => (wrap ? wrap(card) : card);
   if (outcome?.state === 'done')
-    return <FinishedOffer label={label} title={ready.title} sessionId={outcome.session_id} />;
+    return show(<FinishedOffer label={label} title={ready.title} sessionId={outcome.session_id} />);
   if (outcome?.state === 'running')
-    return (
+    return show(
       <PracticeReady
         label={label}
         title={ready.title}
@@ -53,18 +74,18 @@ export function ReadyCard({ ready, quiet = 'primary' }: { ready: Ready; quiet?: 
                 onPress: () => router.push(`/practice/${outcome.session_id}`),
               }
         }
-      />
+      />,
     );
   if (outcome?.state === 'closed')
-    return (
+    return show(
       <PracticeReady
         label={label}
         title={ready.title}
         detail={t('buddy:now.ready_closed')}
         start={null}
-      />
+      />,
     );
-  return (
+  return show(
     <PracticeReady
       label={label}
       title={ready.title}
@@ -88,6 +109,6 @@ export function ReadyCard({ ready, quiet = 'primary' }: { ready: Ready; quiet?: 
                 }),
             }
       }
-    />
+    />,
   );
 }

@@ -8,6 +8,7 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
+import { useCurrentResult } from '../../lib/learning/homeScope.js';
 import { ChatCard } from '../buddy/ChatCard.js';
 
 export function FinishedOffer({
@@ -22,6 +23,7 @@ export function FinishedOffer({
   sessionId: string;
 }) {
   const { t } = useTranslation('buddy');
+  const currentResult = useCurrentResult();
   return (
     <ChatCard
       tone="accent"
@@ -30,12 +32,16 @@ export function FinishedOffer({
       title={title}
       titleLines={2}
       detail={t('now.offer_done')}
-      primary={{
-        label: t('now.result_view'),
-        variant: 'secondary',
-        accessibilityHint: `${label}: ${title}`,
-        onPress: () => router.push(`/practice/${sessionId}`),
-      }}
+      primary={
+        currentResult === sessionId
+          ? null
+          : {
+              label: t('now.result_view'),
+              variant: 'secondary',
+              accessibilityHint: `${label}: ${title}`,
+              onPress: () => router.push(`/practice/${sessionId}`),
+            }
+      }
     />
   );
 }

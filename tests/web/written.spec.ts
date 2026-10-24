@@ -9,6 +9,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { chatCardAction } from './chatCard';
 import { onboardChild, startOffer } from './figureWalk';
 import { bothSchemes, PHONES, settle, SHOTS } from './fit';
 
@@ -52,7 +53,8 @@ async function checkRight(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Geschafft!' })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
   // Back in the thread the result card heads with it, and nothing above says it again (#625).
-  await expect(page.getByRole('button', { name: 'Ansehen' })).toBeVisible();
+  // Earlier completed exercises retain their own review link. This is the current result.
+  await expect(chatCardAction(page, 'Geschafft!', 'Ansehen')).toBeVisible();
   await expect(page.getByText(/geschafft/i)).toHaveCount(1);
 }
 

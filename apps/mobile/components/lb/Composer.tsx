@@ -26,6 +26,7 @@
 import { forwardRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { KEEPS_FOCUS } from '../../lib/keepsFocus.js';
 import { formDensity } from '../../lib/keyboard.js';
@@ -33,10 +34,11 @@ import { pressedStyle, UI } from '../../lib/theme/components.js';
 import { COMPOSER } from '../../lib/theme/composer.js';
 import { useMotionReduced } from '../../lib/theme/motion.js';
 import { circle, RADIUS } from '../../lib/theme/radius.js';
-import { SPACE, TOUCH } from '../../lib/theme/space.js';
+import { bottomRoom, SPACE, TOUCH } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useVisibleHeight } from '../../lib/useVisibleHeight.js';
+import { useSettled } from '../../lib/useSettled.js';
 import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { TalkButton } from '../voice/TalkButton.js';
 import type { VoiceInput } from '../voice/useVoiceInput.js';
@@ -148,7 +150,20 @@ export const Composer = forwardRef<LbTextInputRef, ComposerProps>(function Compo
   ref,
 ) {
   const seen = useVisibleHeight();
+  const insets = useSafeAreaInsets();
   const typing = formDensity(seen.window, seen.overlap) === 'tight';
+  const [boxHeight, setBoxHeight] = useSettled(0, 'composerBox');
+  const [chipsHeight, setChipsHeight] = useSettled(0, 'composerChips');
+  const gap = typing ? SPACE.sm : COMPOSER.chipsGap;
+  // A growing answer keeps its lines and keys. Optional shortcuts give way before the pinned
+  // bar takes more than half the keyboard room; their measured height survives while folded.
+  const chipsFolded =
+    typing &&
+    seen.visible > 0 &&
+    boxHeight > 0 &&
+    chipsHeight > 0 &&
+    boxHeight + chipsHeight + gap >
+      seen.visible / 2 - SPACE.sm - bottomRoom(insets.bottom, SPACE.md);
   // While the mic listens or writes down, nothing is sent or checked: the slot is the
   // conversation's, or empty.
   const idle = voice === undefined || voice.state === 'idle';
@@ -159,7 +174,7 @@ export const Composer = forwardRef<LbTextInputRef, ComposerProps>(function Compo
     </>
   );
   return (
-    <View style={{ gap: COMPOSER.chipsGap, flexShrink: attachedYields ? 1 : 0 }}>
+    <View style={{ gap, flexShrink: attachedYields ? 1 : 0 }}>
       {attachedYields ? (
         <ScrollView
           testID="scroll-list"
@@ -173,88 +188,99 @@ export const Composer = forwardRef<LbTextInputRef, ComposerProps>(function Compo
       ) : (
         accessories
       )}
-      {chips}
-      <LbTextInput
-        {...field}
-        ref={ref}
-        variant="bar"
-        multiline
-        editable={!disabled && field.editable !== false}
-        {...(tall ? { rows: COMPOSER.rows.tall, maxRows: tallRows(tall, typing) } : {})}
-        under={
-          <>
-            {mode === null || mode.on ? keys : null}
-            <View
-              style={{
-                flexDirection: 'row',
-                // Tools that wrap keep the mic and the primary slot on the last line.
-                alignItems: 'flex-end',
-                gap: COMPOSER.toolGap,
-                minHeight: COMPOSER.slot,
-              }}
-            >
-              {/* One line of tools (design Composer.jsx). The unit is a note in the count's
-                  type, not a chip: as a chip beside the camera and "Rechnen" it took a second line
-                  on 360 (#599). Wrapping stays the last resort before anything is cut. */}
+      {chips ? (
+        <View
+          style={{ display: chipsFolded ? 'none' : 'flex' }}
+          onLayout={(e) => {
+            if (!chipsFolded) setChipsHeight(Math.round(e.nativeEvent.layout.height));
+          }}
+        >
+          {chips}
+        </View>
+      ) : null}
+      <View onLayout={(e) => setBoxHeight(Math.round(e.nativeEvent.layout.height))}>
+        <LbTextInput
+          {...field}
+          ref={ref}
+          variant="bar"
+          multiline
+          editable={!disabled && field.editable !== false}
+          {...(tall ? { rows: COMPOSER.rows.tall, maxRows: tallRows(tall, typing) } : {})}
+          under={
+            <>
+              {mode === null || mode.on ? keys : null}
               <View
                 style={{
-                  flex: 1,
                   flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  columnGap: COMPOSER.toolGap,
-                  rowGap: COMPOSER.gap,
+                  // Tools that wrap keep the mic and the primary slot on the last line.
+                  alignItems: 'flex-end',
+                  gap: COMPOSER.toolGap,
                   minHeight: COMPOSER.slot,
                 }}
               >
-                {tool ? (
+                {/* One line of tools (design Composer.jsx). The unit is a note in the count's
+                  type, not a chip: as a chip beside the camera and "Rechnen" it took a second line
+                  on 360 (#599). Wrapping stays the last resort before anything is cut. */}
+                <View
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    columnGap: COMPOSER.toolGap,
+                    rowGap: COMPOSER.gap,
+                    minHeight: COMPOSER.slot,
+                  }}
+                >
+                  {tool ? (
+                    <Slot>
+                      <CircleBtn
+                        icon={tool.icon}
+                        plain
+                        size={COMPOSER.slot}
+                        {...(tool.onPress ? { onPress: tool.onPress } : {})}
+                        accessibilityLabel={tool.label}
+                      />
+                    </Slot>
+                  ) : null}
+                  {mode ? <ModeChip {...mode} /> : null}
+                  {unit ? <UnitNote unit={unit} /> : null}
+                  {preview}
+                  {count ? (
+                    <View style={{ paddingLeft: COMPOSER.count.padStart }}>
+                      <FieldCount length={field.value.length} max={field.maxLength} />
+                    </View>
+                  ) : null}
+                </View>
+                {mic && voice ? (
                   <Slot>
-                    <CircleBtn
-                      icon={tool.icon}
-                      plain
-                      size={COMPOSER.slot}
-                      {...(tool.onPress ? { onPress: tool.onPress } : {})}
-                      accessibilityLabel={tool.label}
+                    <MicButton
+                      tone="quiet"
+                      voice={voice}
+                      size="sm"
+                      label={micLabel}
+                      disabled={disabled}
                     />
                   </Slot>
                 ) : null}
-                {mode ? <ModeChip {...mode} /> : null}
-                {unit ? <UnitNote unit={unit} /> : null}
-                {preview}
-                {count ? (
-                  <View style={{ paddingLeft: COMPOSER.count.padStart }}>
-                    <FieldCount length={field.value.length} max={field.maxLength} />
-                  </View>
-                ) : null}
+                <View
+                  testID="composer-primary"
+                  style={{
+                    flexShrink: 0,
+                    minWidth: COMPOSER.slot,
+                    height: COMPOSER.slot,
+                    // A round control's 44 pt target is centred on the 40 pt slot it is drawn at.
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Primary action={idle ? action : null} onTalk={onTalk} />
+                </View>
               </View>
-              {mic && voice ? (
-                <Slot>
-                  <MicButton
-                    tone="quiet"
-                    voice={voice}
-                    size="sm"
-                    label={micLabel}
-                    disabled={disabled}
-                  />
-                </Slot>
-              ) : null}
-              <View
-                testID="composer-primary"
-                style={{
-                  flexShrink: 0,
-                  minWidth: COMPOSER.slot,
-                  height: COMPOSER.slot,
-                  // A round control's 44 pt target is centred on the 40 pt slot it is drawn at.
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Primary action={idle ? action : null} onTalk={onTalk} />
-              </View>
-            </View>
-          </>
-        }
-      />
+            </>
+          }
+        />
+      </View>
     </View>
   );
 });

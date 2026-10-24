@@ -147,14 +147,19 @@ export function messageCard(m: MessageView): ReactNode {
  * What a domain hangs under a message, beside its action cards: the start of the practice one of
  * Buddy's background messages announces (issue #632). `quiet` as for an action's card.
  */
-export const messageExtras = registry<string, (m: MessageView, quiet: Quiet) => ReactNode>(
-  'Karten unter Nachrichten',
-);
+export const messageExtras = registry<
+  string,
+  (m: MessageView, quiet: Quiet, wrap: (card: ReactNode) => ReactNode) => ReactNode
+>('Karten unter Nachrichten');
 
 /** Every card a domain hangs under this message, in the order they were given. */
-export function messageExtra(m: MessageView, quiet: Quiet): ReactNode[] {
+export function messageExtra(
+  m: MessageView,
+  quiet: Quiet,
+  wrap: (card: ReactNode) => ReactNode,
+): ReactNode[] {
   return messageExtras.values().flatMap((card) => {
-    const drawn = card(m, quiet);
+    const drawn = card(m, quiet, wrap);
     return drawn ? [drawn] : [];
   });
 }

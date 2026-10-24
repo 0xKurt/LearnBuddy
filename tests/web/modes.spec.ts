@@ -24,6 +24,7 @@ import {
   shot,
   SHOTS,
 } from './fit';
+import { chatCardAction as offerStart } from './chatCard';
 import { recordPerf } from './perf';
 import { voiceAsSilence } from './talk';
 
@@ -34,30 +35,6 @@ function inSheet(page: Page) {
 
 /** The words every offer card's button carries (components/learn/OfferCard.tsx). */
 const START = "Los geht's";
-
-/**
- * The start button of the offer card whose own line is `title` (the offer's text).
- *
- * Not "the newest `Los geht's`", and that cost two runs to learn (issue #267). The thread keeps
- * every earlier offer, and the new one renders a frame AFTER Buddy's words — so `.last()` after
- * waiting for the text clicked the PREVIOUS offer about one run in two, and counting the buttons
- * first raced the other way.
- *
- * Nor "the block that contains some words and a button" (#243 merge, 03.10.): a new card enters
- * with an animation and is invisible for a moment (Reanimated `entering` on the web). Its text
- * already counts for `hasText`, its button not yet for `getByRole` — so the innermost block with
- * both was the thread itself, holding the earlier cards' buttons: two of them failed the click
- * (strict mode), one would have been clicked. Hence the card's own title, and only once it is
- * VISIBLE: `.last()` over the divs holding that visible title and a start button is the card.
- */
-function offerStart(page: Page, title: string) {
-  return page
-    .locator('div')
-    .filter({ has: page.getByRole('button', { name: START }) })
-    .filter({ has: page.getByText(title, { exact: true }).filter({ visible: true }) })
-    .last()
-    .getByRole('button', { name: START });
-}
 
 /**
  * The bar on top (a paused practice, a waiting photo) floats over the ways to start.
@@ -601,7 +578,8 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   await bothSchemes(page, '27-practice-voice-mode');
   // "Tastatur": back to the input bar, and silent again — she never switched Vorlesen on.
   await page.getByRole('button', { name: 'Tastatur' }).last().click();
-  await page.unroute('**/v1/voice/speech');
+  // Keep the same speech fixture for the conversation below too: the stack has no voice.
+  // Falling back to the headless browser's speech engine cannot exercise a completed reading.
   await expect(page.getByRole('textbox', { name: 'Deine Frage zur Aufgabe' })).toBeVisible();
   await expect(readAloud).toHaveAttribute('aria-checked', 'false');
   // Vorlesen on in practice, still on at Buddy: one setting, one switch, two heads.
@@ -634,14 +612,14 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   // One status line while the microphone records (#599): how her turn ends here.
   await expect(page.getByText(buddyDe.talk.tap_when_done)).toBeVisible();
   await shot(page, '32-talk-listening');
-  await page.waitForTimeout(1500);
+  // Observe her live words while she speaks. After the response headers, the scripted reply
+  // can already own this line; waiting for her words then catches the NEXT recording instead
+  // (15 s later), which has replaced the reply we wanted to check (#913).
+  await expect(page.getByText('Was steht diese Woche an?').last()).toBeVisible();
   const streamed = page.waitForResponse((r) => r.url().endsWith('/v1/buddy/messages'));
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
   // Buddy's reply comes as a stream (shown while it is written, read aloud once stored).
   expect((await streamed).headers()['content-type']).toContain('text/event-stream');
-  // Her words stand as the one line under the orb while Buddy thinks (#599), and in the one
-  // thread (issue #18) — the chat underneath carries them, so they are found either way.
-  await expect(page.getByText('Was steht diese Woche an?').last()).toBeVisible();
   // The answer on the conversation screen, as that line (the chat underneath has it too).
   await expect(
     page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),
@@ -676,7 +654,7 @@ const KEYBOARD = { 390: 336, 360: 300 } as const;
  * gets the focus back for each pass (the contrast check in `shot` may move it): the keyboard
  * and the math keys only show while she is typing.
  */
-async function pathShots(page: Page, name: string): Promise<void> {
+async function pathShots(page: Page, name: string, feedback = false): Promise<void> {
   const field = page.getByLabel('Deine Antwort');
   for (const scheme of ['light', 'dark'] as const) {
     await setScheme(page, scheme);
@@ -689,6 +667,9 @@ async function pathShots(page: Page, name: string): Promise<void> {
       await field.focus();
       await expect(page.getByRole('button', { name: 'Neue Zeile' })).toBeVisible();
       await settle(page);
+      // After Check the ordinary conversation follows Buddy's feedback (#608/#640).
+      // She scrolls back to the question to work on her next version, with the field pinned.
+      if (feedback) await page.getByTestId('question-card').last().scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(SHOTS, `${name}-${scheme}-kb-${phone.width}.png`) });
       // With the keyboard up the task still shows above the pinned bar. A typed question stands
       // in the one scrolling practice body now (#608), which has no `scroll-question`: its card.
@@ -755,7 +736,7 @@ test('a written path: three lines in, the first broken step named (issue #221)',
       })
       .last(),
   ).toBeVisible();
-  await pathShots(page, '38-path-broke');
+  await pathShots(page, '38-path-broke', true);
 
   // She writes it again; a sound path is judged on the value it arrives at.
   await field.fill(corrected);

@@ -83,6 +83,9 @@ export function scriptRoleplay(): void {
     const all = req.contents
       .flatMap((m) => m.parts.flatMap((p) => ('text' in p ? [p.text] : [])))
       .join('\n');
+    // One fake utterance, followed by silence. Later audio chunks carry the earlier words as
+    // context only; repeating them produced a doubled, unscripted conversation request (#913).
+    if (/SPOKEN JUST BEFORE \(/.test(all)) return { heard_speech: false, text: '' };
     return /EXPECTED LANGUAGE: en/.test(all)
       ? { heard_speech: true, text: 'How much it costs?' }
       : { heard_speech: true, text: 'Was steht diese Woche an?' };

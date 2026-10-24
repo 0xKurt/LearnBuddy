@@ -81,7 +81,7 @@ test('mehrere richtige ankreuzen: checkboxes, a gentle count, the set judged by 
   await check.click();
   await expect(page.getByText('Stimmt – gut gemacht!').last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Geschafft!', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Zurück zu Buddy' }).click();
 
   // ── four statements, one under the other ──
@@ -112,5 +112,5 @@ test('mehrere richtige ankreuzen: checkboxes, a gentle count, the set judged by 
   await check.click();
   await expect(page.getByText('Stimmt', { exact: false }).last()).toBeVisible();
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Geschafft!')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Geschafft!', exact: true })).toBeVisible();
 });

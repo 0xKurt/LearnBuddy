@@ -9,13 +9,12 @@
 //   - still running     → `startTopic` joins the running one (no second model call),
 //   - failed or skipped → her tap prepares it exactly as before. Nothing is lost.
 //
-// Nothing here tells her anything: a preparation that is not finished is not claimed
-// (CLAUDE.md rule 5); the offer card says what it always said until the session is there.
+// A preparation that is not finished is never claimed (CLAUDE.md rule 5). If it fails,
+// startTopic corrects the offer's reply; only a permanent refusal withdraws its start.
 
 import type { ActionSummary } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
-import { isAppError } from '../../lib/errors.js';
 import { startTopic } from './generate.js';
 import type { PracticeLearner } from './service.js';
 
@@ -55,27 +54,9 @@ export function prepareOffered(
           // The kinds of picture she asked for (#724), as her tap hands them over.
           figures: offer.figures?.length ? offer.figures : null,
         });
-      } catch (err) {
-        // "Nothing to learn from this" is not an outage — it is the generator saying this
-        // offer can never start, and it would say the same to her tap (issue #196). So it is
-        // kept: the button stops being a button, and STATE stops calling it something waiting
-        // for her. Every other failure (model down, timeout) says nothing about the offer —
-        // her tap prepares it then, and says what went wrong there.
-        // 'speech_off' is the same kind of answer for a listening offer (issue #210) and a Diktat (#242): there is
-        // no voice configured to read a text aloud, which her tap would hit just the same. Both
-        // are stable facts about this deployment, not an outage — so the button stops being a
-        // button instead of promising a text nobody can hear.
-        if (
-          isAppError(err) &&
-          (err.details?.reason === 'not_usable' || err.details?.reason === 'speech_off')
-        ) {
-          await deps.db.query(
-            `update buddy_actions set cannot_start_at = $3
-              where id = $1 and learner_id = $2 and tool = 'offer_learning'
-                and cannot_start_at is null`,
-            [action.id, learnerId, deps.now()],
-          );
-        }
+      } catch {
+        // startTopic records the failed offer and corrects its reply (#913). A transient
+        // failure leaves the button available: her tap can try preparing it again.
       }
     });
   }
