@@ -1,0 +1,128 @@
+[
+  {
+    "id": "de-intro",
+    "locale": "de-DE",
+    "text": "Das ist LearnBuddy – dein Lernbuddy für Arbeiten und Tests.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "de-s1",
+    "locale": "de-DE",
+    "text": "Zuerst richten die Eltern alles ein. Sie setzen ihre PIN und entscheiden, ob Buddy sich melden darf.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "de-s2",
+    "locale": "de-DE",
+    "text": "Mia erzählt Buddy, was ansteht. Buddy trägt die Mathearbeit am Freitag ein und bittet um das Blatt.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "de-s3",
+    "locale": "de-DE",
+    "text": "Mia fotografiert ihr Arbeitsblatt direkt im Chat. Buddy liest die Aufgaben – ihr eigenes Material ist die Quelle.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "de-s4",
+    "locale": "de-DE",
+    "text": "Kurz darauf ist die Übung bereit – mit Aufgaben aus genau ihrem Blatt, passend zur Arbeit.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "de-s5",
+    "locale": "de-DE",
+    "text": "Beim Hängenbleiben gibt Buddy einen freundlichen Tipp. Und „Richtig“ sagt er erst, wenn die Antwort wirklich stimmt.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "de-s6",
+    "locale": "de-DE",
+    "text": "Am Ende zeigt Buddy in Ruhe, was Mia heute geschafft hat. Das Ergebnis bleibt im Chat.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "de-s7",
+    "locale": "de-DE",
+    "text": "Zum Schluss verabredet Mia eine Erinnerung für morgen, 16 Uhr. Buddy meldet sich dann, wie die Eltern es erlauben.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "de-outro",
+    "locale": "de-DE",
+    "text": "Buddy denkt mit, damit Mia in Ruhe lernen kann. Erzähl Buddy einfach, was bei dir ansteht.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-intro",
+    "locale": "en-GB",
+    "text": "This is LearnBuddy – your study buddy for tests and exams.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-s1",
+    "locale": "en-GB",
+    "text": "First, a parent sets things up. They choose a PIN and decide whether Buddy may reach out.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-s2",
+    "locale": "en-GB",
+    "text": "Then Mia tells Buddy what's coming up. Buddy adds her maths test on Friday and asks for her worksheet.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-s3",
+    "locale": "en-GB",
+    "text": "Mia snaps her worksheet in the chat. Buddy reads it, so her own sheet is the source.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-s4",
+    "locale": "en-GB",
+    "text": "Soon the practice is ready, with tasks from her very own sheet, made for Friday's test.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-s5",
+    "locale": "en-GB",
+    "text": "When she gets stuck, Buddy gives a friendly hint. Buddy says “right” only when it really is.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-s6",
+    "locale": "en-GB",
+    "text": "At the end, Buddy calmly shows what Mia got done today. The result stays in the chat.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-s7",
+    "locale": "en-GB",
+    "text": "Finally, Mia sets a reminder for tomorrow at four. Buddy will check in then, just as her parents allowed.",
+    "voice": "warm",
+    "rate": 1
+  },
+  {
+    "id": "en-outro",
+    "locale": "en-GB",
+    "text": "Buddy thinks ahead, so Mia can learn calmly. Just tell Buddy what's coming up.",
+    "voice": "warm",
+    "rate": 1
+  }
+]

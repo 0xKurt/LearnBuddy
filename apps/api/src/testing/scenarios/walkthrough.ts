@@ -31,6 +31,7 @@ import { scriptMark } from './mark.js';
 import { scriptPeriodic } from './periodic.js';
 import { scriptPreparationFailure } from './preparation.js';
 import { scriptPrimary } from './primary.js';
+import { scriptPromoEn } from './promo-en.js';
 import { scriptReading } from './reading.js';
 import { scriptRoleplay } from './roleplay.js';
 import { scriptEar } from './ear.js';
@@ -109,6 +110,9 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   scriptTeachBack();
   // Before the core loop too: "Schule" and "Handy" are everyday words its rules may know (#258).
   scriptEssay();
+  // The English promo recording (tests/web/promo.spec.ts, en): its own sentences, sheet size and
+  // titles, so it answers nothing of the German core loop below.
+  scriptPromoEn();
   scriptCoreLoop();
   // Before the learning modes: their "probetest" sentence would answer this one too (#241).
   scriptTimedTest();

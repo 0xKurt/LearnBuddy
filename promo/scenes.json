@@ -1,0 +1,1559 @@
+{
+  "meta": {
+    "repo": "/home/claude/0xkurt/learnbuddy @ ef5703876c00ac33fa8fd0245a707be07d9e43e6 (24.10.2026)",
+    "format": "9:16, 1080 px wide; headline Figtree ExtraBold ~84 px, caption ~44 px; counter 'n / 7' in violet",
+    "recording": "one live session per language, no reload; scenes join languages.<lang>.scenes by n",
+    "storyboard": "/home/claude/promo/storyboard.md"
+  },
+  "languages": {
+    "de": {
+      "core_message": "Sag Buddy, was ansteht, und zeig ihm dein Blatt – er macht daraus eine ruhige Übung, hilft mit Tipps und meldet sich so, wie die Eltern es erlauben.",
+      "intro": {
+        "title": "LearnBuddy",
+        "sub": "Dein Lernbuddy für Arbeiten und Tests.",
+        "narration": "Das ist LearnBuddy – dein Lernbuddy für Arbeiten und Tests.",
+        "narration_words": 9,
+        "seconds": 4.5
+      },
+      "outro": {
+        "title": "Buddy denkt mit.",
+        "sub": "Erzähl Buddy einfach, was bei dir ansteht.",
+        "narration": "Buddy denkt mit, damit Mia in Ruhe lernen kann. Erzähl Buddy einfach, was bei dir ansteht.",
+        "narration_words": 16,
+        "seconds": 7.5
+      },
+      "scenes": [
+        {
+          "n": 1,
+          "headline": "Mit Eltern-PIN",
+          "caption": "Ob Buddy sich meldet, entscheiden die Eltern.",
+          "narration": "Zuerst richten die Eltern alles ein. Sie setzen ihre PIN und entscheiden, ob Buddy sich melden darf.",
+          "narration_words": 17,
+          "seconds": 7.5
+        },
+        {
+          "n": 2,
+          "headline": "Eine Arbeit steht an",
+          "caption": "Ein Satz genügt – Buddy trägt die Arbeit ein.",
+          "narration": "Mia erzählt Buddy, was ansteht. Buddy trägt die Mathearbeit am Freitag ein und bittet um das Blatt.",
+          "narration_words": 17,
+          "seconds": 7.5
+        },
+        {
+          "n": 3,
+          "headline": "Foto vom Arbeitsblatt",
+          "caption": "Ein Foto im Chat – Buddy liest das Blatt.",
+          "narration": "Mia fotografiert ihr Arbeitsblatt direkt im Chat. Buddy liest die Aufgaben – ihr eigenes Material ist die Quelle.",
+          "narration_words": 17,
+          "seconds": 7.5
+        },
+        {
+          "n": 4,
+          "headline": "Übung ist bereit",
+          "caption": "Aus ihrem Blatt macht Buddy eine Übung.",
+          "narration": "Kurz darauf ist die Übung bereit – mit Aufgaben aus genau ihrem Blatt, passend zur Arbeit.",
+          "narration_words": 15,
+          "seconds": 7.0
+        },
+        {
+          "n": 5,
+          "headline": "Ein Tipp hilft weiter",
+          "caption": "Buddy gibt einen Tipp – sie findet die Lösung.",
+          "narration": "Beim Hängenbleiben gibt Buddy einen freundlichen Tipp. Und „Richtig“ sagt er erst, wenn die Antwort wirklich stimmt.",
+          "narration_words": 17,
+          "seconds": 7.5
+        },
+        {
+          "n": 6,
+          "headline": "Geschafft!",
+          "caption": "Buddy zeigt in Ruhe, was heute gelungen ist.",
+          "narration": "Am Ende zeigt Buddy in Ruhe, was Mia heute geschafft hat. Das Ergebnis bleibt im Chat.",
+          "narration_words": 16,
+          "seconds": 7.5
+        },
+        {
+          "n": 7,
+          "headline": "Bis morgen, 16 Uhr",
+          "caption": "Buddy meldet sich zur verabredeten Zeit.",
+          "narration": "Zum Schluss verabredet Mia eine Erinnerung für morgen, 16 Uhr. Buddy meldet sich dann, wie die Eltern es erlauben.",
+          "narration_words": 19,
+          "seconds": 8.5
+        }
+      ],
+      "total_seconds": 65.0
+    },
+    "en": {
+      "core_message": "Tell Buddy what's coming up and show him your sheet – he turns it into calm practice, helps with hints and checks in the way the parents allow.",
+      "intro": {
+        "title": "LearnBuddy",
+        "sub": "Your study buddy for tests.",
+        "narration": "This is LearnBuddy – your study buddy for tests and exams.",
+        "narration_words": 10,
+        "seconds": 5.0
+      },
+      "outro": {
+        "title": "Buddy thinks ahead.",
+        "sub": "Just tell Buddy what's coming up.",
+        "narration": "Buddy thinks ahead, so Mia can learn calmly. Just tell Buddy what's coming up.",
+        "narration_words": 14,
+        "seconds": 6.5
+      },
+      "scenes": [
+        {
+          "n": 1,
+          "headline": "Parents' PIN",
+          "caption": "Parents decide whether Buddy may reach out.",
+          "narration": "First, a parent sets things up. They choose a PIN and decide whether Buddy may reach out.",
+          "narration_words": 17,
+          "seconds": 7.5
+        },
+        {
+          "n": 2,
+          "headline": "Test coming up",
+          "caption": "One sentence – Buddy adds the test.",
+          "narration": "Then Mia tells Buddy what's coming up. Buddy adds her maths test on Friday and asks for her worksheet.",
+          "narration_words": 19,
+          "seconds": 8.5
+        },
+        {
+          "n": 3,
+          "headline": "Photo of a worksheet",
+          "caption": "A photo in the chat – Buddy reads it.",
+          "narration": "Mia snaps her worksheet in the chat. Buddy reads it, so her own sheet is the source.",
+          "narration_words": 17,
+          "seconds": 7.5
+        },
+        {
+          "n": 4,
+          "headline": "Practice is ready",
+          "caption": "Buddy turns her sheet into short practice.",
+          "narration": "Soon the practice is ready, with tasks from her very own sheet, made for Friday's test.",
+          "narration_words": 16,
+          "seconds": 7.5
+        },
+        {
+          "n": 5,
+          "headline": "A hint helps",
+          "caption": "Buddy gives a hint – she finds the answer.",
+          "narration": "When she gets stuck, Buddy gives a friendly hint. Buddy says “right” only when it really is.",
+          "narration_words": 17,
+          "seconds": 7.5
+        },
+        {
+          "n": 6,
+          "headline": "Done!",
+          "caption": "Buddy calmly shows what went well today.",
+          "narration": "At the end, Buddy calmly shows what Mia got done today. The result stays in the chat.",
+          "narration_words": 17,
+          "seconds": 7.5
+        },
+        {
+          "n": 7,
+          "headline": "Tomorrow at 4 pm",
+          "caption": "Buddy checks in at the agreed time.",
+          "narration": "Finally, Mia sets a reminder for tomorrow at four. Buddy will check in then, just as her parents allowed.",
+          "narration_words": 19,
+          "seconds": 8.5
+        }
+      ],
+      "total_seconds": 66.0
+    }
+  },
+  "session": {
+    "config": {
+      "spec": "tests/web/promo.spec.ts (branch claude/promo-video, run: scripts/web-walkthrough.sh promo)",
+      "use": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "deviceScaleFactor": 2,
+        "video": {
+          "mode": "on",
+          "size": {
+            "width": 780,
+            "height": 1688
+          }
+        },
+        "colorScheme": "light",
+        "reducedMotion": "no-preference",
+        "locale": {
+          "de": "de-DE",
+          "en": "en-GB"
+        },
+        "timezoneId": "Europe/Berlin"
+      },
+      "learner": {
+        "email": {
+          "de": "freshEmail('promo-de')",
+          "en": "freshEmail('promo-en')"
+        },
+        "password": "geheim-1234",
+        "name": "Mia",
+        "birth": {
+          "day": "14",
+          "month": "03",
+          "year": "2013"
+        },
+        "pin": "4826"
+      },
+      "language_guard": {
+        "expect": {
+          "de": "Dein Lernbuddy für Arbeiten und Tests.",
+          "en": "Your study buddy for tests and exams."
+        },
+        "fallback_en": [
+          {
+            "do": "tap",
+            "target": {
+              "role": "button",
+              "name": {
+                "de": "/Deutsch/",
+                "en": "/Deutsch/"
+              },
+              "exact": false
+            },
+            "ms": 0
+          },
+          {
+            "do": "tap",
+            "target": {
+              "role": "radio",
+              "name": {
+                "de": "English",
+                "en": "English"
+              },
+              "exact": true
+            },
+            "ms": 0
+          }
+        ]
+      },
+      "marks_file": {
+        "de": "test-results/web/promo-marks-de.json",
+        "en": "test-results/web/promo-marks-en.json"
+      },
+      "video_file": {
+        "de": "test-results/web/promo-de.webm",
+        "en": "test-results/web/promo-en.webm"
+      },
+      "never_call": [
+        "shot",
+        "bothSchemes",
+        "screenShots",
+        "settle",
+        "screenLook",
+        "setViewportSize"
+      ]
+    },
+    "conventions": {
+      "do": "type = fill('') then pressSequentially(text, {delay}); tap = click(); upload = waitForEvent('filechooser') + tap(target) + setFiles(file); wait = wait until 'for' is visible (expectSeen), then pause ms; wait without 'for' = pause ms; run = execute a block from session",
+      "target": "role → getByRole(role, {name, exact}); label → getByLabel(label, {exact}); text → getByText(text, {exact}); testid → getByTestId; within = scope the locator inside that element",
+      "strings": "a string between slashes ('/…/') is a RegExp; everything else is exact text",
+      "ms": "pause after the step (reading time in the video)",
+      "cut": "true = this part of the recording is removed in the edit",
+      "expect": "texts that must be visible during the scene (getByText; objects = getByRole); absent = must not be there"
+    },
+    "prelude": [
+      {
+        "do": "goto",
+        "url": "/",
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "wait",
+        "for": {
+          "text": {
+            "de": "Dein Lernbuddy für Arbeiten und Tests.",
+            "en": "Your study buddy for tests and exams."
+          },
+          "exact": true
+        },
+        "ms": 2500,
+        "note": "first 2.5 s = intro background (welcome screen with orb)"
+      },
+      {
+        "do": "type",
+        "target": {
+          "label": {
+            "de": "E-Mail",
+            "en": "E-mail"
+          },
+          "exact": false
+        },
+        "text": {
+          "de": "<freshEmail>",
+          "en": "<freshEmail>"
+        },
+        "delay": 0,
+        "clear": true,
+        "ms": 0,
+        "cut": true,
+        "note": "fill()"
+      },
+      {
+        "do": "type",
+        "target": {
+          "label": {
+            "de": "Passwort",
+            "en": "Password"
+          },
+          "exact": true
+        },
+        "text": {
+          "de": "geheim-1234",
+          "en": "geheim-1234"
+        },
+        "delay": 0,
+        "clear": true,
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "type",
+        "target": {
+          "label": {
+            "de": "Passwort wiederholen",
+            "en": "Repeat password"
+          },
+          "exact": false
+        },
+        "text": {
+          "de": "geheim-1234",
+          "en": "geheim-1234"
+        },
+        "delay": 0,
+        "clear": true,
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "button",
+          "name": {
+            "de": "Konto erstellen",
+            "en": "Create account"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "wait",
+        "for": {
+          "text": {
+            "de": "Kurz zum Datenschutz",
+            "en": "A quick word on privacy"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "checkbox"
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "button",
+          "name": {
+            "de": "Weiter",
+            "en": "Continue"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "wait",
+        "for": {
+          "text": {
+            "de": "Wer lernt mit LearnBuddy?",
+            "en": "Who is learning with LearnBuddy?"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "radio",
+          "name": {
+            "de": "Mein Kind",
+            "en": "My child"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "type",
+        "target": {
+          "label": {
+            "de": "Wie heißt dein Kind? (Spitzname genügt)",
+            "en": "What's your child's name? (A nickname is fine)"
+          },
+          "exact": false
+        },
+        "text": {
+          "de": "Mia",
+          "en": "Mia"
+        },
+        "delay": 0,
+        "clear": true,
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "button",
+          "name": {
+            "de": "Bundesland wählen",
+            "en": "Choose your federal state"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "radio",
+          "name": {
+            "de": "Niedersachsen",
+            "en": "Lower Saxony (Niedersachsen)"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "type",
+        "target": {
+          "label": {
+            "de": "Tag",
+            "en": "Day"
+          },
+          "exact": true
+        },
+        "text": {
+          "de": "14",
+          "en": "14"
+        },
+        "delay": 0,
+        "clear": true,
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "type",
+        "target": {
+          "label": {
+            "de": "Monat",
+            "en": "Month"
+          },
+          "exact": true
+        },
+        "text": {
+          "de": "03",
+          "en": "03"
+        },
+        "delay": 0,
+        "clear": true,
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "type",
+        "target": {
+          "label": {
+            "de": "Jahr",
+            "en": "Year"
+          },
+          "exact": true
+        },
+        "text": {
+          "de": "2013",
+          "en": "2013"
+        },
+        "delay": 0,
+        "clear": true,
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "button",
+          "name": {
+            "de": "Weiter",
+            "en": "Next"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      }
+    ],
+    "after_scene_1": [
+      {
+        "do": "tap",
+        "target": {
+          "role": "button",
+          "name": {
+            "de": "Los geht's, Mia!",
+            "en": "Let's go, Mia!"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "button",
+          "name": {
+            "de": "Weiter",
+            "en": "Next"
+          },
+          "exact": true
+        },
+        "only_if_visible": {
+          "role": "radiogroup",
+          "name": {
+            "de": "Buddys Stimme",
+            "en": "Buddy's voice"
+          },
+          "exact": true
+        },
+        "cut": true,
+        "note": "voice page only with LB_DEV_SPEECH=fake (as in signUpMia)"
+      },
+      {
+        "do": "wait",
+        "for": {
+          "text": {
+            "de": "Sag es Buddy einfach",
+            "en": "Just tell Buddy"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "tap",
+        "target": {
+          "role": "button",
+          "name": {
+            "de": "Überspringen",
+            "en": "Skip"
+          },
+          "exact": true
+        },
+        "ms": 0,
+        "cut": true
+      },
+      {
+        "do": "wait",
+        "for": {
+          "text": {
+            "de": "LearnBuddy",
+            "en": "LearnBuddy"
+          },
+          "exact": false
+        },
+        "ms": 0,
+        "cut": true
+      }
+    ],
+    "practice_rest": {
+      "note": "like practise() in tests/web/coreLoop.ts: on each question screen detect the visible prompt; the 'why' question is scene 5, the others are these blocks; stop when the result heading is visible",
+      "until": {
+        "role": "heading",
+        "name": {
+          "de": "Geschafft!",
+          "en": "Done!"
+        },
+        "exact": true
+      },
+      "blocks": [
+        {
+          "when": {
+            "text": {
+              "de": "Kürze 6/8 und gib das Ergebnis als Dezimalzahl an.",
+              "en": "Simplify 6/8 and give the result as a decimal."
+            },
+            "exact": true
+          },
+          "steps": [
+            {
+              "do": "type",
+              "target": {
+                "label": {
+                  "de": "Deine Antwort",
+                  "en": "Your answer"
+                },
+                "exact": false
+              },
+              "text": {
+                "de": "0,75",
+                "en": "0.75"
+              },
+              "delay": 60,
+              "clear": true,
+              "ms": 300
+            },
+            {
+              "do": "tap",
+              "target": {
+                "role": "button",
+                "name": {
+                  "de": "Prüfen",
+                  "en": "Check"
+                },
+                "exact": true
+              },
+              "ms": 0
+            },
+            {
+              "do": "wait",
+              "for": {
+                "text": {
+                  "de": "Richtig",
+                  "en": "Right"
+                },
+                "exact": true
+              },
+              "ms": 900,
+              "note": "also: 'Stimmt – gut gemacht!' / 'That's right – well done!'"
+            },
+            {
+              "do": "tap",
+              "target": {
+                "role": "button",
+                "name": {
+                  "de": "Weiter",
+                  "en": "Next"
+                },
+                "exact": true
+              },
+              "ms": 0
+            }
+          ],
+          "cut": true,
+          "b_roll": true
+        },
+        {
+          "when": {
+            "text": {
+              "de": "/^Welcher Bruch ist größer:/",
+              "en": "/^Which fraction is larger:/"
+            },
+            "exact": true
+          },
+          "steps": [
+            {
+              "do": "tap",
+              "target": {
+                "role": "radio",
+                "name": {
+                  "de": "2 Drittel",
+                  "en": "2 thirds"
+                },
+                "exact": true
+              },
+              "ms": 400
+            },
+            {
+              "do": "tap",
+              "target": {
+                "role": "button",
+                "name": {
+                  "de": "Prüfen",
+                  "en": "Check"
+                },
+                "exact": true
+              },
+              "ms": 0
+            },
+            {
+              "do": "wait",
+              "for": {
+                "text": {
+                  "de": "Richtig",
+                  "en": "Right"
+                },
+                "exact": true
+              },
+              "ms": 900
+            },
+            {
+              "do": "tap",
+              "target": {
+                "role": "button",
+                "name": {
+                  "de": "Weiter",
+                  "en": "Next"
+                },
+                "exact": true
+              },
+              "ms": 0
+            }
+          ],
+          "cut": true,
+          "b_roll": true
+        },
+        {
+          "when": {
+            "text": {
+              "de": "Wie heißt die Zahl unter dem Bruchstrich?",
+              "en": "What is the number below the fraction bar called?"
+            },
+            "exact": true
+          },
+          "steps": [
+            {
+              "do": "type",
+              "target": {
+                "label": {
+                  "de": "Deine Antwort",
+                  "en": "Your answer"
+                },
+                "exact": false
+              },
+              "text": {
+                "de": "Nenner",
+                "en": "denominator"
+              },
+              "delay": 60,
+              "clear": true,
+              "ms": 300
+            },
+            {
+              "do": "tap",
+              "target": {
+                "role": "button",
+                "name": {
+                  "de": "Prüfen",
+                  "en": "Check"
+                },
+                "exact": true
+              },
+              "ms": 0
+            },
+            {
+              "do": "wait",
+              "for": {
+                "text": {
+                  "de": "Richtig",
+                  "en": "Right"
+                },
+                "exact": true
+              },
+              "ms": 900
+            },
+            {
+              "do": "tap",
+              "target": {
+                "role": "button",
+                "name": {
+                  "de": "Weiter",
+                  "en": "Next"
+                },
+                "exact": true
+              },
+              "ms": 0
+            }
+          ],
+          "cut": true,
+          "b_roll": true
+        }
+      ]
+    }
+  },
+  "scenes": [
+    {
+      "n": 1,
+      "usp": [
+        5,
+        1
+      ],
+      "proof": "core-loop-setup.spec.ts (03-profile-child, 03a2-contact-question, 03b-handover), redesign-contact.spec.ts, redesign-handover.spec.ts",
+      "steps": [
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Noch kurz für die Eltern",
+              "en": "One more thing for the parents"
+            },
+            "exact": true
+          },
+          "ms": 1000
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "checkbox",
+            "name": {
+              "de": "/sorgeberechtigt/",
+              "en": "/parental responsibility/"
+            }
+          },
+          "ms": 400
+        },
+        {
+          "do": "type",
+          "target": {
+            "label": {
+              "de": "PIN der Eltern",
+              "en": "Parents' PIN"
+            },
+            "exact": false
+          },
+          "text": {
+            "de": "4826",
+            "en": "4826"
+          },
+          "delay": 180,
+          "clear": true,
+          "ms": 200
+        },
+        {
+          "do": "type",
+          "target": {
+            "label": {
+              "de": "PIN wiederholen",
+              "en": "Repeat PIN"
+            },
+            "exact": false
+          },
+          "text": {
+            "de": "4826",
+            "en": "4826"
+          },
+          "delay": 180,
+          "clear": true,
+          "ms": 500
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Weiter",
+              "en": "Next"
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Darf Buddy Mia Benachrichtigungen schicken?",
+              "en": "May Buddy send Mia notifications?"
+            },
+            "exact": true
+          },
+          "ms": 2800
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Ja, erlauben",
+              "en": "Yes, allow"
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Fertig! Das ist eingestellt:",
+              "en": "Done! This is set up:"
+            },
+            "exact": true
+          },
+          "ms": 2500
+        }
+      ],
+      "then": "session.after_scene_1",
+      "expect": {
+        "de": [
+          "Noch kurz für die Eltern",
+          "Darf Buddy Mia Benachrichtigungen schicken?",
+          "Zum Beispiel eine Erinnerung vor einer Arbeit. Nie abends – und ändern könnt ihr es jederzeit in den Einstellungen, mit eurer PIN.",
+          "2 von 4",
+          "Fertig! Das ist eingestellt:",
+          "PIN der Eltern: gesetzt – nur ihr kennt sie",
+          "/Push-Benachrichtigungen: erlaubt/",
+          "Gib Mia jetzt das Handy."
+        ],
+        "en": [
+          "One more thing for the parents",
+          "May Buddy send Mia notifications?",
+          "For example a reminder before a test. Never in the evening – and you can change it any time in the settings, with your PIN.",
+          "2 of 4",
+          "Done! This is set up:",
+          "Parents' PIN: set – only you know it",
+          "/Push notifications: allowed/",
+          "Now hand the phone to Mia."
+        ]
+      },
+      "alternatives": [
+        "PIN later: choose 'Nein, danke' here, then at the end Mehr → Einstellungen → 'Aufs Handy' → 'Eltern fragen' → PIN keys 4,8,2,6 → 'Ja – nie nach 20:00 Uhr.' (tour.spec.ts:217–226); scene 7 then shows the in-app note"
+      ]
+    },
+    {
+      "n": 2,
+      "usp": [
+        1,
+        4
+      ],
+      "proof": "core-loop-plan.spec.ts (05-buddy-planned), coreLoop.ts planTest(), redesign-home.spec.ts",
+      "steps": [
+        {
+          "do": "wait",
+          "for": {
+            "role": "heading",
+            "name": {
+              "de": "Hallo Mia. Was steht an?",
+              "en": "Hello Mia. What's coming up?"
+            },
+            "exact": true
+          },
+          "ms": 1500
+        },
+        {
+          "do": "type",
+          "target": {
+            "label": {
+              "de": "Schreib Buddy …",
+              "en": "Write to Buddy …"
+            },
+            "exact": false
+          },
+          "text": {
+            "de": "Ich schreibe am Freitag eine Mathearbeit über Brüche.",
+            "en": "I have a maths test on Friday about fractions."
+          },
+          "delay": 35,
+          "clear": true,
+          "ms": 400
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Senden",
+              "en": "Send"
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Super, dann bereiten wir uns bis Freitag zusammen vor. Hast du ein Arbeitsblatt dazu? Ein Foto reicht.",
+              "en": "Great, let's get ready for Friday together. Do you have a worksheet for it? A photo is enough."
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "/Eingetragen: Mathearbeit Brüche am /",
+              "en": "/Added: Fractions test on /"
+            },
+            "exact": true
+          },
+          "ms": 3000
+        }
+      ],
+      "expect": {
+        "de": [
+          "Hallo Mia. Was steht an?",
+          "Erzähl mir von deiner nächsten Arbeit oder zeig mir ein Arbeitsblatt. Ich mach daraus Übungen.",
+          "Super, dann bereiten wir uns bis Freitag zusammen vor. Hast du ein Arbeitsblatt dazu? Ein Foto reicht.",
+          "/^Eingetragen: Mathearbeit Brüche am /",
+          "Arbeitsblatt Brüche",
+          "Schick mir ein Foto.",
+          {
+            "role": "button",
+            "name": "Foto hinzufügen",
+            "exact": true
+          },
+          {
+            "role": "button",
+            "name": "Zurücknehmen",
+            "exact": true
+          }
+        ],
+        "en": [
+          "Hello Mia. What's coming up?",
+          "Tell me about your next test or show me a worksheet. I’ll turn it into exercises.",
+          "Great, let's get ready for Friday together. Do you have a worksheet for it? A photo is enough.",
+          "/^Added: Fractions test on /",
+          "Fractions worksheet",
+          "Send me a photo.",
+          {
+            "role": "button",
+            "name": "Add photo",
+            "exact": true
+          },
+          {
+            "role": "button",
+            "name": "Take back",
+            "exact": true
+          }
+        ]
+      },
+      "absent": {
+        "de": [
+          "/Ich warte auf dein Foto/"
+        ],
+        "en": [
+          "/Waiting for your photo/"
+        ]
+      },
+      "note": "The sentence must be exactly this one: the scripted model answers only /mathearbeit über brüche/i (quote 'am Freitag eine Mathearbeit über Brüche'); any other sentence throws 'no scripted chat answer'. The date is the next Friday after the recording day."
+    },
+    {
+      "n": 3,
+      "usp": [
+        2
+      ],
+      "proof": "coreLoop.ts sendWorksheet(), worksheetJpeg(); core-loop-plan.spec.ts (08-capture-photo)",
+      "steps": [
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Foto hinzufügen",
+              "en": "Add photo"
+            },
+            "exact": true
+          },
+          "ms": 0,
+          "note": "the button in the card on top (capture bar)"
+        },
+        {
+          "do": "wait",
+          "for": {
+            "role": "button",
+            "name": {
+              "de": "Foto aufnehmen",
+              "en": "Take photo"
+            },
+            "exact": true
+          },
+          "ms": 700
+        },
+        {
+          "do": "upload",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Foto aufnehmen",
+              "en": "Take photo"
+            },
+            "exact": true
+          },
+          "file": {
+            "de": "await worksheetJpeg(page)  // test-results/web/worksheet.jpg, 800×1000 @2x → sent as 1280×1600",
+            "en": "await worksheetJpegEn(page)  // test-results/web/worksheet-en.jpg, 820×1000 @2x → sent as 1312×1600 (storyboard §6.2)"
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "role": "img",
+            "name": {
+              "de": "Foto 1 von 1",
+              "en": "Photo 1 of 1"
+            },
+            "exact": true
+          },
+          "ms": 1200
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Senden",
+              "en": "Send"
+            },
+            "exact": true
+          },
+          "ms": 2000,
+          "note": "reading card on top; its text changes quickly, no expect"
+        },
+        {
+          "do": "wait",
+          "for": {
+            "role": "button",
+            "name": {
+              "de": "/^Übung bereit: Mathearbeit Brüche\\./",
+              "en": "/^Practice ready: Fractions test\\./"
+            },
+            "exact": false
+          },
+          "ms": 0,
+          "timeout": 30000,
+          "cut": true,
+          "note": "waiting for the reading and Buddy's check – removed in the edit"
+        }
+      ],
+      "expect": {
+        "de": [
+          "Was möchtest du anhängen?",
+          {
+            "role": "img",
+            "name": "Foto 1 von 1",
+            "exact": true
+          }
+        ],
+        "en": [
+          "What do you want to attach?",
+          {
+            "role": "img",
+            "name": "Photo 1 of 1",
+            "exact": true
+          }
+        ]
+      },
+      "absent": {
+        "de": [
+          "Foto 1 ist unscharf."
+        ],
+        "en": [
+          "Photo 1 is blurry."
+        ]
+      },
+      "alternatives": [
+        "photo coaching first: upload apps/mobile/lib/photo/__tests__/fixtures/blur.jpg → 'Foto 1 ist unscharf.' / 'Photo 1 is blurry.' + 'Schwer lesbar' / 'Hard to read', pause 2000 → upload via 'Neu fotografieren' / 'Take it again' with the real sheet (core-loop-plan.spec.ts:66–82)"
+      ],
+      "note": "Do not use fixtures/sharp.jpg: its reading belongs to another scenario."
+    },
+    {
+      "n": 4,
+      "usp": [
+        1,
+        2
+      ],
+      "proof": "core-loop-plan.spec.ts (09-buddy-prepared), coreLoop.ts practise()",
+      "steps": [
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.",
+              "en": "I made a short practice from your worksheet."
+            },
+            "exact": true
+          },
+          "ms": 3000
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Jetzt üben",
+              "en": "Practise"
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Aufgabe 1 von 4",
+              "en": "Task 1 of 4"
+            },
+            "exact": true
+          },
+          "ms": 2000
+        },
+        {
+          "do": "run",
+          "block": "practice_rest",
+          "until": "the why-question (scene 5) or the result heading",
+          "cut": true
+        }
+      ],
+      "expect": {
+        "de": [
+          {
+            "role": "button",
+            "name": "/^Übung bereit: Mathearbeit Brüche\\./"
+          },
+          "/^4 Aufgaben · ca\\. 5 Min\\.$/",
+          "Aus deinem Arbeitsblatt habe ich eine kurze Übung gemacht.",
+          "nur hier in der App",
+          "Aufgabe 1 von 4"
+        ],
+        "en": [
+          {
+            "role": "button",
+            "name": "/^Practice ready: Fractions test\\./"
+          },
+          "/^4 tasks · about 5 min$/",
+          "I made a short practice from your worksheet.",
+          "only here in the app",
+          "Task 1 of 4"
+        ]
+      },
+      "alternatives": [
+        "tap the card to open its details ('Für „Mathearbeit Brüche“ …' / 'For “Fractions test” …', now.ready_for_exam) – wording not covered by a spec",
+        "b-roll: question 1 typed '0,75' / '0.75' → 'Richtig' + 'Stimmt – gut gemacht!' (practice_rest block 1)"
+      ]
+    },
+    {
+      "n": 5,
+      "usp": [
+        3
+      ],
+      "proof": "scripted tutor rule 4 in core-loop.ts; verdict labels practice:verdict.*; wrong-then-right flow like redesign-question-feedback.spec.ts",
+      "steps": [
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Warum multipliziert man beim Erweitern Zähler und Nenner mit derselben Zahl?",
+              "en": "Why do you multiply the numerator and the denominator by the same number?"
+            },
+            "exact": true
+          },
+          "ms": 1500
+        },
+        {
+          "do": "type",
+          "target": {
+            "label": {
+              "de": "Deine Antwort",
+              "en": "Your answer"
+            },
+            "exact": false
+          },
+          "text": {
+            "de": "Damit der Bruch größer wird.",
+            "en": "So the fraction gets bigger."
+          },
+          "delay": 45,
+          "clear": true,
+          "ms": 400,
+          "note": "must contain neither 'wert'/'gleich' (EN: 'value'/'same')"
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Prüfen",
+              "en": "Check"
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Fast. Denk daran, was mit dem Wert des Bruchs passiert.",
+              "en": "Almost. Think about what happens to the value of the fraction."
+            },
+            "exact": true
+          },
+          "ms": 2800
+        },
+        {
+          "do": "type",
+          "target": {
+            "label": {
+              "de": "Deine Antwort",
+              "en": "Your answer"
+            },
+            "exact": false
+          },
+          "text": {
+            "de": "Damit der Wert gleich bleibt.",
+            "en": "So the value stays the same."
+          },
+          "delay": 45,
+          "clear": true,
+          "ms": 400
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Prüfen",
+              "en": "Check"
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Genau – der Wert bleibt gleich, nur die Darstellung ändert sich.",
+              "en": "Exactly – the value stays the same, only the way it looks changes."
+            },
+            "exact": true
+          },
+          "ms": 2200
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Weiter",
+              "en": "Next"
+            },
+            "exact": true
+          },
+          "ms": 0,
+          "cut": true
+        },
+        {
+          "do": "run",
+          "block": "practice_rest",
+          "until": "the result heading",
+          "cut": true
+        }
+      ],
+      "expect": {
+        "de": [
+          "Warum multipliziert man beim Erweitern Zähler und Nenner mit derselben Zahl?",
+          "Noch nicht ganz",
+          "Fast. Denk daran, was mit dem Wert des Bruchs passiert.",
+          "Richtig",
+          "Genau – der Wert bleibt gleich, nur die Darstellung ändert sich."
+        ],
+        "en": [
+          "Why do you multiply the numerator and the denominator by the same number?",
+          "Not quite yet",
+          "Almost. Think about what happens to the value of the fraction.",
+          "Right",
+          "Exactly – the value stays the same, only the way it looks changes."
+        ]
+      },
+      "note": "Between the two tries the question stays open; 'Buddy schaut sich deine Antwort an …' / 'Buddy is looking at your answer …' shows briefly."
+    },
+    {
+      "n": 6,
+      "usp": [
+        4
+      ],
+      "proof": "redesign-done.spec.ts (done-*-result, done-*-home-result), core-loop-practice.spec.ts (11-practice-summary, 12b-buddy-result-in-thread)",
+      "steps": [
+        {
+          "do": "wait",
+          "for": {
+            "role": "heading",
+            "name": {
+              "de": "Geschafft!",
+              "en": "Done!"
+            },
+            "exact": true
+          },
+          "ms": 3000
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Zurück zu Buddy",
+              "en": "Back to Buddy"
+            },
+            "exact": true,
+            "within": {
+              "testid": "bottom-bar"
+            }
+          },
+          "ms": 0,
+          "note": "scoped: the header carries the same label"
+        },
+        {
+          "do": "wait",
+          "for": {
+            "role": "button",
+            "name": {
+              "de": "Ansehen",
+              "en": "View"
+            },
+            "exact": true
+          },
+          "ms": 2000
+        }
+      ],
+      "expect": {
+        "de": [
+          "Geschafft!",
+          "Fertig",
+          "Du hast 4 Aufgaben beantwortet.",
+          "Richtig",
+          "Mehr davon, etwas schwerer",
+          "Zurück zu Buddy",
+          "Ansehen"
+        ],
+        "en": [
+          "Done!",
+          "Finished",
+          "You answered 4 tasks.",
+          "Right",
+          "More like this, a bit harder",
+          "Back to Buddy",
+          "View"
+        ]
+      },
+      "absent": {
+        "de": [
+          "Alles saß gleich beim ersten Mal.",
+          "/Schauen wir nochmal an/"
+        ],
+        "en": [
+          "All of it right the first time.",
+          "/Let's look at/"
+        ]
+      },
+      "note": "Because of the second try in scene 5 there is no 'all right first time' line; no topic list (one question per topic, practice/summary.ts ENOUGH_FOR_A_TOPIC = 2)."
+    },
+    {
+      "n": 7,
+      "usp": [
+        1,
+        5
+      ],
+      "proof": "scripted reminder rule in core-loop.ts; redesign-chat-text.spec.ts covers it only with notifications off",
+      "steps": [
+        {
+          "do": "type",
+          "target": {
+            "label": {
+              "de": "Schreib Buddy …",
+              "en": "Write to Buddy …"
+            },
+            "exact": false
+          },
+          "text": {
+            "de": "Erinnere mich morgen um 16 Uhr an Brüche.",
+            "en": "Remind me about fractions tomorrow at 4 pm."
+          },
+          "delay": 35,
+          "clear": true,
+          "ms": 400
+        },
+        {
+          "do": "tap",
+          "target": {
+            "role": "button",
+            "name": {
+              "de": "Senden",
+              "en": "Send"
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "Alles klar, ich erinnere dich morgen um 16 Uhr an Brüche.",
+              "en": "Okay, I'll remind you about fractions tomorrow at 4 pm."
+            },
+            "exact": true
+          },
+          "ms": 0
+        },
+        {
+          "do": "wait",
+          "for": {
+            "text": {
+              "de": "/Verabredet: Brüche üben morgen, 16:00/",
+              "en": "/Agreed: Practise fractions tomorrow, 16:00/"
+            },
+            "exact": true
+          },
+          "ms": 3500
+        },
+        {
+          "do": "end",
+          "note": "page.close(); video.saveAs(); write marks"
+        }
+      ],
+      "expect": {
+        "de": [
+          "Alles klar, ich erinnere dich morgen um 16 Uhr an Brüche.",
+          "/Verabredet: Brüche üben morgen, 16:00/",
+          {
+            "role": "button",
+            "name": "Zurücknehmen",
+            "exact": true
+          }
+        ],
+        "en": [
+          "Okay, I'll remind you about fractions tomorrow at 4 pm.",
+          "/Agreed: Practise fractions tomorrow, 16:00/",
+          {
+            "role": "button",
+            "name": "Take back",
+            "exact": true
+          }
+        ]
+      },
+      "absent": {
+        "de": [
+          "Verabredetes erscheint hier in der App – Benachrichtigungen sind aus."
+        ],
+        "en": [
+          "What you agreed shows up here in the app – notifications are off."
+        ]
+      },
+      "note": "The sentence must be exactly this one (rule /^Erinnere mich morgen um 16 Uhr an Brüche\\.$/i). The missing in-app note proves the parents' yes from scene 1."
+    }
+  ]
+}

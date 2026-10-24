@@ -2,10 +2,21 @@ name: Promo recording
 
 # Records the real app being used (web build against the dev stack, 390×844, de-DE) for the
 # promo video: tests/web/promo.spec.ts drives the core loop at reading pace with Playwright's
-# video on. Started by hand only (Actions → Promo recording → Run workflow); the recording and
-# its scene marks are the "promo-recording" artifact. Lives on the claude/promo-video branch.
+# video on. Runs on a push to the claude/promo-video branch (where it lives) or by hand (Actions →
+# Promo recording → Run workflow); the recording and its scene marks are the "promo-recording"
+# artifact. The push trigger also registers the workflow: GitHub dispatches only workflows it
+# knows, and a file that exists on no default branch becomes known through its first run.
 on:
+  push:
+    branches: [claude/promo-video]
+    # The renderer and the storyboard texts change nothing in the recording.
+    paths-ignore: ['promo/render/**', 'promo/*.md', 'promo/scenes.json']
   workflow_dispatch:
+
+# A newer push makes the older recording worthless: cancel it.
+concurrency:
+  group: promo-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   record:
