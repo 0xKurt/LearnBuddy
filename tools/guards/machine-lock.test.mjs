@@ -42,7 +42,8 @@ function lockEnv(lock, extra = {}) {
   const env = { ...process.env };
   delete env.CI;
   delete env.LB_TEST_LOCK_HELD;
-  return { ...env, LB_TEST_LOCK: lock, LB_TEST_LOCK_POLL: '1', ...extra };
+  // These stale-lock fixtures exercise one slot, independently of the machine's slot count.
+  return { ...env, LB_TEST_LOCK: lock, LB_TEST_LOCK_POLL: '1', LB_TEST_SLOTS: '1', ...extra };
 }
 
 /** A pid that is certainly not running: a process that has already exited. */

@@ -2,9 +2,9 @@
 // Pure and unit-tested: this decides whether what the microphone hears is HER, and it must
 // never be Buddy's own voice coming back from the speaker.
 //
-// What the mic hears while Buddy speaks is only ever a LEVEL (dBFS), never words: nothing is
-// recorded or written down until Buddy has stopped (lib/speech/bargeMonitor.ts). So the worst
-// an echo can do is stop him by mistake — it can never put his words into her mouth.
+// This gate only sees LEVELS (dBFS). The legacy bargeMonitor retains no audio; Android's
+// continuous recorder retains an onset buffer through the same echo-cancelled source and
+// only delivers an utterance after this gate identifies her (continuousTurns.ts).
 //
 // Two layers keep his voice out:
 // 1. The platform's echo cancellation removes most of it before we see a level (the browser's
@@ -22,8 +22,8 @@
 // still on its way the level means nothing about echo, and calibrating on silence would set
 // the bar so low that his first loud syllable could pass it.
 
-/** Learned before anything may count: the echo canceller converges and the residue is heard. */
-export const CALIBRATE_MS = 600;
+import { NoiseFloor } from './noiseFloor.js';
+export { CALIBRATE_MS } from './noiseFloor.js';
 /** Her voice must stand this far above the loud end of his residue. */
 const MARGIN_DB = 10;
 /** …and above this in any case: quieter is the room, not someone talking to the phone. */
@@ -32,12 +32,8 @@ export const MIN_DB = -42;
 export const MIN_SPEECH_MS = 300;
 /** A quieter stretch this long between loud frames still belongs to the same candidate. */
 export const MAX_GAP_MS = 200;
-/** How far back the residue is remembered. */
-const WINDOW_MS = 3000;
 /** Frames further apart than this (the app was busy) are not a continuous stretch. */
 const MAX_FRAME_MS = 250;
-
-type Sample = { at: number; db: number };
 
 /** The level of a block of samples (−1…1) as dBFS; silence is −160 like expo-audio's metering. */
 export function rmsDb(samples: ArrayLike<number>): number {
@@ -51,16 +47,8 @@ export function rmsDb(samples: ArrayLike<number>): number {
   return rms > 0 ? Math.max(-160, 20 * Math.log10(rms)) : -160;
 }
 
-function percentile(values: readonly number[], p: number): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const i = Math.min(sorted.length - 1, Math.max(0, Math.ceil(p * sorted.length) - 1));
-  return sorted[i] ?? -160;
-}
-
 export class BargeGate {
-  /** Residue frames (not part of a candidate), newest last. */
-  private residue: Sample[] = [];
-  private playedMs = 0;
+  private readonly noise = new NoiseFloor(MIN_DB, MARGIN_DB);
   private last: number | null = null;
   private loudMs = 0;
   private quietMs = 0;
@@ -68,12 +56,7 @@ export class BargeGate {
 
   /** The level a frame must reach to count as her voice right now (null while calibrating). */
   threshold(): number | null {
-    if (this.playedMs < CALIBRATE_MS || this.residue.length === 0) return null;
-    const echo = percentile(
-      this.residue.map((s) => s.db),
-      0.9,
-    );
-    return Math.max(MIN_DB, echo + MARGIN_DB);
+    return this.noise.threshold();
   }
 
   /**
@@ -92,9 +75,8 @@ export class BargeGate {
     }
     const dt = step > 0 && step <= MAX_FRAME_MS ? step : 0;
     const bar = this.threshold();
-    this.playedMs += dt;
+    this.noise.observe(db, at, dt, bar === null || db < bar);
     if (bar === null || db < bar) {
-      this.learn({ at, db });
       if (this.loudMs > 0) {
         this.quietMs += dt;
         if (this.quietMs > MAX_GAP_MS) {
@@ -112,11 +94,5 @@ export class BargeGate {
       return true;
     }
     return false;
-  }
-
-  private learn(sample: Sample): void {
-    this.residue.push(sample);
-    const from = sample.at - WINDOW_MS;
-    while (this.residue.length > 0 && (this.residue[0]?.at ?? 0) < from) this.residue.shift();
   }
 }
