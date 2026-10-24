@@ -3,16 +3,25 @@ import { act, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { renderInApp } from '../../../testing/render.js';
 const fake = vi.hoisted(() => ({
-  onText: null as null | ((text: string) => void),
+  onText: null as
+    | null
+    | ((text: string, pronunciation?: undefined, current?: () => boolean) => void),
+  onSpeechStart: null as null | (() => void),
   send: vi.fn(),
   speak: vi.fn(),
   stream: vi.fn(),
   feed: vi.fn(),
   toggle: vi.fn(),
+  setHome: vi.fn(),
 }));
 vi.mock('../useVoiceInput.js', () => ({
-  useVoiceInput: (opts: { onText: (text: string) => void; untilPause?: boolean }) => {
+  useVoiceInput: (opts: {
+    onText: typeof fake.onText;
+    onSpeechStart?: () => void;
+    untilPause?: boolean;
+  }) => {
     fake.onText = opts.onText;
+    fake.onSpeechStart = opts.onSpeechStart ?? null;
     return {
       state: 'idle',
       live: '',
@@ -32,7 +41,7 @@ vi.mock('../../../lib/speech/streamSpeaker.js', () => ({ createStreamSpeaker: fa
 vi.mock('../../../lib/api/endpoints.js', () => ({ sendMessageStreamed: fake.send }));
 vi.mock('../../../lib/api/queries.js', () => ({
   useHome: () => ({ data: { thread: [] } }),
-  setHome: vi.fn(),
+  setHome: fake.setHome,
 }));
 vi.mock('../../../lib/api/client.js', () => ({ newId: () => 'turn-1' }));
 vi.mock('../../../lib/buddy/useSceneLanguage.js', () => ({
@@ -98,4 +107,41 @@ it('reads the stored talk reply even when no streaming events arrived', async ()
     ),
   );
   expect(fake.stream).not.toHaveBeenCalled();
+});
+
+it('ignores a superseded response even when its home arrives after the next message', async () => {
+  let finishOld!: (value: typeof result) => void;
+  fake.send.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finishOld = resolve;
+      }),
+  );
+  fake.send.mockResolvedValueOnce(result);
+  renderInApp(<TalkScreen />);
+  await act(async () => fake.onText?.('Der erste Teil'));
+  await act(async () => fake.onText?.('und die Fortsetzung'));
+  await waitFor(() => expect(fake.setHome).toHaveBeenCalledOnce());
+  fake.speak.mockClear();
+  await act(async () => finishOld(result));
+  expect(fake.setHome).toHaveBeenCalledOnce();
+  expect(fake.speak).not.toHaveBeenCalled();
+});
+
+it('sends an earlier transcript for server supersede without letting it speak over a continuation', async () => {
+  fake.send.mockImplementation(
+    async (_text: string, _id: string, _attachment: null, progress: (e: unknown) => void) => {
+      progress({ round: 0, speakable: true, text: reply, done: true });
+      return result;
+    },
+  );
+  renderInApp(<TalkScreen />);
+  await act(async () => {
+    fake.onSpeechStart?.();
+    fake.onText?.('Der erste Teil', undefined, () => false);
+  });
+  await waitFor(() => expect(fake.send).toHaveBeenCalledOnce());
+  expect(fake.stream).not.toHaveBeenCalled();
+  expect(fake.speak).not.toHaveBeenCalled();
+  expect(fake.setHome).not.toHaveBeenCalled();
 });

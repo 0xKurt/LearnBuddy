@@ -28,6 +28,15 @@ const residue = (t: number) => (Math.floor(t / 150) % 2 === 0 ? -48 : -60);
 const her = (t: number) => (t % 300 < 250 ? -25 : -50);
 
 describe('BargeGate', () => {
+  it('invalid frames cannot teach a background or count as speech', () => {
+    const gate = new BargeGate();
+    run(gate, 0, 2000, () => Number.NaN);
+    expect(gate.threshold()).toBeNull();
+    run(gate, 2000, 2000, residue);
+    const threshold = gate.threshold();
+    expect(run(gate, 4000, 1000, () => Infinity)).toBeNull();
+    expect(gate.threshold()).toBe(threshold);
+  });
   it('never fires while calibrating, however loud', () => {
     const gate = new BargeGate();
     expect(run(gate, 0, CALIBRATE_MS - FRAME, () => -10)).toBeNull();

@@ -4,7 +4,8 @@
 // after maxMs; a dictation (onChunk) has no time limit — a long recording
 // rolls over into pieces at pauses (lib/speech/dictation.ts, issue #19), the
 // recorder restarting inside the silence so she never notices. Every file is
-// deleted from the device right after reading it; nothing is kept.
+// deleted from the device right after reading it; continuous Android Talk keeps its private
+// session file only until capture ends, while reading complete frames without stopping.
 
 import type { AudioMime } from '@learnbuddy/shared-types/contracts';
 import {
@@ -20,6 +21,7 @@ import { File } from 'expo-file-system';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { LiveRecordingReader, liveRecordingOptions, type LiveRecording } from './liveRecording.js';
 import { ChunkCutter, SpeechMark } from './dictation.js';
 import {
   MAX_AUDIO_BASE64,
@@ -94,6 +96,8 @@ export type RecordPhase = 'idle' | 'starting' | 'recording' | 'stopping';
 export type DictationChunk = { index: number; last: boolean; silent?: boolean };
 
 type Handlers = {
+  /** Continuous Android conversation capture, with no stop at a turn boundary. */
+  continuous?: LiveRecording;
   /** The whole recording in one piece; not called when `onChunk` is given. */
   onRecorded?: (recording: Recording) => void;
   onFailed: (why: RecordFailure) => void;
@@ -110,7 +114,7 @@ type Handlers = {
    * follow each reading (the end of her turn at a pause) follows it here, on time, instead of
    * waiting for the screen to draw.
    */
-  onLevel?: (level: number, now: number) => void;
+  onLevel?: (level: number, now: number, db?: number) => void;
 };
 
 type Options = Handlers & {
@@ -185,10 +189,15 @@ export function useRecording({
   onFailed,
   onChunk,
   onLevel,
+  continuous,
   maxMs = MAX_RECORDING_MS,
   long,
 }: Options) {
-  const recorder = useAudioRecorder(long ? LONG_RECORDING : SPEECH_RECORDING);
+  const recorder = useAudioRecorder(
+    continuous ? liveRecordingOptions(SPEECH_RECORDING) : long ? LONG_RECORDING : SPEECH_RECORDING,
+  );
+  const liveReader = useRef(new LiveRecordingReader()).current;
+  const stopOnFailure = useRef<() => Promise<void>>(() => Promise.resolve());
   /** The most a recording may be as base64: a long one takes the API's larger request. */
   const maxBase64 = useRef(MAX_AUDIO_BASE64);
   maxBase64.current = long?.maxBase64 ?? MAX_AUDIO_BASE64;
@@ -206,8 +215,8 @@ export function useRecording({
   const cancelled = useRef(false);
   const limit = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useMounted();
-  const handlers = useRef<Handlers>({ onRecorded, onFailed, onChunk, onLevel });
-  handlers.current = { onRecorded, onFailed, onChunk, onLevel };
+  const handlers = useRef<Handlers>({ onRecorded, onFailed, onChunk, onLevel, continuous });
+  handlers.current = { onRecorded, onFailed, onChunk, onLevel, continuous };
   const maxRef = useRef(maxMs);
   maxRef.current = maxMs;
   /** Which piece of a dictation is being recorded, and how long the finished ones were. */
@@ -337,26 +346,37 @@ export function useRecording({
       try {
         const s = recorder.getStatus();
         setMeter((prev) => meterShown(prev, s.durationMillis, s.metering));
-        handlers.current.onLevel?.(levelFromDb(s.metering), Date.now());
+        const live = handlers.current.continuous;
+        if (live && recorder.uri) {
+          liveReader.read(recorder.uri, live.data);
+          live.meter(s.metering ?? -160, s.durationMillis);
+        }
+        handlers.current.onLevel?.(levelFromDb(s.metering), Date.now(), s.metering ?? -160);
         mark.current.observe(s.metering);
         if (
+          !handlers.current.continuous &&
           handlers.current.onChunk &&
           !rolling.current &&
           cutter.current.shouldCut(s.durationMillis, levelFromDb(s.metering), Date.now())
         )
           rollover();
       } catch {
+        if (handlers.current.continuous && phaseRef.current === 'recording') {
+          handlers.current.onFailed('failed');
+          void stopOnFailure.current();
+        }
         // Released meanwhile: the phase follows.
       }
     }, 120);
     return () => clearInterval(poll);
-  }, [phase, recorder, rollover]);
+  }, [phase, recorder, rollover, liveReader]);
 
   /** Ends the recording; deliver = false throws it away (leaving the screen, the app going away). */
   const finish = useCallback(
     (deliver: boolean): Promise<void> =>
       enqueue(async () => {
         if (phaseRef.current !== 'recording') return;
+        if (!deliver) handlers.current.continuous?.end(false);
         clearLimit();
         setPhase('stopping');
         const endedAtMs = performance.now();
@@ -376,6 +396,13 @@ export function useRecording({
         const known = fileUri.current;
         fileUri.current = null;
         try {
+          const live = handlers.current.continuous;
+          if (live) {
+            if (deliver && (uri ?? known)) liveReader.read((uri ?? known)!, live.data);
+            if (deliver) live.end(true);
+            discardFile(uri ?? known);
+            return;
+          }
           if (!deliver) {
             // Thrown away (left the screen, answered another way): delete it, unread. A
             // recorder already released on unmount has no uri any more — the one noted at the
@@ -449,8 +476,10 @@ export function useRecording({
           setPhase('idle');
         }
       }),
-    [enqueue, recorder, setPhase],
+    [enqueue, recorder, setPhase, liveReader],
   );
+
+  stopOnFailure.current = () => finish(false);
 
   const start = useCallback(async (): Promise<void> => {
     if (phaseRef.current !== 'idle') return;
@@ -487,6 +516,7 @@ export function useRecording({
         setPhase('idle');
         return;
       }
+      liveReader.reset();
       recorder.record();
       fileUri.current = recorder.uri;
       startedAt.current = Date.now();
@@ -496,7 +526,7 @@ export function useRecording({
       mark.current.reset();
       setPhase('recording');
       // A dictation (onChunk) has no time limit: only her tap ends it.
-      if (!handlers.current.onChunk)
+      if (!handlers.current.onChunk && !handlers.current.continuous)
         limit.current = setTimeout(() => void finish(true), maxRef.current);
     } catch {
       await allowRecording(false);
@@ -505,7 +535,7 @@ export function useRecording({
     } finally {
       clearTimeout(tooSlow);
     }
-  }, [finish, recorder, setPhase]);
+  }, [finish, recorder, setPhase, liveReader]);
 
   const stop = useCallback(() => finish(true), [finish]);
   /** Ends the recording and throws it away (she answered another way). */
@@ -542,7 +572,7 @@ export function useRecording({
           : Math.min(meter.elapsedMs, maxMs)
         : 0,
     /** The longest this recording can get (for "0:07 / 1:00"); a dictation has no bound. */
-    maxMs: onChunk ? null : maxMs,
+    maxMs: onChunk || continuous ? null : maxMs,
     /** How loud she is right now (0…1; 0 when not recording or not measured). */
     level: phase === 'recording' ? meter.level : 0,
     denied: saysRefused ? denied : null,

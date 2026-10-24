@@ -21,6 +21,8 @@ import { pronunciationPacks } from '../../lib/speech/pronunciation.js';
 import type { MicState } from '../../lib/speech/talkState.js';
 import type { TranscribeRequest } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
+import { useConversationCapture } from '../../lib/speech/useConversationCapture.js';
 import { useTranslation } from 'react-i18next';
 
 import { announce } from '../../lib/announce.js';
@@ -62,7 +64,14 @@ type Options = {
   /** answer: the question being answered, so a short answer is heard in context. */
   context?: string | null;
   /** The understood text (never empty). */
-  onText: (text: string, pronunciation?: ConversationPronunciation) => void;
+  onText: (
+    text: string,
+    pronunciation?: ConversationPronunciation,
+    current?: () => boolean,
+  ) => void;
+  /** Hands-free Talk keeps the Android microphone through transcription and playback. */
+  continuation?: boolean;
+  onSpeechStart?: () => void;
   /**
    * Conversation: listening ends by itself when she pauses — on the device, and on the
    * recording path wherever the recorder measures her level (`endsByItself`).
@@ -72,6 +81,7 @@ type Options = {
 
 export type VoiceInput = {
   state: VoiceInputState;
+  continuous?: boolean;
   /** Listening on the device rather than recording. */
   onDevice: boolean;
   /** With untilPause: her pause ends this listening, no tap needed (issue #523). */
@@ -102,6 +112,8 @@ export function useVoiceInput({
   context = null,
   onText,
   untilPause = false,
+  continuation = false,
+  onSpeechStart,
 }: Options): VoiceInput {
   const { i18n } = useTranslation();
   const [transcribing, setTranscribing] = useState(false);
@@ -109,6 +121,7 @@ export function useVoiceInput({
   const [heard, setHeard] = useState('');
   const [choosing, setChoosing] = useState(false);
   const [hint, setHint] = useState<VoiceHint | null>(null);
+  const [calibrated, setCalibrated] = useState(false);
   const mounted = useMounted();
   /** cancel() drops text from a listening that began before it (lib/speech/turnGuard.ts). */
   const guard = useRef(new TurnGuard()).current;
@@ -225,7 +238,31 @@ export function useVoiceInput({
     d.chain = d.chain.then(() => transcribePiece(d, r, chunk));
   }
 
+  const continuous =
+    continuation && untilPause && purpose === 'message' && Platform.OS === 'android';
+  const capture = useConversationCapture({
+    lang,
+    onLive: setHeard,
+    onStart: () => {
+      setHeard('');
+      setHint(null);
+      onSpeechStart?.();
+    },
+    onPending: setTranscribing,
+    onText: (text, current) => {
+      if (current()) {
+        announce(text);
+        setHeard('');
+      }
+      latest.current.onText(text, undefined, current);
+    },
+    onFailed: (error) => {
+      setHint('failed');
+      toast.show(messageFor(error), 'error');
+    },
+  });
   const rec = useRecording({
+    continuous: continuous ? capture.stream : undefined,
     onChunk: onPiece,
     onLevel,
     onFailed: (why) => {
@@ -249,7 +286,10 @@ export function useVoiceInput({
       }
     },
     // The phone can't do this language after all: the same tap goes on as a recording.
-    onFallback: () => void rec.start(),
+    onFallback: () => {
+      if (continuous) capture.begin();
+      void rec.start();
+    },
     onFailed: setHint,
   });
   const onDevice = device.phase !== 'idle';
@@ -263,7 +303,9 @@ export function useVoiceInput({
     : transcribing || rec.phase === 'stopping'
       ? 'transcribing'
       : rec.phase === 'recording'
-        ? 'recording'
+        ? untilPause && recorderMeters && !(continuous ? capture.ready : calibrated)
+          ? 'starting'
+          : 'recording'
         : rec.phase === 'starting' || choosing
           ? 'starting'
           : 'idle';
@@ -273,15 +315,23 @@ export function useVoiceInput({
   // (lib/speech/pauseEnd.ts); the tap keeps working.
   // Every reading counts, as the recorder takes it (`onLevel`, #637): the pause is not judged
   // only when the screen happens to draw.
-  const pause = useRef(new PauseEnd()).current;
-  const pauseEnds = untilPause && !onDevice && recorderMeters;
+  // Short pauses belong to the continuous Android path; other recorders keep their prior bound.
+  const pause = useRef(new PauseEnd(1600)).current;
+  const pauseEnds = untilPause && !continuous && !onDevice && recorderMeters;
   const listening = useRef(false);
-  listening.current = pauseEnds && state === 'recording';
+  listening.current = pauseEnds && rec.phase === 'recording';
   useEffect(() => {
-    if (!listening.current) pause.reset();
-  }, [pauseEnds, state, pause]);
-  function onLevel(level: number, now: number): void {
-    if (listening.current && pause.observe(level, now)) {
+    if (!listening.current) {
+      pause.reset();
+      setCalibrated(false);
+    }
+  }, [pauseEnds, rec.phase, pause]);
+  function onLevel(level: number, now: number, db?: number): void {
+    if (!listening.current) return;
+    const ended = db === undefined ? pause.observe(level, now) : pause.observeDb(db, now);
+    if (pause.ready && !calibrated) setCalibrated(true);
+    if (ended) {
+      listening.current = false;
       tapped('transcribe');
       void rec.stop();
     }
@@ -306,11 +356,16 @@ export function useVoiceInput({
       await device.start(locale, { untilPause, recordAudio: pack?.state === 'ready' });
     } else {
       setChoosing(false);
+      if (continuous) capture.begin();
       await rec.start();
     }
   }
 
   function toggle(): void {
+    if (continuous && rec.phase === 'recording') {
+      capture.finish();
+      return;
+    }
     if (state === 'recording') {
       tapped('transcribe');
       if (onDevice) device.stop();
@@ -332,6 +387,7 @@ export function useVoiceInput({
   function cancel(): void {
     dropped('transcribe');
     guard.cancel();
+    capture.cancel();
     setChoosing(false);
     setTranscribing(false);
     setHeard('');
@@ -341,6 +397,7 @@ export function useVoiceInput({
 
   return {
     state,
+    continuous: continuous && rec.phase !== 'idle',
     onDevice,
     endsByItself: untilPause && (onDevice || recorderMeters),
     elapsedMs: onDevice ? device.elapsedMs : rec.elapsedMs,

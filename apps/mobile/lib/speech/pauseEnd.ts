@@ -1,42 +1,69 @@
-// The end of her turn on the recording path (conversation mode, issue #523): the on-device
-// recogniser ends by itself on a pause, and where it is unavailable the recorder's level
-// decides. Once she has clearly spoken, a sustained pause ends the recording; a room too
-// loud to ever fall quiet never ends it, and the tap keeps working. Pure, so the rule is
-// unit-tested; useVoiceInput holds one per recording.
+// A calibrated room-relative gate ends her recording after a short pause (#932).
+import { NoiseFloor } from './noiseFloor.js';
 
-import { ROOM_TONE } from './level.js';
-
-/** Use the recorder's existing room-tone boundary, including quieter syllables (#932). */
-const ROOM = ROOM_TONE;
-/** She must have spoken this long before a pause can end her turn. */
 const HEARD_MS = 250;
-/** A pause this long ends it. */
-const PAUSE_MS = 1600;
-/** A gap between two readings counts at most this much (a stalled poll is not speech). */
+const PAUSE_MS = 650;
 const MAX_STEP_MS = 200;
+const MAX_GAP_MS = 200;
+// Same dBFS domain as BargeGate; quiet nearby speech can clear this lower floor.
+const MIN_DB = -50;
+const MARGIN_DB = 6;
 
 export class PauseEnd {
+  constructor(private readonly pauseMs = PAUSE_MS) {}
+
+  private noise = new NoiseFloor(MIN_DB, MARGIN_DB);
   private heardMs = 0;
   private quietSince: number | null = null;
-  private lastAt = 0;
+  private lastAt: number | null = null;
 
-  /** One level reading (0…1) at `now`; true = her turn is over. */
+  get speaking(): boolean {
+    return this.heardMs >= HEARD_MS;
+  }
+
+  nextTurn(heard = false): void {
+    this.heardMs = heard ? HEARD_MS : 0;
+    this.quietSince = null;
+  }
+
+  get ready(): boolean {
+    return this.noise.threshold() !== null;
+  }
+
+  /** Recorder display level (0…1), converted back to its dBFS scale. */
   observe(level: number, now: number): boolean {
-    const dt = this.lastAt ? Math.min(MAX_STEP_MS, now - this.lastAt) : 0;
+    if (!Number.isFinite(level) || level < 0 || level > 1) return false;
+    return this.observeDb(level * 45 - 50, now);
+  }
+
+  /** Raw metering avoids treating the display's clamped silence as −50 dBFS noise. */
+  observeDb(db: number, now: number): boolean {
+    const step = this.lastAt === null ? 0 : now - this.lastAt;
     this.lastAt = now;
-    if (level > ROOM) {
+    if (!Number.isFinite(db)) return false;
+    const dt = step > 0 && step <= MAX_STEP_MS ? step : 0;
+    // Initial quiet frames already bound the floor. Do not learn her early onset or syllable
+    // dips as room noise while the readiness calibration is still completing (#932).
+    const bar = this.noise.threshold(false);
+    this.noise.observe(db, now, dt, bar === null || (db < bar && this.heardMs === 0));
+    if (bar === null) return false;
+    if (db >= bar) {
       this.heardMs += dt;
       this.quietSince = null;
       return false;
     }
-    if (this.heardMs < HEARD_MS) return false;
     this.quietSince ??= now;
-    return now - this.quietSince >= PAUSE_MS;
+    if (this.heardMs < HEARD_MS) {
+      if (now - this.quietSince > MAX_GAP_MS) this.heardMs = 0;
+      return false;
+    }
+    return now - this.quietSince >= this.pauseMs;
   }
 
   reset(): void {
+    this.noise = new NoiseFloor(MIN_DB, MARGIN_DB);
     this.heardMs = 0;
     this.quietSince = null;
-    this.lastAt = 0;
+    this.lastAt = null;
   }
 }

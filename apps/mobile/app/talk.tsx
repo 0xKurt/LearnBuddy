@@ -4,9 +4,9 @@
 // Buddy listens again. On the phone, listening ends by itself when she pauses;
 // on the recording path (the browser) she taps the mic when she is done.
 // She can talk over Buddy (issue #35): where the platform cancels echo (the
-// browser, Android), the mic's LEVEL is watched while he speaks — never its words
-// — and her voice, clearly above his echo for long enough (lib/speech/bargeIn.ts),
-// stops him and listens. Tapping the mic or Buddy himself does the same, on every
+// browser, Android), a calibrated level gate identifies her above his echo. The Android
+// recorder retains her onset and keeps capturing through transcription and replies; the
+// device-recognizer/browser path still uses the level-only monitor. Tapping the mic or Buddy himself does the same, on every
 // phone. When Buddy offers something to tap
 // (start learning, open a part of the app), the card stays tappable while the
 // loop simply listens again (issue #40). The mic is only on while this screen
@@ -113,13 +113,22 @@ export default function TalkScreen() {
   const open = useRef(true);
 
   // The scene language drives phone recognition, Vosk's pack and Buddy's voice.
+  const screenReaderOn = useScreenReader();
   const sceneLang = useSceneLanguage();
   useLocalPronunciation(sceneLang);
   const voice = useVoiceInput({
     purpose: 'message',
     lang: sceneLang,
     untilPause: true,
-    onText: (text, pronunciation) => void answer(text, pronunciation),
+    continuation: talkListensByItself(screenReaderOn),
+    onSpeechStart: () => {
+      ++turnSeq.current;
+      stopSpeaking();
+      setProblem(null);
+      setLive(null);
+      setPhase('listening');
+    },
+    onText: (text, pronunciation, current) => void answer(text, pronunciation, current),
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
@@ -151,17 +160,23 @@ export default function TalkScreen() {
     else start();
   }
 
-  async function answer(text: string, pronunciation?: ConversationPronunciation): Promise<void> {
-    void playCue('done');
+  async function answer(
+    text: string,
+    pronunciation?: ConversationPronunciation,
+    current: () => boolean = () => true,
+  ): Promise<void> {
+    if (current()) void playCue('done');
     const id = newId();
-    setPending({ id, text });
-    setLive(null);
-    // An answer that arrived whole stays on screen through this turn (rule 18).
-    setReply((held) => (held?.whole ? held : null));
-    setPhase('thinking');
-    const me = ++turnSeq.current;
+    if (current()) {
+      setPending({ id, text });
+      setLive(null);
+      // An answer that arrived whole stays on screen through this turn (rule 18).
+      setReply((held) => (held?.whole ? held : null));
+      setPhase('thinking');
+    }
+    const me = current() ? ++turnSeq.current : turnSeq.current - 1;
     // She spoke again (or left): this answer no longer drives the screen or the voice.
-    const stale = () => turnSeq.current !== me || !open.current;
+    const stale = () => turnSeq.current !== me || !open.current || !current();
     // Buddy's reply is shown and read while it is written when the answer changes nothing
     // (the server says `speakable`); one that changes something becomes `speakable` the moment
     // it is stored, before the home follows (#644) — so she never hears words that are
@@ -232,8 +247,8 @@ export default function TalkScreen() {
       // Her tap on "Gespräch beenden" may have been answered while this turn was on its way:
       // the home it brings back is then the older one, with the scene still running, and is
       // not written over the newer (lib/api/homeCache.ts `writeHome`, the context fence).
-      setHome(res.home);
       if (stale()) return;
+      setHome(res.home);
       const r = replyAfter(res.home.thread, id);
       if (res.status === 'failed' || !r) {
         // Whatever was said of a withdrawn answer stops mid-sentence. The spoken problem
@@ -295,7 +310,6 @@ export default function TalkScreen() {
 
   // Start listening once when the screen opens (she opened it to talk) — not with a screen
   // reader on (audit M-85): the phone would hear VoiceOver itself.
-  const screenReaderOn = useScreenReader();
   const screenReader = useRef<boolean | null>(null);
   screenReader.current = screenReaderOn;
   const started = useRef(false);
@@ -391,7 +405,10 @@ export default function TalkScreen() {
   // her voice: clearly louder than his residue, for long enough (lib/speech/bargeIn.ts).
   const gate = useRef(new BargeGate());
   const watching =
-    bargeSupported && phase === 'speaking' && talkListensByItself(screenReader.current);
+    !voice.continuous &&
+    bargeSupported &&
+    phase === 'speaking' &&
+    talkListensByItself(screenReader.current);
   useEffect(() => {
     if (watching) gate.current = new BargeGate();
   }, [watching]);
