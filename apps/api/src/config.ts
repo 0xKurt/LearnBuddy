@@ -2,6 +2,7 @@
 // there is no silent fallback to fake services in any environment.
 
 import { z } from 'zod';
+import { openAISpeechFields, speechVoices, checkSpeechVoices } from './speech/openai-config.js';
 
 import { isLocalDatabaseHost } from './lib/db.js';
 import { openaiConfigFields, requireOpenAIConfig } from './llm/openai-config.js';
@@ -72,24 +73,14 @@ const Config = z
     /** Node server only: run the scheduler in-process every N seconds (0 = off; pg_cron in production). */
     TICK_INTERVAL_SECONDS: z.coerce.number().int().min(0).max(3600).optional(),
     /** 'disabled' runs the app without a model: Buddy says so honestly. */
-    LLM_BACKEND: z.enum(['vertex', 'openai', 'disabled']).default('vertex'),
+    LLM_BACKEND: z.enum(['vertex', 'openai', 'disabled']).default('openai'),
     ...openaiConfigFields,
+    ...openAISpeechFields,
     GOOGLE_CLOUD_PROJECT: z.string().optional(),
     GOOGLE_VERTEX_LOCATION: EuLocation.default('europe-west4'),
     /** Service-account JSON inline (Vercel); written to a temp file at boot. */
     GOOGLE_APPLICATION_CREDENTIALS_JSON: z.string().optional(),
-    /**
-     * Conversation, planning, tutoring, reading worksheets, speech.
-     *
-     * Still Gemini 3.6 Flash, although the owner asked on 01.10. to move to 3.8. The 3.8 runs of
-     * 01.10. (47/49, 34/49, 39/49, every failure `model_unavailable`, almost no prefix cache)
-     * are NOT a measurement of 3.8: the same evening showed the project has no quota for 3.8 in
-     * `eu` — 429 RESOURCE_EXHAUSTED on the first call (docs/decisions/model-choice-2026-10-01.md,
-     * "Nachtrag 2"). So nothing is known about 3.8's quality or speed yet (#665, audit F11).
-     * What keeps 3.6 is only that it is measured and answers; the switch waits for the quota
-     * (a Cloud Console action) and a fresh run of `npx tsx evals/buddy/run.ts` with
-     * VERTEX_MODEL_SMART=eu/gemini-3.8-flash.
-     */
+    /** Legacy provider settings apply only when explicitly selected by environment. */
     VERTEX_MODEL_SMART: ModelSpec.default('eu/gemini-3.6-flash'),
     /** Cheaper model for separately measured narrow tasks: the distress check (#867), not the tutor. */
     VERTEX_MODEL_FAST: ModelSpec.default('eu/gemini-3.1-flash-lite'),
@@ -116,14 +107,14 @@ const Config = z
           return z.NEVER;
         }
       }),
-    EMBEDDING_BACKEND: z.enum(['vertex', 'openai', 'disabled']).default('vertex'),
-    AUDIO_BACKEND: z.enum(['vertex', 'openai']).default('vertex'),
+    EMBEDDING_BACKEND: z.enum(['vertex', 'openai', 'disabled']).optional(),
+    AUDIO_BACKEND: z.enum(['vertex', 'openai']).optional(),
     /**
      * Buddy's natural voice (ADR 0008): 'google' = Cloud Text-to-Speech (Chirp 3: HD voices)
      * through its EU endpoint, with the Vertex service account. 'disabled': the app reads
      * aloud with the phone's own voice, as before.
      */
-    SPEECH_BACKEND: z.enum(['google', 'openai', 'disabled']).default('disabled'),
+    SPEECH_BACKEND: z.enum(['google', 'openai', 'disabled']).optional(),
     /** Only the EU endpoint: the text of her replies is processed in the EU (docs/privacy.md). */
     SPEECH_ENDPOINT: z
       .enum(['eu-texttospeech.googleapis.com'])
@@ -158,8 +149,22 @@ const Config = z
     PUSH_BACKEND: z.enum(['expo', 'disabled']).default('expo'),
     EXPO_ACCESS_TOKEN: z.string().optional(),
   })
+  .transform((c) => ({
+    ...c,
+    OPENAI_TTS_VOICES: speechVoices(c.OPENAI_MODEL_SPEECH, c.OPENAI_TTS_VOICES),
+    AUDIO_BACKEND:
+      c.AUDIO_BACKEND ?? (c.LLM_BACKEND === 'openai' ? ('openai' as const) : ('vertex' as const)),
+    EMBEDDING_BACKEND:
+      c.EMBEDDING_BACKEND ??
+      (c.LLM_BACKEND === 'openai' ? ('openai' as const) : ('vertex' as const)),
+    SPEECH_BACKEND:
+      c.SPEECH_BACKEND ??
+      (c.LLM_BACKEND === 'openai' ? ('openai' as const) : ('disabled' as const)),
+  }))
   .superRefine((c, ctx) => {
     requireOpenAIConfig(c, ctx);
+    if (c.SPEECH_BACKEND === 'openai')
+      checkSpeechVoices(c.OPENAI_MODEL_SPEECH, c.OPENAI_TTS_VOICES, ctx);
     if (c.LLM_BACKEND === 'vertex' && !c.GOOGLE_CLOUD_PROJECT) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -272,7 +277,7 @@ export function bootWarnings(c: Config): string[] {
   // about it was not.
   if (c.SPEECH_BACKEND === 'disabled') {
     warnings.push(
-      "SPEECH_BACKEND is not 'google': Buddy has no natural voice, so every reply is read with the phone's own",
+      "SPEECH_BACKEND is 'disabled': Buddy has no natural voice, so every reply is read with the phone's own",
     );
   }
   // Push off means nothing Buddy sends reaches her phone, even with contact on: it all waits in

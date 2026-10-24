@@ -11,6 +11,7 @@ import type { MaterialView, SessionView } from '@learnbuddy/shared-types/contrac
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { chosenFor, offered } from '../modules/practice/formChoice.js';
+import { OPENAI_PROFILE } from '../llm/openai.js';
 import { testDatabaseAvailable } from '../testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../testing/harness.js';
 
@@ -49,6 +50,7 @@ describe.skipIf(!dbReady)('the forms of a run made from existing questions (#657
   let l: Learner;
   beforeEach(async () => {
     env = await createTestEnv({ start: '2026-10-14T15:00:00Z' });
+    env.llm.profile = OPENAI_PROFILE;
     l = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     env.llm.byDefault('buddy_check', {
       json: { disposition: 'wait', reason: 'n/a', actions: [], outreach: null },

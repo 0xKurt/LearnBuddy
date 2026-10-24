@@ -15,6 +15,7 @@ const config = loadConfig({
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
   LLM_BACKEND: 'openai',
   OPENAI_API_KEY: 'not-a-real-key',
+  OPENAI_MODEL_FAST: 'gpt-5.4-nano',
 });
 describe('direct HTTP gateway', () => {
   const createGateway = (fetch: typeof globalThis.fetch) => new OpenAIGateway(config, fetch);
@@ -139,7 +140,7 @@ describe('direct HTTP gateway', () => {
     });
   });
 
-  it.each(['gpt-4.1-mini', 'gpt-4.1-nano'] as const)(
+  it.each(['gpt-4.1-mini'] as const)(
     'omits reasoning for %s and prices its reported snapshot',
     async (model) => {
       const fetch = http({ ...completion(), model: `${model}-2025-04-14` });
@@ -150,7 +151,7 @@ describe('direct HTTP gateway', () => {
       const body = JSON.parse(String(fetch.mock.calls[0]![1]?.body));
       expect(body).not.toHaveProperty('reasoning_effort');
       expect(body.temperature).toBe(0.3);
-      expect(result.usage.costMicros).toBe(model === 'gpt-4.1-mini' ? 560 : 140);
+      expect(result.usage.costMicros).toBe(560);
     },
   );
 

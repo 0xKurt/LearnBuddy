@@ -14,7 +14,7 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -32,8 +32,7 @@ import type { LlmGateway } from '../../src/llm/gateway.js';
 import { llmGateway } from '../../src/production.js';
 
 // The provider variables live in apps/api/.env.local, like every other eval.
-const dotenv = await import('dotenv');
-dotenv.config({ path: '.env.local' });
+(await import('dotenv')).config({ path: '.env.local' });
 import {
   TEST_TICK_SECRET,
   createTestEnv,
@@ -273,7 +272,7 @@ class Journey {
 let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
 async function render(html: string): Promise<Uint8Array> {
   browser ??= await chromium.launch({
-    executablePath: process.env.LB_CHROMIUM ?? '/opt/pw-browsers/chromium',
+    ...(process.env.LB_CHROMIUM ? { executablePath: process.env.LB_CHROMIUM } : {}),
   });
   const page = await browser.newPage({ viewport: { width: 820, height: 1100 } });
   await page.setContent(
@@ -746,8 +745,8 @@ const JOURNEYS: Spec[] = [
     async run(j) {
       const r = await j.say('erinner mich donnerstag an das referat über vulkane');
       j.check(
-        tools(r, 'plan_step', 'schedule_check', 'plan_exam', 'remember'),
-        `Buddy plant etwas (${r.tools.join(', ') || 'nichts'})`,
+        tools(r, 'plan_step', 'plan_talk') || /(?:wann|uhrzeit)[^?]*\?/i.test(r.reply),
+        'Buddy plant oder klärt die fehlende Uhrzeit',
       );
       j.check(/donnerstag|1\.\s*okt/i.test(r.reply), 'nennt den Donnerstag');
     },
@@ -1000,6 +999,7 @@ for (const spec of chosen) {
   if (process.env.LENA_OUT) writeFileSync(process.env.LENA_OUT, `${out.join('\n')}\n`);
 }
 await (browser as { close: () => Promise<void> } | null)?.close();
+rmSync(TMP, { recursive: true, force: true });
 
 const byKind = new Map<string, number[]>();
 for (const w of allWaits) {

@@ -92,6 +92,7 @@ export type ChatConfig = {
   client: OpenAI;
   profile: GatewayProfile;
   model: { smart: string; fast: string };
+  routes?: Partial<Record<LlmRequest['purpose'], string>>;
 };
 
 export class ChatGateway extends RetryingGateway {
@@ -107,7 +108,7 @@ export class ChatGateway extends RetryingGateway {
     const limits = this.profile.structuredOutput;
     const schema = strictSchema(req.schema);
     assertStrictSchema(schema, limits);
-    const model = this.config.model[req.tier];
+    const model = this.config.routes?.[req.purpose] ?? this.config.model[req.tier];
     const reasoning = model.startsWith('gpt-5.4');
     const params: ChatCompletionCreateParamsBase = {
       model,

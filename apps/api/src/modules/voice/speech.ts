@@ -92,6 +92,7 @@ export async function synthesizeSpeech(
     outcome: 'ok' | 'cached' | 'shared' | 'error';
     latencyMs?: number;
     errorKind?: string;
+    costMicros?: number;
   }) =>
     deps.db
       .query(
@@ -103,7 +104,8 @@ export async function synthesizeSpeech(
           row.outcome,
           text.length,
           row.latencyMs ?? 0,
-          row.outcome === 'ok' ? text.length * deps.speech.microsPerCharacter : 0,
+          row.costMicros ??
+            (row.outcome === 'ok' ? text.length * deps.speech.microsPerCharacter : 0),
           row.errorKind ?? null,
           now,
         ],
@@ -136,7 +138,12 @@ export async function synthesizeSpeech(
     });
   } catch (err) {
     if (err instanceof SpeechError) {
-      await count({ outcome: 'error', latencyMs: took(), errorKind: err.kind });
+      await count({
+        outcome: 'error',
+        latencyMs: took(),
+        errorKind: err.kind,
+        costMicros: err.costMicros,
+      });
       // Logs carry the kind only, never the text.
       console.warn('[voice] speech provider failed', { kind: err.kind });
       throw new AppError('unavailable', 'Buddy’s own voice is not available right now', {
@@ -145,7 +152,7 @@ export async function synthesizeSpeech(
     }
     throw err;
   }
-  await count({ outcome: 'ok', latencyMs: took() });
+  await count({ outcome: 'ok', latencyMs: took(), costMicros: audio.costMicros });
   if (shared) {
     await deps.db.query(
       `insert into speech_cache_shared (key, mime, audio, created_at, expires_at)

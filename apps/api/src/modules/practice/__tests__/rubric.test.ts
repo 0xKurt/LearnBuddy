@@ -5,8 +5,9 @@
 // beurteilt, muss auf ihren Text zeigen, sonst zählt es nicht.
 
 import { describe, expect, it } from 'vitest';
+import { toJsonSchema } from '../../../llm/json-schema.js';
 
-import type { Rubric, RubricElement } from '@learnbuddy/shared-types/contracts';
+import { RUBRIC_MAX, type Rubric, type RubricElement } from '@learnbuddy/shared-types/contracts';
 
 import {
   askedElements,
@@ -17,7 +18,7 @@ import {
   rubricVerdict,
   usableRubric,
   wordsIn,
-  type RubricClaim,
+  RubricClaim,
 } from '../rubric.js';
 
 const element = (over: Partial<RubricElement> & { check: RubricElement['check'] }): RubricElement =>
@@ -276,4 +277,15 @@ describe('what Buddy says', () => {
     expect(rubricReply('fr', o, 'x')).toContain('Länge : pas encore');
     expect(rubricReply('it', o, 'x')).toContain('Länge: non ancora');
   });
+});
+
+// Live EU replies appended the point's name, so no claim matched its stored reference (#893).
+it('constrains rubric references on the wire instead of silently losing every judgement', () => {
+  const expected = Array.from({ length: RUBRIC_MAX }, (_, i) => `r${i + 1}`);
+  expect(toJsonSchema(RubricClaim)).toMatchObject({
+    properties: { element: { type: 'string', enum: expected } },
+  });
+  expect(RubricClaim.safeParse(claim({ element: 'r1 Einleitung' })).success).toBe(false);
+  for (const element of expected)
+    expect(RubricClaim.safeParse(claim({ element })).success).toBe(true);
 });

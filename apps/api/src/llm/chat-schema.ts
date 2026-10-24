@@ -2,6 +2,7 @@
 import type { GatewayProfile } from './profile.js';
 import { LlmError, type JsonSchema } from './gateway.js';
 import { schemaProperties } from './schemaBudget.js';
+import { schemaBounds } from './json-schema.js';
 
 export function schemaObject(value: unknown): value is JsonSchema {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -17,7 +18,7 @@ function acceptsNull(schema: JsonSchema): boolean {
 
 /** All properties required; only formerly optional, non-nullable fields gain a null sentinel. */
 export function strictSchema(schema: JsonSchema): JsonSchema {
-  const out = { ...schema };
+  const out = { ...schema, ...schemaBounds(schema) };
   if (schemaObject(schema.properties)) {
     const required = Array.isArray(schema.required) ? schema.required : [];
     out.properties = Object.fromEntries(

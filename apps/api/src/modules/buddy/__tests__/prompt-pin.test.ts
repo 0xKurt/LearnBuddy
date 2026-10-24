@@ -29,12 +29,12 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
   it('is byte for byte what it was before the domain registered its part', () => {
     const p = buddyPrompt();
     expect([p.turnSystem.length, sha(p.turnSystem)]).toEqual([
-      24905,
-      'd2f2b20b6d2fe069434a50f2c16fb81a18d54043f6cc8bb2d1159e647ed2722f',
+      24454,
+      '8fa883fb0ac150fe9db6f94c619cc30f7307a47ec92b0f9fe011d94d9b02a7ac',
     ]);
     expect([p.checkSystem.length, sha(p.checkSystem)]).toEqual([
-      7517,
-      '47757f85aa8db4c1910c1c4bbe71db8dc6eaa7ec6e7514dbd8822616796b4708',
+      7335,
+      '1258a0f019dee4481655422e80c16c01d13bcc5aebbbe48c01b8ff6dbc5b423b',
     ]);
     expect(sha(p.turnSchema)).toBe(
       '60ebd4c332c219c23fc0badf968be5b8a3514cce6c997e301a41f460b1f5017b',
@@ -48,7 +48,7 @@ describe('the prompt Buddy sends (pinned, issue #107)', () => {
     expect(sha(p.checkStepSchema)).toBe(
       '71c169c4b9fa524d188a62c899668186d34d04795f06bf79992b875c565a7888',
     );
-    expect(p.version).toBe('buddy.5ba71cfd');
+    expect(p.version).toBe('buddy.cc821aee');
   });
 
   it('is built once: every call hands out the same prompt', () => {

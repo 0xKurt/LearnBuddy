@@ -78,7 +78,10 @@ function setup(
     name === 'fake'
       ? fake
       : name === 'openai'
-        ? new OpenAIAudioGateway(openAIClient(mediaConfig, fetch), fake)
+        ? new OpenAIAudioGateway(openAIClient(mediaConfig, fetch), fake, {
+            OPENAI_MODEL_PRONOUNCE: 'gpt-audio-1.5',
+            OPENAI_MODEL_TRANSCRIBE: 'gpt-4o-transcribe',
+          })
         : new VertexGateway(
             mediaConfig,
             () =>

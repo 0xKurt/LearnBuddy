@@ -24,6 +24,7 @@ import { writeFileSync } from 'node:fs';
 import type { SessionView } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
+import { evalJudge } from '../judge.js';
 import { loadConfig } from '../../src/config.js';
 import type { LlmGateway } from '../../src/llm/gateway.js';
 import { toJsonSchema } from '../../src/llm/json-schema.js';
@@ -42,6 +43,7 @@ const config = loadConfig({
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
 const vertex = llmGateway(config);
+const examiner = evalJudge(config);
 /** What the model answered for the steps this eval judges — printed when something fails. */
 const seen: { purpose: string; json?: unknown; error?: string }[] = [];
 const gateway: LlmGateway = {
@@ -121,7 +123,7 @@ const Verdict = z.object({
   language_ok: z
     .boolean()
     .describe('true if the German is correct and a 12-year-old understands it'),
-  why: z.string().max(200).describe('One short German sentence: what is wrong, or why it is fine'),
+  why: z.string().max(200).describe('German reason, at most 200 characters'),
 });
 const VERDICT_SCHEMA = toJsonSchema(Verdict);
 
@@ -139,7 +141,7 @@ async function judge(
   grade: number,
   question: { prompt: string; answer: string },
 ): Promise<z.infer<typeof Verdict>> {
-  const res = await vertex.generate({
+  const res = await examiner.generate({
     purpose: 'buddy_check',
     tier: 'smart',
     promptVersion: 'content-eval.v1',

@@ -16,7 +16,7 @@ import { randomUUID } from 'node:crypto';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadConfig } from '../../src/config.js';
-import { VertexEmbeddings } from '../../src/llm/vertex-embeddings.js';
+import { embeddingGateway } from '../../src/production.js';
 import { llmGateway } from '../../src/production.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
@@ -143,7 +143,7 @@ async function main(): Promise<void> {
     const env = await createTestEnv({
       start: '2026-09-28T08:00:00Z',
       gateway,
-      embeddings: config.LLM_BACKEND === 'vertex' ? new VertexEmbeddings(config) : 'disabled',
+      embeddings: embeddingGateway(config),
     });
     try {
       const l = await onboard(env, {

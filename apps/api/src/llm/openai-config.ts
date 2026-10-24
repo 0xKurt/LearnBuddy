@@ -2,13 +2,27 @@
 import { z } from 'zod';
 import type { PriceTable } from './pricing.js';
 
-export const OPENAI_MODELS = [
-  'gpt-5.4-mini',
-  'gpt-5.4-nano',
-  'gpt-4.1-mini',
-  'gpt-4.1-nano',
-] as const;
+export const OPENAI_MODELS = ['gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1-mini'] as const;
 const Model = z.enum(OPENAI_MODELS);
+const Routes = z
+  .object({
+    buddy_turn: Model,
+    buddy_check: Model,
+    tutor: Model,
+    safeguard: Model,
+    explain: Model,
+    extraction: Model,
+    figures: Model,
+    transcribe: Model,
+    hints: Model,
+    reexplain: Model,
+    summary: Model,
+    consolidate: Model,
+    forms: Model,
+    canary: Model,
+  })
+  .partial()
+  .strict();
 export const OpenAIBaseUrl = z.enum([
   'https://eu.api.openai.com/v1',
   'https://eu.api.openai.com/v1/',
@@ -17,12 +31,29 @@ export const openaiConfigFields = {
   OPENAI_API_KEY: z.string().trim().min(1).optional(),
   // Fail closed: no global host, proxy, credentials, query, fragment or SDK environment fallback.
   OPENAI_BASE_URL: OpenAIBaseUrl.default('https://eu.api.openai.com/v1'),
+  OPENAI_ROUTES: z
+    .string()
+    .optional()
+    .transform((raw, ctx) => {
+      if (!raw) return {} as z.infer<typeof Routes>;
+      try {
+        return Routes.parse(JSON.parse(raw));
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'OPENAI_ROUTES must map known purposes to supported models',
+        });
+        return z.NEVER;
+      }
+    }),
   OPENAI_MODEL_SMART: Model.default('gpt-5.4-mini'),
-  OPENAI_MODEL_FAST: Model.default('gpt-5.4-nano'),
-  OPENAI_MODEL_PRONOUNCE: z.enum(['gpt-audio-1.5', 'gpt-audio']).default('gpt-audio-1.5'),
+  OPENAI_MODEL_FAST: Model.default('gpt-5.4-mini'),
+  OPENAI_MODEL_PRONOUNCE: z
+    .enum(['gpt-audio-1.5', 'gpt-audio', 'gpt-realtime-2.1-mini', 'gpt-realtime-2.1'])
+    .default('gpt-realtime-2.1'),
   OPENAI_MODEL_TRANSCRIBE: z
-    .enum(['gpt-4o-transcribe', 'gpt-4o-mini-transcribe'])
-    .default('gpt-4o-transcribe'),
+    .enum(['gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-transcribe'])
+    .default('gpt-transcribe'),
 };
 export function requireOpenAIConfig(
   config: {
@@ -31,9 +62,19 @@ export function requireOpenAIConfig(
     AUDIO_BACKEND: string;
     EMBEDDING_BACKEND: string;
     OPENAI_API_KEY?: string;
+    OPENAI_MODEL_PRONOUNCE: string;
   },
   ctx: z.RefinementCtx,
 ): void {
+  if (
+    config.AUDIO_BACKEND === 'openai' &&
+    !config.OPENAI_MODEL_PRONOUNCE.startsWith('gpt-realtime-')
+  )
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['OPENAI_MODEL_PRONOUNCE'],
+      message: 'an EU-listed Realtime model is required for active pronunciation',
+    });
   if (
     [
       config.LLM_BACKEND,

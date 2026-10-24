@@ -89,6 +89,7 @@ async function main(): Promise<void> {
     `\nKernpunkte übereinstimmend: ${s.all.agree}/${s.all.total} · fälschlich erfüllt ${s.all.falseMet} · fälschlich offen ${s.all.missedMet} · ohne Rückmeldung ${s.noFeedback} · Hilfe-Antwort ${s.safeguarded}`,
   );
   console.log(`Kosten: ${(costMicros / 1e6).toFixed(4)} USD für ${results.length} Texte`);
+  process.exitCode = s.all.agree === s.all.total && s.noFeedback === 0 ? 0 : 1;
 }
 
 void main();

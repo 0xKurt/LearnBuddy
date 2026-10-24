@@ -2,7 +2,7 @@
 //
 // Feature code asks for a structured JSON answer that matches a schema and
 // validates it again with zod; free text is never parsed for decisions.
-// Implementations: VertexGateway (default), OpenAIGateway (opt-in), DisabledGateway (no model
+// Implementations: OpenAIGateway (default), VertexGateway (explicit opt-in), DisabledGateway (no model
 // configured — callers degrade honestly), ScriptedGateway (tests only).
 
 import type { AudioMime } from '@learnbuddy/shared-types/contracts';

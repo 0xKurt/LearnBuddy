@@ -24,10 +24,15 @@ export const OPENAI_PROFILE: GatewayProfile = {
       'properties',
       'additionalProperties',
       'required',
+      'minLength',
+      'maxLength',
+      'minItems',
+      'maxItems',
     ]),
     keepsPropertyOrder: true,
     streamsPartialJson: true,
     maxSchemaProperties: 5000,
+    preferredSchemaProperties: 269,
     maxSchemaDepth: 10,
     maxEnumValues: 1000,
     maxSchemaStringChars: 120_000,
@@ -43,6 +48,7 @@ export class OpenAIGateway extends ChatGateway {
       client: openAIClient(config, fetch),
       profile: OPENAI_PROFILE,
       model,
+      routes: config.OPENAI_ROUTES,
     });
   }
 }
