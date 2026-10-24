@@ -86,7 +86,9 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
   await shot(page, '41-roleplay-line');
 
   // The chat mic and message playback use the same scene language as conversation mode (#918).
-  const dictated = page.waitForRequest((r) => r.url().endsWith('/v1/voice/transcribe'));
+  const dictated = page.waitForRequest(
+    (r) => r.method() === 'POST' && r.url().endsWith('/v1/voice/transcribe'),
+  );
   await page.getByRole('button', { name: 'Nachricht sprechen', exact: true }).click();
   await page.waitForTimeout(1200);
   await page.getByRole('button', { name: 'Aufnahme stoppen', exact: true }).click();
@@ -105,14 +107,22 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
     await page.mouse.up();
     const menu = page.locator('[aria-modal="true"]');
     await expect(menu.getByRole('heading', { name: 'Buddys Nachricht' })).toBeVisible();
-    const played = page.waitForRequest((r) => r.url().endsWith('/v1/voice/speech'));
+    const played = page.waitForRequest(
+      (r) => r.method() === 'GET' && r.url().endsWith('/v1/voice/speech'),
+    );
     await menu.getByRole('button', { name: 'Anhören', exact: true }).click();
-    expect((await played).postDataJSON()).toMatchObject({ locale: expect.stringMatching(/^en-/) });
+    expect(
+      JSON.parse(decodeURIComponent((await played).headers()['x-speech-request']!)),
+    ).toMatchObject({ locale: expect.stringMatching(/^en-/) });
     await expect(menu.getByRole('button', { name: 'Anhalten', exact: true })).toBeVisible();
     await menu.getByRole('button', { name: 'Anhalten', exact: true }).click();
-    const slowed = page.waitForRequest((r) => r.url().endsWith('/v1/voice/speech'));
+    const slowed = page.waitForRequest(
+      (r) => r.method() === 'GET' && r.url().endsWith('/v1/voice/speech'),
+    );
     await menu.getByRole('button', { name: 'Langsam anhören', exact: true }).click();
-    expect((await slowed).postDataJSON()).toMatchObject({
+    expect(
+      JSON.parse(decodeURIComponent((await slowed).headers()['x-speech-request']!)),
+    ).toMatchObject({
       locale: expect.stringMatching(/^en-/),
       slow: true,
     });
@@ -136,7 +146,9 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
   await expect(page.getByText('Buddy spielt: Kellner')).toBeVisible();
   await expect(page.getByText('Englisch · Rollenspiel', { exact: true }).last()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Gespräch beenden' })).toHaveCount(1);
-  const transcribed = page.waitForRequest((r) => r.url().endsWith('/v1/voice/transcribe'));
+  const transcribed = page.waitForRequest(
+    (r) => r.method() === 'POST' && r.url().endsWith('/v1/voice/transcribe'),
+  );
   await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
   const req = await transcribed;

@@ -51,6 +51,34 @@ describe.skipIf(!dbReady)('home: the card on top', () => {
   });
   afterEach(() => env.closeChecked());
 
+  it('offers pack languages from prepared learning content without leaking another learner', async () => {
+    await env.db.query(
+      `insert into subjects (learner_id, name, kind, created_at) values ($1, 'Französisch', 'french', $2)`,
+      [l.learnerId, env.clock.now()],
+    );
+    await env.db.query(
+      `insert into items (learner_id, kind, prompt, answer, lang, origin, created_at) values ($1, 'speak', 'Hello', 'Hello', 'en', 'buddy', $2)`,
+      [l.learnerId, env.clock.now()],
+    );
+    await env.db.query(
+      `insert into items (learner_id, kind, prompt, answer, lang, prompt_lang, origin, created_at)
+       values ($1, 'vocab', 'ciao', 'hallo', 'de', 'it', 'typed', $2)`,
+      [l.learnerId, env.clock.now()],
+    );
+    const home = (await l.api.get<BuddyHome>('/buddy')).body;
+    expect(home).toHaveProperty('learning_languages', ['de', 'en', 'fr', 'it']);
+    const other = await onboard(env, {
+      relation: 'child',
+      name: 'Mia',
+      birthDate: '2014-02-10',
+      pin: '4826',
+    });
+    expect((await other.api.get<BuddyHome>('/buddy')).body).toHaveProperty(
+      'learning_languages',
+      [],
+    );
+  });
+
   /** Practice Buddy prepared for Thursday's test, for the given learner. */
   async function preparedForTest(learnerId: string, plannedDate: string | null = null) {
     const goal = await env.db.one<{ id: string }>(

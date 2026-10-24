@@ -20,6 +20,15 @@ export function baseLanguage(lang: string | null | undefined): string | null {
   return /^[a-z]{2,3}$/.test(primary) ? primary : null;
 }
 
+/** Only an explicitly different learning language needs pronunciation evaluation. */
+export function foreignLanguage(
+  language: string | null | undefined,
+  native: string,
+): string | undefined {
+  const base = baseLanguage(language);
+  return base && base !== baseLanguage(native) ? base : undefined;
+}
+
 /** The BCP 47 locale a text in `lang` is read in ("fr" → "fr-FR"); unknown languages pass through. */
 export function voiceLocale(lang: string): string {
   const base = baseLanguage(lang);

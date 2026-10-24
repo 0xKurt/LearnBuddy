@@ -1,0 +1,22 @@
+10-24 18:48:01.389 31283 31357 I ReactNativeJS: PACK_PROOF_START
+10-24 18:48:01.500 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":false}'
+10-24 18:48:01.501 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":false}'
+10-24 18:48:01.501 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":false}'
+10-24 18:48:01.501 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":false}'
+10-24 18:48:01.502 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":false}'
+10-24 18:48:01.910 31283 31357 I ReactNativeJS: 'PACK_PROOF_BYTES', 196608
+10-24 18:48:02.415 31283 31357 I ReactNativeJS: 'PACK_PROOF_BYTES', 524288
+10-24 18:48:02.912 31283 31357 I ReactNativeJS: 'PACK_PROOF_BYTES', 803840
+10-24 18:48:03.415 31283 31357 I ReactNativeJS: 'PACK_PROOF_BYTES', 1114112
+10-24 18:48:03.915 31283 31357 I ReactNativeJS: 'PACK_PROOF_BYTES', 1441792
+10-24 18:48:04.418 31283 31357 I ReactNativeJS: 'PACK_PROOF_BYTES', 1769472
+10-24 18:48:04.929 31283 31357 I ReactNativeJS: 'PACK_PROOF_BYTES', 2097152
+10-24 18:48:05.426 31283 31357 I ReactNativeJS: 'PACK_PROOF_BYTES', 2424832
+10-24 18:48:05.489 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":false}'
+10-24 18:48:05.489 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"none","connected":false}'
+10-24 18:48:05.499 31283 31357 I ReactNativeJS: 'PACK_PROOF_STOP', 'Error: model_network_changed', 'bytes', 2490368
+10-24 18:48:07.516 31283 31357 I ReactNativeJS: 'PACK_PROOF_SETTLED_BYTES', 2490368
+10-24 18:48:07.529 31283 31357 I ReactNativeJS: 'PACK_PROOF_CLEAN', true
+10-24 18:48:07.631 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":true}'
+10-24 18:48:07.773 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":true}'
+10-24 18:48:07.775 31283 31357 I ReactNativeJS: 'PACK_PROOF_NETWORK', '{"type":"wifi","connected":true,"expensive":true}'

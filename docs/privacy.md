@@ -422,10 +422,11 @@ unchanged transcript; uncertainty never uploads this recording. The server deriv
 word verdicts for the current reply, omitting uncertain words. Evidence is not added to stored
 chat messages (normal model-call retention still applies).
 
-First speaking use downloads public EN/DE/FR/ES/IT packs only on explicitly unmetered connections;
-unknown/metered connections need one explicit confirmation showing the archive size. Consent is
-kept on the device for that archive; refusal is remembered for the app run. Disconnected devices
-wait. Failures use exponential back-off across screen mounts.
+Learning content prepares public EN/DE/FR/ES/IT packs silently in the background, only on
+explicitly unmetered connections. Unknown, metered and disconnected networks wait; there is no
+confirmation dialog and previous metered consent is ignored. Ordinary conversation in the app
+language never requests a pack or pronunciation evaluation. Failures use exponential back-off
+across screen mounts. Until ready, the existing server path remains usable.
 Downloads come from alphacephei.com without learner IDs;
 the host receives normal network metadata. Private app storage, pinned SHA-256/length checks,
 bounded extraction and honest progress/failure states protect installation. No model or audio

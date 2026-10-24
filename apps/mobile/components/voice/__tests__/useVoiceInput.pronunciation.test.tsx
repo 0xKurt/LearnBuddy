@@ -10,7 +10,7 @@ const fake = vi.hoisted(() => ({
   level: null as null | ((level: number, at: number) => void),
   stop: vi.fn(),
 }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'en' } }) }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'de' } }) }));
 vi.mock('../../../lib/announce.js', () => ({ announce: vi.fn() }));
 vi.mock('../../../lib/api/endpoints.js', () => ({ transcribe: vi.fn() }));
 vi.mock('../../../lib/errors.js', () => ({ messageFor: () => '' }));
@@ -53,6 +53,20 @@ describe('conversation input evidence and cancellation', () => {
     vi.clearAllMocks();
     fake.recPhase = 'idle';
     fake.pack.mockResolvedValue({ state: 'ready', path: '/pack' });
+  });
+  it('never records or evaluates pronunciation in the app language, even with an installed pack', async () => {
+    const onText = vi.fn();
+    const { result } = renderHook(() =>
+      useVoiceInput({ purpose: 'message', lang: 'de-DE', untilPause: true, onText }),
+    );
+    act(() => result.current.toggle());
+    await waitFor(() =>
+      expect(fake.start).toHaveBeenCalledWith('de-DE', { untilPause: true, recordAudio: false }),
+    );
+    await act(async () => fake.handler?.('Hallo', 'file:///take.wav'));
+    expect(fake.pack).not.toHaveBeenCalled();
+    expect(fake.check).not.toHaveBeenCalled();
+    expect(onText).toHaveBeenCalledWith('Hallo', undefined);
   });
   it('requests a local recording only with a ready pack and delivers structured evidence with the unchanged transcript', async () => {
     const onText = vi.fn();
