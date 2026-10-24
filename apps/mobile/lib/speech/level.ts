@@ -26,8 +26,8 @@ export type Meter = { elapsedMs: number; level: number };
 
 const LEVEL_STEPS = 20;
 
-/** Room tone, not her voice (levelFromDb ~0.12; lib/speech/pauseEnd.ts judges by the same line). */
-export const ROOM_TONE = 0.12;
+/** Display-only floor for the orb; speech gates learn their own background in noiseFloor.ts. */
+const ROOM_TONE = 0.12;
 
 export function meterShown(
   prev: Meter,

@@ -161,7 +161,18 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
       async () => {
         const second = await send(l, 'Oh, und Englisch auch!');
         expect(second.body.status).toBe('done');
-        return say('Mathe, alles klar.');
+        return say('Mathe, alles klar.', [
+          {
+            tool: 'remember',
+            args: {
+              about: 'everyday',
+              kind: 'fact',
+              statement: 'Lernt nur Mathe',
+              quote: 'Ich muss Mathe lernen.',
+              until: null,
+            },
+          },
+        ]);
       },
       (req) => {
         const text = ScriptedGateway.textOf(req);
@@ -179,6 +190,13 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
       ['buddy', 'Mathe und Englisch – womit fangen wir an?'],
     ]);
     expect(home.thread[2]!.options).toEqual(['Mathe', 'Englisch']);
+    // A late action from the superseded response must not become effective either (#932).
+    expect(
+      await env.db.query(`select id from buddy_memories where learner_id = $1 and statement = $2`, [
+        l.learnerId,
+        'Lernt nur Mathe',
+      ]),
+    ).toEqual([]);
   });
 
   it('a superseded message is not "done" when the newer turn fails (superseded-message-done-without-reply)', async () => {

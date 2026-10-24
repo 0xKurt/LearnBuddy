@@ -52,13 +52,16 @@ export async function streamAudio(
       headers: source.headers,
       signal: controller.signal,
     });
-    if (!response.ok || !response.body) throw new Error('speech unavailable');
+    if (!response.ok) throw new Error('speech unavailable');
     if (response.headers.get('content-type')?.startsWith('audio/pcm')) {
-      const uri = preparePcm(response.body, controller.signal, close);
+      const body = response.body;
+      if (!body) throw new Error('speech unavailable');
+      const uri = preparePcm(body, controller.signal, close);
       streaming = true;
       return uri;
     }
-    // Cached complete files and legacy providers remain playable without another provider call.
+    // Expo starts consuming bytes when body is accessed. Only open that stream for PCM:
+    // a competing arrayBuffer() would otherwise cache an empty/truncated WAV or MP3 (#932).
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (signal.aborted) throw new Error('stopped');
     const mime = response.headers.get('content-type')?.startsWith('audio/wav')

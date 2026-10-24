@@ -333,7 +333,13 @@ live/model/audio gates: [provider decision](decisions/openai-eu-2026-10-23.md).
   that she is talking over him (`apps/mobile/lib/speech/bargeIn.ts`). Nothing of it is written
   down, sent or kept: in the browser it is an analyser on the stream (no recorder at all); on
   Android a recorder must run to meter, and its cache file is deleted the moment Buddy stops.
-  Only when her voice is detected does Buddy stop and the normal listening above begin. Not on
+  On the Android hands-free **recorder** path (#932), the same echo-cancelled microphone instead
+  stays open through transcription and playback. A short local frame buffer retains her onset;
+  only a detected utterance is transcribed through the existing EU endpoint. The private AAC
+  session file is deleted when capture ends, the screen closes, or the app leaves the foreground;
+  background frames are discarded from memory. No background-only chunk is uploaded.
+  On the device-recognizer/browser path, only when her voice is detected does Buddy stop and
+  the normal listening above begin. Not on
   iOS, not with a screen reader on, and only on the conversation screen she opened.
 - **OpenAI Ireland — proposed processor (#893, not activated by this change):** the opt-in
   speech, recorded-audio and embedding adapters use only `https://eu.api.openai.com/v1`;

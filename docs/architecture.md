@@ -6152,8 +6152,10 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`readsIn`, `speech/gateway.ts` — the same test a listening text and a Diktat use). Without it
   the setup leaves the voice step out and the settings leave the group out; nothing is guessed
   from a sample that happened to sound like the phone. Audio is
-  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). Every sentence
-  asked for is counted in `speech_calls` (#682): outcome (made, her cache, the shared sample cache,
+  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). Native PCM
+  opens the progressive response body; cached WAV/MP3 reads the complete file directly. Expo
+  must not open both readers for one response, or the cached file loses its bytes (#932). Every
+  sentence asked for is counted in `speech_calls` (#682): outcome (made, her cache, the shared sample cache,
   error), characters, latency and the gateway's list-price cost (`microsPerCharacter`), never the
   text; TTS characters per day are one query on it. The app
   (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
@@ -6256,14 +6258,29 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   the orb as the chat's own bubbles and cards (`components/buddy/Conversation.tsx`, with the
   read-along of `components/buddy/ReadAlongBubble.tsx`) in place of that line, and a tapped offer
   keeps the voice on (issue #40). On the phone listening ends
-  by itself when she pauses: the on-device recogniser (`untilPause`), or on the recording path a
-  pause of 1.6 s after clear speech, measured from the recorder's level (`lib/speech/pauseEnd.ts`,
-  issue #523) — the status line then says so instead of asking for a tap. The browser's recorder measures
-  no level, so there she taps the mic when done (`voice.endsByItself`).
+  by itself when she pauses: the on-device recogniser (`untilPause`), or on the continuous Android recording path a
+  pause of 650 ms after at least 250 ms above the measured room noise plus 6 dB, with
+  a −50 dBFS lower bound (`lib/speech/pauseEnd.ts`, issues #523/#932). The shared
+  `noiseFloor.ts` estimator is extracted from BargeGate: 600 ms calibration, the 90th
+  percentile of non-candidate samples in a three-second window. Talk remains in preparation
+  during calibration, but an onset above the first measured quiet frames is retained already.
+  Recorders without a continuation buffer keep their prior 1.6-s pause. Quiet syllables count too; separated clicks and stalled meter polls
+  cannot arm the detector. On Android's hands-free recorder path, `record.ts` uses the existing
+  echo-cancelled `voice_communication` source with AAC/ADTS. `liveRecording.ts` reads complete
+  frames while the same recorder keeps running; `continuousTurns.ts` retains 800 ms before a
+  detected onset and cuts on the pause without closing the microphone. Capture continues during
+  transcription and playback. `useConversationCapture.ts` orders transcripts and sends each
+  continuation as a new normal message: the server's existing supersede/`herWords()` path
+  combines pending messages. No `/stop`, no client history rewrite. A new onset invalidates
+  the older reply locally; late streams and homes cannot affect the screen. The existing
+  server context fence also rejects superseded actions. Cancellation deletes the session's
+  temporary file and drops queued transcripts. The status line then says so
+  instead of asking for a tap. The browser's recorder measures no level, so there she taps
+  the mic when done (`voice.endsByItself`).
   Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once.
   **She can also just talk over him** (barge-in, issue #35), in the browser and on Android:
   while he speaks (and the mic may open by itself — no screen reader) an ear watches the mic's
-  **level**, never its words (`lib/speech/bargeMonitor.ts`: the browser's `getUserMedia` with
+  **level**, never its words on the device-recognizer/browser path (`lib/speech/bargeMonitor.ts`: the browser's `getUserMedia` with
   `echoCancellation` on and an analyser, no recorder; Android a level-only recorder on the
   `voice_communication` source, the one the platform runs its echo canceller on, its cache file
   deleted at once). So an echo can at worst stop him by mistake — it can never be written down
@@ -6298,8 +6315,10 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   `voice_communication` on some phones), and how long the recorder takes to let go before the
   recogniser starts (it adds to `relisten`: after an interruption, and after his last word
   while the recorder is still letting go — the recogniser always waits for it, never races it).
-  The first syllables she said before the gate decided (≈ 0.3 s) and while the recogniser
-  starts are not written down: the ear holds only levels, by design.
+  On that device-recognizer/browser path, the first syllables before the gate decides and the
+  recognizer starts are still not retained. The Android continuous recorder path above keeps
+  the onset instead, through the same echo-cancelled source and BargeGate threshold; only a
+  detected learner utterance is sent, not the background/echo used for calibration.
   Opening the screen warms the recogniser (issue #41, `warmRecognition` in
   `lib/speech/recognize.ts`): the Android service choice with its installed languages, the
   engine decision and the permission answer — the latter remembered while the app stays in
