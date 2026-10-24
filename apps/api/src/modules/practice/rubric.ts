@@ -59,6 +59,7 @@
 //      aussprechen kann.
 
 import {
+  RUBRIC_MAX,
   RUBRIC_QUOTE_MAX,
   RUBRIC_VERBS_MAX,
   StoredRubric as StoredRubricSchema,
@@ -182,8 +183,8 @@ export function askedElements(
  */
 export const RubricClaim = z.object({
   element: z
-    .string()
-    .describe('The element this is about, named by the ref given in REQUIRED ELEMENTS.'),
+    .enum(Array.from({ length: RUBRIC_MAX }, (_, i) => refOf(i)) as [string, ...string[]])
+    .describe('Ref from REQUIRED ELEMENTS.'),
   met: z
     .boolean()
     .describe('true only if this element really is in her text; otherwise false — never a guess.'),

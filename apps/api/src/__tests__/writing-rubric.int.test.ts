@@ -143,12 +143,19 @@ describe.skipIf(!dbReady)('a writing task is answered element by element', () =>
   });
   afterEach(() => env.closeChecked());
 
-  it('costs ONE model call per answer, whatever the rubric asks about', async () => {
-    const s = await start(env, l, [essay()]);
+  it('checks every required element even when the answer matches the stored sketch', async () => {
+    const s = await start(env, l, [essay({ answer: WHOLE })]);
     const id = s.items[0]!.item.id;
     const before = env.llm.callsFor('tutor').length;
-    env.llm.script('tutor', judges('correct', 'Rund.', [held('was ich sehr bedrückend finde')]));
-    await answer(l, s, id, WHOLE);
+    env.llm.script(
+      'tutor',
+      judges('correct', 'Rund.', [
+        { element: 'r3', verbs: [] },
+        held('was ich sehr bedrückend finde'),
+      ]),
+    );
+    const result = await answer(l, s, id, WHOLE);
+    expect(result.body.verdict).toBe('correct');
     // Four required elements, one call — not one per element, and not a second round for the
     // ones code decided. A further call would be `unexpected` and a missing one `pending`;
     // the afterEach above fails on either.

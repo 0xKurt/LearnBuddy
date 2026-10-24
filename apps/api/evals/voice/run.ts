@@ -5,7 +5,7 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -103,5 +103,6 @@ for (const [i, c] of cases.entries()) {
   );
 }
 await env.close();
+rmSync(dir, { recursive: true, force: true });
 console.log(`\n${cases.length - failed}/${cases.length} passed`);
 process.exit(failed ? 1 : 0);

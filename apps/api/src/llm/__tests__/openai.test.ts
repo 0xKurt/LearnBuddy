@@ -41,6 +41,41 @@ const turn = () =>
   });
 
 describe('direct strict decisions (#893)', () => {
+  it('boots all model services with only the EU provider key', () => {
+    expect(
+      loadConfig({
+        DATABASE_URL: 'postgres://postgres@127.0.0.1:54316/postgres',
+        SUPABASE_URL: 'http://unused.local',
+        SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
+        ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
+        OPENAI_API_KEY: 'not-a-real-key',
+      }),
+    ).toMatchObject({
+      LLM_BACKEND: 'openai',
+      AUDIO_BACKEND: 'openai',
+      SPEECH_BACKEND: 'openai',
+      EMBEDDING_BACKEND: 'openai',
+    });
+  });
+
+  it('routes each purpose independently of the tier, including streamed calls', async () => {
+    const routed = loadConfig({
+      ...process.env,
+      DATABASE_URL: 'postgres://postgres@127.0.0.1:54316/postgres',
+      SUPABASE_URL: 'http://unused.local',
+      SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
+      ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
+      LLM_BACKEND: 'openai',
+      OPENAI_API_KEY: 'not-a-real-key',
+      OPENAI_ROUTES: JSON.stringify({ buddy_turn: 'gpt-4.1-mini' }),
+    });
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      sse([chunk(JSON.stringify(answer), 'stop'), { choices: [], usage }]),
+    );
+    await new OpenAIGateway(routed, fetch).generate({ ...turn(), onPartial: () => {} });
+    expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body)).model).toBe('gpt-4.1-mini');
+  });
+
   it('avoids the measured HTTP 400 for function tools with reasoning on the real Buddy schema', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (_url, init) => {
       const body = JSON.parse(String(init?.body));

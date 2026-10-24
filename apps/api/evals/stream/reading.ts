@@ -12,12 +12,12 @@ import sharp from 'sharp';
 
 import { loadConfig } from '../../src/config.js';
 import { LlmError, type LlmGateway } from '../../src/llm/gateway.js';
-import { VertexGateway } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { ScriptedGateway } from '../../src/testing/fakes.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
 dotenv({ path: '.env.local', quiet: true });
-const real = new VertexGateway(
+const real = llmGateway(
   loadConfig({
     ...process.env,
     DATABASE_URL: 'postgres://unused/unused',

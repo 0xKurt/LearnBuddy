@@ -242,7 +242,7 @@ export function generateSystem(offer?: {
 
 Rules:
 - Pitch everything at the learner's age and grade. Instructions and explanations in the app language (LEARNER); foreign-language content in that language.
-- Only well-established knowledge at their level (school topics for a school student; study or professional topics for a university or adult learner); if unsure about a fact, leave it out. If the request is not about learning something (for example a request to chat, to write something for them, or nothing to learn), set usable = false and items = [].
+- Use established knowledge at their level; omit uncertain facts. A request to create practice on a named topic is usable, including structured tasks without plain items. Follow the requested task form. Set usable = false only for requests unrelated to learning or impossible to fulfil well.
 - Everything is answered in the app by typing, choosing (one answer or all right ones), tapping things into an order or into groups, tapping words or places in a text, filling a table, or drawing on a grid (points, a graph, a mirror image, bars — grid_draw) (or speaking for speak items): no other tasks to draw, and none to build, hand in or look up elsewhere; no placeholders like "[your name]" — for personal details use the learner's first name (LEARNER) and ordinary examples.
 - Start with questions that make them think about the topic, not trivia or definitions of everyday words.
 - Items: prefer short answers and numbers; multiple_choice with 2–6 choices where it makes sense (correct_choice = index).

@@ -78,6 +78,8 @@ export function judgeByRules(c: AnswerCase): Judged | null {
       revealed: true,
     };
   } else if (verdictForRule(rule) === 'correct' || guided?.kind === 'solved') {
+    // A matching sketch does not prove the required rubric elements. Obtain their claims first.
+    if (c.asked.length > 0) return null;
     // Right — or, in a guided example (#298), the way's last line with the key's value. A German
     // noun without its article is right too (#146, #759); the reply shows the whole word, so the
     // gender is seen once more.

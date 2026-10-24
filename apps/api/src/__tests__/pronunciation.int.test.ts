@@ -136,6 +136,8 @@ describe.skipIf(!dbReady)('prepared offline pronunciation (#896)', () => {
         Object.assign(http, { Response }),
       ),
       env.llm,
+      // This fixture exercises the legacy HTTP protocol, independently of the Realtime default.
+      { OPENAI_MODEL_PRONOUNCE: 'gpt-audio-1.5', OPENAI_MODEL_TRANSCRIBE: 'gpt-transcribe' },
     );
     scriptPronunciationTip(env, 2);
     env.llm.script('safeguard', { json: { concern: false } });

@@ -15,6 +15,21 @@ import { z } from 'zod';
 
 import type { JsonSchema } from './gateway.js';
 
+// Keep provider-independent wire JSON small for Vertex. The direct strict adapter can enforce
+// string and array bounds too; retain them beside each node without adding prompt text or Vertex keywords.
+const bounds = new WeakMap<JsonSchema, JsonSchema>();
+export function schemaBounds(schema: JsonSchema): JsonSchema {
+  return bounds.get(schema) ?? {};
+}
+
+/** Copy a schema node without losing its provider-only constraints. */
+export function copySchema(schema: JsonSchema): JsonSchema {
+  const copy = { ...schema };
+  const limits = bounds.get(schema);
+  if (limits) bounds.set(copy, limits);
+  return copy;
+}
+
 export function toJsonSchema(schema: z.ZodTypeAny): JsonSchema {
   const out = convert(schema);
   const description = schema.description;
@@ -54,8 +69,15 @@ function ownWords(wrapper: z.ZodTypeAny, value: z.ZodTypeAny): z.ZodTypeAny {
 function convert(s: z.ZodTypeAny): JsonSchema {
   const def = s._def as { typeName: z.ZodFirstPartyTypeKind };
   switch (def.typeName) {
-    case z.ZodFirstPartyTypeKind.ZodString:
-      return withDescription(s, { type: 'string' });
+    case z.ZodFirstPartyTypeKind.ZodString: {
+      const value = s as z.ZodString;
+      const out = withDescription(s, { type: 'string' });
+      bounds.set(out, {
+        ...(value.minLength === null ? {} : { minLength: value.minLength }),
+        ...(value.maxLength === null ? {} : { maxLength: value.maxLength }),
+      });
+      return out;
+    }
     case z.ZodFirstPartyTypeKind.ZodNumber: {
       const n = s as z.ZodNumber;
       return withHint(s, { type: n.isInt ? 'integer' : 'number' }, range(n.minValue, n.maxValue));
@@ -80,13 +102,21 @@ function convert(s: z.ZodTypeAny): JsonSchema {
       const d = a._def as {
         minLength: { value: number } | null;
         maxLength: { value: number } | null;
+        exactLength: { value: number } | null;
       };
       const items = range(d.minLength?.value ?? null, d.maxLength?.value ?? null);
-      return withHint(
+      const out = withHint(
         s,
         { type: 'array', items: toJsonSchema(a.element) },
         items ? `${items} items` : null,
       );
+      const min = d.exactLength?.value ?? d.minLength?.value;
+      const max = d.exactLength?.value ?? d.maxLength?.value;
+      bounds.set(out, {
+        ...(min === undefined ? {} : { minItems: min }),
+        ...(max === undefined ? {} : { maxItems: max }),
+      });
+      return out;
     }
     case z.ZodFirstPartyTypeKind.ZodObject: {
       const o = s as z.ZodObject<z.ZodRawShape>;

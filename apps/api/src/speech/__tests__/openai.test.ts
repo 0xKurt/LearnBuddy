@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { openAIClient } from '../../llm/openai-client.js';
 import { OpenAISpeech } from '../openai.js';
 import { rateFor } from '../gateway.js';
+import { DEFAULT_OPENAI_VOICES, openAISpeechFields, speechVoices } from '../openai-config.js';
 const config = { OPENAI_API_KEY: 'test', OPENAI_BASE_URL: 'https://eu.api.openai.com/v1' };
 const input = {
   text: 'Guten Morgen.',
@@ -12,6 +13,24 @@ const input = {
   timeoutMs: 1000,
 };
 describe('EU speech', () => {
+  it('applies an operator voice override to both audio and its cache key', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(new Response('audio', { headers: { 'content-type': 'audio/mpeg' } }));
+    const voices = speechVoices(
+      'tts-1',
+      openAISpeechFields.OPENAI_TTS_VOICES.parse('{"warm":"ash"}'),
+    );
+    const speech = new OpenAISpeech(openAIClient(config, fetch), voices);
+    await speech.synthesize(input);
+    expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body)).voice).toBe('ash');
+    expect(speech.voiceId('warm', 'de-DE')).not.toBe(
+      new OpenAISpeech(openAIClient(config)).voiceId('warm', 'de-DE'),
+    );
+    expect(voices.bright).toBe(DEFAULT_OPENAI_VOICES.bright);
+    expect(() => openAISpeechFields.OPENAI_TTS_VOICES.parse('{broken')).toThrow();
+    expect(() => openAISpeechFields.OPENAI_TTS_VOICES.parse('{"unknown":"ash"}')).toThrow();
+  });
   it('requests MP3, preserves the speed steps, and separates its cache from the old provider', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()

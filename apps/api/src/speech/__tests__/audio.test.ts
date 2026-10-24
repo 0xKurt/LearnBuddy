@@ -42,6 +42,10 @@ const usage = {
   total_tokens: 120,
 };
 describe('recorded audio routing', () => {
+  it('prices duration receipts including the residency uplift', () => {
+    expect(audioUsage('gpt-transcribe', { seconds: 60 }, 1, 0).costMicros).toBe(4950);
+    expect(audioUsage('gpt-4o-mini-transcribe', { seconds: 60 }, 1, 0).costMicros).toBe(3000);
+  });
   it.each([
     ['gpt-4o-transcribe', 765],
     ['gpt-4o-mini-transcribe', 383],
@@ -62,8 +66,9 @@ describe('recorded audio routing', () => {
     expect(result.json).toEqual({ heard_speech: true, text: '3/4', distress: false });
     expect(String(fetch.mock.calls[0]![0])).toContain('/audio/transcriptions');
     const body = fetch.mock.calls[0]![1]?.body as FormData;
-    expect(body.get('model')).toBe('gpt-4o-transcribe');
+    expect(body.get('model')).toBe('gpt-transcribe');
     expect(body.get('language')).toBe('de');
+    expect(body.get('prompt')).toBeNull(); // No foreign-language text bias or target answer.
     expect(body.get('file')).toBeInstanceOf(File);
     const called = chat.callsFor('transcribe')[0]!;
     expect(called.contents.flatMap((m) => m.parts).every((p) => 'text' in p)).toBe(true);

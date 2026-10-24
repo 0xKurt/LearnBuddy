@@ -32,7 +32,11 @@ type SchemaKeyword =
   | 'anyOf'
   | 'properties'
   | 'additionalProperties'
-  | 'required';
+  | 'required'
+  | 'minLength'
+  | 'maxLength'
+  | 'minItems'
+  | 'maxItems';
 
 export type GatewayProfile = {
   /** For logs and errors: which provider and endpoint. */
@@ -64,6 +68,8 @@ export type GatewayProfile = {
     streamsPartialJson: boolean;
     /** The most properties over every object of a schema the provider serves (`schemaBudget.ts`). */
     maxSchemaProperties: number;
+    /** Prefer form selection above this size, even when the provider accepts a larger schema. */
+    preferredSchemaProperties?: number;
     maxSchemaDepth: number;
     maxEnumValues: number;
     maxSchemaStringChars: number;

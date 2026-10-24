@@ -18,7 +18,7 @@ import { createTestEnv, onboard } from '../../src/testing/harness.js';
 
 const config = loadConfig({
   ...process.env,
-  DATABASE_URL: 'x',
+  DATABASE_URL: 'postgres://unused/unused',
   SUPABASE_URL: 'http://x.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',

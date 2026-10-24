@@ -12,16 +12,23 @@
 // `usageMetadata` of a live call.
 // requires live verification in Claude Code session (needs a running Postgres; no model)
 
+import '../../src/testing/domain.js';
 import { config as loadDotenv } from 'dotenv';
 
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { playSheetJourney, requestFacts } from '../../src/testing/request-flow.js';
+import { OPENAI_PROFILE } from '../../src/llm/openai.js';
+import { strictSchema } from '../../src/llm/chat-schema.js';
 
 loadDotenv({ path: '.env.local' });
 
 async function textTokens(): Promise<((text: string) => Promise<number>) | null> {
   if (!process.argv.includes('--tokens')) return null;
+  if (process.env.LLM_BACKEND === 'openai')
+    throw new Error(
+      '--tokens estimates the legacy vocabulary; use direct usage receipts for this provider',
+    );
   const { LocalTokenizer } = await import('@google/genai/tokenizer/node');
   const tokenizer = new LocalTokenizer('gemini-2.5-flash');
   return async (text) => (text ? ((await tokenizer.countTokens(text)).totalTokens ?? 0) : 0);
@@ -31,6 +38,7 @@ async function main(): Promise<void> {
   if (!(await testDatabaseAvailable())) throw new Error('No local Postgres (LB_TEST_DATABASE_URL)');
   const count = await textTokens();
   const env = await createTestEnv({ start: '2026-10-02T12:00:00Z' });
+  if (process.env.LLM_BACKEND === 'openai') env.llm.profile = OPENAI_PROFILE;
   try {
     const lena = await onboard(env, { relation: 'child', name: 'Lena', birthDate: '2014-02-10' });
     const journey = await playSheetJourney(env, lena);
@@ -50,7 +58,10 @@ async function main(): Promise<void> {
     if (count) head.push('system+text tok (est.)', 'schema tok (text, est.)');
     console.log(`| ${head.join(' | ')} |\n|${head.map(() => '---').join('|')}|`);
     for (const req of env.llm.calls) {
-      const f = requestFacts(req, journey);
+      const f = requestFacts(
+        process.env.LLM_BACKEND === 'openai' ? { ...req, schema: strictSchema(req.schema) } : req,
+        journey,
+      );
       const row: Array<string | number> = [
         f.purpose,
         f.systemChars,

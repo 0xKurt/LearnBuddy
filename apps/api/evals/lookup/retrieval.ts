@@ -25,7 +25,7 @@ import {
   lexicalLists,
   type Candidate,
 } from '../../src/modules/buddy/connectors/material.js';
-import { VertexEmbeddings } from '../../src/llm/vertex-embeddings.js';
+import { embeddingGateway } from '../../src/production.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
 import { RETRIEVAL_CASES, SHEETS } from './fixtures.js';
@@ -51,10 +51,10 @@ async function main(): Promise<void> {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'unused-unused-unused',
     ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
   });
-  if (config.LLM_BACKEND !== 'vertex')
-    throw new Error('Set LLM_BACKEND=vertex and the Vertex variables (docs/SETUP-VERTEX.md)');
+  if (config.EMBEDDING_BACKEND === 'disabled')
+    throw new Error('A configured EMBEDDING_BACKEND is required');
   if (!(await testDatabaseAvailable())) throw new Error('No local Postgres (LB_TEST_DATABASE_URL)');
-  const embeddings = new VertexEmbeddings(config);
+  const embeddings = embeddingGateway(config);
   let costMicros = 0;
   let tokens = 0;
 
@@ -141,7 +141,7 @@ async function main(): Promise<void> {
       };
       const rFts = rank(fuseRrf(fts, [], []));
       const rLex = rank(fuseRrf(fts, trgm, []));
-      const rHyb = rank(fuseRrf(fts, trgm, vector));
+      const rHyb = rank(fuseRrf(fts, trgm, vector, embeddings.space));
       if (rFts === 1) wins.fts++;
       if (rLex === 1) wins.lexical++;
       if (rHyb === 1) wins.hybrid++;
@@ -175,7 +175,7 @@ async function main(): Promise<void> {
     console.info(
       `cost: $${(costMicros / 1e6).toFixed(6)} for ${tokens} embedding tokens (${passages.length} passages + ${n} queries)`,
     );
-    process.exit(wins.hybrid >= wins.lexical && wins.hybrid > wins.fts ? 0 : 1);
+    process.exitCode = wins.hybrid >= wins.lexical && wins.hybrid > wins.fts ? 0 : 1;
   } finally {
     await env.close();
   }

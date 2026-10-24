@@ -20,6 +20,7 @@ import { writeFileSync } from 'node:fs';
 import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
 
+import { evalJudge } from '../judge.js';
 import { loadConfig } from '../../src/config.js';
 import { buddyPrompt } from '../../src/modules/buddy/prompts.js';
 import { registerLearning } from '../../src/modules/learning/register.js';
@@ -62,7 +63,7 @@ const Verdict = z.object({
     .describe('true if every technical word is explained where it is used'),
   right_level: z.boolean().describe('true if a 12-year-old in grade 6 can follow it'),
   short_enough: z.boolean().describe('true if it reads in under a minute on a phone'),
-  why: z.string().max(240).describe('One short German sentence: what is missing, or why it works'),
+  why: z.string().max(240).describe('German reason, at most 240 characters'),
 });
 const SCHEMA = toJsonSchema(Verdict);
 
@@ -85,6 +86,7 @@ async function main(): Promise<void> {
     throw new Error('a model backend is required (a configured LLM_BACKEND)');
   if (!(await testDatabaseAvailable())) throw new Error('a local Postgres is required');
   const vertex = llmGateway(config);
+  const examiner = evalJudge(config);
 
   const out: string[] = [
     `# Erklär-Eval (live, ${buddyPrompt().version}, ${new Date().toISOString().slice(0, 16)})`,
@@ -111,7 +113,7 @@ async function main(): Promise<void> {
         out.push(`## ${ask.what}`, '', '**Keine Antwort.**', '');
         continue;
       }
-      const res = await vertex.generate({
+      const res = await examiner.generate({
         purpose: 'buddy_check',
         tier: 'smart',
         promptVersion: 'explain-eval.v1',

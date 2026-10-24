@@ -3,8 +3,11 @@
 
 import { FractionFigure } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
+import { toJsonSchema } from '../../../llm/json-schema.js';
+import { strictSchema } from '../../../llm/chat-schema.js';
 
-import { keepChosen, keptAndLost } from '../formChoice.js';
+import { fitted, keepChosen, keptAndLost } from '../formChoice.js';
 
 const figure = { type: 'fraction', shape: 'bar', fractions: [{ parts: 4, filled: 3 }] };
 const before = {
@@ -20,6 +23,21 @@ const before = {
 };
 
 describe('keptAndLost (#664)', () => {
+  it('retains provider string bounds when narrowing the forms', () => {
+    const schema = toJsonSchema(
+      z.object({
+        title: z.string().max(40),
+        items: z.array(z.object({ text: z.string().max(120) })).max(2),
+      }),
+    );
+    const narrowed = fitted(schema, { forms: [], figures: [] });
+    expect(strictSchema(narrowed.schema)).toMatchObject({
+      properties: {
+        title: { maxLength: 40 },
+        items: { maxItems: 2, items: { properties: { text: { maxLength: 120 } } } },
+      },
+    });
+  });
   it('names every task it drops: a valid figure not chosen, a form not chosen', () => {
     expect(FractionFigure.safeParse(figure).success).toBe(true);
     const { kept, lost } = keptAndLost(before, { forms: new Set(), figures: new Set() });

@@ -20,22 +20,21 @@
 
 import { loadConfig } from '../../src/config.js';
 import { rateFor } from '../../src/speech/gateway.js';
-import { GoogleSpeech } from '../../src/speech/google.js';
+import { speechGateway } from '../../src/production.js';
 
-import { mp3Seconds } from './mp3.js';
+import { audioSeconds } from './duration.js';
 
 const dotenv = await import('dotenv');
 dotenv.config({ path: '.env.local' });
 
 const config = loadConfig({
   ...process.env,
-  SPEECH_BACKEND: 'google',
   DATABASE_URL: 'postgres://unused/unused',
   SUPABASE_URL: 'http://x.local',
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-const speech = new GoogleSpeech(config);
+const speech = speechGateway(config);
 const RATE = rateFor(0, false);
 const rounds = Number(process.argv[2] ?? 5);
 
@@ -50,7 +49,10 @@ async function synth(text: string): Promise<Sample> {
     rate: RATE,
     timeoutMs: 8000,
   });
-  return { ms: performance.now() - t0, plays: mp3Seconds(audio.audio) * 1000 };
+  return {
+    ms: performance.now() - t0,
+    plays: (await audioSeconds(audio.audio, audio.mime)) * 1000,
+  };
 }
 
 const fmt = (ms: number) => `${(ms / 1000).toFixed(2)}s`;

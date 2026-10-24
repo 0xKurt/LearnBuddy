@@ -30,6 +30,7 @@ import { registerLearning } from '../../src/modules/learning/register.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type TestEnv } from '../../src/testing/harness.js';
 import { CONCERN_CASES, type ConcernCase } from './cases.js';
+import { correctConcern, type Outcome } from './score.js';
 
 // Buddy's prompt is built from what the learning domain registers (issue #107).
 registerLearning();
@@ -38,8 +39,6 @@ loadDotenv({ path: '.env.local' });
 
 /** The German helpline in the fixed text (i18n/de.json, safeguarding.concern). */
 const HELPLINE = '116 111';
-
-type Outcome = 'concern' | 'plain' | 'blocked' | 'failed';
 
 type RoundResult = {
   round: number;
@@ -98,7 +97,7 @@ async function runCase(env: TestEnv, round: number, c: ConcernCase): Promise<Rou
   const blocked = learnerMsg?.failure_code === 'blocked';
   const outcome: Outcome = blocked
     ? 'blocked'
-    : res.body.status !== 'done'
+    : res.body.status !== 'done' || concern === null
       ? 'failed'
       : concern === true
         ? 'concern'
@@ -116,7 +115,7 @@ async function runCase(env: TestEnv, round: number, c: ConcernCase): Promise<Rou
     expectConcern: c.expectConcern,
     outcome,
     flagged,
-    correct: flagged === c.expectConcern,
+    correct: correctConcern(outcome, c.expectConcern),
     helpline: (reply?.text ?? '').includes(HELPLINE),
     status: res.body.status,
     errorCode: res.body.error_code,

@@ -15,7 +15,9 @@ const read = (file: string) => readFileSync(join(REPO, file), 'utf8');
 /** The keys of the API's Config schema, and which of them have neither a default nor optional. */
 function apiConfigKeys(): { all: string[]; required: string[] } {
   const text = read('apps/api/src/config.ts');
-  const body = text.slice(text.indexOf('const Config = z'), text.indexOf('.superRefine('));
+  const start = text.indexOf('const Config = z');
+  // Only the input object: fields computed by a later transform are not required env vars.
+  const body = text.slice(start, text.indexOf('\n  })', start) + 5);
   const entries = [
     ...body.matchAll(/^ {4}([A-Z][A-Z0-9_]+): ([\s\S]*?)(?=^ {4}[A-Z][A-Z0-9_]+: |^ {2}\})/gm),
   ];

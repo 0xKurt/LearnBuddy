@@ -161,7 +161,7 @@ async function gather(
   );
   if (lexical === null) return null;
   return {
-    fused: fuseRrf(lexical.fts, lexical.trgm, vectorList ?? []),
+    fused: fuseRrf(lexical.fts, lexical.trgm, vectorList ?? [], deps.embeddings.space),
     headlines: lexical.headlines,
   };
 }
@@ -375,7 +375,12 @@ async function vectorCandidates(
  * results. Ties fall to the earlier list (full text first). Exported for the
  * retrieval eval (apps/api/evals/lookup), which fuses the same lists.
  */
-export function fuseRrf(fts: Candidate[], trgm: Candidate[], vector: Candidate[]): Fused[] {
+export function fuseRrf(
+  fts: Candidate[],
+  trgm: Candidate[],
+  vector: Candidate[],
+  space?: EmbeddingGateway['space'],
+): Fused[] {
   const byId = new Map<string, Fused>();
   const add = (list: Candidate[], mark: (f: Fused, c: Candidate) => void) => {
     for (const [rank, c] of list.entries()) {
@@ -407,7 +412,17 @@ export function fuseRrf(fts: Candidate[], trgm: Candidate[], vector: Candidate[]
   add(vector, (f, c) => {
     f.vectorDist = c.vectorDist ?? null;
   });
-  return [...byId.values()].sort((a, b) => b.score - a.score);
+  // A calibrated, unambiguous semantic match must not lose to two weak lexical votes.
+  // Keep ordinary RRF for ambiguous/distant vectors and for the legacy embedding space.
+  const clear =
+    space === 'openai-small-1536'
+      ? clearVectorDistances(
+          space,
+          vector.flatMap((c) => (c.vectorDist === undefined ? [] : [c.vectorDist])),
+        )
+      : new Set<number>();
+  const evidence = (f: Fused) => Number(f.vectorDist !== null && clear.has(f.vectorDist));
+  return [...byId.values()].sort((a, b) => evidence(b) - evidence(a) || b.score - a.score);
 }
 
 /** Total size of the pre-injected block (issue #26: a hard context-budget cap). */

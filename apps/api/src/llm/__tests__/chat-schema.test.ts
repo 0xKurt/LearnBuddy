@@ -13,6 +13,47 @@ const assertDirectSchema = (schema: Parameters<typeof assertStrictSchema>[0]) =>
   assertStrictSchema(schema, OPENAI_PROFILE.structuredOutput);
 
 describe('strict direct schemas retain the original contract', () => {
+  it('enforces nested string bounds in strict output without enlarging the legacy schema', () => {
+    const schema = toJsonSchema(
+      z.object({
+        why: z.string().min(1).max(200),
+        rows: z.array(z.object({ tip: z.string().max(120).optional() })),
+        label: z.string().max(40).nullable(),
+      }),
+    );
+    expect(JSON.stringify(schema)).not.toContain('maxLength');
+    expect(strictSchema(schema)).toMatchObject({
+      properties: {
+        why: { type: 'string', minLength: 1, maxLength: 200 },
+        rows: {
+          items: {
+            properties: { tip: { anyOf: [{ type: 'string', maxLength: 120 }, { type: 'null' }] } },
+          },
+        },
+        label: { anyOf: [{ type: 'string', maxLength: 40 }, { type: 'null' }] },
+      },
+    });
+    expect(
+      strictSchema({ type: 'object', properties: { free: { type: 'string' } } }),
+    ).toMatchObject({
+      properties: { free: { anyOf: [{ type: 'string' }, { type: 'null' }] } },
+    });
+  });
+  it('enforces exact and maximum array sizes without changing the legacy wire schema', () => {
+    const schema = toJsonSchema(
+      z.object({
+        places: z.array(z.string()).length(3),
+        verbs: z.array(z.string()).max(6).default([]),
+      }),
+    );
+    expect(JSON.stringify(schema)).not.toContain('maxItems');
+    expect(strictSchema(schema)).toMatchObject({
+      properties: {
+        places: { minItems: 3, maxItems: 3 },
+        verbs: { anyOf: [{ maxItems: 6 }, { type: 'null' }] },
+      },
+    });
+  });
   it('requires optional fields as nullable without mutating names, order or descriptions', () => {
     const contract = z.object({
       properties: z.string().optional().describe('Original meaning'),
