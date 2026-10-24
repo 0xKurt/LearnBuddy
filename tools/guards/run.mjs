@@ -14,6 +14,10 @@ import { join } from 'node:path';
 import { REPO_ROOT } from './measure.mjs';
 
 const GUARDS = [
+  [
+    'Migrationsnachweis-Tests (#915)',
+    ['--test', join('tools', 'guards', 'migration-applied.test.mjs')],
+  ],
   ['Anbieter-Importe (#893)', [join('tools', 'guards', 'provider-imports.mjs')]],
   ['Anbieter-Import-Tests', ['--test', join('tools', 'guards', 'provider-imports.test.mjs')]],
   ['Wächter-Tests', ['--test', '--test-reporter=dot', join('tools', 'guards', 'guards.test.mjs')]],
