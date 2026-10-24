@@ -583,7 +583,10 @@ end state (`outcome`, issue #844): running with "Weitermachen", done with "Gesch
 or "Nicht mehr offen" (`modules/learning/practiceOutcome.ts`). One control per practice on the
 screen (issue #846, rule 19): while the bar on top starts or continues a practice, its card in the
 thread — `show_ready`, `announces`, or an offer whose open run it is (`running_session_id`) —
-keeps its words and leaves the button to the bar (`useBarPractice`, `lib/learning/homeScope.tsx`). A tool of its own did not fit:
+keeps its words and leaves the button to the bar (`useBarPractice`, `lib/learning/homeScope.tsx`).
+The same rule holds for a finished offer: while the current result card opens that session,
+`FinishedOffer` keeps its status but leaves that action to the result (`useCurrentResult`, #913).
+Older sessions and history without the current result keep their own action. A tool of its own did not fit:
 the turn step schema then stood one property under Vertex's bound (§Schema budget). The prompt and STATE's "Already waiting" section send him there instead of
 "say where it is". He never says which task forms or pictures a practice will have: those are
 chosen when the run is built, after his answer; naming the parts of a picture the app shows is not
@@ -2780,6 +2783,12 @@ its own route, so nothing she asks is ever misread as an answer:
   a row of tiles cut at the slot's edge read as broken (CLAUDE.md rule 17). A folded board gives
   no room (`boardGives` false). Guarded in `fit.ts` (`cutTiles`): with her question focused no
   tile is drawn cut. A typed answer or a board's own cell being edited does not fold.
+  The non-shrinking question column follows its content directly; it does not mirror a delayed
+  content measurement into `minHeight`. That obsolete height left a gap after resizing and
+  interfered with figure sizing (#913).
+  A whole tapping board can also push the pinned bar past the screen without overflowing inside
+  its own slot. The optional help row yields to that measured column overrun as well as to an
+  overflowing board; the board, its draft and Check stay whole (`AnswerShell`, #913).
   **The conversation shows whole parts only** (#403, after #63/#286): a turn, the help chips or a
   card under the replies is drawn whole below the question card, or not at all there — never the
   lower half of "Tipp · Lösung zeigen" under the fade, the edge of a reply or a sliver of an orb.

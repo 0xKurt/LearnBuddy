@@ -45,6 +45,10 @@ for (const look of ONBOARDING_LOOKS)
     // Exercise the long real value before returning to the intended required region.
     await page.getByRole('button', { name: 'Bundesland: Niedersachsen', exact: true }).click();
     await page.getByRole('radio', { name: 'Mecklenburg-Vorpommern', exact: true }).click();
+    // The selected value is already painted while the picker finishes sliding out.
+    await expect(
+      page.getByRole('radio', { name: 'Mecklenburg-Vorpommern', exact: true }),
+    ).toHaveCount(0);
     for (const phone of PHONES) {
       await page.setViewportSize(phone);
       const label = page.getByText('Mecklenburg-Vorpommern', { exact: true });

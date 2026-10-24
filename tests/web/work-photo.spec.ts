@@ -23,8 +23,9 @@ const NOTEBOOK = `<body style="margin:0; padding:56px 64px; background:#fdfcf6;
 
 /** The camera at the start of the bar; the photo goes in through the browser's file chooser. */
 async function photograph(page: Page, file: string): Promise<void> {
-  const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Foto von deinem Rechenweg' }).click();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Aus der Galerie', exact: true }).click();
   await (await chooser).setFiles(file);
 }
 

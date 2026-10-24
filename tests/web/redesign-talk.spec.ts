@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { planTest, sendWorksheet } from './coreLoop';
 import { expect, test } from '@playwright/test';
 import { onboardChild, startOffer } from './figureWalk';
+import { chatCardAction } from './chatCard';
 import { PHONES, shot } from './fit';
 import { LISTENING, REPLY, sayOneThing, voiceAsSilence } from './talk';
 import { SCREEN_LOOKS, screenLook, screenTargets } from './redesign-screen-matrix';
@@ -104,7 +105,8 @@ for (const sample of [
     await expect(page.getByText(LISTENING, { exact: true })).toBeVisible();
     // A card to tap in the thread: there the thread's newest stands under the orb (issue #40).
     // The caption's line has the same test id (TalkCaption): the tail is the one with the card.
-    const ready = page.getByRole('button', { name: "Los geht's", exact: true });
+    // The worksheet's prepared practice is a different offer. Choose the topic she just asked for.
+    const ready = chatCardAction(page, 'Brüche vergleichen');
     const tail = page.locator('[data-testid="scroll-talk"]:visible').filter({ has: ready });
     await expect(ready).toBeVisible();
     await screenTargets(page);

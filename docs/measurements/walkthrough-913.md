@@ -99,3 +99,56 @@ Der Ausgangslauf lief während der Analyse weiter und endete ohne Abschlusszähl
 ## Grenzen
 
 Der Browser verwendet die echte Web-App, API und den gemeinsamen lokalen Postgres mit geskriptetem Modell. Keine Aussage zur Qualität echter Modellantworten, Mikrofon-/Audioqualität oder nativen Geräten. Kosten für Live-Modelle: 0 USD. Die vollständige ursprüngliche Prüfung lief beim Beginn der Untersuchung noch; spätere Fehler werden separat erfasst.
+
+## Fortsetzung nach dem vollständigen Lauf auf 1408d40c
+
+Der vom Owner beendete Lauf ergab **260 bestanden, 12 fehlgeschlagen, 10 bestehende Auslassungen**
+(282 Fälle). Die Fortsetzung untersucht jeden dieser zwölf Fälle; keine Assertion wird gelockert.
+
+| Fälle | Klasse | Belegte Ursache und Korrektur |
+| --- | --- | --- |
+| `redesign-profile-parent` · pastell dark, ocean dark (2) | c – Übergang | Der gewählte Wert steht bereits im Formular, während `Sheet` den Picker mit `DURATION.base` ausblendet und noch gemountet hält. Die Textsuche fand deshalb Formular und Radio. Der Ablauf wartet auf das entfernte Radio; Schrift- und Vollständigkeitsprüfungen bleiben unverändert. Alle vier Themes im gezielten Lauf bestanden. |
+| `redesign-talk` · 360, 390 (2) | b – Ablaufskript | Zwei verschiedene Angebote stehen korrekt im Gespräch: „Mathearbeit Brüche“ vom Foto und das ausdrücklich gewünschte „Brüche vergleichen“. Der Ablauf identifiziert die Karte über diesen Titel und prüft ihren eindeutigen Start statt sämtliche Starts des Gesprächs gleichzusetzen. Beide Größen bestanden. |
+| `select-all` (1) | b – Ablaufskript | Beim zweiten Ergebnis findet die reine Textsuche zusätzlich „Geschafft!“ auf der dahinter gemounteten Startseite. Die Prüfung verlangt die sichtbare Ergebnisüberschrift wie die bereits korrigierten Abläufe S5. Gezielt bestanden. |
+| `solids` · Netze/Würfelgebäude (1) | a – Layout | Der unveränderte Geometriecheck meldet nach Resize 27 px Abstand zwischen Frage und Antwort (höchstens 24 erlaubt). Der zusätzliche Lauf scheitert bereits an 13 px Bildschirmüberlauf. Der Wrapper hält über `minHeight` einen verzögerten Inhaltshöhenwert und beeinflusst damit die erneute Abbildungsgröße. Er folgt jetzt direkt seinem nicht schrumpfenden Inhalt; der gespiegelte Zustand und sein Messcallback entfallen. |
+| `tap-figures` · Gradnetz, Zeichnungen #462 (2) | a – Layout | Das ganze Tappbrett überschreitet nicht seinen eigenen Rahmen, drückt aber die Leiste 13 px unter den Bildschirm. `AnswerShell` ignorierte den negativen freien Platz bei der Entscheidung über die optionale Hilfe. Der gemessene Spaltenüberlauf lässt jetzt die Hilfe weichen; Brett, Entwurf und Prüfen bleiben ganz. Neuer Komponententest vorher rot, danach grün. |
+| `tour` (1) | b – Ablaufskript | Nach Entfernen des Entwurfs blieb das bereits gesendete, gelesene Foto korrekt im Gespräch. Die globale Bildsuche zählte es mit. Die Prüfung bezieht sich jetzt ausdrücklich auf den Composer; der Verlauf wird nicht gelöscht. Der nächste Durchlauf erreicht danach ein zweites, korrekt erhaltenes Angebot neben „Nomen“; dort identifiziert der gemeinsame Kartenhelfer die verlangte Übung. |
+| `work-photo` (1) | b – Ablaufskript | Der Foto-Knopf öffnet das vorhandene Anhangmenü. Der Ablauf wartete auf einen Dateidialog, ohne „Aus der Galerie“ zu wählen. Er bedient jetzt diesen Menüpunkt. |
+| `written` · Fehlerdetektiv, schriftliches Rechnen (2) | a – Ergebnisaktion | Das abgeschlossene Angebot und die aktuelle Ergebniskarte öffnen dieselbe Sitzung mit je einem „Ansehen“. `FinishedOffer` überlässt die Aktion dem aktuellen Ergebnis; andere Ergebnisse und Verlauf ohne diese Karte behalten ihren Zugang. Neuer Komponententest vorher rot, danach grün. Bei der dritten Rechnung muss der Ablauf zusätzlich die aktuelle Ergebniskarte bestimmen; ein älteres Ergebnis behält zu Recht seinen Zugang. Der unveränderte Einmaligkeitscheck für „Geschafft!“ bleibt bestehen. |
+
+Zusätzliche isolierte Produktnachweise: **2 fehlgeschlagen / 12 bestanden → 14 bestanden** in
+`oneStart.test.tsx` und `AnswerShellTools.test.tsx` (Logs in `.cache/red-remaining-unit.log` und
+`.cache/green-remaining-unit.log`). Die erste Browserfortsetzung steht in `.cache/walk-remaining-1.log`.
+
+Erste gezielte Browserfortsetzung: **11 bestanden / 3 fehlgeschlagen**, 14,0 Minuten. Alle vier
+Profilvarianten, beide Talk-Größen, Select-all, beide Tappzeichnungen, Rechenwegfoto und
+Fehlerdetektiv sind grün. Die drei weiterführenden Fehler sind oben ergänzt und werden nach der
+Korrektur separat erneut geprüft. Die zweite Fortsetzung steht in `.cache/walk-remaining-2.log`.
+
+Zweite gezielte Browserfortsetzung: **6 bestanden / 0 fehlgeschlagen**, 8,7 Minuten (beide
+Talk-Größen, vollständiger Solids-Ablauf, vollständige Tour und beide Written-Fälle). Damit sind
+**alle zwölf übergebenen Fehler** erneut grün. Der Würfel-Abstand beträgt nach der Korrektur
+0 px bei beiden Telefonen in beiden Themes; der bisherige 13-px-Überlauf ist ebenfalls weg.
+Der vollständige Endlauf folgt mit identischem Produkt- und Testcode, Log `.cache/walk-final.log`.
+
+
+## Gegenprüfung im ersten Endlauf
+
+Der erste vollständige Versuch wurde bei **67 bestanden / 1 fehlgeschlagen / 3 ausgelassen**
+angehalten, um einen neu aufgedeckten Fehler vor dem abschließenden Neustart zu korrigieren
+(`.cache/walk-full-interrupted.log`). `reading.spec.ts:79` meldete in beiden Themes bei 360 px
+„Zeile 19 …: 38 of 44 pt“. Die neue Überlaufbehandlung faltete die Hilfe auch bei einer
+schrumpfbaren, scrollbar erlaubten Belegstellenliste; diese nahm den frei gewordenen Platz wieder
+ein und ließ die nächste Zeile teilweise erscheinen. Negativer Spaltenraum faltet die Hilfe nun
+nur bei Brettern mit `keeps="whole"`; schrumpfbare Bretter behalten den bisherigen Weg, während
+echter gemeldeter Brettüberlauf weiter berücksichtigt wird.
+
+Der neue Gegenbeweis im Komponententest ergab **1 fehlgeschlagen / 6 bestanden → 7 bestanden**
+(`.cache/red-scrollable-help.log`, `.cache/walk-reading-regression.log`). Der unveränderte
+Leseablauf ist anschließend vollständig grün. Er wird gemeinsam mit Solids und beiden
+Tappzeichnungen geprüft, bevor der vollständige Endlauf neu startet. Keine Assertion geändert.
+
+Gemeinsame Gegenprüfung: **4 Browserfälle bestanden / 0 fehlgeschlagen**, 8,9 Minuten
+(Lesen, Solids, Gradnetz, Zeichnungen #462), zusätzlich **7 Layout-Komponententests bestanden**.
+Damit bleiben alle zwölf ursprünglichen Restfälle grün; auch die zusätzliche Leseregression ist
+vor dem Neustart des Endlaufs behoben.

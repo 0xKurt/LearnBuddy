@@ -476,8 +476,9 @@ export default function PracticeScreen() {
                       // issues #286, #386). The question never shrinks; the conversation does, by whole
                       // turns (`threadCap`).
                       flexGrow: 0,
-                      flexShrink: 1,
-                      minHeight: measured.questionContentHeight,
+                      // The child already keeps its whole content. Mirroring its asynchronously
+                      // measured height here retains a taller, obsolete box after a resize (#913).
+                      flexShrink: 0,
                     }}
                   >
                     <ScrollView
@@ -493,9 +494,6 @@ export default function PracticeScreen() {
                         paddingTop: PRACTICE.questionColumn.paddingTop,
                         gap: SPACE.md,
                       }}
-                      onContentSizeChange={(_, h) =>
-                        measured.setQuestionContentHeight(Math.round(h))
-                      }
                     >
                       {/* The next question comes in softly from the side (keyed by the question). Its
                       drawing reports while it sizes itself: the card's own height waits for it. */}

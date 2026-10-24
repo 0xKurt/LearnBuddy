@@ -80,7 +80,10 @@ export function AnswerShell({
   const gaveHelp = useRef(false);
   // Include the room already returned by the folded row, so it does not immediately unfold
   // when the last answer cell starts fitting. As the board shrinks, the free room restores it.
-  const foldForBoard = boardOverflow - Math.max(0, spare) + (gaveHelp.current ? helpHeight : 0) > 1;
+  // A scrollable board can absorb column pressure itself. Only a whole board needs the
+  // optional row to yield to column overflow; otherwise the expanding list consumes that row.
+  const boardRoom = keeps === 'whole' ? spare : Math.max(0, spare);
+  const foldForBoard = boardOverflow - boardRoom + (gaveHelp.current ? helpHeight : 0) > 1;
   gaveHelp.current = foldForBoard;
   const typedUnderBoard = answer !== null && 'field' in action && action.field !== undefined;
   const typing = typedUnderBoard && action.typing === true;

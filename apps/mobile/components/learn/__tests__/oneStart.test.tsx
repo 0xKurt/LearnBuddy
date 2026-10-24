@@ -13,6 +13,7 @@ import { barPractice, LearningHome } from '../../../lib/learning/homeScope.js';
 import { renderInApp } from '../../../testing/render.js';
 import { OfferCard } from '../OfferCard.js';
 import { ReadyCard } from '../ReadyCard.js';
+import { FinishedOffer } from '../FinishedOffer.js';
 import { Conversation } from '../../buddy/Conversation.js';
 import { registerLearning } from '../../../lib/learning/register.js';
 
@@ -163,4 +164,25 @@ describe('one start per practice on the screen (issue #846)', () => {
     expect(screen.getByText('Brüche')).toBeTruthy();
     expect(screen.queryByRole('button', { name: "Los geht's" })).toBeNull();
   });
+});
+
+it('a finished offer leaves its current result action to the result card, but keeps other results', () => {
+  const app = onHome(
+    home({ type: 'practice_result', session_id: RUN } as BuddyHome['now']),
+    { ...LAYOUT, result: true },
+    <FinishedOffer label="Üben" title="Brüche" sessionId={RUN} />,
+  );
+  expect(screen.getByText('Geübt')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Ansehen' })).toBeNull();
+  app.rerender(
+    <LearningHome
+      h={home({ type: 'practice_result', session_id: 'other-run' } as BuddyHome['now'])}
+      layout={{ ...LAYOUT, result: true }}
+    >
+      <FinishedOffer label="Üben" title="Brüche" sessionId={RUN} />
+    </LearningHome>,
+  );
+  expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
+  app.rerender(<FinishedOffer label="Üben" title="Brüche" sessionId={RUN} />);
+  expect(screen.getByRole('button', { name: 'Ansehen' })).toBeTruthy();
 });
