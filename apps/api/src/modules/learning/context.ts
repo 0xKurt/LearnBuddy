@@ -358,6 +358,7 @@ function waitingSection(state: BuddyState, aliases: Aliases, tz: string): string
     const at = localParts(o.created_at, tz);
     const wish = [
       o.difficulty,
+      o.vocabulary ? `vocabulary ${JSON.stringify(o.vocabulary)}` : null,
       o.direction === 'produce'
         ? 'she writes the foreign word'
         : o.direction === 'recognise'

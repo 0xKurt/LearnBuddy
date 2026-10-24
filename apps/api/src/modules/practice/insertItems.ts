@@ -2,15 +2,29 @@
 import { checkedPronunciationPlan, type VocabDirection } from '@learnbuddy/shared-types/contracts';
 import type { Db } from '../../lib/db.js';
 import type { ItemSource, StoredItem } from './items.js';
+import { knownVocabulary, sameVocabulary } from './vocabulary.js';
 
 export async function insertItems(
   db: Db,
   src: ItemSource,
   items: ReadonlyArray<StoredItem>,
   direction: VocabDirection | null = null,
+  reuseVocabulary = false,
 ): Promise<string[]> {
   const ids: string[] = [];
+  if (reuseVocabulary && items.some((it) => it.kind === 'vocab'))
+    await db.query('select 1 from buddy_settings where learner_id = $1 for update', [
+      src.learnerId,
+    ]);
+  const known = reuseVocabulary ? await knownVocabulary(db, src.learnerId) : [];
   const insert = async (it: StoredItem, asked = true) => {
+    if (reuseVocabulary && it.kind === 'vocab') {
+      const existing = known.find((row) => sameVocabulary(row, it))?.id;
+      if (existing) {
+        if (asked && !ids.includes(existing)) ids.push(existing);
+        return;
+      }
+    }
     const row = await db.one<{ id: string }>(
       `insert into items (learner_id, material_id, subject_id, kind, prompt, answer, accepted_answers, unit,
                           choices, correct_choice, topic, difficulty, source_excerpt, origin, lang, prompt_lang, figure,
@@ -56,13 +70,22 @@ export async function insertItems(
           : null,
       ],
     );
+    if (reuseVocabulary && it.kind === 'vocab' && it.prompt_lang && it.lang)
+      known.push({
+        id: row.id,
+        prompt: it.prompt,
+        answer: it.answer,
+        accepted_answers: it.accepted_answers,
+        prompt_lang: it.prompt_lang,
+        lang: it.lang,
+      });
     if (asked) ids.push(row.id);
   };
   const pair = (it: StoredItem) => it.kind === 'vocab' && !!it.lang && !!it.prompt_lang;
   for (const it of items) await insert(it, !(pair(it) && direction === 'produce'));
   // The other direction of each pair comes after all first directions — asked right after
-  // its twin, the answer would still be on screen. Its alternatives are unknown; the tutor
-  // judges variants.
+  // its twin, the answer would still be on screen. Generated reverse variants travel with
+  // the pair; older extractions without them retain the existing tutor fallback.
   for (const it of items) {
     if (!pair(it)) continue;
     await insert(
@@ -70,7 +93,7 @@ export async function insertItems(
         ...it,
         prompt: it.answer,
         answer: it.prompt,
-        accepted_answers: [],
+        accepted_answers: it.reverse_answers ?? [],
         prompt_lang: it.lang,
         lang: it.prompt_lang,
         // Hints were written for the first direction.

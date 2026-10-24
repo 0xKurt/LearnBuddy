@@ -17,6 +17,7 @@ import {
   TalkFormat,
   TalkStage,
   VocabDirection as VocabDirectionSchema,
+  VocabularyRequest,
 } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
@@ -42,22 +43,17 @@ const preparePractice = z.object({
     focus_topics: z.array(z.string().trim().min(1).max(60)).max(5),
     // The three below are optional in parsing (older scripted answers have none of them);
     // the model sees all of them. Issue #113.
-    only_wrong: z
-      .boolean()
-      .optional()
-      .describe('only the questions that did not sit last time (may be fewer)'),
+    only_wrong: z.boolean().optional().describe('previous mistakes (may be fewer)'),
     difficulty: DifficultyWishSchema.nullable()
       .optional()
       .describe('the harder or easier half of her questions; null unless she asked'),
     direction: VocabDirectionSchema.nullable()
       .optional()
-      .describe(
-        'vocabulary only: recognise = the foreign word is shown, produce = her own; null unless she asked',
-      ),
+      .describe('vocab wish: recognise shows foreign, produce shows own; else null'),
     // Two sheets of the same subject used to be one pool, so asking for the vocabulary
     // could hand her the other sheet (issue #144).
     sheet: MaterialRef.nullable().optional().describe('the one sheet she pointed at; else null'),
-    vocabulary_only: z.boolean().optional().describe('she asked for vocabulary and nothing else'),
+    vocabulary_only: z.boolean().optional().describe('she asked for vocabulary only'),
     // Without these two, "minutes" was the only thing that could set the size — a guess
     // about how long she wants to sit, standing in for what she actually said (#145).
     question_count: z
@@ -68,10 +64,7 @@ const preparePractice = z.object({
       .nullable()
       .optional()
       .describe('the number SHE named; else null (the minutes decide)'),
-    all_of_them: z
-      .boolean()
-      .optional()
-      .describe('everything there is; your reply names no number, the card does'),
+    all_of_them: z.boolean().optional().describe('all; only the card states count'),
   }),
 });
 const requestMaterial = z.object({
@@ -80,7 +73,7 @@ const requestMaterial = z.object({
     goal: GoalTarget.nullable(),
     // What it is for stays (the field name alone does not say it); the German example of what
     // a sheet is called does not (#213) — the app shows this title to the learner.
-    title: Title.describe('what to photograph, in her language'),
+    title: Title.describe('photo request, her language'),
     /**
      * A page that belongs to a sheet she already sent — the forgotten back, a page left out
      * (issue #118). Without it the page becomes a second sheet of its own.
@@ -97,12 +90,7 @@ const deleteItem = z.object({
   tool: z.literal('delete_item'),
   args: z.object({
     material: MaterialRef,
-    question: z
-      .string()
-      .trim()
-      .min(3)
-      .max(300)
-      .describe('word for word as on the sheet (find_questions)'),
+    question: z.string().trim().min(3).max(300).describe('verbatim from find_questions'),
     quote: Quote,
   }),
 });
@@ -137,23 +125,15 @@ const offerLearning = z.object({
   args: z.object({
     // What each kind is for stands once, in the prompt's "Learning now" (#667).
     kind: StartTopicRequest.shape.kind.describe('see "Learning now"'),
-    text: z
-      .string()
-      .trim()
-      .min(2)
-      .max(600)
-      .describe('what to learn, in her words: topic, typed vocabulary or the task'),
+    vocabulary: VocabularyRequest.nullable().optional(),
+    text: z.string().trim().min(2).max(3000).describe('her topic, verbatim pairs or task'),
     // Planned and offered in one answer, the test had no alias yet and the turn failed (#636).
-    goal: GoalTarget.nullable()
-      .default(null)
-      .describe('practice or test for a planned test: g1 or "new"; else null'),
+    goal: GoalTarget.nullable().default(null).describe('practice/test goal or "new"; else null'),
     // A Diktat of the words on one of her sheets (issue #242). Optional in parsing like the two
     // below: older scripted answers have none.
     sheet: MaterialRef.nullable()
       .optional()
-      .describe(
-        'spelling_dictation, teach_back or essay from one of her sheets: its alias, and text names it; else null',
-      ),
+      .describe('spelling_dictation/teach_back/essay: her sheet alias; text names it; else null'),
     // What she asked for beyond the topic (issue #113), one field (#724): the level is a wish for
     // questions written on a topic, the direction one for vocabulary pairs — never both in one
     // offer, so one field holds either. It freed the property `pictures` needs: the turn's step
@@ -163,14 +143,10 @@ const offerLearning = z.object({
       .enum([...DifficultyWishSchema.options, ...VocabDirectionSchema.options])
       .nullable()
       .optional()
-      .describe(
-        'only her wish: harder or easier than her grade; vocab: recognise = the foreign word is shown, produce = her own; else null',
-      ),
+      .describe('level wish; legacy vocab recognise=foreign shown, produce=own shown; else null'),
     // Issue #388: a practice test is offered once practice on it goes well (code decides,
     // `practice/readiness.ts`) — or when she asks for one, in her words, checked by code.
-    asked: Quote.nullable()
-      .optional()
-      .describe('test only: her words asking for it; null when it is your idea'),
+    asked: Quote.nullable().optional().describe('test: her request; null if your idea'),
     // Issue #241: a clock only on her wish. The minutes are a value from a fixed list, never a
     // number of the model's own (rule 2), and her words asking for it are checked by code.
     time_limit: z
@@ -180,7 +156,7 @@ const offerLearning = z.object({
       })
       .nullable()
       .optional()
-      .describe('test only, when she asks for a time limit; else null'),
+      .describe('test: requested timer; else null'),
     // Issue #724: a kind of picture only on her wish, from a closed list; the run's form choice
     // takes it first. One property: the turn's schema sits at Vertex's budget (#627), so her
     // words are not quoted beside it. #842: anatomy goes to the library's checked pictures, and
@@ -188,7 +164,7 @@ const offerLearning = z.object({
     pictures: PictureWish.nullable()
       .optional()
       .describe(
-        'practice or test, when she asks to see a kind of picture: its figure types — the body, a plant or an organ: schematic (a labelled picture from the library), a diagram only for a flow it has none of; else null. Your reply names no picture: the card says whether the run has one',
+        'practice/test: requested figure types; anatomy uses schematic, diagram only for flows missing from the library. Null otherwise. The card, never your reply, says which pictures exist.',
       ),
   }),
 });
@@ -217,21 +193,14 @@ const offerDrill = z.object({
 const startRoleplay = z.object({
   tool: z.literal('start_roleplay'),
   args: z.object({
-    language: RoleplayLanguage.describe('the foreign language she practises, never her own'),
-    scene: z.string().trim().min(3).max(80).describe('where it plays, a few words in her language'),
-    role: z
-      .string()
-      .trim()
-      .min(2)
-      .max(40)
-      .describe('who you play, one to three words in her language'),
+    language: RoleplayLanguage.describe('foreign practice language'),
+    scene: z.string().trim().min(3).max(80).describe('setting, briefly in her language'),
+    role: z.string().trim().min(2).max(40).describe('your role, 1–3 words, her language'),
     points: z
       .array(z.string().trim().min(2).max(60))
       .min(3)
       .max(5)
-      .describe(
-        'the role card: what she has to manage, short phrases in her language (from her card if any); the feedback is on these',
-      ),
+      .describe('feedback targets: her role card tasks, briefly in her language'),
     quote: Quote,
   }),
 });
@@ -249,7 +218,7 @@ const planTalk = z.object({
     subject: z.string().trim().min(1).max(40).describe('in her language'),
     subject_kind: z.enum(SUBJECT_KINDS),
     day: DaySpecSchema.describe('the day of the talk'),
-    minutes: z.number().int().min(1).max(45).nullable().describe('only if she said; else null'),
+    minutes: z.number().int().min(1).max(45).nullable().describe('if asked; else null'),
     steps: z
       .array(
         z.object({
@@ -259,7 +228,7 @@ const planTalk = z.object({
       )
       .min(1)
       .max(5)
-      .describe('the steps still ahead, in order, each before the talk'),
+      .describe('remaining steps in order, before talk'),
     quote: Quote,
   }),
 });
@@ -285,7 +254,7 @@ const offerRehearsal = z.object({
     // Asked for the text on her sheet, he once wrote a different one (#636): code checks it. The
     // turn has to decide it every time (#726): an optional field let a sheet's text pass unchecked.
     sheet: MaterialRef.nullable().describe(
-      'read_aloud from her sheet: its alias, text word for word from it; else null',
+      'read_aloud: sheet alias, text copied verbatim; else null',
     ),
   }),
 });
@@ -389,6 +358,7 @@ export const LEARNING_ACT_TOOLS: readonly (ActToolEntry & { name: keyof DomainAc
       needsQuote: false,
       undoable: false,
       does: 'a button that starts learning now (kinds below)',
+      replyAfterApply: (action) => action.tool === 'offer_learning' && !!action.args.vocabulary,
       offer: true,
     },
   },

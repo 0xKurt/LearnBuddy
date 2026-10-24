@@ -41,6 +41,11 @@ export function OfferCard({
   const { state, start } = useStartTopic();
   // Its open run is what the bar on top continues: the one control stays there (#846).
   const { onTop, resumes } = useOfferRun(offer);
+  const waitingForWords =
+    !!offer.vocabulary &&
+    !offer.running_session_id &&
+    !offer.finished_session_id &&
+    !offer.preparation_failed;
   const preparing = state.status === 'preparing';
   // The server already knows this one cannot start: writing its questions was refused while
   // she was still reading Buddy's reply (issue #196). Then there is no button to offer — she
@@ -104,11 +109,17 @@ export function OfferCard({
       // Whether its prepared run shows a picture, from the run itself (#842): Buddy's words may
       // promise one; this line says what is there once the questions exist.
       detail={
-        offer.pictures_shown === true
-          ? t('learn:topic.with_picture')
-          : offer.pictures_shown === false
-            ? t('learn:topic.without_picture')
-            : null
+        offer.kind === 'vocab' && !dead
+          ? waitingForWords
+            ? t('learn:topic.preparing')
+            : offer.running_session_id
+              ? t('learn:topic.ready')
+              : null
+          : offer.pictures_shown === true
+            ? t('learn:topic.with_picture')
+            : offer.pictures_shown === false
+              ? t('learn:topic.without_picture')
+              : null
       }
       note={dead ? t('learn:topic.not_usable') : state.status === 'failed' ? state.message : null}
       start={

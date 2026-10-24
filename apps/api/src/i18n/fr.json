@@ -551,6 +551,7 @@
       }
     },
     "not_usable": "Je n’ai pas pu préparer cet exercice.",
+    "vocab_preparing": "Je prépare tes mots de vocabulaire.",
     "prepare_failed": "La préparation n’a pas abouti. Tu peux réessayer.",
     "pronunciation_passt": "Cela semble juste.",
     "pronunciation_fast": "Presque — réécoute les mots marqués.",

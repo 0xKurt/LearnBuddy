@@ -16,6 +16,7 @@ import {
   TestMinutes,
   UnclearSpot,
   VocabDirection,
+  VocabularyRequest,
 } from './learning.js';
 import { RehearsalKind, RehearsalView, TalkFormat, TalkStage } from './talk.js';
 
@@ -141,6 +142,8 @@ const LEARNING_ACTIONS = [
      */
     difficulty: DifficultyWish.nullable().default(null),
     direction: VocabDirection.nullable().default(null),
+    vocabulary: VocabularyRequest.nullable().optional(),
+    preparation_failed: z.boolean().optional(),
     /**
      * test only: the time limit she asked for (issue #241), one of `TEST_MINUTES`. Null — and
      * absent in older records — means no clock: a timer is never there without her wish.

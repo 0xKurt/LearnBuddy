@@ -366,9 +366,9 @@ describe.skipIf(!dbReady)('explain profiles (#281 D2)', () => {
         client_request_id: randomUUID(),
         kind,
         // Homework help keeps only tasks she typed: every prompt is in her text.
-        // A Diktat keeps only words from her list: the list is in it too.
+        // Vocabulary needs the supplied translation too; a Diktat needs her word list.
         text: [
-          ...ITEMS.map((i) => i.prompt),
+          ...ITEMS.map((i) => (i.kind === 'vocab' ? `${i.prompt} – ${i.answer}` : i.prompt)),
           ...STRUCTURED.map((s) => s.prompt),
           `Meine Lernwörter: ${DICTATION_WORDS.join(', ')}`,
         ].join('\n'),

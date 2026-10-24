@@ -1,0 +1,1443 @@
+{
+  "date": "2026-10-24",
+  "base": "989c448a",
+  "final_prompt_versions": [
+    "buddy.ffc6b990",
+    "safeguard.39175532",
+    "generate.1c0492cb"
+  ],
+  "calls_total": 93,
+  "cost_micros_total": 843792,
+  "cases": [
+    {
+      "id": "known-list",
+      "problems": [],
+      "reply": "Ich bereite deine Vokabeln vor.",
+      "offer": {
+        "kind": "vocab",
+        "text": "the kitchen – die Küche; the room – das Zimmer",
+        "tool": "offer_learning",
+        "figures": [],
+        "goal_id": null,
+        "minutes": null,
+        "direction": null,
+        "startable": true,
+        "difficulty": null,
+        "vocabulary": {
+          "lang": "de",
+          "count": 2,
+          "output": "practice",
+          "source": "typed",
+          "direction": "both",
+          "prompt_lang": "en"
+        },
+        "material_id": null,
+        "pictures_shown": null,
+        "running_session_id": null,
+        "finished_session_id": null
+      },
+      "cards": 4,
+      "pairs": [
+        {
+          "prompt": "the kitchen",
+          "answer": "die Küche",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "typed"
+        },
+        {
+          "prompt": "the room",
+          "answer": "das Zimmer",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "typed"
+        },
+        {
+          "prompt": "die Küche",
+          "answer": "the kitchen",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "typed"
+        },
+        {
+          "prompt": "das Zimmer",
+          "answer": "the room",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "typed"
+        }
+      ],
+      "costMicros": 21289
+    },
+    {
+      "id": "unknown-list",
+      "problems": [],
+      "reply": "Gern — aus welchem Fach oder welcher Sprache ist *Unit 3*?",
+      "pairs": [],
+      "costMicros": 10490
+    },
+    {
+      "id": "topic-en-both",
+      "problems": [],
+      "reply": "Ich bereite deine Vokabeln vor.",
+      "offer": {
+        "kind": "vocab",
+        "text": "Wohnung",
+        "tool": "offer_learning",
+        "figures": [],
+        "goal_id": null,
+        "minutes": null,
+        "direction": null,
+        "startable": true,
+        "difficulty": null,
+        "vocabulary": {
+          "lang": "en",
+          "count": 20,
+          "output": "practice",
+          "source": "topic",
+          "direction": "both",
+          "prompt_lang": "de"
+        },
+        "material_id": null,
+        "pictures_shown": null,
+        "running_session_id": null,
+        "finished_session_id": null
+      },
+      "cards": 40,
+      "pairs": [
+        {
+          "prompt": "der Flur",
+          "answer": "hallway",
+          "accepted_answers": [
+            "hall",
+            "corridor"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "kitchen",
+          "answer": "die Küche",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Teppich",
+          "answer": "carpet",
+          "accepted_answers": [
+            "rug"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "fridge",
+          "answer": "der Kühlschrank",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Herd",
+          "answer": "stove",
+          "accepted_answers": [
+            "cooker"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Bett",
+          "answer": "bed",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "stove",
+          "answer": "der Herd",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Tisch",
+          "answer": "table",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "table",
+          "answer": "der Tisch",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Küche",
+          "answer": "kitchen",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "hallway",
+          "answer": "der Flur",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Sofa",
+          "answer": "sofa",
+          "accepted_answers": [
+            "couch"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "wardrobe",
+          "answer": "der Schrank",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Stuhl",
+          "answer": "chair",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "carpet",
+          "answer": "der Teppich",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Lampe",
+          "answer": "lamp",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "room",
+          "answer": "das Zimmer",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "window",
+          "answer": "das Fenster",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "bathroom",
+          "answer": "das Bad",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "bedroom",
+          "answer": "das Schlafzimmer",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Tür",
+          "answer": "door",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "living room",
+          "answer": "das Wohnzimmer",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Wohnzimmer",
+          "answer": "living room",
+          "accepted_answers": [
+            "lounge"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Fenster",
+          "answer": "window",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Schrank",
+          "answer": "wardrobe",
+          "accepted_answers": [
+            "cupboard"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "bed",
+          "answer": "das Bett",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "lamp",
+          "answer": "die Lampe",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "flat",
+          "answer": "die Wohnung",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "shelf",
+          "answer": "das Regal",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "balcony",
+          "answer": "der Balkon",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Balkon",
+          "answer": "balcony",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Bad",
+          "answer": "bathroom",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "door",
+          "answer": "die Tür",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Schlafzimmer",
+          "answer": "bedroom",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Kühlschrank",
+          "answer": "fridge",
+          "accepted_answers": [
+            "refrigerator"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Wohnung",
+          "answer": "flat",
+          "accepted_answers": [
+            "apartment"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Zimmer",
+          "answer": "room",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Regal",
+          "answer": "shelf",
+          "accepted_answers": [
+            "bookshelf",
+            "bookcase"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "sofa",
+          "answer": "das Sofa",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "chair",
+          "answer": "der Stuhl",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        }
+      ],
+      "costMicros": 32513
+    },
+    {
+      "id": "topic-fr-produce",
+      "problems": [],
+      "reply": "Ich bereite deine Vokabeln vor.",
+      "offer": {
+        "kind": "vocab",
+        "text": "Wohnung",
+        "tool": "offer_learning",
+        "figures": [],
+        "goal_id": null,
+        "minutes": null,
+        "direction": "produce",
+        "startable": true,
+        "difficulty": null,
+        "vocabulary": {
+          "lang": "fr",
+          "count": 20,
+          "output": "practice",
+          "source": "topic",
+          "direction": "produce",
+          "prompt_lang": "de"
+        },
+        "material_id": null,
+        "pictures_shown": null,
+        "running_session_id": null,
+        "finished_session_id": null
+      },
+      "cards": 20,
+      "pairs": [
+        {
+          "prompt": "die Wohnung",
+          "answer": "l'appartement",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Wohnzimmer",
+          "answer": "le salon",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Wand",
+          "answer": "le mur",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "le lit",
+          "answer": "das Bett",
+          "accepted_answers": [
+            "das Bett"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "le mur",
+          "answer": "die Wand",
+          "accepted_answers": [
+            "die Wand"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "les meubles",
+          "answer": "die Möbel",
+          "accepted_answers": [
+            "die Möbel"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Balkon",
+          "answer": "le balcon",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Treppe",
+          "answer": "les escaliers",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "la porte",
+          "answer": "die Tür",
+          "accepted_answers": [
+            "die Tür"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "la salle de bain",
+          "answer": "das Badezimmer",
+          "accepted_answers": [
+            "das Badezimmer"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Bett",
+          "answer": "le lit",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Küche",
+          "answer": "la cuisine",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "le balcon",
+          "answer": "der Balkon",
+          "accepted_answers": [
+            "der Balkon"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "le salon",
+          "answer": "das Wohnzimmer",
+          "accepted_answers": [
+            "das Wohnzimmer"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "la lampe",
+          "answer": "die Lampe",
+          "accepted_answers": [
+            "die Lampe"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Flur",
+          "answer": "le couloir",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "la fenêtre",
+          "answer": "das Fenster",
+          "accepted_answers": [
+            "das Fenster"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "le sol",
+          "answer": "der Boden",
+          "accepted_answers": [
+            "der Boden"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "la cuisine",
+          "answer": "die Küche",
+          "accepted_answers": [
+            "die Küche"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "le voisin",
+          "answer": "der Nachbar",
+          "accepted_answers": [
+            "der Nachbar"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Möbel",
+          "answer": "les meubles",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Lampe",
+          "answer": "la lampe",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Badezimmer",
+          "answer": "la salle de bain",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "le plafond",
+          "answer": "die Decke",
+          "accepted_answers": [
+            "die Decke"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "les escaliers",
+          "answer": "die Treppe",
+          "accepted_answers": [
+            "die Treppe"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "l'appartement",
+          "answer": "die Wohnung",
+          "accepted_answers": [
+            "die Wohnung"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Schlafzimmer",
+          "answer": "la chambre",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Nachbar",
+          "answer": "le voisin",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Boden",
+          "answer": "le sol",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Schrank",
+          "answer": "l'armoire",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "la chaise",
+          "answer": "der Stuhl",
+          "accepted_answers": [
+            "der Stuhl"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "l'armoire",
+          "answer": "der Schrank",
+          "accepted_answers": [
+            "der Schrank"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Tür",
+          "answer": "la porte",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Tisch",
+          "answer": "la table",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Decke",
+          "answer": "le plafond",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "la table",
+          "answer": "der Tisch",
+          "accepted_answers": [
+            "der Tisch"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Fenster",
+          "answer": "la fenêtre",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "le couloir",
+          "answer": "der Flur",
+          "accepted_answers": [
+            "der Flur"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "la chambre",
+          "answer": "das Schlafzimmer",
+          "accepted_answers": [
+            "das Schlafzimmer"
+          ],
+          "prompt_lang": "fr",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Stuhl",
+          "answer": "la chaise",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "fr",
+          "origin": "buddy"
+        }
+      ],
+      "costMicros": 27105
+    },
+    {
+      "id": "topic-en-chat",
+      "problems": [],
+      "reply": "1. die Wohnung – apartment\n2. das Zimmer – room\n3. die Küche – kitchen\n4. das Bad – bathroom\n5. das Schlafzimmer – bedroom\n6. das Wohnzimmer – living room\n7. der Flur – hallway\n8. der Balkon – balcony\n9. der Keller – basement\n10. der Dachboden – attic\n11. der Tisch – table\n12. der Stuhl – chair\n13. das Sofa – sofa\n14. der Schrank – wardrobe\n15. das Bett – bed\n16. die Lampe – lamp\n17. der Teppich – carpet\n18. das Fenster – window\n19. die Tür – door\n20. der Schlüssel – key",
+      "offer": {
+        "kind": "vocab",
+        "text": "Wohnung",
+        "tool": "offer_learning",
+        "figures": [],
+        "goal_id": null,
+        "minutes": null,
+        "direction": null,
+        "startable": true,
+        "difficulty": null,
+        "vocabulary": {
+          "lang": "en",
+          "count": 20,
+          "output": "chat",
+          "source": "topic",
+          "direction": "both",
+          "prompt_lang": "de"
+        },
+        "material_id": null,
+        "pictures_shown": null,
+        "running_session_id": "2df0865b-5d60-4667-9b86-116f2880a835",
+        "finished_session_id": null
+      },
+      "cards": 40,
+      "pairs": [
+        {
+          "prompt": "das Bett",
+          "answer": "bed",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "attic",
+          "answer": "der Dachboden",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "basement",
+          "answer": "der Keller",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Fenster",
+          "answer": "window",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Schrank",
+          "answer": "wardrobe",
+          "accepted_answers": [
+            "cupboard"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Lampe",
+          "answer": "lamp",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Wohnung",
+          "answer": "apartment",
+          "accepted_answers": [
+            "flat"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Bad",
+          "answer": "bathroom",
+          "accepted_answers": [
+            "bathroom"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Küche",
+          "answer": "kitchen",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Stuhl",
+          "answer": "chair",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Tisch",
+          "answer": "table",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "wardrobe",
+          "answer": "der Schrank",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "balcony",
+          "answer": "der Balkon",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Keller",
+          "answer": "basement",
+          "accepted_answers": [
+            "cellar"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "chair",
+          "answer": "der Stuhl",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Dachboden",
+          "answer": "attic",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "kitchen",
+          "answer": "die Küche",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Schlüssel",
+          "answer": "key",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "apartment",
+          "answer": "die Wohnung",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "hallway",
+          "answer": "der Flur",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Sofa",
+          "answer": "sofa",
+          "accepted_answers": [
+            "couch"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "bedroom",
+          "answer": "das Schlafzimmer",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "die Tür",
+          "answer": "door",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Zimmer",
+          "answer": "room",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "key",
+          "answer": "der Schlüssel",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "room",
+          "answer": "das Zimmer",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Balkon",
+          "answer": "balcony",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "window",
+          "answer": "das Fenster",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "table",
+          "answer": "der Tisch",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Wohnzimmer",
+          "answer": "living room",
+          "accepted_answers": [
+            "lounge"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "das Schlafzimmer",
+          "answer": "bedroom",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "bathroom",
+          "answer": "das Bad",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "bed",
+          "answer": "das Bett",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "living room",
+          "answer": "das Wohnzimmer",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Flur",
+          "answer": "hallway",
+          "accepted_answers": [
+            "corridor"
+          ],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "carpet",
+          "answer": "der Teppich",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "door",
+          "answer": "die Tür",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "sofa",
+          "answer": "das Sofa",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "der Teppich",
+          "answer": "carpet",
+          "accepted_answers": [],
+          "prompt_lang": "de",
+          "lang": "en",
+          "origin": "buddy"
+        },
+        {
+          "prompt": "lamp",
+          "answer": "die Lampe",
+          "accepted_answers": [],
+          "prompt_lang": "en",
+          "lang": "de",
+          "origin": "buddy"
+        }
+      ],
+      "costMicros": 31458
+    }
+  ],
+  "development_batches": [
+    {
+      "name": "vocab-live",
+      "calls": 15,
+      "cost_micros": 114684,
+      "checks": [
+        {
+          "case": "known-list",
+          "problems": []
+        },
+        {
+          "case": "unknown-list",
+          "problems": []
+        },
+        {
+          "case": "topic-en-both",
+          "problems": []
+        },
+        {
+          "case": "topic-fr-produce",
+          "problems": []
+        },
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-v2",
+      "calls": 15,
+      "cost_micros": 102260,
+      "checks": [
+        {
+          "case": "known-list",
+          "problems": []
+        },
+        {
+          "case": "unknown-list",
+          "problems": [
+            "no clarification"
+          ]
+        },
+        {
+          "case": "topic-en-both",
+          "problems": []
+        },
+        {
+          "case": "topic-fr-produce",
+          "problems": [
+            "wrong language orientation",
+            "wrong production direction"
+          ]
+        },
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-final",
+      "calls": 13,
+      "cost_micros": 98947,
+      "checks": [
+        {
+          "case": "known-list",
+          "problems": []
+        },
+        {
+          "case": "unknown-list",
+          "problems": []
+        },
+        {
+          "case": "topic-en-both",
+          "problems": [
+            "wrong language orientation"
+          ]
+        },
+        {
+          "case": "topic-fr-produce",
+          "problems": []
+        },
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-reviewed",
+      "calls": 13,
+      "cost_micros": 124936,
+      "checks": [
+        {
+          "case": "known-list",
+          "problems": []
+        },
+        {
+          "case": "unknown-list",
+          "problems": []
+        },
+        {
+          "case": "topic-en-both",
+          "problems": []
+        },
+        {
+          "case": "topic-fr-produce",
+          "problems": []
+        },
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-output",
+      "calls": 8,
+      "cost_micros": 85711,
+      "checks": [
+        {
+          "case": "topic-fr-produce",
+          "problems": []
+        },
+        {
+          "case": "topic-en-chat",
+          "problems": [
+            "wrong output mode",
+            "tap 422",
+            "chat list missing or incomplete",
+            "wrong stored inventory size"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-chat",
+      "calls": 1,
+      "cost_micros": 11074,
+      "checks": [
+        {
+          "case": "topic-en-chat",
+          "problems": [
+            "missing vocab offer",
+            "wrong stored inventory size"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-repeat",
+      "calls": 9,
+      "cost_micros": 115344,
+      "checks": [
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        },
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        },
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-final-prompt",
+      "calls": 3,
+      "cost_micros": 35939,
+      "checks": [
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-rebased",
+      "calls": 13,
+      "cost_micros": 123439,
+      "checks": [
+        {
+          "case": "known-list",
+          "problems": []
+        },
+        {
+          "case": "unknown-list",
+          "problems": []
+        },
+        {
+          "case": "topic-en-both",
+          "problems": []
+        },
+        {
+          "case": "topic-fr-produce",
+          "problems": []
+        },
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        }
+      ],
+      "semantic_findings": [
+        {
+          "case": "topic-en-chat",
+          "prompt": "kitchen",
+          "answer": "die Küche",
+          "incorrect_accepted_answer": "das Badezimmer",
+          "response": "Instruct each variant to match its own pair; focused retest passed."
+        }
+      ]
+    },
+    {
+      "name": "vocab-live-variants",
+      "calls": 3,
+      "cost_micros": 31458,
+      "checks": [
+        {
+          "case": "topic-en-chat",
+          "problems": []
+        }
+      ]
+    }
+  ],
+  "red_baseline": "ef570387"
+}

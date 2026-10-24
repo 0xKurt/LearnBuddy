@@ -46,6 +46,8 @@ export type ActSpec = {
   /** The learner's own words must justify it (quote checked in code). */
   needsQuote: boolean;
   undoable: boolean;
+  /** Content or confirmation that the domain replaces after applying the action. */
+  replyAfterApply?: (action: AnyAction) => boolean;
   /** One line for the catalogue: what it does. */
   does: string;
   /**

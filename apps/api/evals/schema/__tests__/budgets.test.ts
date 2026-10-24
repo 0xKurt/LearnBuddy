@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { overBudget, PROMPT_BUDGETS } from '../budgets.js';
 import { variants } from '../inventory.js';
+import { explainSchemaFor } from '../../../src/modules/practice/setProfiles.js';
 import { mistakeContext } from '../../../src/modules/practice/mistakeContext.js';
 import { LEAN_RULES } from '../../../src/modules/materials/extract.js';
 import { SOURCE_RULES } from '../../../src/modules/materials/sources.js';
@@ -30,6 +31,12 @@ describe('prompt budgets (#651)', () => {
   });
   it('every call the app sends stays within its purpose’s budget', () => {
     expect(overBudget(variants())).toEqual([]);
+  });
+
+  it('keeps reverse vocabulary variants out of sheet-reading schemas', () => {
+    expect(JSON.stringify(explainSchemaFor('vocab', null))).toContain('"reverse_answers"');
+    for (const reading of variants().filter((v) => v.purpose === 'extraction'))
+      expect(JSON.stringify(reading.schema)).not.toContain('"reverse_answers"');
   });
 
   it('every budget belongs to a purpose that is still sent', () => {

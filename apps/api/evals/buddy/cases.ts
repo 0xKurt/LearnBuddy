@@ -4,6 +4,7 @@
 // actually applied — not the wording of the reply.
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
+import { VOCABULARY_CASES } from './vocabularyCases.js';
 import { holdsWordPairs } from '../../src/modules/buddy/text.js';
 
 import { exam, foreignDayWord, germanLeak, must, onSheet, type Case } from './caseChecks.js';
@@ -14,6 +15,7 @@ export type { Case, Outcome } from './caseChecks.js';
 const TONIGHT = new Date('2026-09-28T22:00:00Z');
 
 export const CASES: Case[] = [
+  ...VOCABULARY_CASES,
   {
     id: 'de_exam_weekday',
     message: 'Ich schreibe am Donnerstag eine Englischarbeit über das Past Tense.',
@@ -604,13 +606,6 @@ export const CASES: Case[] = [
         o.offers.some((f) => f.kind === 'test' && f.minutes === 45),
         `a test with the 45 minutes she named: ${JSON.stringify(o.offers)}`,
       ),
-  },
-  {
-    id: 'fr_vocab_typed_offer',
-    learner: { relation: 'child', birthDate: '2014-02-10' },
-    message:
-      'frag mich meine vokabeln ab: la chambre das zimmer, le lit das bett, la fenêtre das fenster',
-    check: (o) => must(o.tools.includes('offer_learning'), 'offers a vocabulary quiz'),
   },
   // Safeguarding (audit I-9, D-10): a child's distress gets the fixed, code-owned reply with
   // the helpline for her language — whether the model flags `concern` or the provider's

@@ -11,6 +11,8 @@ import {
   type PictureWish,
 } from '@learnbuddy/shared-types/contracts';
 
+import { t } from '../../i18n/index.js';
+import { isDeepStrictEqual } from 'node:util';
 import { type ActionOf } from '../buddy/decision.js';
 import { loadStandingOffers } from '../learning/state.js';
 import { holdsWordPairs, normalizeForMatch } from '../buddy/text.js';
@@ -22,6 +24,7 @@ import {
   requireQuote,
 } from '../buddy/toolKit.js';
 import { titleOf } from './drill.js';
+import { vocabularyProblem } from './vocabulary.js';
 import { fromLearnerText } from './generate.js';
 import { practiceGoesWell } from './readiness.js';
 import { materialOf } from '../learning/aliases.js';
@@ -36,7 +39,35 @@ export async function runOfferLearning(
     throw new ToolRejection('offer kind must be supported by the learning contract');
   // One field carries either wish (#724, `decision.ts`): the level or the vocabulary's direction.
   const difficulty = a.wish === 'harder' || a.wish === 'easier' ? a.wish : null;
-  const direction = a.wish === 'recognise' || a.wish === 'produce' ? a.wish : null;
+  const vocabulary = a.vocabulary ?? null;
+  if (vocabulary) {
+    if (a.kind !== 'vocab')
+      throw new ToolRejection(
+        'A pure vocabulary wish must use kind vocab, never practice or cloze.',
+      );
+    if ((a.wish === 'recognise' || a.wish === 'produce') && a.wish !== vocabulary.direction)
+      throw new ToolRejection(
+        'The vocabulary direction contradicts wish; use the direction she requested consistently.',
+      );
+    const problem = vocabularyProblem(vocabulary);
+    if (problem) throw new ToolRejection(problem);
+    if (
+      vocabulary.source === 'typed' &&
+      !(ctx.learnerWords ?? []).some((words) =>
+        normalizeForMatch(words).includes(normalizeForMatch(a.text)),
+      )
+    )
+      throw new ToolRejection(
+        'Typed vocabulary must copy the pairs the learner supplied. For a photographed list use prepare_practice.',
+      );
+  }
+  const direction = vocabulary
+    ? vocabulary.direction === 'both'
+      ? null
+      : vocabulary.direction
+    : a.wish === 'recognise' || a.wish === 'produce'
+      ? a.wish
+      : null;
   // Practice or a test for a planned test stays within its sheets (live finding 6): the goal
   // the model named — from STATE, or "new" for the test plan_exam planned in this same answer
   // (#636) — or the one active goal whose title the offer names exactly.
@@ -48,25 +79,10 @@ export async function runOfferLearning(
     );
     goal = named.length === 1 ? named[0]! : null;
   }
-  // Two of the five kinds are a button over CONTENT, not over a topic, and the generator says so
-  // itself: `vocab` makes one question per pair the text holds and sets usable = false when it
-  // holds none; `help` keeps only tasks whose words are in the text it was given
-  // (practice/generate.ts: TASK.vocab, TASK.help, fromLearnerText). So an offer of those kinds
-  // whose text NAMES the content instead of being it can never start. It still reaches the chat,
-  // she taps it, and the card replaces "Let's go" with "I can't prepare anything from that,
-  // sorry" under a reply that says the practice is ready (issue #196). Reproduced on every live
-  // run: the text was the sheet's own title, "French vocabulary Unité 3", and the tap came back
-  // 422 not_usable.
-  //
-  // So the floor is each generator's own precondition, enforced one step earlier where the model
-  // can still be told — never something stricter than the thing it protects:
-  //   vocab — the text has to BE a list of pairs (text.ts holdsWordPairs: structure, no language
-  //           in it). Where the pairs come from is not the question: she may have typed them, or
-  //           Buddy may have copied them off her sheet to ask them in one direction (#113).
-  //   help  — the task has to be in her own words, which is exactly what the generator keeps.
-  if (a.kind === 'vocab' && !holdsWordPairs(a.text)) {
+  // Typed offers still need pairs; an explicit topic wish carries structured intent.
+  if (a.kind === 'vocab' && vocabulary?.source !== 'topic' && !holdsWordPairs(a.text)) {
     throw new ToolRejection(
-      `"${a.text}" names a vocabulary list instead of being one, and questions are made from the pairs this text holds — so this button could not start anything. Either put the pairs themselves in "text" (one per line, "word – translation"), or, for a list on a sheet she photographed, use prepare_practice on that sheet with vocabulary_only.`,
+      `"${a.text}" names a vocabulary list instead of being one, and questions are made from the pairs this text holds — so this button could not start anything. For an explicit topic wish use vocabulary.source topic, and output chat when she asked for a list in chat. Otherwise put the supplied pairs themselves in "text" (one per line, "word – translation"), or, for a list on a sheet she photographed, use prepare_practice on that sheet with vocabulary_only.`,
     );
   }
   // A Diktat of her sheet (issue #242), questions about it („Erklär mal", #236) or its writing task
@@ -151,6 +167,7 @@ export async function runOfferLearning(
         o.goal_id === (goal?.id ?? null) &&
         o.difficulty === difficulty &&
         o.direction === direction &&
+        isDeepStrictEqual(o.vocabulary ?? null, vocabulary) &&
         (o.material_id ?? null) === (sheet?.id ?? null) &&
         o.minutes === minutes &&
         o.figures.join() === figures.join(),
@@ -172,6 +189,7 @@ export async function runOfferLearning(
       // A direction only ever reaches vocabulary pairs — other questions have none.
       difficulty,
       direction,
+      ...(vocabulary ? { vocabulary } : {}),
       // Only a test, and only on her wish (above); the tap hands it to the run (issue #241).
       minutes,
       // Only on her wish (above); the tap hands it to the run (#724).
@@ -185,6 +203,7 @@ export async function runOfferLearning(
       // Nothing prepared yet; the thread says so once its questions exist (issue #842).
       pictures_shown: null,
     },
+    ...(vocabulary ? { reply: t(ctx.locale, 'practice.vocab_preparing') } : {}),
     undo: null,
     record: async (tx, actionId) => {
       await tx.query(

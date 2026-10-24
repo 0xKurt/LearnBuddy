@@ -1004,11 +1004,23 @@ export type DifficultyWish = z.infer<typeof DifficultyWish>;
 export const VocabDirection = z.enum(['recognise', 'produce']);
 export type VocabDirection = z.infer<typeof VocabDirection>;
 
+/** The model resolves the wish; language fields describe the requested question,
+ * including its orientation for produce. Code normalizes it for bidirectional storage. */
+export const VocabularyRequest = z.object({
+  source: z.enum(['typed', 'topic']).describe('typed=supplied pairs; topic=generate'),
+  output: z.enum(['chat', 'practice']).describe('chat list on request; else practice'),
+  count: z.number().int().min(1).max(10000),
+  prompt_lang: z.string().regex(/^[a-z]{2}$/),
+  lang: z.string().regex(/^[a-z]{2}$/),
+  direction: z.enum(['both', 'recognise', 'produce']),
+});
+export type VocabularyRequest = z.infer<typeof VocabularyRequest>;
+
 /** Start from something the learner named instead of a photo. */
 export const StartTopicRequest = z.object({
   client_request_id: Uuid,
   /**
-   * practice: questions on a topic · vocab: a typed vocabulary list ·
+   * practice: questions on a topic · vocab: typed pairs or topic vocabulary ·
    * speak: sentences/words to say aloud · listen: a spoken text with questions about it
    * (Hörverstehen, issue #210 — refused before generation when there is no voice to
    * read it) · help: a homework task the learner typed ·
@@ -1065,6 +1077,7 @@ export const StartTopicRequest = z.object({
    * either way, so the other one can be practised later; null asks both, as before.
    */
   direction: VocabDirection.nullable().optional(),
+  vocabulary: VocabularyRequest.nullable().optional(),
   /**
    * test only: a time limit she asked for in the chat (issue #241), carried by Buddy's offer.
    * One of `TEST_MINUTES` — anything else is refused here; on any other kind the server refuses

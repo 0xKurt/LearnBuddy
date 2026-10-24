@@ -214,6 +214,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
         await outcome.record?.(tx, row.id);
       }
 
+      const confirmedReply = outcomes.length === 1 ? outcomes[0]?.outcome.reply : undefined;
       let replyMessageId: string | null = null;
       if (input.reply) {
         const msg = await tx.one<{ id: string }>(
@@ -221,9 +222,11 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
            values ($1, 'buddy', $2, $3, $4, $5, $6) returning id`,
           [
             input.learnerId,
-            input.reply.text,
+            confirmedReply ?? input.reply.text,
             input.triggerMessageId,
-            input.reply.options ? JSON.stringify({ options: input.reply.options }) : null,
+            !confirmedReply && input.reply.options
+              ? JSON.stringify({ options: input.reply.options })
+              : null,
             decision.id,
             input.now,
           ],

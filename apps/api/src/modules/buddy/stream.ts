@@ -102,7 +102,7 @@ function changesNothing(raw: string, aliases: ReadonlySet<string>): boolean {
     const spec = ACT_TOOLS[tool as keyof typeof ACT_TOOLS];
     if (!spec.touches.every((t) => t === 'nothing')) return false;
     const parsed = turnActionSchema().safeParse(a);
-    if (!parsed.success) return false;
+    if (!parsed.success || spec.replyAfterApply?.(parsed.data)) return false;
     return aliasesIn(parsed.data.args).every((x) => aliases.has(x));
   });
 }

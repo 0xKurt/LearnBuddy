@@ -679,18 +679,12 @@ summary plus undo data. Enforced here, not in the prompt:
   with "I can't prepare anything from that, sorry"; in the owner's run a successful
   `prepare_practice` stood beside it, and the screen carried ✓ "Prepared: French – 12 questions"
   with that refusal right under it. Three floors, all in code:
-  - **two of the five kinds are a button over CONTENT, not over a topic.** `vocab` makes one
-    question per pair the text holds and sets `usable = false` when it holds none; `help` keeps
-    only tasks whose words are in the text it was given (`practice/generate.ts`: `TASK.vocab`,
-    `TASK.help`, `fromLearnerText`). An offer of those kinds whose text NAMES the content instead
-    of being it can never start, so each is refused by its own generator's precondition — never
-    something stricter than the thing it protects. `vocab`: the text has to BE a list of pairs
-    (`holdsWordPairs` in `modules/buddy/text.ts` — separators only, no word, language or subject
-    in it, the shape the app's own placeholder teaches her). Where the pairs come from is not the
-    question: she may have typed them, or Buddy may have copied them off her sheet to ask them in
-    one direction (#113, `practice-wishes.int.test.ts`). `help`: the task has to be in her own
-    words, which is exactly what the generator keeps. `practice`, `test` and `speak` are written
-    FROM a topic and need none of this;
+  - **source is explicit (#940).** A typed vocabulary offer still needs the actual pairs,
+    copied from her message; a named school list she has not supplied needs a question, not
+    invented words. An explicit request for words on a topic uses `vocab` with structured
+    `vocabulary` (source `typed|topic`, output `chat|practice`, count, two ISO languages,
+    direction). Explicit wishes take precedence over profile defaults. Topic words carry
+    origin `buddy`, typed words `typed`. `help` still needs the task itself, in her words;
   - **one answer, one thing to tap**: `prepare_practice` earlier in the same decision already
     made the card she asked for (`ToolContext.created.preparedStepId`), so an offer beside it is
     refused. This is the gap #184 knowingly left open ("sie kann kurz zwei Knöpfe für dasselbe
@@ -1260,7 +1254,7 @@ picture is the offer card's line (`pictures_shown`, read from its questions), no
 turn's step schema stood at the budget (269) with #725, so `pictures` came with a fold:
 `offer_learning`'s `difficulty` and `direction` are one field `wish` (harder, easier, recognise,
 produce) — a level is a wish for questions on a topic, a direction one for vocabulary pairs, never
-both in one offer. Flat calls (#726) brought the step schema to 242, and a test holds it at least 20 properties under the bound (`buddy/__tests__/offer.test.ts`). A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
+both in one offer. Flat calls (#726) brought the step schema to 242; vocabulary intent (#940) uses 249, and a test holds it at least 20 properties under the bound (`buddy/__tests__/offer.test.ts`). A schema that fits (vocab, speak, listen, read, essay, Diktat, teach_back) is sent
 as it is, without the choosing call. Measured live (#627): the choosing call takes about 1.5 s and
 costs about 0.3 ct (≈ 10 500 input tokens, ≤ 45 output tokens). **The prompt follows the schema**
 (KI-Audit F5-3, #669): a run is told only the rules of the figure families, structured forms and
@@ -2577,6 +2571,38 @@ zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort)
 `modules/curriculum/__tests__/state.test.ts` (jede Regel nennt Lehrplan, Land und Jahr).
 
 ## Practice
+
+### Topic vocabulary (#940)
+
+Buddy chooses vocabulary through `offer_learning kind=vocab`, including an explicit topic wish
+and a list requested in chat. The structured request carries source, output, count, both
+languages and direction; no keyword classifier or extra form picker is involved. Unknown
+school lists still need the learner's words or sheet. A request above 25 pairs is refused with
+a clarification about the first batch; it is never silently truncated.
+
+The existing vocab item schema and bidirectional storage are reused. Code checks different
+languages, typed-pair membership, and the requested count **after** validation and deduplication.
+An incomplete inventory is refused atomically. Existing directional cards belonging to this
+learner are reused, preserving their repetition history; concurrent writers serialize on the
+learner's settings row. Twenty pairs give forty cards, or twenty session questions for an
+explicit single direction. Reverse accepted answers are generated alongside forward variants.
+The request languages describe the shown question and its answer. For produce, code
+normalizes those sides into the existing foreign-first storage before selecting the reverse card.
+Vocabulary generation uses medium reasoning to check articles and variants in both languages,
+a measured exception to the general no-thinking choice in #670. Articles, meanings and
+acceptable variants are also checked in the live vocabulary evaluation.
+
+For output `chat`, preparation is awaited before returning the chat response. The session and
+numbered list are committed together from exactly the same validated inventory. The offer's
+stored request is authoritative on tap, including after a failed preparation. A single vocabulary
+offer uses a code-owned future confirmation before preparation; its model draft is withheld
+from streaming until the authoritative reply exists; the offer reports preparation, readiness or refusal.
+
+The coordinator's production evidence (24 October 2026, 16:36 UTC) was supplied without database
+access: `offer_learning kind=vocab`, text “Basisvokabeln zur Wohnung: Räume, Möbel und Alltag”; two
+successful `explain` calls returned `usable=false`, causing `not_usable`. The old generator only
+accepted typed lists. The later two-task cloze came from a separate `practice` offer for a vocab
+wish: a routing error, not the failed vocabulary offer. No production query was run here.
 
 **One result on home and in practice** (#918). `NowCard.practice_result` carries the pass, clock
 expiry, total and drill summary. `loadSessions` uses `summarize`, `drillSummary` and `ranOut`, the

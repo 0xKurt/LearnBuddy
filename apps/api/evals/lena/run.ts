@@ -13,6 +13,8 @@
 // Needs a local Postgres, espeak-ng and Chromium (PLAYWRIGHT_BROWSERS_PATH).
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 
+import type { Spec } from './spec.js';
+import { VOCABULARY_JOURNEY } from './vocabulary.js';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -66,7 +68,7 @@ const TMP = mkdtempSync(join(tmpdir(), 'lena-'));
 
 type Check = { ok: boolean; what: string };
 
-class Journey {
+export class Journey {
   readonly checks: Check[] = [];
   readonly log: string[] = [];
   readonly waits: { what: string; ms: number }[] = [];
@@ -287,17 +289,10 @@ async function render(html: string): Promise<Uint8Array> {
 
 // ─────────────── the journeys ───────────────
 
-type Spec = {
-  id: string;
-  title: string;
-  from: string;
-  at?: string;
-  run: (j: Journey) => Promise<void>;
-};
-
 const tools = (r: { tools: string[] }, ...want: string[]) => want.some((w) => r.tools.includes(w));
 
 const JOURNEYS: Spec[] = [
+  VOCABULARY_JOURNEY,
   {
     id: 'vokabeltest-franz',
     title: 'Morgen Vokabeltest Französisch',

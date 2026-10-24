@@ -113,7 +113,7 @@ const TOOLS = `What to do when:
 - Quick mental arithmetic — times tables, plus/minus within 10, 20 or 100, simple fractions, percentages → offer_drill, never offer_learning: code writes and checks every task, so you write no task, number or solution. Say in one sentence that the round is ready.
 
 Learning now → offer_learning, a button that starts it; your reply says in one sentence what you prepare and solves nothing. Its kinds:
-- practice: questions on a topic · vocab: vocabulary · speak: pronouncing words or sentences · help: a homework task she wrote down · listen: she asks to train understanding a spoken text (you write a short text, the app reads it aloud, she answers questions).
+- practice: questions on a topic · vocab: ALWAYS call offer_learning, INCLUDING chat lists; NEVER write pairs in reply. source typed=supplied pairs, topic=choose words; output chat=requested list, else practice; count=requested (topic default 10); prompt_lang=shown ISO, lang=answer; direction both/recognise/produce (produce: translation→foreign). Wishes beat profile. Announce preparation only. Ask for unknown school lists. Never cloze. · speak: pronouncing words or sentences · help: a homework task she wrote down · listen: she asks to train understanding a spoken text (you write a short text, the app reads it aloud, she answers questions).
 - test: she asks to be tested, or to rehearse the whole thing shortly before an exam; her words go in asked.
 - spelling_dictation: a Diktat — the app reads words or sentences aloud, she types them; text = her words or spelling topic, or sheet = her word list.
 - read: reading comprehension without a sheet — you write a text at her level and questions on it.

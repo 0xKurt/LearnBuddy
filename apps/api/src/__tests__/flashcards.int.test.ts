@@ -362,6 +362,10 @@ describe.skipIf(!dbReady)('flashcards', () => {
     // And a run of questions takes no card: she answers those, and what she says about a
     // card may not stand in for an answer nobody checked.
     const answering = await startRun(PAIRS, 'Unité 5');
+    // Reused words keep their history (#940); rejection must leave that history untouched.
+    const beforeCard = await env.db.maybeOne('select * from item_states where item_id = $1', [
+      answering.items[0]!.item.id,
+    ]);
     const asCard = await l.api.post(`/practice/sessions/${answering.id}/card`, {
       client_turn_id: randomUUID(),
       item_id: answering.items[0]!.item.id,
@@ -369,13 +373,10 @@ describe.skipIf(!dbReady)('flashcards', () => {
     });
     expect([asCard.status, why(asCard.body)]).toEqual([409, 'not_a_card_pass']);
     expect(
-      (
-        await env.db.one<{ n: number }>(
-          `select count(*)::int as n from item_states where item_id = $1`,
-          [answering.items[0]!.item.id],
-        )
-      ).n,
-    ).toBe(0);
+      await env.db.maybeOne('select * from item_states where item_id = $1', [
+        answering.items[0]!.item.id,
+      ]),
+    ).toEqual(beforeCard);
     // Nothing of that touched her learning state: the card still carries exactly the one
     // review the run before it wrote, and no self-assessment has been recorded for it.
     const state = await env.db.one<{ reps: number; last_outcome: string }>(

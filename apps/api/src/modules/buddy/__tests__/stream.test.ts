@@ -67,6 +67,27 @@ describe('replyProgress', () => {
     expect(replyProgress(raw, NONE)?.speakable).toBe(true);
   });
 
+  it('waits for the stored vocabulary confirmation or requested chat list', () => {
+    const raw = answer([
+      {
+        tool: 'offer_learning',
+        args: {
+          kind: 'vocab',
+          text: 'Wohnung',
+          vocabulary: {
+            source: 'topic',
+            output: 'chat',
+            count: 20,
+            prompt_lang: 'en',
+            lang: 'de',
+            direction: 'both',
+          },
+        },
+      },
+    ]);
+    expect(replyProgress(raw, NONE)?.speakable).toBe(false);
+  });
+
   it('holds back a reply whose answer changes something, looks something up, or is unknown', () => {
     expect(replyProgress(answer([{ tool: 'remember', args: {} }]), NONE)?.speakable).toBe(false);
     expect(replyProgress(answer([], [{ tool: 'material_text' }]), NONE)?.speakable).toBe(false);

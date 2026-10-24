@@ -551,6 +551,7 @@
       }
     },
     "not_usable": "No he podido preparar este ejercicio.",
+    "vocab_preparing": "Estoy preparando tus palabras de vocabulario.",
     "prepare_failed": "La preparación no ha funcionado ahora. Puedes intentarlo de nuevo.",
     "pronunciation_passt": "Suena bien.",
     "pronunciation_fast": "Casi — escucha de nuevo las palabras marcadas.",
