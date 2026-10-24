@@ -1580,7 +1580,10 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   since #670 — the same two sheets of `evals/content` on 3.6 Flash gave 31/31 questions without a
   finding without thinking against 26/28 with the old 2048 budget, at the same cost, and thought
   tokens come before the first question streams (`docs/decisions/thinking-2026-10.md`). Hints
-  keep `high` (not measured yet). The tutor gets none: on 3.6 Flash more thinking was slower and not
+  retain `high`: the EU speed audit (#928) found exhausted reasoning budgets on large batches,
+  but `low` and `medium` failed the hint-quality comparison (missing help/incomplete solutions).
+  See `docs/measurements/ai-speed-audit-2026-10-24.md`; smaller batches need a separate evaluation.
+  The tutor gets none: on 3.6 Flash more thinking was slower and not
   better (0: 26/27 at 1.1 s; 1024: 16/18 at 1.4–1.7 s; 4096: 17/18 at 2.5 s, evals/tutor).
 - A model call is only as slow as it must be: thinking budget only where it measurably helps.
   Buddy's turns think at the **minimal level** (`thinking: 'minimal'`, issue #626), not with a
@@ -1595,6 +1598,10 @@ an answer checked within **1.5 s**, Buddy's reply within **3 s**. Rules that fol
   level. The pronunciation judgement uses none (heard_ipa is its close listening; twice as fast,
   no worse).
 - Anything that adds a model call to a step Lena waits on needs a measurement first.
+- A streamed practice starts after three **usable** questions, not necessarily the first three
+  written (#928). Each newly completed prefix passes the same parsing and preparation checks;
+  an early rejected question no longer forces a wait for the whole answer. The remaining
+  questions still come from that same call; tests and difficulty wishes still wait for the set.
 - **An animated part writes only what changed, and nothing while it cannot be seen** (issue
   #637). On Android every animated style Reanimated sends is a shadow-tree commit on the UI
   thread, and a style returning a fresh transform is sent every frame. Buddy's orb therefore keeps

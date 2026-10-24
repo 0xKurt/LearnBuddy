@@ -1,0 +1,1533 @@
+[
+  {
+    "variant": "hints-high",
+    "records": [
+      {
+        "type": "setup",
+        "at": "2026-10-24T14:38:42.636Z",
+        "head": "187106266d14c564214de1a901bb507d9ff4cb75",
+        "node": "v22.23.3",
+        "endpoint": "https://eu.api.openai.com/v1",
+        "alreadySpent": 1.259116
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 1,
+        "attempts": 1,
+        "start": 1150.587625,
+        "end": 21731.501375,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "high",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 759,
+          "thoughtTokens": 4841,
+          "cachedTokens": 1152,
+          "costMicros": 28943,
+          "latencyMs": 20580
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 1144.47775,
+        "end": 21742.071459,
+        "stage": "hints-eval",
+        "round": 1,
+        "status": "ok",
+        "firstMs": 20598,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 20598,
+        "split": {
+          "db": 8.331958999999415,
+          "model": 20580.81025,
+          "other": 8.451499999999214
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "gleichnamig machen: $2/4 + 1/4$"
+            ],
+            "worked_solution": "Zuerst machst du die Brüche gleichnamig. Aus 1/2 wird 2/4, weil der Nenner 4 sein soll. Dann addierst du die Zähler: 2/4 + 1/4 = 3/4. Das ergibt 0,75.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Die Brüche müssen erst den gleichen Nenner haben.",
+                "Man addiert Zähler und Nenner einfach zusammen.",
+                "Der Nenner wird beim Addieren verdoppelt."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "1/2 + 1/4",
+                "note": "Ausgangsterm"
+              },
+              {
+                "line": "2/4 + 1/4",
+                "note": "gleichnamig machen"
+              },
+              {
+                "line": "3/4",
+                "note": "Zähler addieren"
+              }
+            ]
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [
+              "Gesucht ist der Fall des Wortes im Satz.",
+              "Das Verb 'helfen' verlangt im Deutschen einen bestimmten Fall.",
+              "Achte auf die Form des Wortes vor \"Kind\"."
+            ],
+            "worked_solution": "Prüfe zuerst, welches Verb im Satz steht. Das Verb helfen verlangt im Deutschen den Dativ. Deshalb steht dem Kind im Dativ.",
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe zuerst auf beiden Seiten 6 ab. Dann steht dort 3x = 12. Danach teilst du beide Seiten durch 3. So bekommst du x = 4.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Gleichungen bleiben richtig, wenn man auf beiden Seiten dasselbe rechnet.",
+                "Die 6 wird einfach auf die andere Seite gesetzt, ohne das Vorzeichen zu ändern.",
+                "Man teilt zuerst durch 6, weil dort eine 6 steht."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [
+              "Gesucht ist die Verbform in der Vergangenheit.",
+              "Es geht um die einfache Vergangenheit im Englischen.",
+              "Bei go hilft es, die unregelmäßige Form zu kennen."
+            ],
+            "worked_solution": "Go ist im Englischen unregelmäßig. In der einfachen Vergangenheit bekommt es nicht einfach eine Endung, sondern eine eigene Form. In dem Satz heißt es deshalb went.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Go ist unregelmäßig und hat eine eigene Vergangenheitsform.",
+                "In der einfachen Vergangenheit bekommt jedes Verb nur -ed.",
+                "Nach Yesterday bleibt das Verb unverändert."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "budget",
+        "charged": 1.2880589999999998
+      }
+    ]
+  },
+  {
+    "variant": "hints-low",
+    "records": [
+      {
+        "type": "setup",
+        "at": "2026-10-24T14:39:05.364Z",
+        "head": "187106266d14c564214de1a901bb507d9ff4cb75",
+        "node": "v22.23.3",
+        "endpoint": "https://eu.api.openai.com/v1",
+        "alreadySpent": 1.2880589999999998
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 1,
+        "attempts": 1,
+        "start": 844.472834,
+        "end": 4567.771584,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "low",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 655,
+          "thoughtTokens": 140,
+          "cachedTokens": 0,
+          "costMicros": 5158,
+          "latencyMs": 3723
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 841.464209,
+        "end": 4577.901,
+        "stage": "hints-eval",
+        "round": 1,
+        "status": "ok",
+        "firstMs": 3736,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 3736,
+        "split": {
+          "db": 5.419832000000383,
+          "model": 3723.189,
+          "other": 7.827958999999737
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Addiere die beiden Brüche.",
+              "Dafür brauchst du einen gemeinsamen Nenner.",
+              "Schreibe beide Brüche zuerst mit demselben Nenner."
+            ],
+            "worked_solution": "Bringe die Brüche auf einen gemeinsamen Nenner. Dann kannst du die Zähler addieren. Das Ergebnis kannst du als Dezimalzahl schreiben.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Brüche dürfen nur mit gleichem Nenner addiert werden.",
+                "Man addiert einfach Zähler und Nenner direkt.",
+                "Bei Brüchen muss man immer erst in Dezimalzahlen umwandeln."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [
+              "Gesucht ist der Fall von „dem Kind“.",
+              "Achte darauf, welche Frage das Verb „helfen“ stellt.",
+              "Überlege, welcher Fall bei einer Hilfe-Aktion benutzt wird."
+            ],
+            "worked_solution": "Das Verb „helfen“ verlangt den Dativ. Deshalb steht „dem Kind“ im Dativ.",
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "Sechs abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe zuerst 6 auf beiden Seiten ab. Dann bleibt 3x = 12. Teile jetzt beide Seiten durch 3. So erhältst du x = 4.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Man macht auf beiden Seiten dieselbe Rechenoperation.",
+                "Man darf nur die rechte Seite verändern.",
+                "Man teilt die 6 zuerst durch 3 und setzt dann alles ein."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "Sechs abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [
+              "Setze die richtige Vergangenheitsform von „go“ ein.",
+              "Das ist ein unregelmäßiges Verb.",
+              "Überlege, wie die einfache Vergangenheit von „go“ heißt."
+            ],
+            "worked_solution": "Das Verb „go“ ist unregelmäßig. In der einfachen Vergangenheit heißt es „went“. Im Satz lautet die richtige Form also: Yesterday she went to school.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "„go“ hat eine unregelmäßige Vergangenheitsform.",
+                "Man bildet die Vergangenheit immer mit „-ed“.",
+                "Hier braucht man die Form für die Gegenwart."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [
+              "Gesucht ist der Name für den unteren Teil eines Bruchs.",
+              "Dafür gibt es einen festen Fachbegriff.",
+              "Überlege, wie der untere Bruchteil im Matheunterricht heißt."
+            ],
+            "worked_solution": "Der untere Teil eines Bruchs heißt Nenner. Er steht unter dem Bruchstrich und zeigt, in wie viele gleich große Teile das Ganze geteilt ist.",
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 2,
+        "attempts": 1,
+        "start": 4586.655125,
+        "end": 9262.963375,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "low",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 681,
+          "thoughtTokens": 269,
+          "cachedTokens": 1280,
+          "costMicros": 5926,
+          "latencyMs": 4676
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 4585.411167,
+        "end": 9269.856959,
+        "stage": "hints-eval",
+        "round": 2,
+        "status": "ok",
+        "firstMs": 4684,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 4684,
+        "split": {
+          "db": 3.8072900000024674,
+          "model": 4676.2955839999995,
+          "other": 4.342917999998463
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Du sollst zwei Brüche addieren.",
+              "Gleiche zuerst den Nenner an, dann addierst du die Zähler.",
+              "Schreibe beide Brüche mit dem gleichen Nenner und rechne dann weiter."
+            ],
+            "worked_solution": "Bringe beide Brüche auf denselben Nenner. Dann addierst du die beiden Zähler. Am Ende kürzt oder schreibst du das Ergebnis in passender Form.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Brüche kann man nur direkt addieren, wenn sie gleichnamig sind.",
+                "Man addiert bei Brüchen immer nur die Nenner.",
+                "Man muss zuerst die Zähler multiplizieren."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [
+              "Gesucht ist der grammatische Fall von „dem Kind“.",
+              "Achte auf die Frage nach dem Empfänger oder Betroffenen einer Handlung.",
+              "Überlege, welcher Fall oft nach Verben wie „helfen“ steht."
+            ],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe zuerst 6 auf beiden Seiten ab. Dann steht dort 3x = 12. Zum Schluss teilst du beide Seiten durch 3 und erhältst x = 4.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Man darf auf beiden Seiten einer Gleichung dieselbe Rechenoperation machen.",
+                "Man darf die 6 nur auf einer Seite wegnehmen.",
+                "Man muss zuerst x verdoppeln, bevor man rechnet."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [
+              "Du sollst die Verbform in der Vergangenheit bilden.",
+              "Es geht um die einfache Vergangenheit im Englischen.",
+              "Denk an die besondere Vergangenheitsform von „go“."
+            ],
+            "worked_solution": "Suche die einfache Vergangenheit von „go“. Bei diesem Verb ist die Form unregelmäßig. Im Satz steht dann die Vergangenheitsform anstelle des Grundverbs.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Unregelmäßige Verben haben eigene Vergangenheitsformen.",
+                "Man hängt bei jedem Verb einfach -ed an.",
+                "Im Englischen bleibt das Verb in der Vergangenheit immer gleich."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [
+              "Gesucht ist der Name eines Teils vom Bruch.",
+              "Denk an die Bezeichnung für die Zahl unten im Bruch.",
+              "Überlege, wie man den unteren Teil eines Bruchs nennt."
+            ],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 3,
+        "attempts": 1,
+        "start": 9278.006042,
+        "end": 11894.177917,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "low",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 483,
+          "thoughtTokens": 61,
+          "cachedTokens": 1280,
+          "costMicros": 3916,
+          "latencyMs": 2616
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 9276.856334,
+        "end": 11897.98375,
+        "stage": "hints-eval",
+        "round": 3,
+        "status": "ok",
+        "firstMs": 2621,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 2621,
+        "split": {
+          "db": 2.991041999999652,
+          "model": 2616.159834,
+          "other": 1.976539999999659
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Gleichnamig machen: $2/4 + 1/4$"
+            ],
+            "worked_solution": "Bringe beide Brüche auf den gleichen Nenner. Dann kannst du die Zähler addieren: aus den beiden Brüchen wird ein gemeinsamer Bruch. Danach kürzt du, falls möglich, und liest das Ergebnis ab.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Brüche mit gleichem Nenner kann man direkt über die Zähler addieren.",
+                "Man multipliziert Zähler und Nenner immer miteinander.",
+                "Man addiert bei Brüchen nur die Nenner."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "1/2 + 1/4",
+                "note": "Ausgangsterm"
+              },
+              {
+                "line": "2/4 + 1/4",
+                "note": "Gleichnamig machen"
+              },
+              {
+                "line": "3/4",
+                "note": "Zähler addieren"
+              }
+            ]
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe auf beiden Seiten 6 ab. Dann bleibt eine Gleichung mit 3x übrig. Teile anschließend beide Seiten durch 3, um x allein zu erhalten.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Auf beiden Seiten muss dieselbe Operation gemacht werden.",
+                "Man darf die 6 nur links wegnehmen.",
+                "Man teilt zuerst durch 6 und dann zieht man 3 ab."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 4,
+        "attempts": 1,
+        "start": 11906.085042,
+        "end": 14360.25275,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "low",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 512,
+          "thoughtTokens": 61,
+          "cachedTokens": 1280,
+          "costMicros": 4059,
+          "latencyMs": 2454
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 11904.825084,
+        "end": 14364.499042,
+        "stage": "hints-eval",
+        "round": 4,
+        "status": "ok",
+        "firstMs": 2460,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 2460,
+        "split": {
+          "db": 3.306957999997394,
+          "model": 2454.1504999999997,
+          "other": 2.21650000000227
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Welche Summe aus zwei Brüchen soll berechnet werden?",
+              "Denk an einen gemeinsamen Nenner, damit du die Brüche addieren kannst.",
+              "Erweitere beide Brüche so, dass sie denselben Nenner haben."
+            ],
+            "worked_solution": "Erweitere $\\frac{1}{2}$ und $\\frac{1}{4}$ auf denselben Nenner, zum Beispiel 4. Dann kannst du die Zähler addieren. So erhältst du den Dezimalwert der Summe.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Brüche darf man erst mit gleichem Nenner addieren.",
+                "Man addiert einfach Zähler und Nenner getrennt.",
+                "Ein größerer Nenner macht den Bruch immer größer."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe zuerst 6 auf beiden Seiten der Gleichung ab. Dann bleibt $3x = 12$. Teile nun beide Seiten durch 3, damit du $x$ allein hast.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Man muss auf beiden Seiten dieselbe Operation machen.",
+                "Man addiert 6, um das Minus rückgängig zu machen.",
+                "Man teilt zuerst durch 6 und danach durch 3."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 5,
+        "attempts": 1,
+        "start": 14372.469709,
+        "end": 17178.860459,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "low",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 500,
+          "thoughtTokens": 115,
+          "cachedTokens": 1280,
+          "costMicros": 4267,
+          "latencyMs": 2806
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 14371.28725,
+        "end": 17181.780084,
+        "stage": "hints-eval",
+        "round": 5,
+        "status": "ok",
+        "firstMs": 2810,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 2810,
+        "split": {
+          "db": 2.389251000000513,
+          "model": 2806.3814580000017,
+          "other": 1.7221250000002328
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Add the two Brüche.",
+              "Du brauchst einen gemeinsamen Nenner und dann vergleichst du die Zähler.",
+              "Schreibe einen der beiden Brüche erst mit Nenner 4 um."
+            ],
+            "worked_solution": "Bringe beide Brüche auf den gleichen Nenner. Dann addierst du nur die Zähler und behältst den Nenner bei. Zum Schluss kannst du das Ergebnis auch als Dezimalzahl schreiben.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Bei gleichen Nennern werden die Zähler addiert.",
+                "Man addiert immer auch die Nenner miteinander.",
+                "Man darf nur dann addieren, wenn die Nenner verschieden sind."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Zuerst ziehst du auf beiden Seiten 6 ab. Dann bleibt nur noch der Term mit x übrig. Danach teilst du durch 3, damit x allein steht.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Man macht auf beiden Seiten dieselbe Umkehroperation.",
+                "Man darf nur die 18 durch 3 teilen.",
+                "Man rechnet zuerst 3 + 6 = 9 und setzt dann x ein."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "budget",
+        "charged": 1.311385
+      }
+    ]
+  },
+  {
+    "variant": "hints-medium",
+    "records": [
+      {
+        "type": "setup",
+        "at": "2026-10-24T14:39:37.652Z",
+        "head": "187106266d14c564214de1a901bb507d9ff4cb75",
+        "node": "v22.23.3",
+        "endpoint": "https://eu.api.openai.com/v1",
+        "alreadySpent": 1.311385
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 1,
+        "attempts": 1,
+        "start": 844.9535,
+        "end": 9822.576208,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "medium",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 593,
+          "thoughtTokens": 1676,
+          "cachedTokens": 0,
+          "costMicros": 12455,
+          "latencyMs": 8977
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 841.936208,
+        "end": 9832.372,
+        "stage": "hints-eval",
+        "round": 1,
+        "status": "ok",
+        "firstMs": 8990,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 8990,
+        "split": {
+          "db": 4.679539999996678,
+          "model": 8977.520584,
+          "other": 8.235668000002761
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Was ist die Summe von zwei Brüchen mit verschiedenen Nennern?",
+              "Mach die Brüche zuerst gleichnamig.",
+              "Erweitere auf einen gemeinsamen Nenner und addiere dann die Zähler."
+            ],
+            "worked_solution": "Bringe beide Brüche auf denselben Nenner. Dann kannst du die Zähler addieren. Zum Schluss liest du das Ergebnis als Dezimalzahl ab: 0.75.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Brüche werden erst gleichnamig gemacht, dann werden die Zähler addiert.",
+                "Man addiert immer nur die Nenner miteinander.",
+                "Zähler und Nenner werden einfach getrennt addiert."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe auf beiden Seiten 6 ab. Dann bleibt 3x = 12. Teile beide Seiten durch 3. So erhältst du x = 4.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Man führt auf beiden Seiten dieselbe Rechenoperation aus.",
+                "Man darf die 6 einfach auf die andere Seite bringen und das Vorzeichen ignorieren.",
+                "Man teilt am Anfang sofort durch 3."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Aufgabe"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [
+              "Gesucht ist die Vergangenheit von einem unregelmäßigen Verb.",
+              "Bei diesem Verb hilft keine -ed-Form.",
+              "Denke an die besondere Vergangenheitsform von go."
+            ],
+            "worked_solution": "Im Simple Past wird das unregelmäßige Verb go zu went. Der Satz lautet dann: Yesterday she went to school.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Im Simple Past haben unregelmäßige Verben eigene Formen.",
+                "Man hängt einfach immer -ed an jedes Verb.",
+                "Nach yesterday steht das Verb immer im Infinitiv."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 2,
+        "attempts": 1,
+        "start": 9841.478458,
+        "end": 20785.405125,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "medium",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 730,
+          "thoughtTokens": 1921,
+          "cachedTokens": 1280,
+          "costMicros": 14346,
+          "latencyMs": 10944
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 9840.1545,
+        "end": 20797.037666,
+        "stage": "hints-eval",
+        "round": 2,
+        "status": "ok",
+        "firstMs": 10957,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 10957,
+        "split": {
+          "db": 7.635206000000835,
+          "model": 10943.911083999998,
+          "other": 5.336876000001212
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Welche Zahl soll berechnet werden?",
+              "Brüche macht man zuerst mit gleichem Nenner vergleichbar.",
+              "Beginne damit, beide Brüche gleichnamig zu schreiben."
+            ],
+            "worked_solution": "Schreibe die Brüche mit dem gleichen Nenner. Dann addierst du nur die Zähler und lässt den Nenner gleich. Am Ende kannst du das Ergebnis noch als Dezimalzahl angeben.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Brüche mit gleichem Nenner werden über die Zähler addiert.",
+                "Man addiert immer Zähler und Nenner getrennt.",
+                "Für die Summe muss man erst den kleineren Bruch streichen."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [
+              "Welcher Fall wird im Satz gefragt?",
+              "Das Verb helfen braucht ein Objekt in einem bestimmten Fall.",
+              "Frag dich, zu welchem Fragewort das Wort nach dem Verb passt."
+            ],
+            "worked_solution": "Im Satz steht das Wort nach dem Verb helfen. Dieses Verb verlangt ein Dativobjekt. Deshalb ist „dem Kind“ im Dativ.",
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe auf beiden Seiten 6 ab, damit der Term mit x allein steht. Dann bleibt eine einfachere Gleichung übrig. Zum Schluss teilst du durch 3, damit x alleine ist.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Auf beiden Seiten wird dieselbe Zahl abgezogen oder addiert.",
+                "Man teilt zuerst die 18 durch 6.",
+                "Bei Gleichungen darf man nur auf einer Seite rechnen."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [
+              "Welche Zeit zeigt das Wort „Yesterday“ an?",
+              "Das Verb ist unregelmäßig, also brauchst du seine eigene Vergangenheitsform.",
+              "Ändere zuerst nur das Verb, nicht den Rest des Satzes."
+            ],
+            "worked_solution": "Das Wort „Yesterday“ zeigt die einfache Vergangenheit an. Das Verb go ist unregelmäßig und bildet die Vergangenheitsform nicht mit -ed. Setze deshalb die passende Past-Form in den Satz ein.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Unregelmäßige Verben haben eigene Vergangenheitsformen.",
+                "Vergangenheit bildet man immer mit 'will'.",
+                "Bei 'yesterday' bleibt das Verb in der Grundform."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 3,
+        "attempts": 1,
+        "start": 20805.674708,
+        "end": 32695.827875,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "medium",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 668,
+          "thoughtTokens": 2231,
+          "cachedTokens": 1280,
+          "costMicros": 15573,
+          "latencyMs": 11890
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 20804.47925,
+        "end": 32705.825583,
+        "stage": "hints-eval",
+        "round": 3,
+        "status": "ok",
+        "firstMs": 11901,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 11901,
+        "split": {
+          "db": 6.668043000001489,
+          "model": 11890.138959,
+          "other": 4.539330999999947
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Hier sollst du zwei Brüche addieren.",
+              "Dazu brauchen beide Brüche zuerst denselben Nenner.",
+              "Wandle den kleineren Nenner so um, dass beide gleich sind, und addiere dann die Zähler."
+            ],
+            "worked_solution": "Bring beide Brüche auf denselben Nenner. Dann kannst du die Zähler addieren und den Nenner beibehalten. Das Ergebnis ist $0.75$.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Brüche mit verschiedenen Nennern macht man zuerst gleichnamig.",
+                "Man addiert Zähler und Nenner jeweils getrennt.",
+                "Man darf die Brüche einfach als ganze Zahlen zusammenzählen."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [
+              "Gesucht ist der Fall von 'dem Kind'.",
+              "Achte auf das Verb: Manche Verben verlangen einen bestimmten Fall.",
+              "Schau auf die Form des Artikels vor 'Kind' und verbinde sie mit dem Verb."
+            ],
+            "worked_solution": "Im Satz steht 'dem Kind' nach dem Verb 'helfen'. Dieses Verb verlangt einen bestimmten Fall für die Person, der geholfen wird. Deshalb ist die richtige Lösung der Dativ.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Das Verb 'helfen' verlangt den indirekten Fall für die Person.",
+                "Nach dem Verb steht immer der Akkusativ.",
+                "Nach 'dem' steht automatisch der Nominativ."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "Minus 6: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe auf beiden Seiten $6$ ab. Dann bleibt $3x = 12$. Teile nun beide Seiten durch $3$, dann erhältst du $x = 4$.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Gleiche Operationen auf beiden Seiten halten die Gleichung wahr.",
+                "Man darf nur auf einer Seite etwas ändern.",
+                "Man teilt am Anfang immer durch die größte Zahl."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "Minus 6"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [
+              "Gesucht ist die einfache Vergangenheit des Verbs.",
+              "Ein unregelmäßiges Verb verändert seine Form oft ganz anders als regelmäßige Verben.",
+              "Denk an die besondere Vergangenheitsform von 'go'."
+            ],
+            "worked_solution": "Das Verb 'go' ist unregelmäßig. Deshalb bildet man die einfache Vergangenheit nicht mit -ed. Die passende Form lautet 'went'.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Unregelmäßige Verben haben eigene Vergangenheitsformen.",
+                "Im Past Simple bekommt jedes Verb einfach -ed.",
+                "Die Vergangenheitsform bleibt immer unverändert."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 4,
+        "attempts": 1,
+        "start": 32715.849083,
+        "end": 42564.355208,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "medium",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 666,
+          "thoughtTokens": 1992,
+          "cachedTokens": 1280,
+          "costMicros": 14380,
+          "latencyMs": 9848
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 32714.488958,
+        "end": 42577.063,
+        "stage": "hints-eval",
+        "round": 4,
+        "status": "ok",
+        "firstMs": 9863,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 9863,
+        "split": {
+          "db": 8.321415000002162,
+          "model": 9848.486667000001,
+          "other": 5.765959999996994
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Was soll berechnet werden? Addiere die beiden Brüche.",
+              "Brüche kannst du erst zusammenzählen, wenn sie denselben Nenner haben.",
+              "Erweitere einen der Brüche so, dass beide unten gleich sind."
+            ],
+            "worked_solution": "Suche zuerst einen gemeinsamen Nenner, hier ist 4 praktisch. Dazu schreibst du \\frac{1}{2} als \\frac{2}{4}. Dann kannst du die Zähler addieren: \\frac{2}{4} + \\frac{1}{4} = \\frac{3}{4}. Das ist als Dezimalzahl 0.75.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Beide Brüche werden mit gleichem Nenner verglichen.",
+                "Man addiert nur die Zähler und lässt die Nenner getrennt.",
+                "Man multipliziert Zähler und Nenner einfach zusammen."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe zuerst 6 auf beiden Seiten ab. Dann bleibt 3x = 12. Jetzt teilst du beide Seiten durch 3. So erhältst du x = 4.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Man zieht auf beiden Seiten dieselbe Zahl ab.",
+                "Man darf das Pluszeichen einfach löschen.",
+                "Man rechnet nur auf einer Seite der Gleichung."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "Durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [
+              "Welche Verbform passt in die Vergangenheit?",
+              "Das Verb ist unregelmäßig, also hilft nicht nur -ed.",
+              "Überlege, wie 'go' in der einfachen Vergangenheit heißt."
+            ],
+            "worked_solution": "Im Satz steht 'Yesterday', also brauchst du die einfache Vergangenheit. 'Go' ist ein unregelmäßiges Verb und ändert seine Form. Deshalb verwendest du die Pastform von 'go' in diesem Satz.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Unregelmäßige Verben haben eigene Vergangenheitsformen.",
+                "Nach 'yesterday' bleibt das Verb in der Grundform.",
+                "Man bildet die Vergangenheit immer mit 'will'."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "call",
+        "purpose": "hints",
+        "stage": "hints-eval",
+        "round": 5,
+        "attempts": 1,
+        "start": 42586.267583,
+        "end": 58207.015458,
+        "first": null,
+        "systemChars": 2554,
+        "schemaChars": 2836,
+        "properties": 10,
+        "textChars": 513,
+        "thinking": "medium",
+        "usage": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "inputTokens": 1482,
+          "outputTokens": 760,
+          "thoughtTokens": 3440,
+          "cachedTokens": 1280,
+          "costMicros": 22013,
+          "latencyMs": 15621
+        },
+        "error": null
+      },
+      {
+        "type": "endpoint",
+        "start": 42585.086083,
+        "end": 58220.686291,
+        "stage": "hints-eval",
+        "round": 5,
+        "status": "ok",
+        "firstMs": 15636,
+        "sentenceMs": null,
+        "readyMs": null,
+        "replyCompleteMs": null,
+        "totalMs": 15636,
+        "split": {
+          "db": 9.24583300001541,
+          "model": 15620.731,
+          "other": 5.623374999981024
+        },
+        "calls": [
+          "hints"
+        ],
+        "result": [
+          {
+            "prompt": "Berechne $\\frac{1}{2} + \\frac{1}{4}$.",
+            "answer": "0.75",
+            "hints": [
+              "Gesucht ist der Wert der ganzen Summe.",
+              "Zum Addieren von Brüchen hilft ein gemeinsamer Nenner.",
+              "Mach die Brüche zuerst gleichnamig."
+            ],
+            "worked_solution": "Zuerst macht man die Brüche gleichnamig. Aus \\frac{1}{2} wird \\frac{2}{4}. Dann addiert man die Zähler: \\frac{2}{4} + \\frac{1}{4} = \\frac{3}{4} = 0.75.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Brüche addiert man mit gleichem Nenner.",
+                "Zähler und Nenner werden getrennt addiert.",
+                "Beim Addieren werden die Nenner einfach multipliziert."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Bestimme den Fall von „dem Kind“ im Satz „Ich helfe dem Kind.“",
+            "answer": "Dativ",
+            "hints": [
+              "Gesucht ist der Fall von „dem Kind“.",
+              "Das Verb „helfen“ verlangt im Deutschen einen bestimmten Fall.",
+              "Achte auf den Fall, der nach „helfen“ verwendet wird."
+            ],
+            "worked_solution": "„dem Kind“ ist das Objekt zu „helfen“. Das Verb „helfen“ steht im Deutschen mit dem Dativ. Deshalb ist der Fall Dativ.",
+            "why": null,
+            "worked_steps": null
+          },
+          {
+            "prompt": "Löse die Gleichung $3x + 6 = 18$.",
+            "answer": "4",
+            "hints": [
+              "6 abziehen: $3x = 12$"
+            ],
+            "worked_solution": "Ziehe zuerst auf beiden Seiten 6 ab. Dann bleibt 3x = 12. Teile nun durch 3, damit x allein steht. So erhältst du x = 4.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Auf beiden Seiten darf man dieselbe Zahl abziehen.",
+                "Man darf nur die linke Seite verändern.",
+                "Der Faktor vor x wird zuerst addiert."
+              ]
+            },
+            "worked_steps": [
+              {
+                "line": "3x + 6 = 18",
+                "note": "Ausgangsgleichung"
+              },
+              {
+                "line": "3x = 12",
+                "note": "6 abziehen"
+              },
+              {
+                "line": "x = 4",
+                "note": "durch 3 teilen"
+              }
+            ]
+          },
+          {
+            "prompt": "Setze das Verb in die einfache Vergangenheit: Yesterday she (go) to school.",
+            "answer": "went",
+            "hints": [
+              "Gesucht ist die Verbform in der Vergangenheit.",
+              "Bei unregelmäßigen Verben gibt es oft eine eigene Form.",
+              "Denk an die Vergangenheit von „go“."
+            ],
+            "worked_solution": "Das Verb „go“ ist unregelmäßig. Deshalb wird die einfache Vergangenheit nicht mit -ed gebildet. Die richtige Form im Satz lautet „went“.",
+            "why": {
+              "correct": 0,
+              "reasons": [
+                "Unregelmäßige Verben haben eigene Vergangenheitsformen.",
+                "Im Simple Past hängt man immer -ed an.",
+                "Bei englischen Verben bleibt die Grundform immer gleich."
+              ]
+            },
+            "worked_steps": null
+          },
+          {
+            "prompt": "Wie heißt die Zahl unter dem Bruchstrich?",
+            "answer": "Nenner",
+            "hints": [],
+            "worked_solution": null,
+            "why": null,
+            "worked_steps": null
+          }
+        ]
+      },
+      {
+        "type": "budget",
+        "charged": 1.3901520000000003
+      }
+    ]
+  }
+]
