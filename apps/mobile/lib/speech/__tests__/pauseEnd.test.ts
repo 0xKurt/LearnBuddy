@@ -17,6 +17,13 @@ describe('the end of her turn on the recording path (issue #523)', () => {
     expect(p.observe(0.02, 3700)).toBe(true);
   });
 
+  it('ends after a quiet sentence above room tone, not only a loud voice', () => {
+    const p = new PauseEnd();
+    expect(run(p, 0.2, 1000, 1000)).toBe(false);
+    expect(run(p, 0.02, 2100, 1500)).toBe(false);
+    expect(p.observe(0.02, 3700)).toBe(true);
+  });
+
   it('a loud room that never falls quiet never ends it: the tap is the way', () => {
     const p = new PauseEnd();
     expect(run(p, 0.6, 1000, 1000)).toBe(false);
@@ -28,16 +35,32 @@ describe('the end of her turn on the recording path (issue #523)', () => {
     expect(run(p, 0, 1000, 5000)).toBe(false);
   });
 
-  it('a word too short to count does not arm the pause', () => {
+  it('a brief click does not arm the pause', () => {
     const p = new PauseEnd();
-    expect(run(p, 0.6, 1000, 300)).toBe(false);
+    expect(run(p, 0.6, 1000, 100)).toBe(false);
     expect(run(p, 0, 1400, 3000)).toBe(false);
+  });
+
+  it('ends a short quiet sentence captured on the POCO without waiting for a tap', () => {
+    const p = new PauseEnd();
+    // First 0.8 s of the device recording: a quiet 1.37 s spoken fixture, sampled at ~133 ms.
+    for (const [at, level] of [
+      [0, 0],
+      [135, 0],
+      [268, 0.172],
+      [401, 0.2],
+      [535, 0.117],
+      [669, 0.181],
+    ] as const)
+      expect(p.observe(level, 1000 + at)).toBe(false);
+    expect(run(p, 0.02, 1803, 1500)).toBe(false);
+    expect(p.observe(0.02, 3403)).toBe(true);
   });
 
   it('a stalled poll is not counted as speech', () => {
     const p = new PauseEnd();
     p.observe(0.6, 1000);
-    // One reading two seconds later counts as at most 400 ms of speech.
+    // One reading two seconds later cannot count as enough speech to arm the pause.
     p.observe(0.6, 3000);
     expect(run(p, 0, 3100, 3000)).toBe(false);
   });

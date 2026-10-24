@@ -6152,8 +6152,10 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (`readsIn`, `speech/gateway.ts` — the same test a listening text and a Diktat use). Without it
   the setup leaves the voice step out and the settings leave the group out; nothing is guessed
   from a sample that happened to sound like the phone. Audio is
-  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). Every sentence
-  asked for is counted in `speech_calls` (#682): outcome (made, her cache, the shared sample cache,
+  cached per learner for 24 h (`speech_cache`, keyed by a hash, purged by the tick). Native PCM
+  opens the progressive response body; cached WAV/MP3 reads the complete file directly. Expo
+  must not open both readers for one response, or the cached file loses its bytes (#932). Every
+  sentence asked for is counted in `speech_calls` (#682): outcome (made, her cache, the shared sample cache,
   error), characters, latency and the gateway's list-price cost (`microsPerCharacter`), never the
   text; TTS characters per day are one query on it. The app
   (`lib/speech/listen.ts`) fetches the next sentence while one plays (`expo-audio`) and reads a
@@ -6257,9 +6259,11 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   read-along of `components/buddy/ReadAlongBubble.tsx`) in place of that line, and a tapped offer
   keeps the voice on (issue #40). On the phone listening ends
   by itself when she pauses: the on-device recogniser (`untilPause`), or on the recording path a
-  pause of 1.6 s after clear speech, measured from the recorder's level (`lib/speech/pauseEnd.ts`,
-  issue #523) — the status line then says so instead of asking for a tap. The browser's recorder measures
-  no level, so there she taps the mic when done (`voice.endsByItself`).
+  pause of 1.6 s after at least 250 ms above the shared room-tone boundary, measured from
+  the recorder's level (`lib/speech/pauseEnd.ts`, issues #523/#932). Quiet syllables count too;
+  a single click or stalled meter poll cannot arm the detector. The status line then says so
+  instead of asking for a tap. The browser's recorder measures no level, so there she taps
+  the mic when done (`voice.endsByItself`).
   Tapping the mic — or Buddy himself — while he speaks interrupts him and listens at once.
   **She can also just talk over him** (barge-in, issue #35), in the browser and on Android:
   while he speaks (and the mic may open by itself — no screen reader) an ear watches the mic's

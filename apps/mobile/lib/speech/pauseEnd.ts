@@ -6,15 +6,14 @@
 
 import { ROOM_TONE } from './level.js';
 
-/** levelFromDb: ~0.28 is clear speech, ~0.12 is room tone (lib/speech/level.ts). */
-const SPEECH = 0.28;
+/** Use the recorder's existing room-tone boundary, including quieter syllables (#932). */
 const ROOM = ROOM_TONE;
 /** She must have spoken this long before a pause can end her turn. */
-const HEARD_MS = 500;
+const HEARD_MS = 250;
 /** A pause this long ends it. */
 const PAUSE_MS = 1600;
 /** A gap between two readings counts at most this much (a stalled poll is not speech). */
-const MAX_STEP_MS = 400;
+const MAX_STEP_MS = 200;
 
 export class PauseEnd {
   private heardMs = 0;
@@ -25,12 +24,8 @@ export class PauseEnd {
   observe(level: number, now: number): boolean {
     const dt = this.lastAt ? Math.min(MAX_STEP_MS, now - this.lastAt) : 0;
     this.lastAt = now;
-    if (level >= SPEECH) {
-      this.heardMs += dt;
-      this.quietSince = null;
-      return false;
-    }
     if (level > ROOM) {
+      this.heardMs += dt;
       this.quietSince = null;
       return false;
     }
