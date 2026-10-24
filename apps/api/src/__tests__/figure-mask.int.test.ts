@@ -71,7 +71,10 @@ describe.skipIf(!dbReady)('no figure on a vocab or speak card (#375)', () => {
     const res = await l.api.post<SessionView>('/practice/topic', {
       client_request_id: randomUUID(),
       kind,
-      text: 'Französisch und Brüche üben',
+      text:
+        kind === 'vocab'
+          ? VOCAB.map((i) => `${i.prompt} – ${i.answer}`).join('\n')
+          : 'Französisch und Brüche üben',
     });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     await env.flushBackground();

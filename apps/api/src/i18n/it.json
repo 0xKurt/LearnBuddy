@@ -551,6 +551,7 @@
       }
     },
     "not_usable": "Non sono riuscito a preparare questo esercizio.",
+    "vocab_preparing": "Sto preparando le tue parole da imparare.",
     "prepare_failed": "La preparazione non è riuscita. Puoi riprovare.",
     "pronunciation_passt": "Sembra corretto.",
     "pronunciation_fast": "Quasi — riascolta le parole segnate.",

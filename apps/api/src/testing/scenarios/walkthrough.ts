@@ -6,6 +6,7 @@
 // requires live verification in Claude Code session (stand-ins for the outside world; scripted model)
 
 // The browser has no Vitest setupFiles: install the same domain choice step here (#913).
+import { scriptTopicVocabulary } from './vocabulary.js';
 import '../domain.js';
 import type { ScriptedGateway } from '../fakes.js';
 import { scriptAsk } from './ask.js';
@@ -75,6 +76,7 @@ export function scriptWalkthrough(scripted: ScriptedGateway): void {
   // The gallery's own stops (#387), each keyed by a sentence nobody else types: code tasks (#262),
   // a talk and its rehearsal (#264), tasks with a table, a chart or a long source (#297) and an
   // explanation with a picture (#298).
+  scriptTopicVocabulary();
   scriptCode();
   scriptTalks();
   scriptTaskSubjects();

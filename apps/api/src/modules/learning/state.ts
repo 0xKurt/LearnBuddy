@@ -154,6 +154,7 @@ type StandingOffer = {
   material_id?: string | null;
   difficulty: DifficultyWish | null;
   direction: VocabDirection | null;
+  vocabulary?: OfferSummary['vocabulary'];
   /** A test she asked to sit with time: its minutes (issue #241); null without a clock. */
   minutes: TestMinutes | null;
   /** The kinds of picture she asked it to show (#724); empty when none. */
@@ -242,6 +243,7 @@ export async function loadStandingOffers(
       material_id?: string | null;
       difficulty?: DifficultyWish | null;
       direction?: VocabDirection | null;
+      vocabulary?: OfferSummary['vocabulary'];
       minutes?: TestMinutes | null;
       figures?: ModelFigureType[];
     };
@@ -271,6 +273,7 @@ export async function loadStandingOffers(
     material_id: r.result.material_id ?? null,
     difficulty: r.result.difficulty ?? null,
     direction: r.result.direction ?? null,
+    vocabulary: r.result.vocabulary ?? null,
     minutes: r.result.minutes ?? null,
     figures: r.result.figures ?? [],
     created_at: r.created_at,

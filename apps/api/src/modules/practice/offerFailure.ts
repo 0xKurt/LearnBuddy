@@ -20,7 +20,9 @@ export async function recordOfferFailure(
     // Same fence/order as a turn: neither the card nor its words change under a decision.
     await tx.query(`select 1 from buddy_settings where learner_id = $1 for update`, [learner.id]);
     const offer = await tx.maybeOne<{ decision_id: string }>(
-      `update buddy_actions set cannot_start_at = case when $3 then $4 else cannot_start_at end
+      `update buddy_actions set cannot_start_at = case when $3 then $4 else cannot_start_at end,
+              result = case when result->>'kind' = 'vocab'
+                then jsonb_set(result, '{preparation_failed}', 'true'::jsonb) else result end
         where id = $1 and learner_id = $2 and tool = 'offer_learning' and status = 'applied'
           and cannot_start_at is null
           and not exists (select 1 from practice_sessions

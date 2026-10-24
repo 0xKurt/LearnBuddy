@@ -551,6 +551,7 @@
       }
     },
     "not_usable": "Die Übung konnte ich leider nicht vorbereiten.",
+    "vocab_preparing": "Ich bereite deine Vokabeln vor.",
     "prepare_failed": "Die Vorbereitung hat gerade nicht geklappt. Du kannst es noch einmal versuchen.",
     "pronunciation_passt": "Das klingt passend.",
     "pronunciation_fast": "Fast — hör dir die markierten Wörter nochmal an.",

@@ -161,6 +161,9 @@ export const UnclearReport = z.object({
 });
 export type UnclearReport = z.infer<typeof UnclearReport>;
 
+// Generated reverse variants belong to topic vocabulary, not the sheet-reading schema.
+const ReadItem = ItemDraft.omit({ reverse_answers: true });
+
 export const ExtractionResult = z.object({
   is_learning_material: z.boolean(),
   readable: z.boolean(),
@@ -190,7 +193,7 @@ export const ExtractionResult = z.object({
     .string()
     .max(12000)
     .describe('Faithful transcription (Markdown), used to ground explanations'),
-  items: z.array(ItemDraft).max(ITEMS_PER_READING),
+  items: z.array(ReadItem).max(ITEMS_PER_READING),
   /**
    * Tasks whose answer is a shape, not a text: an order to find (#228), a table to fill in
    * (#230), links to make (#229). Checked by code before anything is stored
@@ -261,7 +264,7 @@ export type ExtractionResult = z.infer<typeof ExtractionResult>;
 
 /** How the answer is parsed: item by item, so one broken item costs only itself (H-14, H-15). */
 export const ExtractionParse = ExtractionResult.extend({
-  items: itemsOneByOne(ItemDraft, ITEMS_PER_READING),
+  items: itemsOneByOne(ReadItem, ITEMS_PER_READING),
   structured: itemsOneByOne(StructuredDraft, STRUCTURED_PER_READING),
   reading: itemsOneByOne(ReadingDraftParse, READINGS_PER_READING),
   part_tasks: itemsOneByOne(SheetPartTaskParse, PART_TASKS_PER_READING),
@@ -272,7 +275,7 @@ export const ExtractionParse = ExtractionResult.extend({
  * one there) — fewer tokens to write, less room to run on (live finding 2).
  */
 export const HomeworkExtraction = ExtractionResult.extend({
-  items: z.array(ItemDraft.omit({ worked_solution: true })).max(12),
+  items: z.array(ReadItem.omit({ worked_solution: true })).max(12),
   structured: z.array(StructuredDraftHomework).max(STRUCTURED_PER_READING).default([]),
   part_tasks: z.array(SheetPartTaskHomework).max(PART_TASKS_PER_READING).default([]),
   // Homework is helped task by task, as printed: a reading text there stays the questions she

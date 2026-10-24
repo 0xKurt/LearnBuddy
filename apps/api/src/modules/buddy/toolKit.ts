@@ -144,6 +144,8 @@ export type UndoSpec =
 
 export type ToolOutcome = {
   summary: ActionSummary;
+  /** A single-action confirmation whose factual wording is owned by the tool. */
+  reply?: string;
   undo: UndoSpec | null;
   /** Domain bookkeeping after the action has an id, inside the decision's transaction. */
   record?: (tx: Db, actionId: string) => Promise<void>;

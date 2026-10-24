@@ -192,12 +192,12 @@ type TurnHooks = {
     reply: string,
     learnerWords: readonly string[],
   ): Promise<string[]>;
-  /** After a decision was applied: work it starts in the background. */
+  /** After publication: background work, or awaited content with its persisted replacement reply. */
   applied(
     deps: Deps,
     learnerId: string,
     actions: ReadonlyArray<{ id: string; summary: ActionSummary }>,
-  ): void;
+  ): void | { text: string } | Promise<void | { text: string }>;
   /** A held-back message ends what runs in its mode, in the same transaction. */
   concern(tx: Db, learnerId: string, now: Date): Promise<void>;
 };

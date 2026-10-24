@@ -245,6 +245,13 @@ const [optionFirst, ...optionRest] = ModelFigure.options.filter(
 const OptionFigure = z.discriminatedUnion('type', [optionFirst!, ...optionRest]);
 
 export const ItemDraft = z.object({
+  reverse_answers: z
+    .array(z.string().trim().min(1).max(200))
+    .max(MAX_ACCEPTED)
+    .optional()
+    .describe(
+      'vocab: synonyms of prompt in prompt_lang ONLY, same meaning and singular/plural; preserve noun articles; never translations in lang',
+    ),
   kind: z
     .enum(['short', 'long', 'numeric', 'multiple_choice', 'formula', 'vocab', 'speak'])
     .describe(

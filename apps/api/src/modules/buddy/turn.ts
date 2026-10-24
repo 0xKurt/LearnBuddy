@@ -444,10 +444,18 @@ async function decideTurn(
       // Stored now, so it may be read aloud now (#644, rule 5): an answer that changed
       // something no longer waits for the home to be built, sent and read by the phone before
       // its first sound. The fixed help answer is not streamed (rule 18): it arrives whole.
-      if (result.replyMessageId && !parsed.data.concern && streamedWhole !== round)
-        onReply?.(round, { text: reply.text, speakable: true, done: true }, 'applied');
-      // What Buddy just offered is prepared while she reads his reply (issue #48).
-      hooks.applied(deps, learner.id, result.actions);
+      // A domain may complete requested content before returning its authoritative reply.
+      const preparedReply = await hooks.applied(deps, learner.id, result.actions);
+      if (
+        result.replyMessageId &&
+        !parsed.data.concern &&
+        (streamedWhole !== round || preparedReply)
+      )
+        onReply?.(
+          round,
+          { text: preparedReply?.text ?? reply.text, speakable: true, done: true },
+          'applied',
+        );
       return { status: 'done', errorCode: null };
     }
     // Another runner took this message over (e.g. recovery after a timeout): report where it stands.

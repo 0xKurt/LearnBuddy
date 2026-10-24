@@ -1,7 +1,7 @@
 // Learning without a photo: something the learner named or typed becomes a
 // session (docs/architecture.md §Practice).
 //   practice — questions on a topic (Buddy's own, marked as such)
-//   vocab    — a typed vocabulary list, asked in both directions
+//   vocab    — typed pairs or topic words, validated for chat and practice
 //   speak    — words or sentences to say aloud
 //   listen   — a text she HEARS, with questions about it (Hörverstehen, issue #210)
 //   spelling_dictation — a Diktat: words or sentences read aloud that she types (issue #242)
@@ -24,6 +24,7 @@ import { learnerTimezone } from '../../lib/zone.js';
 import { callModel, releaseCall, type Reservation } from '../../llm/call.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import { firstQuestions } from './firstQuestions.js';
+import { publishVocabulary, vocabularyItems, requestForOffer } from './vocabulary.js';
 import { bumpContext } from '../buddy/plan.js';
 import { requireSafeText } from '../buddy/distress.js';
 import { findOrCreateSubject } from '../learning/state.js';
@@ -204,7 +205,7 @@ export const REST_WINDOW_MS = 25_000;
 
 const TASK: Record<StartTopicRequest['kind'], string> = {
   practice: `Write 6–10 PRACTICE questions on the topic the learner named, at their grade, easy to harder, mixing kinds sensibly.`,
-  vocab: `The learner TYPED A VOCABULARY LIST. Turn every pair into one "vocab" item exactly as typed (prompt = the foreign word/phrase incl. article, answer = the translation, prompt_lang / lang = their ISO languages; every other translation a teacher would accept in accepted_answers (synonyms, other spellings; with the article for nouns; up to ${MAX_ACCEPTED}) — answers are checked against this list without a model). Do not add words. Up to 25 pairs. If there are no pairs, usable = false.`,
+  vocab: `Prepare vocabulary pairs only. VOCABULARY source typed: copy supplied pairs exactly, never add words; topic: choose useful words on the requested topic at her grade. Write exactly count distinct pairs, with prompt_lang/lang matching the request. Without VOCABULARY, only copy typed pairs (up to 25). For topic nouns include articles wherever they teach grammatical gender. For typed pairs preserve the supplied spelling. Every prompt is in prompt_lang, every answer and accepted_answers entry in lang; reverse_answers contains ONLY equivalent translations in prompt_lang, never lang. Use accurate meanings and natural synonyms (up to ${MAX_ACCEPTED} each); omit doubtful variants and preserve grammatical number (singular/plural). Before returning check EACH pair and BOTH variant lists for language, gender/article and meaning. Check variants against their OWN pair, never a neighbouring item; use [] without a confident synonym. Direction changes which stored side is asked, never these fields. No cloze tasks.`,
   listen: LISTEN_RULES,
   spelling_dictation: DICTATION_RULES,
   teach_back: TEACH_BACK_RULES,
@@ -505,6 +506,7 @@ async function generateSet(
                 ? `SHEET TEXT (${SHEET_USE[input.kind]}):\n${dictation.text}`
                 : null,
               gaps,
+              input.vocabulary ? `VOCABULARY: ${JSON.stringify(input.vocabulary)}` : null,
               `LEARNER'S TEXT:\n${input.text}`,
             ]
               .filter(Boolean)
@@ -550,10 +552,9 @@ async function generateSet(
         // A streamed run must be finished inside the window the run waits for it, or it would
         // still be writing after the run stopped saying "more is coming" (issue #220).
         timeoutMs: onPartial ? REST_WINDOW_MS : 60_000,
-        // No thinking (#670, docs/decisions/thinking-2026-10.md): measured on 3.6 Flash, a 2048
-        // budget gave no more careful questions (26/28 vs 31/31 without finding) and its
-        // thought tokens delay the first question she sees.
-        thinking: 'off',
+        // General tasks keep the no-thinking result of #670. Vocabulary gets a bounded
+        // review budget: the #940 live eval found wrong-language variants without it.
+        thinking: input.kind === 'vocab' ? 'medium' : 'off',
         onPartial,
         // Which set went out, in `llm_calls` (#652): the whole schema, a choice, or the fallback.
         trace: { schemaVariant: narrowed.how },
@@ -648,6 +649,7 @@ function preparedFrom(
     ),
     input.difficulty,
   );
+  if (input.kind === 'vocab') items = vocabularyItems(items, input);
   // Homework is what the learner typed — tasks the model added are dropped.
   if (input.kind === 'help') items = items.filter((i) => fromLearnerText(i.prompt, input.text));
   if (input.kind === 'test' && !ownSheets) {
@@ -760,6 +762,7 @@ async function prepareTopic(
       reason: 'time_only_for_tests',
     });
 
+  input = await requestForOffer(deps.db, learner.id, input);
   // The same request again (her tap on a card already prepared): that run, never a second one.
   const existing = await runOfRequest(deps.db, learner.id, input.client_request_id, deps.now());
   if (existing) return existing;
@@ -951,26 +954,27 @@ async function store(
     origin: 'typed' | 'buddy' | null;
   },
 ): Promise<string> {
-  if (
-    !set.usable ||
-    prepared.items.length +
-      prepared.bars.length +
-      prepared.listening.length +
-      prepared.staffs.length +
-      prepared.codes.length +
-      prepared.structured.length +
-      prepared.dictation.length +
-      prepared.teachBack.length +
-      prepared.reading.length +
-      prepared.partTasks.length +
-      prepared.essays.length ===
-      0
-  ) {
+  const all = [
+    ...prepared.items,
+    ...prepared.structured,
+    ...prepared.partTasks,
+    ...prepared.bars,
+    ...prepared.listening,
+    ...prepared.staffs,
+    ...prepared.codes,
+    ...prepared.dictation,
+    ...prepared.teachBack,
+    ...prepared.reading,
+    ...prepared.essays,
+  ];
+  if (!set.usable || all.length === 0) {
     throw new AppError('invalid_input', 'Nothing to learn from this', { reason: 'not_usable' });
   }
   const { now, goalId, pendingUntil } = opts;
   try {
     return await deps.db.tx(async (tx) => {
+      // Same lock order as Buddy: serialize card reuse and publish behind the context fence.
+      await tx.query('select 1 from buddy_settings where learner_id = $1 for update', [learner.id]);
       const subjectId = set.subject
         ? (await findOrCreateSubject(tx, learner.id, set.subject.name, set.subject.kind)).id
         : null;
@@ -980,24 +984,21 @@ async function store(
           learnerId: learner.id,
           materialId: null,
           subjectId,
-          origin: opts.origin ?? ORIGIN[input.kind],
+          origin:
+            opts.origin ?? (input.vocabulary?.source === 'topic' ? 'buddy' : ORIGIN[input.kind]),
         },
-        [
-          ...prepared.items,
-          ...prepared.structured,
-          ...prepared.partTasks,
-          ...prepared.bars,
-          ...prepared.listening,
-          ...prepared.staffs,
-          ...prepared.codes,
-          ...prepared.dictation,
-          ...prepared.teachBack,
-          ...prepared.reading,
-          ...prepared.essays,
-        ],
+        all,
         // Both directions are stored either way; this asks the one she wanted (issue #113).
         input.direction ?? null,
+        input.kind === 'vocab',
       );
+      if (
+        input.kind === 'vocab' &&
+        itemIds.length !== prepared.items.length * (input.direction ? 1 : 2)
+      )
+        throw new AppError('invalid_input', 'Vocabulary contains repeated cards', {
+          reason: 'not_usable',
+        });
       const id = await createSession(
         tx,
         learner.id,
@@ -1014,6 +1015,7 @@ async function store(
         },
         now,
       );
+      if (input.kind === 'vocab') await publishVocabulary(tx, learner.id, input, prepared.items);
       if (input.kind === 'practice' || input.kind === 'test') {
         await tx.query('update practice_sessions set hints_on_open = true where id = $1', [id]);
       }
