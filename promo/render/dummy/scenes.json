@@ -1,0 +1,25 @@
+{
+  "fps": 30,
+  "recording": "app.webm",
+  "languages": {
+    "de": {
+      "recording": "app.webm",
+      "intro": { "title": "LearnBuddy", "sub": "Dein Lernbuddy, der mitdenkt.", "audio": "audio/de-intro.wav" },
+      "scenes": [
+        { "n": 1, "headline": "Eine Arbeit steht an", "caption": "Buddy trägt die Arbeit ein – mit „Rückgängig“.", "audio": "audio/de-s1.wav", "fromMs": 400, "toMs": 4600 },
+        { "n": 2, "headline": "Üben mit deinem Arbeitsblatt", "caption": "Aufgaben aus deinem eigenen Material – Schritt für Schritt erklärt, bis es wirklich sitzt.", "audio": ["audio/de-s2a.mp3", "audio/de-s2b.wav"], "fromMs": 4600, "toMs": 7800 },
+        { "n": 3, "headline": "Deine Woche auf einen Blick", "caption": "Buddy plant mit, du siehst nur, was gerade dran ist.", "fromMs": 7800, "toMs": 12300 }
+      ],
+      "outro": { "title": "Lernen, das mitdenkt.", "sub": "Jetzt kostenlos testen", "audio": "audio/de-outro.wav" }
+    },
+    "en": {
+      "intro": { "title": "LearnBuddy", "sub": "Your study buddy that thinks ahead.", "audio": "audio/en-intro.wav" },
+      "scenes": [
+        { "n": 1, "headline": "A test is coming up", "caption": "Buddy puts it in your week – with “Undo”.", "audio": "audio/en-s1.wav", "fromMs": 400, "toMs": 4600 },
+        { "n": 2, "headline": "Practice from your worksheet", "caption": "Exercises from your own material, explained step by step until it clicks.", "audio": "audio/en-s2.wav", "fromMs": 4600, "toMs": 7800 },
+        { "n": 3, "headline": "Your whole week at a glance", "caption": "Buddy plans ahead – you only see what matters now.", "audio": "audio/en-s3.mp3", "fromMs": 7800, "toMs": 12300 }
+      ],
+      "outro": { "title": "Learning that thinks ahead.", "sub": "Try it free today" }
+    }
+  }
+}

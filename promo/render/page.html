@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>LearnBuddy Promo</title>
+<!--
+  One page draws the whole film. render.mjs hands it a plan (window.init(plan)); after that
+  window.seek(tMs) puts the page into the state of time t. Every property is a pure function of t,
+  set as inline style: no requestAnimationFrame, no CSS transitions or animations, so a frame
+  rendered twice is the same frame.
+-->
+<style>
+@font-face { font-family: 'Figtree'; font-weight: 500; src: url('fonts/Figtree-Medium.ttf') format('truetype'); }
+@font-face { font-family: 'Figtree'; font-weight: 600; src: url('fonts/Figtree-SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'Figtree'; font-weight: 700; src: url('fonts/Figtree-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'Figtree'; font-weight: 800; src: url('fonts/Figtree-ExtraBold.ttf') format('truetype'); }
+
+:root {
+  /* Pastell Soft (apps/mobile/lib/theme/palettes.ts) */
+  --bg: #faf7fd;
+  --ink: #1f1b2e;
+  --ink2: #5d5873;
+  --primary: #6a48d7;
+  --on-primary: #ffffff;
+  --bezel: #1f1b2e;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+#stage {
+  position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: 'Figtree', sans-serif; -webkit-font-smoothing: antialiased; font-kerning: normal;
+}
+.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+.blob { position: absolute; }
+#grain { image-rendering: pixelated; background-repeat: repeat; }
+.hidden { display: none !important; }
+
+/* phone */
+#phone {
+  position: absolute; border-radius: 64px; background: var(--bezel);
+  box-shadow: 0 30px 80px rgba(31, 27, 46, 0.18), 0 6px 18px rgba(31, 27, 46, 0.06),
+              inset 0 0 0 1.5px rgba(255, 255, 255, 0.07);
+  transform-origin: 50% 50%;
+}
+#screen { position: absolute; left: 14px; top: 14px; border-radius: 50px; overflow: hidden; background: var(--bg); isolation: isolate; }
+#clip { display: block; width: 100%; height: 100%; object-fit: fill; }
+#screen.cover #clip { object-fit: cover; object-position: 50% 0; }
+
+/* scene text */
+.t { position: absolute; left: 0; width: 1080px; text-align: center; }
+.t > span { display: inline-block; }
+.t-counter { font-weight: 700; font-size: 34px; line-height: 40px; letter-spacing: 0.08em; padding-left: 0.08em; color: var(--primary); white-space: nowrap; }
+.t-head { font-weight: 800; font-size: 84px; line-height: 1.1; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; }
+.t-cap { left: 50px; width: 980px; font-weight: 600; font-size: 44px; line-height: 1.27; color: var(--ink2); text-wrap: balance; }
+.t-cap > span { display: inline; }
+
+/* intro / outro */
+.wordmark { font-weight: 800; font-size: 110px; line-height: 1.1; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; }
+.sub { left: 50px; width: 980px; font-weight: 500; font-size: 40px; line-height: 1.3; color: var(--ink2); text-wrap: balance; }
+.sub > span, .claim > span { display: inline; }
+.claim { left: 50px; width: 980px; font-weight: 700; font-size: 52px; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink2); text-wrap: balance; }
+.cta { position: absolute; left: 0; width: 1080px; display: flex; justify-content: center; }
+.cta > span {
+  display: inline-flex; align-items: center; height: 104px; padding: 0 56px; border-radius: 999px;
+  background: var(--primary); color: var(--on-primary); font-weight: 700; font-size: 40px; letter-spacing: 0.005em; white-space: nowrap;
+  box-shadow: 0 18px 44px rgba(106, 72, 215, 0.28);
+}
+
+/* Buddy orb: the glass sphere of the app icon, or the CSS orb as fallback */
+.orb { position: absolute; transform-origin: 50% 50%; }
+.orb .halo, .orb .drop, .orb .ball { position: absolute; border-radius: 50%; }
+.orb .halo {
+  left: -58%; top: -58%; width: 216%; height: 216%;
+  background: radial-gradient(circle closest-side,
+    rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.78) 34%, rgba(239, 230, 255, 0.62) 50%,
+    rgba(227, 214, 255, 0.34) 68%, rgba(227, 233, 255, 0.12) 84%, rgba(227, 233, 255, 0) 100%);
+}
+.orb .drop {
+  left: 14%; width: 72%; top: 88%; height: 18%;
+  background: radial-gradient(closest-side, rgba(106, 72, 215, 0.20), rgba(106, 72, 215, 0));
+}
+.orb .ball { left: 0; top: 0; width: 100%; height: 100%; background-repeat: no-repeat; }
+.orb.css .ball {
+  background: radial-gradient(circle at 36% 30%, #ffffff 0%, #efe6ff 40%, #e3e9ff 72%, #fde3f0 100%);
+  box-shadow: inset 0 0 0 5px #fde3f0, inset -18px -24px 60px rgba(227, 214, 255, 0.9);
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="bg"></div>
+  <div class="layer" id="grain"></div>
+  <div class="layer" id="scenesLayer">
+    <div id="phone"><div id="screen"><img id="clip" alt=""></div></div>
+  </div>
+  <div class="layer" id="introLayer"></div>
+  <div class="layer" id="outroLayer"></div>
+</div>
+<script>
+'use strict';
+
+// ---- Layout (1080×1920) ---------------------------------------------------------------------
+const W = 1080;
+const SHOT_W = 390, SHOT_H = 844;               // the app's screen; the phone keeps exactly this ratio
+const LAYOUT = {
+  counterY: 180,                                 // centre lines
+  headlineY: 262,                                // leaves room for Ä/Ö/Ü dots under the counter
+  captionY: 1728,
+  phoneTop: 362,
+  screenW: 560,                                  // → screen 560 × 1211.9, phone 588 × 1239.9
+  bezel: 14,
+  textMaxW: 980,
+  intro: { orbSize: 320, orbY: 830, wordY: 1110, subY: 1225 },
+  outro: { orbSize: 200, orbY: 745, wordY: 955, claimY: 1072, ctaY: 1206 },
+};
+LAYOUT.screenH = LAYOUT.screenW * SHOT_H / SHOT_W;
+LAYOUT.phoneW = LAYOUT.screenW + 2 * LAYOUT.bezel;
+LAYOUT.phoneH = LAYOUT.screenH + 2 * LAYOUT.bezel;
+LAYOUT.phoneLeft = (W - LAYOUT.phoneW) / 2;
+
+// The big glass sphere inside ref/app-icon.png (1024²): centre and radius, measured from its rim.
+const ICON_SPHERE = { cx: 469.5, cy: 539.5, r: 290, size: 1024 };
+
+// Background light: Glow tokens (blue, lilac, pink), drifting slowly.
+const BLOBS = [
+  { color: [255, 214, 234], a: 0.90, cx: -40, cy: 330, rx: 860, ry: 700, ax: 70, ay: 55, px: 23, py: 19, ps: 17, ph: 0.0 }, // pink, upper left
+  { color: [207, 220, 255], a: 0.90, cx: 1150, cy: 1020, rx: 780, ry: 920, ax: 80, ay: 70, px: 27, py: 21, ps: 19, ph: 1.7 }, // blue, right
+  { color: [227, 214, 255], a: 0.95, cx: 240, cy: 1930, rx: 1000, ry: 760, ax: 90, ay: 50, px: 29, py: 24, ps: 23, ph: 3.1 }, // lilac, bottom
+];
+
+// ---- Motion (seconds) ---------------------------------------------------------------------
+const M = {
+  introOut: 0.35,           // intro content fades over [end − 0.5, end − 0.15], drifting up …
+  introOutEnd: 0.15,
+  phoneLead: 0.25,          // … so the phone (from 0.25 s before scene 1) never sits under half-faded text
+  phoneIn: 0.6,             // … and takes 0.6 s (scale 0.96 → 1, opacity 0 → 1)
+  lastOut: 0.35,            // phone and last text fade during the last 0.35 s of the last scene
+  textOutLead: 0.25,        // at a scene change the old text fades over [b − 0.25, b] …
+  textInLead: 0.10,         // … the new headline + counter come in from b − 0.10 (0.35 s crossfade)
+  textIn: 0.45,             // slide 12 px from above, ease-out cubic
+  slide: 12,
+  capDelay: 0.20,           // caption fades in 0.2 s after the headline
+  capIn: 0.45,
+  breathe: 2.5,             // orb breathes 1.00 ↔ 1.04 every 2.5 s
+};
+
+const c01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+const outCubic = (x) => 1 - Math.pow(1 - x, 3);
+const inOut = (x) => x * x * (3 - 2 * x);
+const breathe = (t) => 1 + 0.02 * (1 - Math.cos((2 * Math.PI * t) / M.breathe));
+const $ = (id) => document.getElementById(id);
+
+let PLAN = null;
+const ELS = { blobs: [], scenes: [], intro: {}, outro: {} };
+let shownClip = -1;
+
+function el(tag, cls, parent, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) { const s = document.createElement('span'); s.textContent = text; e.appendChild(s); }
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function blobGradient(b) {
+  const [r, g, bl] = b.color;
+  const stops = [[1, 0], [0.82, 20], [0.56, 40], [0.28, 62], [0.09, 82], [0, 100]];
+  return `radial-gradient(closest-side, ${stops.map(([k, p]) => `rgba(${r},${g},${bl},${(b.a * k).toFixed(3)}) ${p}%`).join(', ')})`;
+}
+
+// A static, seeded grain over the background only (0–2 levels darker per pixel): it dithers the
+// pastel gradients, which in 8-bit H.264 would otherwise show bands. Same seed → same pixels.
+function grainUrl(size = 256, seed = 0x5eed1e) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  const img = g.createImageData(size, size);
+  let s = seed >>> 0;
+  const rnd = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < size * size; i++) img.data[i * 4 + 3] = Math.floor(rnd() * 3); // black, alpha 0..2
+  g.putImageData(img, 0, 0);
+  return c.toDataURL('image/png');
+}
+
+function makeOrb(parent, size, mode, iconUrl) {
+  const o = el('div', 'orb ' + mode, parent);
+  o.style.width = size + 'px';
+  o.style.height = size + 'px';
+  el('div', 'drop', o);
+  el('div', 'halo', o);
+  const ball = el('div', 'ball', o);
+  if (mode === 'icon') {
+    const k = size / (2 * ICON_SPHERE.r);
+    ball.style.backgroundImage = `url("${iconUrl}")`;
+    ball.style.backgroundSize = `${ICON_SPHERE.size * k}px ${ICON_SPHERE.size * k}px`;
+    ball.style.backgroundPosition = `${-(ICON_SPHERE.cx - ICON_SPHERE.r) * k}px ${-(ICON_SPHERE.cy - ICON_SPHERE.r) * k}px`;
+    ball.style.boxShadow = '0 18px 40px rgba(106, 72, 215, 0.16)';
+  }
+  return o;
+}
+
+// Width of the text in a single line at the element's current size.
+function lineWidth(e) {
+  const ws = e.style.whiteSpace;
+  e.style.whiteSpace = 'nowrap';
+  const span = e.firstChild;
+  const prev = span.style.display;
+  span.style.display = 'inline-block';
+  const w = span.getBoundingClientRect().width;
+  span.style.display = prev;
+  e.style.whiteSpace = ws;
+  return w;
+}
+
+// One line, shrunk to fit if needed (headlines, the wordmark): never wraps.
+function fitOneLine(e, base, maxW) {
+  e.style.fontSize = base + 'px';
+  const w = lineWidth(e);
+  const size = w > maxW ? Math.floor((base * maxW / w) * 4) / 4 : base;
+  e.style.fontSize = size + 'px';
+  return { size, lines: 1, shrunk: size < base };
+}
+
+// Prefer one line (shrinking at most to minOne), else wrap balanced to at most two lines,
+// shrinking only when two lines are not enough.
+function fitTwoLines(e, base, maxW, minOne) {
+  e.style.fontSize = base + 'px';
+  const w = lineWidth(e);
+  if (w <= maxW) return { size: base, lines: 1 };
+  const one = Math.floor((base * maxW / w) * 4) / 4;
+  if (one >= minOne) { e.style.fontSize = one + 'px'; e.style.whiteSpace = 'nowrap'; return { size: one, lines: 1 }; }
+  let size = base;
+  const lines = () => Math.round(e.getBoundingClientRect().height / (parseFloat(getComputedStyle(e).lineHeight)));
+  e.style.whiteSpace = 'normal';
+  while (lines() > 2 && size > 26) { size -= 1; e.style.fontSize = size + 'px'; }
+  return { size, lines: lines(), shrunk: size < base };
+}
+
+function centreAt(e, y) {
+  const h = e.getBoundingClientRect().height;
+  e.dataset.top = String(y - h / 2);
+  e.style.top = e.dataset.top + 'px';
+}
+
+function loadImage(img, url, what) {
+  img.src = url;
+  return img.decode().catch(() => { throw new Error(`${what} konnte nicht geladen werden: ${decodeURI(url)}`); });
+}
+
+window.init = async function init(plan) {
+  PLAN = plan;
+  const warnings = [];
+  const fonts = ['500 40px Figtree', '600 44px Figtree', '700 34px Figtree', '800 84px Figtree'];
+  await Promise.all(fonts.map((f) => document.fonts.load(f, 'LearnBuddy äöüß „“–')));
+  await document.fonts.ready;
+  const missing = fonts.filter((f) => !document.fonts.check(f));
+  if (missing.length) throw new Error('Figtree nicht geladen: ' + missing.join(', '));
+
+  // background
+  const bg = $('bg');
+  for (const b of BLOBS) {
+    const d = el('div', 'blob', bg);
+    Object.assign(d.style, { left: b.cx - b.rx + 'px', top: b.cy - b.ry + 'px', width: 2 * b.rx + 'px', height: 2 * b.ry + 'px', background: blobGradient(b) });
+    ELS.blobs.push(d);
+  }
+  const grain = grainUrl();
+  $('grain').style.backgroundImage = `url("${grain}")`;
+  await loadImage(new Image(), grain, 'Korn-Textur');
+
+  // phone
+  const phone = $('phone'), screen = $('screen');
+  Object.assign(phone.style, { left: LAYOUT.phoneLeft + 'px', top: LAYOUT.phoneTop + 'px', width: LAYOUT.phoneW + 'px', height: LAYOUT.phoneH + 'px' });
+  Object.assign(screen.style, { width: LAYOUT.screenW + 'px', height: LAYOUT.screenH + 'px' });
+  const ratio = plan.clip.width / plan.clip.height;
+  if (Math.abs(ratio / (SHOT_W / SHOT_H) - 1) > 0.005) {
+    screen.classList.add('cover');
+    warnings.push(`Aufnahme ist ${plan.clip.width}×${plan.clip.height}, nicht 390:844 — wird oben bündig beschnitten.`);
+  }
+
+  // scene text
+  const layer = $('scenesLayer');
+  const fits = [];
+  plan.scenes.forEach((s, i) => {
+    const counter = el('div', 't t-counter', layer, s.counter);
+    const head = el('div', 't t-head', layer, s.headline);
+    const cap = el('div', 't t-cap', layer, s.caption || '');
+    const fh = fitOneLine(head, 84, LAYOUT.textMaxW);
+    const fc = fitTwoLines(cap, 44, LAYOUT.textMaxW, 40);
+    centreAt(counter, LAYOUT.counterY);
+    centreAt(head, LAYOUT.headlineY);
+    centreAt(cap, LAYOUT.captionY);
+    if (fh.shrunk) warnings.push(`Szene ${s.n}: Headline auf ${fh.size}px verkleinert (passt sonst nicht in ${LAYOUT.textMaxW}px)${fh.size < 67 ? ' — deutlich kleiner als die anderen, kürzen empfohlen' : ''}.`);
+    if (fc.shrunk) warnings.push(`Szene ${s.n}: Caption braucht mehr als 2 Zeilen bei 44px — auf ${fc.size}px verkleinert.`);
+    fits.push({ n: s.n, headlinePx: fh.size, captionPx: fc.size, captionLines: fc.lines });
+    ELS.scenes.push({ counter, head, cap });
+  });
+
+  // intro
+  const iL = $('introLayer'), I = LAYOUT.intro;
+  const iOrb = makeOrb(iL, I.orbSize, plan.orb, plan.iconUrl);
+  Object.assign(iOrb.style, { left: (W - I.orbSize) / 2 + 'px', top: I.orbY - I.orbSize / 2 + 'px' });
+  const iWord = el('div', 't wordmark', iL, plan.intro.title);
+  fitOneLine(iWord, 110, LAYOUT.textMaxW);
+  centreAt(iWord, I.wordY);
+  const iSub = el('div', 't sub', iL, plan.intro.sub || '');
+  fitTwoLines(iSub, 40, LAYOUT.textMaxW, 36);
+  centreAt(iSub, I.subY);
+  ELS.intro = { orb: iOrb, word: iWord, sub: iSub };
+
+  // outro
+  const oL = $('outroLayer'), O = LAYOUT.outro;
+  const oOrb = makeOrb(oL, O.orbSize, plan.orb, plan.iconUrl);
+  Object.assign(oOrb.style, { left: (W - O.orbSize) / 2 + 'px', top: O.orbY - O.orbSize / 2 + 'px' });
+  const oWord = el('div', 't wordmark', oL, plan.outro.wordmark);
+  fitOneLine(oWord, 110, LAYOUT.textMaxW);
+  centreAt(oWord, O.wordY);
+  const oClaim = el('div', 't claim', oL, plan.outro.title || '');
+  fitTwoLines(oClaim, 52, LAYOUT.textMaxW, 46);
+  centreAt(oClaim, O.claimY);
+  const oCta = el('div', 'cta', oL, plan.outro.sub || '');
+  if (!plan.outro.sub) oCta.classList.add('hidden');
+  const ctaSpan = oCta.firstChild;
+  const ctaW = ctaSpan.getBoundingClientRect().width;
+  if (ctaW > LAYOUT.textMaxW) ctaSpan.style.fontSize = Math.floor(40 * (LAYOUT.textMaxW - 112) / (ctaW - 112)) + 'px';
+  centreAt(oCta, O.ctaY);
+  ELS.outro = { orb: oOrb, word: oWord, claim: oClaim, cta: oCta };
+
+  // images: the icon (orb) and the first clip frame
+  if (plan.orb === 'icon') await loadImage(new Image(), plan.iconUrl, 'App-Icon');
+  await showClip(plan.scenes[0].clipStart);
+
+  return { totalMs: plan.totalMs, warnings, fits, layout: LAYOUT };
+};
+
+window.totalMs = () => PLAN.totalMs;
+
+async function showClip(idx) {
+  if (idx === shownClip) return;
+  const url = PLAN.clip.dirUrl + String(idx + 1).padStart(6, '0') + '.jpg';
+  await loadImage($('clip'), url, 'Clip-Frame');
+  shownClip = idx;
+}
+
+function setVis(e, opacity, ty = 0, scale = 1) {
+  if (opacity <= 0.0005) { e.classList.add('hidden'); return; }
+  e.classList.remove('hidden');
+  e.style.opacity = opacity >= 0.9995 ? '1' : opacity.toFixed(4);
+  e.style.transform = (ty || scale !== 1) ? `translate3d(0, ${ty.toFixed(3)}px, 0) scale(${scale.toFixed(5)})` : 'none';
+}
+
+// Which clip frame the phone shows at film time t (seconds). Before scene 1 it holds scene 1's
+// first frame, after the last scene its last; a scene longer than its clip section (its audio
+// runs longer) holds the section's last frame (freeze-hold).
+function clipIndexAt(t) {
+  const P = PLAN, fms = 1000 / P.fps;
+  let s = P.scenes[0], tau = 0;
+  for (const sc of P.scenes) {
+    if (t >= sc.start) { s = sc; tau = t - sc.start; }
+  }
+  const len = s.toMs - s.fromMs;
+  const ms = s.fromMs + Math.min(Math.max(tau, 0) * 1000, len - fms);
+  const idx = Math.floor(ms * P.fps / 1000 + 1e-4);
+  return Math.max(0, Math.min(P.clip.count - 1, idx));
+}
+
+window.seek = async function seek(tMs) {
+  const P = PLAN;
+  const t = tMs / 1000;
+  const frame = 1 / P.fps;
+
+  // background drift
+  BLOBS.forEach((b, i) => {
+    const dx = b.ax * Math.sin((2 * Math.PI * t) / b.px + b.ph);
+    const dy = b.ay * Math.sin((2 * Math.PI * t) / b.py + b.ph * 1.3 + 1);
+    const s = 1 + 0.035 * Math.sin((2 * Math.PI * t) / b.ps + b.ph * 0.7);
+    ELS.blobs[i].style.transform = `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) scale(${s.toFixed(5)})`;
+  });
+
+  // intro
+  {
+    const d = P.intro.dur, tau = t - P.intro.start;
+    const out = 1 - inOut(c01((tau - (d - M.introOutEnd - M.introOut)) / M.introOut));
+    const up = -16 * (1 - out);
+    const on = tau < d;
+    const po = outCubic(c01(tau / 0.6));
+    const pw = outCubic(c01((tau - 0.18) / 0.55));
+    const ps = outCubic(c01((tau - 0.38) / 0.55));
+    setVis(ELS.intro.orb, on ? po * out : 0, up, (0.92 + 0.08 * po) * breathe(tau));
+    setVis(ELS.intro.word, on ? pw * out : 0, 18 * (1 - pw) + up);
+    setVis(ELS.intro.sub, on ? ps * out : 0, 18 * (1 - ps) + up);
+  }
+
+  // phone
+  const s0 = P.scenes[0].start, eL = P.outro.start;
+  const pin = outCubic(c01((t - (s0 - M.phoneLead)) / M.phoneIn));
+  const pout = inOut(c01((t - (eL - M.lastOut)) / M.lastOut));
+  const phoneOp = t < eL ? pin * (1 - pout) : 0;
+  setVis($('phone'), phoneOp, 0, (0.96 + 0.04 * pin) * (1 - 0.02 * pout));
+  let clipIdx = -1;
+  if (phoneOp > 0.0005) { clipIdx = clipIndexAt(t); await showClip(clipIdx); }
+
+  // scene text
+  P.scenes.forEach((s, i) => {
+    const b = s.start, e = s.start + s.dur, last = i === P.scenes.length - 1;
+    const hp = outCubic(c01((t - (b - M.textInLead)) / M.textIn));
+    const cp = outCubic(c01((t - (b - M.textInLead + M.capDelay)) / M.capIn));
+    const o = last
+      ? 1 - inOut(c01((t - (e - M.lastOut)) / M.lastOut))
+      : 1 - inOut(c01((t - (e - M.textOutLead)) / M.textOutLead));
+    const gone = t >= e;
+    const drift = 8 * (1 - o);
+    const E = ELS.scenes[i];
+    setVis(E.counter, gone ? 0 : hp * o, -M.slide * (1 - hp) + drift);
+    setVis(E.head, gone ? 0 : hp * o, -M.slide * (1 - hp) + drift);
+    setVis(E.cap, gone ? 0 : cp * o, drift);
+  });
+
+  // outro (its last fade runs out one frame before the end, so the last frame is pure background)
+  {
+    const d = P.outro.dur, f = P.outro.fade, tau = t - P.outro.start;
+    const fade = 1 - inOut(c01((tau - (d - f)) / (f - frame)));
+    const on = tau >= -0.2;
+    const p = (delay) => outCubic(c01((tau - delay) / 0.55));
+    const po = outCubic(c01((tau + 0.15) / 0.6));
+    setVis(ELS.outro.orb, on ? po * fade : 0, 0, (0.92 + 0.08 * po) * breathe(Math.max(0, tau)));
+    setVis(ELS.outro.word, on ? p(-0.05) * fade : 0, 18 * (1 - p(-0.05)));
+    setVis(ELS.outro.claim, on ? p(0.12) * fade : 0, 18 * (1 - p(0.12)));
+    setVis(ELS.outro.cta, on && P.outro.sub ? p(0.28) * fade : 0, 18 * (1 - p(0.28)));
+  }
+
+  return { t: tMs, clip: clipIdx };
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>LearnBuddy Dummy</title>
+<style>
+@font-face { font-family: Figtree; font-weight: 400; src: url('../../figtree-src/fonts/ttf/Figtree-Regular.ttf'); }
+@font-face { font-family: Figtree; font-weight: 500; src: url('../../figtree-src/fonts/ttf/Figtree-Medium.ttf'); }
+@font-face { font-family: Figtree; font-weight: 600; src: url('../../figtree-src/fonts/ttf/Figtree-SemiBold.ttf'); }
+@font-face { font-family: Figtree; font-weight: 700; src: url('../../figtree-src/fonts/ttf/Figtree-Bold.ttf'); }
+@font-face { font-family: Figtree; font-weight: 800; src: url('../../figtree-src/fonts/ttf/Figtree-ExtraBold.ttf'); }
+:root {
+  --ink:#1f1b2e; --ink2:#5d5873; --ink3:#8e89a3; --placeholder:#6f6a85; --paper:#ffffff; --bg:#faf7fd;
+  --hair:rgba(60,40,120,0.09); --hair2:rgba(60,40,120,0.16); --primary:#6a48d7; --primaryLt:#ebe5fc;
+  --mint:#dcf1ea; --successText:#46663f; --peach:#fbe3ee; --sky:#e2ebfd; --butter:#f6efdc; --lavender:#ece6fb; --blush:#fae0ea;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 390px; height: 844px; overflow: hidden; background: var(--bg); font-family: Figtree, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+.glow { position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 30% at 0% 0%, rgba(207,220,255,0.9), transparent 70%),
+    radial-gradient(50% 26% at 100% 18%, rgba(255,214,234,0.85), transparent 70%),
+    radial-gradient(70% 34% at 30% 100%, rgba(227,214,255,0.9), transparent 70%); }
+.screen { position: absolute; inset: 0; transition: transform 380ms cubic-bezier(.2,.8,.2,1), opacity 380ms; }
+.screen.off-right { transform: translateX(100%); }
+.screen.off-left { transform: translateX(-30%); opacity: 0; }
+header { position: absolute; top: 0; left: 0; right: 0; height: 64px; padding: 10px 16px 0; display: flex; align-items: center; justify-content: space-between; z-index: 2; }
+.pill { height: 44px; padding: 0 16px 0 12px; border-radius: 999px; background: var(--paper); display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 2px 8px rgba(75,58,143,0.08); }
+.circ { width: 44px; height: 44px; border-radius: 50%; background: var(--paper); display: grid; place-items: center; box-shadow: 0 2px 8px rgba(75,58,143,0.08); }
+.brand { font-weight: 800; font-size: 13px; letter-spacing: 0.16em; color: var(--ink3); }
+.right { display: flex; gap: 8px; }
+.thread { position: absolute; top: 70px; left: 0; right: 0; bottom: 96px; overflow: hidden; padding: 8px 16px 16px; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; }
+.row { display: flex; align-items: flex-end; gap: 8px; }
+.row.me { justify-content: flex-end; }
+.orb { width: 26px; height: 26px; border-radius: 50%; flex: none; background: radial-gradient(circle at 35% 30%, #fff 0%, #efe6ff 45%, #d9cfff 70%, #fde3f0 100%); box-shadow: 0 0 10px rgba(227,214,255,0.9); }
+.bubble { max-width: 290px; padding: 11px 16px; border-radius: 20px; font-size: 17px; line-height: 23px; }
+.bubble.buddy { background: var(--paper); border-bottom-left-radius: 6px; box-shadow: 0 2px 10px rgba(75,58,143,0.06); }
+.bubble.me { background: var(--primary); color: #fff; border-bottom-right-radius: 6px; }
+.card { border-radius: 20px; padding: 16px; }
+.card h3 { margin: 0 0 4px; font-size: 18px; font-weight: 700; }
+.card p { margin: 0; font-size: 16px; line-height: 22px; color: var(--ink2); }
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 46px; padding: 0 20px; border-radius: 999px; background: var(--primary); color: #fff; font-weight: 700; font-size: 16px; border: 0; font-family: inherit; }
+.btn.soft { background: var(--primaryLt); color: var(--primary); }
+.chip { margin-left: 34px; border-radius: 16px; background: var(--mint); color: var(--successText); padding: 10px 14px; font-size: 14px; line-height: 19px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.chip b { font-weight: 700; white-space: nowrap; }
+.pop { animation: pop 320ms cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+.dots { display: flex; gap: 5px; padding: 15px 16px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); animation: blink 900ms infinite; }
+.dots i:nth-child(2) { animation-delay: 150ms; } .dots i:nth-child(3) { animation-delay: 300ms; }
+@keyframes blink { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+.composer { position: absolute; left: 16px; right: 16px; bottom: 30px; height: 52px; border-radius: 26px; background: var(--paper); border: 1px solid var(--hair2); display: flex; align-items: center; padding: 0 6px 0 14px; gap: 10px; }
+.composer input { flex: 1; border: 0; outline: 0; font: 500 17px Figtree; color: var(--ink); background: transparent; }
+.composer input::placeholder { color: var(--placeholder); }
+.send { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: grid; place-items: center; }
+.home-ind { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--ink); opacity: .85; }
+/* practice */
+.top { position: absolute; top: 0; left: 0; right: 0; padding: 16px 16px 0; }
+.toprow { display: flex; align-items: center; gap: 12px; height: 44px; }
+.toprow .t { font-weight: 800; font-size: 20px; flex: 1; }
+.prog { height: 8px; border-radius: 4px; background: var(--lavender); margin-top: 12px; overflow: hidden; }
+.prog i { display: block; height: 100%; width: 37.5%; background: var(--primary); border-radius: 4px; transition: width 500ms; }
+.qcard { margin: 20px 16px 0; background: var(--paper); border-radius: 20px; padding: 20px; box-shadow: 0 4px 18px rgba(75,58,143,0.08); }
+.qcard .k { font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--ink3); text-transform: uppercase; }
+.qcard h2 { margin: 6px 0 16px; font-size: 24px; line-height: 30px; font-weight: 800; }
+.bar { height: 34px; border-radius: 10px; background: var(--canvas, #f1edf8); display: flex; overflow: hidden; margin-bottom: 10px; border: 1px solid var(--hair); }
+.bar span { flex: 1; border-right: 1px solid rgba(255,255,255,0.9); }
+.bar span.f { background: #b9a4f0; }
+.bar span:last-child { border-right: 0; }
+.blabel { font-size: 14px; color: var(--ink2); margin: -4px 0 10px; font-weight: 600; }
+.opts { margin: 16px 16px 0; display: grid; gap: 10px; }
+.opt { height: 60px; border-radius: 16px; background: var(--paper); border: 1.5px solid var(--hair2); display: flex; align-items: center; padding: 0 18px; font-size: 20px; font-weight: 700; gap: 12px; transition: background 200ms, border-color 200ms; }
+.opt.ok { background: var(--mint); border-color: #b3e0cf; color: var(--successText); }
+.feedback { margin: 14px 16px 0; padding: 14px 16px; border-radius: 16px; background: var(--paper); font-size: 16px; line-height: 22px; color: var(--ink2); display: flex; gap: 10px; align-items: flex-start; }
+.cta { position: absolute; left: 16px; right: 16px; bottom: 30px; }
+.cta .btn { width: 100%; height: 52px; font-size: 17px; }
+/* week */
+.week { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; }
+.weekin { padding: 20px 16px 120px; }
+.weekin h1 { margin: 6px 0 2px; font-size: 30px; font-weight: 800; letter-spacing: -0.01em; }
+.weekin .sub { font-size: 16px; color: var(--ink2); margin-bottom: 18px; }
+.item { border-radius: 20px; padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 14px; align-items: center; transition: transform 180ms; }
+.item .d { width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,0.75); display: grid; place-items: center; text-align: center; font-weight: 800; font-size: 13px; line-height: 15px; color: var(--ink2); flex: none; }
+.item .d b { display: block; font-size: 19px; color: var(--ink); }
+.item .tt { font-weight: 700; font-size: 17px; line-height: 21px; }
+.item .ss { font-size: 14px; color: var(--ink2); margin-top: 2px; }
+.item.pressed { transform: scale(0.98); }
+.tap { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: rgba(106,72,215,0.25); border: 2px solid rgba(106,72,215,0.45); pointer-events: none; z-index: 50; animation: tap 450ms ease-out forwards; }
+@keyframes tap { from { transform: scale(0.5); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<!-- Screen 1: chat -->
+<section class="screen" id="chat">
+  <header>
+    <div class="pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1f1b2e" stroke-width="2" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="2"/><rect x="17" y="14" width="4" height="6" rx="2"/></svg>Reden</div>
+    <div class="brand">BUDDY</div>
+    <div class="right">
+      <div class="circ"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f1b2e" stroke-width="2" stroke-linecap="round"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></div>
+      <div class="circ"><svg width="20" height="20" viewBox="0 0 24 24" fill="#1f1b2e"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></div>
+    </div>
+  </header>
+  <div class="thread" id="thread">
+    <div class="row"><div class="orb"></div><div class="bubble buddy">Guten Morgen! Gestern hast du 8 von 10 Vokabeln gewusst – stark.</div></div>
+    <div class="row me"><div class="bubble me">Danke! Heute hab ich Sport und Bio.</div></div>
+    <div class="row"><div class="orb"></div><div class="bubble buddy">Klingt nach einem vollen Tag. Steht diese Woche noch etwas an?</div></div>
+    <div class="card" style="background: var(--peach); margin-left: 34px;">
+      <h3>Schick mir ein Foto</h3>
+      <p>Fotografier dein Arbeitsblatt – ich mache daraus Übungen für dich.</p>
+      <div style="margin-top: 12px"><span class="btn">Foto machen</span></div>
+    </div>
+  </div>
+  <div class="composer">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5d5873" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    <input id="msg" placeholder="Schreib Buddy …" autocomplete="off">
+    <div class="send" id="send"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></div>
+  </div>
+  <div class="home-ind"></div>
+</section>
+
+<!-- Screen 2: practice -->
+<section class="screen off-right" id="practice">
+  <div class="top">
+    <div class="toprow">
+      <div class="circ"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f1b2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></div>
+      <div class="t">Brüche üben</div>
+      <div style="font-weight:700;color:var(--ink2);font-size:15px">3 / 8</div>
+    </div>
+    <div class="prog"><i id="progbar"></i></div>
+  </div>
+  <div style="position:absolute; top: 100px; left: 0; right: 0;">
+    <div class="qcard">
+      <div class="k">Aus deinem Arbeitsblatt</div>
+      <h2>Welcher Bruch ist größer?</h2>
+      <div class="bar"><span class="f"></span><span class="f"></span><span class="f"></span><span></span></div>
+      <div class="blabel">3/4</div>
+      <div class="bar"><span class="f"></span><span class="f"></span><span></span></div>
+      <div class="blabel" style="margin-bottom:0">2/3</div>
+    </div>
+    <div class="opts">
+      <div class="opt" id="optA">3/4</div>
+      <div class="opt">2/3</div>
+      <div class="opt">Beide gleich groß</div>
+    </div>
+    <div class="feedback" id="fb" style="visibility:hidden">
+      <div class="orb" style="margin-top:2px"></div>
+      <div><b style="color:var(--ink)">Genau!</b> 3/4 sind 0,75 – und 2/3 nur etwa 0,67. Gleich große Teile machen den Vergleich leicht.</div>
+    </div>
+  </div>
+  <div class="cta"><button class="btn" id="next">Weiter zur Woche</button></div>
+  <div class="home-ind"></div>
+</section>
+
+<!-- Screen 3: week -->
+<section class="screen off-right" id="weekscreen">
+  <div class="week" id="week">
+    <div class="weekin" id="weekin">
+      <div class="toprow"><div class="circ"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f1b2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></div></div>
+      <h1>Deine Woche</h1>
+      <div class="sub">Buddy denkt mit – du siehst nur, was dran ist.</div>
+      <div class="item" style="background:var(--blush)"><div class="d">DO<b>1.</b></div><div><div class="tt">Mathearbeit: Brüche</div><div class="ss">Übung vorbereitet · 12 Aufgaben</div></div></div>
+      <div class="item" style="background:var(--sky)"><div class="d">MO<b>5.</b></div><div><div class="tt">Vokabeltest Englisch</div><div class="ss">Unit 3 – „At the market“</div></div></div>
+      <div class="item" style="background:var(--mint)"><div class="d">MI<b>7.</b></div><div><div class="tt">Referat Bio: Zellen</div><div class="ss">Gliederung steht, Folien fehlen</div></div></div>
+      <div class="item" style="background:var(--butter)"><div class="d">FR<b>9.</b></div><div><div class="tt">Lesen: „Die Welle“</div><div class="ss">Kapitel 3 bis Freitag</div></div></div>
+      <div class="item" style="background:var(--lavender)"><div class="d">SA<b>10.</b></div><div><div class="tt">Wiederholung Brüche</div><div class="ss">10 Minuten, ganz entspannt</div></div></div>
+      <div class="item" style="background:var(--peach)"><div class="d">SO<b>11.</b></div><div><div class="tt">Frei – kein Lernen</div><div class="ss">Buddy meldet sich nicht</div></div></div>
+      <div class="item" style="background:var(--sky)"><div class="d">MO<b>12.</b></div><div><div class="tt">Erdkunde: Flüsse Europas</div><div class="ss">Karte üben · 8 Fragen</div></div></div>
+      <div class="item" style="background:var(--mint)"><div class="d">DI<b>13.</b></div><div><div class="tt">Musik: Notenwerte</div><div class="ss">Kurzer Test in der 3. Stunde</div></div></div>
+      <div class="item" style="background:var(--butter)"><div class="d">MI<b>14.</b></div><div><div class="tt">Deutsch: Erörterung</div><div class="ss">Gliederung mit Buddy üben</div></div></div>
+      <div class="item" style="background:var(--blush)"><div class="d">DO<b>15.</b></div><div><div class="tt">Geschichte: Römer</div><div class="ss">Karteikarten · 20 Begriffe</div></div></div>
+    </div>
+  </div>
+  <div class="home-ind"></div>
+</section>
+
+<script>
+const $ = (s) => document.querySelector(s);
+function tapAt(x, y) {
+  const d = document.createElement('div'); d.className = 'tap'; d.style.left = x + 'px'; d.style.top = y + 'px';
+  document.body.appendChild(d); setTimeout(() => d.remove(), 500);
+}
+document.addEventListener('pointerdown', (e) => tapAt(e.clientX, e.clientY));
+function add(html) {
+  const t = $('#thread'); const w = document.createElement('div'); w.innerHTML = html.trim();
+  const el = w.firstChild; el.classList.add('pop'); t.appendChild(el); return el;
+}
+$('#send').addEventListener('click', () => {
+  const v = $('#msg').value.trim(); if (!v) return;
+  $('#msg').value = '';
+  // keep the thread short enough to fit
+  for (let k = 0; k < 2; k++) { const first = $('#thread').firstElementChild; if (first) first.remove(); }
+  add(`<div class="row me"><div class="bubble me">${v}</div></div>`);
+  const typing = add(`<div class="row"><div class="orb"></div><div class="bubble buddy dots"><i></i><i></i><i></i></div></div>`);
+  setTimeout(() => {
+    typing.remove();
+    add(`<div class="row"><div class="orb"></div><div class="bubble buddy">Ich habe dir die Mathearbeit für Donnerstag eingetragen! Wollen wir gleich ein paar Aufgaben üben?</div></div>`);
+    setTimeout(() => add(`<div class="chip"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#46663f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M5 12l5 5 9-10"/></svg>Eingetragen: Mathearbeit Brüche, Do. 1. Oktober</span><b>Rückgängig</b></div>`), 260);
+    setTimeout(() => add(`<div style="margin-left:34px;display:flex;gap:8px"><span class="btn" id="practiceBtn">Jetzt üben</span><span class="btn soft">Später</span></div>`), 520);
+  }, 650);
+});
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#practiceBtn')) {
+    $('#chat').classList.add('off-left'); $('#practice').classList.remove('off-right');
+  }
+  if (e.target.closest('#optA')) {
+    $('#optA').classList.add('ok');
+    $('#optA').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#46663f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>3/4';
+    setTimeout(() => { $('#fb').style.visibility = 'visible'; $('#fb').classList.add('pop'); $('#progbar').style.width = '50%'; }, 250);
+  }
+  if (e.target.closest('#next')) {
+    $('#practice').classList.add('off-left'); $('#weekscreen').classList.remove('off-right');
+  }
+  const it = e.target.closest('.item');
+  if (it) { it.classList.add('pressed'); setTimeout(() => it.classList.remove('pressed'), 200); }
+});
+// smooth wheel scroll for the week list (the page itself never scrolls)
+let target = 0, cur = 0;
+document.addEventListener('wheel', (e) => {
+  const max = $('#weekin').scrollHeight - $('#week').clientHeight;
+  target = Math.max(0, Math.min(max, target + e.deltaY)); e.preventDefault();
+}, { passive: false });
+(function loop() { cur += (target - cur) * 0.16; $('#weekin').style.transform = `translateY(${-cur}px)`; requestAnimationFrame(loop); })();
+</script>
+</body>
+</html>
