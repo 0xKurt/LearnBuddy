@@ -16,6 +16,7 @@ import { ApiError } from './client.js';
 import { refreshProfileIfChanged, writeHome } from './homeCache.js';
 import { keys } from './keys.js';
 import { getHome, getMe, getMemory, getSettings } from './endpoints.js';
+import { useLearningPacks } from '../speech/useLearningPacks.js';
 import { registry } from '../registry.js';
 
 export const queryClient = new QueryClient({
@@ -107,13 +108,16 @@ export function prefetchHome(): void {
  * Only the screen she sees asks (#637): the chat under a practice neither polls nor redraws; it
  * catches up when she comes back (a stale home is fetched again on return).
  */
-export const useHome = () =>
-  useQuery({
+export const useHome = () => {
+  const query = useQuery({
     queryKey: keys.home,
     queryFn: loadHome,
     subscribed: useOnScreen(),
     refetchInterval: (q) => homePollMs(q.state.data),
   });
+  useLearningPacks(query.data);
+  return query;
+};
 
 /**
  * The home a step brought back, for every screen. Not written when it is older than the one held

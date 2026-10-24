@@ -41,7 +41,12 @@ import { engineFor, useDeviceRecognition } from '../../lib/speech/recognize.js';
 import { TurnGuard } from '../../lib/speech/turnGuard.js';
 import { transcriptContext, transcriptLang } from '../../lib/speech/spoken.js';
 import { useMounted } from '../../lib/useMounted.js';
-import { DEVICE_DICTATION_MS, MIN_AUDIO_BASE64, voiceLocale } from '../../lib/speech/voice.js';
+import {
+  DEVICE_DICTATION_MS,
+  MIN_AUDIO_BASE64,
+  foreignLanguage,
+  voiceLocale,
+} from '../../lib/speech/voice.js';
 import { toast } from '../lb/Toast.js';
 import { dropped, reacted, tapped } from '../../lib/perf.js';
 
@@ -276,9 +281,10 @@ export function useVoiceInput({
       if (!guard.current()) return;
       const token = guard.begin();
       setTranscribing(true);
+      const language = foreignLanguage(latest.current.lang, i18n.language);
       const pronunciation =
-        uri && untilPause
-          ? await checkConversationPronunciation(text, latest.current.lang ?? i18n.language, uri)
+        uri && untilPause && language
+          ? await checkConversationPronunciation(text, language, uri)
           : undefined;
       if (mounted.current && guard.holds(token)) {
         setTranscribing(false);
@@ -348,9 +354,8 @@ export function useVoiceInput({
       return;
     }
     if (engine === 'device') {
-      const pack = untilPause
-        ? await pronunciationPacks.state(latest.current.lang ?? i18n.language)
-        : null;
+      const language = foreignLanguage(latest.current.lang, i18n.language);
+      const pack = untilPause && language ? await pronunciationPacks.state(language) : null;
       if (!mounted.current || !guard.holds(token)) return;
       setChoosing(false);
       await device.start(locale, { untilPause, recordAudio: pack?.state === 'ready' });

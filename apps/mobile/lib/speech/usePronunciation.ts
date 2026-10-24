@@ -3,7 +3,7 @@ import { pronunciationPacks } from './pronunciation.js';
 import { usePronunciationLab } from './pronunciationLab.js';
 import type { PackState } from './pronunciationPacks.js';
 
-/** First use requests a network-gated download; all speaking paths share its state. */
+/** Speaking observes a silently network-gated pack; all speaking paths share its state. */
 export function useLocalPronunciation(language: string | undefined) {
   const [pack, setPack] = useState<PackState>({ state: 'unavailable' });
   const labOpen = usePronunciationLab((s) => s.open);

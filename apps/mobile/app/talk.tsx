@@ -75,7 +75,7 @@ import {
   type TalkPhase,
 } from '../lib/speech/talkState.js';
 import { afterReply } from '../lib/speech/talkTurn.js';
-import { voiceLocale } from '../lib/speech/voice.js';
+import { foreignLanguage, voiceLocale } from '../lib/speech/voice.js';
 import { useSay } from '../lib/speech/say.js';
 import { replyAfter, spokenText } from '../lib/speech/spoken.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
@@ -90,7 +90,7 @@ type Phase = TalkPhase;
 
 export default function TalkScreen() {
   const { palette } = useTheme();
-  const { t } = useTranslation(['buddy', 'common']);
+  const { t, i18n } = useTranslation(['buddy', 'common']);
   const insets = useSafeAreaInsets();
   const window = useWindowDimensions();
   const say = useSay();
@@ -115,7 +115,7 @@ export default function TalkScreen() {
   // The scene language drives phone recognition, Vosk's pack and Buddy's voice.
   const screenReaderOn = useScreenReader();
   const sceneLang = useSceneLanguage();
-  useLocalPronunciation(sceneLang);
+  useLocalPronunciation(foreignLanguage(sceneLang, i18n.language));
   const voice = useVoiceInput({
     purpose: 'message',
     lang: sceneLang,
