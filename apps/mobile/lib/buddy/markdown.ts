@@ -60,7 +60,9 @@ export function markdownBlocks(text: string): MdBlock[] {
     }
     flushList();
     // A heading is a bold line of its own (Buddy's bubble has one headline style: the text).
+    if (heading) flushPara();
     para.push(heading ? `**${(heading[1] ?? '').replace(/\*\*/g, '').trim()}**` : line);
+    if (heading) flushPara();
   }
   flushPara();
   flushList();

@@ -2,7 +2,7 @@ import type { BuddyHome, BuddySettingsView } from '@learnbuddy/shared-types/cont
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 
-import { newerHome, writeHome } from '../homeCache.js';
+import { newerHome, retainConversation, writeHome } from '../homeCache.js';
 import { keys } from '../keys.js';
 
 // Only identity and the context fence matter here: the cache stores whatever it is given.
@@ -107,4 +107,59 @@ describe('a home that comes back late', () => {
     expect(writeHome(client, home('other learner', 1))).toBe(true);
     expect(client.getQueryData(keys.home)).toEqual(home('other learner', 1));
   });
+});
+
+it('keeps chat before talk, updates overlapping messages, and keeps the oldest pagination flag', () => {
+  const client = new QueryClient();
+  const m = (id: string, text = id) =>
+    ({
+      id,
+      text,
+      created_at: `2026-10-24T12:00:0${id}.000Z`,
+      actions: [],
+    }) as unknown as BuddyHome['thread'][number];
+  writeHome(client, { ...home('chat'), thread: [m('1'), m('2')], thread_has_more: false });
+  writeHome(client, {
+    ...home('talk', 2),
+    thread: [m('2', 'updated'), m('3')],
+    thread_has_more: true,
+  });
+  const returned = client.getQueryData<BuddyHome>(keys.home)!;
+  expect(returned.thread.map((m) => m.text)).toEqual(['1', 'updated', '3']);
+  expect(returned.thread_has_more).toBe(false);
+});
+
+it('does not bridge an unseen gap or resurrect a server-deleted message', () => {
+  const m = (id: string) =>
+    ({
+      id,
+      created_at: `2026-10-24T12:00:0${id}.000Z`,
+      actions: [],
+    }) as unknown as BuddyHome['thread'][number];
+  const held = { ...home('held'), thread: [m('1'), m('2'), m('3')], thread_has_more: false };
+  const gap = { ...home('gap', 2), thread: [m('5')], thread_has_more: true };
+  expect(retainConversation(gap, held)).toEqual(gap);
+  const deleted = { ...home('deleted', 2), thread: [m('2')], thread_has_more: true };
+  expect(retainConversation(deleted, held).thread.map((m) => m.id)).toEqual(['1', '2']);
+  const empty = { ...home('empty', 2), thread: [], thread_has_more: false };
+  expect(retainConversation(empty, held)).toEqual(empty);
+});
+
+it('does not refresh the profile repeatedly when an old level action leaves the live window', () => {
+  const client = new QueryClient();
+  const m = (id: string, actions: unknown[] = []) =>
+    ({
+      id,
+      created_at: `2026-10-24T12:00:0${id}.000Z`,
+      actions,
+    }) as unknown as BuddyHome['thread'][number];
+  const held = {
+    ...home('held'),
+    thread: [m('1', [{ id: 'level', status: 'applied', summary: { tool: 'set_level' } }]), m('2')],
+    thread_has_more: false,
+  };
+  client.setQueryData(keys.home, held);
+  const invalidate = vi.spyOn(client, 'invalidateQueries');
+  writeHome(client, { ...home('poll', 2), thread: [m('2'), m('3')], thread_has_more: true });
+  expect(invalidate).not.toHaveBeenCalledWith({ queryKey: keys.me, refetchType: 'all' });
 });

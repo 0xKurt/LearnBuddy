@@ -9,7 +9,7 @@ import type { SessionStart } from './useSessionStart.js';
 /** Nothing on top says anything instead of the conversation (no domain, or nothing carried). */
 const NOTHING_CARRIED = { asks: () => false, names: () => false };
 
-/** The newest messages the home shows; the rest is in the history. */
+/** Recent messages used to decide whether a greeting still carries the current result. */
 export const VISIBLE_MESSAGES = 6;
 
 type Action = MessageView['actions'][number];
@@ -92,11 +92,9 @@ export function threadOnScreen(
       .reverse()
       .flatMap((m) => m.actions)
       .find((a) => asksInBar(a) && a.undoable) ?? null;
-  const messages = h.thread
-    .slice(-VISIBLE_MESSAGES)
-    .map((m) =>
-      m.actions.some(asksInBar) ? { ...m, actions: m.actions.filter((a) => !asksInBar(a)) } : m,
-    );
+  const messages = h.thread.map((m) =>
+    m.actions.some(asksInBar) ? { ...m, actions: m.actions.filter((a) => !asksInBar(a)) } : m,
+  );
   const carriedOnTop = new Set(
     messages
       .flatMap((m) => m.actions)

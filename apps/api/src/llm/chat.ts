@@ -119,6 +119,9 @@ export class ChatGateway extends RetryingGateway {
         : {}),
       ...(reasoning
         ? {
+            ...(this.profile.name === 'openai'
+              ? { verbosity: responseVerbosity(req.purpose) }
+              : {}),
             reasoning_effort:
               req.thinking === 'off' ? 'none' : req.thinking === 'minimal' ? 'low' : req.thinking,
           }
@@ -236,5 +239,20 @@ export class ChatGateway extends RetryingGateway {
       result.attempts = 1;
       throw result;
     }
+  }
+}
+
+/** Detail is chosen by purpose; Buddy still adapts to the learner's requested scope. */
+function responseVerbosity(purpose: LlmRequest['purpose']): 'low' | 'medium' | 'high' {
+  switch (purpose) {
+    case 'explain':
+    case 'reexplain':
+      return 'high';
+    case 'buddy_turn':
+    case 'tutor':
+    case 'summary':
+      return 'medium';
+    default:
+      return 'low';
   }
 }

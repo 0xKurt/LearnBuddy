@@ -1,0 +1,80 @@
+{
+  "costMicros": 61794,
+  "results": [
+    {
+      "id": "smalltalk",
+      "words": 12,
+      "passed": true,
+      "reply": "Gern 💛 Wenn du magst, machen wir direkt mit dem Nächsten weiter.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12578,
+        "outputTokens": 62,
+        "thoughtTokens": 10,
+        "cachedTokens": 12416,
+        "costMicros": 10734,
+        "latencyMs": 1395
+      }
+    },
+    {
+      "id": "detail",
+      "words": 291,
+      "passed": true,
+      "reply": "Klar — der **Wasserkreislauf** ist der ständige Weg, den Wasser auf der Erde macht. Er verbindet **Meer, Seen, Flüsse, Boden, Pflanzen, Tiere und die Atmosphäre**.\n\n## Die wichtigsten Stationen\n\n### 1) Verdunstung\nDie Sonne erwärmt Wasser aus **Meeren, Seen, Flüssen und feuchtem Boden**. Dann wird es zu unsichtbarem Wasserdampf und steigt nach oben.\n\n### 2) Transpiration\nAuch **Pflanzen** geben Wasser ab. Über ihre Blätter geht Wasser in die Luft. Das nennt man Transpiration.\n\n### 3) Kondensation\nIn der Höhe ist es kühler. Der Wasserdampf kühlt ab und wird wieder zu winzigen Wassertropfen. So entstehen **Wolken**.\n\n### 4) Niederschlag\nWenn in den Wolken viele Tropfen zusammenkommen und zu schwer werden, fallen sie zur Erde zurück: als **Regen, Schnee, Hagel oder Graupel**.\n\n### 5) Versickerung und Grundwasser\nEin Teil des Wassers dringt in den Boden ein. Das heißt **Versickerung**. Dort sammelt es sich als **Grundwasser** und fließt langsam weiter.\n\n### 6) Oberflächenabfluss\nNicht alles versickert. Ein anderer Teil fließt über die Erde in **Bäche, Flüsse, Seen und schließlich ins Meer**.\n\nDann beginnt alles wieder von vorne.\n\n## Warum ist der Wasserkreislauf wichtig?\n\n- Er sorgt dafür, dass Wasser **immer wieder verteilt** wird.\n- Er bringt **Süßwasser** in Flüsse, Seen und ins Grundwasser.\n- Ohne ihn gäbe es **keinen Regen** und damit auch **keine Pflanzen**, Tiere und Menschen in dieser Form.\n- Er hilft, die **Temperatur** auf der Erde mit zu regulieren.\n- Er versorgt Böden und Pflanzen mit Wasser, damit **Leben möglich bleibt**.\n\n## Kurz zusammengefasst\nDie Sonne verdunstet Wasser → es bildet Wolken → daraus fällt Niederschlag → Wasser versickert oder fließt zurück ins Meer → und der Kreislauf beginnt neu.\n\nWenn du magst, kann ich dir danach auch noch eine **einfache Skizze in Worten** oder eine **Merkliste für den Test** machen.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12593,
+        "outputTokens": 567,
+        "thoughtTokens": 17,
+        "cachedTokens": 12416,
+        "costMicros": 13281,
+        "latencyMs": 4384
+      }
+    },
+    {
+      "id": "everything",
+      "words": 266,
+      "passed": true,
+      "reply": "Klar — hier ist das Wichtigste zum **Wasserkreislauf** für die Schule:\n\n## Was ist der Wasserkreislauf?\nDer Wasserkreislauf beschreibt, wie Wasser auf der Erde **ständig in Bewegung** ist. Es wird nicht „verbraucht“, sondern immer wieder verändert und transportiert.\n\n## Die wichtigsten Schritte\n\n### 1. Verdunstung\nDurch die **Sonne** wird Wasser warm und geht als **Wasserdampf** in die Luft.\n- Das passiert vor allem bei Meeren, Seen, Flüssen und auch bei nassen Böden.\n- Auch Pflanzen geben Wasser an die Luft ab. Das nennt man **Transpiration**.\n\n### 2. Kondensation\nDer Wasserdampf steigt nach oben. Dort ist es kälter.\n- Der Dampf kühlt ab.\n- Er wird wieder zu winzigen Wassertröpfchen.\n- Diese Tröpfchen bilden **Wolken**.\n\n### 3. Niederschlag\nWenn sich viele Tröpfchen in einer Wolke sammeln, werden sie schwer.\n- Dann fallen sie zur Erde.\n- Das kann als **Regen**, **Schnee** oder **Hagel** passieren.\n\n### 4. Versickerung und Abfluss\nDas Wasser landet auf dem Boden.\n- Ein Teil **versickert** in die Erde.\n- Ein anderer Teil fließt als **Bach, Fluss oder über den Boden** zurück ins Meer.\n- So kommt das Wasser wieder dorthin, wo der Kreislauf neu beginnt.\n\n## Warum ist das wichtig?\n- Es sorgt dafür, dass es auf der Erde immer wieder **neues nutzbares Wasser** gibt.\n- Pflanzen, Tiere und Menschen brauchen es zum Leben.\n- Ohne den Wasserkreislauf gäbe es viel weniger Regen und kein stabiles Klima.\n\n## Merksatz\n**Die Sonne lässt Wasser verdunsten, es bildet Wolken, fällt als Niederschlag zurück und fließt wieder ab.**\n\nWenn du willst, kann ich dir das auch noch **ganz kurz als Lernzettel** oder **in einfachen Stichpunkten** zusammenfassen.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12589,
+        "outputTokens": 517,
+        "thoughtTokens": 16,
+        "cachedTokens": 12416,
+        "costMicros": 13025,
+        "latencyMs": 4192
+      }
+    },
+    {
+      "id": "spoken",
+      "words": 193,
+      "passed": true,
+      "reply": "Klar — ich erklär’s dir ruhig und einfach.\n\nStell dir die Erde wie einen großen Kreis vor, in dem Wasser ständig unterwegs ist. Es verschwindet nicht, sondern verändert nur seinen Ort und seine Form.\n\n**So läuft der Wasserkreislauf ab:**\n\n1. **Die Sonne wärmt Seen, Meere und Flüsse.**\n   Dadurch wird Wasser immer wärmer.\n\n2. **Ein Teil des Wassers verdunstet.**\n   Das heißt: Es wird zu unsichtbarem Wasserdampf und steigt nach oben in die Luft.\n\n3. **Oben wird es kälter.**\n   Der Wasserdampf kühlt ab und wird wieder zu kleinen Wassertropfen. Das nennt man **Kondensation**.\n\n4. **Aus den Tropfen werden Wolken.**\n   Viele winzige Tropfen sammeln sich zusammen.\n\n5. **Wenn die Wolken schwer genug sind, fällt Wasser herunter.**\n   Das kann **Regen**, **Schnee** oder **Hagel** sein.\n\n6. **Das Wasser landet wieder auf der Erde.**\n   Es fließt in Bäche, Flüsse, Seen und Meere zurück — oder versickert im Boden.\n\nUnd dann beginnt alles wieder von vorn.\n\n**Kurz gesagt:**\nDie Sonne treibt das Wasser an, es steigt auf, bildet Wolken und fällt wieder herunter. So bewegt sich Wasser immer im Kreis.\n\nWenn du willst, kann ich es dir auch noch **in ganz kurzen Stichpunkten** oder **als kleines Bild im Kopf** erklären.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12596,
+        "outputTokens": 396,
+        "thoughtTokens": 14,
+        "cachedTokens": 12416,
+        "costMicros": 12422,
+        "latencyMs": 3384
+      }
+    },
+    {
+      "id": "summary",
+      "words": 158,
+      "passed": false,
+      "reply": "## Übersichtliche Zusammenfassung\n\n### Worum es ging\n- Wir haben über den **Wasserkreislauf** gesprochen.\n- Danach ging es um **Verdunstung** und **Kondensation**.\n- Außerdem kam eine Idee für einen **Versuch** dazu.\n\n### Wichtige Inhalte\n- **Verdunstung**: Wasser wird durch Wärme zu Wasserdampf.\n- **Kondensation**: Wasserdampf wird wieder zu kleinen Wassertröpfchen.\n- **Wolken** bestehen aus vielen kleinen Wassertröpfchen.\n- **Sonnenwärme** ist die Energiequelle für den Wasserkreislauf.\n- Wasser kann nach dem Niederschlag **versickern** oder **zurückfließen**.\n\n### Was dir wichtig war\n- Du hast gemerkt, dass du **Verdunstung** und **Kondensation** leicht verwechselst.\n- Du wolltest die beiden Begriffe deshalb noch einmal üben.\n\n### Versuchsidee\n- Du wolltest eine **kalte Glasscheibe über warmes Wasser** halten.\n- Dabei sollte man beobachten, was passiert.\n- Die genaue Art, wie du die Beobachtung festhältst, war noch offen.\n\n### Kurz gesagt\n- Der Wasserkreislauf wurde erklärt.\n- Die Begriffe Verdunstung und Kondensation wurden wiederholt.\n- Eine Versuchsidee wurde besprochen, um die Begriffe besser zu verstehen.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12757,
+        "outputTokens": 356,
+        "thoughtTokens": 9,
+        "cachedTokens": 12416,
+        "costMicros": 12332,
+        "latencyMs": 3000
+      }
+    }
+  ]
+}

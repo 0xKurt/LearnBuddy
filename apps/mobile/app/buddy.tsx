@@ -56,14 +56,10 @@ import { HomeSkeleton } from '../components/lb/Skeletons.js';
 import { useAnnounce } from '../lib/announce.js';
 import { newId } from '../lib/api/client.js';
 import { answerContactOptIn, reportOutcome, undoAction } from '../lib/api/endpoints.js';
+import { useEarlierMessages } from '../lib/buddy/useEarlierMessages.js';
 import { useHome } from '../lib/api/queries.js';
 import { headState, useThreadRecording } from '../lib/buddy/headState.js';
-import {
-  greetingOnScreen,
-  placeByTime,
-  threadOnScreen,
-  VISIBLE_MESSAGES,
-} from '../lib/buddy/homeThread.js';
+import { greetingOnScreen, placeByTime, threadOnScreen } from '../lib/buddy/homeThread.js';
 import { newestBuddyId, showNewReply } from '../lib/buddy/newReply.js';
 import { greetingRoom } from '../lib/buddy/sessionAnchor.js';
 import { useContactOptIn } from '../lib/buddy/useContactOptIn.js';
@@ -120,6 +116,7 @@ export default function BuddyScreen() {
   const thread = home.data?.thread;
   const newestReply = thread ? newestBuddyId(thread) : null;
   const follow = useThreadFollow(newestReply);
+  const earlier = useEarlierMessages(follow.preserveForPrepend);
   const { pending, live, send, stopReply } = useHomeSend({ thread, onSend: follow.followNext });
   // Her sheet from the tap on "Senden" until her stored message is there (issue #632).
   const sending = useSendingInThread(thread);
@@ -281,8 +278,8 @@ export default function BuddyScreen() {
               refreshing={home.isRefetching}
               onRefresh={refetch}
             >
-              {h.thread.length > VISIBLE_MESSAGES || h.thread_has_more ? (
-                <Btn size="sm" variant="ghost" center onPress={() => router.push('/history')}>
+              {h.thread_has_more ? (
+                <Btn size="sm" variant="ghost" center busy={earlier.loading} onPress={earlier.load}>
                   {t('buddy:thread.load_more')}
                 </Btn>
               ) : null}

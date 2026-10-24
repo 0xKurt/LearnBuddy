@@ -74,11 +74,15 @@ describe('the stage (Talk.jsx:22–45)', () => {
     const talk = code('app/talk.tsx');
     expect(talk.match(/\bsetHome\(/g)).toHaveLength(1);
     expect(talk).not.toMatch(/setQueryData|writeHome/);
-    expect(code('lib/api/queries.ts')).toMatch(
-      /export function setHome\(home: BuddyHome\): void \{[^}]*writeHome\(queryClient, home\);\s*\}/,
-    );
+    const setHome = code('lib/api/queries.ts')
+      .split('export function setHome(')[1]!
+      .split('export const useSettings')[0]!;
+    expect(setHome).not.toMatch(/setQueryData/);
+    expect(setHome).toContain('writeHome(queryClient, home)');
+    expect(setHome).toContain('writeHome(queryClient, complete)');
+    expect(setHome).toContain('currentSession() === session');
     expect(code('lib/api/homeCache.ts')).toMatch(
-      /export function writeHome\([^)]*\): boolean \{\s*if \(!newerHome\(home, client\.getQueryData<BuddyHome>\(keys\.home\)\)\) return false;/,
+      /export function writeHome\([^)]*\): boolean \{\s*const held = client\.getQueryData<BuddyHome>\(keys\.home\);\s*if \(!newerHome\(home, held\)\) return false;/,
     );
   });
 

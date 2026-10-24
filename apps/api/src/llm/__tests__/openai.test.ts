@@ -76,6 +76,22 @@ describe('direct strict decisions (#893)', () => {
     expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body)).model).toBe('gpt-4.1-mini');
   });
 
+  it.each([
+    ['buddy_turn', 'medium'],
+    ['summary', 'medium'],
+    ['buddy_check', 'low'],
+    ['explain', 'high'],
+  ] as const)(
+    'sets verbosity for %s without limiting requested detail',
+    async (purpose, verbosity) => {
+      const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+        Response.json(completion('stop', JSON.stringify(answer))),
+      );
+      await new OpenAIGateway(config, fetch).generate({ ...turn(), purpose });
+      expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body)).verbosity).toBe(verbosity);
+    },
+  );
+
   it('avoids the measured HTTP 400 for function tools with reasoning on the real Buddy schema', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (_url, init) => {
       const body = JSON.parse(String(init?.body));

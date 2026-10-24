@@ -192,3 +192,17 @@ it('a read intent supersedes a queued end follow before content grows', () => {
   expect(scrollTo).toHaveBeenLastCalledWith({ y: 250, animated: false });
   expect(scrollToEnd).not.toHaveBeenCalled();
 });
+
+it('keeps the same visible message when older pages are prepended', () => {
+  const { result } = renderHook(() => useThreadFollow(null, { initiallyFollowing: false }));
+  const scrollTo = vi.fn();
+  result.current.scroll.current = { scrollTo } as unknown as ScrollView;
+  act(() => {
+    result.current.onContentSizeChange(360, 900);
+    result.current.onScroll(scrolled(100));
+    result.current.preserveForPrepend();
+    result.current.onContentSizeChange(360, 1500);
+  });
+  expect(scrollTo).toHaveBeenLastCalledWith({ y: 700, animated: false });
+  expect(result.current.atEnd).toBe(false);
+});

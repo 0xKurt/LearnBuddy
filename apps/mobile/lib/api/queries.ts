@@ -13,9 +13,10 @@ import { homePollMs } from './homePoll.js';
 import { useOnScreen } from '../screenFocus.js';
 import { onlineFrom } from '../net.js';
 import { ApiError } from './client.js';
-import { refreshProfileIfChanged, writeHome } from './homeCache.js';
+import { refreshProfileIfChanged, retainConversation, writeHome } from './homeCache.js';
 import { keys } from './keys.js';
-import { getHome, getMe, getMemory, getSettings } from './endpoints.js';
+import { conversationGap, fillConversationGap } from './conversationWindow.js';
+import { getHome, getMe, getMemory, getSettings, getThread } from './endpoints.js';
 import { registry } from '../registry.js';
 
 export const queryClient = new QueryClient({
@@ -85,7 +86,12 @@ export const homeFollowers = registry<string, (home: BuddyHome) => void>('Starts
 
 /** The home from the server, and what it carries into the other caches. */
 async function loadHome(): Promise<BuddyHome> {
-  const home = await getHome();
+  const incoming = await fillConversationGap(
+    await getHome(),
+    queryClient.getQueryData<BuddyHome>(keys.home),
+    getThread,
+  );
+  const home = retainConversation(incoming, queryClient.getQueryData<BuddyHome>(keys.home));
   // A turn that finished while she waited (a poll brings its home): her profile too (#671).
   refreshProfileIfChanged(queryClient, home, queryClient.getQueryData<BuddyHome>(keys.home));
   for (const follow of homeFollowers.values()) follow(home);
@@ -123,8 +129,19 @@ export const useHome = () => {
  */
 export function setHome(home: BuddyHome): void {
   // A turn that finishes after sign-out never refills the cleared cache (shared phone).
-  if (!currentSession()) return;
-  writeHome(queryClient, home);
+  const session = currentSession();
+  if (!session) return;
+  const held = queryClient.getQueryData<BuddyHome>(keys.home);
+  if (conversationGap(home, held)) {
+    void fillConversationGap(home, held, getThread)
+      .then((complete) => {
+        if (currentSession() === session) writeHome(queryClient, complete);
+      })
+      .catch(() => {
+        if (currentSession() === session)
+          void queryClient.invalidateQueries({ queryKey: keys.home });
+      });
+  } else writeHome(queryClient, home);
 }
 
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: getSettings });
