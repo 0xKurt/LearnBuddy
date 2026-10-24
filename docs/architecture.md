@@ -470,6 +470,11 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
 - **Her words**: a quote must be whole words from what she wrote since Buddy's last answer —
   several quick messages count together (audit M-49) — and a quote of fewer than four letters
   counts only as a whole message (a bare "Ja"), never as a fragment ("ge" in "geschlagen").
+  Only `offer_learning.asked` allows one clarification bridge (#938): if the immediately preceding Buddy message has
+  structured `ask` options and replies to the learner message immediately before it, that one
+  completed learner message is also quotable for that test request. Memory, settings, clocks and
+  other actions still require current-turn words. No recursive chain, older messages, blocked or
+  concern messages; the state query remains scoped to this learner.
 - **Only what she said** (live finding 4: "hab gleich Handballtraining" became "hat sonntags
   Nachmittag Handballtraining"): a memory (`remember`, `correct_memory`) may name a day, time of
   day, month or number only if her quote does (a correction: or the statement known before) —
@@ -6257,7 +6262,9 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   (his offers and open-area buttons, a result) or a roleplay runs, the newest messages stand under
   the orb as the chat's own bubbles and cards (`components/buddy/Conversation.tsx`, with the
   read-along of `components/buddy/ReadAlongBubble.tsx`) in place of that line, and a tapped offer
-  keeps the voice on (issue #40). On the phone listening ends
+  keeps the voice on (issue #40). Failed turns keep the existing thread scrollable, with an honest
+  hint and retry using the same client message id; an offer in the visible tail remains tappable
+  during her next turn (#938). On the phone listening ends
   by itself when she pauses: the on-device recogniser (`untilPause`), or on the continuous Android recording path a
   pause of 650 ms after at least 250 ms above the measured room noise plus 6 dB, with
   a −50 dBFS lower bound (`lib/speech/pauseEnd.ts`, issues #523/#932). The shared

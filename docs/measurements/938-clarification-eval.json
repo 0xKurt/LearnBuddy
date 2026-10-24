@@ -1,0 +1,39 @@
+{
+  "promptVersion": "buddy.d17f4c69",
+  "ranAt": "2026-10-24T17:10:47.732Z",
+  "models": [
+    "gpt-5.4-mini-2026-03-17"
+  ],
+  "costMicros": 19971,
+  "inputTokens": 15552,
+  "cachedTokens": 0,
+  "cases": [
+    {
+      "id": "de_vocab_test_after_clarification",
+      "ok": true,
+      "problems": [],
+      "reply": "Klar — ich bereite dir einen Vokabeltest zum Thema Alltag auf Deutsch und Englisch vor.",
+      "options": null,
+      "tools": [
+        "offer_learning"
+      ],
+      "calls": 4,
+      "costMicros": 19971,
+      "inputTokens": 15552,
+      "cachedTokens": 0,
+      "thoughtTokens": 139,
+      "latenciesMs": [
+        1838,
+        549,
+        576,
+        3966
+      ],
+      "rounds": [
+        1
+      ],
+      "firstSpeakableMs": [
+        1684
+      ]
+    }
+  ]
+}

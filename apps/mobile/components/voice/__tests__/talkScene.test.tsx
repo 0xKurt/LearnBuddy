@@ -70,6 +70,16 @@ describe('the tail of a running scene', () => {
     expect(talkTail([opening, hers], other)).toEqual([opening, hers]);
   });
 
+  it('keeps the preceding conversation available after a failed turn', () => {
+    const history = [1, 2, 3, 4].map((n) => message(n, n % 2 ? 'learner' : 'buddy', `Satz ${n}`));
+    const failed = {
+      ...message(5, 'learner', 'Deutsch und Englisch.'),
+      status: 'failed' as const,
+      failure_code: 'model_invalid',
+    };
+    expect(talkTail([...history, failed], null)).toEqual([...history, failed]);
+  });
+
   it('is the newest three messages', () => {
     const many = [1, 2, 3, 4, 5].map((n) => message(n, 'learner', `Satz ${n}`));
     expect(talkTail(many, null).map((m) => m.text)).toEqual(['Satz 3', 'Satz 4', 'Satz 5']);

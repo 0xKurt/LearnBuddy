@@ -47,6 +47,8 @@ export type ApplyInput = {
   reference: Date;
   /** What the learner wrote that this decision answers; null for background checks. */
   learnerWords: readonly string[] | null;
+  /** One linked clarification request; only offer_learning.asked may use these words. */
+  clarificationWords?: readonly string[];
   /** A safeguarding answer (TurnDecision.concern). */
   concern?: boolean;
   triggerMessageId: string | null;
@@ -152,6 +154,7 @@ export async function applyDecision(db: Db, input: ApplyInput): Promise<ApplyRes
               reference: input.reference,
               mode: input.meta.mode,
               learnerWords: input.learnerWords,
+              clarificationWords: input.clarificationWords,
               concern: input.concern ?? false,
               triggerMessageId: input.triggerMessageId,
               locale: input.locale,

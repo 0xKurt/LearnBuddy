@@ -304,7 +304,11 @@ async function decideTurn(
           }
         : {}),
     });
-    const { dialogue, learnerWords } = turnDialogue(state.messages, message.id, learner.locale);
+    const { dialogue, learnerWords, clarificationWords } = turnDialogue(
+      state.messages,
+      message.id,
+      learner.locale,
+    );
     // Passages her words clearly point at go into the context up front, so the answer
     // does not depend on the model calling search_material (issue #26). Appended after
     // the volatile end of STATE — the cache order (context.ts) is untouched.
@@ -432,6 +436,7 @@ async function decideTurn(
       // The day the model counted from (audit M-51): not the day the message was written.
       reference: now,
       learnerWords,
+      clarificationWords,
       concern: parsed.data.concern,
       triggerMessageId: message.id,
       messageClaim: { id: message.id, token: message.claim_token },
@@ -505,13 +510,15 @@ export function turnErrorCode(err: unknown): string {
  */
 export function turnDialogue(
   messages: ReadonlyArray<
-    Pick<MessageRow, 'id' | 'role' | 'text' | 'status' | 'failure_code' | 'recall_block'>
+    Pick<MessageRow, 'id' | 'role' | 'text' | 'status' | 'failure_code' | 'recall_block'> &
+      Partial<Pick<MessageRow, 'ask' | 'reply_to_id'>>
   >,
   triggerId: string,
   locale: string,
 ): {
   dialogue: Array<{ role: 'learner' | 'buddy'; text: string }>;
   learnerWords: string[];
+  clarificationWords: string[];
 } {
   // One rule for what a model may be told about a past message (modules/buddy/recall.ts,
   // issue #149). This path had its own version of it and the summariser had none, which is
@@ -521,14 +528,34 @@ export function turnDialogue(
     .filter((m): m is typeof m & { text: string } => m.text !== null);
   const at = shown.findIndex((m) => m.id === triggerId);
   if (at < 0) {
-    return { dialogue: shown.map((m) => ({ role: m.role, text: m.text })), learnerWords: [] };
+    return {
+      dialogue: shown.map((m) => ({ role: m.role, text: m.text })),
+      learnerWords: [],
+      clarificationWords: [],
+    };
   }
   let runStart = at;
   while (runStart > 0 && shown[runStart - 1]!.role === 'learner') runStart--;
   const run = shown.slice(runStart, at + 1);
   const ordered = [...shown.slice(0, runStart), ...shown.slice(at + 1), ...run];
+  // Only one explicit clarification bridge, linked to the immediately preceding wish.
+  // Use the original sequence: a hidden/blocked message must not join unrelated turns.
+  const originalStart = messages.findIndex((m) => m.id === run[0]?.id);
+  const question = messages[originalStart - 1];
+  const wish = messages[originalStart - 2];
+  const clarified =
+    question?.role === 'buddy' &&
+    question.ask != null &&
+    question.recall_block === null &&
+    wish?.role === 'learner' &&
+    question.reply_to_id === wish.id &&
+    wish.recall_block === null &&
+    wish.status === 'done'
+      ? [wish]
+      : [];
   return {
     dialogue: ordered.map((m) => ({ role: m.role, text: m.text })),
+    clarificationWords: clarified.map((m) => m.text),
     learnerWords: run
       .filter((m) => m.role === 'learner' && (m.recall_block ?? null) === null)
       .map((m) => m.text),

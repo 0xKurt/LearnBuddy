@@ -51,4 +51,34 @@ describe('turnDialogue', () => {
     expect(dialogue.map((d) => d.text).join(' ')).toContain('Schutzfilter');
     expect(learnerWords).toEqual(['Wollen wir üben?']);
   });
+  it('bridges only one linked clarification, never an earlier request or blocked words', () => {
+    const wish = m('1', 'learner', '20 Vokabeln testen');
+    const question = {
+      ...m('2', 'buddy', 'Welche Sprache?'),
+      ask: { options: ['Englisch'] },
+      reply_to_id: '1',
+    };
+    const answer = m('3', 'learner', 'Englisch');
+    const later = {
+      ...m('4', 'buddy', 'Welche Richtung?'),
+      ask: { options: ['Beide'] },
+      reply_to_id: '3',
+    };
+    expect(turnDialogue([wish, question, answer], '3', 'de').clarificationWords).toEqual([
+      wish.text,
+    ]);
+    expect(
+      turnDialogue([wish, question, answer, later, m('5', 'learner', 'Beide')], '5', 'de')
+        .clarificationWords,
+    ).toEqual(['Englisch']);
+    expect(turnDialogue([wish, question, answer], '3', 'de').learnerWords).toEqual(['Englisch']);
+    expect(
+      turnDialogue([{ ...wish, recall_block: 'concern' }, question, answer], '3', 'de')
+        .clarificationWords,
+    ).toEqual([]);
+    expect(
+      turnDialogue([wish, { ...question, reply_to_id: 'other' }, answer], '3', 'de')
+        .clarificationWords,
+    ).toEqual([]);
+  });
 });

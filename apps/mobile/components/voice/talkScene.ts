@@ -66,8 +66,10 @@ export function carriesCard(m: MessageView | undefined): boolean {
 export function talkTail(
   thread: readonly MessageView[],
   startsScene: ((a: Action) => boolean) | null,
+  problem = false,
 ): MessageView[] {
-  const tail = thread.slice(-TAIL);
+  // Failure never makes the preceding conversation disappear; it remains scrollable.
+  const tail = problem || thread.at(-1)?.status === 'failed' ? [...thread] : thread.slice(-TAIL);
   if (startsScene === null) return tail;
   return tail
     .map((m) =>

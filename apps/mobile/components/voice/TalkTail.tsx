@@ -19,6 +19,7 @@ export function TalkTail({
   live,
   busy,
   showTyping,
+  onResend,
 }: {
   messages: MessageView[];
   /** Her words as her own bubble, until the server's thread carries the message. */
@@ -27,6 +28,7 @@ export function TalkTail({
   live: string | null;
   busy: boolean;
   showTyping: boolean;
+  onResend: (message: MessageView) => void;
 }) {
   const scroll = useRef<ScrollView>(null);
   const endScroll = useEndScroll(scroll);
@@ -68,6 +70,7 @@ export function TalkTail({
           live={live}
           busy={busy}
           spoken
+          onResend={onResend}
           // The microphone is this screen's one filled action.
           quiet="soft"
           showTyping={showTyping}

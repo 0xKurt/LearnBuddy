@@ -45,6 +45,8 @@ export type ToolContext = {
   mode: 'turn' | 'check';
   /** What the learner wrote that this decision answers (one or several quick messages). */
   learnerWords: readonly string[] | null;
+  /** One linked clarification request; only offer_learning.asked may use these words. */
+  clarificationWords?: readonly string[];
   /** The turn is a safeguarding answer (TurnDecision.concern): nothing about it is remembered. */
   concern: boolean;
   triggerMessageId: string | null;

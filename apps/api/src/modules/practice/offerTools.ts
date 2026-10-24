@@ -88,7 +88,14 @@ export async function runOfferLearning(
     throw new ToolRejection('"asked" only goes with a practice test (kind "test") — leave it null');
   }
   if (a.kind === 'test') {
-    if (a.asked) requireQuote(ctx, a.asked);
+    if (a.asked)
+      requireQuote(
+        {
+          ...ctx,
+          learnerWords: [...(ctx.learnerWords ?? []), ...(ctx.clarificationWords ?? [])],
+        },
+        a.asked,
+      );
     else if (
       !(await practiceGoesWell(ctx.db, ctx.learnerId, { goalId: goal?.id ?? null, text: a.text }))
     ) {

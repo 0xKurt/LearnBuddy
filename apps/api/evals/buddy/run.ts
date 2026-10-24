@@ -28,12 +28,13 @@ import { BlockAudit } from './blockaudit.js';
 import { testDatabaseAvailable } from '../../src/testing/database.js';
 import { createTestEnv, onboard, type Learner, type TestEnv } from '../../src/testing/harness.js';
 import { CASES as BASE_CASES, type Outcome } from './cases.js';
+import { clarificationCase } from './clarificationCase.js';
 import { DAY_CASES } from './dayCases.js';
 import { judgeRuns, runsFor } from './repeat.js';
 import { bumpContext } from '../../src/modules/buddy/plan.js';
 
 /** Every case: the turns, and the DaySpec cases of the day list (#687). */
-const CASES = [...BASE_CASES, ...DAY_CASES];
+const CASES = [...BASE_CASES, ...DAY_CASES, clarificationCase];
 
 // Buddy's prompt is built from what the learning domain registers (issue #107).
 registerLearning();
@@ -326,6 +327,8 @@ async function main(): Promise<void> {
                   )
                 ).flatMap((d) => d.errors ?? []),
               ];
+        // Include offer preparation in the reported cost before closing the case.
+        await env.flushBackground();
         // cached: what the provider served from its prefix cache (issue #25). Every case is a
         // different learner on its own throwaway database, so what can be cached between them
         // is only the part before `contents` — system prompt plus response schema. Measured

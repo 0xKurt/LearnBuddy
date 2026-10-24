@@ -164,10 +164,14 @@ export default function TalkScreen() {
     text: string,
     pronunciation?: ConversationPronunciation,
     current: () => boolean = () => true,
+    retryId?: string,
   ): Promise<void> {
     if (current()) void playCue('done');
-    const id = newId();
+    const id = retryId ?? newId();
     if (current()) {
+      if (retryId) voiceRef.current.cancel();
+      stopSpeaking();
+      setProblem(null);
       setPending({ id, text });
       setLive(null);
       // An answer that arrived whole stays on screen through this turn (rule 18).
@@ -445,9 +449,13 @@ export default function TalkScreen() {
   // own bubbles (issue #18) — where there is something to tap or to look at, or a scene runs.
   const thread = home.data?.thread ?? [];
   const scene = sceneOf(home.data);
-  const tail = talkTail(thread, scene?.starts ?? null);
+  const tail = talkTail(thread, scene?.starts ?? null, problem !== null);
   const role = scene?.role ?? null;
-  const threaded = scene !== null || carriesCard(thread[thread.length - 1]);
+  const threaded =
+    scene !== null ||
+    problem !== null ||
+    thread.at(-1)?.status === 'failed' ||
+    tail.some(carriesCard);
   // Her words as her own bubble: the live transcript while she speaks, then what she
   // said until the server's thread carries the message.
   const confirmed = pending !== null && thread.some((m) => m.client_message_id === pending.id);
@@ -576,11 +584,19 @@ export default function TalkScreen() {
         {threaded ? (
           <TalkTail
             messages={tail}
+            onResend={(message) =>
+              void answer(
+                message.text,
+                undefined,
+                undefined,
+                message.client_message_id ?? undefined,
+              )
+            }
             pending={bubble}
             live={live}
             busy={phase === 'thinking'}
-            // While she is still speaking, her forming words are no writing of Buddy's.
-            showTyping={phase !== 'listening'}
+            // Only an active turn is writing; a failed turn waits for her retry.
+            showTyping={phase === 'thinking'}
           />
         ) : null}
       </View>
@@ -604,6 +620,15 @@ export default function TalkScreen() {
           ) : (
             <MicStatus voice={voice} />
           )}
+          {problem && pending && !confirmed ? (
+            <Btn
+              variant="soft"
+              center
+              onPress={() => void answer(pending.text, undefined, undefined, pending.id)}
+            >
+              {t('common:actions.retry')}
+            </Btn>
+          ) : null}
         </View>
       ) : null}
       {reading ? (
