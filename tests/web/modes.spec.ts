@@ -612,14 +612,14 @@ test('learning modes: reading aloud and talking — at a question, with Buddy, o
   // One status line while the microphone records (#599): how her turn ends here.
   await expect(page.getByText(buddyDe.talk.tap_when_done)).toBeVisible();
   await shot(page, '32-talk-listening');
-  await page.waitForTimeout(1500);
+  // Observe her live words while she speaks. After the response headers, the scripted reply
+  // can already own this line; waiting for her words then catches the NEXT recording instead
+  // (15 s later), which has replaced the reply we wanted to check (#913).
+  await expect(page.getByText('Was steht diese Woche an?').last()).toBeVisible();
   const streamed = page.waitForResponse((r) => r.url().endsWith('/v1/buddy/messages'));
   await page.getByRole('button', { name: 'Aufnahme stoppen' }).click();
   // Buddy's reply comes as a stream (shown while it is written, read aloud once stored).
   expect((await streamed).headers()['content-type']).toContain('text/event-stream');
-  // Her words stand as the one line under the orb while Buddy thinks (#599), and in the one
-  // thread (issue #18) — the chat underneath carries them, so they are found either way.
-  await expect(page.getByText('Was steht diese Woche an?').last()).toBeVisible();
   // The answer on the conversation screen, as that line (the chat underneath has it too).
   await expect(
     page.getByText('Diese Woche steht noch nichts an – magst du etwas üben?').last(),

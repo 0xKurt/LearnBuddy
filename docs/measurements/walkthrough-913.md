@@ -152,3 +152,31 @@ Gemeinsame Gegenprüfung: **4 Browserfälle bestanden / 0 fehlgeschlagen**, 8,9 
 (Lesen, Solids, Gradnetz, Zeichnungen #462), zusätzlich **7 Layout-Komponententests bestanden**.
 Damit bleiben alle zwölf ursprünglichen Restfälle grün; auch die zusätzliche Leseregression ist
 vor dem Neustart des Endlaufs behoben.
+
+
+## Vollständiger Lauf auf 52a48378
+
+Der vollständige Lauf endete nach **2,4 Stunden mit 271 bestanden / 1 fehlgeschlagen /
+10 bestehenden Auslassungen** (`.cache/walk-full-52a48378.log`). Alle zwölf übergebenen Restfälle
+und der zusätzlich abgesicherte Leseablauf bestanden darin.
+
+Der einzige weitere Fehler war `modes.spec.ts` · „reading aloud and talking“: Der Ablauf wartete
+nach Empfang der Antwort-Header zuerst auf die kurz sichtbare eigene Äußerung und danach auf
+Buddys Antwort. Die geskriptete Antwort konnte die eigene Zeile bereits ersetzen, bevor die erste
+Prüfung sie sah. Diese Prüfung fand dann erst die nächste geskriptete Aufnahme nach 15 Sekunden;
+deren neue Wörter hatten die Antwort wieder verdrängt. Belege: Beide Nachrichten stehen korrekt
+im lokalen Test-Postgres (Antwort um `04:55:38.700Z`); der Fehler-Screenshot entstand um
+`04:56:14.845Z`, also nach dem nächsten 15-Sekunden-Audioteil und dem anschließenden
+20-Sekunden-Assertion-Timeout. Der Screenshot zeigt die erneut laufende Aufnahme mit ihren
+Wörtern. Die eigenständige Prüfung des Vorlese-/Wiederaufnahmezyklus bestand im selben Lauf.
+
+Der Ablauf prüft dieselben eigenen Wörter jetzt während der Aufnahme, bevor er sie abschickt,
+statt nach den Antwort-Headern. Er wartet auf dieses sichtbare Ereignis statt pauschal 1500 ms.
+Die Prüfung von Stream-Header, sichtbarer Antwort und gespeicherten eigenen Wörtern bleibt
+unverändert. Dies ist eine belegte Reihenfolge im Ablaufskript; keine Produktänderung.
+
+Gezielte Gegenprüfung mit Trace: **1 bestanden / 0 fehlgeschlagen**, 1,6 Minuten
+(`.cache/walk-voice-timing.log`, `.cache/voice-timing-green-trace.zip`). Die Trace zeigt die
+Reihenfolge ausdrücklich: eigene Wörter nach 11,4 Sekunden Wartezeit sichtbar, anschließend
+Aufnahme beendet, Antwortprüfung 30 ms später erfolgreich; dieselben eigenen Wörter stehen nach
+Beenden des Gesprächs weiterhin im Chat. Keine Prüfung wurde entfernt oder abgeschwächt.
