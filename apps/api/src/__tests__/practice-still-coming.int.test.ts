@@ -172,6 +172,63 @@ describe.skipIf(!dbReady)('a run that starts before its questions are all writte
     );
   });
 
+  it.each(['schema', 'quality'] as const)(
+    'starts once three usable questions arrive after an early %s rejection (#928)',
+    async (rejection) => {
+      const held = heldStream();
+      const set = {
+        ...SET,
+        items: SET.items.map((item, i) =>
+          i !== 0
+            ? item
+            : rejection === 'schema'
+              ? { ...item, answer: null }
+              : { ...item, prompt: 'Berechne $\\overbrace{1+1}$.' },
+        ),
+      };
+      env.llm.script('explain', async (req) => {
+        // First three written leaves only two usable. The fourth is complete while the
+        // rest of the same answer is still held: no retry and no relaxed validation.
+        req.onPartial?.(JSON.stringify({ ...set, items: set.items.slice(0, 3) }));
+        req.onPartial?.(JSON.stringify({ ...set, items: set.items.slice(0, 4) }));
+        await held.until;
+        return set;
+      });
+      const pending = start(l);
+      let deadline: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const started = await Promise.race([
+          pending,
+          new Promise<null>((resolve) => {
+            deadline = setTimeout(() => resolve(null), 1500);
+          }),
+        ]);
+        expect(started, 'must return while the rest of the stream is held').not.toBeNull();
+        expect(started!.body.preparing).toBe(true);
+        expect(started!.body.items.map((i) => i.item.prompt)).toEqual([
+          'Frage 2',
+          'Frage 3',
+          'Frage 4',
+        ]);
+        held.release();
+        await env.flushBackground();
+        const grown = await l.api.get<SessionView>(`/practice/sessions/${started!.body.id}`);
+        expect(grown.body.items.map((i) => i.item.prompt)).toEqual(
+          SET.items.slice(1).map((i) => i.prompt),
+        );
+        expect(grown.body.items.slice(0, 3).map((i) => i.item.id)).toEqual(
+          started!.body.items.map((i) => i.item.id),
+        );
+        expect(grown.body.preparing).toBe(false);
+        expect(env.llm.callsFor('explain')).toHaveLength(1);
+      } finally {
+        clearTimeout(deadline);
+        held.release();
+        await pending;
+      }
+    },
+  );
+
   it('does not end the run when she answers the first questions before the rest lands', async () => {
     const held = heldStream();
     env.llm.script('explain', {

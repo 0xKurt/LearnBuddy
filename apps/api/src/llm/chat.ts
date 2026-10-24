@@ -160,8 +160,13 @@ export class ChatGateway extends RetryingGateway {
             reason = choice.finish_reason ?? reason;
             refused ||= Boolean(choice.delta.refusal);
             if (refused || reason === 'content_filter') continue;
-            text += choice.delta.content ?? '';
-            if (text) req.onPartial(restoreStrictPartial(req.schema, text));
+            // Finish/metadata chunks still update safety and usage above, but carry no new
+            // text. Re-parsing the whole growing answer would only publish it twice (#928).
+            const added = choice.delta.content;
+            if (added) {
+              text += added;
+              req.onPartial(restoreStrictPartial(req.schema, text));
+            }
             if (signal.aborted) throw classifyOpenAI(null, signal, req.signal, null);
           }
         } else {
