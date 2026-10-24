@@ -1165,21 +1165,28 @@ A call that the provider did not run for her — provider
 down, request refused, safety block — gives its reservation back; a timeout or unusable output
 keeps it (the provider may have done and billed the work).
 
-### Direct EU provider preparation (#891, off by default)
+### Direct EU provider (#893)
 
-`LLM_BACKEND=openai` selects `OpenAIGateway`; Vertex remains the default. `OPENAI_API_KEY`,
+`LLM_BACKEND=openai` selects `OpenAIGateway` and is the default. No Google project or credentials
+are required to construct any production service in this mode. `OPENAI_API_KEY`,
 `OPENAI_BASE_URL` (EU-only, default `https://eu.api.openai.com/v1`) and `OPENAI_MODEL_SMART` /
-`OPENAI_MODEL_FAST` configure it. Azure's adapter, configuration and tests have been removed.
+`OPENAI_MODEL_FAST` configure it. Both tiers default to `gpt-5.4-mini`; `OPENAI_ROUTES` overrides
+a model per purpose and rejects unknown purpose/model names. Audio, speech and embeddings default
+to the same direct provider when the chat backend is selected. Each backend remains independently
+switchable by environment; legacy credentials are required only by a selected legacy service.
+Azure's adapter, configuration and tests have been removed.
 All provider limits (accepted MIME types, images, inline bytes, schema properties/depth/enums/
 strings), cache mode, escape normalization and prices live in `GatewayProfile`. The direct
 adapter accepts JPEG/PNG and inline PDFs as Chat Completions `file` parts, with 20 images /
-20 MB Base64 combined. Redirects and SDK retries are disabled. Audio remains a separate workstream.
+20 MB Base64 combined. Redirects and SDK retries are disabled. Audio uses its separate adapter (§Voice).
 
 The real Buddy, explain and extraction schemas were accepted as strict `response_format`
 JSON on the EU endpoint (23.10.2026, #893). Each decision is one request; there are no staged
 function calls or JSON-repair requests. Original Zod constraints, lookups, permissions and the
 atomic context fence remain authoritative. Strict nullable fields are restored to optional
-fields before validation; partial JSON streams incrementally for every purpose. The previous
+fields before validation; partial JSON streams incrementally for every purpose. String and array bounds from
+Zod are retained beside the provider-neutral schema nodes and enforced in the direct strict wire
+schema, including after form selection. The legacy wire JSON and prompt budgets stay unchanged. The previous
 function path failed with HTTP 400 because the selected model does not combine function tools
 and reasoning in Chat Completions. HTTP rejection keeps its status (`HTTP_400`); safety refusal
 remains `blocked`. Raw provider responses are logged only by the synthetic benchmark, never
@@ -1196,6 +1203,10 @@ See [the dated decision](decisions/openai-eu-2026-10-23.md) for corrected direct
 activation gates. In particular, an EU URL is not proof of project ZDR, and current self-consent
 from 16 does not satisfy the API agreement's parental-consent requirement for all minors.
 
+The dated [model choice and live checks](decisions/openai-model-choice-2026-10-24.md) record
+quality gates, EU-listed media models and the production switch/reindex procedure. A default
+change does not apply hosting configuration or attest project-level residency approval.
+
 ### Schema budget (#627)
 
 Vertex serves a `responseJsonSchema` only up to a size it does not publish. A schema past that size
@@ -1208,7 +1219,10 @@ least 270. So **`MAX_SCHEMA_PROPERTIES = 269`**, and every schema we send stays 
 guard `llm/__tests__/schemaBudget.test.ts` over the schema inventory, docs/engineering-guards.md).
 The Buddy turn sits at 268: a new action field needs room made elsewhere first.
 
-**Choosing the forms first** (`practice/formChoice.ts`, the step #281 put off as D3). A practice,
+**Choosing the forms first** (`practice/formChoice.ts`, the step #281 put off as D3).
+A provider may also set a preferred schema size below its hard limit: the direct EU adapter
+prefers 269 properties, while still accepting up to 5,000. The existing selector and known-form
+reuse then reduce large content requests without adding provider-specific rules to the module. A practice,
 test or help run and a sheet reading have schemas of 518–774 properties: every task form and
 every figure type at once. They were refused from 03.10. on, when #231's option pictures copied the
 figure union a second time; bisected in #627. When the whole schema does not fit, a small first call
@@ -6061,32 +6075,41 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   never costs a long take. Each piece counts against the budgets on its own (§Limits). Cut
   quality on real recordings (stitched vs. whole clip) is not yet measured — that comparison
   belongs to the walkthrough scenario before the pieces path replaces anything further.
-- **EU audio migration (#893, proposed):** `AUDIO_BACKEND=openai` wraps the existing model
-  gateway for recordings only. `/audio/transcriptions` (`gpt-4o-transcribe`) supplies the verbatim
+- **EU audio (#893):** `AUDIO_BACKEND=openai` wraps the existing model
+  gateway for recordings only. `/audio/transcriptions` (`gpt-transcribe`) supplies the verbatim
   transcript, with the known recording language supplied independently of the target/question;
   the existing text gateway performs maths formatting, distress interpretation and
   rehearsal structure. Empty transcripts are handled in code, with no formatter call. Existing
   code still grades dictation/listening answers and reading accuracy, measures talk timing and
   validates pronunciation consistency. Photo transcription stays on the image gateway.
-  Pronunciation sends the sounds to `gpt-audio-1.5` (six adult references: same error recall,
-  fewer false alarms than the current gateway; mini regressed); transcript matching cannot assess accent
-  or phonemes. M4A/AAC/WebM convert to WAV in memory with JS/WASM, with input/decoded-size bounds;
+  Pronunciation sends the sounds to the EU-listed `gpt-realtime-2.1` over the same EU host,
+  in one bounded audio-in/text-out response with a forced pronunciation function, no conversation
+  persistence, tracing or reconnect. The original sound is decoded/resampled to mono PCM16 at
+  24 kHz in memory; transcript matching cannot assess accent or phonemes. Active configuration
+  rejects the older unlisted `gpt-audio` models. The three synthetic baseline verdicts match;
+  this is not a child-voice or word-level equivalence claim. M4A/AAC/WebM convert to WAV in memory with JS/WASM, with input/decoded-size bounds;
   recordings are never written to disk. Existing budgets count one logical request and record
   the cost of both stages, including a paid transcription followed by a failed formatter.
   Cancellation and one deadline cover both stages; no fallback to another provider occurs.
-  The default stays on the current gateway. Broader human pronunciation equivalence across children/languages and
+  Broader human pronunciation equivalence across children/languages and
   live end-to-end formatting/filler preservation remain rollout gates, not proven by fakes.
-- **EU TTS candidate (#893):** `SPEECH_BACKEND=openai` selects `OpenAISpeech` behind the same seam,
-  shared cache, locale support and six voice names; provider/model/locale/voice are part of the
-  cache identity. `tts-1` returns MP3 and receives the existing speaking-rate steps directly.
-  The EU-only client is shared with transcription/pronunciation/embeddings via `OPENAI_API_KEY`
-  and `OPENAI_BASE_URL`; any other base URL fails startup, redirects and SDK retries are disabled.
-  Defaults remain unchanged. This candidate is **not cleared for rollout**: measured full-MP3
-  latency 1.66–2.06 s regresses against Chirp3's 0.61–0.90 s on the five short locale samples;
-  `gpt-4o-mini-tts` was 10.98–15.97 s. Voice/accent quality still needs a listening comparison.
+- **EU TTS (#893):** `SPEECH_BACKEND=openai` selects `OpenAISpeech` behind the existing seam.
+  `OPENAI_MODEL_SPEECH=gpt-realtime-2.1-mini` is the default EU-listed model. One bounded,
+  stateless response uses a fixed calm, clear, child-appropriate read-aloud instruction; tracing
+  and reconnect are disabled. PCM chunks become one WAV for the existing cache/player. The
+  player still waits for the complete file; provider first-chunk latency is not audible-start
+  latency. The six voices default to marin/shimmer/coral/ash/cedar/echo (warm/bright/soft/friendly/
+  clear/deep); measured median F0 separates the existing higher/lower groups. Onyx is not
+  supported by this model. `OPENAI_TTS_VOICES` provides validated operator overrides and changes
+  the cache identity. `tts-1` remains explicitly selectable with its own supported voice map,
+  but cannot apply the style instruction. Token receipts, including completed failed responses,
+  go to the existing speech cost log; cached playback costs zero. Fixed wording is instructed,
+  not proven by string comparison: speech legitimately expands numbers. Human listening and
+  real-device audible latency remain release gates. See the dated model decision for results.
+  The shared EU client rejects other hosts and disables redirects and SDK retries.
 - **Buddy's natural voice** (ADR 0008): everything read aloud goes sentence by sentence through
-  `POST /voice/speech` (`modules/voice/speech.ts` → `speech/` seam → Google Cloud TTS, Chirp 3:
-  HD voices, EU endpoint; `SPEECH_BACKEND=google`, default off until verified live). Voice and
+  `POST /voice/speech` (`modules/voice/speech.ts` → `speech/` seam → the selected EU speech
+  provider; the legacy Google adapter is only selected explicitly). Voice and
   speed come from her settings (`buddy_settings.voice`, `voice_speed`; tool `set_voice`, or the
   voice picked with a tap — `components/voice/VoicePicker.tsx` in the setup's last step and in the
   settings, closed until opened; ADR 0008 §Amendment). The picker is a list like a phone's

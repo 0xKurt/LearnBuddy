@@ -9,6 +9,13 @@ import { agreement, forHumans, tally, verdictSchema } from '../judge.js';
 const yes = { correct: true, followable: true, on_curriculum: true, short_enough: true, why: 'ok' };
 
 describe('the grade-10 judge', () => {
+  it('retains missing model answers in the denominator for human review', () => {
+    const missing = agreement(EXPLAIN_CRITERIA, {}, {});
+    expect(missing.clean).toBe(false);
+    expect(missing.disputed).toEqual(Object.keys(EXPLAIN_CRITERIA));
+    expect(tally(EXPLAIN_CRITERIA, [missing]).every((c) => c.yes === 0 && c.of === 1)).toBe(true);
+    expect(forHumans([{ id: 'missing', agreement: missing }])).toEqual(['missing']);
+  });
   it('asks the same criteria in swapped order', () => {
     const asListed = Object.keys(verdictSchema(EXPLAIN_CRITERIA, false).shape);
     const swapped = Object.keys(verdictSchema(EXPLAIN_CRITERIA, true).shape);

@@ -33,13 +33,7 @@ describe.skipIf(!(await testDatabaseAvailable()))('recorded audio through the AP
     http.mockResolvedValueOnce(
       Response.json({
         text,
-        usage: {
-          type: 'tokens',
-          input_tokens: 100,
-          output_tokens: 5,
-          input_token_details: { audio_tokens: 90 },
-          total_tokens: 105,
-        },
+        usage: { type: 'duration', seconds: 2 },
       }),
     );
   }
@@ -61,12 +55,12 @@ describe.skipIf(!(await testDatabaseAvailable()))('recorded audio through the AP
       [l.learnerId],
     );
     expect(usage.calls).toBe(1);
-    expect(usage.cost_micros).toBeGreaterThan(0);
+    expect(usage.cost_micros).toBe(165 + 800); // Two audio seconds plus the formatter receipt.
     const call = await env.db.one<{ model: string; attempts: number }>(
       `select model,attempts from llm_calls where learner_id=$1 and purpose='transcribe'`,
       [l.learnerId],
     );
-    expect(call.model).toContain('gpt-4o-transcribe');
+    expect(call.model).toContain('gpt-transcribe');
     expect(call.attempts).toBe(2);
     expect(
       await env.db.query('select 1 from buddy_messages union all select 1 from practice_turns'),

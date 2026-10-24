@@ -16,7 +16,8 @@ import { config as dotenv } from 'dotenv';
 import { loadConfig } from '../../src/config.js';
 import { safeguardingText } from '../../src/i18n/safeguarding.js';
 import { LlmError, type LlmGateway, type LlmUsage } from '../../src/llm/gateway.js';
-import { VertexGateway, modelFor } from '../../src/llm/vertex.js';
+import { modelFor } from '../../src/llm/vertex.js';
+import { llmGateway } from '../../src/production.js';
 import { distressCheck, type DistressFinding } from '../../src/modules/buddy/distress.js';
 import { ScriptedGateway } from '../../src/testing/fakes.js';
 import { createTestEnv, onboard } from '../../src/testing/harness.js';
@@ -33,12 +34,11 @@ const config = loadConfig({
   SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
   ADMIN_TOKEN_SECRET: 'unused-unused-unused-unused-unused!',
 });
-assert.equal(config.LLM_BACKEND, 'vertex');
+assert.notEqual(config.LLM_BACKEND, 'disabled');
 // An explicit deployment route must not silently send this experiment to the smart model.
 config.VERTEX_ROUTES = {};
-assert.equal(config.VERTEX_MODEL_FAST, 'eu/gemini-3.1-flash-lite');
-assert.equal(config.VERTEX_MODEL_SMART, 'eu/gemini-3.6-flash');
-const real = new VertexGateway(config);
+config.OPENAI_ROUTES = {};
+const real = llmGateway(config);
 const scripted = new ScriptedGateway();
 const ledger = join(homedir(), '.local/share/learnbuddy-agents/BUDGET-LEDGER.md');
 let call = 0;
@@ -46,7 +46,7 @@ let chargedMicros = 0;
 const plan = comparisonPlan(SAFEGUARDING_CASES);
 let current: Trial = plan[0]!;
 const results: Measurement[] = [];
-const output = '../../.cache/879';
+const output = process.env.SAFEGUARDING_OUT ?? '../../.cache/safeguarding';
 mkdirSync(output, { recursive: true });
 const startedAt = new Date().toISOString();
 const traceFile = join(output, `safeguarding-${startedAt.replaceAll(':', '-')}.jsonl`);
@@ -70,7 +70,12 @@ const gateway: LlmGateway = {
     call++;
     // Evaluation-only override: the request, prompt, schema and limits stay identical.
     const sent = { ...req, tier: current.tier };
-    const model = modelFor(config, sent);
+    const model =
+      config.LLM_BACKEND === 'openai'
+        ? sent.tier === 'fast'
+          ? config.OPENAI_MODEL_FAST
+          : config.OPENAI_MODEL_SMART
+        : modelFor(config, sent);
     log('before', 'reserve gross 0.060000', `evals/tutor safeguarding on ${model}`);
     let usage: LlmUsage | null = null;
     let outcome = 'ok';
@@ -91,7 +96,9 @@ const gateway: LlmGateway = {
       // 3.6's table uses net promotional prices; charge twice that before any credit.
       // Failed earlier attempts have no usage in the gateway result: reserve them too.
       const cost =
-        (usage ? usage.costMicros * (current.tier === 'smart' ? 2 : 1) : attemptReserveMicros) +
+        (usage
+          ? usage.costMicros * (config.LLM_BACKEND === 'vertex' && current.tier === 'smart' ? 2 : 1)
+          : attemptReserveMicros) +
         (attempts - 1) * attemptReserveMicros;
       chargedMicros += cost;
       log(
@@ -209,7 +216,10 @@ try {
     JSON.stringify(
       {
         startedAt,
-        models: { fast: config.VERTEX_MODEL_FAST, smart: config.VERTEX_MODEL_SMART },
+        models:
+          config.LLM_BACKEND === 'openai'
+            ? { fast: config.OPENAI_MODEL_FAST, smart: config.OPENAI_MODEL_SMART }
+            : { fast: config.VERTEX_MODEL_FAST, smart: config.VERTEX_MODEL_SMART },
         summary: summarize(results, plan),
         calls: call,
         grossCeilingUsd: chargedMicros / 1e6,

@@ -15,10 +15,7 @@ export function verdictSchema(criteria: Criteria, reversed: boolean) {
   const ordered = reversed ? [...keys].reverse() : keys;
   const shape: Record<string, z.ZodTypeAny> = {};
   for (const key of ordered) shape[key] = z.boolean().describe(criteria[key] ?? key);
-  shape.why = z
-    .string()
-    .max(300)
-    .describe('One short German sentence: what is wrong, or why it holds');
+  shape.why = z.string().max(300).describe('German reason, at most 300 characters');
   return z.object(shape);
 }
 

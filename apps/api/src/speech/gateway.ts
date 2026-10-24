@@ -20,13 +20,22 @@ export type SpeechInput = {
   signal?: AbortSignal;
 };
 
-export type SpeechAudio = { mime: 'audio/mpeg' | 'audio/wav'; audio: Buffer };
+export type SpeechAudio = {
+  mime: 'audio/mpeg' | 'audio/wav';
+  audio: Buffer;
+  /** Token-priced providers return their usage receipt; character-priced providers omit it. */
+  costMicros?: number;
+};
 
 export type SpeechErrorKind = 'unavailable' | 'timeout' | 'rate_limited' | 'refused' | 'cancelled';
 
 export class SpeechError extends Error {
   readonly kind: SpeechErrorKind;
-  constructor(kind: SpeechErrorKind, message: string) {
+  constructor(
+    kind: SpeechErrorKind,
+    message: string,
+    readonly costMicros = 0,
+  ) {
     super(message);
     this.name = 'SpeechError';
     this.kind = kind;

@@ -22,6 +22,7 @@ import { writeFileSync } from 'node:fs';
 
 import { config as loadDotenv } from 'dotenv';
 
+import { evalJudge } from '../judge.js';
 import { loadConfig } from '../../src/config.js';
 import { toJsonSchema } from '../../src/llm/json-schema.js';
 import { llmGateway } from '../../src/production.js';
@@ -54,6 +55,7 @@ const config = loadConfig({
   ADMIN_TOKEN_SECRET: process.env.ADMIN_TOKEN_SECRET ?? 'unused-unused-unused-unused-unused!',
 });
 const vertex = llmGateway(config);
+const examiner = evalJudge(config);
 
 type Criteria = Readonly<Record<string, string>>;
 
@@ -64,7 +66,7 @@ Answer with the JSON object described by the schema.`;
 /** One reading of the judge, with the criteria in the order given. */
 async function read(criteria: Criteria, reversed: boolean, text: string): Promise<Reading> {
   const schema = verdictSchema(criteria, reversed);
-  const res = await vertex.generate({
+  const res = await examiner.generate({
     purpose: 'buddy_check',
     tier: 'smart',
     promptVersion: 'grade10-eval.v1',
@@ -81,9 +83,13 @@ async function read(criteria: Criteria, reversed: boolean, text: string): Promis
 
 /** Both readings, and what they agree on. */
 async function judged(criteria: Criteria, text: string) {
-  const first = await read(criteria, false, text);
-  const second = await read(criteria, true, text);
-  return { agreement: agreement(criteria, first, second), why: String(first.why) };
+  try {
+    const first = await read(criteria, false, text);
+    const second = await read(criteria, true, text);
+    return { agreement: agreement(criteria, first, second), why: String(first.why) };
+  } catch (error) {
+    return { agreement: agreement(criteria, {}, {}), why: `Nicht bewertet: ${String(error)}` };
+  }
 }
 
 type Judged = { id: string; what: string; shown: string; agreement: Agreement; why: string };
@@ -115,6 +121,13 @@ async function explanations(): Promise<Judged[]> {
       const shown = reply?.text.trim() ?? '';
       if (!shown) {
         console.log(`✗ ${c.id}: keine Antwort`);
+        out.push({
+          id: c.id,
+          what: c.what,
+          shown,
+          agreement: agreement(EXPLAIN_CRITERIA, {}, {}),
+          why: 'Keine Antwort',
+        });
         continue;
       }
       const j = await judged(
@@ -210,6 +223,14 @@ async function tasks(): Promise<{ judged: Judged[]; counts: string[] }> {
       try {
         const rows = await run(env, l, c);
         const { tasks: found, single } = described(rows);
+        if (!found.length)
+          out.push({
+            id: `${c.id}-${how}`,
+            what: c.what,
+            shown: '',
+            agreement: agreement(TASK_CRITERIA, {}, {}),
+            why: 'Keine zusammenhängende Aufgabe',
+          });
         const figures = rows.filter((r) => r.task_part && (r.figure || r.image_id)).length;
         counts.push(
           `| ${c.id} | ${how} | ${found.length} | ${rows.length - single} | ${single} | ${figures} |`,
@@ -220,6 +241,13 @@ async function tasks(): Promise<{ judged: Judged[]; counts: string[] }> {
           out.push({ id: `${c.id}-${how}-${n + 1}`, what: c.what, shown: task, ...j });
         }
       } catch (err) {
+        out.push({
+          id: `${c.id}-${how}`,
+          what: c.what,
+          shown: '',
+          agreement: agreement(TASK_CRITERIA, {}, {}),
+          why: String(err),
+        });
         counts.push(
           `| ${c.id} | ${how} | Fehler: ${err instanceof Error ? err.message : String(err)} | | | |`,
         );
@@ -287,6 +315,7 @@ async function main(): Promise<void> {
   if (process.env.GRADE10_OUT) writeFileSync(process.env.GRADE10_OUT, `${report.join('\n')}\n`);
   const clean = [...explained, ...tasked].filter((c) => c.agreement.clean).length;
   console.log(`\n${clean}/${explained.length + tasked.length} ohne Befund`);
+  process.exitCode = clean === explained.length + tasked.length ? 0 : 1;
 }
 
 void main();

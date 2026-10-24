@@ -42,6 +42,28 @@ function setup(name: 'fake' | 'google' | 'openai', scenario: MediaScenario) {
   return { gateway, fetch };
 }
 afterEach(() => vi.unstubAllGlobals());
+it.skipIf(!dbReady)(
+  'records a token-priced speech receipt once, then free cached playback',
+  async () => {
+    await withLearner(async (env, learner) => {
+      const speech = new FakeSpeech();
+      const synthesize = speech.synthesize.bind(speech);
+      speech.synthesize = async (input) => ({ ...(await synthesize(input)), costMicros: 1234 });
+      env.deps.speech = speech;
+      const body = { text: input.text, locale: input.locale };
+      expect((await learner.api.post('/voice/speech', body)).status).toBe(200);
+      expect((await learner.api.post('/voice/speech', body)).status).toBe(200);
+      expect(
+        await env.db.query(
+          'select outcome, cost_micros from speech_calls order by cost_micros desc',
+        ),
+      ).toEqual([
+        { outcome: 'ok', cost_micros: 1234 },
+        { outcome: 'cached', cost_micros: 0 },
+      ]);
+    });
+  },
+);
 describe.each(['fake', 'google', 'openai'] as const)('%s SpeechGateway contract', (name) => {
   it('returns playable audio, voice identity and the supported locale', async () => {
     const { gateway } = setup(name, 'ok');

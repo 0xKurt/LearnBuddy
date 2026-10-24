@@ -1,10 +1,10 @@
-// Live check of the pronunciation judgement (Vertex): does the model hear the
+// Live check of the configured pronunciation gateway: does the model hear the
 // difference between a French voice, a German accent and a wrong word?
 // Needs a configured LLM_BACKEND, provider variables, a local Postgres and espeak-ng.
 //   cd apps/api && npx tsx evals/speak/run.ts
 // requires live verification in Claude Code session (stand-ins for the outside world; live model)
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AnswerResponse, SessionView } from '@learnbuddy/shared-types/contracts';
@@ -106,3 +106,4 @@ for (const [file, label] of [
   );
 }
 await env.close();
+rmSync(S, { recursive: true, force: true });

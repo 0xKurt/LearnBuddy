@@ -29,6 +29,7 @@ import { z } from 'zod';
 
 import { loadConfig } from '../../src/config.js';
 import type { JsonSchema } from '../../src/llm/gateway.js';
+import { strictSchema } from '../../src/llm/chat-schema.js';
 import { ensureCredentialsFile, modelFor, splitModelSpec } from '../../src/llm/vertex.js';
 import * as decision from '../../src/modules/buddy/decision.js';
 import * as lookups from '../../src/modules/buddy/lookups.js';
@@ -214,7 +215,7 @@ function runConfig() {
   return loadConfig({
     ...process.env,
     // Without a project the routes and model names are still the configured defaults.
-    LLM_BACKEND: process.env.GOOGLE_CLOUD_PROJECT ? process.env.LLM_BACKEND : 'disabled',
+    LLM_BACKEND: process.env.LLM_BACKEND ?? 'disabled',
     DATABASE_URL: 'postgres://unused/unused',
     SUPABASE_URL: 'http://x.local',
     SUPABASE_SERVICE_ROLE_KEY: 'unused-unused-unused',
@@ -242,9 +243,19 @@ export async function buildReport(): Promise<Report> {
       });
       continue;
     }
-    const model = modelFor(config, { purpose: v.purpose, tier: v.tier });
-    const text = serialize(v.schema);
-    const unions = unionsOf(v.schema, named);
+    const model =
+      config.LLM_BACKEND === 'openai'
+        ? v.purpose === 'pronounce'
+          ? config.OPENAI_MODEL_PRONOUNCE
+          : (config.OPENAI_ROUTES[v.purpose] ??
+            (v.tier === 'fast' ? config.OPENAI_MODEL_FAST : config.OPENAI_MODEL_SMART))
+        : modelFor(config, { purpose: v.purpose, tier: v.tier });
+    const schema =
+      config.LLM_BACKEND === 'openai' && v.purpose !== 'pronounce'
+        ? strictSchema(v.schema)
+        : v.schema;
+    const text = serialize(schema);
+    const unions = unionsOf(schema, named);
     measured.push({
       purpose: v.purpose,
       profile: v.profile,
@@ -261,8 +272,8 @@ export async function buildReport(): Promise<Report> {
         chars: text.length,
         sha256: sha256(text),
         textTokens: counter.count ? await counter.count(model, text) : null,
-        shape: shapeOf(v.schema),
-        topLevel: topLevelOf(v.schema),
+        shape: shapeOf(schema),
+        topLevel: topLevelOf(schema),
       },
       unions,
     });
@@ -273,14 +284,25 @@ export async function buildReport(): Promise<Report> {
     commit: git(['rev-parse', 'HEAD']),
     commitDate: git(['show', '-s', '--format=%cI', 'HEAD']),
     dirty: status.length > 0,
-    sdk: `@google/genai ${versionOf('@google/genai')}`,
+    sdk:
+      config.LLM_BACKEND === 'openai'
+        ? `openai ${versionOf('openai')}`
+        : `@google/genai ${versionOf('@google/genai')}`,
     zod: versionOf('zod'),
-    models: {
-      smart: config.VERTEX_MODEL_SMART,
-      fast: config.VERTEX_MODEL_FAST,
-      location: config.GOOGLE_VERTEX_LOCATION,
-      routes: JSON.stringify(config.VERTEX_ROUTES),
-    },
+    models:
+      config.LLM_BACKEND === 'openai'
+        ? {
+            smart: config.OPENAI_MODEL_SMART,
+            fast: config.OPENAI_MODEL_FAST,
+            location: config.OPENAI_BASE_URL,
+            routes: JSON.stringify(config.OPENAI_ROUTES),
+          }
+        : {
+            smart: config.VERTEX_MODEL_SMART,
+            fast: config.VERTEX_MODEL_FAST,
+            location: config.GOOGLE_VERTEX_LOCATION,
+            routes: JSON.stringify(config.VERTEX_ROUTES),
+          },
     tokens: {
       status: counter.count ? 'counted' : 'not counted',
       reason: counter.reason,

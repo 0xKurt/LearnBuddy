@@ -8,6 +8,7 @@ const Usage = z.object({
   output_tokens: Count.optional(),
   prompt_tokens_details: z.object({ audio_tokens: Count.optional() }).optional(),
   input_token_details: z.object({ audio_tokens: Count.optional() }).optional(),
+  output_token_details: z.object({ audio_tokens: Count.optional() }).optional(),
   seconds: z.number().nonnegative().optional(),
 });
 /** List-price ceiling. Cached tokens are never guessed or subtracted. Pricing read 2026-10-23. */
@@ -25,12 +26,18 @@ export function audioUsage(
     inputTokens,
     u?.prompt_tokens_details?.audio_tokens ?? u?.input_token_details?.audio_tokens ?? inputTokens,
   );
+  const audioOut = Math.min(outputTokens, u?.output_token_details?.audio_tokens ?? 0);
+  const textOut = outputTokens - audioOut;
   const cost =
-    model === 'gpt-audio-1.5' || model === 'gpt-audio'
-      ? audio * 32 + (inputTokens - audio) * 2.5 + outputTokens * 10
-      : model === 'gpt-4o-mini-transcribe'
-        ? audio * 3 + (inputTokens - audio) * 1.25 + outputTokens * 5
-        : audio * 6 + (inputTokens - audio) * 2.5 + outputTokens * 10;
+    model === 'gpt-realtime-2.1-mini'
+      ? (audio * 10 + (inputTokens - audio) * 0.6 + textOut * 2.4 + audioOut * 20) * 1.1
+      : model === 'gpt-realtime-2.1'
+        ? (audio * 32 + (inputTokens - audio) * 4 + textOut * 24 + audioOut * 64) * 1.1
+        : model === 'gpt-audio-1.5' || model === 'gpt-audio'
+          ? audio * 32 + (inputTokens - audio) * 2.5 + outputTokens * 10
+          : model === 'gpt-4o-mini-transcribe'
+            ? audio * 3 + (inputTokens - audio) * 1.25 + outputTokens * 5
+            : audio * 6 + (inputTokens - audio) * 2.5 + outputTokens * 10;
   return {
     model,
     inputTokens,
@@ -38,7 +45,12 @@ export function audioUsage(
     thoughtTokens: 0,
     cachedTokens: 0,
     latencyMs: elapsed,
-    costMicros: Math.ceil(u?.seconds !== undefined ? u.seconds * 100 : cost),
+    costMicros: Math.ceil(
+      u?.seconds !== undefined
+        ? u.seconds *
+            (model === 'gpt-transcribe' ? 82.5 : model === 'gpt-4o-mini-transcribe' ? 50 : 100)
+        : cost,
+    ),
   };
 }
 export function withAudioUsage(audio: LlmUsage, other: LlmUsage | null, elapsed: number): LlmUsage {

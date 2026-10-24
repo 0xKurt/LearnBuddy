@@ -21,7 +21,7 @@ import type { Deps } from '../../deps.js';
 import { isAppError } from '../../lib/errors.js';
 import { callAhead, reserveCall, type Reservation } from '../../llm/call.js';
 import type { JsonSchema, LlmMessage, LlmPurpose } from '../../llm/gateway.js';
-import { toJsonSchema } from '../../llm/json-schema.js';
+import { copySchema, toJsonSchema } from '../../llm/json-schema.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 import { withinBudget } from '../../llm/schemaBudget.js';
 
@@ -110,7 +110,9 @@ function pruned(schema: JsonSchema, keep: Keep): JsonSchema {
   const isNull = (b: Node) => isSchema(b) && b.type === 'null';
   /** One schema node, or GONE when nothing of it is left (an emptied union, or its array). */
   const walk = (n: JsonSchema): JsonSchema | typeof GONE => {
-    const out: JsonSchema = { ...n };
+    // Leaves are immutable. Preserve their identity and the converter's provider-only bounds.
+    if (!isSchema(n.items) && !Array.isArray(n.anyOf) && !isSchema(n.properties)) return n;
+    const out = copySchema(n);
     if (isSchema(n.items)) {
       const items = walk(n.items);
       if (items === GONE) return GONE;
@@ -367,7 +369,8 @@ export async function chooseForms(
   },
 ): Promise<Narrowed & { reservation: Reservation | null }> {
   // The bound of the gateway this call goes to (#646): another provider serves other sizes.
-  const max = deps.llm.profile.structuredOutput.maxSchemaProperties;
+  const limits = deps.llm.profile.structuredOutput;
+  const max = Math.min(limits.maxSchemaProperties, limits.preferredSchemaProperties ?? Infinity);
   if (withinBudget(call.full, max))
     return { schema: call.full, keep: null, how: 'whole', reservation: null };
   // Before the choosing call, never after it: a run her limit refuses costs no choice (#665).

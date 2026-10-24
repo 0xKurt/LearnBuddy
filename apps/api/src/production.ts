@@ -34,6 +34,23 @@ export function llmGateway(config: Config): LlmGateway {
     : gateway;
 }
 
+/** Production and evaluation use the same configured search and speech providers. */
+export function embeddingGateway(config: Config): Deps['embeddings'] {
+  return config.EMBEDDING_BACKEND === 'openai'
+    ? new OpenAIEmbeddings(openAIClient(config))
+    : config.EMBEDDING_BACKEND === 'vertex' && config.GOOGLE_CLOUD_PROJECT
+      ? new VertexEmbeddings(config)
+      : new DisabledEmbeddings();
+}
+
+export function speechGateway(config: Config): Deps['speech'] {
+  return config.SPEECH_BACKEND === 'openai'
+    ? new OpenAISpeech(openAIClient(config), config.OPENAI_TTS_VOICES, config.OPENAI_MODEL_SPEECH)
+    : config.SPEECH_BACKEND === 'google'
+      ? new GoogleSpeech(config)
+      : new DisabledSpeech();
+}
+
 export function productionDeps(
   config: Config,
   background: Deps['background'],
@@ -50,20 +67,10 @@ export function productionDeps(
     auth: new SupabaseAuthVerifier(config),
     storage: new SupabaseStorage(config),
     llm: llmGateway(config),
-    embeddings:
-      config.EMBEDDING_BACKEND === 'openai'
-        ? new OpenAIEmbeddings(openAIClient(config))
-        : config.EMBEDDING_BACKEND === 'vertex' && config.GOOGLE_CLOUD_PROJECT
-          ? new VertexEmbeddings(config)
-          : new DisabledEmbeddings(),
+    embeddings: embeddingGateway(config),
     push:
       config.PUSH_BACKEND === 'expo' ? new ExpoPush(config.EXPO_ACCESS_TOKEN) : new DisabledPush(),
-    speech:
-      config.SPEECH_BACKEND === 'openai'
-        ? new OpenAISpeech(openAIClient(config))
-        : config.SPEECH_BACKEND === 'google'
-          ? new GoogleSpeech(config)
-          : new DisabledSpeech(),
+    speech: speechGateway(config),
     background,
   };
 }

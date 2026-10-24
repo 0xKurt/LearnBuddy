@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { llmGateway } from '../../production.js';
+import { embeddingGateway, llmGateway, speechGateway } from '../../production.js';
 import { loadConfig, bootWarnings } from '../../config.js';
 const env = {
   NODE_ENV: 'test',
@@ -46,6 +46,12 @@ describe('EU speech and search configuration', () => {
     expect(c.EMBEDDING_BACKEND).toBe('openai');
     expect(c.OPENAI_BASE_URL).toBe('https://eu.api.openai.com/v1');
     expect(bootWarnings(c)).toEqual([]);
+    expect(embeddingGateway(c)).toMatchObject({
+      available: true,
+      model: 'text-embedding-3-small',
+      dimensions: 1536,
+    });
+    expect(speechGateway(c).voiceId('warm', 'de-DE')).toContain('openai:');
   });
   it.each([
     'https://api.openai.com/v1',
