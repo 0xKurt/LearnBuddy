@@ -1,5 +1,5 @@
 // requires live verification in Claude Code session (paid, EU endpoint, throwaway DB only)
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -13,6 +13,7 @@ import { GOALS, initialRequests } from './cases.js';
 import { choose, PERSONAS, Action, type Persona } from './actor.js';
 import { Session, snapshot, type Step } from './session.js';
 import { Budget } from './budget.js';
+import { appendBudgetLedger } from './ledger.js';
 import { advise, calibration, forHumans } from './judge.js';
 import { candidate, dedupe, economics, gate, keyOf } from './report.js';
 import { OPENAI_EU_PRICES } from '../../src/llm/openai-config.js';
@@ -399,8 +400,7 @@ try {
 } finally {
   await closeSheetBrowser();
   const summary = save();
-  appendFileSync(
-    `${process.env.HOME}/.local/share/learnbuddy-agents/BUDGET-LEDGER.md`,
+  appendBudgetLedger(
     `\n2026-10-24 | child-explorer | #944 | ${budget.receipts.length} | ${budget.spent.toFixed(6)} USD upper | ${mode}: ${outDir}\n`,
   );
   console.info(

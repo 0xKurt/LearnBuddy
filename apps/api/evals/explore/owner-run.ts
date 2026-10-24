@@ -1,5 +1,5 @@
 // requires live verification in Claude Code session (paid fixed regressions; isolated database)
-import { writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { loadConfig } from '../../src/config.js';
 import { OpenAIGateway } from '../../src/llm/openai.js';
@@ -10,6 +10,7 @@ import { OWNER } from './cases.js';
 import { home, say, tap, tick, history, visibleOffers, type Tap, type Turn } from './driver.js';
 import { inspect, goalProblems, type Finding } from './checks.js';
 import { Budget } from './budget.js';
+import { appendBudgetLedger } from './ledger.js';
 
 registerLearning();
 if (process.env.LB_TEST_LOCK_HELD !== '1') throw new Error('Source scripts/test-lock.sh first');
@@ -110,8 +111,7 @@ try {
       2,
     ),
   );
-  appendFileSync(
-    `${process.env.HOME}/.local/share/learnbuddy-agents/BUDGET-LEDGER.md`,
+  appendBudgetLedger(
     `\n2026-10-24 | child-explorer | #944 | ${budget.receipts.length} | ${budget.spent.toFixed(6)} USD upper | owner regressions\n`,
   );
   console.info(`Report: ${report}; cost ceiling $${budget.spent.toFixed(4)}`);

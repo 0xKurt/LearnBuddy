@@ -25,18 +25,25 @@ passed. Maestro syntax was checked for the individual child flows after correcti
 Live baseline verdicts and transcripts are in the adjacent `owner-*.json` files. Green product
 cases stay green; injected negative controls are explicitly named in `recorded-owner.json`.
 
-## Hook-Nachprüfung: Kopfrechnen
+## Review-Korrektur (#954)
 
-Der vollständige Hook-Lauf deckte eine bestehende zufällige Mindestquote in
-`src/__tests__/drill.int.test.ts` auf: `expected 4 to be greater than or equal to 5`
-bei `ceil(wrong.size * 0.6)`. `pickRound` zieht gewichtet; `weightOf` verspricht
-explizit nur die Reihenfolge der Gewichte, keine Mindestzahl pro Runde.
+Die fachfremde Änderung am Kopfrechnen-Integrationstest wurde vollständig zurückgenommen.
+Die ursprüngliche Mindestquote von 60 % bleibt unverändert. Dieser PR behauptet keine
+statistische Widerlegung dieser Assertion.
 
-Der Integrationstest prüft jetzt jedes gespeicherte Ergebnis am richtigen Item
-und dieselbe Item-ID für wiederkehrende Fakten. Zwei Mengen von je 20 aus 36
-Fakten müssen mindestens vier gemeinsame Fakten haben. Die bestehende Prüfung
-der Gewichtung über 300 feste Seeds bleibt unverändert.
+Ledger-Regressionen: Der ursprüngliche Schreiber wurde unverändert in `ledger.ts`
+extrahiert und mit `evals/explore/__tests__/ledger.test.ts` ausgeführt: **4/4 rot**
+(unset/leerer Pfad schreibt trotzdem; Zielpfad ignoriert; keine Fehlerwarnung).
+Die Korrektur liest ausschließlich `LB_BUDGET_LEDGER` und fängt Schreibfehler ab.
+Die Tests verwenden echte temporäre Dateien, prüfen Anhängen und erhalten sowohl
+Erfolgswert als auch ursprünglichen Fehler bei einem nicht beschreibbaren Ziel.
 
-Rot: vollständiger Git-Hook, 3376 Tests bestanden, diese Quotenbehauptung fehlgeschlagen.
-Grün: gezielt nur die geänderte Datei, 5/5 Tests bestanden (24.10.2026).
-Produktcode wurde nicht geändert.
+Gezielter Befehl (Node 22, gemeinsamem Postgres, zwei Workern und Maschinenlock):
+
+```sh
+. scripts/test-lock.sh
+pnpm -C apps/api exec vitest run evals/explore/__tests__/ledger.test.ts src/__tests__/drill.int.test.ts
+```
+
+Grün nach Korrektur (24.10.2026): **2 Dateien, 9/9 Tests bestanden** — vier Ledger-Fälle
+und alle fünf unveränderten Kopfrechnen-Integrationstests auf gemeinsamem Postgres.

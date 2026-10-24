@@ -26,6 +26,10 @@ machine-lock implementation. `LB_TEST_MAX_WORKERS=2` remains set.
 Defaults: five actions per session (configurable 3–12), 35 minutes (at most 60), $12
 (at most $15). Set `EXPLORE_MAX_USD`, `EXPLORE_MAX_STEPS`, `EXPLORE_MAX_MINUTES`, `EXPLORE_OUT`.
 Budgets are per invocation: the operator must subtract earlier batches from the authorised total.
+An additional shared ledger is opt-in: set `LB_BUDGET_LEDGER` to its file path.
+Both runners append only when configured; write errors emit a warning and preserve the run result.
+For an authorised paid batch under the shared brief, explicitly set
+`LB_BUDGET_LEDGER="$HOME/.local/share/learnbuddy-agents/BUDGET-LEDGER.md"`.
 Every completed or interrupted run writes an explicit verdict and costs; the wrapper reserves a
 conservative three-attempt byte/token ceiling before each provider call. Unknown bills keep the
 reservation. `budget.json` journals reservations before sending and receipts after settlement, even if a later process failure prevents the final report. Receipts include reasoning and background calls. Reports distinguish cached-price
@@ -107,7 +111,9 @@ or human listening check cannot pass by running a silent fake voice.
 
 Reuse the real test harness, TestClock, scripted gateway, app contracts, EU gateway/prices,
 `sheetPhoto`, grade10 judge agreement, Zod and existing Maestro installation. The only dependency
-added is **franc-min 6.2.0**, MIT, maintained in [wooorm/franc](https://github.com/wooorm/franc),
-Node-only dev tooling; it is not imported by mobile or shipped in a native bundle. Statistical
+added is **franc-min 6.2.0**, MIT, published in [wooorm/franc](https://github.com/wooorm/franc),
+126,936 unpacked bytes across 8 files (package alone, excluding transitive dependencies).
+Registry metadata checked on 2026-10-24: latest release 2024-01-11, so recent release activity
+is not claimed. Node-only dev tooling; it is not imported by mobile or shipped in a native bundle. Statistical
 language detection is preferable to building another ad-hoc language word list. No UI or
 accessibility dependency is added. No product implementation is copied or changed.
