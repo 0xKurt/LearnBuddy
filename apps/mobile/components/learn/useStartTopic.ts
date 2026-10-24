@@ -24,6 +24,7 @@ import { ApiError, newId } from '../../lib/api/client.js';
 import { startTopic } from '../../lib/api/learningEndpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { messageFor } from '../../lib/errors.js';
+import { safeguardingReply } from '../../lib/safeguarding.js';
 import { useMounted } from '../../lib/useMounted.js';
 
 export type TopicKind = StartTopicRequest['kind'];
@@ -33,7 +34,7 @@ export type StartState =
   | { status: 'preparing' }
   /** 422 not_usable: nothing to learn from this text. */
   | { status: 'not_usable' }
-  | { status: 'failed'; message: string };
+  | { status: 'failed'; message: string; safeguarded?: true };
 
 type Attempt = { kind: TopicKind; text: string; id: string };
 
@@ -98,10 +99,13 @@ export function useStartTopic() {
       // changing only this card's local state left Buddy's success claim above the refusal.
       if (requestId) void queryClient.invalidateQueries({ queryKey: keys.home });
       if (mounted.current) {
+        const reply = safeguardingReply(err);
         setState(
-          err instanceof ApiError && err.reason === 'not_usable'
-            ? { status: 'not_usable' }
-            : { status: 'failed', message: messageFor(err) },
+          reply !== null
+            ? { status: 'failed', message: reply, safeguarded: true }
+            : err instanceof ApiError && err.reason === 'not_usable'
+              ? { status: 'not_usable' }
+              : { status: 'failed', message: messageFor(err) },
         );
       }
       return null;

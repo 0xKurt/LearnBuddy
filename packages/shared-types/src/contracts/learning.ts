@@ -1003,11 +1003,11 @@ export const StartTopicRequest = z.object({
   /**
    * practice: questions on a topic · vocab: a typed vocabulary list ·
    * speak: sentences/words to say aloud · listen: a spoken text with questions about it
-   * (Hörverstehen, issue #210 — refused before any model call when there is no voice to
+   * (Hörverstehen, issue #210 — refused before generation when there is no voice to
    * read it) · help: a homework task the learner typed ·
    * test: a practice test on a topic (one try per question, no hints, results at the
    * end) · spelling_dictation: a Diktat — words or sentences read aloud that she types
-   * (issue #242; refused before any model call when there is no voice, like listen) ·
+   * (issue #242; refused before generation when there is no voice, like listen) ·
    * teach_back: „Erklär mal" (issue #236) — open questions she answers by explaining, by voice or
    * in writing, checked against 3–6 key points. read: Leseverständnis without a photo (#368) —
    * Buddy writes a reading text at her level and questions about it, held to the rules of a

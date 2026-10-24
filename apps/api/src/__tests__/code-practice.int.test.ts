@@ -160,7 +160,7 @@ describe.skipIf(!dbReady)('Informatik: Programme und Abfragen', () => {
     );
     expect(res.body.reply.text).toBe(t('de', 'safeguarding.concern'));
     expect(res.body.verdict).toBe('not_an_attempt');
-    expect(JSON.stringify(env.llm.callsFor('safeguard')[0])).toContain('schlägt mich');
+    expect(JSON.stringify(env.llm.callsFor('safeguard').at(-1))).toContain('schlägt mich');
   });
 
   it('keeps all eight code lines and grades the final runtime failure', async () => {

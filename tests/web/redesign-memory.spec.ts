@@ -2,6 +2,9 @@ import { expect, test } from '@playwright/test';
 import { freshEmail, signUpMia, askShorter, openMenu } from './coreLoop';
 import { shot } from './fit';
 import { SCREEN_LOOKS, screenLook, screenShots } from './redesign-screen-matrix';
+import apiDe from '../../apps/api/src/i18n/de.json';
+import { DISTRESS_TEXT } from '../../apps/api/src/testing/scenarios/safeguarding';
+import { expectSeen } from './seen';
 
 for (const look of SCREEN_LOOKS) {
   test(`redesign Memory ${look.family} ${look.dark ? 'dark' : 'light'}: edit persistence, remove and undo`, async ({
@@ -38,6 +41,24 @@ for (const look of SCREEN_LOOKS) {
     await sheet.getByRole('button', { name: 'Ändern: Möchte kurze Übungen', exact: true }).click();
     const input = page.getByLabel('Was Buddy sich merken soll');
     await expect(input).toBeVisible();
+    await input.fill(DISTRESS_TEXT);
+    await screenShots(page, `redesign-memory-${appearance}-before-help`);
+    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    const help = page.locator('[aria-modal="true"]');
+    const reply = help.getByText(apiDe.safeguarding.concern, { exact: true });
+    await expectSeen(reply);
+    await expect(reply).toBeInViewport({ ratio: 1 });
+    await expect(page.getByText('Geändert.', { exact: true })).toHaveCount(0);
+    await screenShots(page, `redesign-memory-${appearance}-help`, true);
+    await help.getByRole('button', { name: 'Schließen', exact: true }).click();
+    await page.reload();
+    await expect(page.getByRole('button', { name: /^Möchte kurze Übungen/ })).toBeVisible();
+    await expect(page.getByText(DISTRESS_TEXT, { exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: /^Möchte kurze Übungen/ }).click();
+    await page
+      .locator('[aria-modal="true"]')
+      .getByRole('button', { name: 'Ändern: Möchte kurze Übungen', exact: true })
+      .click();
     await input.fill('Möchte kurze Übungen mit Pausen');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByText('Geändert.', { exact: true })).toBeVisible();

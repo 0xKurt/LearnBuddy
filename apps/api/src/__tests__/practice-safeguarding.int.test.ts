@@ -155,7 +155,7 @@ describe.skipIf(!dbReady)('distress in a practice answer field (issue #389)', ()
     expect(res.body.verdict).toBe('not_an_attempt');
     expect(await itemRow(s)).toEqual({ attempts: 0, status: 'open' });
     // The concern bit was enough: no second model read her words.
-    expect(env.llm.callsFor('safeguard')).toHaveLength(0);
+    expect(env.llm.callsFor('safeguard')).toHaveLength(1); // Only the topic's preflight.
   });
 
   it.each([
@@ -174,7 +174,7 @@ describe.skipIf(!dbReady)('distress in a practice answer field (issue #389)', ()
     expect(res.body.verdict).toBe('not_an_attempt');
     expect(await itemRow(s)).toEqual({ attempts: 0, status: 'open' });
     // The check read her words, and nothing of the solution.
-    const [check] = env.llm.callsFor('safeguard');
+    const check = env.llm.callsFor('safeguard').at(-1);
     expect(ScriptedGateway.textOf(check!)).toContain(HIT);
   });
 
@@ -197,7 +197,7 @@ describe.skipIf(!dbReady)('distress in a practice answer field (issue #389)', ()
       `select calls from usage_daily where learner_id = $1 and kind = 'safeguard'`,
       [l.learnerId],
     );
-    expect(used.calls).toBe(1);
+    expect(used.calls).toBe(2); // Topic preflight plus this answer's check.
   });
 
   it('fails safe when no check can read her words: the fixed help line, never only "cannot check"', async () => {
@@ -222,7 +222,7 @@ describe.skipIf(!dbReady)('distress in a practice answer field (issue #389)', ()
     expect(res.status).toBe(200);
     expect(res.body.reply.text).toContain(t('de', 'safeguarding.unchecked'));
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
-    expect(env.llm.callsFor('safeguard')).toHaveLength(0);
+    expect(env.llm.callsFor('safeguard')).toHaveLength(1); // Only the topic's preflight.
   });
 
   it('answers a provider block of the check like a block of the tutor', async () => {
@@ -255,7 +255,7 @@ describe.skipIf(!dbReady)('distress in a practice answer field (issue #389)', ()
       text: 'Paris',
     });
     expect(choice.body.verdict).toBe('correct');
-    expect(env.llm.callsFor('safeguard')).toHaveLength(0);
+    expect(env.llm.callsFor('safeguard')).toHaveLength(1); // Only the topic's preflight.
   });
 
   it('answers a provider block with the fixed text, not "kann ich gerade nicht prüfen"', async () => {

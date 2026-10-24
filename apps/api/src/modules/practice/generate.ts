@@ -25,6 +25,7 @@ import { callModel, releaseCall, type Reservation } from '../../llm/call.js';
 import type { LlmMessage } from '../../llm/gateway.js';
 import { answerUpTo } from '../../llm/partial.js';
 import { bumpContext } from '../buddy/plan.js';
+import { requireSafeText } from '../buddy/distress.js';
 import { findOrCreateSubject } from '../learning/state.js';
 import { ageOn } from '../identity/model.js';
 import { CURRICULUM_RULES, curriculumBlock, offCurriculum, pointOf } from '../curriculum/state.js';
@@ -772,8 +773,10 @@ async function prepareTopic(
   const existing = await runOfRequest(deps.db, learner.id, input.client_request_id, deps.now());
   if (existing) return existing;
 
-  // Hörverstehen without a voice is not an exercise (issue #210). Refused BEFORE the model is
-  // asked: a set of questions about a text nobody can hear would be worse than none, and the call
+  await requireSafeText(deps, learner, input.text);
+
+  // Hörverstehen without a voice is not an exercise (issue #210). Refused BEFORE generation:
+  // a set of questions about a text nobody can hear would be worse than none, and the call
   // would be spent on it. The offer in the chat stops being a button for the same reason
   // (`practice/prepare.ts`), so nothing promises a listening task that cannot be heard.
   // A Diktat is the same: words nobody can read aloud are not a Diktat (issue #242).

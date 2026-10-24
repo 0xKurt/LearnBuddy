@@ -10,6 +10,8 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { Banner } from '../lb/Banner.js';
+import { SafeguardingReply } from '../buddy/SafeguardingReply.js';
+import { SHEET_TEXT } from '../lb/Sheet.js';
 import type { StartState } from './useStartTopic.js';
 
 export function StartStatus({ state }: { state: StartState }) {
@@ -21,7 +23,7 @@ export function StartStatus({ state }: { state: StartState }) {
       ? t('topic.preparing')
       : state.status === 'not_usable'
         ? t('topic.not_usable')
-        : state.status === 'failed'
+        : state.status === 'failed' && !state.safeguarded
           ? state.message
           : null,
   );
@@ -53,6 +55,12 @@ export function StartStatus({ state }: { state: StartState }) {
         </View>
       );
     case 'failed':
+      if (state.safeguarded)
+        return (
+          <View style={SHEET_TEXT}>
+            <SafeguardingReply text={state.message} />
+          </View>
+        );
       return (
         <View accessibilityLiveRegion="polite">
           <Banner tone="warning">{state.message}</Banner>

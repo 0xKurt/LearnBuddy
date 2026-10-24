@@ -5,6 +5,10 @@ import { expect, test } from '@playwright/test';
 import { paletteOf, themeNameOf } from '../../apps/mobile/lib/theme/palettes';
 import { freshEmail, openMenu, signUpMia } from './coreLoop';
 import { PHONES, shot } from './fit';
+import { screenShots } from './redesign-screen-matrix';
+import apiDe from '../../apps/api/src/i18n/de.json';
+import { DISTRESS_TEXT } from '../../apps/api/src/testing/scenarios/safeguarding';
+import { expectSeen } from './seen';
 
 for (const family of ['Pastell', 'Meer'] as const) {
   for (const dark of [false, true]) {
@@ -22,6 +26,21 @@ for (const family of ['Pastell', 'Meer'] as const) {
       await mode.click();
       await expect(mode).toBeChecked();
       await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+      await openMenu(page, 'Hausaufgabe');
+      await page.getByRole('button', { name: 'Aufgabe eintippen' }).click();
+      const sheet = page.locator('[aria-modal="true"]');
+      await sheet
+        .getByRole('textbox', { name: 'Welche Aufgabe? Schreib sie ab.', exact: true })
+        .fill(DISTRESS_TEXT);
+      await screenShots(page, `homework-${family}-${dark ? 'dark' : 'light'}-before-help`, true);
+      await sheet.getByRole('button', { name: /Los geht.s/ }).click();
+      const reply = sheet.getByText(apiDe.safeguarding.concern, { exact: true });
+      await expectSeen(reply);
+      await expect(reply).toBeInViewport({ ratio: 1 });
+      await expect(page).not.toHaveURL(/\/practice\//);
+      await expect(sheet.getByRole('button', { name: /Los geht.s/ })).toHaveCount(0);
+      await screenShots(page, `homework-${family}-${dark ? 'dark' : 'light'}-help`, true);
+      await sheet.getByRole('button', { name: 'Schließen', exact: true }).click();
       await openMenu(page, 'Hausaufgabe');
       await page.getByRole('button', { name: 'Aufgabe eintippen' }).click();
       await page
