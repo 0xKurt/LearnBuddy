@@ -90,6 +90,7 @@ describe.skipIf(!dbReady)('a throttled model provider', () => {
       await env.checkScript({ reset: true });
     } finally {
       await env.db.query(`delete from llm_calls`);
+      await env.db.query(`delete from buddy_messages`);
     }
   });
   afterAll(async () => {

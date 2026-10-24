@@ -6,6 +6,7 @@
 // a defined effect for the learner (jobs.ts TERMINAL).
 
 import type { Db } from '../../lib/db.js';
+import { decisionFailures, type DecisionFailures } from './decisionFailures.js';
 import type { JobKind } from './jobs.js';
 import { lastCanary, type CanaryRun } from './canary.js';
 import {
@@ -49,6 +50,8 @@ export type SchedulerHealth = {
    */
   model_failures: PurposeFailures[];
   model_canary: CanaryRun;
+  /** Final learner failures and separate attempt/background/offer counts (#951). */
+  decision_failures: DecisionFailures;
 };
 
 export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealth> {
@@ -97,5 +100,6 @@ export async function schedulerHealth(db: Db, now: Date): Promise<SchedulerHealt
     model_throttle: throttle,
     model_failures: failures,
     model_canary: canary,
+    decision_failures: await decisionFailures(db, now),
   };
 }

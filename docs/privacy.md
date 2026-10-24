@@ -150,6 +150,15 @@ sweep records when it ran and how many rows it removed — counts only, never co
 
 ## Access control
 
+Operator diagnostics (#951): `apps/api/scripts/decision-why.ts <decision_id>` is restricted to
+operators with database credentials; it is not an app endpoint or learner capability. It opens a
+read-only transaction and returns only disposition, fixed/redacted errors, model, prompt version
+and linked call schema variant, round, attempts and fixed/redacted error code. It never selects
+output, triggers or child text. Do not paste database credentials into logs. Health publishes only
+aggregate counts and fixed top-three failure codes, with no learner or decision identifiers.
+Offer failures store only a fixed code and app-clock timestamp in the existing action result;
+they follow that action's existing export and account-deletion lifecycle.
+
 Key inventory, rotation order and verification for the owner: [key-rotation.md](key-rotation.md).
 
 - The app only talks to the API. The API connects to Postgres with its own role — versioned in

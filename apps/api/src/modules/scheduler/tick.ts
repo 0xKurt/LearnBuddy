@@ -8,6 +8,11 @@
 // never exceeds the function limit; unfinished work stays queued.
 
 import type { Deps } from '../../deps.js';
+import {
+  decisionFailures,
+  decisionFailureAlarms,
+  type DecisionFailures,
+} from './decisionFailures.js';
 import { runLearnerJobs } from '../buddy/check.js';
 import { queueStalledTurns } from '../buddy/turnRecovery.js';
 import { checkReceipts, sendDueOutreach, type DeliveryStats } from '../buddy/delivery.js';
@@ -89,6 +94,7 @@ export type TickStats = {
   throttle: ModelThrottle | null;
   /** Refused and unusable calls per purpose over the last hour (issue #650). */
   failures: PurposeFailures[] | null;
+  decisionFailures: DecisionFailures | null;
   /** Schemas this build sends past what Vertex serves (issue #650); alarms into `errors`. */
   overBudget: OverBudget[];
   /** The hourly real model call (canary.ts); its failure alarms into `errors` until one passes. */
@@ -112,6 +118,7 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     retention: null,
     throttle: null,
     failures: null,
+    decisionFailures: null,
     overBudget: [],
     canary: null,
     errors: [],
@@ -152,6 +159,12 @@ export async function runTick(deps: Deps, opts: { budgetMs?: number } = {}): Pro
     if (stats.overBudget.length > 0) alarms.push(overBudgetAlarm(stats.overBudget));
     stats.errors.push(...alarms);
     if (alarms.length > 0) console.warn('[scheduler] model alarm', { alarms });
+  });
+
+  await guard('decisions', async () => {
+    stats.decisionFailures = await decisionFailures(deps.db, deps.now());
+    // Re-evaluated, not accumulated: repeats keep health red; a recovered window clears it.
+    stats.errors.push(...decisionFailureAlarms(stats.decisionFailures));
   });
 
   await guard('recover', async () => {
