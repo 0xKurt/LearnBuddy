@@ -3,7 +3,12 @@
 // start or stops moving counts as failed, so the phone's voice can take over instead of
 // leaving her in silence.
 
-import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import {
+  createAudioPlayer,
+  setAudioModeAsync,
+  type AudioPlayer,
+  type AudioSource,
+} from 'expo-audio';
 import { Platform } from 'react-native';
 
 import type { ListenEnd, PlayHandle } from './pipeline.js';
@@ -15,6 +20,29 @@ const START_TIMEOUT_MS = 5000;
 const STALL_MS = 4000;
 
 let audioModeSet = false;
+let sequence = 0;
+const prepared = new Map<string, AudioPlayer>();
+
+/** Constructing a paused player starts downloading the next sentence, without making sound. */
+export function prepareAudio(source: AudioSource): string {
+  const uri = `buddy-stream:${sequence++}`;
+  prepared.set(uri, createAudioPlayer(source, { updateInterval: 100, downloadFirst: false }));
+  return uri;
+}
+
+/** Idempotent: the queue may release a played clip again when the utterance ends. */
+export function releasePlayer(uri: string): boolean {
+  if (!uri.startsWith('buddy-stream:')) return false;
+  const player = prepared.get(uri);
+  prepared.delete(uri);
+  try {
+    player?.pause();
+    player?.remove();
+  } catch {
+    /* Already removed. */
+  }
+  return true;
+}
 
 export function playAudio(
   uri: string,
@@ -31,7 +59,7 @@ export function playAudio(
   }
   let player: AudioPlayer;
   try {
-    player = createAudioPlayer(uri, { updateInterval: 100 });
+    player = prepared.get(uri) ?? createAudioPlayer(uri, { updateInterval: 100 });
   } catch {
     on.onEnd('error');
     return { stop: () => undefined };
@@ -48,8 +76,10 @@ export function playAudio(
     clearInterval(timer);
     sub.remove();
     try {
-      player.pause();
-      player.remove();
+      if (!releasePlayer(uri)) {
+        player.pause();
+        player.remove();
+      }
     } catch {
       // Already released.
     }
@@ -81,13 +111,14 @@ export function playAudio(
     }
     const progress = playbackProgress(t, d);
     if (started) on.onProgress(progress);
-    if (started && d > 0 && t >= d - 0.05) {
+    // A stream's duration grows as bytes arrive; only didJustFinish proves EOF.
+    if (!uri.startsWith('buddy-stream:') && started && d > 0 && t >= d - 0.05) {
       finish('done');
     } else if (!started && now - opened > START_TIMEOUT_MS) {
       finish('error');
     } else if (started && now - lastMove > STALL_MS) {
       // Nearly through counts as read; otherwise the phone's voice reads it again.
-      finish((progress ?? 0) > 0.9 ? 'done' : 'error');
+      finish(!uri.startsWith('buddy-stream:') && (progress ?? 0) > 0.9 ? 'done' : 'error');
     }
   }, 100);
 

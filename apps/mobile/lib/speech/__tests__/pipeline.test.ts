@@ -106,11 +106,11 @@ describe('reading a finished text', () => {
     await h.tickTo(30_000);
     expect(h.log).toEqual([
       'fetch "Eins." ahead=false @0',
-      'fetch "Zwei." ahead=true @1100',
       'play "Eins." @1100',
+      'fetch "Zwei." ahead=true @1100',
       'played "Eins." @7100',
-      'fetch "Drei." ahead=true @7100',
       'play "Zwei." @7100',
+      'fetch "Drei." ahead=true @7100',
       'played "Zwei." @13100',
       'play "Drei." @13100',
       'played "Drei." @19100',
@@ -142,11 +142,11 @@ describe('reading a reply while it is being written', () => {
     await h.tickTo(30_000);
     expect(h.log).toEqual([
       'fetch "Eins." ahead=false @0',
-      'fetch "Zwei." ahead=true @1100',
       'play "Eins." @1100',
+      'fetch "Zwei." ahead=true @1100',
       'played "Eins." @7100',
-      'fetch "Drei." ahead=true @7100',
       'play "Zwei." @7100',
+      'fetch "Drei." ahead=true @7100',
       'played "Zwei." @13100',
       'play "Drei." @13100',
       'played "Drei." @19100',
@@ -213,8 +213,8 @@ describe('when the natural voice cannot', () => {
     await h.tickTo(30_000);
     expect(h.log).toEqual([
       'fetch "Eins." ahead=false @0',
-      'fetch "Zwei." ahead=true @1100',
       'play "Eins." @1100',
+      'fetch "Zwei." ahead=true @1100',
       'played "Eins." @7100',
       'fetch "Drei." ahead=true @7100',
       'phone "Zwei." @7100',
@@ -240,5 +240,45 @@ describe('when the natural voice cannot', () => {
     await h.tickTo(60_000);
     expect(h.log.filter((l) => l.includes('Vier.'))).toEqual([]);
     expect(ends).toEqual(['stopped']);
+  });
+});
+
+describe('streaming clips', () => {
+  it('starts sentence two only when sentence one becomes audible, and cancels the queued clip', async () => {
+    const fetched: string[] = [];
+    const released: string[] = [];
+    let audible!: () => void;
+    const effects: ReadingEffects = {
+      fetch: async (text) => {
+        fetched.push(text);
+        return { uri: text };
+      },
+      play: (_uri, on) => {
+        audible = on.start;
+        return { stop: () => undefined };
+      },
+      release: (uri) => {
+        released.push(uri);
+      },
+      device: () => undefined,
+    };
+    const read = readText({
+      effects,
+      store: createVoiceStore(),
+      growing: true,
+      transform: (s) => s,
+      onEnd: () => undefined,
+    });
+    read.feed('Eins. ', false);
+    await flush();
+    read.feed('Eins. Zwei. ', false);
+    await flush();
+    expect(fetched).toEqual(['Eins.']);
+    audible();
+    await flush();
+    expect(fetched).toEqual(['Eins.', 'Zwei.']);
+    read.stop('stopped');
+    await flush();
+    expect(released.sort()).toEqual(['Eins.', 'Zwei.']);
   });
 });

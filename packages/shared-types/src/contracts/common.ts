@@ -41,6 +41,7 @@ export const APP_REQUEST_HEADERS = [
   'x-timezone',
   'x-app-version',
   'x-admin-token',
+  'x-speech-request',
 ] as const;
 export type AppRequestHeader = (typeof APP_REQUEST_HEADERS)[number];
 

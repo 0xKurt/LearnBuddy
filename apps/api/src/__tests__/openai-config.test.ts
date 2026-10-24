@@ -27,6 +27,7 @@ describe('direct EU gateway configuration', () => {
       expect(deps.llm.profile.name).toBe('openai+openai-audio');
       expect(deps.embeddings.model).toBe('text-embedding-3-small');
       expect(deps.speech.available).toBe(true);
+      expect(deps.speech.voiceId('warm', 'de-DE')).toContain('tts-1:de-DE:nova');
     } finally {
       await close();
     }
@@ -39,9 +40,9 @@ describe('direct EU gateway configuration', () => {
       OPENAI_MODEL_SMART: 'gpt-5.4-mini',
       OPENAI_MODEL_FAST: 'gpt-5.4-mini',
       OPENAI_MODEL_PRONOUNCE: 'gpt-realtime-2.1',
-      OPENAI_MODEL_SPEECH: 'gpt-realtime-2.1-mini',
+      OPENAI_MODEL_SPEECH: 'tts-1',
       OPENAI_MODEL_TRANSCRIBE: 'gpt-transcribe',
-      OPENAI_TTS_VOICES: { warm: 'marin', deep: 'echo' },
+      OPENAI_TTS_VOICES: { warm: 'nova', deep: 'onyx' },
     });
     expect(llmGateway(config).profile.name).toBe('openai+openai-audio');
   });
@@ -83,7 +84,7 @@ describe('direct EU gateway configuration', () => {
     ['OPENAI_MODEL_PRONOUNCE', 'gpt-audio-1.5'],
     ['OPENAI_MODEL_PRONOUNCE', 'gpt-audio'],
     ['OPENAI_MODEL_SPEECH', 'gpt-4o-mini-tts'],
-    ['OPENAI_TTS_VOICES', '{"warm":"onyx"}'],
+    ['OPENAI_TTS_VOICES', '{"warm":"marin"}'],
   ])('rejects unsafe or incomplete %s', (key, value) => {
     expect(() => loadConfig({ ...direct, [key]: value })).toThrow(key);
   });

@@ -6093,20 +6093,26 @@ Talking instead of typing, everywhere she would otherwise type (chat, answers):
   Cancellation and one deadline cover both stages; no fallback to another provider occurs.
   Broader human pronunciation equivalence across children/languages and
   live end-to-end formatting/filler preservation remain rollout gates, not proven by fakes.
-- **EU TTS (#893):** `SPEECH_BACKEND=openai` selects `OpenAISpeech` behind the existing seam.
-  `OPENAI_MODEL_SPEECH=gpt-realtime-2.1-mini` is the default EU-listed model. One bounded,
-  stateless response uses a fixed calm, clear, child-appropriate read-aloud instruction; tracing
-  and reconnect are disabled. PCM chunks become one WAV for the existing cache/player. The
-  player still waits for the complete file; provider first-chunk latency is not audible-start
-  latency. The six voices default to marin/shimmer/coral/ash/cedar/echo (warm/bright/soft/friendly/
-  clear/deep); measured median F0 separates the existing higher/lower groups. Onyx is not
-  supported by this model. `OPENAI_TTS_VOICES` provides validated operator overrides and changes
-  the cache identity. `tts-1` remains explicitly selectable with its own supported voice map,
-  but cannot apply the style instruction. Token receipts, including completed failed responses,
-  go to the existing speech cost log; cached playback costs zero. Fixed wording is instructed,
-  not proven by string comparison: speech legitimately expands numbers. Human listening and
-  real-device audible latency remain release gates. See the dated model decision for results.
-  The shared EU client rejects other hosts and disables redirects and SDK retries.
+- **EU TTS (#893, #921):** `SPEECH_BACKEND=openai` selects `OpenAISpeech` behind the existing
+  seam. `OPENAI_MODEL_SPEECH=tts-1` defaults to progressive MP3 playback; the six voices are
+  nova/shimmer/coral/ash/echo/onyx (warm/bright/soft/friendly/clear/deep). Validated
+  `OPENAI_TTS_VOICES` overrides remain part of the cache identity. This model supports speed
+  control but no style instruction. The explicitly selectable `gpt-realtime-2.1-mini` retains
+  a fixed calm, clear, child-appropriate instruction and marin/shimmer/coral/ash/cedar/echo.
+  Its bounded stateless response disables tracing/reconnect and collects PCM into a complete
+  WAV; raw PCM arrival is not progressive playback through the existing player. Provider token
+  receipts survive the streaming route and complete-file fallback. Only complete audio is
+  cached; cached playback costs zero. The EU-only client rejects other hosts, redirects and
+  retries. Human listening and real-device audible latency remain unverified.
+- **Progressive speech (#921, ADR 0008 §Amendment 2026-10-24):** the speech route streams
+  MP3 bytes with `Accept: audio/mpeg`; its JSON response stays compatible. Authenticated
+  media GET requests carry the validated speech request in `x-speech-request`, never in URLs.
+  Native Expo Audio players preload HTTP audio; web uses MediaSource with a complete-file
+  fallback where unsupported. The next sentence preloads during playback, and cancellation
+  releases the player and pending audio. The integration comparison found faster raw PCM
+  from Realtime but only `tts-1` produced progressive audio compatible with this player;
+  `gpt-4o-tts` returned `model_not_found` twice. See
+  `docs/decisions/tts-streaming-integration-2026-10-24.md` for timings and limitations.
 - **Buddy's natural voice** (ADR 0008): everything read aloud goes sentence by sentence through
   `POST /voice/speech` (`modules/voice/speech.ts` → `speech/` seam → the selected EU speech
   provider; the legacy Google adapter is only selected explicitly). Voice and

@@ -16,12 +16,10 @@ import {
   OutreachActionResponse,
   ReplyStreamEvent,
   SendMessageResponse,
-  SpeechResponse,
   TranscribeResponse,
   TranscribeStreamEvent,
   type AppLocale,
   type CreateLearnerRequest,
-  type SpeechRequest,
   type TranscribeRequest,
   type UpdateBuddySettingsRequest,
   type UpdateLearnerRequest,
@@ -213,7 +211,3 @@ export const transcribe = (
         },
       })
     : request('POST', '/voice/transcribe', { body, schema: TranscribeResponse, wait: 'long' });
-
-/** One sentence in Buddy's natural voice (ADR 0008); voice and speed are her settings. */
-export const synthesizeSpeech = (body: SpeechRequest) =>
-  request('POST', '/voice/speech', { body, schema: SpeechResponse, wait: 'long' });

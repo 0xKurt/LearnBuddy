@@ -3,6 +3,7 @@
 // Deleted once played; the cache directory is the system's to clear anyway.
 
 import { File, Paths } from 'expo-file-system';
+import { prepareAudio, releasePlayer } from './naturalPlayer.js';
 
 let seq = 0;
 
@@ -17,9 +18,21 @@ export function audioUri(base64: string, mime: 'audio/mpeg' | 'audio/wav'): stri
 }
 
 export function releaseAudio(uri: string): void {
+  if (releasePlayer(uri)) return;
   try {
     new File(uri).delete();
   } catch {
     // Already gone.
   }
+}
+
+/** Native media transport progressively buffers MP3, including the sentence fetched ahead. */
+export async function streamAudio(
+  source: { uri: string; headers: Record<string, string> },
+  signal: AbortSignal,
+): Promise<string> {
+  if (signal.aborted) throw new Error('stopped');
+  const uri = prepareAudio(source);
+  signal.addEventListener('abort', () => releasePlayer(uri), { once: true });
+  return uri;
 }

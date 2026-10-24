@@ -20,9 +20,8 @@ import type { VoiceName } from '@learnbuddy/shared-types/contracts';
 import { AppState } from 'react-native';
 import * as Speech from 'expo-speech';
 
-import { ApiError } from '../api/client.js';
-import { synthesizeSpeech } from '../api/endpoints.js';
-import { audioUri, releaseAudio } from './naturalAudio.js';
+import { ApiError, speechSource } from '../api/client.js';
+import { streamAudio, releaseAudio } from './naturalAudio.js';
 import { playAudio } from './naturalPlayer.js';
 import {
   readText,
@@ -133,22 +132,33 @@ function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
   const locale = voiceLocale(lang);
   const slow = opts.slow ?? false;
   const self: { reading: Reading | null } = { reading: null };
+  const cancelled = new AbortController();
   const effects: ReadingEffects = {
     async fetch(spoken, ahead): Promise<Clip> {
       if (!/^[a-z]{2}-[A-Z]{2}$/.test(locale) || !gate.allows(locale)) return null;
+      const request = new AbortController();
+      const cancelRequest = () => request.abort();
+      cancelled.signal.addEventListener('abort', cancelRequest, { once: true });
+      if (cancelled.signal.aborted) request.abort();
       try {
-        const res = await withTimeout(
-          synthesizeSpeech({
+        const signal = request.signal;
+        const uri = await withTimeout(
+          speechSource({
             text: spoken,
             locale,
             ...(slow ? { slow: true } : {}),
             ...(opts.voice ? { voice: opts.voice } : {}),
-          }),
+          }).then((source) => streamAudio(source, signal)),
           ahead ? FETCH_TIMEOUT_MS : FIRST_PIECE_TIMEOUT_MS,
         );
-        gate.speed = res.speed;
-        return { uri: audioUri(res.audio_base64, res.mime) };
+        if (cancelled.signal.aborted) {
+          releaseAudio(uri);
+          return null;
+        }
+        return { uri };
       } catch (err) {
+        request.abort();
+        cancelled.signal.removeEventListener('abort', cancelRequest);
         const failure = failureOf(err);
         // Giving up on a piece she waits for in silence is impatience, not a broken voice:
         // the phone reads this one, the natural voice stays on for the rest of the reply.
@@ -196,6 +206,7 @@ function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
     transform: opts.transform ?? ((s: string) => s),
     growing,
     onEnd: (why) => {
+      cancelled.abort();
       if (current === self.reading) current = null;
       opts.onEnd?.(why);
     },

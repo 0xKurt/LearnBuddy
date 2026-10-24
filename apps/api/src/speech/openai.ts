@@ -54,9 +54,24 @@ export class OpenAISpeech implements SpeechGateway {
         },
         { signal, timeout: input.timeoutMs },
       );
-      const audio = Buffer.from(await result.arrayBuffer());
-      if (!audio.length || !result.headers.get('content-type')?.startsWith('audio/'))
+      if (!result.body || !result.headers.get('content-type')?.startsWith('audio/'))
         throw new SpeechError('refused', 'Provider returned no audio');
+      const chunks: Buffer[] = [];
+      const reader = result.body.getReader();
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (!value.length) continue;
+          const chunk = Buffer.from(value);
+          chunks.push(chunk);
+          await input.onAudio?.({ mime: 'audio/mpeg', audio: chunk });
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      const audio = Buffer.concat(chunks);
+      if (!audio.length) throw new SpeechError('refused', 'Provider returned no audio');
       return { mime: 'audio/mpeg', audio };
     } catch (error) {
       if (error instanceof SpeechError) throw error;

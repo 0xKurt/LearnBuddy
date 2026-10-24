@@ -18,6 +18,8 @@ export type SpeechInput = {
   rate: number;
   timeoutMs: number;
   signal?: AbortSignal;
+  /** Delivered in order as bytes arrive; awaiting the sink applies backpressure. */
+  onAudio?: (chunk: SpeechAudio) => Promise<void>;
 };
 
 export type SpeechAudio = {

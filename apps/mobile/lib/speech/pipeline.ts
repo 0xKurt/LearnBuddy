@@ -73,6 +73,7 @@ export function readText(opts: {
   let at = 0;
   /** Ran out of pieces and waits for the next one to be written. */
   let stalled = true;
+  let audible = false;
   // Buddy's first sentence is not written yet: his voice is on its way, not idle.
   if (growing) store.set({ phase: 'loading', progress: null, source: null });
 
@@ -106,6 +107,8 @@ export function readText(opts: {
   function playOnDevice(i: number): void {
     const piece = pieces[i];
     if (!piece) return;
+    audible = true;
+    void fetchClip(i + 1, true);
     store.set({ phase: 'speaking', source: 'device', index: piece.at, progress: null });
     effects.device(piece.spoken, {
       done: () => playNext(i + 1),
@@ -117,6 +120,7 @@ export function readText(opts: {
   function playNext(i: number): void {
     if (!alive) return;
     at = i;
+    audible = false;
     const piece = pieces[i];
     if (!piece) {
       // Nothing more to say yet: wait for the next sentence instead of ending — Buddy is
@@ -134,7 +138,6 @@ export function readText(opts: {
     if (!ready.has(i)) store.set({ phase: 'loading', index: piece.at, progress: null });
     void fetchClip(i, false).then((clip) => {
       if (!alive) return;
-      void fetchClip(i + 1, true); // The next sentence arrives while this one plays.
       if (!clip) {
         playOnDevice(i);
         return;
@@ -142,7 +145,10 @@ export function readText(opts: {
       store.set({ index: piece.at, progress: null });
       playing = effects.play(clip.uri, {
         start: () => {
-          if (alive) store.set({ phase: 'speaking', source: 'natural', progress: 0 });
+          if (!alive) return;
+          audible = true;
+          void fetchClip(i + 1, true);
+          store.set({ phase: 'speaking', source: 'natural', progress: 0 });
         },
         progress: (progress) => {
           if (alive) store.set({ progress });
@@ -178,7 +184,7 @@ export function readText(opts: {
       if (r.sentences.length > 0 || done) store.set({ text, sentences });
       if (!stalled) {
         // A sentence written while the one before it plays is fetched straight away.
-        if (ready.has(at)) void fetchClip(at + 1, true);
+        if (audible) void fetchClip(at + 1, true);
         return;
       }
       if (pieces[at]) {
