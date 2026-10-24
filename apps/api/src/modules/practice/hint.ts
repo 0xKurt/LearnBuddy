@@ -13,13 +13,13 @@ import { CARD_PASS } from './cards.js';
 import { DRILL_PASS } from './drill.js';
 import { givesHints, offersHintButton } from './modeRules.js';
 import { keyPointsOf, pointLadder, pointStepText } from './pointSteps.js';
+import { secretsFor } from './secrets.js';
 import { mentionsSolution } from './tutor.js';
 import { answerItem } from './answer.js';
 import {
   nextSeq,
   replayOrLoad,
   replayTurn,
-  solutionsOf,
   type ItemRow,
   type PracticeLearner,
   type SessionItemRow,
@@ -73,10 +73,11 @@ export async function hintItem(
           | 'correct_choice'
           | 'unit'
           | 'rubric'
+          | 'task'
         >
       >(
         `select si.status, si.hints_used, si.prepared_hints_used, si.explained, i.hints, i.kind, i.prompt,
-                i.answer, i.accepted_answers, i.choices, i.correct_choice, i.unit, i.rubric
+                i.answer, i.accepted_answers, i.choices, i.correct_choice, i.unit, i.rubric, i.task
            from session_items si join items i on i.id = si.item_id
           where si.session_id = $1 and si.item_id = $2 and i.learner_id = $3
           for update of si`,
@@ -93,10 +94,8 @@ export async function hintItem(
       if (points && !step) throw new NoPreparedHint();
       const hint = step ? pointStepText(learner.locale, step) : si.hints[si.prepared_hints_used];
       if (hint === undefined) throw new NoPreparedHint();
-      if (
-        session.mode === 'help' &&
-        solutionsOf(si).some((sol) => mentionsSolution(hint, sol, si.prompt))
-      ) {
+      const { secrets, visible } = secretsFor(si);
+      if (session.mode === 'help' && secrets.some((sol) => mentionsSolution(hint, sol, visible))) {
         throw new NoPreparedHint();
       }
       const seq = await nextSeq(tx, sessionId);

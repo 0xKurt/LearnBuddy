@@ -46,6 +46,7 @@ import { MathText } from '../math/MathText.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { ReadAgain } from '../lb/ReadAgain.js';
 import { BottomBar } from '../lb/BottomBar.js';
+import { resultLines, resultTitle } from '../../lib/practice/resultText.js';
 import { PassEnd } from './PassEnd.js';
 import { ProgressRow } from './Question.js';
 import { useQuestionVoice } from './useQuestionVoice.js';
@@ -188,14 +189,17 @@ export function DrillRound({ session, title, onChange, onClose }: Props) {
       >
         <PassEnd
           finished={finished}
-          title={t('practice:drill.done_title')}
+          title={t(`practice:${resultTitle({ mode: session.mode, pass: 'drill' })}`)}
           line={
-            finished && drill.summary
-              ? drill.summary.group.kind === 'range'
-                ? t(`practice:drill.line.${drill.summary.line}_range`, { what: title })
-                : t(`practice:drill.line.${drill.summary.line}_${drill.summary.group.kind}`, {
-                    n: drill.summary.group.n,
-                  })
+            finished
+              ? resultLines(session.summary!, {
+                  mode: session.mode,
+                  pass: 'drill',
+                  title,
+                  drill_summary: drill.summary,
+                })
+                  .map(({ key, ...values }) => t(`practice:${key}`, values))
+                  .join(' ')
               : null
           }
           lineTestID="drill-line"

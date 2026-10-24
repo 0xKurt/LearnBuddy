@@ -10,7 +10,7 @@
 // dropped, an item that already has hints is never overwritten, and a failure
 // only means the tutor model helps as before.
 
-import { isStructuredKind, MATH_NOTATION_SHORT } from '@learnbuddy/shared-types/contracts';
+import { MATH_NOTATION_SHORT } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
@@ -20,9 +20,9 @@ import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { ItemDraft, LANGUAGE_RULES } from './items.js';
 import { checkedWhy, ItemWhy } from './why.js';
+import { secretsFor, shownSolution } from './secrets.js';
 import type { ItemRow, PracticeLearner } from './service.js';
 import { checkedSteps, stepHints, WorkedSteps } from './workedSteps.js';
-import { secretsOf, structuredTaskOf } from './structured.js';
 import { mentionsSolution } from './tutor.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 
@@ -65,23 +65,6 @@ Answer with the JSON object described by the schema; "n" is the question's numbe
 type Row = ItemRow & { subject_kind: string | null; task: unknown };
 
 /**
- * What a hint for this question must not state, and the text she can read anyway (a hint
- * may repeat that). A structured item's secrets come from its task: for a cloze every key
- * of every gap (issue #232), which the whole-text solution alone would not catch.
- */
-function secretsFor(r: Row): { secrets: string[]; visible: string } {
-  const task = isStructuredKind(r.kind) ? structuredTaskOf(r.task, r.kind) : null;
-  if (task) return secretsOf(task, r.prompt);
-  return { secrets: [shown(r), ...r.accepted_answers], visible: r.prompt };
-}
-
-function shown(r: Row): string {
-  return r.kind === 'multiple_choice' && r.choices && r.correct_choice !== null
-    ? (r.choices[r.correct_choice] ?? r.answer)
-    : `${r.answer}${r.unit ? ` ${r.unit}` : ''}`;
-}
-
-/**
  * Writes hints for these questions of the session that have none yet (practice, test). Each
  * caller names the questions it brought into the run (F9-a, #660), so two calls never send the
  * same question: the run's first questions come from the call that created it, the rest from the
@@ -117,7 +100,7 @@ export async function prepareHints(
   const list = rows
     .map(
       (r, n) =>
-        `${n + 1}. [${r.kind}] QUESTION: ${secretsFor(r).visible}${r.choices ? `\n   CHOICES: ${r.choices.join(' | ')}` : ''}\n   SOLUTION: ${shown(r)}`,
+        `${n + 1}. [${r.kind}] QUESTION: ${secretsFor(r).visible}${r.choices ? `\n   CHOICES: ${r.choices.join(' | ')}` : ''}\n   SOLUTION: ${shownSolution(r)}`,
     )
     .join('\n');
   const res = await callModel(deps, learner.id, day, {

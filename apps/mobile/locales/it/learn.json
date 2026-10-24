@@ -26,7 +26,7 @@
   "topic": {
     "practice": {
       "title": "Su cosa vuoi esercitarti?",
-      "hint": "Ti faccio qualche domanda su questo.",
+      "hint": "Ti propongo qualche esercizio su questo.",
       "placeholder": "es. sommare frazioni, il simple past",
       "ex_1": "Sommare frazioni",
       "ex_2": "Il simple past",
@@ -34,7 +34,7 @@
     },
     "test": {
       "title": "Su cosa è la verifica?",
-      "hint": "Una risposta per domanda, niente suggerimenti: vedrai il risultato alla fine.",
+      "hint": "Una risposta per esercizio, niente suggerimenti: vedrai il risultato alla fine.",
       "placeholder": "es. frazioni, unità 3, il Medioevo",
       "ex_1": "Frazioni",
       "ex_2": "Simple past",

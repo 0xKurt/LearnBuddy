@@ -23,24 +23,24 @@ import { useAnnounce } from '../../lib/announce.js';
 import { messageFor } from '../../lib/errors.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
-import { Btn, MAX_FONT_SCALE } from '../lb/Btn.js';
+import { Btn } from '../lb/Btn.js';
 import { toast } from '../lb/Toast.js';
 import { CardChoices, CardDone, ChatCard } from '../buddy/ChatCard.js';
 
 type Confirm = Extract<ActionSummary, { tool: 'confirm_delete' }>;
 
 export function ConfirmCard({ confirm }: { confirm: Confirm }) {
-  const { palette } = useTheme();
+  useTheme();
   const { t } = useTranslation(['buddy', 'common']);
   const [busy, setBusy] = useState<'yes' | 'no' | null>(null);
 
-  const what = confirm.what === 'material' ? 'sheet' : 'question';
+  const what = confirm.what === 'material' ? 'material' : 'item';
   const name = confirm.what === 'material' ? confirm.title : confirm.detail;
   const settled =
     confirm.status === 'confirmed'
-      ? t(`buddy:confirm.${what}_deleted`)
+      ? t(`common:delete.${what}.done`)
       : confirm.status === 'declined'
-        ? t(`buddy:confirm.${what}_kept`)
+        ? t(`common:delete.${what}.kept`)
         : confirm.status === 'open'
           ? null
           : t('buddy:confirm.no_longer_open');
@@ -59,7 +59,7 @@ export function ConfirmCard({ confirm }: { confirm: Confirm }) {
     }
   }
 
-  const title = t(`buddy:confirm.${what}_title`);
+  const title = t(`common:delete.${what}.title`);
   // What was decided stays in the card it was asked in (Cards.jsx:42–43).
   if (settled) {
     return (
@@ -69,7 +69,7 @@ export function ConfirmCard({ confirm }: { confirm: Confirm }) {
     );
   }
 
-  const destroy = t(`buddy:confirm.${what}_delete`);
+  const destroy = t(`common:delete.${what}.confirm`);
   return (
     <ChatCard
       tone="warn"
@@ -81,25 +81,16 @@ export function ConfirmCard({ confirm }: { confirm: Confirm }) {
       detailLines={3}
     >
       {/* Said once, plainly: this is the part that cannot be taken back. */}
-      <Text style={TYPE.meta}>{t(`buddy:confirm.${what}_body`)}</Text>
+      <Text style={TYPE.meta}>{t(`common:delete.${what}.body`, { title: confirm.title })}</Text>
       <CardChoices>
         {/* The dangerous button says exactly what it does, never just "Ja" — in the danger ink
             on paper, never a red fill (Cards.jsx:34, :46); keeping it is the quiet way out. */}
         <Btn
-          variant="secondary"
+          variant="danger"
           size="sm"
           busy={busy === 'yes'}
           disabled={busy === 'no'}
           onPress={() => void answer(true)}
-          label={
-            <Text
-              numberOfLines={1}
-              maxFontSizeMultiplier={MAX_FONT_SCALE}
-              style={[TYPE.action, { color: palette.danger }]}
-            >
-              {destroy}
-            </Text>
-          }
         >
           {destroy}
         </Btn>
@@ -110,7 +101,7 @@ export function ConfirmCard({ confirm }: { confirm: Confirm }) {
           disabled={busy === 'yes'}
           onPress={() => void answer(false)}
         >
-          {t('buddy:confirm.keep')}
+          {t('common:delete.keep')}
         </Btn>
       </CardChoices>
     </ChatCard>

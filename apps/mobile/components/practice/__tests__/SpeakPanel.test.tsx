@@ -27,6 +27,8 @@ import { paletteOf } from '../../../lib/theme/palettes.js';
 import { RADIUS } from '../../../lib/theme/radius.js';
 import { renderInApp, styleOf } from '../../../testing/render.js';
 import { SpeakPanel } from '../SpeakPanel.js';
+import { WordSheet } from '../WordSheet.js';
+import { RehearseCard } from '../../buddy/RehearseCard.js';
 
 /** What the panel handed the recorder, so a test can report a finished recording. */
 type Recorded = { uri: string; mime: AudioMime; durationMs: number; base64: string };
@@ -45,7 +47,12 @@ const recorder = vi.hoisted(() => ({
 const platform = vi.hoisted(() => ({ os: 'ios', openSettings: vi.fn() }));
 
 /** Reading the sentence aloud, and the upload of her recording. */
-const outside = vi.hoisted(() => ({ speak: vi.fn(), stop: vi.fn(), speakItem: vi.fn() }));
+const outside = vi.hoisted(() => ({
+  speak: vi.fn(),
+  stop: vi.fn(),
+  speakItem: vi.fn(),
+  speakWord: vi.fn(),
+}));
 
 vi.mock('../../../lib/speech/record.js', () => ({
   useRecording: ({ onRecorded }: { onRecorded: (r: Recorded) => void }) => {
@@ -70,13 +77,17 @@ vi.mock('../../../lib/speech/listen.js', () => ({
 
 vi.mock('../../../lib/api/learningEndpoints.js', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
-  return { ...actual, speakItem: outside.speakItem };
+  return { ...actual, speakItem: outside.speakItem, speakWord: outside.speakWord };
 });
 
 vi.mock('react-native', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('react-native');
   return {
     ...actual,
+    AccessibilityInfo: {
+      ...(actual.AccessibilityInfo as object),
+      announceForAccessibilityWithOptions: vi.fn(),
+    },
     Platform: {
       ...(actual.Platform as object),
       get OS() {
@@ -165,6 +176,7 @@ beforeEach(() => {
   platform.openSettings.mockReset();
   recorder.start.mockReset();
   outside.speak.mockReset();
+  outside.speakWord.mockReset();
   outside.speak.mockResolvedValue(undefined);
   outside.stop.mockReset();
   outside.speakItem.mockReset();
@@ -308,7 +320,7 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
   it('keeps one lead while it records, and nothing else to decide', () => {
     recorder.phase = 'recording';
     renderPanel({ skip: true });
-    expect(leading().map(named)).toEqual(['Aufnahme beenden und an Buddy schicken']);
+    expect(leading().map(named)).toEqual(['Aufnahme stoppen']);
     expect(skin(leading()[0]!).borderTopLeftRadius).toBe(`${RADIUS.round}px`);
     // Hearing it is still there but waits (her own voice is being recorded), and the way
     // past the sentence is gone until she stops: nothing competes with "Fertig".
@@ -318,14 +330,14 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
     expect(screen.queryByRole('button', { name: 'Überspringen' })).toBeNull();
   });
 
-  it('says "Fertig" on the primary, with a tick, while she speaks (Flows.jsx:123)', () => {
+  it('says "Fertig" on the primary, with the shared stop square, while she speaks (Flows.jsx:123)', () => {
     recorder.phase = 'recording';
     renderPanel();
     const lead = leading()[0]!;
     expect(lead.textContent).toBe('Fertig');
     // The filled accent, not the grey "soft" skin the stop button had.
     expect(skin(lead).backgroundColor).toBe(rgb(paletteOf('pastell').primary));
-    expect(lead.querySelector('path')?.getAttribute('d')).toBe('M5 12l5 5 9-10');
+    expect(lead.querySelector('rect')?.getAttribute('width')).toBe('11');
   });
 
   it('waits on the primary itself while Buddy listens, instead of a status row (Flows.jsx:124)', async () => {
@@ -338,5 +350,66 @@ describe('one action leads, the rest is quiet and of one shape (issue #186)', ()
     expect(leading()[0]!.getAttribute('aria-disabled')).toBe('true');
     expect(leading()[0]!.getAttribute('aria-busy')).toBe('true');
     expect(screen.queryByRole('progressbar', { name: 'Buddy hört zu …' })).toBeNull();
+  });
+});
+
+function renderWord() {
+  return renderInApp(
+    <WordSheet
+      word={{ text: 'chat', ok: false, tip: 'Achte auf den Anfang.' }}
+      sessionId="55555555-5555-4555-8555-555555555555"
+      itemId={ITEM.id}
+      lang="fr"
+      onClose={() => undefined}
+    />,
+  );
+}
+
+describe('the same recorder state in word practice and rehearsal (#918)', () => {
+  it.each(['word', 'rehearsal'])('offers settings for a refused mic in %s', (surface) => {
+    recorder.denied = { canAskAgain: false };
+    if (surface === 'word') renderWord();
+    else
+      renderInApp(
+        <RehearseCard
+          actionId="55555555-5555-4555-8555-555555555555"
+          offer={{
+            tool: 'offer_rehearsal',
+            kind: 'read_aloud',
+            title: 'Lesen',
+            text: 'Bonjour.',
+            minutes: null,
+            goal_id: null,
+          }}
+        />,
+      );
+    const settings = screen.getByRole('button', { name: 'Einstellungen öffnen' });
+    fireEvent.click(settings);
+    expect(platform.openSettings).toHaveBeenCalledTimes(1);
+    expect(recorder.start).not.toHaveBeenCalled();
+  });
+
+  it('shows the running recording in word practice', () => {
+    recorder.phase = 'recording';
+    renderWord();
+    expect(screen.getByLabelText('Aufnahme läuft, 0:00 von 0:30')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Aufnahme stoppen' }).textContent).toBe('Fertig');
+  });
+
+  it('does not grade silence as almost right or repeat a pronunciation tip', async () => {
+    outside.speakWord.mockResolvedValue({
+      audible: false,
+      ok: false,
+      heard: '',
+      tip: null,
+      help: null,
+    });
+    renderWord();
+    await act(async () => {
+      recorder.onRecorded?.(RECORDING);
+    });
+    expect(screen.queryByText('Fast – hör es dir nochmal an und probier es.')).toBeNull();
+    expect(screen.queryByText('Achte auf den Anfang.')).toBeNull();
+    expect(screen.getByText('Das konnte ich nicht sicher beurteilen.')).toBeTruthy();
   });
 });

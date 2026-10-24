@@ -20,7 +20,9 @@ import { EmptyState } from './EmptyState.js';
 type Props = {
   /** What failed; its message is the title (`lib/errors.ts`). */
   error: unknown;
-  onRetry: () => void;
+  onRetry?: () => void;
+  /** A local lifecycle state already translated by its caller. */
+  message?: string;
   /** The retry is in flight: the button shows it and takes no second tap. */
   busy?: boolean;
   /**
@@ -44,25 +46,33 @@ type Props = {
 export const isGone = (error: unknown): boolean =>
   error instanceof ApiError && error.code === 'not_found';
 
-export function LoadFailed({ error, onRetry, busy, back, children, inline = false }: Props) {
+export function LoadFailed({
+  error,
+  onRetry,
+  busy,
+  back,
+  children,
+  message,
+  inline = false,
+}: Props) {
   const { t } = useTranslation('common');
   const online = useOnline();
   const gone = isGone(error);
   // Offline, or the thing is gone: nothing to think about (States.jsx "offline", "notfound").
   const resting = !online || gone;
-  const retry = (
+  const retry = onRetry ? (
     <Btn pill center busy={busy} onPress={onRetry}>
       {t('common:actions.retry')}
     </Btn>
-  );
+  ) : null;
   return (
     <View style={{ flex: 1, justifyContent: 'center' }}>
       <EmptyState
         orb={!inline}
         state={resting ? 'idle' : 'think'}
-        title={messageFor(error)}
+        title={message ?? messageFor(error)}
         action={
-          back && gone ? (
+          back && (gone || !onRetry) ? (
             // Gone: the way back alone. Without one the retry stays — never a screen whose only
             // offer is something else (signing out at the start gate).
             <Btn pill center onPress={back.onPress}>

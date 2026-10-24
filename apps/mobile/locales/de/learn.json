@@ -26,7 +26,7 @@
   "topic": {
     "practice": {
       "title": "Was willst du üben?",
-      "hint": "Ich stelle dir ein paar Fragen dazu.",
+      "hint": "Ich gebe dir ein paar Aufgaben dazu.",
       "placeholder": "z. B. Brüche addieren, Simple Past",
       "ex_1": "Brüche addieren",
       "ex_2": "Simple Past",
@@ -34,7 +34,7 @@
     },
     "test": {
       "title": "Worüber schreibst du den Test?",
-      "hint": "Eine Antwort pro Frage, keine Tipps – das Ergebnis siehst du am Ende.",
+      "hint": "Eine Antwort pro Aufgabe, keine Tipps – das Ergebnis siehst du am Ende.",
       "placeholder": "z. B. Brüche, Unité 3, Das Mittelalter",
       "ex_1": "Brüche",
       "ex_2": "Simple Past",

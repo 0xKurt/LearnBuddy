@@ -105,7 +105,7 @@ describe('her question in the bar', () => {
 });
 
 // Gespräch (issue #386): the waveform in the bar starts it in place, and the bar becomes the
-// conversation row — "Tastatur" · the big mic · "Nochmal vorlesen", the conversation screen's.
+// conversation row — "Tastatur" · the big mic · "Nochmal anhören", the conversation screen's.
 describe('Gespräch in the bar', () => {
   const talk = (onReadAgain?: () => void): CheckAction => ({
     talk: {
@@ -147,15 +147,15 @@ describe('Gespräch in the bar', () => {
     // The row, not the input bar: no field, the mic and the two side actions.
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(screen.getByRole('button', { name: 'Antwort sagen' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Nochmal vorlesen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nochmal anhören' }));
     expect(readAgain).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'Tastatur' }));
     expect(useVoiceMode.getState().conversation).toBe(false);
   });
 
-  it('keeps the row where the question must not be heard, without "Nochmal vorlesen"', () => {
+  it('keeps the row where the question must not be heard, without "Nochmal anhören"', () => {
     renderInApp(<Asking action={talk()} />);
-    expect(screen.queryByRole('button', { name: 'Nochmal vorlesen' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Nochmal anhören' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Tastatur' })).toBeTruthy();
   });
 });

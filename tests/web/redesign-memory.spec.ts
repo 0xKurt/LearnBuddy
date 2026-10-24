@@ -41,6 +41,9 @@ for (const look of SCREEN_LOOKS) {
     await sheet.getByRole('button', { name: 'Ändern: Möchte kurze Übungen', exact: true }).click();
     const input = page.getByLabel('Was Buddy sich merken soll');
     await expect(input).toBeVisible();
+    await expect(page.locator('[aria-modal="true"]')).toHaveCount(1);
+    const form = page.getByTestId('scroll-form');
+    await expect(form.getByRole('button', { name: 'Speichern', exact: true })).toHaveCount(0);
     await input.fill(DISTRESS_TEXT);
     await screenShots(page, `redesign-memory-${appearance}-before-help`);
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();

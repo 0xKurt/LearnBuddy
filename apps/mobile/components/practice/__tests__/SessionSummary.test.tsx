@@ -116,7 +116,7 @@ describe('SessionSummary — the Probetest review', () => {
     );
     expect(screen.getAllByTestId('summary-lead')).toHaveLength(1);
     expect(screen.getByTestId('summary-lead').textContent).toBe(
-      'Du hast 4 Fragen beantwortet. Heute ohne Tipp geschafft: Brüche. Schauen wir nochmal an: Gleichungen, Terme.',
+      'Du hast 4 Aufgaben beantwortet. Heute ohne Tipp geschafft: Brüche. Schauen wir nochmal an: Gleichungen, Terme.',
     );
   });
 });

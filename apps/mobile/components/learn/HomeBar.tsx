@@ -72,7 +72,7 @@ export function HomeBar({ h, layout, busy, act, captureUndo, titleInset }: BarPr
         busy={busy}
         titleInset={titleInset}
         // "Foto machen": the camera at once, the photo lands in the chat's bar (issue #519).
-        onPress={() => askAttach({ open: 'camera', link })}
+        onPress={() => askAttach({ open: 'menu', link })}
         onNoPhoto={captureUndo ? () => void act(() => undoAction(captureUndo.id)) : null}
       />
     );

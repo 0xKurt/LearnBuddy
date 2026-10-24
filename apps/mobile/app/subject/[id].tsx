@@ -141,7 +141,7 @@ export default function SubjectScreen() {
         (v) => v && mapMaterials(v, (list) => list.filter((x) => x.id !== m.id)),
       );
       refreshAll();
-      toast.show(t('library:deleted'));
+      toast.show(t('common:delete.material.done'));
     } catch (err) {
       if (err instanceof ApiError && err.code === 'not_found') {
         // Already gone: nothing left to confirm.
@@ -275,16 +275,16 @@ export default function SubjectScreen() {
       {content}
       <Sheet
         visible={sheetOpen}
-        title={t('library:delete_sheet.title')}
-        closeLabel={t('common:actions.cancel')}
+        title={t('common:delete.material.title')}
+        closeLabel={t('common:delete.keep')}
         onClose={() => setSheetOpen(false)}
       >
         <Text style={[TYPE.body, SHEET_TEXT]}>
-          {t('library:delete_sheet.body', { title: deleteTitle })}
+          {t('common:delete.material.body', { title: deleteTitle })}
         </Text>
         <ErrorNote text={deleteError} />
         <Btn variant="danger" pill full busy={deleting} onPress={() => void confirmDelete()}>
-          {t('library:delete_sheet.confirm')}
+          {t('common:delete.material.confirm')}
         </Btn>
       </Sheet>
     </Screen>

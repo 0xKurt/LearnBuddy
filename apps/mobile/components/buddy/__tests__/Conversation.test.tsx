@@ -326,7 +326,7 @@ const PREPARED: ActionView = {
 };
 
 const PHOTO_SENTENCE = 'Ich warte auf dein Foto: Arbeitsblatt Brüche';
-const PREPARED_SENTENCE = 'Vorbereitet: Mathearbeit Brüche – 4 Aufgaben, ca. 5 Min.';
+const PREPARED_SENTENCE = 'Übung bereit: Mathearbeit Brüche – 4 Aufgaben, ca. 5 Min.';
 
 function laterMessage(actions: ActionView[]): MessageView {
   return {

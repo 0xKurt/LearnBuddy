@@ -17,6 +17,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { openMenu } from './coreLoop';
 import { onboardChild, startOffer } from './figureWalk';
 import { shot } from './fit';
+import { screenLook, SCREEN_LOOKS, screenShots } from './redesign-screen-matrix';
 
 /** Her answer in the bar, sent. */
 async function send(page: Page, text: string): Promise<void> {
@@ -79,7 +80,7 @@ async function rehearse(page: Page, result: string): Promise<void> {
   await page.getByRole('button', { name: 'Aufnahme starten' }).last().click();
   // Long enough for a believable pace with the scripted transcript (about 100 words a minute).
   await page.waitForTimeout(12_000);
-  await page.getByRole('button', { name: 'Fertig' }).last().click();
+  await page.getByRole('button', { name: 'Aufnahme stoppen' }).last().click();
   await expect(page.getByText(result, { exact: false }).last()).toBeVisible({ timeout: 30_000 });
 }
 
@@ -88,6 +89,7 @@ test('a talk: the plan up to the day, a Probevortrag and reading aloud, measured
 }) => {
   test.setTimeout(300_000);
   await onboardChild(page, 'talk');
+  await screenLook(page, SCREEN_LOOKS[0]);
   const say = async (text: string) => {
     await page.getByLabel('Schreib Buddy …').fill(text);
     await page.getByRole('button', { name: 'Senden' }).click();
@@ -97,7 +99,13 @@ test('a talk: the plan up to the day, a Probevortrag and reading aloud, measured
   await shot(page, '264a-talk-planned');
   await say('Kann ich einen Probevortrag halten?');
   await expect(page.getByRole('button', { name: 'Aufnahme starten' })).toBeVisible();
-  await shot(page, '264b-rehearse-card');
+  await screenShots(page, '264b-rehearse-card');
+  // Stay in this visit: a full reload deliberately opens on a new greeting.
+  await openMenu(page, 'Einstellungen');
+  await page.getByRole('radio', { name: 'Dunkel', exact: true }).click();
+  await page.getByRole('button', { name: 'Zurück', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Aufnahme starten' })).toBeVisible();
+  await screenShots(page, '264b-rehearse-card-dark');
   await rehearse(page, 'Pausenlaute');
   await shot(page, '264c-rehearse-result');
   await say('Ich möchte vorlesen üben.');

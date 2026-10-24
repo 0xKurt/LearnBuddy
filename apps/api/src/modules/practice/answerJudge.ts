@@ -12,7 +12,7 @@ import type { Stepped } from './answerSteps.js';
 import { codePassed, codeReply } from './codeCheck.js';
 import { columnStepOf } from './columnCalc.js';
 import { nearlyRight, dictationReply } from './dictation.js';
-import { NEAR_MISS, plainMath, typoShapeFor } from './evaluate.js';
+import { plainMath, typoShapeFor, verdictForRule } from './evaluate.js';
 import { REVEAL_AFTER_MISSES, workedReply } from './ladder.js';
 import { givesHints } from './modeRules.js';
 import {
@@ -77,7 +77,7 @@ export function judgeByRules(c: AnswerCase): Judged | null {
       gaveHint: false,
       revealed: true,
     };
-  } else if (rule === 'correct' || rule === 'no_article' || guided?.kind === 'solved') {
+  } else if (verdictForRule(rule) === 'correct' || guided?.kind === 'solved') {
     // Right — or, in a guided example (#298), the way's last line with the key's value. A German
     // noun without its article is right too (#146, #759); the reply shows the whole word, so the
     // gender is seen once more.
@@ -139,7 +139,7 @@ export function judgeByRules(c: AnswerCase): Judged | null {
       revealed: false,
     };
   } else if (
-    NEAR_MISS.has(rule) &&
+    verdictForRule(rule) === 'partially_correct' &&
     !articleMissing(rule, item) &&
     locatedOrNotHelp(rule, session)
   ) {

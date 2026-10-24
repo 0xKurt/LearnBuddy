@@ -171,6 +171,12 @@ export function messageExtra(
 export const readAlong =
   slot<ComponentType<{ text: string; style: StyleProp<TextStyle> }>>('Mitlesen');
 
+/** A domain's shared listening control in the message menu. */
+export const messageListen =
+  slot<ComponentType<{ source: { text: string; lang: string }; slow?: boolean }>>(
+    'Nachricht anhören',
+  );
+
 /** The line on top of the thread (a running roleplay, else her focus); null: none. */
 export const workingOn = slot<(h: BuddyHome) => ReactNode>('Zeile über dem Gespräch');
 

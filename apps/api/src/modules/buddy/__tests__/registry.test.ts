@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { registerLearning } from '../../learning/register.js';
+import { CONCERN_MEANING } from '../distress.js';
+import { SCHEMA as VOICE_SCHEMA } from '../../voice/service.js';
 import { ACT_SCHEMAS } from '../decision.js';
 import {
   ACT_TOOLS,
@@ -9,11 +11,19 @@ import {
   checkActionSchema,
   toolsFor,
   turnActionSchema,
+  turnDecisionSchema,
 } from '../registry.js';
 
 describe('act tool registry', () => {
   // The learning domain's tools join the core's at start-up (issue #107, cut 7b).
   beforeAll(() => registerLearning());
+
+  it('uses one concern meaning in chat and voice', () => {
+    const chat = turnDecisionSchema().shape.concern.description!;
+    expect(chat).toContain(CONCERN_MEANING.is);
+    expect(chat).toContain(CONCERN_MEANING.isNot);
+    expect(JSON.stringify(VOICE_SCHEMA)).toContain(CONCERN_MEANING.is);
+  });
 
   it('registers every act tool exactly once', () => {
     expect(Object.keys(ACT_TOOLS).sort()).toEqual(Object.keys(ACT_SCHEMAS).sort());

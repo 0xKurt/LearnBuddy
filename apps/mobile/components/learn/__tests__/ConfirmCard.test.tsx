@@ -32,12 +32,12 @@ beforeEach(() => api.answerConfirmation.mockClear());
 describe('the delete confirmation (issue #151)', () => {
   it('asks as a heading, names the sheet and says once that it cannot be taken back', () => {
     renderInApp(<ConfirmCard confirm={SHEET} />);
-    expect(screen.getByRole('heading', { name: 'Dieses Blatt löschen?' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Blatt löschen?' })).toBeTruthy();
     // A long name is cut after three lines, never the question or the buttons pushed away.
     expect(styleOf(screen.getByText('Brüche kürzen und vergleichen')).webkitLineClamp).toBe('3');
     expect(
       screen.getByText(
-        'Das Blatt, seine Fragen und die Fotos sind danach weg. Das lässt sich nicht rückgängig machen.',
+        '„Brüche kürzen und vergleichen“ und die Aufgaben daraus werden gelöscht, die Fotos auch. Das lässt sich nicht rückgängig machen.',
       ),
     ).toBeTruthy();
   });
@@ -75,9 +75,9 @@ describe('the delete confirmation (issue #151)', () => {
         confirm={{ ...SHEET, what: 'item', title: null, detail: 'Was ist 3/4 + 1/8?' }}
       />,
     );
-    expect(screen.getByRole('heading', { name: 'Diese Frage löschen?' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Aufgabe löschen?' })).toBeTruthy();
     expect(screen.getByText('Was ist 3/4 + 1/8?')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Frage löschen' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Aufgabe löschen' })).toBeTruthy();
   });
 
   it.each([

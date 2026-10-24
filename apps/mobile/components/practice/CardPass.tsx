@@ -52,6 +52,7 @@ import { BottomBar } from '../lb/BottomBar.js';
 import { useSpokenWords } from '../math/useSpokenMath.js';
 import { CheckBar } from './CheckBar.js';
 import { ItemThread } from './ItemThread.js';
+import { resultLines, resultTitle } from '../../lib/practice/resultText.js';
 import { PassEnd } from './PassEnd.js';
 import { ListenButton } from './ListenButton.js';
 import { Hint, ProgressRow } from './Question.js';
@@ -136,8 +137,10 @@ export function CardPass({ session, title, onChange, onClose, asked }: Props) {
       >
         <PassEnd
           finished={finished}
-          title={t('practice:cards.done_title')}
-          line={t('practice:cards.done_body')}
+          title={t(`practice:${resultTitle({ mode: session.mode, pass: 'cards' })}`)}
+          line={resultLines(session.summary!, { mode: session.mode, pass: 'cards' })
+            .map(({ key, ...values }) => t(`practice:${key}`, values))
+            .join(' ')}
         />
         <BottomBar>
           <Btn size="lg" pill full onPress={onClose}>

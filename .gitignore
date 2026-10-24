@@ -77,3 +77,6 @@ apps/mobile/credentials.json
 # Maestro writes screenshots and recordings next to where it runs (issue #37).
 .maestro/**/*.png
 .maestro/**/*.mp4
+
+# App source is not personal memory, even with a global memory/ ignore.
+!/apps/mobile/components/memory/

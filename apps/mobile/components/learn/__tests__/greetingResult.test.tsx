@@ -4,7 +4,7 @@
 import { BuddyHome } from '@learnbuddy/shared-types/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { greetingResult } from '../GreetingResult.js';
+import { greetingResult } from '../ResultNotice.js';
 
 const SESSION = '00000000-0000-4000-8000-000000000002';
 
@@ -42,4 +42,37 @@ describe('the greeting offers the practice it named (issue #195)', () => {
     expect(greetingResult(home(result), '00000000-0000-4000-8000-000000000009', on)).toBeNull();
     expect(greetingResult(home(null), SESSION, on)).toBeNull();
   });
+});
+
+it.each([
+  { pass: 'cards' as const, mode: 'practice' as const, title: 'Durch!' },
+  { pass: null, mode: 'test' as const, ran_out: true, title: 'Die Zeit ist um' },
+])('uses the result title for $title, without false praise', async (facts) => {
+  const { screen } = await import('@testing-library/react');
+  const { renderInApp } = await import('../../../testing/render.js');
+  const { ResultNotice } = await import('../ResultNotice.js');
+  const { practiceGreeting } = await import('../../../lib/learning/greeting.js');
+  const now = { ...result, ...facts, total: 6, finished_at: '2026-10-24T12:00:00.000Z' };
+  renderInApp(<ResultNotice now={now} {...on} />);
+  expect(screen.getByText(facts.title)).toBeTruthy();
+  expect(practiceGreeting(now)).toBeNull();
+});
+
+it('uses the same result sentences as the session page', async () => {
+  const { screen } = await import('@testing-library/react');
+  const { renderInApp } = await import('../../../testing/render.js');
+  const { ResultNotice } = await import('../ResultNotice.js');
+  const { SessionSummary } = await import('../../practice/SessionSummary.js');
+  const summary = {
+    answered: 4,
+    first_try: 2,
+    right: 4,
+    secure_topics: ['Brüche'],
+    shaky_topics: ['Brüche'],
+  };
+  const view = renderInApp(<SessionSummary mode="practice" summary={summary} />);
+  const line = screen.getByTestId('summary-lead').textContent!;
+  view.unmount();
+  renderInApp(<ResultNotice now={{ ...result, result: summary }} {...on} />);
+  expect(screen.getByText(line)).toBeTruthy();
 });

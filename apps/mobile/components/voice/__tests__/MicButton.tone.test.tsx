@@ -79,7 +79,12 @@ it.each(['idle', 'recording', 'starting', 'transcribing'] as const)(
       </>,
     );
     await act(async () => {});
-    const label = state === 'recording' ? 'Aufnahme stoppen' : 'Diktieren';
+    const label =
+      state === 'recording'
+        ? 'Aufnahme stoppen'
+        : state === 'starting'
+          ? 'Mikrofon wird bereit …'
+          : 'Diktieren';
     const secondary = screen.getByRole('button', { name: label });
     const paint = face(secondary);
     expect(styleOf(secondary).width).toBe('44px');

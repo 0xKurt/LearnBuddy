@@ -15,7 +15,6 @@
   "edit": "Modifier",
   "edit_a11y": "Modifier : {{statement}}",
   "edit_input": "Ce que Buddy doit retenir",
-  "save": "Enregistrer",
   "cancel": "Annuler",
   "remove": "Retirer",
   "remove_a11y": "Retirer : {{statement}}",

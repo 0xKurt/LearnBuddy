@@ -256,7 +256,7 @@ describe('sessionGreeting (issue #195)', () => {
     (lang) => {
       // The greeting stands directly above the thread's result card ("Geschafft!"). Saying
       // „… hast du gerade geschafft." over it read as the same word twice.
-      type Buddy = { now: { result_title: string }; session: { after: Record<string, string> } };
+      type Buddy = { session: { after: Record<string, string> } };
       const copy = JSON.parse(
         readFileSync(join(__dirname, `../../../locales/${lang}/buddy.json`), 'utf8'),
       ) as Buddy;
@@ -265,7 +265,10 @@ describe('sessionGreeting (issue #195)', () => {
           .toLocaleLowerCase(lang)
           .split(/[^\p{L}]+/u)
           .filter((w) => w.length > 3);
-      const card = words(copy.now.result_title);
+      const practice = JSON.parse(
+        readFileSync(join(__dirname, `../../../locales/${lang}/practice.json`), 'utf8'),
+      ) as { summary: { title: string } };
+      const card = words(practice.summary.title);
       for (const [key, line] of Object.entries(copy.session.after))
         expect(
           words(line).filter((w) => card.includes(w)),

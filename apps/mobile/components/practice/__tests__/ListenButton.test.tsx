@@ -1,6 +1,6 @@
 // The one listen control (#311 step 2) with each of its sources: words, tones (#445) and a
 // question's recording (the Hörtext #210, the Diktat #242). The same states for all — ready
-// ("Anhören" / "Nochmal hören"), loading ("Lädt …"), playing ("Anhalten"), and a sound that could
+// ("Anhören" / "Nochmal anhören"), loading ("Lädt …"), playing ("Anhalten"), and a sound that could
 // not be made is said and leaves it ready again; "Langsam" is the same listening, sharing its state.
 // requires live verification in Claude Code session (the sound itself: expo-audio, the phone's voice and the request are replaced here)
 
@@ -136,7 +136,7 @@ describe('ListenButton: words', () => {
     tap('Anhören');
     act(() => spoken[0]?.onEnd?.('error'));
     expect(told).toEqual([
-      'Vorlesen klappt auf diesem Gerät gerade nicht – vielleicht fehlt die Stimme für diese Sprache.',
+      'Anhören klappt auf diesem Gerät gerade nicht – vielleicht fehlt die Stimme für diese Sprache.',
     ]);
     expect(button('Anhören')).toBeTruthy();
   });
@@ -230,9 +230,9 @@ describe('ListenButton: a recording (Hörtext #210, Diktat #242)', () => {
     heard = 0;
   });
 
-  it('says "Nochmal hören" once she heard it before', () => {
+  it('says "Nochmal anhören" once she heard it before', () => {
     show({ heard: true });
-    expect(button('Nochmal hören')).toBeTruthy();
+    expect(button('Nochmal anhören')).toBeTruthy();
   });
 
   it('loads, says "Anhalten" once it sounds, and stops on the second tap', async () => {

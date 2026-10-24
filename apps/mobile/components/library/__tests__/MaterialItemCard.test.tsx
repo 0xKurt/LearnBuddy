@@ -67,7 +67,7 @@ describe('a question in „Dein Material"', () => {
     // Deleting is in the sheet ⋯ opens, never a button in the card (MIGRATION.md §5).
     expect(screen.queryByText('Löschen')).toBeNull();
     expect(screen.queryByRole('button', { name: /löschen/i })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Mehr zu Frage 3' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mehr zu Aufgabe 3' }));
     expect(onMenu).toHaveBeenCalledTimes(1);
   });
 });

@@ -23,6 +23,14 @@ const ios: EngineFacts = {
 };
 
 describe('chooseEngine', () => {
+  it('uses the same answer transcription on every phone, including an offline-capable one', () => {
+    expect(chooseEngine(ios, 'answer')).toBe('server');
+    expect(
+      chooseEngine({ ...ios, platform: 'android', installedLocales: ['de-DE'] }, 'answer'),
+    ).toBe('server');
+    expect(chooseEngine(ios, 'message')).toBe('device');
+  });
+
   it('uses the device on iOS when it can recognise offline', () => {
     expect(chooseEngine(ios)).toBe('device');
   });

@@ -39,7 +39,7 @@ describe('question action in the header menu', () => {
     const onCorner = menu();
     expect(screen.queryByText('Passt nicht')).toBeNull();
     fireEvent.click(screen.getByRole('button'));
-    fireEvent.click(screen.getByRole('button', { name: 'Frage passt nicht' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Aufgabe passt nicht' }));
     expect(onCorner).toHaveBeenCalledTimes(1);
     expect(onCorner).toHaveBeenCalledWith('flag');
     expect(screen.queryByRole('dialog')).toBeNull();

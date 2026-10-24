@@ -53,8 +53,8 @@
     "title_pages": "Seite {{pages}} nochmal",
     "intro": "Nur was gefehlt hat – der Rest ist schon fertig. Achte darauf, dass die ganze Seite drauf ist.",
     "title_add": "Seite hinzufügen",
-    "intro_add": "Die Fragen dazu kommen zu diesem Blatt.",
-    "added": "Seite geschickt. Sobald sie gelesen ist, kommen ihre Fragen zu diesem Blatt."
+    "intro_add": "Die Aufgaben dazu kommen zu diesem Blatt.",
+    "added": "Seite geschickt. Sobald sie gelesen ist, kommen ihre Aufgaben zu diesem Blatt."
   },
   "draft": {
     "title": "Deine Fotos sind noch nicht gesendet",

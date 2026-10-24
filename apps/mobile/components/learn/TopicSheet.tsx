@@ -157,7 +157,7 @@ export function TopicSheet({ kind, onClose }: Props) {
           ) : null}
         </>
       ) : null}
-      <StartStatus state={state} />
+      <StartStatus state={state} preparingInAction />
     </Sheet>
   );
 }

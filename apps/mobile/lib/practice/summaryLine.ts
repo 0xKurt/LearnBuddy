@@ -13,12 +13,12 @@ export function summaryLines(
   summary: Pick<PracticeSummary, 'answered' | 'first_try'>,
   mode: SessionMode,
 ): SummaryLine[] {
-  const { answered, first_try: firstTry } = summary;
+  const { answered } = summary;
   if (answered <= 0) return [];
   if (mode === 'help') return [{ key: 'summary_line.help', count: answered }];
   const lines: SummaryLine[] = [{ key: 'summary_line.answered', count: answered }];
   // Only praise that is true for the whole round; a partial count would read like a grade.
-  if (mode !== 'test' && firstTry === answered) {
+  if (praiseShape(summary, mode) === 'all_first') {
     lines.push({ key: answered === 1 ? 'summary_line.first_one' : 'summary_line.all_first' });
   }
   return lines;
@@ -40,4 +40,15 @@ export function topicsToReview(
   const allRight =
     summary.right !== undefined && summary.answered > 0 && summary.right >= summary.answered;
   return allRight ? [] : summary.shaky_topics;
+}
+
+/** The single praise rule, also used by the greeting. */
+export function praiseShape(
+  summary: Pick<PracticeSummary, 'answered' | 'first_try'>,
+  mode: SessionMode,
+): 'help' | 'all_first' | 'practice' {
+  if (mode === 'help') return 'help';
+  return mode !== 'test' && summary.answered > 0 && summary.first_try === summary.answered
+    ? 'all_first'
+    : 'practice';
 }

@@ -40,7 +40,12 @@ export function installedMatch(installed: readonly string[], locale: string): st
   return installed.find((l) => base !== null && baseLanguage(l) === base) ?? null;
 }
 
-export function chooseEngine(f: EngineFacts): SpeechEngine {
+export function chooseEngine(
+  f: EngineFacts,
+  purpose: 'message' | 'answer' = 'message',
+): SpeechEngine {
+  // Answers need the same number/fraction/unit formatting and question context on every phone.
+  if (purpose === 'answer') return 'server';
   if (f.platform !== 'ios' && f.platform !== 'android') return 'server';
   if (!f.available || !f.onDeviceSupported || f.failedBefore) return 'server';
   // Android only works offline with the language's model installed.

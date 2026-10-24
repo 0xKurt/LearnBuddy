@@ -38,9 +38,9 @@ afterEach(() => {
 
 describe('a test with time', () => {
   it('says where she is, and the minutes left as a tail of its own with their full words', () => {
-    expect(progressLine(t, PROGRESS)).toBe('Frage 1 von 3');
+    expect(progressLine(t, PROGRESS)).toBe('Aufgabe 1 von 3');
     expect(progressLine(t, { ...PROGRESS, preparing: true })).toBe(
-      'Frage 1 · ich schreibe noch mehr',
+      'Aufgabe 1 · ich schreibe noch mehr',
     );
     expect(clockTail(t, null)).toBeUndefined();
     // The short form for the eye, the whole words for a screen reader — as the chip had them.

@@ -26,8 +26,7 @@ import { RHYTHM } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { currentLocale } from '../../lib/i18n/index.js';
 import { localDecimal } from '../../lib/numbers.js';
-import { summaryLines, topicsToReview } from '../../lib/practice/summaryLine.js';
-import { timeUpLines } from '../../lib/practice/testClock.js';
+import { resultLines, resultTitle } from '../../lib/practice/resultText.js';
 import { ResultList, type ResultRow } from '../lb/ResultList.js';
 
 type Props = {
@@ -56,39 +55,15 @@ export function SessionSummary({
     if (celebrate) haptic.success();
   }, [celebrate]);
   const { t } = useTranslation('practice');
-  const homework = mode === 'help';
-  // The time ran out (issue #241): how far she got comes first; that what stayed open is not
-  // wrong follows it.
-  const timeUp = ranOut && review ? timeUpLines(summary, review.length) : [];
-  const lines = (
-    timeUp.length > 0
-      ? timeUp.filter((l) => l.count !== undefined)
-      : summaryLines(summary, mode).map((l) => ({ ...l, answered: undefined }))
-  ).map((l) =>
-    l.count === undefined ? t(l.key) : t(l.key, { count: l.count, answered: l.answered }),
-  );
-  const rest = timeUp.filter((l) => l.count === undefined).map((l) => t(l.key));
-  // Homework is about solving it herself, not about topics that "sit".
-  const secure = homework ? [] : summary.secure_topics;
-  // Only what did not end right deserves another look (issue #630): an all-right round says so.
-  const shaky = topicsToReview(summary, mode);
-  // One calm paragraph under the heading (design ui_kits/app/Done.jsx:26): what she did, what
-  // stayed open, what sits and what deserves another look — sentences, never a stack of lines.
-  const lead = [
-    ...lines,
-    ...rest,
-    ...(secure.length > 0 ? [t('summary.secure', { topics: secure.join(', ') })] : []),
-    ...(shaky.length > 0 ? [t('summary.shaky', { topics: shaky.join(', ') })] : []),
-  ].join(' ');
+  const facts = { mode, ran_out: ranOut, total: review?.length };
+  const lead = resultLines(summary, facts)
+    .map(({ key, ...values }) => t(key, values))
+    .join(' ');
   return (
     <View style={{ gap: RHYTHM.sections }}>
       <View style={{ gap: RESULT.introGap }}>
         <Text accessibilityRole="header" style={TYPE.display}>
-          {homework
-            ? t('summary_help.title')
-            : mode === 'test'
-              ? t(ranOut ? 'summary_test.time_up_title' : 'summary_test.title')
-              : t('summary.title')}
+          {t(resultTitle(facts))}
         </Text>
         {lead ? (
           <Text testID="summary-lead" style={[TYPE.body, { color: palette.ink2 }]}>

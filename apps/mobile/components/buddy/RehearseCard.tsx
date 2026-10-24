@@ -1,17 +1,5 @@
-// Buddy offered a rehearsal of her talk, or reading a text aloud (issue #264): one card under his
-// message that records her — no new screen (CLAUDE.md rule 16): the conversation carries it like a
-// roleplay (#244). It is the thread's one card (`ChatCard`, #599) with the design's parts
-// (components/practice/Modes.jsx:33–50): the tile, what it is, the talk's title, what to do, and
-// one button. While it records, the card shows the design's live state (`RehearseLive`): the
-// running time large, the length she was given beside "ich höre zu", and "Fertig" as the paper
-// button. The large orb of that state is not drawn here: in the chat Buddy stands in the head,
-// and listens there while the card records (`useThreadRecording`).
-// The recording goes to the server once, is measured there and kept nowhere; the result arrives
-// in the thread as Buddy's message (`RehearsalResult`).
-//
-// The microphone is only on while she has tapped it on, on this card she is looking at — the same
-// rule as everywhere a recording runs (lib/speech/record.ts).
-
+// A rehearsal uses the same recording action and status as word and sentence practice.
+// Its material, target duration and measured result remain specific to the rehearsal.
 import {
   REHEARSAL_MAX_BASE64,
   REHEARSAL_MAX_MS,
@@ -19,7 +7,7 @@ import {
 } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import { newId } from '../../lib/api/client.js';
 import { sendRehearsal } from '../../lib/api/learningEndpoints.js';
@@ -27,14 +15,14 @@ import { setHome } from '../../lib/api/queries.js';
 import { useThreadRecording } from '../../lib/buddy/headState.js';
 import { sentDuration } from '../../lib/buddy/rehearsal.js';
 import { messageFor } from '../../lib/errors.js';
-import { useRecording, type Recording } from '../../lib/speech/record.js';
-import { formatClock } from '../../lib/speech/voice.js';
-import { SPACE } from '../../lib/theme/space.js';
+import { type Recording } from '../../lib/speech/record.js';
+import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
 import { ChatCard } from './ChatCard.js';
-import { quietVariant, type Quiet } from './extensions.js';
-import { useTheme } from '../../lib/theme/ThemeProvider.js';
+import { type Quiet } from './extensions.js';
+import { MicButton, MicStatus } from '../voice/MicButton.js';
+import { useMicRecorder } from '../voice/useMicRecorder.js';
 
 type Offer = Extract<ActionSummary, { tool: 'offer_rehearsal' }>;
 
@@ -79,13 +67,10 @@ export function RehearseCard({
     }
   }
 
-  const rec = useRecording({
+  const rec = useMicRecorder({
     maxMs,
     long: { maxBase64: REHEARSAL_MAX_BASE64 },
     onRecorded: (r) => void send(r),
-    onFailed: (why) => {
-      if (why !== 'denied') setProblem(t(`practice:speak.problem.${why}`));
-    },
   });
   const recording = rec.phase === 'recording';
   // The chat's head shows Buddy listening while the recorder runs (lib/buddy/headState.ts) —
@@ -112,11 +97,6 @@ export function RehearseCard({
       : offer.minutes !== null
         ? t('buddy:rehearse.hint_talk_minutes', { minutes: offer.minutes })
         : t('buddy:rehearse.hint_talk');
-  const trouble = rec.denied
-    ? t(Platform.OS === 'web' ? 'practice:speak.denied_web' : 'practice:speak.denied')
-    : problem;
-  const time = formatClock(rec.elapsedMs);
-  const max = formatClock(maxMs);
 
   return (
     <ChatCard
@@ -127,21 +107,6 @@ export function RehearseCard({
       titleLines={2}
       // While it records the card says what is happening, not what to do.
       detail={recording ? null : hint}
-      primary={{
-        label: recording
-          ? t('practice:speak.record_stop')
-          : sending
-            ? t('practice:speak.listening')
-            : t('buddy:rehearse.start'),
-        // "Fertig" is the paper button of the live state (Modes.jsx:47).
-        variant: recording ? 'secondary' : quietVariant(quiet),
-        busy: sending || rec.phase === 'starting' || rec.phase === 'stopping',
-        // As wide as its words, with the microphone before them (Modes.jsx:37).
-        fit: true,
-        ...(recording ? {} : { icon: 'mic' as const }),
-        onPress: toggle,
-        accessibilityHint: `${label}: ${offer.title}`,
-      }}
     >
       {/* The passage stands whole: she reads it from here while the card records. */}
       {offer.kind === 'read_aloud' && offer.text ? (
@@ -149,27 +114,23 @@ export function RehearseCard({
           {offer.text}
         </Text>
       ) : null}
-      {recording ? (
-        <View
-          testID="rehearse-live"
-          accessible
-          accessibilityRole="text"
-          accessibilityLabel={t('practice:speak.recording_label', { time, max })}
-          style={{ alignItems: 'center', gap: SPACE.sm }}
-        >
-          <Text style={[TYPE.questionMedium, { fontVariant: ['tabular-nums'] }]}>{time}</Text>
-          <Text style={TYPE.meta}>
-            {offer.minutes !== null
-              ? t('buddy:rehearse.live_target', {
-                  target: formatClock(offer.minutes * 60_000),
-                })
-              : t('buddy:rehearse.live', { max })}
-          </Text>
-        </View>
-      ) : null}
-      {trouble ? (
+      <MicStatus
+        voice={rec.voice}
+        targetMs={offer.minutes === null ? undefined : offer.minutes * 60_000}
+      />
+      <MicButton
+        voice={rec.voice}
+        presentation="recorder"
+        label={t('buddy:rehearse.start')}
+        tone={quiet === 'primary' ? 'primary' : 'quiet'}
+        busy={sending}
+        busyLabel={t('practice:speak.listening')}
+        onPress={toggle}
+        accessibilityHint={`${label}: ${offer.title}`}
+      />
+      {problem ? (
         <Text accessibilityRole="alert" style={TYPE.meta}>
-          {trouble}
+          {problem}
         </Text>
       ) : null}
     </ChatCard>

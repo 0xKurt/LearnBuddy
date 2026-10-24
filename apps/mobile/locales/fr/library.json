@@ -37,14 +37,14 @@
     "model_error": "Un problème est survenu pendant la lecture.",
     "photos_missing": "Toutes les photos ne sont pas arrivées.",
     "budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain.",
-    "blocked": "Le filtre de sécurité bloque cette fiche. La relire n'y changera rien – tape simplement les questions.",
+    "blocked": "Le filtre de sécurité bloque cette fiche. La relire n'y changera rien – tape simplement les exercices.",
     "form_not_practicable": "J'ai bien pu lire la fiche – c'est juste ce type d'exercice que je ne peux pas faire avec toi. Demande-moi : je t'explique les étapes.",
     "nothing_marked": "Je n'ai rien trouvé de marqué comme faux sur le contrôle – donc rien à retravailler. Si quelque chose est quand même marqué en rouge, reprends-le en photo.",
     "too_large": "Trop de grandes photos d’un coup – envoie la fiche en deux fois."
   },
   "source": {
     "corrected_test": "Tiré de ton contrôle corrigé : de nouveaux exercices sur ce qui était marqué – avec d'autres nombres et d'autres mots.",
-    "notebook_entry": "Tiré de ton cahier : quelques questions courtes sur le dernier cours – parfait pour demain matin."
+    "notebook_entry": "Tiré de ton cahier : quelques exercices courts sur le dernier cours – parfait pour demain matin."
   },
   "incomplete_hint": "Les photos ne sont pas arrivées en entier. Supprime la fiche et reprends-la en photo.",
   "incomplete_page": {
@@ -68,18 +68,12 @@
   "retry_started": "Je relis la fiche.",
   "delete": "Supprimer",
   "delete_label": "Supprimer « {{title}} »",
-  "delete_sheet": {
-    "title": "Supprimer la fiche ?",
-    "body": "« {{title}} » et ses exercices seront supprimés, les photos aussi. Tu ne pourras pas revenir en arrière.",
-    "confirm": "Supprimer"
-  },
-  "deleted": "Fiche supprimée.",
   "empty": {
     "title": "Tes fiches arriveront ici",
     "body": "Prends en photo une fiche, une page de manuel ou ton cahier – j'en fais des exercices."
   },
-  "open": "Voir les questions",
-  "open_label": "Voir les questions de « {{title}} »",
+  "open": "Voir les exercices",
+  "open_label": "Voir les exercices de « {{title}} »",
   "rename": "Renommer",
   "rename_label": "Renommer « {{title}} »",
   "rename_sheet": {
@@ -90,16 +84,16 @@
   },
   "renamed": "Renommée.",
   "items": {
-    "loading": "Je récupère les questions …",
+    "loading": "Je récupère les exercices …",
     "back": "Retour",
-    "reading": "Je lis la feuille en ce moment – les questions arrivent bientôt.",
-    "empty_title": "Il n'y a plus de questions ici",
-    "empty_body": "Tu as supprimé toutes les questions de cette feuille. Reprends-la simplement en photo si tu veux t'entraîner à nouveau avec.",
-    "question_label": "Question {{number}}",
-    "more_label": "Plus pour la question {{number}}",
+    "reading": "Je lis la feuille en ce moment – les exercices arrivent bientôt.",
+    "empty_title": "Il n'y a plus d’exercices ici",
+    "empty_body": "Tu as supprimé tous les exercices de cette feuille. Prends-la à nouveau en photo si tu veux t’entraîner dessus.",
+    "question_label": "Exercice {{number}}",
+    "more_label": "Plus pour l’exercice {{number}}",
     "choices": "Au choix",
     "delete": "Supprimer",
-    "delete_label": "Supprimer la question {{number}}",
+    "delete_label": "Supprimer l’exercice {{number}}",
     "result": {
       "first_try": "Trouvé du premier coup",
       "with_help": "Avec un peu d'aide",
@@ -107,12 +101,6 @@
       "never_asked": "Pas encore travaillée"
     }
   },
-  "item_delete_sheet": {
-    "title": "Supprimer la question ?",
-    "body": "Cette question ne reviendra plus.",
-    "confirm": "Supprimer"
-  },
-  "item_deleted": "Question supprimée.",
   "add_page": "Ajouter une page",
   "subjects": "Matières",
   "recent": "Récemment"

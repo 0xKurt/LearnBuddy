@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { buddyContracts, GoalBrief } from './buddy.js';
 import { IsoDateTime, LocalDate, Uuid } from './common.js';
-import { DrillCarry, DrillRange, DrillRow } from './drill.js';
+import { DrillCarry, DrillLine, DrillRange, DrillRow } from './drill.js';
 import { ModelFigureType } from './figure.js';
 import {
   DifficultyWish,
@@ -199,6 +199,7 @@ const LEARNING_ACTIONS = [
      * Decorated when the thread is served; null while none ended, and from an older server.
      */
     finished_session_id: Uuid.nullable().default(null),
+    running_session_id: Uuid.nullable().optional(),
   }),
   /**
    * A roleplay started in the conversation (issue #244): the role card she plays to. Scene,
@@ -366,6 +367,12 @@ export const NowCard = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('practice_result'),
     session_id: Uuid,
+    /** Result facts; optional for homes from older servers. */
+    pass: z.enum(['cards', 'drill']).nullable().optional(),
+    ran_out: z.boolean().optional(),
+    total: z.number().int().nonnegative().optional(),
+    title: z.string().nullable().optional(),
+    drill_summary: DrillLine.nullable().optional(),
     /** help: homework — solved by herself, no hit rate (docs/UX-PRINCIPLES.md). */
     mode: z.enum(['practice', 'test', 'help']).default('practice'),
     result: PracticeSummary,

@@ -19,9 +19,9 @@ import type {
   VocabDirection,
 } from '@learnbuddy/shared-types/contracts';
 
+import { loadSessions, WORKED_IN, type SessionBrief } from './sessionState.js';
 import type { Db } from '../../lib/db.js';
 import type { RecallableMessage } from '../buddy/recall.js';
-import { summarize, type SummaryRow } from '../practice/summary.js';
 
 export type SubjectRow = {
   id: string;
@@ -127,32 +127,6 @@ export type MaterialBrief = {
 /** What the act tools need of a sheet they are pointed at (issue #153). */
 export type MaterialTarget = Pick<MaterialBrief, 'id' | 'title' | 'status'>;
 
-type SessionBrief = {
-  id: string;
-  mode: 'practice' | 'test' | 'help';
-  /** Topic and homework sessions carry their own title. */
-  title: string | null;
-  status: 'active' | 'finished' | 'abandoned';
-  goal_id: string | null;
-  step_id: string | null;
-  started_at: Date;
-  /** Resuming is keyed on this, not on started_at (audit H-7; practice/lifecycle.ts). */
-  last_activity_at: Date;
-  finished_at: Date | null;
-  total: number;
-  answered: number;
-  first_try: number;
-  /**
-   * Never worked in (`WORKED_IN`): nothing she started, so nothing to "go on with" — whether the
-   * background preparation of an offer wrote it (practice/prepare.ts, issue #48), or she opened a
-   * practice prepared from her photo and left before answering (#599). Never a homework (`help`):
-   * the home card is its way in. `loadStandingOffers` reads "taken up" the same way (rule 5).
-   */
-  untouched: boolean;
-  secure_topics: string[];
-  shaky_topics: string[];
-};
-
 /** What the offer card in the chat carries (`ActionSummary`, `components/learn/OfferCard.tsx`). */
 type OfferSummary = Extract<ActionSummary, { tool: 'offer_learning' }>;
 
@@ -226,7 +200,6 @@ const LIMITS = {
   subjects: 20,
   topics: 40,
   materials: 10,
-  sessions: 5,
   /** Offers still standing; more than a handful is not a list the model needs to read. */
   standing: 5,
   /** Questions kept for after practice (issue #391): a few, never a backlog to work through. */
@@ -244,12 +217,6 @@ const STANDING_WINDOW_MS = 24 * 3_600_000;
  * put off or flagged — or a word of hers to the tutor. One reading for "taken up" and for what
  * the home may offer to go on with (#599 correction, CLAUDE.md rule 5).
  */
-const WORKED_IN = `(exists (select 1 from session_items w
-                              where w.session_id = ps.id
-                                and (w.status <> 'open' or w.attempts > 0 or w.hints_used > 0
-                                     or w.deferred_at is not null or w.flagged_at is not null))
-                    or exists (select 1 from practice_turns w
-                                where w.session_id = ps.id and w.role = 'learner'))`;
 
 /**
  * Offers of Buddy's she has not taken up (issue #184), oldest first.
@@ -392,46 +359,6 @@ async function loadMaterials(db: Db, learnerId: string, now: Date): Promise<Mate
  * practice/lifecycle.ts): an open homework is never out of reach (audit H-7). Secure and shaky
  * topics come from the one summary the result screen uses (feedback #3).
  */
-async function loadSessions(db: Db, learnerId: string): Promise<SessionBrief[]> {
-  const sessionRows = await db.query<
-    Omit<SessionBrief, 'secure_topics' | 'shaky_topics'> & { topic_rows: SummaryRow[] }
-  >(
-    `select ps.id, ps.status, ps.goal_id, ps.step_id, ps.started_at, ps.last_activity_at,
-            ps.finished_at, case when ps.mode = 'explain' then 'practice' else ps.mode end as mode,
-            ps.title,
-            count(si.item_id)::int as total,
-            count(*) filter (where si.status <> 'open')::int as answered,
-            count(*) filter (where si.status = 'correct' and si.first_try_correct)::int as first_try,
-            -- Her homework from her own photos is hers from the moment she sent it: the home card
-            -- is its way in, worked in or not (session-lifecycle H-7). Every other session is
-            -- hers to go on with only once she worked in it (#599).
-            (ps.mode <> 'help' and not ${WORKED_IN}) as untouched,
-            coalesce(json_agg(json_build_object('topic', i.topic, 'status', si.status,
-                                                'first_try_correct', si.first_try_correct,
-                                                -- Recognition and production are different
-                                                -- evidence (issue #163).
-                                                'answered_by', si.answered_by,
-                                                -- A free text she did not get right names no
-                                                -- shaky topic (issue #197).
-                                                'kind', i.kind))
-                       filter (where si.item_id is not null), '[]'::json) as topic_rows
-       from practice_sessions ps
-       -- A question she flagged as unfit counts as neither answered nor shaky.
-       left join session_items si on si.session_id = ps.id and si.flagged_at is null
-       left join items i on i.id = si.item_id
-      where ps.learner_id = $1
-        and (ps.status = 'active'
-             or ps.id in (select id from practice_sessions where learner_id = $1
-                           order by started_at desc, seq desc limit $2))
-      group by ps.id
-      order by ps.started_at desc, ps.seq desc`,
-    [learnerId, LIMITS.sessions],
-  );
-  return sessionRows.map(({ topic_rows, ...s }) => {
-    const summary = summarize(topic_rows);
-    return { ...s, secure_topics: summary.secure_topics, shaky_topics: summary.shaky_topics };
-  });
-}
 
 /** Everything of the learning domain in Buddy's state (its context provider's `load`). */
 export async function loadLearningState(db: Db, learnerId: string, now: Date) {

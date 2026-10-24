@@ -6,7 +6,7 @@
 // before the API confirmed it.
 
 import type { MemoryView, UpdateMemoryRequest } from '@learnbuddy/shared-types/contracts';
-import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
 import { useRef, useState } from 'react';
 import { Keyboard, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,12 +25,10 @@ import { keys, queryClient, useMemory } from '../lib/api/queries.js';
 import { messageFor } from '../lib/errors.js';
 import { useTheme } from '../lib/theme/ThemeProvider.js';
 import { TYPE } from '../lib/theme/type.js';
-import { MEMORY } from '../lib/theme/memory.js';
-import { DURATION, motionIsReduced } from '../lib/theme/motion.js';
 import { LIBRARY } from '../lib/theme/library.js';
 import { GUTTER_APP, SPACE } from '../lib/theme/space.js';
 import { useAnnounce } from '../lib/announce.js';
-import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+import { MEMORY } from '../lib/theme/memory.js';
 import { Sheet, SHEET_TEXT } from '../components/lb/Sheet.js';
 import { SafeguardingReply } from '../components/buddy/SafeguardingReply.js';
 import { safeguardingReply } from '../lib/safeguarding.js';
@@ -64,15 +62,11 @@ function rowsOf(memories: MemoryView[]): Row[] {
   ];
 }
 
-/** A field that got the focus is scrolled to near the top once the keyboard is up. */
-const AFTER_KEYBOARD_MS = DURATION.keyboardReveal;
-
 export default function MemoryScreen() {
   const { palette } = useTheme();
   const { t } = useTranslation(['memory', 'common']);
   const memory = useMemory();
   const insets = useSafeAreaInsets();
-  const list = useRef<FlashListRef<Row>>(null);
   const entering = useListEntrance(memory.data !== undefined);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -173,17 +167,6 @@ export default function MemoryScreen() {
 
   const rows = rowsOf(memory.data.memories);
 
-  /** Keeps the field she is typing in above the keyboard. */
-  const reveal = (index: number) => {
-    setTimeout(() => {
-      void list.current?.scrollToIndex({
-        index,
-        animated: !motionIsReduced(),
-        viewOffset: MEMORY.revealOffset,
-      });
-    }, AFTER_KEYBOARD_MS);
-  };
-
   const heading = (text: string) => (
     <Text accessibilityRole="header" style={[TYPE.label, { paddingHorizontal: SPACE.xs }]}>
       {text}
@@ -227,7 +210,7 @@ export default function MemoryScreen() {
               groupStart={rows[index - 1]?.type !== 'memory'}
               groupEnd={rows[index + 1]?.type !== 'memory'}
               temporary={row.temporary}
-              editing={editingId === m.id}
+              editing={editingId === m.id && help === null}
               draft={draft}
               saving={savingId === m.id}
               locked={savingId !== null}
@@ -241,7 +224,6 @@ export default function MemoryScreen() {
                 void change(m, { statement: draft.trim(), version: m.version }, t('memory:saved'))
               }
               onRemove={() => remove(m)}
-              onInputFocus={() => reveal(index)}
             />
           </Rise>
         );
@@ -251,15 +233,14 @@ export default function MemoryScreen() {
 
   return (
     <Screen back title={title}>
-      <KeyboardSafe style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         {/* Only what is on screen is drawn (gaps.md #22). */}
         <FlashList
-          ref={list}
           testID="scroll-list"
           data={rows}
           keyExtractor={(row) => row.key}
           getItemType={(row) => row.type}
-          extraData={{ editingId, draft, savingId }}
+          extraData={{ editingId, draft, savingId, help }}
           contentContainerStyle={{
             paddingHorizontal: GUTTER_APP,
             paddingTop: LIBRARY.pageTop,
@@ -271,7 +252,7 @@ export default function MemoryScreen() {
           }
           renderItem={({ item, index }) => renderRow(item, index)}
         />
-      </KeyboardSafe>
+      </View>
       <Sheet
         visible={help !== null}
         closeLabel={t('common:actions.close')}

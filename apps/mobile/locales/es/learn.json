@@ -26,7 +26,7 @@
   "topic": {
     "practice": {
       "title": "¿Qué quieres practicar?",
-      "hint": "Te hago unas cuantas preguntas sobre ello.",
+      "hint": "Te propongo unos ejercicios sobre ello.",
       "placeholder": "p. ej. sumar fracciones, el simple past",
       "ex_1": "Sumar fracciones",
       "ex_2": "El simple past",
@@ -34,7 +34,7 @@
     },
     "test": {
       "title": "¿Sobre qué es el examen?",
-      "hint": "Una respuesta por pregunta, sin pistas: verás el resultado al final.",
+      "hint": "Una respuesta por ejercicio, sin pistas: verás el resultado al final.",
       "placeholder": "p. ej. fracciones, unidad 3, la Edad Media",
       "ex_1": "Fracciones",
       "ex_2": "Pasado simple",

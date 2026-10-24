@@ -5,11 +5,11 @@
     "more": "Plus d'options",
     "add": "Ajouter",
     "mic": "Parler",
-    "speak": "Lire à voix haute",
+    "speak": "Écouter",
     "stop": "Arrêter",
     "pin_delete": "Effacer le dernier chiffre",
     "pin_progress": "Chiffres saisis : {{count}} sur 4",
-    "camera": "Prendre une photo",
+    "camera": "Ajouter une photo",
     "keyboard": "Clavier",
     "language": "Choisir la langue",
     "send": "Envoyer",
@@ -47,8 +47,8 @@
       "failed": "L'enregistrement n'a pas marché. Réessaie, s'il te plaît.",
       "part_lost": "Un morceau de ton enregistrement s'est perdu – le reste est déjà là."
     },
-    "read_again": "Relire",
-    "read_aloud": "Lecture à voix haute",
+    "read_again": "Écouter à nouveau",
+    "read_aloud": "Écouter",
     "recording": "Je t'écoute … {{time}} / {{max}}",
     "recording_open": "Je t'écoute … {{time}}",
     "recording_open_value": "Enregistrement en cours, {{time}}",
@@ -56,7 +56,10 @@
     "stop": "Arrêter l'enregistrement",
     "stop_hint": "Ensuite, j'écris ce que tu as dit.",
     "topic": "Le dire au lieu de l’écrire",
-    "transcribing": "J'écris ce que tu as dit …"
+    "transcribing": "J'écris ce que tu as dit …",
+    "done": "Terminé",
+    "target": "Objectif {{target}}",
+    "finishing": "Fin de l’enregistrement …"
   },
   "session": {
     "expired": "La session s’est terminée. Reconnecte-toi : ce qui n’était pas encore envoyé est toujours là."
@@ -86,7 +89,7 @@
     "s1_title": "Dis-le simplement à Buddy",
     "s1_body": "Écrire, parler ou montrer une photo – les trois chemins mènent à la même conversation.",
     "s2_title": "Ta feuille devient des exercices",
-    "s2_body": "Photographie une feuille d'exercices et Buddy en fait des questions adaptées à ton travail.",
+    "s2_body": "Photographie une fiche et Buddy en fait des exercices adaptés à ton travail.",
     "s3_title": "Buddy pense à tout",
     "s3_body": "Contrôles, chapitres, le bon moment pour réviser : Buddy s'en souvient pour toi et ne te contacte que si vous le voulez.",
     "s4_title": "Choisis tes couleurs",
@@ -95,5 +98,22 @@
     "start": "C'est parti",
     "skip": "Passer",
     "step_label": "{{n}} sur {{count}}"
+  },
+  "delete": {
+    "keep": "Garder",
+    "item": {
+      "title": "Supprimer cet exercice ?",
+      "body": "Cet exercice ne reviendra plus. C’est définitif.",
+      "confirm": "Supprimer l’exercice",
+      "done": "Exercice supprimé.",
+      "kept": "L’exercice reste."
+    },
+    "material": {
+      "title": "Supprimer la fiche ?",
+      "body": "« {{title}} » et ses exercices seront supprimés, les photos aussi. Tu ne pourras pas revenir en arrière.",
+      "confirm": "Supprimer la fiche",
+      "done": "La fiche a été supprimée.",
+      "kept": "Tout reste comme avant."
+    }
   }
 }

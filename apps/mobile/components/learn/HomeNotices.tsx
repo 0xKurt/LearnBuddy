@@ -173,7 +173,7 @@ function PagesNotice({
               disabled: busy,
               onPress: () =>
                 askAttach({
-                  open: 'camera',
+                  open: 'menu',
                   link: {
                     completes: notice.material_id,
                     ...(several ? { pages: notice.pages.map((p) => p.page).join(', ') } : {}),
@@ -206,7 +206,7 @@ function FailedNotice({
     // The same purpose (homework stays homework) and, for a page, the same sheet (M-18).
     onPress: () =>
       askAttach({
-        open: 'camera',
+        open: 'menu',
         link: { purpose: now.purpose ?? 'study', completes: now.completes ?? null },
       }),
   };

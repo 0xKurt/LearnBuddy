@@ -135,11 +135,14 @@ describe('Gespräch: one way in, one row of controls (#386)', () => {
 
   it('has one row: the big mic in the middle, the same on the conversation screen and in practice', () => {
     expect(holders(/<VoiceRow\b/)).toEqual(['app/talk.tsx', 'components/practice/CheckBar.tsx']);
-    // The round mic stands in the row, the input bar and the topic sheet — no second big mic
-    // (the chat's voice-first bar, the practice voice slot).
+    // Dictation and audio assessment share the same mic control (#918).
     expect(holders(/<MicButton\b/)).toEqual([
+      'components/buddy/RehearseCard.tsx',
       'components/lb/Composer.tsx',
       'components/learn/TopicSheet.tsx',
+      'components/practice/PronunciationLab.tsx',
+      'components/practice/SpeakPanel.tsx',
+      'components/practice/WordSheet.tsx',
       'components/voice/VoiceRow.tsx',
     ]);
     // One row, one size prop: the whole screen on /talk, the 56 pt mic in practice (#386).
@@ -167,5 +170,32 @@ describe('what #386 removed stays removed', () => {
       'components/lb/ReadAgain.tsx',
       'components/practice/CheckBar.tsx',
     ]);
+  });
+});
+
+describe('shared speech behavior (#918)', () => {
+  it('gets the roleplay language from one hook for every live mic and speaker', () => {
+    for (const file of [
+      'app/talk.tsx',
+      'components/buddy/Composer.tsx',
+      'components/buddy/MessageMenu.tsx',
+      'lib/buddy/useHomeSend.ts',
+    ]) {
+      expect(app.find((s) => s.file === file)!.text, file).toContain('useSceneLanguage(');
+    }
+  });
+
+  it('keeps recording lifecycle in the dictation and recorder controls', () => {
+    expect(holders(/\buseRecording\(/)).toEqual([
+      'components/voice/useMicRecorder.ts',
+      'components/voice/useVoiceInput.ts',
+      'lib/speech/record.ts',
+    ]);
+  });
+
+  it('uses the same listening control for a chat message', () => {
+    expect(app.find((s) => s.file === 'components/buddy/MessageMenu.tsx')!.text).toContain(
+      '<ListenButton',
+    );
   });
 });

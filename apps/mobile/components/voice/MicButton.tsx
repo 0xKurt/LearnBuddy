@@ -1,10 +1,6 @@
 import { BusyIndicator } from '../lb/BusyIndicator.js';
-// Shared microphone control: recording uses a static stop square and its real timer.
-// The optional Talk pill preserves the same recorder, accessibility and busy behavior — and keeps
-// the conversation's look while it records (design ui_kits/app/Talk.jsx:34–37, Gaps.jsx:138–141):
-// the mic glyph on the action colour with the float shadow. There the state is told by the
-// pill's word ("Fertig") and by the orb, and to a screen reader by the same name and value as
-// everywhere ("Aufnahme stoppen", the running time) — never by colour alone.
+// Shared microphone control: one stop square, timer and permission action for dictation,
+// conversation and bounded recordings. Presentations only change the available space.
 
 import { useTranslation } from 'react-i18next';
 import { Linking, Platform, Text, View } from 'react-native';
@@ -24,9 +20,15 @@ import { Btn } from '../lb/Btn.js';
 import { Icon } from '../lb/Icon.js';
 import { PressArea } from '../lb/PressArea.js';
 import type { VoiceInput } from './useVoiceInput.js';
+import { RecordingStatus } from './RecordingStatus.js';
+
+export type MicControl = Pick<
+  VoiceInput,
+  'elapsedMs' | 'maxMs' | 'denied' | 'hint' | 'live' | 'toggle'
+> & { state: VoiceInput['state'] | 'stopping' };
 
 type Props = {
-  voice: VoiceInput;
+  voice: MicControl;
   /** What tapping does when idle ("Nachricht sprechen", "Antwort sagen"). */
   label: string;
   /** Optional short visible copy; the accessible action keeps its full name. */
@@ -40,7 +42,10 @@ type Props = {
   /** Instead of start/stop recording (the conversation screen runs its own loop). */
   onPress?: () => void;
   disabled?: boolean;
-  presentation?: 'circle' | 'pill';
+  presentation?: 'circle' | 'pill' | 'recorder';
+  busy?: boolean;
+  busyLabel?: string;
+  accessibilityHint?: string;
 };
 
 export function MicButton({
@@ -53,13 +58,35 @@ export function MicButton({
   disabled = false,
   onPress,
   presentation = 'circle',
+  busy = false,
+  busyLabel,
+  accessibilityHint,
 }: Props) {
   const { palette } = useTheme();
   const { t } = useTranslation('common');
   const recording = voice.state === 'recording';
-  const working = voice.state === 'starting' || voice.state === 'transcribing';
+  const working =
+    busy ||
+    voice.state === 'starting' ||
+    voice.state === 'stopping' ||
+    voice.state === 'transcribing';
+  const statusLabel =
+    voice.state === 'starting'
+      ? t('voice.getting_ready')
+      : voice.state === 'stopping'
+        ? t('voice.finishing')
+        : busy
+          ? (busyLabel ?? t('loading'))
+          : null;
+  const refused = Boolean(voice.denied) && Platform.OS !== 'web';
+  const press = refused ? () => void Linking.openSettings() : (onPress ?? voice.toggle);
+  const actionLabel = refused
+    ? t('voice.open_settings')
+    : recording
+      ? t('voice.stop')
+      : (statusLabel ?? label);
   // A running recording can always be stopped.
-  const off = recording ? false : disabled || working;
+  const off = recording || refused ? false : disabled || working;
   // 'sm' is the composer pill, where it stands beside the + and the talk button: one size
   // for the three, or their centres drift apart on the pill's baseline (issue #134).
   const pill = presentation === 'pill';
@@ -68,17 +95,40 @@ export function MicButton({
   const quiet = tone === 'quiet';
   const filled = !quiet && (tone === 'primary' || size === 'lg' || recording || filledIdle);
   // The stop square on the darker fill is the round mic's sign for "recording"; the pill keeps
-  // its glyph and its colour.
-  const square = recording && !pill;
+  // its colour; all presentations use the same stop glyph.
+  const square = recording;
   const bg = quiet
     ? palette.canvas
-    : square
+    : square && !pill
       ? palette.primaryDk
       : filled
         ? palette.primary
         : palette.paper;
   const fg = quiet ? palette.ink : filled ? palette.onPrimary : palette.primaryDk;
   const time = formatClock(voice.elapsedMs);
+
+  if (presentation === 'recorder') {
+    return (
+      <Btn
+        size="lg"
+        full
+        pill
+        variant={tone === 'quiet' ? 'secondary' : 'primary'}
+        {...(refused ? {} : { icon: recording ? ('stop' as const) : ('mic' as const) })}
+        busy={working}
+        disabled={off}
+        onPress={press}
+        accessibilityLabel={actionLabel}
+        accessibilityHint={recording || refused ? undefined : accessibilityHint}
+      >
+        {refused
+          ? t('voice.open_settings')
+          : recording
+            ? t('voice.done')
+            : (statusLabel ?? visibleLabel ?? label)}
+      </Btn>
+    );
+  }
 
   return (
     <View
@@ -90,10 +140,10 @@ export function MicButton({
       }}
     >
       <PressArea
-        onPress={onPress ?? voice.toggle}
+        onPress={press}
         disabled={off}
         accessibilityRole="button"
-        accessibilityLabel={recording ? t('voice.stop') : label}
+        accessibilityLabel={actionLabel}
         accessibilityHint={recording ? t('voice.stop_hint') : t('voice.hint')}
         accessibilityState={{ disabled: off, busy: working }}
         aria-busy={working}
@@ -157,7 +207,13 @@ export function MicButton({
               />
             )}
             {pill ? (
-              <Text style={[TYPE.action, { color: fg }]}>{visibleLabel ?? label}</Text>
+              <Text style={[TYPE.action, { color: fg }]}>
+                {refused
+                  ? t('voice.open_settings')
+                  : recording
+                    ? t('voice.done')
+                    : (visibleLabel ?? label)}
+              </Text>
             ) : null}
           </View>
         )}
@@ -170,7 +226,7 @@ export function MicButton({
  * The line above the field: the timer while recording, "writing it down"
  * afterwards, a calm hint when nothing came out, and what to do without a microphone.
  */
-export function MicStatus({ voice }: { voice: VoiceInput }) {
+export function MicStatus({ voice, targetMs }: { voice: MicControl; targetMs?: number }) {
   const { palette } = useTheme();
   const { t } = useTranslation('common');
   // VoiceOver hears the same states (audit M-80): writing down, no mic, nothing understood.
@@ -191,39 +247,9 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
   useAnnounce(status, { liveRegion: voice.state === 'transcribing' });
 
   if (voice.state === 'recording') {
-    const time = formatClock(voice.elapsedMs);
-    // A dictation has no time limit (issue #19): only the running timer is shown.
-    const open = voice.maxMs === null;
-    const max = open ? '' : formatClock(voice.maxMs ?? 0);
     return (
       <View style={{ gap: VOICE.statusGap }}>
-        <View
-          accessible
-          accessibilityLabel={
-            open
-              ? t('voice.recording_open_value', { time })
-              : t('voice.recording_value', { time, max })
-          }
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: SPACE.sm,
-            minHeight: VOICE.statusHeight,
-          }}
-        >
-          <View
-            style={{
-              width: VOICE.statusDot,
-              height: VOICE.statusDot,
-              borderRadius: circle(VOICE.statusDot),
-              backgroundColor: palette.primary,
-            }}
-            importantForAccessibility="no"
-          />
-          <Text style={TYPE.voiceStatus}>
-            {open ? t('voice.recording_open', { time }) : t('voice.recording', { time, max })}
-          </Text>
-        </View>
+        <RecordingStatus elapsedMs={voice.elapsedMs} maxMs={voice.maxMs} targetMs={targetMs} />
         {voice.live ? (
           // On-device recognition: what she has said so far, as she says it.
           <Text
@@ -266,11 +292,6 @@ export function MicStatus({ voice }: { voice: VoiceInput }) {
         <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
           {Platform.OS === 'web' ? t('voice.denied_web') : t('voice.denied')}
         </Text>
-        {Platform.OS !== 'web' ? (
-          <Btn variant="soft" onPress={() => void Linking.openSettings()}>
-            {t('voice.open_settings')}
-          </Btn>
-        ) : null}
       </View>
     );
   }

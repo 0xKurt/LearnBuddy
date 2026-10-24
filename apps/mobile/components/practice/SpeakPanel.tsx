@@ -27,7 +27,7 @@ import type {
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
-import { Linking, Platform, Text, View, type TextStyle } from 'react-native';
+import { Text, View, type TextStyle } from 'react-native';
 
 import { isOutdated, isRetryable } from '../../lib/api/apiError.js';
 import { newId } from '../../lib/api/client.js';
@@ -36,13 +36,11 @@ import { useOnline } from '../../lib/api/queries.js';
 import { WaitAborted } from '../../lib/api/whenOnline.js';
 import { messageFor } from '../../lib/errors.js';
 import { signsAround } from '../../lib/practice/spokenWords.js';
-import { stop as stopListening } from '../../lib/speech/listen.js';
-import { useRecording, type RecordFailure, type Recording } from '../../lib/speech/record.js';
+import { type Recording } from '../../lib/speech/record.js';
 import type { z } from 'zod';
 import { useLocalPronunciation } from '../../lib/speech/usePronunciation.js';
 import { usePronunciationLab } from '../../lib/speech/pronunciationLab.js';
 import { pronunciationSubmission } from '../../lib/speech/pronunciation.js';
-import { MAX_RECORDING_MS } from '../../lib/speech/voice.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { PRACTICE } from '../../lib/theme/practice.js';
@@ -50,7 +48,8 @@ import { PRACTICE_SCREEN } from '../../lib/theme/practiceScreen.js';
 import { QUESTION } from '../../lib/theme/question.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
-import { RecordingStatus } from '../voice/RecordingStatus.js';
+import { MicButton, MicStatus } from '../voice/MicButton.js';
+import { useMicRecorder } from '../voice/useMicRecorder.js';
 import { Btn } from '../lb/Btn.js';
 import { Chip } from '../lb/Chip.js';
 import { QuestionCard } from '../lb/QuestionCard.js';
@@ -323,7 +322,6 @@ export function SpeakPanel({
   const { palette } = useTheme();
   const { t } = useTranslation('practice');
   const [sending, setSending] = useState<'idle' | 'sending' | 'failed'>('idle');
-  const [problem, setProblem] = useState<Exclude<RecordFailure, 'denied'> | null>(null);
   const pending = useRef<Pending | null>(null);
   const mounted = useMounted();
   /** Cancels the wait for a connection (nothing has been sent yet while it waits). */
@@ -343,7 +341,6 @@ export function SpeakPanel({
     waiting.current?.abort();
     pending.current = null;
     setSending('idle');
-    setProblem(null);
     progressRef.current?.(null);
   }, [item.id]);
 
@@ -408,7 +405,8 @@ export function SpeakPanel({
     }
   }
 
-  const rec = useRecording({
+  const rec = useMicRecorder({
+    resetKey: item.id,
     onRecorded: (r: Recording) => {
       // Closing the file and turning it into base64 happens before the first byte moves.
       reacted('speak_finish');
@@ -422,13 +420,12 @@ export function SpeakPanel({
       tapped('speak_wait');
       void send();
     },
-    onFailed: (why) => {
+    onFailed: () => {
       // Nothing she can see came of it: the marks are forgotten, so her next attempt is
       // not measured from this one (lib/perf.ts).
       dropped('speak_finish');
       dropped('speak_wait');
       dropped('speak_total');
-      if (why !== 'denied') setProblem(why);
     },
   });
 
@@ -452,8 +449,6 @@ export function SpeakPanel({
       void rec.stop();
       return;
     }
-    setProblem(null);
-    stopListening();
     recordedLocally.current = local;
     void rec.start();
   }
@@ -472,38 +467,6 @@ export function SpeakPanel({
     onSkip?.();
   }
 
-  const micRefused = rec.denied && Platform.OS !== 'web';
-
-  /**
-   * What the one big control does right now — and it is always the thing to do next
-   * (issues #185, #186): without a microphone it opens the settings, while recording it
-   * finishes the recording, with a recording that did not arrive it sends that one again,
-   * otherwise it starts recording. Nothing else in this bar is ever filled, so there is
-   * never a second thing competing for her eye.
-   */
-  const lead = micRefused
-    ? 'settings'
-    : recording
-      ? 'stop'
-      : sending === 'failed'
-        ? 'resend'
-        : sending === 'sending' && !waitingOffline
-          ? 'judging'
-          : 'record';
-
-  const leadText =
-    lead === 'settings'
-      ? t('speak.open_settings')
-      : lead === 'stop'
-        ? t('speak.record_stop')
-        : lead === 'resend'
-          ? t('speak.resend')
-          : lead === 'judging'
-            ? t('speak.listening')
-            : hasFeedback
-              ? t('speak.record_again')
-              : t('speak.record');
-
   // One status row, never a stack (issue #14): what is true right now replaces what was
   // true before — a microphone that was refused, the running recording, Buddy listening,
   // a recording waiting for a connection, a send that failed, or a quiet hint.
@@ -517,46 +480,39 @@ export function SpeakPanel({
   // the same small ghost pills as the rest of the quiet controls (issue #186). "Nochmal
   // senden" is not among them: it is the leading action while a send has failed, so it
   // stands in the big control below rather than as a second filled button up here.
-  const status = rec.denied ? (
-    <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
-      {Platform.OS === 'web' ? t('speak.denied_web') : t('speak.denied')}
-    </Text>
-  ) : recording ? (
-    <RecordingStatus elapsedMs={rec.elapsedMs} maxMs={MAX_RECORDING_MS} />
-  ) : waitingOffline ? (
-    <View style={{ gap: SPACE.sm }}>
-      <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
-        {t('speak.waiting_offline')}
-      </Text>
-      <View style={{ flexDirection: 'row', gap: SPACE.sm, flexWrap: 'wrap' }}>
+  const status =
+    rec.denied || recording || rec.voice.hint ? (
+      <MicStatus voice={rec.voice} />
+    ) : waitingOffline ? (
+      <View style={{ gap: SPACE.sm }}>
+        <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
+          {t('speak.waiting_offline')}
+        </Text>
+        <View style={{ flexDirection: 'row', gap: SPACE.sm, flexWrap: 'wrap' }}>
+          <Btn size="sm" pill variant="ghost" onPress={discard} disabled={disabled}>
+            {t('speak.record_new')}
+          </Btn>
+          {onSkip ? (
+            <Btn size="sm" pill variant="ghost" onPress={skipWhileWaiting} disabled={disabled}>
+              {t('skip')}
+            </Btn>
+          ) : null}
+        </View>
+      </View>
+    ) : sending === 'failed' ? (
+      <View style={{ gap: SPACE.sm }}>
+        <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
+          {t('speak.send_failed')}
+        </Text>
+        {/* Sending it again is the big control below ("Nochmal senden"); letting go of this
+          recording is the quiet alternative. */}
         <Btn size="sm" pill variant="ghost" onPress={discard} disabled={disabled}>
           {t('speak.record_new')}
         </Btn>
-        {onSkip ? (
-          <Btn size="sm" pill variant="ghost" onPress={skipWhileWaiting} disabled={disabled}>
-            {t('skip')}
-          </Btn>
-        ) : null}
       </View>
-    </View>
-  ) : sending === 'failed' ? (
-    <View style={{ gap: SPACE.sm }}>
-      <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
-        {t('speak.send_failed')}
-      </Text>
-      {/* Sending it again is the big control below ("Nochmal senden"); letting go of this
-          recording is the quiet alternative. */}
-      <Btn size="sm" pill variant="ghost" onPress={discard} disabled={disabled}>
-        {t('speak.record_new')}
-      </Btn>
-    </View>
-  ) : problem ? (
-    <Text accessibilityRole="alert" style={[TYPE.body, { color: palette.ink2 }]}>
-      {t(`speak.problem.${problem}`)}
-    </Text>
-  ) : (
-    <PronunciationStatus local={local} pack={pack} />
-  );
+    ) : (
+      <PronunciationStatus local={local} pack={pack} />
+    );
 
   return (
     <BottomBar>
@@ -585,40 +541,21 @@ export function SpeakPanel({
           it waits and says so (Flows.jsx:122–124). Without the microphone that is "open the
           settings", not "speak" — a button that cannot do its job must not keep offering it
           (issue #185). */}
-      <Btn
-        size="lg"
-        full
-        pill
-        variant="primary"
-        {...(lead === 'stop'
-          ? { icon: 'check' as const }
-          : lead === 'record'
-            ? { icon: 'mic' as const }
-            : {})}
-        busy={lead === 'judging'}
-        onPress={
-          lead === 'settings'
-            ? () => void Linking.openSettings()
-            : lead === 'resend'
-              ? () => void send()
-              : toggleRecording
+      <MicButton
+        voice={rec.voice}
+        presentation="recorder"
+        label={sending === 'failed' ? t('speak.resend') : t('speak.record_label')}
+        visibleLabel={
+          sending === 'failed'
+            ? t('speak.resend')
+            : t(hasFeedback ? 'speak.record_again' : 'speak.record')
         }
-        disabled={lead === 'record' ? locked : lead === 'resend' ? disabled : false}
-        accessibilityLabel={
-          lead === 'settings'
-            ? t('speak.open_settings')
-            : lead === 'stop'
-              ? t('speak.record_stop_label')
-              : lead === 'resend'
-                ? t('speak.resend')
-                : lead === 'judging'
-                  ? t('speak.listening')
-                  : t('speak.record_label')
-        }
-        {...(lead === 'record' ? { accessibilityHint: t('speak.record_hint') } : {})}
-      >
-        {leadText}
-      </Btn>
+        busy={sending === 'sending' && !waitingOffline}
+        busyLabel={t('speak.listening')}
+        onPress={sending === 'failed' ? () => void send() : toggleRecording}
+        disabled={sending === 'failed' ? disabled : locked}
+        accessibilityHint={t('speak.record_hint')}
+      />
     </BottomBar>
   );
 }

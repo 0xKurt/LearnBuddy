@@ -3,7 +3,7 @@
 // Was diese Schicht festhält, ist genau das, was dem Kind gegenübersteht:
 //
 //   · der Knopf ist AM Urteil erreichbar, nicht irgendwo in Einstellungen — und er ist erst
-//     da, wenn es ein Urteil gibt (vorher gibt es „Frage passt nicht"). Der Knopf selbst, das
+//     da, wenn es ein Urteil gibt (vorher gibt es „Aufgabe passt nicht"). Der Knopf selbst, das
 //     kurze „Einspruch“ in der Ecke der Frage, steht in QuestionCorner.test.tsx (Issue #459);
 //   · im Probetest und bei Hausaufgaben gibt es ihn nicht: dort kommen die Ergebnisse am Ende
 //     bzw. wird geholfen statt bewertet;
@@ -83,7 +83,7 @@ describe('die Rückfrage', () => {
   it('sagt, was passiert, und behauptet nicht, dass sie recht hatte', () => {
     open();
     expect(screen.getByText('Stimmt die Bewertung nicht?')).toBeDefined();
-    const body = screen.getByText(/Dann nehme ich diese Frage raus/).textContent ?? '';
+    const body = screen.getByText(/Dann nehme ich diese Aufgabe raus/).textContent ?? '';
     // Die drei Dinge, die der Server wirklich tut (practice/service.ts disputeVerdict).
     expect(body).toMatch(/zählt nicht/);
     expect(body).toMatch(/kommt nicht mehr dran/);
@@ -125,7 +125,7 @@ describe('die Rückfrage', () => {
   });
 });
 
-describe('dieselbe Lade für „Frage passt nicht“ (#311)', () => {
+describe('dieselbe Lade für „Aufgabe passt nicht“ (#311)', () => {
   it('sagt dort, was mit der Frage passiert, mit ihrem eigenen Knopf', () => {
     renderInApp(
       <CornerSheet
@@ -136,8 +136,8 @@ describe('dieselbe Lade für „Frage passt nicht“ (#311)', () => {
         onConfirm={() => undefined}
       />,
     );
-    expect(screen.getByText('Frage passt nicht?')).toBeDefined();
-    expect(screen.getByText('Diese Frage kommt nicht mehr dran.')).toBeDefined();
+    expect(screen.getByText('Aufgabe passt nicht?')).toBeDefined();
+    expect(screen.getByText('Diese Aufgabe kommt nicht mehr dran.')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Rausnehmen' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Abbrechen' })).toBeDefined();
   });

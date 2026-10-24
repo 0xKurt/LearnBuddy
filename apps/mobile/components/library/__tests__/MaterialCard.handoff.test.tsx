@@ -40,7 +40,7 @@ function mounted() {
   const open = () => fireEvent.click(screen.getByRole('button', { name: 'Mein Blatt' }));
   const choose = () => {
     open();
-    fireEvent.click(screen.getByRole('button', { name: 'Fragen ansehen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Aufgaben ansehen' }));
   };
   return { ...view, callbacks, props, open, choose };
 }
@@ -84,7 +84,7 @@ describe('material Sheet handoff lifetime', () => {
     row.choose();
     row.open();
     expect(screen.queryByRole('dialog')).toBeNull();
-    const second = screen.queryByRole('button', { name: 'Fragen ansehen' });
+    const second = screen.queryByRole('button', { name: 'Aufgaben ansehen' });
     if (second) fireEvent.click(second);
     flush();
     expect(row.callbacks.onOpen).toHaveBeenCalledTimes(1);

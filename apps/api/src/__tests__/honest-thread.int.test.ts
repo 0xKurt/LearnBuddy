@@ -13,6 +13,7 @@ import type {
   ActionView,
   BuddyHome,
   SendMessageResponse,
+  SessionView,
 } from '@learnbuddy/shared-types/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -97,6 +98,64 @@ describe.skipIf(!dbReady)('the home tells what happened, at its moment (issue #6
     expect(h.now).toMatchObject({ type: 'practice_result', session_id: id });
     // Without it the app could only put the card at the end — under her next message.
     expect(h.now?.type === 'practice_result' && h.now.finished_at).toBe(ended.toISOString());
+  });
+
+  it.each(['cards', 'timed', 'empty_timed'] as const)(
+    'carries the %s result facts and the same summary as the session',
+    async (kind) => {
+      const l = await onboard(env, { relation: 'self', birthDate: '2000-01-01' });
+      const id = await finishedRun(env, l, env.clock.now());
+      if (kind === 'cards') {
+        await env.db.query("update practice_sessions set pass = 'cards' where id = $1", [id]);
+        await env.db.query(
+          "update session_items set answered_by = 'self_rated', first_try_correct = false where session_id = $1",
+          [id],
+        );
+      } else {
+        await env.db.query(
+          "update practice_sessions set mode = 'test', time_limit_minutes = 10, deadline_at = finished_at where id = $1",
+          [id],
+        );
+        if (kind === 'empty_timed')
+          await env.db.query(
+            "update session_items set status = 'open', closed_at = null where session_id = $1",
+            [id],
+          );
+      }
+      const h = await home(l);
+      const view = await l.api.get<SessionView>(`/practice/sessions/${id}`);
+      expect(view.status).toBe(200);
+      expect(h.now).toMatchObject({
+        type: 'practice_result',
+        session_id: id,
+        pass: kind === 'cards' ? 'cards' : null,
+        ran_out: kind !== 'cards',
+        total: 1,
+        result: view.body.summary,
+      });
+    },
+  );
+
+  it('decorates a running drill offer with its existing run', async () => {
+    const l = await onboard(env, { relation: 'self', birthDate: '2000-01-01' });
+    env.llm.script(
+      'buddy_turn',
+      turn({
+        actions: [{ tool: 'offer_drill', args: { range: 'times', rows: [7], carry: null } }],
+      }),
+    );
+    await say(l, 'Lass uns die Siebenerreihe üben.');
+    const offered = actionsOf(await home(l)).find((a) => a.summary.tool === 'offer_drill')!;
+    expect(offered).toBeTruthy();
+    const id = await finishedRun(env, l, env.clock.now(), offered.id);
+    await env.db.query(
+      "update practice_sessions set status = 'active', finished_at = null where id = $1",
+      [id],
+    );
+    expect(actionsOf(await home(l)).find((a) => a.id === offered.id)!.summary).toMatchObject({
+      running_session_id: id,
+      finished_session_id: null,
+    });
   });
 
   it('asks how the test went from the day after it, in her zone, and for a week only', async () => {

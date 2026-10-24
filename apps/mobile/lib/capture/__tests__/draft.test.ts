@@ -237,3 +237,15 @@ describe('PDFs in a draft', () => {
     expect(await s.sentPage('mat-photos', 1)).toBe('c.jpg');
   });
 });
+
+it('keeps a recovered work photo tied to its session and item, never a material', () => {
+  const work = {
+    sessionId: '11111111-1111-4111-8111-111111111111',
+    itemId: '22222222-2222-4222-8222-222222222222',
+  };
+  const now = new Date('2026-10-24T12:00:00Z');
+  expect(
+    cameraOpenOf(JSON.stringify({ work, link: null, at: now.toISOString() }), now),
+  ).toMatchObject({ work, link: null });
+  expect(cameraOpenOf(JSON.stringify({ work, link: LINK, at: now.toISOString() }), now)).toBeNull();
+});

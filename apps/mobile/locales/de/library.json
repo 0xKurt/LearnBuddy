@@ -44,7 +44,7 @@
   },
   "source": {
     "corrected_test": "Aus deiner korrigierten Arbeit: neue Aufgaben zu dem, was angestrichen war – mit anderen Zahlen und Wörtern.",
-    "notebook_entry": "Aus deinem Hefteintrag: ein paar kurze Fragen zur letzten Stunde – gut für morgen früh."
+    "notebook_entry": "Aus deinem Hefteintrag: ein paar kurze Aufgaben zur letzten Stunde – gut für morgen früh."
   },
   "incomplete_hint": "Die Fotos sind nicht ganz angekommen. Lösch das Blatt und fotografier es neu.",
   "incomplete_page": {
@@ -68,18 +68,12 @@
   "retry_started": "Ich lese das Blatt nochmal.",
   "delete": "Löschen",
   "delete_label": "„{{title}}“ löschen",
-  "delete_sheet": {
-    "title": "Blatt löschen?",
-    "body": "„{{title}}“ und die Aufgaben daraus werden gelöscht, die Fotos auch. Das lässt sich nicht rückgängig machen.",
-    "confirm": "Löschen"
-  },
-  "deleted": "Gelöscht.",
   "empty": {
     "title": "Hier landen deine Blätter",
     "body": "Fotografier ein Arbeitsblatt, eine Buchseite oder dein Heft – ich mache Übungen daraus."
   },
-  "open": "Fragen ansehen",
-  "open_label": "Fragen aus „{{title}}“ ansehen",
+  "open": "Aufgaben ansehen",
+  "open_label": "Aufgaben aus „{{title}}“ ansehen",
   "rename": "Umbenennen",
   "rename_label": "„{{title}}“ umbenennen",
   "rename_sheet": {
@@ -90,16 +84,16 @@
   },
   "renamed": "Umbenannt.",
   "items": {
-    "loading": "Ich hole die Fragen …",
+    "loading": "Ich hole die Aufgaben …",
     "back": "Zurück",
-    "reading": "Ich lese das Blatt gerade – gleich sind die Fragen da.",
-    "empty_title": "Hier sind keine Fragen mehr",
-    "empty_body": "Du hast alle Fragen aus diesem Blatt gelöscht. Fotografier es einfach neu, wenn du wieder damit üben magst.",
-    "question_label": "Frage {{number}}",
-    "more_label": "Mehr zu Frage {{number}}",
+    "reading": "Ich lese das Blatt gerade – gleich sind die Aufgaben da.",
+    "empty_title": "Hier sind keine Aufgaben mehr",
+    "empty_body": "Du hast alle Aufgaben aus diesem Blatt gelöscht. Fotografier es einfach neu, wenn du wieder damit üben magst.",
+    "question_label": "Aufgabe {{number}}",
+    "more_label": "Mehr zu Aufgabe {{number}}",
     "choices": "Zur Auswahl",
     "delete": "Löschen",
-    "delete_label": "Frage {{number}} löschen",
+    "delete_label": "Aufgabe {{number}} löschen",
     "result": {
       "first_try": "Auf Anhieb gewusst",
       "with_help": "Mit etwas Hilfe",
@@ -107,12 +101,6 @@
       "never_asked": "Noch nicht geübt"
     }
   },
-  "item_delete_sheet": {
-    "title": "Frage löschen?",
-    "body": "Diese Frage kommt nicht mehr dran.",
-    "confirm": "Löschen"
-  },
-  "item_deleted": "Frage gelöscht.",
   "add_page": "Seite hinzufügen",
   "subjects": "Fächer",
   "recent": "Zuletzt"

@@ -45,17 +45,6 @@ const PARTS: Record<string, string> = {
   QuestionCorner: 'a button (its confirmation is a sheet of its own)',
 };
 
-/**
- * Words that stand where they do on purpose (file → how many, and why). Only shrinks:
- * `tools/guards/no-growth.mjs` compares it with main (`tools/guards/source-lists.mjs`).
- */
-const PLACED: Record<string, { count: number; why: string }> = {
-  'components/practice/WordSheet.tsx': {
-    count: 1,
-    why: '"Ich höre zu …" follows its spinner in one row; the spinner is on the edge',
-  },
-};
-
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
@@ -134,23 +123,10 @@ const say = (f: Finding) => `${f.file}:${f.line} ${f.what}`;
 
 describe('a sheet’s words start on its title’s edge (#599, components/core/Sheet.jsx:11)', () => {
   it('gives every loose line of text in a sheet the sheet’s text inset', () => {
-    const loose = found.flatMap((f) => f.loose);
-    const beyond = Object.entries(
-      loose.reduce<Record<string, Finding[]>>((by, f) => {
-        (by[f.file] ??= []).push(f);
-        return by;
-      }, {}),
-    )
-      .filter(([file, list]) => list.length !== (PLACED[file]?.count ?? 0))
-      .flatMap(([, list]) => list.map(say));
-    expect(beyond, 'add `SHEET_TEXT` to the text’s style (components/lb/Sheet.tsx)').toEqual([]);
-    // A placed line that is gone takes its entry with it.
-    for (const [file, { count }] of Object.entries(PLACED)) {
-      expect(
-        loose.filter((f) => f.file === file),
-        file,
-      ).toHaveLength(count);
-    }
+    expect(
+      found.flatMap((f) => f.loose).map(say),
+      'add `SHEET_TEXT` to the text’s style (components/lb/Sheet.tsx)',
+    ).toEqual([]);
   });
 
   it('knows every part that stands in a sheet at its full width', () => {

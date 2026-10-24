@@ -278,7 +278,7 @@ export function useVoiceInput({
     guard.begin();
     const locale = voiceLocale(latest.current.lang ?? i18n.language);
     setChoosing(true);
-    const engine = await engineFor(locale);
+    const engine = await engineFor(locale, latest.current.purpose);
     if (!mounted.current) return;
     if (!guard.current()) {
       setChoosing(false);

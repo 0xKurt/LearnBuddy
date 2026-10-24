@@ -42,6 +42,7 @@ import {
   type ClaimedMessage,
   type TurnLearner,
 } from '../buddy/turn.js';
+import { secretsFor, type SecretItem } from '../practice/secrets.js';
 import { homeworkSolved, mentionsSolution } from '../practice/tutor.js';
 
 /**
@@ -219,23 +220,17 @@ export async function homeworkLeak(
   reply: string,
   learnerWords: readonly string[],
 ): Promise<string[]> {
-  const open = await deps.db.query<{
-    prompt: string;
-    answer: string;
-    accepted_answers: string[];
-    unit: string | null;
-    tolerance: number | null;
-  }>(
+  const open = await deps.db.query<SecretItem & { tolerance: number | null }>(
     // Open in her help session, or — with no session open (#670, KI-Audit F13) — a task of her
     // homework from the last HOMEWORK_GUARD_DAYS she has not solved: the chat must not do it
     // for her just because the help session was closed or never opened.
-    `select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance
+    `select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance, i.kind, i.choices, i.correct_choice, i.task
        from practice_sessions ps
        join session_items si on si.session_id = ps.id and si.status = 'open'
        join items i on i.id = si.item_id
       where ps.learner_id = $1 and ps.mode = 'help' and ps.status = 'active'
      union
-     select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance
+     select i.prompt, i.answer, i.accepted_answers, i.unit, i.tolerance, i.kind, i.choices, i.correct_choice, i.task
        from items i
       where i.learner_id = $1 and i.origin = 'homework' and i.archived_at is null
         and i.created_at >= $2
@@ -246,11 +241,10 @@ export async function homeworkLeak(
   const hers = learnerWords.join('\n');
   // Every key of the task, not only the first (#227 B7): an accepted answer given away is the
   // solution given away.
-  return open.some(
-    (i) =>
-      !homeworkSolved(i, hers) &&
-      [i.answer, ...i.accepted_answers].some((k) => mentionsSolution(reply, k, i.prompt)),
-  )
+  return open.some((i) => {
+    const { secrets, visible } = secretsFor(i);
+    return !homeworkSolved(i, hers) && secrets.some((k) => mentionsSolution(reply, k, visible));
+  })
     ? [
         'reply: it gives away the solution of her open homework task. Help her find it herself (a question, a first step) — never the result.',
       ]

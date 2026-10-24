@@ -71,7 +71,7 @@ describe('the ⋯ menu (App.jsx:125–134)', () => {
     renderInApp(<HeaderMenu visible onClose={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Blatt fotografieren' }));
     // The stand-in router is on "/", not on the chat: she is taken back to its bar.
-    await vi.waitFor(() => expect(attach.attachInChat).toHaveBeenCalledWith({ open: 'camera' }));
+    await vi.waitFor(() => expect(attach.attachInChat).toHaveBeenCalledWith({ open: 'menu' }));
     expect(router.pushed).toEqual([]);
   });
 

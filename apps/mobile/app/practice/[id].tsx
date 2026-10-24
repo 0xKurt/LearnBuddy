@@ -74,7 +74,6 @@ import { useSpeakPhase } from '../../components/practice/SpeakPanel.js';
 import { isRetryable } from '../../lib/api/apiError.js';
 import { usePracticeSession } from '../../lib/api/sessionQueries.js';
 import { practiceHeadState } from '../../lib/buddy/headState.js';
-import { messageFor } from '../../lib/errors.js';
 import { isForeign } from '../../lib/i18n/index.js';
 import { FigureSizingReport } from '../../lib/math/figureSizing.js';
 import { answerForm } from '../../lib/practice/answerForm.js';
@@ -164,7 +163,8 @@ export default function PracticeScreen() {
     if (query.isError) {
       return (
         <PracticeStuck
-          message={messageFor(query.error)}
+          error={query.error}
+          busy={query.isFetching}
           onBack={backToBuddy}
           {...(isRetryable(query.error) ? { onRetry: () => void query.refetch() } : {})}
         />

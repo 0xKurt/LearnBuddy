@@ -10,8 +10,7 @@ import { asTestTurn, REVEAL_AFTER_MISSES } from './ladder.js';
 import { givesHints } from './modeRules.js';
 import { ladderEndReply } from './pointSteps.js';
 import { checkRubric, newlyExplained, rubricReply, rubricVerdict } from './rubric.js';
-import { shownSolution } from './service.js';
-import { secretsOf } from './structured.js';
+import { secretsFor, type SecretItem } from './secrets.js';
 import { mentionsSolution } from './tutor.js';
 
 /**
@@ -20,13 +19,8 @@ import { mentionsSolution } from './tutor.js';
  * The one rule the hint ladder's guard below and the tutor's own flag (`answerTutor.ts`, F9-b
  * #661) both use.
  */
-export function namesTheSolution(
-  c: Pick<AnswerCase, 'item' | 'structured'>,
-  reply: string,
-): boolean {
-  const { item, structured } = c;
-  if (!structured) return mentionsSolution(reply, shownSolution(item), item.prompt);
-  const { secrets, visible } = secretsOf(structured, item.prompt);
+export function namesTheSolution(c: { item: SecretItem }, reply: string): boolean {
+  const { secrets, visible } = secretsFor(c.item);
   return secrets.some((s) => mentionsSolution(reply, s, visible));
 }
 

@@ -34,16 +34,11 @@ import { LlmError, type LlmMessage } from '../../llm/gateway.js';
 import { toJsonSchema } from '../../llm/json-schema.js';
 import { ageOn } from '../identity/model.js';
 import { storeExchange } from './exchange.js';
-import {
-  replayOrLoad,
-  shownSolution,
-  solutionsOf,
-  type ItemRow,
-  type PracticeLearner,
-} from './service.js';
+import { replayOrLoad, type ItemRow, type PracticeLearner } from './service.js';
 import { cleanPunctuation, cutToWords, REEXPLAIN_MAX_WORDS } from './brief.js';
 import { CARD_PASS } from './cards.js';
 import { EXPLAIN_FIGURE_RULE, ExplainFigure, explanationFigure } from './explainFigure.js';
+import { secretsFor, shownSolution, type SecretItem } from './secrets.js';
 import { mentionsSolution } from './tutor.js';
 import { promptVersion } from '../../llm/promptVersion.js';
 
@@ -197,20 +192,18 @@ export async function reexplain(
   );
   // Homework: the tasks still open must not be solved in passing.
   const open = homework
-    ? await deps.db.query<
-        Pick<
-          ItemRow,
-          'prompt' | 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit' | 'accepted_answers'
-        >
-      >(
-        `select i.prompt, i.kind, i.answer, i.choices, i.correct_choice, i.unit, i.accepted_answers
+    ? await deps.db.query<SecretItem>(
+        `select i.prompt, i.kind, i.answer, i.choices, i.correct_choice, i.unit, i.accepted_answers, i.task
            from session_items si join items i on i.id = si.item_id
           where si.session_id = $1 and si.status = 'open'`,
         [sessionId],
       )
     : [];
   const leaks = (text: string) =>
-    open.some((o) => solutionsOf(o).some((sol) => mentionsSolution(text, sol, o.prompt)));
+    open.some((o) => {
+      const { secrets, visible } = secretsFor(o);
+      return secrets.some((sol) => mentionsSolution(text, sol, visible));
+    });
 
   const day = await learnerDay(deps.db, learner.id, now);
   const context: LlmMessage[] = [

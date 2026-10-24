@@ -104,7 +104,14 @@ export function rebasedUri(uri: string, dirUri: string): string {
  * lib/capture/pendingCamera.ts). What the capture was for is noted before the
  * camera opens, so the recovered photo lands in the right capture (audit M-22).
  */
-export const CameraOpen = z.object({ link: Link, at: z.string() });
+export const WorkTargetSchema = z.object({
+  sessionId: z.string().uuid(),
+  itemId: z.string().uuid(),
+});
+export type WorkTarget = z.infer<typeof WorkTargetSchema>;
+export const CameraOpen = z
+  .object({ link: Link.nullable(), work: WorkTargetSchema.optional(), at: z.string() })
+  .refine((v) => (v.work ? v.link === null : v.link !== null));
 export type CameraOpen = z.output<typeof CameraOpen>;
 
 /** A camera hand-over older than this is not recovered (she has moved on). */

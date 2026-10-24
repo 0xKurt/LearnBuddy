@@ -18,8 +18,8 @@
     "update_goal_day": "Modifié : {{title}} – désormais le {{day}}",
     "close_goal_done": "Terminé : {{title}}",
     "close_goal_dropped": "Retiré : {{title}}",
-    "prepare_practice_one": "Préparé : {{title}} – {{count}} exercice, env. {{minutes}} min",
-    "prepare_practice_other": "Préparé : {{title}} – {{count}} exercices, env. {{minutes}} min",
+    "prepare_practice_one": "Exercices prêts : {{title}} – {{count}} exercice, env. {{minutes}} min",
+    "prepare_practice_other": "Exercices prêts : {{title}} – {{count}} exercices, env. {{minutes}} min",
     "plan_step": "Prévu : {{title}} {{when}}",
     "plan_step_agreed": "Convenu : {{title}} {{when}}",
     "plan_step_repeat_daily": "Convenu : {{title}} tous les jours à {{time}}",
@@ -38,9 +38,9 @@
     "delete_material": "J’ai rangé « {{title}} »",
     "delete_material_untitled": "J’ai rangé la feuille",
     "rename_material": "La feuille s’appelle maintenant « {{title}} »",
-    "delete_item": "La question est retirée : « {{question}} »",
+    "delete_item": "L’exercice est retiré : « {{question}} »",
     "open_area": "Affiché : {{what}}",
-    "show_ready": "Prêt à commencer : {{title}}",
+    "show_ready": "Exercices prêts : {{title}}",
     "set_contact_quiet": "Notifications seulement entre {{from}} et {{to}}, jamais après {{quiet}}",
     "set_contact_days": "jamais ces jours-là : {{days}}",
     "request_material_undone": "Pas besoin de photo : {{title}}",
@@ -73,18 +73,7 @@
     }
   },
   "confirm": {
-    "keep": "Garder",
-    "no_longer_open": "Cette question n’est plus ouverte.",
-    "question_body": "Elle ne reviendra plus. C’est définitif.",
-    "question_delete": "Supprimer la question",
-    "question_deleted": "La question a disparu.",
-    "question_kept": "La question reste.",
-    "question_title": "Supprimer cette question ?",
-    "sheet_body": "La feuille, ses questions et les photos disparaissent. C’est définitif.",
-    "sheet_delete": "Supprimer la feuille",
-    "sheet_deleted": "La feuille a disparu.",
-    "sheet_kept": "Tout reste comme avant.",
-    "sheet_title": "Supprimer cette feuille ?"
+    "no_longer_open": "Cette question n’est plus ouverte."
   },
   "decision": {
     "optin_title": "Je peux t'envoyer des notifications sur ton téléphone ?",
@@ -149,7 +138,6 @@
     "title_buddy": "Message de Buddy",
     "title_mine": "Ton message",
     "copy": "Copier",
-    "speak": "Lire à voix haute",
     "copied": "Copié",
     "copy_failed": "La copie n'a pas marché"
   },
@@ -173,7 +161,7 @@
     "ready_later": "Pas aujourd'hui",
     "capture_body": "Envoie-moi une photo.",
     "capture_why": "J'en ferai des exercices pour toi.",
-    "capture_cta": "Prendre une photo",
+    "capture_cta": "Ajouter une photo",
     "sending_title": "Envoi de tes photos…",
     "sending_body": "Garde l'appli ouverte encore un instant, jusqu'à ce que tout soit arrivé.",
     "processing_title": "Je lis ta fiche…",
@@ -184,17 +172,16 @@
     "failed_model_error": "Un problème est survenu pendant la lecture.",
     "failed_photos_missing": "Les photos ne sont pas arrivées en entier.",
     "failed_budget_exhausted": "Je ne peux plus lire de fiches pour aujourd'hui. Ça remarchera demain.",
-    "failed_blocked": "Je n'ai pas le droit de lire cette fiche – le filtre de sécurité la bloque. La relire n'y changera rien. Tape simplement les questions dont tu as besoin.",
+    "failed_blocked": "Je n'ai pas le droit de lire cette fiche – le filtre de sécurité la bloque. La relire n'y changera rien. Tape simplement les exercices dont tu as besoin.",
     "failed_form_not_practicable": "J'ai bien pu lire ta fiche. Mais ce type d'exercice, je ne peux pas m'entraîner avec toi – demande-moi, je t'explique les étapes.",
     "failed_nothing_marked": "Je n'ai rien trouvé de marqué comme faux sur ton contrôle – donc rien à retravailler. Si quelque chose est quand même marqué en rouge, prends une nouvelle photo.",
     "failed_too_large": "Ça faisait trop de grandes photos d’un coup pour une seule fiche. Envoie-la en deux fois, s’il te plaît.",
     "failed_retry": "Relire",
     "failed_new_photo": "Nouvelle photo",
-    "result_title": "C'est fait !",
     "result_view": "Voir",
     "offer_done": "Fait",
-    "resume_body_untitled_one": "Encore {{count}} question",
-    "resume_body_untitled_other": "Encore {{count}} questions",
+    "resume_body_untitled_one": "Encore {{count}} exercice",
+    "resume_body_untitled_other": "Encore {{count}} exercices",
     "resume_title_help": "Reprends tes devoirs",
     "resume_title_test": "Reprends ton test d'entraînement",
     "pages_title_one": "Je n'ai pas pu lire une page en entier",
@@ -263,10 +250,10 @@
       "2": "Tu veilles, {{name}} ?"
     },
     "after": {
-      "practice_one": "Salut {{name}} – tu viens de répondre à {{count}} question.",
-      "practice_other": "Salut {{name}} – tu viens de répondre à {{count}} questions.",
-      "all_first_one": "Salut {{name}} – {{count}} question, juste du premier coup.",
-      "all_first_other": "Salut {{name}} – {{count}} questions, tout juste du premier coup.",
+      "practice_one": "Salut {{name}} – tu viens de répondre à {{count}} exercice.",
+      "practice_other": "Salut {{name}} – tu viens de répondre à {{count}} exercices.",
+      "all_first_one": "Salut {{name}} – {{count}} exercice, juste du premier coup.",
+      "all_first_other": "Salut {{name}} – {{count}} exercices, tout juste du premier coup.",
       "help_one": "Salut {{name}} – tu viens de résoudre {{count}} exercice toi-même.",
       "help_other": "Salut {{name}} – tu viens de résoudre {{count}} exercices toi-même."
     }
@@ -327,7 +314,7 @@
     "stopped": "Arrêté.",
     "new_reply": "Nouvelle réponse",
     "new_reply_label": "Aller à la nouvelle réponse",
-    "message_hint": "Appui long pour copier ou lire à voix haute"
+    "message_hint": "Appuie longtemps pour copier ou écouter"
   },
   "voice": {
     "name": {
@@ -408,8 +395,6 @@
     "hint_talk": "Présente ton exposé comme si la classe écoutait. 10 minutes au plus.",
     "hint_talk_minutes": "{{minutes}} minutes sont prévues. Présente-le comme si la classe écoutait.",
     "hint_read": "Lis le texte à voix haute. 2 minutes au plus.",
-    "live_target": "Objectif {{target}} · je t’écoute",
-    "live": "Je t’écoute · {{max}} au maximum",
     "too_short": "C’était très court. Lance l’enregistrement et parle jusqu’à la fin.",
     "result": {
       "length": "Durée",

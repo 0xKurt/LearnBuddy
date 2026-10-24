@@ -7,7 +7,8 @@ import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { pronunciationPacks } from '../../lib/speech/pronunciation.js';
 import { usePronunciationLab } from '../../lib/speech/pronunciationLab.js';
 import type { PackState } from '../../lib/speech/pronunciationPacks.js';
-import { useRecording } from '../../lib/speech/record.js';
+import { useMicRecorder } from '../voice/useMicRecorder.js';
+import { MicButton, MicStatus } from '../voice/MicButton.js';
 import { voskChecker } from '../../lib/speech/vosk.js';
 import { nativeVosk, pronunciationPcm } from '../../lib/speech/voskNative.js';
 import { SPACE } from '../../lib/theme/space.js';
@@ -35,7 +36,7 @@ export function PronunciationLab() {
     if (open && plan) void pronunciationPacks.state(plan.language).then(setPack);
     return () => active.current?.abort();
   }, [open, plan]);
-  const rec = useRecording({
+  const rec = useMicRecorder({
     onRecorded: async (recording) => {
       const bridge = nativeVosk();
       if (!plan || !bridge || pack.state !== 'ready') return;
@@ -105,10 +106,15 @@ export function PronunciationLab() {
         >
           {t('practice:speak.pack_remove')}
         </Btn>
-        <Btn
-          disabled={
-            busy || pack.state !== 'ready' || rec.phase === 'starting' || rec.phase === 'stopping'
-          }
+        <View style={SHEET_TEXT}>
+          <MicStatus voice={rec.voice} />
+        </View>
+        <MicButton
+          voice={rec.voice}
+          presentation="recorder"
+          label={t('practice:speak.record')}
+          busy={busy}
+          disabled={pack.state !== 'ready'}
           onPress={() => {
             if (rec.phase === 'recording') {
               ended.current = performance.now();
@@ -118,9 +124,7 @@ export function PronunciationLab() {
               void rec.start();
             }
           }}
-        >
-          {t(rec.phase === 'recording' ? 'practice:speak.record_stop' : 'practice:speak.record')}
-        </Btn>
+        />
         {result ? (
           <Text accessibilityLiveRegion="polite" style={[TYPE.meta, SHEET_TEXT]}>
             {result}

@@ -416,25 +416,17 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
       item_id: byTopic('Brüche vergleichen').id,
       choice: 0,
     });
-    // Only the capital letter differs, in maths: never right by rule, the tutor judges it
-    // gently (decision D-2, audit C-7).
-    env.llm.script('tutor', (req) => {
-      expect(ScriptedGateway.textOf(req)).toContain(
-        'RULE CHECK: differs from the solution only in capitalisation',
-      );
-      return {
-        intent: 'answer',
-        verdict: 'correct',
-        reply: 'Genau, der Nenner.',
-        gave_hint: false,
-        revealed_answer: false,
-      };
-    });
-    await lina.api.post(`/practice/sessions/${sessionId}/answer`, {
-      client_turn_id: ids.turn3,
-      item_id: byTopic('Begriffe').id,
-      text: 'nenner',
-    });
+    // Capitalisation is not the point in maths: code accepts it on every surface (#918).
+    const folded = await lina.api.post<{ verdict: string }>(
+      `/practice/sessions/${sessionId}/answer`,
+      {
+        client_turn_id: ids.turn3,
+        item_id: byTopic('Begriffe').id,
+        text: 'nenner',
+      },
+    );
+    expect(folded.status).toBe(200);
+    expect(folded.body.verdict).toBe('correct');
 
     // A free-text explanation: not decidable by rules → the tutor judges it (structured).
     env.llm.script('tutor', (req) => {
@@ -471,8 +463,8 @@ describe.skipIf(!dbReady)('Buddy core loop (child learner, Europe/Berlin)', () =
     expect(replay.body.reply.text).toBe(
       'Genau – der Wert bleibt gleich, nur die Darstellung ändert sich.',
     );
-    // "nenner" and the free text were judged by the tutor, once each.
-    expect(env.llm.callsFor('tutor')).toHaveLength(2);
+    // Only the free explanation needs the tutor; replay and folded text need no call.
+    expect(env.llm.callsFor('tutor')).toHaveLength(1);
 
     // Finishing wakes Buddy right away to plan what comes next (here: nothing to add today).
     env.llm.script('buddy_check', (req) => {

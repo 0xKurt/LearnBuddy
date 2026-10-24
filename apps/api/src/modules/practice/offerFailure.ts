@@ -29,12 +29,32 @@ export async function recordOfferFailure(
       [actionId, learner.id, permanent, deps.now()],
     );
     if (!offer) return;
-    const changed = await tx.query(
-      `update buddy_messages set text = $3, ask = null
-        where learner_id = $1 and decision_id = $2 and role = 'buddy' and text is distinct from $3
-        returning id`,
-      [learner.id, offer.decision_id, text],
+    const messages = await tx.query<{ id: string; text: string }>(
+      `select id, text from buddy_messages
+        where learner_id = $1 and decision_id = $2 and role = 'buddy' for update`,
+      [learner.id, offer.decision_id],
     );
-    if (permanent || changed.length > 0) await bumpContext(tx, learner.id);
+    const failures = [
+      t(learner.locale, 'practice.not_usable'),
+      t(learner.locale, 'practice.prepare_failed'),
+    ];
+    let changed = false;
+    for (const message of messages) {
+      // A free-form reply has no reliable offer-only boundary. Preserve its other content;
+      // only a known fixed notice can be replaced, and never append the correction twice.
+      const previous = failures.find(
+        (failure) => message.text === failure || message.text.endsWith(`\n\n${failure}`),
+      );
+      const original = previous ? message.text.slice(0, -previous.length).trimEnd() : message.text;
+      const corrected = original ? `${original}\n\n${text}` : text;
+      if (corrected === message.text) continue;
+      await tx.query(`update buddy_messages set text = $3 where id = $1 and learner_id = $2`, [
+        message.id,
+        learner.id,
+        corrected,
+      ]);
+      changed = true;
+    }
+    if (permanent || changed) await bumpContext(tx, learner.id);
   });
 }

@@ -19,7 +19,7 @@ describe('a wish for a page, handed to the chat', () => {
     askAttach({ open: 'camera', link: { purpose: 'homework', stepId: 's1' } });
     expect(useAttachRequest.getState().take()).toEqual({
       link: { ...CHAT_LINK, purpose: 'homework', stepId: 's1' },
-      open: 'camera',
+      open: 'menu',
       resume: false,
       pending: false,
     });

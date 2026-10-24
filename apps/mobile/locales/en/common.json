@@ -5,11 +5,11 @@
     "more": "More",
     "add": "Add",
     "mic": "Speak",
-    "speak": "Read aloud",
+    "speak": "Listen",
     "stop": "Stop",
     "pin_delete": "Delete last digit",
     "pin_progress": "{{count}} of 4 digits entered",
-    "camera": "Take a photo",
+    "camera": "Add photo",
     "keyboard": "Keyboard",
     "language": "Choose language",
     "send": "Send",
@@ -47,8 +47,8 @@
       "failed": "The recording didn't work. Please try again.",
       "part_lost": "A bit of your recording got lost – the rest is already there."
     },
-    "read_again": "Read it again",
-    "read_aloud": "Read aloud",
+    "read_again": "Listen again",
+    "read_aloud": "Listen",
     "recording": "I'm listening … {{time}} / {{max}}",
     "recording_open": "I'm listening … {{time}}",
     "recording_open_value": "Recording, {{time}}",
@@ -56,7 +56,10 @@
     "stop": "Stop recording",
     "stop_hint": "Then I'll write down what you said.",
     "topic": "Say it instead of typing",
-    "transcribing": "I'm writing down what you said …"
+    "transcribing": "I'm writing down what you said …",
+    "done": "Done",
+    "target": "Target {{target}}",
+    "finishing": "Finishing the recording …"
   },
   "session": {
     "expired": "You were signed out. Sign in again – anything not sent yet is still here."
@@ -86,7 +89,7 @@
     "s1_title": "Just tell Buddy",
     "s1_body": "Type, talk or show a photo – all three lead into the same conversation.",
     "s2_title": "Your worksheet becomes practice",
-    "s2_body": "Take a photo of a worksheet and Buddy turns it into questions that match your work.",
+    "s2_body": "Take a photo of a worksheet and Buddy turns it into tasks that match your work.",
     "s3_title": "Buddy thinks ahead",
     "s3_body": "Tests, topics, the right moment to practise: Buddy keeps track for you and only reaches out if you both want that.",
     "s4_title": "Pick your colours",
@@ -95,5 +98,22 @@
     "start": "Let's go",
     "skip": "Skip",
     "step_label": "{{n}} of {{count}}"
+  },
+  "delete": {
+    "keep": "Keep it",
+    "item": {
+      "title": "Delete task?",
+      "body": "This task will not come up again. This cannot be undone.",
+      "confirm": "Delete task",
+      "done": "Task deleted.",
+      "kept": "The task stays."
+    },
+    "material": {
+      "title": "Delete sheet?",
+      "body": "“{{title}}” and its tasks will be deleted, and the photos too. This can't be undone.",
+      "confirm": "Delete sheet",
+      "done": "The sheet is gone.",
+      "kept": "Everything stays as it was."
+    }
   }
 }

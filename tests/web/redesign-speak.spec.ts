@@ -86,9 +86,7 @@ for (const family of ['pastell', 'ocean'] as const) {
       await expect.poll(scale).toBe(1);
       await page.mouse.up();
       await page.waitForTimeout(1200); // Same audible-length recording as the existing tour.
-      await page
-        .getByRole('button', { name: 'Aufnahme beenden und an Buddy schicken', exact: true })
-        .click();
+      await page.getByRole('button', { name: 'Aufnahme stoppen', exact: true }).click();
       await expect(
         page.getByText('Deine Aufnahme ist noch nicht bei Buddy angekommen.', { exact: true }),
       ).toBeVisible();
@@ -184,7 +182,7 @@ for (const family of ['pastell', 'ocean'] as const) {
           (response) =>
             response.request().method() === 'POST' && response.url().endsWith('/speak-word'),
         );
-        await sheet.getByRole('button', { name: 'Fertig', exact: true }).click();
+        await sheet.getByRole('button', { name: 'Aufnahme stoppen', exact: true }).click();
         const wordRequest = await request;
         expect(new URL(wordRequest.url()).pathname).toBe(
           `/v1/practice/sessions/${finished.id}/speak-word`,

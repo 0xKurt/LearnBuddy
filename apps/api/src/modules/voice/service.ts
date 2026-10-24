@@ -5,6 +5,7 @@
 import type { TranscribeRequest, TranscribeStreamEvent } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
+import { CONCERN_MEANING } from '../buddy/distress.js';
 import type { Deps } from '../../deps.js';
 import { AppError, isAppError } from '../../lib/errors.js';
 import { learnerDay } from '../../lib/zone.js';
@@ -22,12 +23,7 @@ const Transcript = z.object({
   // Rule 18 (review of #630): words she said are never dropped when they tell of danger — even a
   // recording the transcriber was not sure held speech. Lenient when parsing: older scripted
   // answers have no such field.
-  distress: z
-    .boolean()
-    .default(false)
-    .describe(
-      'true when what you heard — even unsure, even only in part — tells of danger to the speaker: being hurt, bullied, abused or threatened, thinking of hurting themselves, feeling unsafe or hopeless',
-    ),
+  distress: z.boolean().default(false).describe(`Even unsure or incomplete: ${CONCERN_MEANING.is}`),
 });
 // Exported for the schema inventory (`evals/schema`, issue #281); nothing else reads it.
 export const SCHEMA = toJsonSchema(Transcript);

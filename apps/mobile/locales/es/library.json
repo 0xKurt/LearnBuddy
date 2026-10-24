@@ -37,14 +37,14 @@
     "model_error": "Algo ha fallado durante la lectura.",
     "photos_missing": "No han llegado todas las fotos.",
     "budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
-    "blocked": "El filtro de seguridad no deja pasar esta ficha. Volver a leerla no servirá: escribe las preguntas.",
+    "blocked": "El filtro de seguridad no deja pasar esta ficha. Volver a leerla no servirá: escribe los ejercicios.",
     "form_not_practicable": "He podido leer la ficha sin problema: solo que este tipo de ejercicio no lo puedo practicar contigo. Pregúntame y te explico los pasos.",
     "nothing_marked": "No he encontrado nada marcado como incorrecto en el examen, así que no hay nada que repasar. Si al final hay algo marcado en rojo, vuelve a hacerle una foto.",
     "too_large": "Demasiadas fotos grandes a la vez: envía la ficha en dos partes."
   },
   "source": {
     "corrected_test": "De tu examen corregido: ejercicios nuevos sobre lo que estaba marcado, con otros números y otras palabras.",
-    "notebook_entry": "De tu cuaderno: unas preguntas cortas sobre la última clase, perfectas para mañana por la mañana."
+    "notebook_entry": "De tu cuaderno: unos ejercicios cortos sobre la última clase, perfectos para mañana por la mañana."
   },
   "incomplete_hint": "Las fotos no han llegado completas. Elimina la ficha y vuelve a hacerle una foto.",
   "incomplete_page": {
@@ -68,18 +68,12 @@
   "retry_started": "Vuelvo a leer la ficha.",
   "delete": "Eliminar",
   "delete_label": "Eliminar “{{title}}”",
-  "delete_sheet": {
-    "title": "¿Eliminar la ficha?",
-    "body": "Se eliminarán “{{title}}” y sus ejercicios, y también las fotos. No se puede deshacer.",
-    "confirm": "Eliminar"
-  },
-  "deleted": "Ficha eliminada.",
   "empty": {
     "title": "Aquí aparecerán tus fichas",
     "body": "Haz una foto de una ficha, una página del libro o tu cuaderno: lo convierto en ejercicios."
   },
-  "open": "Ver preguntas",
-  "open_label": "Ver las preguntas de «{{title}}»",
+  "open": "Ver ejercicios",
+  "open_label": "Ver los ejercicios de «{{title}}»",
   "rename": "Cambiar nombre",
   "rename_label": "Cambiar el nombre de «{{title}}»",
   "rename_sheet": {
@@ -90,16 +84,16 @@
   },
   "renamed": "Nombre cambiado.",
   "items": {
-    "loading": "Estoy trayendo las preguntas …",
+    "loading": "Estoy trayendo los ejercicios …",
     "back": "Volver",
-    "reading": "Estoy leyendo la hoja ahora mismo – enseguida están las preguntas.",
-    "empty_title": "Aquí ya no quedan preguntas",
-    "empty_body": "Has borrado todas las preguntas de esta hoja. Hazle una foto nueva si quieres volver a practicar con ella.",
-    "question_label": "Pregunta {{number}}",
-    "more_label": "Más sobre la pregunta {{number}}",
+    "reading": "Estoy leyendo la hoja ahora mismo – enseguida están los ejercicios.",
+    "empty_title": "Aquí ya no quedan ejercicios",
+    "empty_body": "Has borrado todos los ejercicios de esta hoja. Hazle una foto nueva si quieres volver a practicar con ella.",
+    "question_label": "Ejercicio {{number}}",
+    "more_label": "Más sobre el ejercicio {{number}}",
     "choices": "Opciones",
     "delete": "Borrar",
-    "delete_label": "Borrar la pregunta {{number}}",
+    "delete_label": "Borrar el ejercicio {{number}}",
     "result": {
       "first_try": "Acertada a la primera",
       "with_help": "Con un poco de ayuda",
@@ -107,12 +101,6 @@
       "never_asked": "Aún sin practicar"
     }
   },
-  "item_delete_sheet": {
-    "title": "¿Borrar la pregunta?",
-    "body": "Esta pregunta ya no volverá a salir.",
-    "confirm": "Borrar"
-  },
-  "item_deleted": "Pregunta borrada.",
   "add_page": "Añadir una página",
   "subjects": "Asignaturas",
   "recent": "Reciente"

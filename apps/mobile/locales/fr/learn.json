@@ -26,7 +26,7 @@
   "topic": {
     "practice": {
       "title": "Qu'est-ce que tu veux travailler ?",
-      "hint": "Je te pose quelques questions là-dessus.",
+      "hint": "Je te propose quelques exercices là-dessus.",
       "placeholder": "p. ex. additionner des fractions, le passé composé",
       "ex_1": "Additionner des fractions",
       "ex_2": "Le passé composé",
@@ -34,7 +34,7 @@
     },
     "test": {
       "title": "Sur quoi porte le test ?",
-      "hint": "Une réponse par question, pas d'indices – tu verras le résultat à la fin.",
+      "hint": "Une réponse par exercice, pas d’indices – tu verras le résultat à la fin.",
       "placeholder": "p. ex. fractions, unité 3, le Moyen Âge",
       "ex_1": "Les fractions",
       "ex_2": "Le passé composé",

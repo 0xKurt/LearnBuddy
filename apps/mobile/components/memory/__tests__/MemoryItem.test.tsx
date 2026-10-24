@@ -58,6 +58,14 @@ describe('grouped memory entry', () => {
     for (const name of ['Ändern: Möchte kurze Übungen', 'Entfernen: Möchte kurze Übungen'])
       expect(screen.getByRole('button', { name }).querySelectorAll('svg')).toHaveLength(1);
   });
+  it('edits in the shared sheet, with Save outside the scrolling form', () => {
+    renderInApp(<MemoryItem {...props()} editing draft="Andere Übungen" />);
+    expect(screen.getByRole('heading', { name: 'Was Buddy sich merken soll' })).toBeTruthy();
+    const field = screen.getByRole('textbox', { name: 'Was Buddy sich merken soll' });
+    const form = field.closest('[data-testid="scroll-form"]');
+    expect(form).not.toBeNull();
+    expect(form!.contains(screen.getByRole('button', { name: 'Speichern' }))).toBe(false);
+  });
   it('retains the existing dirty/trimmed save guard and saving lock', () => {
     const on = props();
     const { rerender } = renderInApp(<MemoryItem {...on} editing draft="   " />);

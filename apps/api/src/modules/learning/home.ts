@@ -310,7 +310,7 @@ async function nowCardOf(
     (s) =>
       s.status === 'finished' &&
       // Left without answering anything: nothing to celebrate or report.
-      s.answered > 0 &&
+      (s.answered > 0 || s.ran_out) &&
       s.finished_at &&
       now.getTime() - s.finished_at.getTime() < 30 * 60_000,
   );
@@ -330,9 +330,15 @@ async function nowCardOf(
       type: 'practice_result',
       session_id: justFinished.id,
       mode: justFinished.mode,
+      pass: justFinished.pass,
+      ran_out: justFinished.ran_out,
+      total: justFinished.total,
+      title: justFinished.title,
+      drill_summary: justFinished.drill_summary,
       result: {
         answered: justFinished.answered,
         first_try: justFinished.first_try,
+        right: justFinished.right,
         secure_topics: justFinished.secure_topics,
         shaky_topics: justFinished.shaky_topics,
       },
@@ -542,7 +548,9 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
   const running = await offerRuns(
     db,
     learnerId,
-    page.actions.filter((a) => a.result.tool === 'offer_learning').map((a) => a.id),
+    page.actions
+      .filter((a) => a.result.tool === 'offer_learning' || a.result.tool === 'offer_drill')
+      .map((a) => a.id),
     'active',
   );
   const pictured = await offerPictures(
@@ -599,7 +607,7 @@ export async function dressThread(db: Db, learnerId: string, page: ThreadPage, n
       if ((s.tool === 'offer_learning' || s.tool === 'offer_drill') && finished.has(actionId))
         return { ...s, finished_session_id: finished.get(actionId) ?? null };
       // Still open: the bar may say "Weitermachen" for it, the card then leaves it there (#846).
-      if (s.tool === 'offer_learning' && running.has(actionId))
+      if ((s.tool === 'offer_learning' || s.tool === 'offer_drill') && running.has(actionId))
         return { ...s, running_session_id: running.get(actionId) ?? null };
       if (s.tool === 'show_ready') {
         const outcome = outcomes.get(s.step_id) ?? null;

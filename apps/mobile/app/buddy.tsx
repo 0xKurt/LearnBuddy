@@ -331,7 +331,7 @@ export default function BuddyScreen() {
               refreshing={home.isRefetching}
               onRefresh={refetch}
               onSend={(text) => void send(text)}
-              onPhoto={() => askAttach({ open: 'camera' })}
+              onPhoto={() => askAttach({ open: 'menu' })}
               pages={attached}
             />
           )}

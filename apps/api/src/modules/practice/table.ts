@@ -55,7 +55,7 @@ import { z } from 'zod';
 import { t } from '../../i18n/index.js';
 import { sameness } from './arrange.js';
 import { dollarMathRuns } from './dollarMath.js';
-import { compareWithKeys, NEAR_MISS, ruleCheck, type ItemForCheck } from './evaluate.js';
+import { compareWithKeys, verdictForRule, ruleCheck, type ItemForCheck } from './evaluate.js';
 import { ItemDraft } from './items.js';
 import { checkPath } from './steps.js';
 
@@ -495,10 +495,10 @@ export function cellVerdict(
   const verdict = ruleCheck(item, { text, choice: null });
   // 'folded' is the same answer up to case, ß or punctuation where spelling is not the
   // point (D-2): the subject says it does not matter, so it is right here.
-  if (verdict === 'correct' || verdict === 'folded') return 'right';
+  if (verdictForRule(verdict) === 'correct') return 'right';
   // 'other_form' (#227): the right value, written another way — the column asks for a form,
   // so it is nearly right, never wrong (in a recomputed table `form_free` made it right).
-  if (NEAR_MISS.has(verdict) || verdict === 'other_form') return 'near';
+  if (verdictForRule(verdict) === 'partially_correct' || verdict === 'other_form') return 'near';
   if (verdict !== 'unknown') return 'wrong';
   if (numeric) return compareWithKeys(item, text) === 'equal' ? 'near' : 'wrong';
   if (kind === 'formula') {

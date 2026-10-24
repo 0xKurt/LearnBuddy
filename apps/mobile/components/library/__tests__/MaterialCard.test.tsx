@@ -106,7 +106,7 @@ describe('das Sheet eines Blatts (ui_kits/app/More.jsx:82–87)', () => {
     const signs = (name: string) =>
       screen.getByRole('button', { name }).querySelectorAll('svg').length;
     // Zeichen und Pfeil — die anderen sind Aktionen: nur ihr Zeichen.
-    expect(signs('Fragen ansehen')).toBe(2);
+    expect(signs('Aufgaben ansehen')).toBe(2);
     expect(signs('Die Sätze aus „Unité 3“ laut lesen')).toBe(1);
     expect(signs('„Unité 3“ löschen')).toBe(1);
   });
