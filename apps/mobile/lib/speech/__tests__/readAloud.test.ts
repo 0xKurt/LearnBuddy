@@ -163,13 +163,15 @@ describe('cutting a reply that is still being written (nextReadingParts)', () =>
     const text =
       'Der Urknall ist der Moment, in dem unser ganzes Universum angefangen hat, und das war vor etwa 13,8 Milliarden Jahren. Danach wurde es kühler.';
     let cursor = READING_START;
-    const parts = [];
+    const parts: ReturnType<typeof readingParts> = [];
     for (const upTo of [40, 90, 130, text.length]) {
       const r = nextReadingParts(text.slice(0, upTo), upTo === text.length, cursor, plain);
       cursor = r.cursor;
       parts.push(...r.parts);
     }
-    expect(parts).toEqual(readingParts(text, plain));
+    const flatten = (value: typeof parts) =>
+      value.flatMap((part) => part.spoken.map((spoken) => ({ at: part.at, spoken })));
+    expect(flatten(parts)).toEqual(flatten(readingParts(text, plain)));
   });
 
   it('a sentence with nothing to say keeps its number, and only the first is shortened', () => {
@@ -186,4 +188,33 @@ describe('cutting a reply that is still being written (nextReadingParts)', () =>
       { at: 2, spoken: ['Weiter.'] },
     ]);
   });
+});
+
+it('speaks the opening clause before the sentence ends, without repeating or renumbering it', () => {
+  const opening = 'Wir schauen uns zuerst gemeinsam die Zeichnung an, ';
+  const full = opening + 'dann teilen wir den Kreis. Danach zählen wir.';
+  const first = nextReadingParts(opening + 'dann', false, READING_START, (s) => s);
+  expect(first.parts).toEqual([{ at: 0, spoken: [opening.trim()] }]);
+  const next = nextReadingParts(full, true, first.cursor, (s) => s);
+  expect(next.parts).toEqual([
+    { at: 0, spoken: ['dann teilen wir den Kreis.'] },
+    { at: 1, spoken: ['Danach zählen wir.'] },
+  ]);
+  expect(next.sentences).toEqual([opening + 'dann teilen wir den Kreis.', 'Danach zählen wir.']);
+});
+
+it('keeps leading whitespace out of the opening offset and never splits an unfinished formula', () => {
+  const opening = '   Wir schauen uns zuerst gemeinsam die Zeichnung an, ';
+  const first = nextReadingParts(opening + 'dann', false, READING_START, (s) => s);
+  expect(
+    nextReadingParts(opening + 'dann zählen wir.', true, first.cursor, (s) => s).parts,
+  ).toEqual([{ at: 0, spoken: ['dann zählen wir.'] }]);
+  expect(
+    nextReadingParts(
+      'Wir betrachten nun diese etwas längere Formel $a, b, c, d$ und',
+      false,
+      READING_START,
+      (s) => s,
+    ).parts,
+  ).toEqual([]);
 });

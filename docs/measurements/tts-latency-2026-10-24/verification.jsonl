@@ -1,0 +1,26 @@
+{"variant":"","filename":"tts-1-mp3-cold-4.mp3","model":"whisper-1","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Liest den ersten Absatz bitte nochmal."}
+{"variant":"","filename":"tts-1-mp3-cold-4.mp3","model":"gpt-4o-transcribe","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Lies den ersten Absatz bitte noch mal."}
+{"variant":"","filename":"tts-1-pcm-cold-4.wav","model":"whisper-1","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Lies den ersten Absatz bitte noch einmal."}
+{"variant":"","filename":"tts-1-pcm-cold-4.wav","model":"gpt-4o-transcribe","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Lies den ersten Absatz bitte nochmal."}
+{"variant":"","filename":"realtime-cold-4.wav","model":"whisper-1","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Tut mir leid, ich kann den ersten Absatz nicht noch einmal lesen, weil er hier nicht enthalten ist. Wenn Du mir den Text schickst, lese ich ihn gerne laut vor."}
+{"variant":"","filename":"realtime-cold-4.wav","model":"gpt-4o-transcribe","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Tut mir leid, ich kann den ersten Absatz nicht noch einmal lesen, weil er hier nicht enthalten ist. Wenn du mir den Text schickst, lese ich ihn gerne laut vor."}
+{"variant":"","filename":"realtime-cold-5.wav","model":"whisper-1","expected":"Erkläre deinen nächsten Schritt in eigenen Worten.","transcript":"Erkläre deinen nächsten Schritt in eigenen Worten."}
+{"variant":"","filename":"realtime-cold-5.wav","model":"gpt-4o-transcribe","expected":"Erkläre deinen nächsten Schritt in eigenen Worten.","transcript":"Erkläre deinen Nächstenstand in eigenen Worten."}
+{"variant":"","filename":"realtime-warm-1.wav","model":"whisper-1","expected":"Wir schauen uns die Aufgabe gemeinsam an.","transcript":"Wir schauen uns die Aufgabe gemeinsam an."}
+{"variant":"","filename":"realtime-warm-1.wav","model":"gpt-4o-transcribe","expected":"Wir schauen uns die Aufgabe gemeinsam an.","transcript":"Wir schauen uns die Aufgabe gemeinsam an."}
+{"variant":"","filename":"realtime-warm-3.wav","model":"whisper-1","expected":"Was hast du bei diesem Versuch beobachtet?","transcript":"Was hast du bei diesem Versuch beobachtet?"}
+{"variant":"","filename":"realtime-warm-3.wav","model":"gpt-4o-transcribe","expected":"Was hast du bei diesem Versuch beobachtet?","transcript":"Das hasst du bei diesem Versuch beobachtet."}
+{"variant":"","filename":"realtime-warm-4.wav","model":"whisper-1","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Es gibt nichts zu lesen."}
+{"variant":"","filename":"realtime-warm-4.wav","model":"gpt-4o-transcribe","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Es gibt nichts zu lesen."}
+{"variant":"verbatim","filename":"realtime-cold-3.wav","model":"whisper-1","expected":"Was hast du bei diesem Versuch beobachtet?","transcript":"Was hast du bei diesem Versuch beobachtet?"}
+{"variant":"verbatim","filename":"realtime-cold-3.wav","model":"gpt-4o-transcribe","expected":"Was hast du bei diesem Versuch beobachtet?","transcript":"Das hast du bei diesem Versuch beobachtet."}
+{"variant":"verbatim","filename":"realtime-cold-4.wav","model":"whisper-1","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Lies den ersten Absatz bitte noch einmal."}
+{"variant":"verbatim","filename":"realtime-cold-4.wav","model":"gpt-4o-transcribe","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Lies den ersten Absatz bitte noch einmal."}
+{"variant":"verbatim","filename":"realtime-cold-5.wav","model":"whisper-1","expected":"Erkläre deinen nächsten Schritt in eigenen Worten.","transcript":"Erkläre deinen nächsten Schritt in eigenen Worten."}
+{"variant":"verbatim","filename":"realtime-cold-5.wav","model":"gpt-4o-transcribe","expected":"Erkläre deinen nächsten Schritt in eigenen Worten.","transcript":"Erkläre deinen nächsten Schritt in eigenen Worten."}
+{"variant":"verbatim","filename":"realtime-warm-3.wav","model":"whisper-1","expected":"Was hast du bei diesem Versuch beobachtet?","transcript":"Was hast du bei diesem Versuch beobachtet?"}
+{"variant":"verbatim","filename":"realtime-warm-3.wav","model":"gpt-4o-transcribe","expected":"Was hast du bei diesem Versuch beobachtet?","transcript":"Das hast du bei diesem Versuch beobachtet."}
+{"variant":"nonreasoning","filename":"realtime-cold-4.wav","model":"whisper-1","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Lies den ersten Absatz bitte noch einmal."}
+{"variant":"nonreasoning","filename":"realtime-cold-4.wav","model":"gpt-4o-transcribe","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Diesen Erdnapsatz bitte noch einmal."}
+{"variant":"nonreasoning","filename":"realtime-warm-4.wav","model":"whisper-1","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Lies den ersten Absatz bitte noch einmal."}
+{"variant":"nonreasoning","filename":"realtime-warm-4.wav","model":"gpt-4o-transcribe","expected":"Lies den ersten Absatz bitte noch einmal.","transcript":"Lies den ersten Absatz bitte noch einmal."}

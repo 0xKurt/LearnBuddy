@@ -1,0 +1,46 @@
+// Measurement-only entry. Temporarily copy to apps/mobile/tts-native-bench.tsx.
+// Replace index.ts with its import, use the installed dev client, then restore index.ts.
+import { registerRootComponent } from 'expo';
+import { useEffect } from 'react';
+import { Text } from 'react-native';
+import { fetch } from 'expo/fetch';
+import { AudioContext } from 'react-native-audio-api';
+import { playPcm, warmAudio } from './lib/speech/pcmPlayer';
+import { streamAudio, releaseAudio } from './lib/speech/naturalAudio';
+const origin = 'http://127.0.0.1:8137';
+async function run() {
+  const { token } = await (await fetch(origin + '/native-settings')).json();
+  const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json', accept: 'audio/pcm' };
+  let firstRenderedMs: number | null = null, start = 0;
+  const original = AudioContext.prototype.createBufferSource;
+  let analyser: ReturnType<AudioContext['createAnalyser']>;
+  AudioContext.prototype.createBufferSource = function (...args) {
+    const node = original.apply(this, args);
+    if (!analyser) { analyser = this.createAnalyser(); analyser.fftSize = 256; analyser.connect(this.destination); }
+    const connect = node.connect.bind(node);
+    node.connect = (() => connect(analyser)) as typeof node.connect;
+    return node;
+  };
+  warmAudio();
+  const prep = performance.now();
+  const pre = await fetch(origin + '/v1/voice/speech/prepare', { method: 'POST', headers, body: JSON.stringify({ locale: 'de-DE' }) });
+  if (!pre.ok) throw new Error('prepare ' + pre.status);
+  const prewarmMs = Math.round(performance.now() - prep);
+  const rows = [];
+  for (const text of ['Wir schauen uns die Aufgabe gemeinsam an.', 'Teile den Kreis in vier gleich große Stücke.', 'Was hast du bei diesem Versuch beobachtet?', 'Lies den ersten Absatz bitte noch einmal.', 'Erkläre deinen nächsten Schritt in eigenen Worten.']) {
+    warmAudio();
+    start = performance.now(); firstRenderedMs = null;
+    const controller = new AbortController();
+    const samples = new Float32Array(256);
+    const timer = setInterval(() => { if (analyser) { analyser.getFloatTimeDomainData(samples); if (samples.some(s => Math.abs(s) > .005)) firstRenderedMs ??= Math.round(performance.now() - start); } }, 5);
+    const uri = await streamAudio({ uri: origin + '/v1/voice/speech', headers: { ...headers, 'x-speech-request': encodeURIComponent(JSON.stringify({ text, locale: 'de-DE' })) } }, controller.signal);
+    const preparedMs = Math.round(performance.now() - start);
+    let queueStartedMs: number | null = null;
+    const ended = await new Promise(resolve => playPcm(uri, { start: () => { queueStartedMs = Math.round(performance.now() - start); }, progress() {}, end: resolve }));
+    clearInterval(timer); releaseAudio(uri);
+    rows.push({ text, preparedMs, firstRenderedMs, queueStartedMs, ended });
+  }
+  return { device: 'POCO-native-GET-app-transport', prewarmMs, rows };
+}
+function App() { useEffect(() => { run().then(result => fetch(origin + '/native-result', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(result) })).catch(error => fetch(origin + '/native-result', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ error: String(error) }) })); }, []); return <Text>Lokaler Sprachtest – synthetische Sätze</Text>; }
+registerRootComponent(App);

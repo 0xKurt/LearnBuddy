@@ -68,9 +68,10 @@ describe.skipIf(!dbReady)('Buddy’s natural voice', () => {
     expect(first.status).toBe(200);
     expect(first.body).toMatchObject({ mime: 'audio/wav', voice: 'warm', speed: 0 });
     expect(Buffer.from(first.body.audio_base64, 'base64').subarray(0, 4).toString()).toBe('RIFF');
-    // Exactly the text, the language, the voice and the rate — nothing else about her.
+    // The gateway receives the local learner scope for connection isolation; adapters never
+    // send that key to the provider (covered by the Realtime session contract tests).
     expect(env.speech.calls).toEqual([
-      { text, locale: 'de-DE', voice: 'warm', rate: 1, timeoutMs: 8000 },
+      { text, locale: 'de-DE', voice: 'warm', rate: 1, timeoutMs: 8000, sessionKey: l.learnerId },
     ]);
     // The text itself is not stored, only a hash as the key.
     const row = await env.db.one<{ key: string; expires_at: Date }>(

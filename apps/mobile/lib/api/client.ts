@@ -51,7 +51,7 @@ export async function speechSource(
   return {
     uri: `${ENV.API_URL}/v1/voice/speech`,
     headers: {
-      ...requestHeaders(await validToken(), 'audio/mpeg'),
+      ...requestHeaders(await validToken(), 'audio/pcm, audio/mpeg, audio/wav'),
       'x-speech-request': encodeURIComponent(JSON.stringify(input)),
     },
   };
@@ -125,23 +125,31 @@ async function authorised(
 export async function request<S extends ZodTypeAny>(
   method: Method,
   path: string,
-  opts: { body?: unknown; schema: S; wait?: Wait },
+  opts: { body?: unknown; schema: S; wait?: Wait; signal?: AbortSignal },
 ): Promise<z.infer<S>>;
 export async function request(
   method: Method,
   path: string,
-  opts?: { body?: unknown; wait?: Wait },
+  opts?: { body?: unknown; wait?: Wait; signal?: AbortSignal },
 ): Promise<unknown>;
 export async function request<S extends ZodTypeAny>(
   method: Method,
   path: string,
-  opts: { body?: unknown; schema?: S; wait?: Wait } = {},
+  opts: { body?: unknown; schema?: S; wait?: Wait; signal?: AbortSignal } = {},
 ): Promise<unknown> {
   const wd = new Watchdog(WAIT_MS[opts.wait ?? 'quick'], timedOut);
   // A stopwatch for this request (#649): measured, never sent anywhere (lib/perf.ts).
   const started = Date.now();
   try {
-    const res = await authorised(method, path, opts.body, 'application/json', wd);
+    const res = await authorised(
+      method,
+      path,
+      opts.body,
+      'application/json',
+      wd,
+      fetch,
+      opts.signal,
+    );
     const headersMs = Date.now() - started;
     const out = await readJson(res, method, path, opts.schema, wd);
     requested(method, path, {

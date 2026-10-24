@@ -38,7 +38,9 @@ const Voices = z
   .partial()
   .strict();
 export const openAISpeechFields = {
-  OPENAI_MODEL_SPEECH: z.enum(['tts-1', 'gpt-realtime-2.1-mini']).default('tts-1'),
+  OPENAI_MODEL_SPEECH: z
+    .enum(['tts-1', 'gpt-realtime-2.1-mini', 'gpt-realtime-1.5'])
+    .default('tts-1'),
   OPENAI_TTS_VOICES: z
     .string()
     .optional()

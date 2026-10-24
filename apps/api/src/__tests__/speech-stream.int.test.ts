@@ -150,6 +150,75 @@ describe.skipIf(!dbReady)('progressive speech HTTP', () => {
     }
   });
 
+  it('negotiates PCM for the queue, keeps WAV in cache and scopes reuse to the authenticated learner', async () => {
+    const prepare = vi.fn(
+      async (_input: import('../speech/gateway.js').SpeechSessionInput) => undefined,
+    );
+    const synthesize = vi.fn(async (input: import('../speech/gateway.js').SpeechInput) => {
+      await input.onAudio?.({ mime: 'audio/pcm', audio: Buffer.alloc(960) });
+      return { mime: 'audio/wav' as const, audio: Buffer.from('RIFFcached'), costMicros: 4567 };
+    });
+    env.deps.speech = {
+      available: true,
+      microsPerCharacter: 0,
+      localeFor: () => 'de-DE',
+      voiceId: () => 'test-pcm',
+      prepare,
+      synthesize,
+    };
+    const body = { text: 'PCM ohne Warten.', locale: 'de-DE' };
+    const warm = await learner.api.post('/voice/speech/prepare', { locale: 'de-DE' });
+    expect(warm.status).toBe(200);
+    expect(prepare.mock.calls[0]?.[0]).not.toHaveProperty('text');
+    const pcm = await env.app.request('/v1/voice/speech', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${learner.token}`,
+        accept: 'audio/pcm',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    expect(pcm.headers.get('content-type')).toBe('audio/pcm');
+    expect((await pcm.arrayBuffer()).byteLength).toBe(960);
+    const again = await request(body.text);
+    expect(again.headers.get('content-type')).toBe('audio/wav');
+    expect(await again.text()).toBe('RIFFcached');
+    expect(synthesize).toHaveBeenCalledOnce();
+    expect(synthesize.mock.calls[0]?.[0].sessionKey).toBeTruthy();
+    expect(prepare).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionKey: synthesize.mock.calls[0]?.[0].sessionKey }),
+    );
+    expect(
+      await env.db.query('select cost_micros::int from speech_calls where cost_micros = 4567'),
+    ).toEqual([{ cost_micros: 4567 }]);
+    expect(
+      (
+        await env.app.request('/v1/voice/speech/prepare', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ locale: 'de-DE' }),
+        })
+      ).status,
+    ).toBe(401);
+  });
+
+  it('buffers PCM for older clients that only accept complete media files', async () => {
+    env.deps.speech = {
+      available: true,
+      microsPerCharacter: 0,
+      localeFor: () => 'de-DE',
+      voiceId: () => 'test-legacy-pcm',
+      synthesize: async (input) => {
+        await input.onAudio?.({ mime: 'audio/pcm', audio: Buffer.alloc(960) });
+        return { mime: 'audio/wav', audio: Buffer.from('RIFFlegacy'), costMicros: 123 };
+      },
+    };
+    const res = await request('Altes Gerät mit neuer Stimme.');
+    expect(res.headers.get('content-type')).toBe('audio/wav');
+    expect(await res.text()).toBe('RIFFlegacy');
+  });
+
   it('requires authentication and validates the native header', async () => {
     expect((await request('Privat.', 'GET', 'wrong')).status).toBe(401);
     const res = await env.app.request('/v1/voice/speech', {

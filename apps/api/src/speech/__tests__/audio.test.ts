@@ -42,6 +42,21 @@ const usage = {
   total_tokens: 120,
 };
 describe('recorded audio routing', () => {
+  it('prices non-reasoning realtime output from the receipt with the EU uplift', () => {
+    expect(
+      audioUsage(
+        'gpt-realtime-1.5',
+        {
+          input_tokens: 100,
+          output_tokens: 25,
+          input_token_details: { audio_tokens: 0 },
+          output_token_details: { audio_tokens: 20 },
+        },
+        1,
+        0,
+      ).costMicros,
+    ).toBe(1937);
+  });
   it('prices duration receipts including the residency uplift', () => {
     expect(audioUsage('gpt-transcribe', { seconds: 60 }, 1, 0).costMicros).toBe(4950);
     expect(audioUsage('gpt-4o-mini-transcribe', { seconds: 60 }, 1, 0).costMicros).toBe(3000);

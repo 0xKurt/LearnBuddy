@@ -22,6 +22,7 @@ import {
   type AppLocale,
   type CreateLearnerRequest,
   type TranscribeRequest,
+  type SpeechPrepareRequest,
   type UpdateBuddySettingsRequest,
   type UpdateLearnerRequest,
   type UpdateMemoryRequest,
@@ -218,3 +219,11 @@ export const transcribe = (
         },
       })
     : request('POST', '/voice/transcribe', { body, schema: TranscribeResponse, wait: 'long' });
+
+/** Best-effort connection setup while Buddy is composing the reply. */
+export const prepareSpeech = (input: SpeechPrepareRequest, signal: AbortSignal) =>
+  request('POST', '/voice/speech/prepare', {
+    body: input,
+    signal,
+    schema: z.object({ ready: z.boolean() }),
+  });

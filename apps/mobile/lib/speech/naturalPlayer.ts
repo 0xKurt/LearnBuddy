@@ -12,6 +12,7 @@ import {
 import { Platform } from 'react-native';
 
 import type { ListenEnd, PlayHandle } from './pipeline.js';
+import { playPcm } from './pcmPlayer.js';
 import { playbackProgress } from './readAloud.js';
 
 /** No sound after this long: the audio did not start (blocked, broken file). */
@@ -57,6 +58,8 @@ export function playAudio(
     // Heard with the ring/silent switch on, like the phone's own voice.
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => undefined);
   }
+  const pcm = playPcm(uri, { start: on.onStart, progress: on.onProgress, end: on.onEnd });
+  if (pcm) return pcm;
   let player: AudioPlayer;
   try {
     player = prepared.get(uri) ?? createAudioPlayer(uri, { updateInterval: 100 });

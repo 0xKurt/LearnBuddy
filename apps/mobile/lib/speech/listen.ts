@@ -21,6 +21,8 @@ import { AppState } from 'react-native';
 import * as Speech from 'expo-speech';
 
 import { ApiError, speechSource } from '../api/client.js';
+import { prepareSpeech } from '../api/endpoints.js';
+import { warmAudio } from './pcmPlayer.js';
 import { streamAudio, releaseAudio } from './naturalAudio.js';
 import { playAudio } from './naturalPlayer.js';
 import {
@@ -133,6 +135,12 @@ function begin(lang: string, growing: boolean, opts: SpeakOptions): Reading {
   const slow = opts.slow ?? false;
   const self: { reading: Reading | null } = { reading: null };
   const cancelled = new AbortController();
+  warmAudio();
+  if (growing && gate.allows(locale))
+    void prepareSpeech(
+      { locale, ...(slow ? { slow: true } : {}), ...(opts.voice ? { voice: opts.voice } : {}) },
+      cancelled.signal,
+    ).catch(() => undefined);
   const effects: ReadingEffects = {
     async fetch(spoken, ahead): Promise<Clip> {
       if (!/^[a-z]{2}-[A-Z]{2}$/.test(locale) || !gate.allows(locale)) return null;

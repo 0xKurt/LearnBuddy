@@ -1,5 +1,6 @@
 // Authenticated progressive MP3 for browsers; the existing player owns playback and preloading.
 import { prepareAudio, releasePlayer } from './naturalPlayer.js';
+import { preparePcm, releasePcm } from './pcmPlayer.js';
 import { appendAudio } from './mediaStream.js';
 const streams = new Map<string, () => void>();
 
@@ -7,6 +8,7 @@ export function audioUri(base64: string, mime: 'audio/mpeg' | 'audio/wav'): stri
   return `data:${mime};base64,${base64}`;
 }
 export function releaseAudio(uri: string): void {
+  if (releasePcm(uri)) return;
   releasePlayer(uri);
   streams.get(uri)?.();
   streams.delete(uri);
@@ -22,6 +24,11 @@ export async function streamAudio(
   try {
     const res = await fetch(source.uri, { headers: source.headers, signal: controller.signal });
     if (!res.ok || !res.body) throw new Error('speech unavailable');
+    if (res.headers.get('content-type')?.startsWith('audio/pcm'))
+      return preparePcm(res.body, controller.signal, () => {
+        signal.removeEventListener('abort', abort);
+        controller.abort();
+      });
     const progressive =
       res.headers.get('content-type')?.startsWith('audio/mpeg') &&
       typeof MediaSource !== 'undefined' &&
