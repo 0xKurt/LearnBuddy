@@ -454,6 +454,8 @@ const learning = buddyContracts({
     announces: AnnouncedPractice.nullable().optional().catch(null),
   },
   home: {
+    /** Explicit languages of her learning content, for silent unmetered pack preparation. */
+    learning_languages: z.array(z.string()).optional(),
     now: NowCard.nullable().catch(null),
     notice: HomeNotice.nullable().catch(null),
     /**

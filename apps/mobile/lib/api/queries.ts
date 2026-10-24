@@ -113,13 +113,15 @@ export function prefetchHome(): void {
  * Only the screen she sees asks (#637): the chat under a practice neither polls nor redraws; it
  * catches up when she comes back (a stale home is fetched again on return).
  */
-export const useHome = () =>
-  useQuery({
+export const useHome = () => {
+  const query = useQuery({
     queryKey: keys.home,
     queryFn: loadHome,
     subscribed: useOnScreen(),
     refetchInterval: (q) => homePollMs(q.state.data),
   });
+  return query;
+};
 
 /**
  * The home a step brought back, for every screen. Not written when it is older than the one held

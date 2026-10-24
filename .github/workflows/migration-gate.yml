@@ -1,0 +1,33 @@
+name: Migration gate
+
+on:
+  pull_request:
+    paths:
+      - 'infra/supabase/migrations/**'
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Base commit or ref to compare against the selected candidate ref'
+        required: true
+        default: 'origin/main'
+
+permissions:
+  contents: read
+
+jobs:
+  migration-gate:
+    name: migration-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify every candidate migration in production
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || inputs.base }}
+        run: node tools/guards/migration-applied.mjs "$BASE"
