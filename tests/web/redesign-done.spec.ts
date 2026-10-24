@@ -113,4 +113,6 @@ for (const look of SCREEN_LOOKS)
     ).toBeVisible();
     await back.click();
     await expect(page.getByLabel('Schreib Buddy …')).toBeVisible();
+    await expect(page.getByText(practiceDE.summary.title, { exact: true }).last()).toBeVisible();
+    await screenShots(page, `done-${key}-home-result`);
   });

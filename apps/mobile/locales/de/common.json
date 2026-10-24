@@ -5,11 +5,11 @@
     "more": "Mehr",
     "add": "Hinzufügen",
     "mic": "Sprechen",
-    "speak": "Vorlesen",
+    "speak": "Anhören",
     "stop": "Anhalten",
     "pin_delete": "Letzte Ziffer löschen",
     "pin_progress": "{{count}} von 4 Ziffern eingegeben",
-    "camera": "Foto machen",
+    "camera": "Foto hinzufügen",
     "keyboard": "Tastatur",
     "language": "Sprache wählen",
     "send": "Senden",
@@ -47,8 +47,8 @@
       "failed": "Die Aufnahme hat nicht geklappt. Versuch es bitte nochmal.",
       "part_lost": "Ein Stück deiner Aufnahme ist verloren gegangen – der Rest steht schon da."
     },
-    "read_again": "Nochmal vorlesen",
-    "read_aloud": "Vorlesen",
+    "read_again": "Nochmal anhören",
+    "read_aloud": "Anhören",
     "recording": "Ich höre zu … {{time}} / {{max}}",
     "recording_open": "Ich höre zu … {{time}}",
     "recording_open_value": "Aufnahme läuft, {{time}}",
@@ -56,7 +56,10 @@
     "stop": "Aufnahme stoppen",
     "stop_hint": "Danach schreibe ich auf, was du gesagt hast.",
     "topic": "Sagen statt tippen",
-    "transcribing": "Ich schreibe auf, was du gesagt hast …"
+    "transcribing": "Ich schreibe auf, was du gesagt hast …",
+    "done": "Fertig",
+    "target": "Ziel {{target}}",
+    "finishing": "Aufnahme wird beendet …"
   },
   "session": {
     "expired": "Du wurdest abgemeldet. Melde dich neu an – was noch nicht gesendet war, ist noch da."
@@ -86,7 +89,7 @@
     "s1_title": "Sag es Buddy einfach",
     "s1_body": "Schreiben, sprechen oder ein Foto zeigen – alle drei Wege führen ins selbe Gespräch.",
     "s2_title": "Aus deinem Blatt werden Übungen",
-    "s2_body": "Fotografiere ein Arbeitsblatt, und Buddy macht daraus Fragen zum Üben – passend zu deinem Stoff.",
+    "s2_body": "Fotografiere ein Arbeitsblatt, und Buddy macht daraus Aufgaben zum Üben – passend zu deinem Stoff.",
     "s3_title": "Buddy denkt mit",
     "s3_body": "Tests, Themen, der richtige Moment zum Üben: Buddy behält das für dich im Kopf und meldet sich nur, wenn ihr das so wollt.",
     "s4_title": "Such dir deine Farben aus",
@@ -95,5 +98,22 @@
     "start": "Los geht's",
     "skip": "Überspringen",
     "step_label": "{{n}} von {{count}}"
+  },
+  "delete": {
+    "keep": "Behalten",
+    "item": {
+      "title": "Aufgabe löschen?",
+      "body": "Die Aufgabe kommt nicht mehr dran. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Aufgabe löschen",
+      "done": "Aufgabe gelöscht.",
+      "kept": "Die Aufgabe bleibt."
+    },
+    "material": {
+      "title": "Blatt löschen?",
+      "body": "„{{title}}“ und die Aufgaben daraus werden gelöscht, die Fotos auch. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Blatt löschen",
+      "done": "Das Blatt ist weg.",
+      "kept": "Alles bleibt, wie es war."
+    }
   }
 }

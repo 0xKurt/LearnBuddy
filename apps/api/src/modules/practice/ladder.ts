@@ -7,7 +7,8 @@ import type { AnswerResponse } from '@learnbuddy/shared-types/contracts';
 
 import { t } from '../../i18n/index.js';
 import { noSingleSolution } from './evaluate.js';
-import { shownSolution, type ItemRow } from './service.js';
+import type { ItemRow } from './service.js';
+import { shownSolution } from './secrets.js';
 import { answersOnScreen } from './viewParts.js';
 
 /**

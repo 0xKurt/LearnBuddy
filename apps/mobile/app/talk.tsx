@@ -30,7 +30,7 @@ import type { MessageView } from '@learnbuddy/shared-types/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Platform, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn } from '../components/lb/Btn.js';
@@ -41,6 +41,7 @@ import type { OrbMode } from '../components/voice/TalkOrb.js';
 import { carriesCard, sceneOf, talkTail, useEndScene } from '../components/voice/talkScene.js';
 import { TalkStage } from '../components/voice/TalkStage.js';
 import { TalkTail } from '../components/voice/TalkTail.js';
+import { MicStatus } from '../components/voice/MicButton.js';
 import { VoiceRow } from '../components/voice/VoiceRow.js';
 import { talkMode } from '../lib/buddy/moon.js';
 import { useBuddyVoice } from '../lib/speech/useBuddyVoice.js';
@@ -54,6 +55,7 @@ import { messageFor, turnFailureText } from '../lib/errors.js';
 import { haptic } from '../lib/haptics.js';
 import { playCue } from '../lib/speech/cues.js';
 import { AppearText } from '../components/lb/Motion.js';
+import { sceneLanguage, useSceneLanguage } from '../lib/buddy/useSceneLanguage.js';
 import { currentLocale } from '../lib/i18n/index.js';
 import { dropped, reacted, tapped } from '../lib/perf.js';
 import { speak, stop as stopSpeaking, type ListenEnd } from '../lib/speech/listen.js';
@@ -109,7 +111,7 @@ export default function TalkScreen() {
   const open = useRef(true);
 
   // While a scene runs (a roleplay, issue #244) she speaks its language, and the mic listens in it.
-  const sceneLang = sceneOf(useHome().data)?.language ?? null;
+  const sceneLang = useSceneLanguage();
   const voice = useVoiceInput({
     purpose: 'message',
     lang: sceneLang,
@@ -173,7 +175,7 @@ export default function TalkScreen() {
       tapped('first_audio');
       setPhase('speaking');
       along.speaker = createStreamSpeaker(
-        currentLocale(),
+        sceneLang,
         (sentence) => spokenText(sentence, say),
         (why) => {
           spokenEnd = why;
@@ -254,7 +256,7 @@ export default function TalkScreen() {
         tapped('first_audio');
         // A line in a roleplay is read in the roleplay's language; once it has ended, the
         // feedback (the newest message then) is read in hers again (issue #244).
-        void speak(r.text, sceneOf(res.home)?.language ?? currentLocale(), {
+        void speak(r.text, sceneLanguage(res.home, currentLocale()), {
           transform: (sentence) => spokenText(sentence, say),
           onEnd: (why) => {
             spokenEnd = why;
@@ -297,8 +299,8 @@ export default function TalkScreen() {
   // (Android service, installed languages, the permission) are fetched once now, while
   // the screen still opens — listening then starts without those round-trips, every turn.
   useEffect(() => {
-    warmRecognition(voiceLocale(currentLocale()));
-  }, []);
+    warmRecognition(voiceLocale(sceneLang));
+  }, [sceneLang]);
 
   // Leaving (or opening a card on top) ends everything: no reading aloud, no
   // microphone. Coming back makes the mic work again; she taps it to go on.
@@ -565,25 +567,16 @@ export default function TalkScreen() {
             paddingBottom: SPACE.xs,
           }}
         >
-          <Text
-            accessibilityRole="alert"
-            style={[TYPE.small, { color: palette.ink2, textAlign: 'center' }]}
-          >
-            {problem ??
-              (voice.denied
-                ? t(Platform.OS === 'web' ? 'common:voice.denied_web' : 'common:voice.denied')
-                : voice.hint
-                  ? t(`common:voice.problem.${voice.hint}`)
-                  : '')}
-          </Text>
-          {/* The same way out as everywhere else the mic is refused (talk-denied-no-settings-action).
-              The design has no refused microphone on this screen, so the button keeps the look it
-              has everywhere else that state shows (`MicStatus`, owner rule 2). */}
-          {!problem && voice.denied && Platform.OS !== 'web' ? (
-            <Btn variant="soft" pill center onPress={() => void Linking.openSettings()}>
-              {t('common:voice.open_settings')}
-            </Btn>
-          ) : null}
+          {problem ? (
+            <Text
+              accessibilityRole="alert"
+              style={[TYPE.small, { color: palette.ink2, textAlign: 'center' }]}
+            >
+              {problem}
+            </Text>
+          ) : (
+            <MicStatus voice={voice} />
+          )}
         </View>
       ) : null}
       {reading ? (
@@ -651,7 +644,7 @@ export default function TalkScreen() {
                     haptic.tap();
                     // The photo goes into the same conversation: the chat's bar takes it, with
                     // the camera open at once (issue #519) — no screen of its own in between.
-                    attachInChat({ open: 'camera' });
+                    attachInChat({ open: 'menu' });
                   },
                 }
               : null

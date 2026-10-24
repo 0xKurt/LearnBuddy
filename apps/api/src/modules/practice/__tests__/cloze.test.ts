@@ -329,9 +329,9 @@ describe('cloze: her answer, gap by gap (Regel 0)', () => {
       GERMAN,
     )!;
     expect(strict.gaps[0]).toMatchObject({ verdict: 'near', rule: 'spelling' });
-    // In biology it is not: no rule decides, the gap stays open for the model.
+    // In biology spelling is not the point: code accepts the same folded answer.
     const gentle = checkCloze(banked, fill(['wasser', 'Traubenzucker', 'Sauerstoff']), BIOLOGY)!;
-    expect(gentle.gaps[0]).toMatchObject({ verdict: 'open', rule: 'folded', by: null });
+    expect(gentle.gaps[0]).toMatchObject({ verdict: 'right', rule: 'folded', by: 'rule' });
   });
 
   it('an accepted form is right; a number with another value is wrong; anything else is open', () => {

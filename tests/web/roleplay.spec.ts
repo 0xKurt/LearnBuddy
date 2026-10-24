@@ -9,6 +9,7 @@ import buddyDe from '../../apps/mobile/locales/de/buddy.json';
 import { expect, test, type Page } from '@playwright/test';
 
 import { shot } from './fit';
+import { voiceAsSilence } from './talk';
 
 async function onboardChild(page: Page): Promise<void> {
   await page.goto('/');
@@ -54,6 +55,7 @@ async function setDark(page: Page, dark: boolean): Promise<void> {
 test('roleplay: in the chat, in the role, by voice, and feedback per key point', async ({
   page,
 }) => {
+  test.setTimeout(300_000);
   await onboardChild(page);
 
   // ── Asked for in the chat: the role card stands under Buddy's first line ──
@@ -82,6 +84,42 @@ test('roleplay: in the chat, in the role, by voice, and feedback per key point',
   await send(page, 'Hello! A hot chocolate, please.');
   await expect(page.getByText('Would you like a piece of cake with it?')).toBeVisible();
   await shot(page, '41-roleplay-line');
+
+  // The chat mic and message playback use the same scene language as conversation mode (#918).
+  const dictated = page.waitForRequest((r) => r.url().endsWith('/v1/voice/transcribe'));
+  await page.getByRole('button', { name: 'Nachricht sprechen', exact: true }).click();
+  await page.waitForTimeout(1200);
+  await page.getByRole('button', { name: 'Aufnahme stoppen', exact: true }).click();
+  expect((await dictated).postDataJSON()).toMatchObject({ lang: 'en' });
+  await expect(page.getByLabel('Schreib Buddy …')).toHaveValue('How much it costs?');
+  await page.getByLabel('Schreib Buddy …').fill('');
+  await voiceAsSilence(page, 10_000);
+  for (const dark of [false, true]) {
+    await setDark(page, dark);
+    const line = page.getByText('Would you like a piece of cake with it?', { exact: false }).last();
+    const box = await line.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(500);
+    await page.mouse.up();
+    const menu = page.locator('[aria-modal="true"]');
+    await expect(menu.getByRole('heading', { name: 'Buddys Nachricht' })).toBeVisible();
+    const played = page.waitForRequest((r) => r.url().endsWith('/v1/voice/speech'));
+    await menu.getByRole('button', { name: 'Anhören', exact: true }).click();
+    expect((await played).postDataJSON()).toMatchObject({ locale: expect.stringMatching(/^en-/) });
+    await expect(menu.getByRole('button', { name: 'Anhalten', exact: true })).toBeVisible();
+    await menu.getByRole('button', { name: 'Anhalten', exact: true }).click();
+    const slowed = page.waitForRequest((r) => r.url().endsWith('/v1/voice/speech'));
+    await menu.getByRole('button', { name: 'Langsam anhören', exact: true }).click();
+    expect((await slowed).postDataJSON()).toMatchObject({
+      locale: expect.stringMatching(/^en-/),
+      slow: true,
+    });
+    await shot(page, `41b-roleplay-message-${dark ? 'dark' : 'light'}`, { opened: true });
+    await menu.getByRole('button', { name: 'Anhalten', exact: true }).click();
+    await menu.getByRole('button', { name: 'Schließen', exact: true }).click();
+  }
 
   // ── A line in German: the app's own hint, the model's words are not shown ──
   await send(page, 'Was kostet das?');

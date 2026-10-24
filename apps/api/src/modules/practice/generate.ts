@@ -396,7 +396,11 @@ export async function startTopic(
   if (running) return running;
   // A joining tap waits for the corrected offer too, not just the failed model call.
   const started = prepareTopic(deps, learner, input).catch(async (err: unknown) => {
-    await recordOfferFailure(deps, learner, input.client_request_id, err);
+    try {
+      await recordOfferFailure(deps, learner, input.client_request_id, err);
+    } catch {
+      console.warn('[practice] offer correction could not be recorded');
+    }
     throw err;
   });
   inFlight.set(key, started);

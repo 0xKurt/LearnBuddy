@@ -27,7 +27,7 @@ import { promptVersion } from '../../llm/promptVersion.js';
 export const CONCERN_MEANING = {
   is: 'true only when the learner tells of DANGER to herself: being hurt, bullied, abused or threatened, thinking of hurting herself, harming her own body, feeling unsafe or hopeless.',
   isNot:
-    'NOT true for an insult, rudeness towards you, ordinary school stress ("I hate maths", "this is stupid"), or a hard turn in her life she is only telling you about while naming no danger.',
+    'NOT true for an insult, a provocation, rudeness towards you, ordinary school stress, or a hard turn in her life she is only telling you about while naming no danger.',
 } as const;
 
 const DistressDecision = z.object({

@@ -43,7 +43,7 @@ import { hash } from './arrange.js';
 import { dollarMathRuns } from './dollarMath.js';
 import {
   differentNumber,
-  NEAR_MISS,
+  verdictForRule,
   ruleCheck,
   type ItemForCheck,
   type RuleVerdict,
@@ -285,12 +285,10 @@ export type ClozeCheck = {
 export type GapContext = Pick<ItemForCheck, 'spelling' | 'subject_kind'>;
 
 function verdictOf(rule: RuleVerdict): GapVerdict {
-  if (rule === 'correct') return 'right';
-  if (rule === 'incorrect') return 'wrong';
-  // 'folded' (case or punctuation where spelling is not the point) is the tutor's to judge
-  // gently in every other question too; so is everything the rules could not decide.
-  if (rule === 'folded' || rule === 'unknown') return 'open';
-  return NEAR_MISS.has(rule) ? 'near' : 'open';
+  const verdict = verdictForRule(rule);
+  return verdict === null
+    ? 'open'
+    : ({ correct: 'right', incorrect: 'wrong', partially_correct: 'near' }[verdict] as GapVerdict);
 }
 
 /** One gap against its key, with the rules every written answer meets. */

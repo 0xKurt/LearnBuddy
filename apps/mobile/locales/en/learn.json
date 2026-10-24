@@ -26,7 +26,7 @@
   "topic": {
     "practice": {
       "title": "What do you want to practise?",
-      "hint": "I'll ask you a few questions about it.",
+      "hint": "I'll give you a few tasks about it.",
       "placeholder": "e.g. adding fractions, simple past",
       "ex_1": "Adding fractions",
       "ex_2": "Simple past",
@@ -34,7 +34,7 @@
     },
     "test": {
       "title": "What is the test about?",
-      "hint": "One answer per question, no hints – you'll see the result at the end.",
+      "hint": "One answer per task, no hints – you'll see the result at the end.",
       "placeholder": "e.g. fractions, unit 3, the Middle Ages",
       "ex_1": "Fractions",
       "ex_2": "Simple past",

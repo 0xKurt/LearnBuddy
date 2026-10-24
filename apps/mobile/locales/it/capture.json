@@ -53,8 +53,8 @@
     "title_pages": "Di nuovo pagina {{pages}}",
     "intro": "Solo quello che mancava: il resto è già pronto. Fai in modo che ci sia tutta la pagina.",
     "title_add": "Aggiungi una pagina",
-    "intro_add": "Le sue domande si aggiungono a questo foglio.",
-    "added": "Pagina inviata. Appena sarà letta, le sue domande si aggiungeranno a questa scheda."
+    "intro_add": "I suoi esercizi si aggiungono a questa scheda.",
+    "added": "Pagina inviata. Appena sarà letta, i suoi esercizi si aggiungeranno a questa scheda."
   },
   "draft": {
     "title": "Le tue foto non sono ancora state inviate",

@@ -20,8 +20,8 @@
     "back": "To your material"
   },
   "untitled": "Untitled",
-  "questions_one": "{{count}} question",
-  "questions_other": "{{count}} questions",
+  "questions_one": "{{count}} task",
+  "questions_other": "{{count}} tasks",
   "pages_one": "{{count}} page",
   "pages_other": "{{count}} pages",
   "status": {
@@ -37,14 +37,14 @@
     "model_error": "Something went wrong while reading.",
     "photos_missing": "Not all photos arrived.",
     "budget_exhausted": "I can't read any more sheets today. It'll work again tomorrow.",
-    "blocked": "The safety filter won't let this sheet through. Reading it again won't help – just type the questions.",
+    "blocked": "The safety filter won't let this sheet through. Reading it again won't help – just type the tasks.",
     "form_not_practicable": "I could read the sheet just fine – I just can't practise this kind of task with you. Ask me about it: I'll talk you through the steps.",
     "nothing_marked": "I found nothing on the test marked as wrong – so there's nothing to practise. If something is marked in red after all, take the photo again.",
     "too_large": "Too many large photos at once – send the sheet in two parts."
   },
   "source": {
     "corrected_test": "From your corrected test: new tasks on what was marked – with other numbers and words.",
-    "notebook_entry": "From your notebook entry: a few short questions on the last lesson – good for tomorrow morning."
+    "notebook_entry": "From your notebook entry: a few short tasks on the last lesson – good for tomorrow morning."
   },
   "incomplete_hint": "The photos didn't fully arrive. Delete the sheet and photograph it again.",
   "incomplete_page": {
@@ -68,18 +68,12 @@
   "retry_started": "I'm reading the sheet again.",
   "delete": "Delete",
   "delete_label": "Delete “{{title}}”",
-  "delete_sheet": {
-    "title": "Delete sheet?",
-    "body": "“{{title}}” and its questions will be deleted, and the photos too. This can't be undone.",
-    "confirm": "Delete"
-  },
-  "deleted": "Deleted.",
   "empty": {
     "title": "Your sheets end up here",
     "body": "Photograph a worksheet, a textbook page or your exercise book – I'll turn it into practice."
   },
-  "open": "See questions",
-  "open_label": "See the questions from “{{title}}”",
+  "open": "See tasks",
+  "open_label": "See the tasks from “{{title}}”",
   "rename": "Rename",
   "rename_label": "Rename “{{title}}”",
   "rename_sheet": {
@@ -90,16 +84,16 @@
   },
   "renamed": "Renamed.",
   "items": {
-    "loading": "Getting the questions …",
+    "loading": "Getting the tasks …",
     "back": "Back",
-    "reading": "I'm reading the sheet right now – the questions will be here soon.",
-    "empty_title": "No questions left here",
-    "empty_body": "You deleted all the questions from this sheet. Just take a new photo of it if you'd like to practise with it again.",
-    "question_label": "Question {{number}}",
-    "more_label": "More for question {{number}}",
+    "reading": "I'm reading the sheet right now – the tasks will be here soon.",
+    "empty_title": "No tasks left here",
+    "empty_body": "You deleted all the tasks from this sheet. Just take a new photo of it if you'd like to practise with it again.",
+    "question_label": "Task {{number}}",
+    "more_label": "More for task {{number}}",
     "choices": "Options",
     "delete": "Delete",
-    "delete_label": "Delete question {{number}}",
+    "delete_label": "Delete task {{number}}",
     "result": {
       "first_try": "Knew it right away",
       "with_help": "With a little help",
@@ -107,12 +101,6 @@
       "never_asked": "Not practised yet"
     }
   },
-  "item_delete_sheet": {
-    "title": "Delete question?",
-    "body": "This question won't come up again.",
-    "confirm": "Delete"
-  },
-  "item_deleted": "Question deleted.",
   "add_page": "Add a page",
   "subjects": "Subjects",
   "recent": "Recent"

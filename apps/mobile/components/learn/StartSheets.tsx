@@ -51,8 +51,8 @@ export const LearnStartSheets: StartMenu['Sheets'] = ({ open, onOpen }) => {
                 {
                   label: t('learn:vocab.photo'),
                   icon: 'camera',
-                  // The camera at once; the page lands in the chat's bar (issue #519).
-                  onPress: () => fromChoice(() => askAttach({ open: 'camera' })),
+                  // The source menu first; the page lands in the chat's bar (issue #519).
+                  onPress: () => fromChoice(() => askAttach({ open: 'menu' })),
                 },
                 {
                   label: t('learn:vocab.type'),
@@ -65,7 +65,7 @@ export const LearnStartSheets: StartMenu['Sheets'] = ({ open, onOpen }) => {
                   label: t('learn:homework.photo'),
                   icon: 'camera',
                   onPress: () =>
-                    fromChoice(() => askAttach({ open: 'camera', link: { purpose: 'homework' } })),
+                    fromChoice(() => askAttach({ open: 'menu', link: { purpose: 'homework' } })),
                 },
                 {
                   label: t('learn:homework.type'),

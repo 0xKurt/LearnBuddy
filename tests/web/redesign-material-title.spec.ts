@@ -18,11 +18,11 @@ for (const look of SCREEN_LOOKS) {
     await openMenu(page, 'Dein Material');
     await page.getByRole('button', { name: /^Mathe: / }).click();
     // Inside its subject the row opens what can be done with the sheet (ui_kits/app/More.jsx:70,
-    // 82–87); "Fragen ansehen" in that sheet leads here.
+    // 82–87); "Aufgaben ansehen" in that sheet leads here.
     await page.getByRole('button', { name: 'Brüche kürzen und vergleichen', exact: true }).click();
     await page
       .locator('[aria-modal="true"]:visible')
-      .getByRole('button', { name: 'Fragen ansehen', exact: true })
+      .getByRole('button', { name: 'Aufgaben ansehen', exact: true })
       .click();
     await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
     // ui_kits/app/Extra.jsx:111: the head carries the sheet — its name, and "Mathe · 1 Seite".

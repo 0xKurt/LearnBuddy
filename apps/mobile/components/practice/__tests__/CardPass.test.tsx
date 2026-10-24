@@ -222,7 +222,7 @@ describe('die Karte', () => {
       }),
     );
     expect(screen.getByText('Karte 1 von 2')).toBeTruthy();
-    expect(screen.queryByText('Frage 1 von 2')).toBeNull();
+    expect(screen.queryByText('Aufgabe 1 von 2')).toBeNull();
   });
 
   it('keeps an abandoned pass factual and offers its original exit', () => {

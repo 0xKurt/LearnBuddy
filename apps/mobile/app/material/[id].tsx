@@ -23,7 +23,7 @@ import { Btn } from '../../components/lb/Btn.js';
 import { Card } from '../../components/lb/Card.js';
 import { EmptyState } from '../../components/lb/EmptyState.js';
 import { ErrorNote } from '../../components/lb/ErrorNote.js';
-import { LbTextInput } from '../../components/lb/LbTextInput.js';
+import { EditTextSheet } from '../../components/lb/EditTextSheet.js';
 import { ListGroup, Row } from '../../components/lb/ListGroup.js';
 import { isGone, LoadFailed } from '../../components/lb/LoadFailed.js';
 import { QuestionsSkeleton } from '../../components/lb/Skeletons.js';
@@ -124,7 +124,7 @@ export default function MaterialScreen() {
         return { material: { ...v.material, item_count: items.length }, items };
       });
       refreshAround(id);
-      toast.show(t('library:item_deleted'));
+      toast.show(t('common:delete.item.done'));
     } catch (err) {
       if (err instanceof ApiError && err.code === 'not_found') {
         // Already gone (or the whole sheet was deleted elsewhere): show what is true now.
@@ -385,10 +385,10 @@ export default function MaterialScreen() {
         // The sheet is about this one question; deleting asks once more in the same sheet.
         title={
           confirming || !target
-            ? t('library:item_delete_sheet.title')
+            ? t('common:delete.item.title')
             : t('library:items.question_label', { number: target.number })
         }
-        closeLabel={t(confirming ? 'common:actions.cancel' : 'common:actions.close')}
+        closeLabel={t(confirming ? 'common:delete.keep' : 'common:actions.close')}
         onClose={() => setDeleteOpen(false)}
       >
         {target ? (
@@ -398,10 +398,10 @@ export default function MaterialScreen() {
         ) : null}
         {confirming ? (
           <>
-            <Text style={[TYPE.body, SHEET_TEXT]}>{t('library:item_delete_sheet.body')}</Text>
+            <Text style={[TYPE.body, SHEET_TEXT]}>{t('common:delete.item.body')}</Text>
             <ErrorNote text={deleteError} />
             <Btn variant="danger" pill full busy={deleting} onPress={() => void confirmDelete()}>
-              {t('library:item_delete_sheet.confirm')}
+              {t('common:delete.item.confirm')}
             </Btn>
           </>
         ) : (
@@ -421,33 +421,23 @@ export default function MaterialScreen() {
         )}
       </Sheet>
 
-      <Sheet
+      <EditTextSheet
         visible={renameOpen}
         title={t('library:rename_sheet.title')}
-        closeLabel={t('common:actions.cancel')}
+        label={t('library:rename_sheet.label')}
+        placeholder={t('library:rename_sheet.placeholder')}
         onClose={() => setRenameOpen(false)}
-        footer={
-          <Btn pill full busy={renaming} disabled={!draftOk} onPress={() => void saveRename()}>
-            {t('common:actions.save')}
-          </Btn>
-        }
-      >
-        <LbTextInput
-          value={draft}
-          onChangeText={(v) => {
-            setDraft(v);
-            setRenameError(null);
-          }}
-          placeholder={t('library:rename_sheet.placeholder')}
-          accessibilityLabel={t('library:rename_sheet.label')}
-          maxLength={TITLE_MAX}
-          autoFocus
-          returnKeyType="done"
-          onSubmitEditing={() => void saveRename()}
-          error={renameError !== null}
-        />
-        <ErrorNote text={renameError} />
-      </Sheet>
+        onSave={() => void saveRename()}
+        value={draft}
+        onChange={(v) => {
+          setDraft(v);
+          setRenameError(null);
+        }}
+        maxLength={TITLE_MAX}
+        canSave={draftOk}
+        busy={renaming}
+        error={renameError}
+      />
     </Screen>
   );
 }

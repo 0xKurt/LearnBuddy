@@ -34,23 +34,13 @@ export async function drillViewOf(
   );
   let summary: DrillView['summary'] = null;
   if (session.status === 'finished') {
-    const rows = await db.query<{
-      drill_fact: string | null;
-      status: string;
-      before: { last_outcome?: string | null } | null;
-    }>(
+    const rows = await db.query<DrillSummaryRow>(
       `select i.drill_fact, si.status, si.state_before as before
          from session_items si join items i on i.id = si.item_id
         where si.session_id = $1 and si.status <> 'open'`,
       [session.id],
     );
-    const tasks: ClosedTask[] = rows.flatMap((r) => {
-      const fact = r.drill_fact ? factOf(r.drill_fact) : null;
-      return fact
-        ? [{ fact, correct: r.status === 'correct', before: r.before?.last_outcome ?? null }]
-        : [];
-    });
-    summary = drillLine(tasks, spec);
+    summary = drillSummary(rows, spec);
   }
   return {
     spec,
@@ -66,4 +56,25 @@ export async function drillViewOf(
       : null,
     summary,
   };
+}
+
+export type DrillSummaryRow = {
+  drill_fact: string | null;
+  status: string;
+  before: { last_outcome?: string | null } | null;
+};
+
+/** One computation for a finished drill, on the result page and home. */
+export function drillSummary(rows: readonly DrillSummaryRow[], raw: unknown): DrillView['summary'] {
+  const spec = DrillSpec.safeParse(raw);
+  if (!spec.success) return null;
+  const tasks: ClosedTask[] = rows
+    .filter((r) => r.status !== 'open')
+    .flatMap((r) => {
+      const fact = r.drill_fact ? factOf(r.drill_fact) : null;
+      return fact
+        ? [{ fact, correct: r.status === 'correct', before: r.before?.last_outcome ?? null }]
+        : [];
+    });
+  return drillLine(tasks, spec.data);
 }

@@ -1,6 +1,6 @@
 // One thing Buddy keeps: the statement, until when it counts (temporary
 // ones), where it came from (the learner's own words), and the two ways to
-// correct it. Editing happens in place; the screen does the saving.
+// correct it. Editing uses the shared text sheet; the screen does the saving.
 
 import type { MemoryView } from '@learnbuddy/shared-types/contracts';
 import { useEffect, useRef, useState } from 'react';
@@ -11,13 +11,11 @@ import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { UI } from '../../lib/theme/components.js';
 import { RADIUS } from '../../lib/theme/radius.js';
-import { SPACE } from '../../lib/theme/space.js';
 import { formatLastDay } from '../../lib/time.js';
-import { Btn } from '../lb/Btn.js';
+import { EditTextSheet } from '../lb/EditTextSheet.js';
 import { Row, ListGroup } from '../lb/ListGroup.js';
 import { Sheet } from '../lb/Sheet.js';
 import { SHEET_SWAP_MS } from '../buddy/StartSheets.js';
-import { LbTextInput, type LbTextInputRef } from '../lb/LbTextInput.js';
 
 /** UpdateMemoryRequest allows 1–300 characters (trimmed). */
 const STATEMENT_MAX = 300;
@@ -38,7 +36,6 @@ type Props = {
   onCancel: () => void;
   onSave: () => void;
   onRemove: () => void;
-  onInputFocus: (input: LbTextInputRef | null) => void;
 };
 
 export function MemoryItem({
@@ -55,11 +52,9 @@ export function MemoryItem({
   onCancel,
   onSave,
   onRemove,
-  onInputFocus,
 }: Props) {
   const { palette } = useTheme();
   const { t, i18n } = useTranslation('memory');
-  const input = useRef<LbTextInputRef>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const current = useRef({ id: memory.id, locked, onEdit, onRemove });
@@ -113,41 +108,31 @@ export function MemoryItem({
           overflow: 'hidden',
         }}
       >
-        {editing ? (
-          <View style={{ padding: SPACE.lg, gap: SPACE.sm }}>
-            <LbTextInput
-              ref={input}
-              value={draft}
-              onChangeText={onDraft}
-              onFocus={() => onInputFocus(input.current)}
-              autoFocus
-              multiline
-              maxLength={STATEMENT_MAX}
-              editable={!saving}
-              accessibilityLabel={t('edit_input')}
-            />
-            <Text style={[TYPE.meta, { color: palette.ink2 }]}>{source}</Text>
-            <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
-              <Btn size="sm" onPress={onSave} disabled={!canSave}>
-                {t('save')}
-              </Btn>
-              <Btn size="sm" variant="ghost" onPress={onCancel} disabled={saving}>
-                {t('cancel')}
-              </Btn>
-            </View>
-          </View>
-        ) : (
-          <Row
-            indicator="more"
-            title={memory.statement}
-            sub={[until, source].filter(Boolean).join(' ')}
-            onPress={() => {
-              if (pending.current === null) setMenuOpen(true);
-            }}
-            disabled={locked}
-          />
-        )}
+        <Row
+          indicator="more"
+          title={memory.statement}
+          sub={[until, source].filter(Boolean).join(' ')}
+          onPress={() => {
+            if (pending.current === null) setMenuOpen(true);
+          }}
+          disabled={locked}
+        />
       </View>
+      <EditTextSheet
+        visible={editing}
+        title={t('edit_input')}
+        label={t('edit_input')}
+        value={draft}
+        onChange={onDraft}
+        onSave={onSave}
+        onClose={onCancel}
+        maxLength={STATEMENT_MAX}
+        canSave={canSave}
+        busy={saving}
+        multiline
+      >
+        <Text style={[TYPE.meta, { color: palette.ink2 }]}>{source}</Text>
+      </EditTextSheet>
       <Sheet
         visible={menuOpen}
         // The sheet is about this one thing: it carries its words (ui_kits/app/More.jsx:39–44).

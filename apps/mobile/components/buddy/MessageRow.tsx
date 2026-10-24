@@ -205,7 +205,7 @@ export const MessageRow = memo(function MessageRow({
                 accessibilityHint={t('thread.message_hint')}
                 accessibilityActions={[
                   { name: 'copy', label: t('message.copy') },
-                  ...(mine ? [] : [{ name: 'speak', label: t('message.speak') }]),
+                  ...(mine ? [] : [{ name: 'speak', label: t('common:voice.read_aloud') }]),
                 ]}
                 onAccessibilityAction={(e) => {
                   if (e.nativeEvent.actionName === 'copy' || e.nativeEvent.actionName === 'speak')

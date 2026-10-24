@@ -2,7 +2,7 @@
 // card "Foto machen", the ⋯ menu's homework and vocabulary, a notice in the chat, the library, a
 // sheet's "Seite hinzufügen", the conversation's camera, a share from another app — hands its
 // wish to the chat's input bar instead of opening a screen of its own. The bar opens the small
-// menu (Kamera · Fotos · Dateien) or the camera or picker straight away; the pages land above
+// menu (Kamera · Fotos · Dateien) or a picker explicitly requested by a share; the pages land above
 // her text, and she sends them like a message. Before #519 each of them pushed `/capture`, a
 // page that asked again where the photo should come from and then wanted "Senden".
 //
@@ -64,7 +64,12 @@ type Wish = {
 
 /** On the chat's own screen: its input bar opens what was asked for. */
 export function askAttach({ open, link = {}, resume = false, pending = false }: Wish): void {
-  useAttachRequest.getState().ask({ link: { ...CHAT_LINK, ...link }, open, resume, pending });
+  useAttachRequest.getState().ask({
+    link: { ...CHAT_LINK, ...link },
+    open: open === 'camera' ? 'menu' : open,
+    resume,
+    pending,
+  });
 }
 
 /** From any other screen: back to the chat, whose input bar opens what was asked for. */

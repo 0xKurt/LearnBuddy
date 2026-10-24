@@ -40,7 +40,7 @@ describe('grouped material row', () => {
     fireEvent.click(action);
     expect(start).toHaveBeenCalledWith('practice');
     expect(open).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Fragen aus „Mein Blatt“ ansehen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Aufgaben aus „Mein Blatt“ ansehen' }));
     expect(open).toHaveBeenCalledTimes(1);
   });
   it('keeps all-spoken and reading materials truthful', () => {

@@ -17,7 +17,7 @@ import { sendMessageStreamed, stopMessage } from '../api/endpoints.js';
 import { keys, queryClient, setHome } from '../api/queries.js';
 import { messageFor, turnFailureText } from '../errors.js';
 import { haptic } from '../haptics.js';
-import { currentLocale } from '../i18n/index.js';
+import { useSceneLanguage } from './useSceneLanguage.js';
 import { dropped, reacted, tapped } from '../perf.js';
 import { speakInOrder, stop as stopListening } from '../speech/listen.js';
 import { useSay } from '../speech/say.js';
@@ -36,6 +36,7 @@ type Options = {
 
 export function useHomeSend({ thread, onSend }: Options) {
   const { t } = useTranslation('buddy');
+  const sceneLang = useSceneLanguage();
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null);
   /** Buddy's reply while it is being written (an answer that changes nothing). */
   const [live, setLive] = useState<string | null>(null);
@@ -59,9 +60,9 @@ export function useHomeSend({ thread, onSend }: Options) {
     if (!reply) return;
     awaitingReply.current = null;
     const text = spokenText(reply.text, say);
-    if (voiceOn) speakInOrder([{ text, lang: currentLocale() }]);
+    if (voiceOn) speakInOrder([{ text, lang: sceneLang }]);
     else announce(t('buddy:a11y.reply', { text }));
-  }, [thread, voiceOn, say, t]);
+  }, [thread, voiceOn, say, t, sceneLang]);
 
   // Going to another screen ends whatever is being read, and a reply that comes later is not
   // read there.
@@ -122,7 +123,7 @@ export function useHomeSend({ thread, onSend }: Options) {
           if (!voiceOn) return;
           if (!along.speaker) {
             along.speaker = createStreamSpeaker(
-              currentLocale(),
+              sceneLang,
               (sentence) => spokenText(sentence, say),
               () => undefined,
             );

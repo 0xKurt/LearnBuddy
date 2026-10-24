@@ -110,13 +110,13 @@ describe('saved material screen', () => {
 
   it('keeps deletion out of the card: ⋯, the row in its sheet, then one confirmation', async () => {
     renderInApp(<MaterialScreen />);
-    expect(screen.queryByRole('button', { name: 'Frage 1 löschen' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Mehr zu Frage 1' }));
-    expect(screen.getByRole('heading', { name: 'Frage 1' })).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Frage 1 löschen' }));
+    expect(screen.queryByRole('button', { name: 'Aufgabe 1 löschen' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Mehr zu Aufgabe 1' }));
+    expect(screen.getByRole('heading', { name: 'Aufgabe 1' })).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Aufgabe 1 löschen' }));
     expect(seam.remove).not.toHaveBeenCalled();
-    expect(screen.getByText('Frage löschen?')).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Löschen' }));
+    expect(screen.getByText('Aufgabe löschen?')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Aufgabe löschen' }));
     await waitFor(() => expect(seam.remove).toHaveBeenCalledWith('m-1', item.id));
   });
 
@@ -124,12 +124,12 @@ describe('saved material screen', () => {
     seam.data = { ...ready(), items: [], material: { ...ready().material, status: 'processing' } };
     const { rerender } = renderInApp(<MaterialScreen />);
     expect(
-      screen.getByText('Ich lese das Blatt gerade – gleich sind die Fragen da.'),
+      screen.getByText('Ich lese das Blatt gerade – gleich sind die Aufgaben da.'),
     ).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Seite hinzufügen' })).toBeNull();
     seam.data = { ...ready(), items: [] };
     rerender(<MaterialScreen />);
-    expect(screen.getByText('Hier sind keine Fragen mehr')).toBeDefined();
+    expect(screen.getByText('Hier sind keine Aufgaben mehr')).toBeDefined();
     // The empty page's one action fills the sheet again, for this sheet (issue #519).
     fireEvent.click(screen.getByRole('button', { name: 'Seite hinzufügen' }));
     expect(seam.attach).toHaveBeenCalledWith({

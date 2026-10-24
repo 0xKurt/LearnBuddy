@@ -1,7 +1,7 @@
 // Vorlesen everywhere (issue #434, owner on #386: Vorlesen and Gespräch are "global, in jeder
 // Übung"). A Kopfrechnen round and a card pass carry the same Vorlesen switch in their header,
 // read the task or the card's front aloud when Vorlesen is on, and read it again on a tap on it —
-// no new button; for a screen reader the target is "Nochmal vorlesen". The back of a card
+// no new button; for a screen reader the target is "Nochmal anhören". The back of a card
 // is never read unasked. Off, or where the server says it must not be heard (`read_aloud`),
 // nothing is read and the text is no target.
 // requires live verification in Claude Code session (the speech output is replaced)
@@ -146,13 +146,13 @@ describe.each([
 ] as const)('%s', (_name, show, front) => {
   it('carries the Vorlesen switch in its header', () => {
     show();
-    expect(screen.getByRole('switch', { name: /vorlesen/i })).toBeTruthy();
+    expect(screen.getByRole('switch', { name: /anhören/i })).toBeTruthy();
   });
 
   it('reads the task aloud when it appears, and again on a tap on it', () => {
     show();
     expect(texts()).toHaveLength(1);
-    const target = screen.getByRole('button', { name: 'Nochmal vorlesen' });
+    const target = screen.getByRole('button', { name: 'Nochmal anhören' });
     act(() => {
       fireEvent.click(target);
     });

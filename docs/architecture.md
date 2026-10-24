@@ -2557,6 +2557,44 @@ zwei Urteile; `null`, `other` und `he` erzeugen denselben Prompt Wort für Wort)
 
 ## Practice
 
+**One result on home and in practice** (#918). `NowCard.practice_result` carries the pass, clock
+expiry, total and drill summary. `loadSessions` uses `summarize`, `drillSummary` and `ranOut`, the
+same computations as the full session. `resultText` supplies titles and result sentences for the
+home card, ordinary result, flashcards and drill. `ResultNotice` also renders the greeting's
+result action; the greeting uses the shared `praiseShape`, and leaves cards and expired tests to
+their specific result. Running drill and ordinary offers share `useOfferRun` and the home bar's
+single continuation action.
+
+**Shared controls and copy** (#918). Practice errors use `LoadFailed` with the retry's real busy
+state. Material names and memories use `EditTextSheet` with the save action in the fixed footer.
+Preparation has one waiting indicator; `StartStatus` leaves it to an already busy action.
+Deletion copy and danger styling are shared. The learning registry supplies its listening
+control to the message menu through `messageListen`, preserving the core/domain boundary. `docs/copy-glossary.md` names the common terms in all
+five locales.
+
+The essay's `SheetCheck` deliberately remains the full-width footer button: this is the final
+action of the expanded writing form, pinned outside its scrolling text as rule 15 requires.
+The normal answer screen retains `ActionPill` in Composer's action slot. Both invoke the same
+Check action and readiness condition; the sheet introduces no second grading path (#918/19).
+
+Every attachment camera entry opens the source menu first. A work photo and a material photo
+share permission/error text and Android camera recovery, with different explicit destinations.
+A recovered work photo is consumed only by its recorded session and item, never sent to chat or
+stored as material; it passes through the existing quality/read/confirm flow. The same 30-minute
+handover window applies. Native process-kill recovery remains a physical-device verification gap.
+
+**One solution boundary** (#918). `practice/secrets.ts` supplies `secretsFor` to chat homework
+protection, prepared hints, requested hints, answer replies, the help tutor and re-explanations.
+It includes accepted alternatives and every structured key, together with the text already
+visible to the learner; `shownSolution` formats a displayed solution in the same module.
+A single cloze key is protected even when `items.answer` contains the whole completed passage.
+
+**Failed offers** (#918). A correction preserves free-form reply content and appends the fixed
+failure notice: stored replies have no reliable boundary between offer and other content.
+Only a known fixed notice is replaced, so retries do not repeat it. Correction and card state
+share the learner's context fence. If recording the correction fails, the original preparation
+error still reaches the caller; the secondary failure is logged without learner content.
+
 **New runs learn from mistakes** (#871). Before generating a practice or practice test,
 `practice/mistakeContext.ts` reads the learner's latest measured `session_items` result per
 question, within the requested subject and any source sheet/session topics. From the 60 most
@@ -3784,8 +3822,9 @@ checked with the rules of every written answer — `ruleCheck` as a `short` answ
 key and accepted forms, with the item's spelling rule (strict in language subjects), so a typo,
 missing accents or case where spelling counts is a named near miss, and a plain number with
 another value is wrong. With a bank, a bank word that is not this gap's is wrong for sure.
-Whatever no rule decides (`unknown`, or `folded` case/punctuation where spelling is not the
-point) is `open`; only those gaps go to the model (`judgeOpenGaps`, purpose `tutor`, prompt
+Case, ß/ss and punctuation where spelling is not the point (`folded`) are correct in code,
+through the same `verdictForRule` mapping used by tables and short answers (#918).
+Whatever no rule decides (`unknown`) is `open`; only those gaps go to the model (`judgeOpenGaps`, purpose `tutor`, prompt
 `cloze-gaps.v1`): the model returns a verdict per listed gap and nothing else — the reply stays
 code's. No model call when another gap is already wrong for sure; no model, no budget or an
 unreadable answer leaves the gap open, and then nothing is claimed (verdict null,
@@ -4240,7 +4279,7 @@ so the rules only say it when it is certain; everything else goes to the tutor (
   count. A difference only there is, per item (`items.spelling`) or by default for vocabulary and
   language subjects (German, English, French, Spanish, Latin, other language), a near miss "Fast
   richtig – schau nochmal genau auf Groß- und Kleinschreibung, ß und Satzzeichen" (D-2, strict);
-  elsewhere the tutor judges it gently (rule verdict `folded`).
+  elsewhere code accepts it (rule verdict `folded`, mapped by `verdictForRule` on every surface).
 - _Choices._ An option is named by its text (however written; words fold case) or by its badge
   letter — but a letter that is also another option's text ("A" with the, a, an) and an option
   followed by more words ("Richtig ist das nicht") go to the tutor. Since #227 A9 also by its
@@ -5541,6 +5580,10 @@ word list, so it stays a prompt rule.
   `practice_sessions.drill` = the spec), so the lock order, tenant isolation, export and deletion
   are the ones every session has; its tasks are `numeric` items of origin `buddy`, and
   `selectPracticeItems` leaves every one of them out of the practice the model prepares.
+  Unlike a general numeric question, whose requested form may itself be the skill (D-3), a
+  drill's computed fact always asks for a value (#918 finding 23). This is the same deliberate
+  boundary as `form_free`; drill facts are excluded from ordinary practice selection.
+
   _Answering_ (`POST /practice/sessions/:id/drill`, idempotent per `client_turn_id`, a
   concurrent duplicate reads the first one's answer): one try. `checkDrill` compares her value
   with the value COMPUTED from the fact — never with `items.answer` — exactly, as fractions of
@@ -5575,6 +5618,7 @@ word list, so it stays a prompt rule.
   a round without Buddy (there is no tile — the chat is the way in), an offer that stands is not
   yet in STATE's "Already waiting for her" (only `offer_learning` is), so a repeated
   `offer_drill` is not refused by code.
+
 - **speak** — say a sentence aloud (kind `speak`; `POST /practice/sessions/:id/speak`,
   ≤15 s recording). `contracts/pronunciation.ts` is the shared `PronunciationChecker` seam
   (#896): target words, per-word competitors, acoustic evidence and `passt / fast / nochmal /
@@ -5945,6 +5989,32 @@ unsicher`. Preparation generates `confusions` as structured output; Zod and code
     `testing/scenarios/periodic.ts`).
 
 ## Voice
+
+Answer dictation always uses the server transcription path (#918): its question context and
+number/fraction/unit formatting are the same on every phone. `normalizeShortAnswer` does not
+translate number words into digits, so raw device dictation is reserved for messages.
+`chooseEngine` owns this purpose decision. No pronunciation provider is changed.
+
+The active scene's language is resolved once by `useSceneLanguage`: chat dictation, conversation
+mode, streamed/finished chat replies and message playback use it. Fixed app errors remain in the
+app language. Message playback uses `ListenButton`/`useListen`, with stop, slow playback and the
+same error state as practice. Historical message language is not stored separately.
+
+Sentence practice, word practice and rehearsal use `useMicRecorder`, the recorder variant of
+`MicButton` and `MicStatus`/`RecordingStatus`. The leading action opens settings after a native
+microphone refusal; the browser explains how to grant permission there. Silence in word practice
+has no correctness judgement. Recording completion has one stop square and the same label;
+starting, finishing the local recording and uploading are distinct busy states.
+
+End-of-speech differences are deliberate capability boundaries (#918 finding 22). Device
+recognition supplies its own pause endpoint for a conversation (`continuous: false`); a metered
+phone recording uses `PauseEnd` (1.6 seconds after speech). Web recording supplies no level, so
+it ends by an explicit tap and never claims automatic pause detection. Device message dictation
+has the 180-second recognition limit; server dictation rolls over into pieces with no overall
+limit. Pronunciation is one bounded 30-second take; rehearsal has its separate two-minute
+reading/ten-minute talk transport limits. These bounds protect different recording payloads,
+and the shared timer displays the bound that actually applies. Physical-device timing remains
+to be verified, rather than simulated as identical across engines.
 
 Talking instead of typing, everywhere she would otherwise type (chat, answers):
 

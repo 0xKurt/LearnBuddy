@@ -17,6 +17,7 @@ import {
   cardTools,
   messageCards,
   messageExtras,
+  messageListen,
   readAlong,
   greetingAction,
   homeScope,
@@ -78,6 +79,7 @@ describe('the learning domain fills every place of the core (issue #107)', () =>
 
   it.each([
     readAlong,
+    messageListen,
     profileSubjects,
     workingOn,
     homeTop,

@@ -37,14 +37,14 @@
     "model_error": "Qualcosa è andato storto durante la lettura.",
     "photos_missing": "Non sono arrivate tutte le foto.",
     "budget_exhausted": "Per oggi non posso leggere altre schede. Domani si riparte.",
-    "blocked": "Il filtro di sicurezza blocca questa scheda. Rileggerla non servirà: scrivi semplicemente le domande.",
+    "blocked": "Il filtro di sicurezza blocca questa scheda. Rileggerla non servirà: scrivi semplicemente gli esercizi.",
     "form_not_practicable": "La scheda l’ho letta bene: è solo questo tipo di esercizio che non posso fare con te. Chiedimi: ti spiego i passaggi.",
     "nothing_marked": "Nella verifica non ho trovato niente segnato come sbagliato, quindi non c’è niente da ripassare. Se invece c’è qualcosa segnato in rosso, rifalle una foto.",
     "too_large": "Troppe foto grandi in una volta: manda la scheda in due parti."
   },
   "source": {
     "corrected_test": "Dalla tua verifica corretta: esercizi nuovi su ciò che era segnato, con altri numeri e altre parole.",
-    "notebook_entry": "Dal tuo quaderno: qualche domanda breve sull’ultima lezione, perfetta per domani mattina."
+    "notebook_entry": "Dal tuo quaderno: qualche esercizio breve sull’ultima lezione, perfetto per domani mattina."
   },
   "incomplete_hint": "Le foto non sono arrivate complete. Elimina la scheda e fotografala di nuovo.",
   "incomplete_page": {
@@ -53,7 +53,7 @@
   },
   "not_practicable_one": "Un esercizio l’ho lasciato fuori: «{{tasks}}». Quello non posso esercitarlo con te, ma ti spiego volentieri come si affronta.",
   "not_practicable_other": "Questi esercizi li ho lasciati fuori: {{tasks}}. Quelli non posso esercitarli con te, ma ti spiego volentieri come si affrontano.",
-  "photos_deleted": "Le foto non sono più salvate. Elimina il foglio e fotografalo di nuovo.",
+  "photos_deleted": "Le foto non sono più salvate. Elimina la scheda e fotografalo di nuovo.",
   "practice": "Esercitati",
   "practice_label": "Esercitati su “{{title}}”",
   "practice_from": "Esercitati con questo",
@@ -68,18 +68,12 @@
   "retry_started": "Rileggo la scheda.",
   "delete": "Elimina",
   "delete_label": "Elimina “{{title}}”",
-  "delete_sheet": {
-    "title": "Eliminare la scheda?",
-    "body": "“{{title}}” e i suoi esercizi verranno eliminati, insieme alle foto. Non si può annullare.",
-    "confirm": "Elimina"
-  },
-  "deleted": "Scheda eliminata.",
   "empty": {
     "title": "Qui arriveranno le tue schede",
     "body": "Fotografa una scheda, una pagina del libro o il tuo quaderno – lo trasformo in esercizi."
   },
-  "open": "Vedi le domande",
-  "open_label": "Vedi le domande di «{{title}}»",
+  "open": "Vedi gli esercizi",
+  "open_label": "Vedi gli esercizi di «{{title}}»",
   "rename": "Rinomina",
   "rename_label": "Rinomina «{{title}}»",
   "rename_sheet": {
@@ -90,16 +84,16 @@
   },
   "renamed": "Rinominato.",
   "items": {
-    "loading": "Recupero le domande …",
+    "loading": "Recupero gli esercizi …",
     "back": "Indietro",
-    "reading": "Sto leggendo il foglio proprio ora – tra poco ci sono le domande.",
-    "empty_title": "Qui non ci sono più domande",
-    "empty_body": "Hai cancellato tutte le domande di questo foglio. Fagli semplicemente una nuova foto se vuoi esercitarti di nuovo.",
-    "question_label": "Domanda {{number}}",
-    "more_label": "Altro sulla domanda {{number}}",
+    "reading": "Sto leggendo il foglio proprio ora – tra poco ci sono gli esercizi.",
+    "empty_title": "Qui non ci sono più esercizi",
+    "empty_body": "Hai cancellato tutti gli esercizi di questo foglio. Fagli semplicemente una nuova foto se vuoi esercitarti di nuovo.",
+    "question_label": "Esercizio {{number}}",
+    "more_label": "Altro sull’esercizio {{number}}",
     "choices": "Opzioni",
     "delete": "Cancella",
-    "delete_label": "Cancella la domanda {{number}}",
+    "delete_label": "Cancella l’esercizio {{number}}",
     "result": {
       "first_try": "Saputa subito",
       "with_help": "Con un piccolo aiuto",
@@ -107,12 +101,6 @@
       "never_asked": "Non ancora esercitata"
     }
   },
-  "item_delete_sheet": {
-    "title": "Cancellare la domanda?",
-    "body": "Questa domanda non uscirà più.",
-    "confirm": "Cancella"
-  },
-  "item_deleted": "Domanda cancellata.",
   "add_page": "Aggiungi una pagina",
   "subjects": "Materie",
   "recent": "Recenti"

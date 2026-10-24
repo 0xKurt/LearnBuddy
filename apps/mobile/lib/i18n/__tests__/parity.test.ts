@@ -44,3 +44,15 @@ describe('locales', () => {
     }
   });
 });
+
+it.each(LANGS)('%s uses the shared deletion copy and one listening verb', (lang) => {
+  const common = flatten(JSON.parse(readFileSync(join(ROOT, lang, 'common.json'), 'utf8')) as Tree);
+  const practice = flatten(
+    JSON.parse(readFileSync(join(ROOT, lang, 'practice.json'), 'utf8')) as Tree,
+  );
+  expect(common.get('delete.item.confirm')).toBeTruthy();
+  expect(common.get('delete.material.confirm')).toBeTruthy();
+  expect(common.get('a11y.speak')).toBe(practice.get('listen.play'));
+  expect(common.get('voice.read_aloud')).toBe(practice.get('listen.play'));
+  expect(common.get('voice.read_again')).toBe(practice.get('listen.again'));
+});

@@ -53,8 +53,8 @@
     "title_pages": "Page {{pages}} à nouveau",
     "intro": "Seulement ce qui manquait – le reste est déjà prêt. Veille à ce que toute la page soit sur la photo.",
     "title_add": "Ajouter une page",
-    "intro_add": "Ses questions rejoignent cette feuille.",
-    "added": "Page envoyée. Dès qu'elle sera lue, ses questions rejoindront cette fiche."
+    "intro_add": "Ses exercices rejoignent cette fiche.",
+    "added": "Page envoyée. Dès qu’elle sera lue, ses exercices rejoindront cette fiche."
   },
   "draft": {
     "title": "Tes photos ne sont pas encore envoyées",

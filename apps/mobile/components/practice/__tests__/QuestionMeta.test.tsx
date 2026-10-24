@@ -28,7 +28,7 @@ describe('the row above the question', () => {
   it('keeps the words it had where the title already names the topic, or there is none', () => {
     Object.assign(seen, { window: 844, overlap: 0, visible: 844 });
     renderInApp(<QuestionCard prompt="Wie viel ist 6 · 7?" topic={null} fromBuddy />);
-    expect(screen.getByTestId('question-meta').textContent).toBe('Frage von Buddy');
+    expect(screen.getByTestId('question-meta').textContent).toBe('Aufgabe von Buddy');
   });
 
   it('names only the topic of a question from her own sheet', () => {
@@ -55,7 +55,9 @@ describe('the row above the question', () => {
         }}
       />,
     );
-    expect(screen.getByTestId('question-meta').textContent).toBe('Frage von Buddy · a) · b) · c)');
+    expect(screen.getByTestId('question-meta').textContent).toBe(
+      'Aufgabe von Buddy · a) · b) · c)',
+    );
     expect(screen.getByTestId('task-part-steps').getAttribute('aria-label')).toBe(
       'Teilaufgabe b von a, b, c',
     );

@@ -18,8 +18,8 @@
     "update_goal_day": "Changed: {{title}} – now on {{day}}",
     "close_goal_done": "Completed: {{title}}",
     "close_goal_dropped": "Removed: {{title}}",
-    "prepare_practice_one": "Prepared: {{title}} – {{count}} question, about {{minutes}} min",
-    "prepare_practice_other": "Prepared: {{title}} – {{count}} questions, about {{minutes}} min",
+    "prepare_practice_one": "Practice ready: {{title}} – {{count}} task, about {{minutes}} min",
+    "prepare_practice_other": "Practice ready: {{title}} – {{count}} tasks, about {{minutes}} min",
     "plan_step": "Planned: {{title}} {{when}}",
     "plan_step_agreed": "Agreed: {{title}} {{when}}",
     "plan_step_repeat_daily": "Agreed: {{title}} every day at {{time}}",
@@ -38,9 +38,9 @@
     "delete_material": "I put “{{title}}” away",
     "delete_material_untitled": "I put the sheet away",
     "rename_material": "The sheet is called “{{title}}” now",
-    "delete_item": "The question is gone: “{{question}}”",
+    "delete_item": "The task is gone: “{{question}}”",
     "open_area": "Shown: {{what}}",
-    "show_ready": "Ready to start: {{title}}",
+    "show_ready": "Practice ready: {{title}}",
     "set_contact_quiet": "Notifications only between {{from}} and {{to}}, never after {{quiet}}",
     "set_contact_days": "never on these days: {{days}}",
     "request_material_undone": "No photo needed: {{title}}",
@@ -67,24 +67,13 @@
     "keyboard": "Keyboard",
     "attach": {
       "title": "What do you want to attach?",
-      "camera": "Take a photo",
+      "camera": "Take photo",
       "library": "From the gallery",
       "files": "From files"
     }
   },
   "confirm": {
-    "keep": "Keep it",
-    "no_longer_open": "This question is no longer open.",
-    "question_body": "It will not come up again. This cannot be undone.",
-    "question_delete": "Delete question",
-    "question_deleted": "The question is gone.",
-    "question_kept": "The question stays.",
-    "question_title": "Delete this question?",
-    "sheet_body": "The sheet, its questions and the photos go. This cannot be undone.",
-    "sheet_delete": "Delete sheet",
-    "sheet_deleted": "The sheet is gone.",
-    "sheet_kept": "Everything stays as it was.",
-    "sheet_title": "Delete this sheet?"
+    "no_longer_open": "This question is no longer open."
   },
   "decision": {
     "optin_title": "May I send notifications to your phone?",
@@ -149,7 +138,6 @@
     "title_buddy": "Buddy's message",
     "title_mine": "Your message",
     "copy": "Copy",
-    "speak": "Read aloud",
     "copied": "Copied",
     "copy_failed": "Copying didn't work"
   },
@@ -158,12 +146,12 @@
   },
   "now": {
     "resume_title": "Keep practising",
-    "resume_body_one": "{{title}} – {{count}} question left",
-    "resume_body_other": "{{title}} – {{count}} questions left",
+    "resume_body_one": "{{title}} – {{count}} task left",
+    "resume_body_other": "{{title}} – {{count}} tasks left",
     "resume_cta": "Continue",
     "ready_title": "Practice ready: {{title}}",
-    "ready_body_one": "{{count}} question · about {{minutes}} min",
-    "ready_body_other": "{{count}} questions · about {{minutes}} min",
+    "ready_body_one": "{{count}} task · about {{minutes}} min",
+    "ready_body_other": "{{count}} tasks · about {{minutes}} min",
     "ready_closed": "No longer open",
     "ready_focus": "Mostly: {{topics}}",
     "ready_for_exam": "For “{{exam}}” {{when}}",
@@ -173,7 +161,7 @@
     "ready_later": "Not today",
     "capture_body": "Send me a photo.",
     "capture_why": "I'll turn it into practice for you.",
-    "capture_cta": "Take photo",
+    "capture_cta": "Add photo",
     "sending_title": "Sending your photos …",
     "sending_body": "Keep the app open for a moment until everything has arrived.",
     "processing_title": "I'm reading your sheet …",
@@ -184,17 +172,16 @@
     "failed_model_error": "Something went wrong while reading.",
     "failed_photos_missing": "The photos didn't fully arrive.",
     "failed_budget_exhausted": "I can't read any more sheets today. Tomorrow it works again.",
-    "failed_blocked": "I'm not allowed to read this sheet – the safety filter won't let it through. Reading it again won't help. Just type the questions you need.",
+    "failed_blocked": "I'm not allowed to read this sheet – the safety filter won't let it through. Reading it again won't help. Just type the tasks you need.",
     "failed_form_not_practicable": "I could read your sheet just fine. But I can't practise this kind of task with you – just ask me and I'll explain the steps.",
     "failed_nothing_marked": "I found nothing on your test marked as wrong – so there's nothing to practise. If something is marked in red after all, take a new photo.",
     "failed_too_large": "That was too many large photos at once for one sheet. Please send it in two parts.",
     "failed_retry": "Read again",
     "failed_new_photo": "New photo",
-    "result_title": "Done!",
     "result_view": "View",
     "offer_done": "Practised",
-    "resume_body_untitled_one": "{{count}} question left",
-    "resume_body_untitled_other": "{{count}} questions left",
+    "resume_body_untitled_one": "{{count}} task left",
+    "resume_body_untitled_other": "{{count}} tasks left",
     "resume_title_help": "Continue your homework",
     "resume_title_test": "Continue your practice test",
     "pages_title_one": "I couldn't read one page completely",
@@ -263,10 +250,10 @@
       "2": "Up late, {{name}}?"
     },
     "after": {
-      "practice_one": "Hey {{name}} – you just got through {{count}} question.",
-      "practice_other": "Hey {{name}} – you just got through {{count}} questions.",
-      "all_first_one": "Hey {{name}} – {{count}} question, right the first time.",
-      "all_first_other": "Hey {{name}} – {{count}} questions, all right the first time.",
+      "practice_one": "Hey {{name}} – you just got through {{count}} task.",
+      "practice_other": "Hey {{name}} – you just got through {{count}} tasks.",
+      "all_first_one": "Hey {{name}} – {{count}} task, right the first time.",
+      "all_first_other": "Hey {{name}} – {{count}} tasks, all right the first time.",
       "help_one": "Hey {{name}} – you just solved {{count}} task yourself.",
       "help_other": "Hey {{name}} – you just solved {{count}} tasks yourself."
     }
@@ -327,7 +314,7 @@
     "stopped": "Stopped.",
     "new_reply": "New reply",
     "new_reply_label": "Jump to the new reply",
-    "message_hint": "Long press to copy or read aloud"
+    "message_hint": "Press and hold to copy or listen"
   },
   "voice": {
     "name": {
@@ -408,8 +395,6 @@
     "hint_talk": "Give your talk as if the class were listening. 10 minutes at most.",
     "hint_talk_minutes": "{{minutes}} minutes are planned. Give it as if the class were listening.",
     "hint_read": "Read the text aloud. 2 minutes at most.",
-    "live_target": "Goal {{target}} · I’m listening",
-    "live": "I’m listening · {{max}} at most",
     "too_short": "That was very short. Start the recording and talk until you are done.",
     "result": {
       "length": "Length",

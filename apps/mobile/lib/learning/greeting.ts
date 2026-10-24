@@ -3,6 +3,7 @@
 
 import type { NowCard } from '@learnbuddy/shared-types/contracts';
 
+import { praiseShape } from '../practice/summaryLine.js';
 import type { Greeting } from '../buddy/sessionAnchor.js';
 
 /**
@@ -38,17 +39,13 @@ export function practiceGreeting(
   if (
     now?.type !== 'practice_result' ||
     now.result.answered <= 0 ||
+    !!now.pass ||
+    now.ran_out ||
     !justBefore(now, lastMessageAt)
   )
     return null;
-  const { answered, first_try: firstTry } = now.result;
-  const shape =
-    now.mode === 'help'
-      ? // Homework: what she solved herself, the one thing help mode claims.
-        'help'
-      : now.mode !== 'test' && firstTry === answered
-        ? 'all_first'
-        : 'practice';
+  const { answered } = now.result;
+  const shape = praiseShape(now.result, now.mode);
   // One wording per shape, not three per part of the day: the repetition issue #129 was
   // about is a greeting she reads every day, and this one belongs to a single event that
   // stands for half an hour. Four times the copy for that is not a trade worth making.

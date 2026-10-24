@@ -88,10 +88,16 @@ export function timerOf(s: SessionRow, now: Date): SessionView['timer'] {
     remaining_ms: Math.round(remaining),
     // Ended at or after the deadline: the time ran out, it was not handed in early. Whether
     // the app's own countdown, an answer that came too late or the scheduler ended it.
-    ran_out:
-      s.status === 'finished' &&
-      s.deadline_at !== null &&
-      s.finished_at !== null &&
-      s.finished_at.getTime() >= s.deadline_at.getTime(),
+    ran_out: ranOut(s),
   };
+}
+
+/** The same expiry fact in the session view and its home result. */
+export function ranOut(s: Pick<SessionRow, 'status' | 'deadline_at' | 'finished_at'>): boolean {
+  return (
+    s.status === 'finished' &&
+    s.deadline_at !== null &&
+    s.finished_at !== null &&
+    s.finished_at.getTime() >= s.deadline_at.getTime()
+  );
 }

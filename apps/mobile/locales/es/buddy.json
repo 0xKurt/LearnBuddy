@@ -18,8 +18,8 @@
     "update_goal_day": "Modificado: {{title}} – ahora el {{day}}",
     "close_goal_done": "Completado: {{title}}",
     "close_goal_dropped": "Descartado: {{title}}",
-    "prepare_practice_one": "Preparado: {{title}} – {{count}} ejercicio, unos {{minutes}} min",
-    "prepare_practice_other": "Preparado: {{title}} – {{count}} ejercicios, unos {{minutes}} min",
+    "prepare_practice_one": "Práctica lista: {{title}} – {{count}} ejercicio, unos {{minutes}} min",
+    "prepare_practice_other": "Práctica lista: {{title}} – {{count}} ejercicios, unos {{minutes}} min",
     "plan_step": "Planificado: {{title}} {{when}}",
     "plan_step_agreed": "Acordado: {{title}} {{when}}",
     "plan_step_repeat_daily": "Acordado: {{title}} todos los días a las {{time}}",
@@ -38,9 +38,9 @@
     "delete_material": "He guardado «{{title}}»",
     "delete_material_untitled": "He guardado la hoja",
     "rename_material": "La hoja ahora se llama «{{title}}»",
-    "delete_item": "La pregunta ya no está: «{{question}}»",
+    "delete_item": "El ejercicio ya no está: «{{question}}»",
     "open_area": "Mostrado: {{what}}",
-    "show_ready": "Lista para empezar: {{title}}",
+    "show_ready": "Práctica lista: {{title}}",
     "set_contact_quiet": "Notificaciones solo de {{from}} a {{to}}, nunca después de las {{quiet}}",
     "set_contact_days": "nunca estos días: {{days}}",
     "request_material_undone": "No hace falta foto: {{title}}",
@@ -73,18 +73,7 @@
     }
   },
   "confirm": {
-    "keep": "Conservar",
-    "no_longer_open": "Esta pregunta ya no está abierta.",
-    "question_body": "No volverá a salir. No se puede deshacer.",
-    "question_delete": "Borrar la pregunta",
-    "question_deleted": "La pregunta ya no está.",
-    "question_kept": "La pregunta se queda.",
-    "question_title": "¿Borrar esta pregunta?",
-    "sheet_body": "La hoja, sus preguntas y las fotos desaparecen. No se puede deshacer.",
-    "sheet_delete": "Borrar la hoja",
-    "sheet_deleted": "La hoja ya no está.",
-    "sheet_kept": "Todo queda como estaba.",
-    "sheet_title": "¿Borrar esta hoja?"
+    "no_longer_open": "Esta pregunta ya no está abierta."
   },
   "decision": {
     "optin_title": "¿Puedo enviarte notificaciones al móvil?",
@@ -149,7 +138,6 @@
     "title_buddy": "Mensaje de Buddy",
     "title_mine": "Tu mensaje",
     "copy": "Copiar",
-    "speak": "Leer en voz alta",
     "copied": "Copiado",
     "copy_failed": "No se ha podido copiar"
   },
@@ -173,7 +161,7 @@
     "ready_later": "Hoy no",
     "capture_body": "Mándame una foto.",
     "capture_why": "Yo la convierto en ejercicios para ti.",
-    "capture_cta": "Hacer una foto",
+    "capture_cta": "Añadir una foto",
     "sending_title": "Enviando tus fotos…",
     "sending_body": "Deja la app abierta un momento, hasta que haya llegado todo.",
     "processing_title": "Estoy leyendo tu ficha…",
@@ -184,17 +172,16 @@
     "failed_model_error": "Algo ha fallado durante la lectura.",
     "failed_photos_missing": "Las fotos no han llegado completas.",
     "failed_budget_exhausted": "Por hoy ya no puedo leer más fichas. Mañana vuelve a funcionar.",
-    "failed_blocked": "No puedo leer esta ficha: el filtro de seguridad no la deja pasar. Volver a leerla no servirá. Escribe las preguntas que necesites.",
+    "failed_blocked": "No puedo leer esta ficha: el filtro de seguridad no la deja pasar. Volver a leerla no servirá. Escribe los ejercicios que necesites.",
     "failed_form_not_practicable": "He podido leer tu ficha sin problema. Pero este tipo de ejercicio no lo puedo practicar contigo: pregúntame y te explico los pasos.",
     "failed_nothing_marked": "No he encontrado nada marcado como incorrecto en tu examen, así que no hay nada que repasar. Si al final hay algo marcado en rojo, haz una foto nueva.",
     "failed_too_large": "Eran demasiadas fotos grandes a la vez para una sola ficha. Envíala en dos partes, por favor.",
     "failed_retry": "Volver a leer",
     "failed_new_photo": "Nueva foto",
-    "result_title": "¡Lo has conseguido!",
     "result_view": "Ver",
     "offer_done": "Hecho",
-    "resume_body_untitled_one": "Queda {{count}} pregunta",
-    "resume_body_untitled_other": "Quedan {{count}} preguntas",
+    "resume_body_untitled_one": "Queda {{count}} ejercicio",
+    "resume_body_untitled_other": "Quedan {{count}} ejercicios",
     "resume_title_help": "Sigue con tus deberes",
     "resume_title_test": "Sigue con tu examen de prueba",
     "pages_title_one": "No he podido leer una página entera",
@@ -263,10 +250,10 @@
       "2": "¿Trasnochando, {{name}}?"
     },
     "after": {
-      "practice_one": "¡Hola {{name}}! Acabas de hacer {{count}} pregunta.",
-      "practice_other": "¡Hola {{name}}! Acabas de hacer {{count}} preguntas.",
-      "all_first_one": "¡Hola {{name}}! {{count}} pregunta, bien a la primera.",
-      "all_first_other": "¡Hola {{name}}! {{count}} preguntas, todo bien a la primera.",
+      "practice_one": "¡Hola {{name}}! Acabas de hacer {{count}} ejercicio.",
+      "practice_other": "¡Hola {{name}}! Acabas de hacer {{count}} ejercicios.",
+      "all_first_one": "¡Hola {{name}}! {{count}} ejercicio, bien a la primera.",
+      "all_first_other": "¡Hola {{name}}! {{count}} ejercicios, todo bien a la primera.",
       "help_one": "¡Hola {{name}}! Acabas de resolver {{count}} ejercicio por tu cuenta.",
       "help_other": "¡Hola {{name}}! Acabas de resolver {{count}} ejercicios por tu cuenta."
     }
@@ -327,7 +314,7 @@
     "stopped": "Parado.",
     "new_reply": "Nueva respuesta",
     "new_reply_label": "Ir a la nueva respuesta",
-    "message_hint": "Mantén pulsado para copiar o leer en voz alta"
+    "message_hint": "Mantén pulsado para copiar o escuchar"
   },
   "voice": {
     "name": {
@@ -408,8 +395,6 @@
     "hint_talk": "Presenta tu exposición como si la clase escuchara. 10 minutos como máximo.",
     "hint_talk_minutes": "Están previstos {{minutes}} minutos. Preséntala como si la clase escuchara.",
     "hint_read": "Lee el texto en voz alta. 2 minutos como máximo.",
-    "live_target": "Meta {{target}} · te escucho",
-    "live": "Te escucho · {{max}} como máximo",
     "too_short": "Ha sido muy corto. Empieza a grabar y habla hasta terminar.",
     "result": {
       "length": "Duración",

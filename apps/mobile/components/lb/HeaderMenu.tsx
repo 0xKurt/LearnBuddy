@@ -52,8 +52,8 @@ export function HeaderMenu({ visible, onClose, actions = [], canAct = true }: Pr
     // "Blatt fotografieren" is no page (owner 12.10.: photos go through the chat bar): the
     // chat's bar opens its camera — from any other screen after going back to the chat.
     if (place === 'capture') {
-      if (here === CHAT) askAttach({ open: 'camera' });
-      else attachInChat({ open: 'camera' });
+      if (here === CHAT) askAttach({ open: 'menu' });
+      else attachInChat({ open: 'menu' });
       return;
     }
     // The place she is already in: the sheet closes and she is there, not there twice.

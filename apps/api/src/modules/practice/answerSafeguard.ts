@@ -18,9 +18,9 @@ import type { AnswerCase, Judged } from './answerJudge.js';
 import type { Answering } from './answerLoad.js';
 import { distressCheck, saysMoreThan, wordsIn, type DistressFinding } from '../buddy/distress.js';
 import { codeTaskOf } from './code.js';
-import { NEAR_MISS } from './evaluate.js';
+import { NEAR_MISS, verdictForRule } from './evaluate.js';
 import type { RubricClaim } from './rubric.js';
-import { solutionsOf } from './service.js';
+import { secretsFor } from './secrets.js';
 import { staffTaskOf } from './staff.js';
 import { answerTextOf, structuredTaskOf } from './structured.js';
 import { VALUE_CONFIRMED } from './tutor.js';
@@ -81,10 +81,11 @@ export function ownWords(
   if (c.hintRequest && !c.question) return null;
   if (input.via === 'tapped' || (input.text == null && input.parts == null)) return null;
   if (wordsIn(text).length === 0) return null;
-  const matched = rule === 'correct' || NEAR_MISS.has(rule) || VALUE_CONFIRMED.has(rule);
+  const matched =
+    verdictForRule(rule) === 'correct' || NEAR_MISS.has(rule) || VALUE_CONFIRMED.has(rule);
   if (!matched) return text;
   const task = [
-    ...solutionsOf(item),
+    ...secretsFor(item).secrets,
     item.prompt,
     JSON.stringify(c.structured ?? null),
     JSON.stringify(c.codeTask ?? null),

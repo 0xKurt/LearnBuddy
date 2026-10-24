@@ -119,9 +119,10 @@ export async function planTest(page: Page): Promise<void> {
 /** The worksheet photographed and sent; Buddy prepares practice from it by himself. */
 export async function sendWorksheet(page: Page): Promise<void> {
   const photo = await worksheetJpeg(page);
-  // The card's "Foto machen" opens the camera at once, the page lands in the chat (#519).
+  // Every attachment starts with the same source menu (#918).
   const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Foto machen' }).click();
+  await page.getByRole('button', { name: 'Foto hinzufügen' }).click();
+  await page.getByRole('button', { name: 'Foto aufnehmen', exact: true }).click();
   await (await chooser).setFiles(photo);
   await expect(page.getByRole('img', { name: 'Foto 1 von 1' })).toBeVisible();
   await page.getByRole('button', { name: 'Senden' }).click();
@@ -151,7 +152,7 @@ export async function practise(
 ): Promise<void> {
   await page.getByRole('button', { name: 'Jetzt üben' }).click();
   for (let n = 1; n <= ANSWERS.length; n++) {
-    await expect(page.getByText(`Frage ${n} von ${ANSWERS.length}`)).toBeVisible();
+    await expect(page.getByText(`Aufgabe ${n} von ${ANSWERS.length}`)).toBeVisible();
     let current: (typeof ANSWERS)[number] | undefined;
     for (const a of ANSWERS)
       if (await page.getByText(a.prompt, { exact: true }).first().isVisible()) current = a;

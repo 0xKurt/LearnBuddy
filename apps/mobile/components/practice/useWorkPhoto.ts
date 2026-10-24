@@ -14,6 +14,12 @@ import { ApiError, isOutdated } from '../../lib/api/apiError.js';
 import { readWorkPhoto } from '../../lib/api/learningEndpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
 import { openCamera } from '../../lib/capture/camera.js';
+import {
+  clearCameraOpen,
+  markCameraOpen,
+  takePendingWork,
+} from '../../lib/capture/pendingCamera.js';
+import type { WorkTarget } from '../../lib/capture/draft.js';
 import { preparePhoto } from '../../lib/capture/prepare.js';
 import { messageFor } from '../../lib/errors.js';
 import { fieldFrom, type WorkPhotoState } from '../../lib/practice/workPhoto.js';
@@ -31,7 +37,7 @@ export type WorkPhoto = {
 };
 
 /** The question her working is for. */
-export type WorkTarget = { sessionId: string; itemId: string };
+export type { WorkTarget } from '../../lib/capture/draft.js';
 
 export function useWorkPhoto(target: WorkTarget, onCopy: (text: string) => void): WorkPhoto {
   const { t } = useTranslation(['practice', 'capture']);
@@ -44,7 +50,10 @@ export function useWorkPhoto(target: WorkTarget, onCopy: (text: string) => void)
   useEffect(() => {
     current.current = target.itemId;
     setState({ step: 'idle' });
-  }, [target.itemId]);
+    void takePendingWork(target).then((uri) => {
+      if (uri && current.current === target.itemId) void prepare(uri, target.itemId);
+    });
+  }, [target.sessionId, target.itemId]);
 
   async function read(base64: string): Promise<void> {
     const itemId = target.itemId;
@@ -81,34 +90,41 @@ export function useWorkPhoto(target: WorkTarget, onCopy: (text: string) => void)
       try {
         const shot =
           source === 'camera'
-            ? await openCamera()
+            ? await openCamera({
+                opening: () => markCameraOpen(target),
+                closed: () => void clearCameraOpen(),
+              })
             : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] });
         if (shot === 'blocked') {
-          setState({ step: 'failed', text: t('practice:work.camera_blocked') });
+          setState({ step: 'failed', text: t('capture:permission.camera') });
           return;
         }
         uri = shot.canceled ? null : (shot.assets[0]?.uri ?? null);
       } catch {
         setState({
           step: 'failed',
-          text: t(source === 'camera' ? 'practice:work.camera_failed' : 'capture:error.library'),
+          text: t(source === 'camera' ? 'capture:error.camera' : 'capture:error.library'),
         });
         return;
       }
       if (uri === null) return;
-      setState({ step: 'reading' });
-      const photo = await preparePhoto(uri, { base64: true }).catch(() => null);
-      if (current.current !== itemId) return;
-      if (!photo?.base64) {
-        setState({ step: 'failed', text: t('capture:error.prepare', { count: 1 }) });
-        return;
-      }
-      if (photo.problems.length > 0)
-        setState({ step: 'checking', problems: photo.problems, base64: photo.base64 });
-      else await read(photo.base64);
+      await prepare(uri, itemId);
     } finally {
       busy.current = false;
     }
+  }
+
+  async function prepare(uri: string, itemId: string): Promise<void> {
+    setState({ step: 'reading' });
+    const photo = await preparePhoto(uri, { base64: true }).catch(() => null);
+    if (current.current !== itemId) return;
+    if (!photo?.base64) {
+      setState({ step: 'failed', text: t('capture:error.prepare', { count: 1 }) });
+      return;
+    }
+    if (photo.problems.length > 0)
+      setState({ step: 'checking', problems: photo.problems, base64: photo.base64 });
+    else await read(photo.base64);
   }
 
   return {

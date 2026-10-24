@@ -302,7 +302,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (!ready || !currentSession()) return;
     void recoverCameraResult().then((found) => {
-      if (found) attachInChat({ open: null, resume: true, pending: true });
+      if (found?.kind === 'capture') attachInChat({ open: null, resume: true, pending: true });
+      if (found?.kind === 'work') router.push(`/practice/${found.target.sessionId}`);
     });
   }, [ready]);
 

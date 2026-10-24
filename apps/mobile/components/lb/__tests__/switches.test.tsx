@@ -20,12 +20,12 @@ describe('Vorlesen (issue #517)', () => {
 
   it('keeps one name, on or off — the state is the switch’s, not the label’s', () => {
     renderInApp(<ReadAloudSwitch />);
-    const sw = screen.getByRole('switch', { name: 'Vorlesen' });
+    const sw = screen.getByRole('switch', { name: 'Anhören' });
     expect(isOn(sw)).toBe(false);
     act(() => {
       fireEvent.click(sw);
     });
-    const after = screen.getByRole('switch', { name: 'Vorlesen' });
+    const after = screen.getByRole('switch', { name: 'Anhören' });
     expect(isOn(after)).toBe(true);
   });
 });

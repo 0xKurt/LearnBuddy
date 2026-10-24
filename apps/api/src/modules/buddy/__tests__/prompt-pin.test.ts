@@ -318,6 +318,10 @@ const state: BuddyState = {
   sessions: [
     {
       id: 'ps-1',
+      pass: null,
+      ran_out: false,
+      drill_summary: null,
+      right: 6,
       mode: 'practice',
       title: 'Brüche',
       status: 'finished',

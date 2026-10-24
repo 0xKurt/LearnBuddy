@@ -324,7 +324,9 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
     const reply = home.body.thread.find((m) =>
       m.actions.some((a) => a.summary.tool === 'offer_learning'),
     );
-    expect(reply?.text).toBe('Die Übung konnte ich leider nicht vorbereiten.');
+    expect(reply?.text).toBe(
+      'Ich habe deine Übungen vorbereitet.\n\nDie Übung konnte ich leider nicht vorbereiten.',
+    );
     expect(home.body.context_version).toBeGreaterThan(sent.home.context_version);
     // Persisted too: history and the next model turn must not repeat the failed promise.
     const stored = await env.db.one<{ text: string }>(
@@ -368,7 +370,7 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
       m.actions.some((a) => a.id === action.id),
     );
     expect(failed?.text).toBe(
-      'Die Vorbereitung hat gerade nicht geklappt. Du kannst es noch einmal versuchen.',
+      'Die Übung ist vorbereitet.\n\nDie Vorbereitung hat gerade nicht geklappt. Du kannst es noch einmal versuchen.',
     );
     expect(failed?.actions[0]?.summary).toMatchObject({ startable: true });
     env.llm.byDefault('explain', generated());
@@ -415,7 +417,76 @@ describe.skipIf(!dbReady)('an offer has to be able to start', () => {
     await env.flushBackground();
     expect(
       (await owner.api.get<BuddyHome>('/buddy')).body.thread.find((m) => m.id === reply.id)?.text,
-    ).toBe('Die Übung konnte ich leider nicht vorbereiten.');
+    ).toBe('Wir üben Größen.\n\nDie Übung konnte ich leider nicht vorbereiten.');
+  });
+
+  it('preserves the rest of a reply when its offer fails, without repeating the correction', async () => {
+    const l = await onboard(env, { relation: 'self', birthDate: '2000-01-01' });
+    const original = 'Du kannst zuerst deine Notizen sortieren. Die Übung ist vorbereitet.';
+    env.holdBackground();
+    env.llm.script(
+      'buddy_turn',
+      turn({
+        reply: original,
+        actions: [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Größen' } }],
+      }),
+    );
+    const sent = await say(l, 'Wie lerne ich Größen? Bereite auch eine Übung vor.');
+    const message = sent.home.thread.find((m) =>
+      m.actions.some((a) => a.summary.tool === 'offer_learning'),
+    )!;
+    env.llm.script('explain', generated(false));
+    await env.flushBackground();
+    const expected = `${original}\n\nDie Übung konnte ich leider nicht vorbereiten.`;
+    expect(
+      (await l.api.get<BuddyHome>('/buddy')).body.thread.find((m) => m.id === message.id)?.text,
+    ).toBe(expected);
+    env.llm.script('explain', generated(false));
+    await l.api.post('/practice/topic', {
+      client_request_id: message.actions[0]!.id,
+      kind: 'practice',
+      text: 'Größen',
+    });
+    expect(
+      (await l.api.get<BuddyHome>('/buddy')).body.thread.find((m) => m.id === message.id)?.text,
+    ).toBe(expected);
+  });
+
+  it('keeps the preparation error when recording its correction also fails', async () => {
+    const l = await onboard(env, { relation: 'self', birthDate: '2000-01-01' });
+    env.holdBackground();
+    env.llm.script(
+      'buddy_turn',
+      turn({
+        reply: 'Die Übung ist vorbereitet.',
+        actions: [{ tool: 'offer_learning', args: { kind: 'practice', text: 'Größen' } }],
+      }),
+    );
+    const sent = await say(l, 'Ich will Größen üben');
+    const action = sent.home.thread
+      .flatMap((m) => m.actions)
+      .find((a) => a.summary.tool === 'offer_learning')!;
+    await env.db
+      .query(`create function refuse_offer_correction() returns trigger language plpgsql as $$
+      begin raise exception 'correction unavailable'; end $$;
+      create trigger refuse_offer_correction before update on buddy_messages
+      for each row execute function refuse_offer_correction()`);
+    try {
+      env.llm.script('explain', generated(false));
+      const response = await l.api.post('/practice/topic', {
+        client_request_id: action.id,
+        kind: 'practice',
+        text: 'Größen',
+      });
+      expect(response.status).toBe(422);
+      expect(response.body).toMatchObject({ error: { details: { reason: 'not_usable' } } });
+    } finally {
+      await env.db.query(
+        'drop trigger refuse_offer_correction on buddy_messages; drop function refuse_offer_correction()',
+      );
+      env.llm.script('explain', generated(false));
+      await env.flushBackground();
+    }
   });
 
   it('the card on top is the practice she asked for, not the older one', async () => {

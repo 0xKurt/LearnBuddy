@@ -194,7 +194,7 @@ describe.each(['resolve', 'reject'] as const)('held old request %s', (outcome) =
       expect(screen.queryByText('old weather response tip')).toBeNull();
       expect(screen.queryByRole('alert')).toBeNull();
       expect(
-        screen.getByRole('button', { name: 'Dieses Wort sagen' }).getAttribute('aria-disabled'),
+        screen.getByRole('button', { name: 'Buddy hört zu …' }).getAttribute('aria-disabled'),
       ).toBe('true');
       await act(async () => current.resolve(CURRENT));
       expect(screen.getByText(/current word take/)).toBeTruthy();

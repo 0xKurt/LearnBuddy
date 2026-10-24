@@ -9,8 +9,10 @@ import { useTranslation } from 'react-i18next';
 
 import { markdownPlain } from '../../lib/buddy/markdown.js';
 import { haptic } from '../../lib/haptics.js';
-import { currentLocale } from '../../lib/i18n/index.js';
-import { speak } from '../../lib/speech/listen.js';
+import { useSceneLanguage } from '../../lib/buddy/useSceneLanguage.js';
+import { messageListen } from './extensions.js';
+import { View } from 'react-native';
+import { SPACE } from '../../lib/theme/space.js';
 import { ListGroup, Row } from '../lb/ListGroup.js';
 import { Sheet } from '../lb/Sheet.js';
 import { toast } from '../lb/Toast.js';
@@ -40,6 +42,8 @@ export function MessageMenu({
 }) {
   const { t } = useTranslation(['buddy', 'common']);
   const say = useSay();
+  const sceneLang = useSceneLanguage();
+  const ListenButton = messageListen.get();
   return (
     <Sheet
       visible={message !== null}
@@ -49,21 +53,16 @@ export function MessageMenu({
       closeLabel={t('common:actions.close')}
       onClose={onClose}
     >
-      {/* The message's actions as rows with their signs (design components/buddy/Cards.jsx:122,
-          `MessageMenu`: Vorlesen, then Kopieren) — the same list the ⋯ menu is. */}
-      <ListGroup>
-        {message?.role === 'buddy' ? (
-          <Row
-            icon="speak"
-            title={t('buddy:message.speak')}
-            chevron={false}
-            onPress={() => {
-              const m = message;
-              onClose();
-              void speak(spokenText(m.text, say), currentLocale());
-            }}
+      {message?.role === 'buddy' && ListenButton ? (
+        <View style={{ flexDirection: 'row', gap: SPACE.sm, flexWrap: 'wrap' }}>
+          <ListenButton
+            key={message.text}
+            source={{ text: spokenText(message.text, say), lang: sceneLang }}
+            slow
           />
-        ) : null}
+        </View>
+      ) : null}
+      <ListGroup>
         <Row
           icon="file"
           title={t('buddy:message.copy')}

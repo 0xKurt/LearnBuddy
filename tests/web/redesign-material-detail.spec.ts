@@ -25,11 +25,11 @@ for (const look of SCREEN_LOOKS)
     await openMenu(page, 'Dein Material');
     await page.getByRole('button', { name: /^Mathe: / }).click();
     // Inside its subject the row opens what can be done with the sheet (ui_kits/app/More.jsx:70,
-    // 82–87); "Fragen ansehen" in that sheet leads here.
+    // 82–87); "Aufgaben ansehen" in that sheet leads here.
     await page.getByRole('button', { name: 'Brüche kürzen und vergleichen', exact: true }).click();
     await page
       .locator('[aria-modal="true"]:visible')
-      .getByRole('button', { name: 'Fragen ansehen', exact: true })
+      .getByRole('button', { name: 'Aufgaben ansehen', exact: true })
       .click();
     await expect(page.locator('[aria-modal="true"]:visible')).toHaveCount(0);
     await expect(
@@ -60,7 +60,7 @@ for (const look of SCREEN_LOOKS)
     const practiseBox = (await practise.boundingBox())!;
     expect(Math.round(practiseBox.x + practiseBox.width)).toBe(page.viewportSize()!.width - 12);
     // Deleting is never a button in the card (implementation/MIGRATION.md §5).
-    await expect(page.getByRole('button', { name: /^Frage [0-9]+ löschen$/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Aufgabe [0-9]+ löschen$/ })).toHaveCount(0);
     await screenShots(page, `material-${key}`);
     // Renaming is the sheet's own action in the head's ⋯ (#599).
     await page.getByRole('button', { name: 'Mehr', exact: true }).click();
@@ -75,26 +75,28 @@ for (const look of SCREEN_LOOKS)
       page.getByRole('heading', { name: 'Brüche – Test Freitag', exact: true }),
     ).toBeVisible();
     // A question's ⋯ opens its sheet; deleting asks once more in the same sheet.
-    const menus = page.getByRole('button', { name: /^Mehr zu Frage [0-9]+$/ });
-    await page.getByRole('button', { name: 'Mehr zu Frage 1', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Frage 1', exact: true })).toBeVisible();
+    const menus = page.getByRole('button', { name: /^Mehr zu Aufgabe [0-9]+$/ });
+    await page.getByRole('button', { name: 'Mehr zu Aufgabe 1', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Aufgabe 1', exact: true })).toBeVisible();
     await screenShots(page, `material-${key}-question-sheet`, true);
-    await page.getByRole('button', { name: 'Frage 1 löschen', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Frage löschen?', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Aufgabe 1 löschen', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Aufgabe löschen?', exact: true }),
+    ).toBeVisible();
     await screenShots(page, `material-${key}-question-delete`, true);
-    await page.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    await page.getByRole('button', { name: 'Behalten', exact: true }).click();
     await expect(menus).toHaveCount(4);
     for (let remaining = 4; remaining > 0; remaining--) {
-      await page.getByRole('button', { name: 'Mehr zu Frage 1', exact: true }).click();
-      await page.getByRole('button', { name: 'Frage 1 löschen', exact: true }).click();
-      await page.getByRole('button', { name: 'Löschen', exact: true }).click();
+      await page.getByRole('button', { name: 'Mehr zu Aufgabe 1', exact: true }).click();
+      await page.getByRole('button', { name: 'Aufgabe 1 löschen', exact: true }).click();
+      await page.getByRole('button', { name: 'Aufgabe löschen', exact: true }).click();
       await expect(menus).toHaveCount(remaining - 1);
     }
     await expect(practise).toHaveCount(0);
-    await expect(page.getByText('Hier sind keine Fragen mehr', { exact: true })).toBeVisible();
+    await expect(page.getByText('Hier sind keine Aufgaben mehr', { exact: true })).toBeVisible();
     await screenShots(page, `material-${key}-empty`);
     await page.getByRole('button', { name: 'Seite hinzufügen', exact: true }).click();
-    await expect(page.getByText(/^Die Fragen dazu kommen zu diesem Blatt\./)).toBeVisible();
+    await expect(page.getByText(/^Die Aufgaben dazu kommen zu diesem Blatt\./)).toBeVisible();
     await screenShots(page, `material-${key}-add-page`, true);
     const materialId = new URL(path).pathname.split('/').at(-1)!;
     const photo = await worksheetJpeg(page);

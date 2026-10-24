@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import type { HomeLayout } from '../../../lib/homeLayout.js';
 import { barPractice, LearningHome } from '../../../lib/learning/homeScope.js';
 import { renderInApp } from '../../../testing/render.js';
+import { DrillOfferCard } from '../DrillOfferCard.js';
 import { OfferCard } from '../OfferCard.js';
 import { ReadyCard } from '../ReadyCard.js';
 import { FinishedOffer } from '../FinishedOffer.js';
@@ -156,6 +157,27 @@ describe('one start per practice on the screen (issue #846)', () => {
       <ReadyCard ready={{ ...READY, outcome: { state: 'running', session_id: RUN, left: 5 } }} />,
     );
     expect(screen.getByText('Noch 5 Aufgaben')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Weitermachen' })).toBeNull();
+  });
+
+  it('a drill resumes the same run, with just one control when the bar owns it', () => {
+    const offer: Extract<ActionSummary, { tool: 'offer_drill' }> = {
+      tool: 'offer_drill',
+      title: 'Siebenerreihe',
+      range: 'times',
+      rows: [7],
+      carry: null,
+      finished_session_id: null,
+      running_session_id: RUN,
+    };
+    const view = onHome(home(resume), LAYOUT, <DrillOfferCard actionId="a1" offer={offer} />);
+    expect(screen.getByRole('button', { name: 'Weitermachen' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: "Los geht's" })).toBeNull();
+    view.rerender(
+      <LearningHome h={home(resume)} layout={{ ...LAYOUT, bar: 'resume' }}>
+        <DrillOfferCard actionId="a1" offer={offer} />
+      </LearningHome>,
+    );
     expect(screen.queryByRole('button', { name: 'Weitermachen' })).toBeNull();
   });
 

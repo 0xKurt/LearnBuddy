@@ -1,4 +1,4 @@
-// Die stille Ecke der Fortschrittszeile (Issue #164, #459): „Frage passt nicht“, solange die Frage
+// Die stille Ecke der Fortschrittszeile (Issue #164, #459): „Aufgabe passt nicht“, solange die Frage
 // offen ist, danach „Einspruch gegen die Bewertung“ — nie beide, nie eine Zahl.
 //
 // Was hier festgehalten wird, ist, was #459 kaputt fand: der volle Satz stand sichtbar in der Zeile
@@ -46,7 +46,7 @@ describe('die Ecke an der Frage', () => {
 
   it('nimmt eine offene Frage raus, die nicht passt — die Fahne gewinnt', () => {
     const { onFlag, onDispute } = corner({ flaggable: true, canDispute: true });
-    const button = screen.getByRole('button', { name: 'Frage passt nicht' });
+    const button = screen.getByRole('button', { name: 'Aufgabe passt nicht' });
     expect(button.textContent).toBe('Passt nicht');
     expect(screen.getAllByRole('button')).toHaveLength(1);
     fireEvent.click(button);

@@ -157,7 +157,7 @@ function contentOnly(verdict: RuleVerdict): RuleVerdict {
  *   real word ("horse" for "house"), so it is never counted right: the app shows
  *   the spelling and she types it again. Never for numbers ("15:35" is no slip of "14:35").
  * 'folded' is no near miss: the same except case, ß/ss or punctuation where spelling is not
- * the point — the tutor judges it (gently), the rules don't.
+ * the point — code accepts it on every answer surface.
  */
 export type RuleVerdict =
   | 'correct'
@@ -215,6 +215,15 @@ export const NEAR_MISS = new Set<RuleVerdict>([
   // score, and it is not a grade (see `staff.ts`).
   'parts_left',
 ]);
+
+/** The judgement code has proved, independent of the answer surface (#918). */
+export function verdictForRule(
+  rule: RuleVerdict,
+): 'correct' | 'incorrect' | 'partially_correct' | null {
+  if (rule === 'correct' || rule === 'folded' || rule === 'no_article') return 'correct';
+  if (rule === 'incorrect') return 'incorrect';
+  return NEAR_MISS.has(rule) ? 'partially_correct' : null;
+}
 
 /** Slips allowed for a key of this length: short words must be exact ("cat" ≠ "car"). */
 function allowedSlips(key: string): number {

@@ -34,7 +34,7 @@ it.each([false, true])(
     expect(timing).not.toHaveBeenCalled();
     expect(view.getByTestId('recording-dot').style.opacity).toBe('');
     // The time is what shows that it runs.
-    expect(view.getByText('Ich höre mit … 0:02 / 0:30')).toBeTruthy();
+    expect(view.getByText('Ich höre zu … 0:02 / 0:30')).toBeTruthy();
   },
 );
 

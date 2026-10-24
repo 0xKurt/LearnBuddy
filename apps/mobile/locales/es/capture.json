@@ -53,8 +53,8 @@
     "title_pages": "Página {{pages}} otra vez",
     "intro": "Solo lo que faltaba: lo demás ya está listo. Asegúrate de que salga la página entera.",
     "title_add": "Añadir una página",
-    "intro_add": "Sus preguntas se suman a esta hoja.",
-    "added": "Página enviada. En cuanto se lea, sus preguntas se añadirán a esta ficha."
+    "intro_add": "Sus ejercicios se suman a esta ficha.",
+    "added": "Página enviada. En cuanto se lea, sus ejercicios se añadirán a esta ficha."
   },
   "draft": {
     "title": "Tus fotos aún no se han enviado",

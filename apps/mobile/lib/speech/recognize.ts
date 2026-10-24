@@ -153,18 +153,24 @@ function iosRecognizerLocale(): string | null {
 }
 
 /** Which engine this tap uses for `locale`. Never throws: anything unclear means our EU path. */
-export async function engineFor(locale: string): Promise<SpeechEngine> {
+export async function engineFor(
+  locale: string,
+  purpose: 'message' | 'answer' = 'message',
+): Promise<SpeechEngine> {
   try {
     const platform = Platform.OS === 'ios' || Platform.OS === 'android' ? Platform.OS : 'other';
-    return chooseEngine({
-      platform,
-      available: ExpoSpeechRecognitionModule.isRecognitionAvailable(),
-      onDeviceSupported: ExpoSpeechRecognitionModule.supportsOnDeviceRecognition(),
-      installedLocales: await installedLocales(),
-      locale,
-      failedBefore: refused || failedLocales.has(locale),
-      deviceLocale: iosRecognizerLocale(),
-    });
+    return chooseEngine(
+      {
+        platform,
+        available: ExpoSpeechRecognitionModule.isRecognitionAvailable(),
+        onDeviceSupported: ExpoSpeechRecognitionModule.supportsOnDeviceRecognition(),
+        installedLocales: await installedLocales(),
+        locale,
+        failedBefore: refused || failedLocales.has(locale),
+        deviceLocale: iosRecognizerLocale(),
+      },
+      purpose,
+    );
   } catch {
     return 'server';
   }

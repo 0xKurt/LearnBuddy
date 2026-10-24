@@ -24,7 +24,7 @@ import { formNoteFor } from './evaluate.js';
 import { givesHints } from './modeRules.js';
 import { articleMissing, NEAR_MISS_REPLY } from './nearMiss.js';
 import type { RubricClaim } from './rubric.js';
-import { solutionsOf } from './service.js';
+import { secretsFor } from './secrets.js';
 import { passageFor } from './sourcePassage.js';
 import { secretsOf } from './structured.js';
 import {
@@ -266,8 +266,9 @@ async function tutorDecision(
         }
       : x;
   // Only the task itself may state a value; her own guesses are no licence (audit M-28).
+  const { secrets, visible } = secretsFor(item);
   const leaks = (x: TutorDecisionT) =>
-    session.mode === 'help' && givesAwayHomework(x, solutionsOf(item), item.prompt);
+    session.mode === 'help' && givesAwayHomework(x, secrets, visible);
   let d = solvedByHer(await askTutor(tutorContents));
   if (!d.concern && leaks(d)) {
     // Homework: the solution must not be given. One repair with the reason, then a safe hint.

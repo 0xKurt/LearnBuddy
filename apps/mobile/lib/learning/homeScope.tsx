@@ -127,3 +127,10 @@ export function useCurrentResult(): string | null {
 export function useHomeThumbs(): HomeThumbs {
   return useContext(Thumbs);
 }
+
+/** A running offer is continued once, either on the home bar or on its card. */
+export function useOfferRun(offer: { running_session_id?: string | null }) {
+  const bar = useBarPractice();
+  const resumes = offer.running_session_id ?? null;
+  return { resumes, onTop: resumes !== null && bar.session === resumes };
+}

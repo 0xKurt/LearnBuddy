@@ -1,8 +1,4 @@
-// The one line that says a recording runs: a dot and "Ich höre mit … 0:07 / 0:30", on the
-// pronunciation recorder (`SpeakPanel`). The dot stands still (#599): only the orb moves by
-// itself (HANDOFF §4), and the design shows a running recording with words alone
-// (ui_kits/app/Flows.jsx:111, Gaps.jsx:135) — the running time is what shows that it runs.
-
+// One recording status: elapsed time, actual maximum and an optional rehearsal target.
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -14,15 +10,28 @@ import { TYPE } from '../../lib/theme/type.js';
 import { VOICE } from '../../lib/theme/voice.js';
 
 /** "Ich höre mit … 0:07 / 0:30", read by a screen reader as "Aufnahme läuft, 0:07 von 0:30". */
-export function RecordingStatus({ elapsedMs, maxMs }: { elapsedMs: number; maxMs: number }) {
+export function RecordingStatus({
+  elapsedMs,
+  maxMs,
+  targetMs,
+}: {
+  elapsedMs: number;
+  maxMs: number | null;
+  targetMs?: number;
+}) {
   const { palette } = useTheme();
-  const { t } = useTranslation('practice');
+  const { t } = useTranslation('common');
   const time = formatClock(elapsedMs);
-  const max = formatClock(maxMs);
+  const max = maxMs === null ? '' : formatClock(maxMs);
+  const target =
+    targetMs === undefined ? '' : ` · ${t('voice.target', { target: formatClock(targetMs) })}`;
   return (
     <View
       accessible
-      accessibilityLabel={t('speak.recording_label', { time, max })}
+      accessibilityLabel={
+        t(maxMs === null ? 'voice.recording_open_value' : 'voice.recording_value', { time, max }) +
+        target
+      }
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -39,7 +48,9 @@ export function RecordingStatus({ elapsedMs, maxMs }: { elapsedMs: number; maxMs
           backgroundColor: palette.primary,
         }}
       />
-      <Text style={TYPE.voiceStatus}>{t('speak.recording', { time, max })}</Text>
+      <Text style={TYPE.voiceStatus}>
+        {t(maxMs === null ? 'voice.recording_open' : 'voice.recording', { time, max }) + target}
+      </Text>
     </View>
   );
 }

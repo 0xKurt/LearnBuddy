@@ -99,7 +99,7 @@ describe('the two controls of every head (Header.jsx:23–25)', () => {
   it('carries the Vorlesen switch and ⋯, each with a name, a role and a handler', () => {
     const onMenu = vi.fn();
     renderInApp(<BuddyHeader title="Dein Material" leading={back} menu={{ onPress: onMenu }} />);
-    const sound = screen.getByRole('switch', { name: 'Vorlesen' });
+    const sound = screen.getByRole('switch', { name: 'Anhören' });
     const before = sound.getAttribute('aria-checked');
     fireEvent.click(sound);
     expect(sound.getAttribute('aria-checked')).not.toBe(before);
@@ -111,14 +111,14 @@ describe('the two controls of every head (Header.jsx:23–25)', () => {
   it('draws no ⋯ where its screen says a menu would mislead, and keeps the switch', () => {
     renderInApp(<BuddyHeader title="PIN der Eltern" leading={back} menu={null} />);
     expect(screen.queryByRole('button', { name: 'Mehr' })).toBeNull();
-    expect(screen.getByRole('switch', { name: 'Vorlesen' })).toBeTruthy();
+    expect(screen.getByRole('switch', { name: 'Anhören' })).toBeTruthy();
   });
 
   it('puts a screen’s own ⋯ where the shared one stands, after the switch', () => {
     renderInApp(
       <BuddyHeader title="Üben" leading={back} menu={{ own: <button>Eigenes Menü</button> }} />,
     );
-    const sound = screen.getByRole('switch', { name: 'Vorlesen' });
+    const sound = screen.getByRole('switch', { name: 'Anhören' });
     const own = screen.getByRole('button', { name: 'Eigenes Menü' });
     expect(sound.compareDocumentPosition(own) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Mehr' })).toBeNull();

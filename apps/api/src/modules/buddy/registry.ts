@@ -11,6 +11,7 @@
 
 import { z } from 'zod';
 
+import { CONCERN_MEANING } from './distress.js';
 import { flatUnion, nestCall } from './calls.js';
 import type { Aliases, DomainAliases } from './context.js';
 import {
@@ -326,12 +327,7 @@ export const turnDecisionSchema = once('turn decision', () =>
     // helpline and throws the real answer away. The description says both sides, because the one
     // without the other is what went wrong (the schema reaches the model in the same request and
     // is the larger of the two static blocks — see #213).
-    concern: z
-      .boolean()
-      .default(false)
-      .describe(
-        'true only when the learner tells of DANGER to herself: being hurt, bullied, abused or threatened, thinking of hurting herself, harming her own body, feeling unsafe or hopeless. The app then replaces your reply with a fixed caring message and a helpline. NOT true for an insult, a provocation, rudeness towards you, ordinary school stress, or a hard turn in her life she is only telling you about while naming no danger — setting it there throws your answer away and hands her a crisis number instead of an answer.',
-      ),
+    concern: z.boolean().default(false).describe(`${CONCERN_MEANING.is} ${CONCERN_MEANING.isNot}`),
     also_asked: z.boolean().default(false),
     // No minimum length: a safeguarding answer is written by code, so the model rightly
     // leaves the reply empty then (its own text would be thrown away). Everything else

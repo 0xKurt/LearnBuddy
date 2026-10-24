@@ -14,18 +14,17 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { BusyIndicator } from '../lb/BusyIndicator.js';
 import { speakWord } from '../../lib/api/learningEndpoints.js';
 import { messageFor } from '../../lib/errors.js';
 import { useLocalPronunciation } from '../../lib/speech/usePronunciation.js';
 import { pronunciationSubmission } from '../../lib/speech/pronunciation.js';
-import { useRecording, type Recording } from '../../lib/speech/record.js';
-import { stop as stopListening } from '../../lib/speech/listen.js';
+import { type Recording } from '../../lib/speech/record.js';
 import { useTheme } from '../../lib/theme/ThemeProvider.js';
 import { SPACE } from '../../lib/theme/space.js';
 import { TYPE } from '../../lib/theme/type.js';
 import { useMounted } from '../../lib/useMounted.js';
-import { Btn } from '../lb/Btn.js';
+import { MicButton, MicStatus } from '../voice/MicButton.js';
+import { useMicRecorder } from '../voice/useMicRecorder.js';
 import { Sheet, SHEET_TEXT } from '../lb/Sheet.js';
 import { ListenButton } from './ListenButton.js';
 
@@ -110,11 +109,10 @@ function WordAttempt({
     }
   }
 
-  const rec = useRecording({
+  const rec = useMicRecorder({
     onRecorded: (r) => {
       void judge(r, word.text);
     },
-    onFailed: () => setProblem(t('practice:speak.problem.failed')),
   });
 
   function close(): void {
@@ -126,10 +124,9 @@ function WordAttempt({
   }
 
   const recording = rec.phase === 'recording';
-  const busy = sending || rec.phase === 'starting' || rec.phase === 'stopping';
   /** The fixed help answer stands alone: nothing was judged (#785, CLAUDE.md rule 18). */
   const helpAlone = tried?.help != null && !tried.audible;
-  const tip = helpAlone ? null : (tried?.tip ?? word.tip);
+  const tip = helpAlone || tried?.audible === false ? null : (tried?.tip ?? word.tip);
 
   return (
     <Sheet visible title={word.text} closeLabel={t('common:actions.close')} onClose={close}>
@@ -149,19 +146,6 @@ function WordAttempt({
           </Text>
         ) : null}
 
-        {sending ? (
-          <View
-            accessible
-            accessibilityRole="progressbar"
-            accessibilityLabel={t('practice:speak.listening')}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: SPACE.sm }}
-          >
-            <BusyIndicator color={palette.primary} />
-            <Text style={[TYPE.body, { color: palette.ink2 }]}>
-              {t('practice:speak.listening')}
-            </Text>
-          </View>
-        ) : null}
         {problem ? (
           <Text accessibilityRole="alert" style={[TYPE.body, SHEET_TEXT, { color: palette.ink2 }]}>
             {problem}
@@ -172,7 +156,14 @@ function WordAttempt({
             <Text
               style={[
                 TYPE.body,
-                { ...TYPE.title, color: tried.ok ? palette.successText : palette.warningText },
+                {
+                  ...TYPE.title,
+                  color: !tried.audible
+                    ? palette.ink2
+                    : tried.ok
+                      ? palette.successText
+                      : palette.warningText,
+                },
               ]}
             >
               {t(
@@ -190,12 +181,15 @@ function WordAttempt({
           </View>
         ) : null}
 
-        <Btn
-          size="lg"
-          full
-          pill
-          icon={recording ? 'stop' : 'mic'}
-          busy={busy && !recording}
+        <View style={SHEET_TEXT}>
+          <MicStatus voice={rec.voice} />
+        </View>
+        <MicButton
+          voice={rec.voice}
+          presentation="recorder"
+          label={t('practice:speak.word_say')}
+          busy={sending}
+          busyLabel={t('practice:speak.listening')}
           onPress={() => {
             if (recording) {
               void rec.stop();
@@ -204,13 +198,10 @@ function WordAttempt({
             setProblem(null);
             setTried(null);
             // Buddy's voice must not end up in her recording.
-            stopListening();
             recordedLocally.current = local;
             void rec.start();
           }}
-        >
-          {t(recording ? 'practice:speak.record_stop' : 'practice:speak.word_say')}
-        </Btn>
+        />
       </View>
     </Sheet>
   );

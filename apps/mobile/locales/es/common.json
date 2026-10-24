@@ -5,11 +5,11 @@
     "more": "Más opciones",
     "add": "Añadir",
     "mic": "Hablar",
-    "speak": "Leer en voz alta",
+    "speak": "Escuchar",
     "stop": "Detener",
     "pin_delete": "Borrar el último dígito",
     "pin_progress": "{{count}} de 4 dígitos introducidos",
-    "camera": "Hacer una foto",
+    "camera": "Añadir una foto",
     "keyboard": "Teclado",
     "language": "Elegir idioma",
     "send": "Enviar",
@@ -47,8 +47,8 @@
       "failed": "La grabación no ha funcionado. Inténtalo otra vez, por favor.",
       "part_lost": "Un trocito de tu grabación se ha perdido; el resto ya está."
     },
-    "read_again": "Leer otra vez",
-    "read_aloud": "Leer en voz alta",
+    "read_again": "Escuchar otra vez",
+    "read_aloud": "Escuchar",
     "recording": "Te escucho … {{time}} / {{max}}",
     "recording_open": "Te escucho … {{time}}",
     "recording_open_value": "Grabando, {{time}}",
@@ -56,7 +56,10 @@
     "stop": "Parar la grabación",
     "stop_hint": "Después escribo lo que has dicho.",
     "topic": "Decirlo en vez de escribirlo",
-    "transcribing": "Estoy escribiendo lo que has dicho …"
+    "transcribing": "Estoy escribiendo lo que has dicho …",
+    "done": "Listo",
+    "target": "Objetivo {{target}}",
+    "finishing": "Terminando la grabación …"
   },
   "session": {
     "expired": "Se cerró tu sesión. Vuelve a entrar: lo que aún no se había enviado sigue aquí."
@@ -86,7 +89,7 @@
     "s1_title": "Díselo a Buddy sin más",
     "s1_body": "Escribir, hablar o enseñar una foto: los tres caminos llevan a la misma conversación.",
     "s2_title": "Tu hoja se convierte en práctica",
-    "s2_body": "Fotografía una hoja de ejercicios y Buddy la convierte en preguntas que encajan con lo tuyo.",
+    "s2_body": "Fotografía una ficha y Buddy la convierte en ejercicios que encajan con lo tuyo.",
     "s3_title": "Buddy piensa contigo",
     "s3_body": "Exámenes, temas, el momento justo para practicar: Buddy lo recuerda por ti y solo te avisa si así lo queréis.",
     "s4_title": "Elige tus colores",
@@ -95,5 +98,22 @@
     "start": "¡Vamos!",
     "skip": "Saltar",
     "step_label": "{{n}} de {{count}}"
+  },
+  "delete": {
+    "keep": "Conservar",
+    "item": {
+      "title": "¿Borrar este ejercicio?",
+      "body": "Este ejercicio no volverá a salir. No se puede deshacer.",
+      "confirm": "Borrar el ejercicio",
+      "done": "Ejercicio borrado.",
+      "kept": "El ejercicio se queda."
+    },
+    "material": {
+      "title": "¿Eliminar la ficha?",
+      "body": "Se eliminarán “{{title}}” y sus ejercicios, y también las fotos. No se puede deshacer.",
+      "confirm": "Eliminar la ficha",
+      "done": "Ficha eliminada.",
+      "kept": "Todo queda como estaba."
+    }
   }
 }

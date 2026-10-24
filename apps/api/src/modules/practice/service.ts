@@ -491,23 +491,6 @@ async function helpSessionFor(
   });
 }
 
-/** The solution as the learner sees it. */
-export function shownSolution(
-  i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit'>,
-): string {
-  if (i.kind === 'multiple_choice' && i.choices && i.correct_choice !== null) {
-    return i.choices[i.correct_choice] ?? i.answer;
-  }
-  return `${i.answer}${i.unit ? ` ${i.unit}` : ''}`;
-}
-
-/** Every form of the solution a homework reply must not state (audit H-9, M-28). */
-export function solutionsOf(
-  i: Pick<ItemRow, 'kind' | 'answer' | 'choices' | 'correct_choice' | 'unit' | 'accepted_answers'>,
-): string[] {
-  return [...new Set([shownSolution(i), i.answer, ...i.accepted_answers])];
-}
-
 /**
  * Her run was active just now; with its last question closed it finishes here, in the same
  * transaction, so a lost /finish never leaves it looking unfinished (audit H-12).

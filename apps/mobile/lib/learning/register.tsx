@@ -7,6 +7,7 @@ import { MAX_PDF_MB, pollAfterMs, type AnswerRequest } from '@learnbuddy/shared-
 
 import { ProfileLibrarySubjects } from '../../components/library/ProfileLibrarySubjects.js';
 import { DrillOfferCard } from '../../components/learn/DrillOfferCard.js';
+import { ListenButton } from '../../components/practice/ListenButton.js';
 import { OfferCard } from '../../components/learn/OfferCard.js';
 import { ReadyCard } from '../../components/learn/ReadyCard.js';
 import { learningNotices } from '../../components/learn/HomeNotices.js';
@@ -22,6 +23,7 @@ import { RoleplayResult } from '../../components/buddy/RoleplayResult.js';
 import {
   addActionCard,
   messageCards,
+  messageListen,
   messageExtras,
   readAlong,
   greetingAction,
@@ -50,7 +52,7 @@ import { homeTop } from '../homeLayout.js';
 import { LearningHome } from './homeScope.js';
 import { practiceGreeting } from './greeting.js';
 import { greetingNews } from '../buddy/useSessionStart.js';
-import { greetingResult } from '../../components/learn/GreetingResult.js';
+import { greetingResult } from '../../components/learn/ResultNotice.js';
 import { ConfirmCard } from '../../components/learn/ConfirmCard.js';
 import { roleplayScene } from '../../components/learn/talkScene.js';
 import { talkScene } from '../../components/voice/talkScene.js';
@@ -88,6 +90,7 @@ function RunningMath(props: InlineTextProps) {
 }
 
 export function registerLearning(): void {
+  messageListen.fill(ListenButton);
   // ── The chat: Buddy's offers to start something, always shown, one tap starts it …
   addActionCard(
     'offer_learning',

@@ -10,6 +10,7 @@ import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOfferRun } from '../../lib/learning/homeScope.js';
 import { useAnnounce } from '../../lib/announce.js';
 import { startDrill } from '../../lib/api/learningEndpoints.js';
 import { keys, queryClient } from '../../lib/api/queries.js';
@@ -30,7 +31,8 @@ export function DrillOfferCard({
   /** Whether "Los geht's" may be the screen's one filled button (extensions.ts `loudCard`). */
   quiet?: Quiet;
 }) {
-  const { t } = useTranslation(['learn', 'common']);
+  const { t } = useTranslation(['learn', 'common', 'buddy']);
+  const { onTop, resumes } = useOfferRun(offer);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const running = useRef(false);
@@ -72,13 +74,21 @@ export function DrillOfferCard({
       label={label}
       title={offer.title}
       note={failed}
-      start={{
-        label: failed ? t('common:actions.retry') : t('learn:topic.submit'),
-        busy,
-        variant: quietVariant(quiet),
-        accessibilityHint: `${label}: ${offer.title}`,
-        onPress: () => void go(),
-      }}
+      start={
+        onTop
+          ? null
+          : {
+              label: failed
+                ? t('common:actions.retry')
+                : resumes
+                  ? t('buddy:now.resume_cta')
+                  : t('learn:topic.submit'),
+              busy,
+              variant: quietVariant(quiet),
+              accessibilityHint: `${label}: ${offer.title}`,
+              onPress: () => (resumes ? router.push(`/practice/${resumes}`) : void go()),
+            }
+      }
     />
   );
 }

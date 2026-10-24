@@ -96,7 +96,7 @@ describe('the stage (Talk.jsx:22–45)', () => {
   it('keeps every way on and off the screen: keyboard, microphone, photo through the chat bar', () => {
     const talk = code('app/talk.tsx');
     expect(talk).toMatch(/left=\{\{ icon: 'keyboard'[^}]*onPress: leave \}\}/);
-    expect(talk).toMatch(/attachInChat\(\{ open: 'camera' \}\)/);
+    expect(talk).toMatch(/attachInChat\(\{ open: 'menu' \}\)/);
     expect(talk).not.toMatch(/['"`]\/capture/);
     expect(talk).toMatch(/onMagicTap=\{onMic\}/);
     expect(talk).toMatch(/onPress: interrupt/);

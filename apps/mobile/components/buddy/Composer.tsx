@@ -17,6 +17,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useSceneLanguage } from '../../lib/buddy/useSceneLanguage.js';
 import { isTyping } from '../../lib/buddy/typing.js';
 import { composerAfterSend } from '../../lib/buddy/unsent.js';
 import { pageHandler } from '../../lib/capture/pages.js';
@@ -111,9 +112,10 @@ export function Composer({
     deliver(trimmed);
   };
 
+  const sceneLang = useSceneLanguage();
   const voice = useVoiceInput({
     purpose: 'message',
-    lang: null,
+    lang: sceneLang,
     onText: (said) => {
       // Into the field: she checks it and sends it herself.
       setText(mergeTranscript(latest.current, said, 'append', MAX_MESSAGE_LENGTH));

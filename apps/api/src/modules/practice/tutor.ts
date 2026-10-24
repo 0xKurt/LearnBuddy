@@ -127,7 +127,7 @@ const RULE_TEXT: Record<RuleVerdict, string> = {
     'close: the noun is right, the article before it is not (checked) — partially_correct; say the article is not right yet, do not write it',
   typo: 'close: a small spelling slip',
   folded:
-    'differs from the solution only in capitalisation, ß/ss or punctuation — judge gently whether that matters for this question',
+    'correct: only capitalisation, ß/ss or punctuation differ where spelling is not the point (checked)',
   other_form:
     'the VALUE is right — it is the same amount, written another way. Only the form differs from the key: decide whether the form is what this question asks for, and never call it wrong for the value',
   not_transformed:
