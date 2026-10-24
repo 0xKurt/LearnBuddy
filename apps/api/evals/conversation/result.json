@@ -1,0 +1,80 @@
+{
+  "costMicros": 60822,
+  "results": [
+    {
+      "id": "smalltalk",
+      "words": 11,
+      "passed": true,
+      "reply": "Gern 💛 Wenn du magst, machen wir einfach beim Nächsten weiter.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12592,
+        "outputTokens": 61,
+        "thoughtTokens": 24,
+        "cachedTokens": 0,
+        "costMicros": 10810,
+        "latencyMs": 1425
+      }
+    },
+    {
+      "id": "detail",
+      "words": 283,
+      "passed": true,
+      "reply": "Klar — der **Wasserkreislauf** beschreibt, wie Wasser auf der Erde immer wieder den Ort wechselt und dabei seine Form ändern kann. Er ist ein riesiger Kreislauf zwischen **Meer, Land, Luft und Untergrund**.\n\n## Die wichtigsten Stationen\n\n### 1. Verdunstung\nDie Sonne erwärmt Seen, Flüsse, Meere und feuchte Böden. Dann wird Wasser zu Wasserdampf und steigt in die Luft auf. Auch Pflanzen geben Wasser an die Luft ab — das nennt man **Transpiration**.\n\n### 2. Kondensation\nIn großer Höhe ist die Luft kühler. Der Wasserdampf kühlt ab und wird wieder zu winzigen Wassertröpfchen. So entstehen **Wolken**.\n\n### 3. Niederschlag\nWenn sich viele Tröpfchen in den Wolken sammeln und schwer genug werden, fallen sie wieder herunter — als **Regen**, **Schnee**, **Hagel** oder **Niesel**.\n\n### 4. Versickerung und Grundwasser\nEin Teil des Wassers sickert in den Boden ein. Dort sammelt es sich als **Grundwasser**. Das ist wichtig, weil wir es als Trinkwasser nutzen können.\n\n### 5. Oberflächenabfluss\nEin anderer Teil fließt über den Boden in Bäche, Flüsse und schließlich zurück ins Meer. So schließt sich der Kreislauf.\n\n## Warum ist der Wasserkreislauf wichtig?\n- Er verteilt Wasser auf der ganzen Erde.\n- Er sorgt dafür, dass Pflanzen, Tiere und Menschen Wasser bekommen.\n- Er bringt Wasser in den Boden und in Flüsse zurück.\n- Er beeinflusst das Wetter und das Klima.\n- Ohne ihn gäbe es keine Wolken, keinen Regen und kein Leben, wie wir es kennen.\n\n## Kurz zusammengefasst\nDie Sonne treibt den Kreislauf an: Wasser **verdunstet**, steigt auf, **kondensiert** zu Wolken, fällt als **Niederschlag** zurück und fließt wieder in Böden, Flüsse und Meere.\n\nWenn du willst, kann ich dir danach noch eine **einfache Skizze in Worten** dazu machen oder dich mit **Fragen dazu abfragen**.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12607,
+        "outputTokens": 529,
+        "thoughtTokens": 11,
+        "cachedTokens": 12416,
+        "costMicros": 13074,
+        "latencyMs": 4209
+      }
+    },
+    {
+      "id": "everything",
+      "words": 201,
+      "passed": true,
+      "reply": "Klar — hier ist das Wichtigste zum **Wasserkreislauf** für die Schule:\n\n**Was ist der Wasserkreislauf?**\nDer Wasserkreislauf beschreibt, wie Wasser auf der Erde ständig unterwegs ist. Es geht immer wieder von der Erde in die Luft und zurück.\n\n**Die wichtigsten Schritte:**\n- **Verdunstung:** Die Sonne erwärmt Wasser aus Meeren, Seen, Flüssen und Böden. Es wird zu Wasserdampf und steigt nach oben.\n- **Kondensation:** In der Höhe ist es kälter. Der Wasserdampf kühlt ab und wird wieder zu kleinen Wassertröpfchen. So entstehen Wolken.\n- **Niederschlag:** Wenn die Wolken zu viele Wassertröpfchen haben, fällt Wasser wieder herunter — als Regen, Schnee oder Hagel.\n- **Versickerung und Abfluss:** Ein Teil des Wassers sickert in den Boden und wird zu Grundwasser. Ein anderer Teil fließt über Bäche und Flüsse zurück ins Meer.\n\n**Warum ist das wichtig?**\n- Pflanzen, Tiere und Menschen brauchen Wasser.\n- Der Wasserkreislauf sorgt dafür, dass Wasser immer wieder verteilt wird.\n- Ohne ihn gäbe es nicht genug Süßwasser an vielen Orten.\n\n**Merksatz:**\nDie Sonne treibt den Kreislauf an: Wasser verdunstet, wird zu Wolken und fällt als Niederschlag wieder auf die Erde.\n\nWenn du willst, kann ich dir daraus auch noch eine **ganz kurze Lernzusammenfassung** oder **ein paar Schulfragen zum Üben** machen.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12603,
+        "outputTokens": 394,
+        "thoughtTokens": 15,
+        "cachedTokens": 12416,
+        "costMicros": 12423,
+        "latencyMs": 3395
+      }
+    },
+    {
+      "id": "spoken",
+      "words": 152,
+      "passed": true,
+      "reply": "Klar — stell dir die Erde wie ein riesiges Wasser-Karussell vor.\n\n**So läuft der Wasserkreislauf:**\n\n- Die **Sonne** wärmt Wasser in **Meeren, Seen und Flüssen**.\n- Ein Teil davon wird zu **Wasserdampf** und steigt nach oben. Das nennt man **Verdunstung**.\n- Hoch oben ist es kühler. Dort wird der Wasserdampf wieder zu winzigen Wassertröpfchen. Das heißt **Kondensation**.\n- Aus vielen Tröpfchen werden **Wolken**.\n- Wenn die Wolken voll sind, fällt Wasser wieder herunter: als **Regen**, **Schnee** oder **Hagel**. Das heißt **Niederschlag**.\n- Das Wasser fließt dann über den Boden zurück in **Bäche, Flüsse, Seen und Meere**.\n- Ein Teil versickert im Boden und wird zu **Grundwasser**.\n\nUnd dann beginnt alles wieder von vorn.\n\n**Kurz gesagt:**\nDie Sonne macht aus Wasser Dampf, daraus werden Wolken, dann kommt Niederschlag, und das Wasser sammelt sich wieder auf der Erde.\n\nWenn du willst, kann ich dir das jetzt auch noch **mit einem ganz einfachen Merksatz** erklären.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12610,
+        "outputTokens": 326,
+        "thoughtTokens": 9,
+        "cachedTokens": 12416,
+        "costMicros": 12062,
+        "latencyMs": 2928
+      }
+    },
+    {
+      "id": "summary",
+      "words": 135,
+      "passed": true,
+      "reply": "## Bisheriges Gespräch\n\n- **Wasserkreislauf erklärt**\n  - Sonne erwärmt Wasser in Seen, Flüssen und Meeren.\n  - Wasser **verdunstet** und steigt als Wasserdampf auf.\n  - In kühlerer Luft **kondensiert** der Wasserdampf zu Tröpfchen.\n  - Tröpfchen bilden Wolken.\n  - Als Niederschlag fällt Wasser wieder zur Erde.\n  - Es versickert oder fließt über Bäche und Flüsse zurück ins Meer.\n\n- **Wichtiger Unterschied**\n  - **Verdunstung**: flüssig \u001a gasförmig\n  - **Kondensation**: gasförmig \u001a flüssig\n  - Im Wasserkreislauf sind das entgegengesetzte Vorgänge.\n\n- **Dein eigener Versuch**\n  - Du willst eine kalte Glasscheibe über warmes Wasser halten.\n  - Dabei kann man **Kondensation** beobachten: Wasserdampf wird wieder zu kleinen Tröpfchen.\n  - Die Beobachtung lässt sich mit der Wolkenbildung verbinden.\n  - Noch offen ist, **wie** du die Beobachtung festhalten willst.\n\n## Offen\n\n- Ob du die Beobachtung als **Protokoll**, **Stichpunkte** oder **Zeichnung** festhalten möchtest.",
+      "usage": {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "inputTokens": 12958,
+        "outputTokens": 348,
+        "thoughtTokens": 8,
+        "cachedTokens": 12416,
+        "costMicros": 12453,
+        "latencyMs": 3157
+      }
+    }
+  ]
+}

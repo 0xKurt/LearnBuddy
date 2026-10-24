@@ -61,7 +61,10 @@ describe('markdownBlocks', () => {
     ]);
   });
   it('makes a heading a bold line', () => {
-    expect(markdownBlocks('## Brüche\nText')).toEqual([{ type: 'para', text: '**Brüche**\nText' }]);
+    expect(markdownBlocks('## Brüche\nText')).toEqual([
+      { type: 'para', text: '**Brüche**' },
+      { type: 'para', text: 'Text' },
+    ]);
   });
   it('never splits a formula at a line break inside it', () => {
     expect(markdownBlocks('- $\\frac{1}\n{2}$ ist ein Bruch')).toEqual([

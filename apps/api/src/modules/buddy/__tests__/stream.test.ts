@@ -80,9 +80,9 @@ describe('replyProgress', () => {
   });
 
   it('never shows a reply longer than validation allows (repro-28)', () => {
-    const long = JSON.stringify({ actions: [], reply: 'x'.repeat(701), options: null });
+    const long = JSON.stringify({ actions: [], reply: 'x'.repeat(6001), options: null });
     expect(replyProgress(long, NONE)?.speakable).toBe(false);
-    const fits = JSON.stringify({ actions: [], reply: 'x'.repeat(700), options: null });
+    const fits = JSON.stringify({ actions: [], reply: 'x'.repeat(6000), options: null });
     expect(replyProgress(fits, NONE)?.speakable).toBe(true);
   });
 

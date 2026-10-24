@@ -7395,3 +7395,21 @@ job, rather than silently skipping the vector search test. The shared local PG16
   component into a pure module (`lib/capture/attachments.ts`, `lib/capture/materialUpload.ts`,
   `lib/math/figureScale.ts`, `lib/pushFlush.ts`) and proven there; the part that only talks to
   the device stays uncovered and is named as such.
+
+### Conversation continuity and answer scope (#937)
+
+Chat and talk share one message cache. An overlapping server window refreshes its messages
+while preserving the older visited prefix; older pages load above the same chat. The chat no
+longer cuts that conversation to six messages. A non-overlapping window is backfilled through server pagination before it replaces the
+visible chat; failed gap fetches leave the previous conversation available for retry. Explicit
+older-page loads preserve the visible scroll position; sign-out clears the cache as before.
+
+Buddy chooses depth from the request, keeping smalltalk short and detailed explanations complete.
+Summaries condense the relevant conversation into key ideas, conclusions and open questions,
+with each fact once. Replies allow up to 6,000 characters with 4,096 output tokens; the previous
+700-character schema ceiling could cut detailed answers mid-word.
+GPT-5.4 chat transport sets verbosity by purpose: medium for Buddy/tutor/summary, high for
+explanations, low for narrow decisions. Other model families receive no unsupported parameter.
+The existing RichText/InlineText renderer supports headings, emphasis and lists in native and web
+chat; HTML, images and links remain inert text. markdownPlain is shared by copying, accessibility
+and speech. Tables are outside this subset. Library review: issue #937.

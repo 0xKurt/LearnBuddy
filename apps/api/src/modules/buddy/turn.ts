@@ -356,7 +356,7 @@ async function decideTurn(
             system: prompt.turnSystem,
             contents: messages,
             schema: final ? offer.final : offer.step,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 4096,
             temperature: 0.4,
             timeoutMs: 30_000,
             // Minimal, not a budget: at 512 the model was measured thinking up to 885 tokens, and the

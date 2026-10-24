@@ -14,6 +14,11 @@ import { DE as WORDS } from '../../math/__tests__/words.js';
 import { sayMath } from '../../math/speak.js';
 
 describe('spokenText', () => {
+  it('reads structured summaries without heading, emphasis or bullet markers', () => {
+    expect(
+      spokenText('## Überblick\n\n- **Wasser** verdunstet\n- _Wolken_ entstehen', (t) => t),
+    ).toBe('Überblick Wasser verdunstet. Wolken entstehen.');
+  });
   it('reads math in words and drops **bold** markers', () => {
     expect(spokenText('Kürze **zuerst** $\\frac{6}{8}$', sayMath(WORDS))).toBe(
       'Kürze zuerst 6 Achtel',

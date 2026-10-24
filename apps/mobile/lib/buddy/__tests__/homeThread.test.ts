@@ -64,10 +64,10 @@ const prepared = action('a-prep', {
 });
 
 describe('what the home thread shows (issues #94, #204)', () => {
-  it('shows the newest messages only', () => {
+  it('keeps the pre-talk conversation above all spoken turns after returning to chat', () => {
     const thread = Array.from({ length: VISIBLE_MESSAGES + 2 }, (_, i) => message(`m${i}`));
     const { messages } = threadOnScreen(home({ thread, now: null }), layout({}));
-    expect(messages.map((m) => m.id)).toEqual(thread.slice(-VISIBLE_MESSAGES).map((m) => m.id));
+    expect(messages.map((m) => m.id)).toEqual(thread.map((m) => m.id));
   });
 
   it('leaves the photo ask to the capture bar, which carries its undo', () => {
