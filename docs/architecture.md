@@ -7423,3 +7423,34 @@ explanations, low for narrow decisions. Other model families receive no unsuppor
 The existing RichText/InlineText renderer supports headings, emphasis and lists in native and web
 chat; HTML, images and links remain inert text. markdownPlain is shared by copying, accessibility
 and speech. Tables are outside this subset. Library review: issue #937.
+
+### Final decision failures (#951)
+
+The scheduler measures final learner-message failures independently of provider-call failures:
+`decision_failures` counts each learner message once, never each decision attempt or model round.
+The inclusive 60-minute window uses the message's `created_at` and the app clock. Only final
+`failed` messages with `invalid`, `model_unavailable`, `internal` or `budget` count as outages.
+Stopped, blocked and protective messages remain separate counts; rejected attempts repaired to a
+successful message are a breakdown, not an outage. Background decisions have their own counts.
+At least two failures **and** 25% of messages raise one alarm per tick through `stats.errors` →
+heartbeat → health 503 → the existing health workflow. Repeated ticks retain the alarm without
+accumulating incidents; a clean window clears it. Zero traffic and one failure cannot alarm.
+The top three fixed failure codes over 24 hours contain counts only, never decision error text.
+
+`recordOfferFailure` stores `result.offer_failure = {code, at}` on the existing action, using the
+app clock and a fixed reason. The latest transient failure replaces the previous one; permanent
+failures freeze with `cannot_start_at`. Counting uses the failure time, including offers created
+earlier, and deduplicates by action. Offer counts and permanent failures remain separate from
+learner-message rates: `failed` records offers with a failure in the window (even if a later
+retry succeeds); only `permanent` contributes to the offer alarm. Its denominator is distinct
+offers created or failed in that hour, including delayed failures; the same ≥2 and 25% thresholds
+apply. The 24-hour top codes combine final message codes and fixed `offer_`-prefixed codes.
+Existing permanent failures without a reason are `unknown`; no reason is inferred from copy.
+No new migration is needed before the P0-B migration gate (#915); global timestamp indexes can
+be evaluated after that gate, with production query plans.
+
+Operators can run `pnpm -C apps/api exec tsx scripts/decision-why.ts <decision_id>` with their
+operator database environment. The transaction is read-only and selects only disposition, errors,
+model, prompt version and linked call schema variant/round/attempts/error code. Error details that
+are not fixed codes are redacted, because validation errors may quote private text. There is no
+model call and no selection of output, triggers or conversation text. See `privacy.md` §Access control.

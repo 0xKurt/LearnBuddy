@@ -12,21 +12,23 @@ export async function recordOfferFailure(
   actionId: string,
   error: unknown,
 ): Promise<void> {
-  const permanent =
-    isAppError(error) &&
-    (error.details?.reason === 'not_usable' || error.details?.reason === 'speech_off');
+  const reason = isAppError(error) ? error.details?.reason : undefined;
+  const permanent = reason === 'not_usable' || reason === 'speech_off';
+  const code = permanent ? reason : isAppError(error) ? error.code : 'internal';
+  const at = deps.now();
   const text = t(learner.locale, permanent ? 'practice.not_usable' : 'practice.prepare_failed');
   await deps.db.tx(async (tx) => {
     // Same fence/order as a turn: neither the card nor its words change under a decision.
     await tx.query(`select 1 from buddy_settings where learner_id = $1 for update`, [learner.id]);
     const offer = await tx.maybeOne<{ decision_id: string }>(
-      `update buddy_actions set cannot_start_at = case when $3 then $4 else cannot_start_at end
+      `update buddy_actions set cannot_start_at = case when $3 then $4 else cannot_start_at end,
+           result = jsonb_set(result, '{offer_failure}', $5::jsonb)
         where id = $1 and learner_id = $2 and tool = 'offer_learning' and status = 'applied'
           and cannot_start_at is null
           and not exists (select 1 from practice_sessions
                            where learner_id = $2 and client_request_id = $1)
         returning decision_id`,
-      [actionId, learner.id, permanent, deps.now()],
+      [actionId, learner.id, permanent, at, JSON.stringify({ code, at: at.toISOString() })],
     );
     if (!offer) return;
     const messages = await tx.query<{ id: string; text: string }>(

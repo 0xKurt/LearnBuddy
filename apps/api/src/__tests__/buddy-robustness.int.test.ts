@@ -65,7 +65,14 @@ describe.skipIf(!dbReady)('Buddy turns under failure', () => {
   beforeAll(async () => {
     env = await createTestEnv({ start: '2026-09-28T08:00:00Z' });
   });
-  afterEach(() => env.checkScript({ reset: true }));
+  afterEach(async () => {
+    try {
+      await env.checkScript({ reset: true });
+    } finally {
+      // Scheduler outcome rates are global; each scenario owns its learner records.
+      await env.db.query('delete from learners');
+    }
+  });
   afterAll(async () => {
     await env?.close();
   });
