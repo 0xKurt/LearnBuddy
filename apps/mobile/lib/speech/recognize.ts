@@ -6,6 +6,7 @@
 // requires live verification on a real iPhone / Android phone (not testable
 // in the browser or the Node test runner).
 
+import { removeRecognitionAudio } from './conversationPronunciation.js';
 import { getLocales } from 'expo-localization';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -180,7 +181,7 @@ export type DevicePhase = 'idle' | 'starting' | 'listening' | 'stopping';
 type DeviceFailure = 'empty' | 'failed';
 
 type Handlers = {
-  onText: (text: string) => void;
+  onText: (text: string, audioUri?: string) => void | Promise<void>;
   /** The device can't do it here: continue with a recording (same tap). */
   onFallback: () => void;
   onFailed: (why: DeviceFailure) => void;
@@ -195,6 +196,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
   const heardRef = useRef<Heard>(NOTHING_HEARD);
   /** Only the hook instance that started listening reacts to the (app-wide) recogniser events. */
   const mine = useRef(false);
+  const audioUri = useRef<string | null>(null);
   const outcome = useRef<'none' | 'fallback' | 'failed'>('none');
   /** The system ended the listening (not she): what was heard so far is no answer. */
   const interrupted = useRef(false);
@@ -237,6 +239,7 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
       sub.remove();
       clearTimer();
       if (mine.current) ExpoSpeechRecognitionModule.abort();
+      removeRecognitionAudio(audioUri.current);
     };
   }, []);
 
@@ -285,6 +288,14 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
     if (heardText(heardRef.current) === '') h.current.onFailed('failed');
   });
 
+  useSpeechRecognitionEvent('audiostart', (e) => {
+    if (mine.current) audioUri.current = e.uri;
+  });
+
+  useSpeechRecognitionEvent('audioend', (e) => {
+    if (mine.current) audioUri.current = e.uri;
+  });
+
   useSpeechRecognitionEvent('end', () => {
     if (!mine.current) return;
     mine.current = false;
@@ -294,15 +305,28 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
     heardRef.current = NOTHING_HEARD;
     if (mounted.current) setHeard(NOTHING_HEARD);
     setPhase('idle');
-    if (!mounted.current) return;
-    if (end.kind === 'text') h.current.onText(end.text);
+    const uri = audioUri.current;
+    audioUri.current = null;
+    if (!mounted.current) {
+      removeRecognitionAudio(uri);
+      return;
+    }
+    if (end.kind === 'text') {
+      void Promise.resolve(h.current.onText(end.text, uri ?? undefined)).finally(() =>
+        removeRecognitionAudio(uri),
+      );
+    } else removeRecognitionAudio(uri);
+    if (end.kind === 'text') return;
     else if (end.kind === 'fallback') h.current.onFallback();
     else if (end.kind === 'empty') h.current.onFailed('empty');
     else if (end.kind === 'failed') h.current.onFailed('failed');
   });
 
   const start = useCallback(
-    async (lang: string, opts: { untilPause?: boolean } = {}): Promise<void> => {
+    async (
+      lang: string,
+      opts: { untilPause?: boolean; recordAudio?: boolean } = {},
+    ): Promise<void> => {
       if (phaseRef.current !== 'idle') return;
       setPhase('starting');
       try {
@@ -330,6 +354,11 @@ export function useDeviceRecognition({ maxMs, ...handlers }: Handlers & { maxMs:
           // untilPause: the recogniser ends by itself when she stops speaking (conversation).
           continuous: !opts.untilPause,
           requiresOnDeviceRecognition: true,
+          recordingOptions: {
+            persist: opts.recordAudio === true && ExpoSpeechRecognitionModule.supportsRecording(),
+            outputSampleRate: 16_000,
+            outputEncoding: 'pcmFormatInt16',
+          },
           addsPunctuation: true,
           maxAlternatives: 1,
           // A Google service where present (issue #13): OEM recognisers are the

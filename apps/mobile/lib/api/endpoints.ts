@@ -1,3 +1,4 @@
+import type { ConversationPronunciation } from '@learnbuddy/shared-types/contracts';
 // Typed calls to the API (docs/architecture.md §API). Every response is
 // parsed with the shared contracts; a shape mismatch is an ApiError. The learning domain's own
 // calls — her sheets, practice, the rehearsal — stand in learningEndpoints.ts (issue #107).
@@ -106,9 +107,15 @@ export const sendMessageStreamed = (
   replyToId: string | null,
   onReply: (event: ReplyStreamEvent) => void,
   signal?: AbortSignal,
+  pronunciation?: ConversationPronunciation,
 ) =>
   streamRequest('POST', '/buddy/messages', {
-    body: { client_message_id: clientMessageId, text, reply_to_id: replyToId },
+    body: {
+      client_message_id: clientMessageId,
+      text,
+      reply_to_id: replyToId,
+      ...(pronunciation ? { pronunciation } : {}),
+    },
     schema: SendMessageResponse,
     ...(signal ? { signal } : {}),
     onEvent: (e) => {

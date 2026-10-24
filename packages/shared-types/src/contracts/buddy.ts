@@ -1,3 +1,5 @@
+import { ConversationPronunciation } from './conversationPronunciation.js';
+import { pronunciationKey, pronunciationWords } from './pronunciation.js';
 import { z } from 'zod';
 
 import { IsoDateTime, LocalDate, LocalTime, tolerantArray, Uuid } from './common.js';
@@ -259,11 +261,23 @@ export function buddyContracts<
   return { ActionSummary, ActionView, MessageView, BuddyHome, SendMessageResponse };
 }
 
-export const SendMessageRequest = z.object({
-  client_message_id: Uuid,
-  text: z.string().trim().min(1).max(2000),
-  reply_to_id: Uuid.nullable().optional(),
-});
+export const SendMessageRequest = z
+  .object({
+    client_message_id: Uuid,
+    text: z.string().trim().min(1).max(2000),
+    reply_to_id: Uuid.nullable().optional(),
+    pronunciation: ConversationPronunciation.optional(),
+  })
+  .refine(
+    (input) =>
+      !input.pronunciation ||
+      JSON.stringify(pronunciationWords(input.text).map(pronunciationKey)) ===
+        JSON.stringify(input.pronunciation.plan.words.map((w) => pronunciationKey(w.expected))),
+    {
+      message: 'Pronunciation targets must match the complete transcript',
+      path: ['pronunciation'],
+    },
+  );
 export type SendMessageRequest = z.infer<typeof SendMessageRequest>;
 
 /**

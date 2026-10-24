@@ -409,7 +409,18 @@ sends the text breakdown for a tip. Audio is ephemeral; written results retain e
 rules. Cancellation never triggers an upload. This is a hybrid check, not a promise of offline
 practice. The developer lab remains local-only and explicitly reports its failures.
 
-First speaking use downloads public EN/DE/FR/ES/IT packs from alphacephei.com without learner IDs;
+Conversation and roleplay also use the shared local checker when the phone transcript and a
+verified pack are available. The recognizer temporarily saves the recording in its private cache;
+it is removed after checking, cancellation or interruption. Only word evidence accompanies the
+unchanged transcript; uncertainty never uploads this recording. The server derives confirmed
+word verdicts for the current reply, omitting uncertain words. Evidence is not added to stored
+chat messages (normal model-call retention still applies).
+
+First speaking use downloads public EN/DE/FR/ES/IT packs only on explicitly unmetered connections;
+unknown/metered connections need one explicit confirmation showing the archive size. Consent is
+kept on the device for that archive; refusal is remembered for the app run. Disconnected devices
+wait. Failures use exponential back-off across screen mounts.
+Downloads come from alphacephei.com without learner IDs;
 the host receives normal network metadata. Private app storage, pinned SHA-256/length checks,
 bounded extraction and honest progress/failure states protect installation. No model or audio
 files enter the repository. Device lifecycle and child calibration remain unverified in

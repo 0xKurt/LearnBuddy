@@ -30,3 +30,5 @@ export * from './drill.js';
 export * from './workPhoto.js';
 export * from './learning.js';
 export * from './pronunciation.js';
+
+export * from './conversationPronunciation.js';

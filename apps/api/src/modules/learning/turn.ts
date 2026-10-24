@@ -3,6 +3,7 @@
 // moment she writes, a reply that gives away her open homework's solution is refused, an offer is
 // prepared while she reads it, and a held-back message ends the scene.
 
+import { pronunciationContext } from '../buddy/conversationPronunciation.js';
 import type { RoleplayFeedback } from '@learnbuddy/shared-types/contracts';
 
 import type { Deps } from '../../deps.js';
@@ -86,7 +87,7 @@ async function roleplayRound(
       promptVersion: ROLEPLAY_PROMPT_VERSION,
       system: ROLEPLAY_SYSTEM,
       contents: roleplayContents(
-        roleplayFrame(play, learner),
+        roleplayFrame(play, learner) + pronunciationContext(message.pronunciation),
         dialogue,
         at.repairErrors ? repairMessage(at.repairErrors) : undefined,
       ),

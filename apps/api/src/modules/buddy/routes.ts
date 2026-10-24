@@ -118,6 +118,7 @@ buddyRoutes.post('/messages', async (c) => {
         clientMessageId: input.client_message_id,
         text: input.text,
         replyToId: input.reply_to_id ?? null,
+        pronunciation: input.pronunciation,
       },
       onReply,
     );
