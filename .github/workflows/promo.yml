@@ -1,0 +1,47 @@
+name: Promo recording
+
+# Records the real app being used (web build against the dev stack, 390×844, de-DE) for the
+# promo video: tests/web/promo.spec.ts drives the core loop at reading pace with Playwright's
+# video on. Started by hand only (Actions → Promo recording → Run workflow); the recording and
+# its scene marks are the "promo-recording" artifact. Lives on the claude/promo-video branch.
+on:
+  workflow_dispatch:
+
+jobs:
+  record:
+    name: record the core loop (390×844, video)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      LB_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      LB_REQUIRE_TEST_DB: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Record (web build against the dev stack)
+        run: scripts/web-walkthrough.sh promo
+      - name: Keep the recording and the scene marks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promo-recording
+          path: test-results/web
+          if-no-files-found: error
