@@ -366,6 +366,18 @@ registers one context provider at start-up (`modules/buddy/provider.ts`, from
     No check possible: it fails, and Buddy's fixed help line (`safeguarding.unchecked`) follows
     her message — once, however often she sends it again (`where not exists`). Measured:
     `safeguarding.int.test.ts`, `roleplay.int.test.ts` (8 cases, red on main, green since).
+  - **Typed topics and edited memories are checked before generation/storage** (#918 findings
+    1–2, `buddy/distress.ts` `requireSafeText`). `/practice/topic` checks the submitted text before
+    choosing forms or generating anything; a request already prepared replays its session.
+    `PATCH /buddy/memory/:id` checks statement edits, never retract/undo taps. Ownership and version
+    are validated before the check and again under the context lock after it. Only `clear` may
+    proceed. Concern/provider block returns 422 with the fixed age/locale help answer; an unavailable,
+    malformed or budget-limited check returns 503 with `safeguarding.unchecked`, following
+    `failHerTurn` above. Neither case stores the edit or prepares items/sessions. The typed
+    `SafeguardingDetails` error detail carries this reply to the app's existing sheets, where it
+    stays visible until closed (no transient toast, no engine message). Proven on Postgres in
+    `free-text-safeguarding.int.test.ts` and in the two screen specs `redesign-homework` and
+    `redesign-memory`; live classifier quality and native keyboards are not reverified here.
   - **A turn the provider's filter holds back asks the distress check which fixed answer fits**
     (issue #758, `buddy/turn.ts` `heldBack`). The filter cannot tell an insult from a disclosure:
     live (15.10.) Vertex rates the streamed answer to an insult aimed at Buddy as harassment and

@@ -104,7 +104,7 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
     expect(res.body.reply.pronunciation ?? null).toBeNull();
     expect(await itemRow()).toEqual({ attempts: 0, status: 'open' });
     // The check read what she said, with the sentence she was practising.
-    const said = ScriptedGateway.textOf(env.llm.callsFor('safeguard')[0]!);
+    const said = ScriptedGateway.textOf(env.llm.callsFor('safeguard').at(-1)!);
     expect(said).toContain(TOLD);
     expect(said).toContain(SENTENCE);
     // Her words stay in her turns (her data); the tutor's turn is the fixed text.
@@ -131,7 +131,7 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
     const res = await take();
     expect(res.body.verdict).toBe('correct');
     expect(res.body.reply.text).toBe('Super gesprochen!');
-    expect(env.llm.callsFor('safeguard')).toHaveLength(0);
+    expect(env.llm.callsFor('safeguard')).toHaveLength(1); // Only the topic's preflight.
   });
 
   it('keeps the judgement and adds the fixed help line when no check can read her words', async () => {
@@ -168,7 +168,7 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
       tip: null,
       help: t('de', 'safeguarding.concern'),
     });
-    const said = ScriptedGateway.textOf(env.llm.callsFor('safeguard')[0]!);
+    const said = ScriptedGateway.textOf(env.llm.callsFor('safeguard').at(-1)!);
     expect(said).toContain(TOLD);
     expect(said).toContain(SENTENCE);
     // Still practice: nothing is stored, the sentence keeps its state.
@@ -208,6 +208,6 @@ describe.skipIf(!dbReady)('distress in a pronunciation take (#765)', () => {
     env.llm.script('pronounce', wordJudged('Bonjour'));
     const res = await sayWord();
     expect(res.body).toEqual({ audible: true, ok: true, heard: 'Bonjour', tip: null, help: null });
-    expect(env.llm.callsFor('safeguard')).toHaveLength(0);
+    expect(env.llm.callsFor('safeguard')).toHaveLength(1); // Only the topic's preflight.
   });
 });

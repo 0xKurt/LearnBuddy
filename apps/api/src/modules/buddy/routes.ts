@@ -1,7 +1,7 @@
 // Buddy HTTP surface. docs/architecture.md §API.
 // Explicit taps in the app (start, skip, undo, "how did it go", settings)
 // are direct, validated state changes — no model involved. Only free text
-// goes through the model (POST /buddy/messages).
+// goes through the model (POST /buddy/messages and PATCH /memory statement edits).
 
 import {
   type BuddySettingsView,
@@ -40,6 +40,7 @@ import { t } from '../../i18n/index.js';
 import { readsIn } from '../../speech/gateway.js';
 import { registerPushToken } from '../devices/service.js';
 import { buildHome } from './home.js';
+import { requireSafeText } from './distress.js';
 import { addDays, localParts, zonedToInstant } from '../../lib/time.js';
 import { bumpContext, cancelGoalWakeups, lockContext, scheduleStepReminder } from './plan.js';
 import { loosens } from './policy.js';
@@ -441,6 +442,20 @@ buddyRoutes.patch('/memory/:id', async (c) => {
   const memoryId = check(Uuid, c.req.param('id'));
   const input = await readBody(c, UpdateMemoryRequest);
   const editor = actorOf(c) === 'account_holder' ? 'account_holder' : 'learner_edited';
+  if ('statement' in input) {
+    const deps = depsOf(c);
+    const learner = c.get('learner');
+    // No model call for somebody else's or an obsolete entry. The transaction below checks
+    // again after the model returns; never hold the context lock while waiting for it.
+    const current = await deps.db.maybeOne<{ version: number }>(
+      `select version from buddy_memories where id = $1 and learner_id = $2 and status = 'active'`,
+      [memoryId, learner.id],
+    );
+    if (!current) throw new AppError('not_found', 'Memory not found');
+    if (current.version !== input.version)
+      throw new AppError('stale', 'This changed meanwhile; reload');
+    await requireSafeText(deps, learner, input.statement);
+  }
   await underContext(c, async (tx, learnerId, now) => {
     // The undo reaches for the entry it just removed, every other change for a live one.
     const wanted = 'unretract' in input ? 'retracted' : 'active';

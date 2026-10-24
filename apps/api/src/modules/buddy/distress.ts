@@ -2,13 +2,17 @@
 // herself? One small structured call that reads nothing but her words (and, in practice, the
 // question), for every place where the model that would have seen them did not answer: a practice
 // answer code graded alone, a tutor or feedback call that failed (`practice/answerSafeguard.ts`), a
-// chat or roleplay turn whose model call failed (`buddy/turn.ts`). What follows is code's: the
+// chat or roleplay turn whose model call failed (`buddy/turn.ts`), and before generating a typed
+// topic or storing a memory edit (`requireSafeText`). What follows is code's: the
 // fixed help answer, never the model's words. docs/architecture.md §Turns (Safeguarding).
 
+import type { SafeguardingDetails } from '@learnbuddy/shared-types/contracts';
 import { z } from 'zod';
 
 import type { Deps } from '../../deps.js';
-import { isAppError } from '../../lib/errors.js';
+import { AppError, isAppError } from '../../lib/errors.js';
+import { safeguardingText } from '../../i18n/safeguarding.js';
+import { isMinor } from '../identity/model.js';
 import { localParts } from '../../lib/time.js';
 import { learnerTimezone } from '../../lib/zone.js';
 import { callModel } from '../../llm/call.js';
@@ -51,6 +55,28 @@ export const DISTRESS_PROMPT_VERSION = promptVersion('safeguard', DISTRESS_SYSTE
  * on it.
  */
 export type DistressFinding = 'concern' | 'blocked' | 'clear' | 'unchecked';
+
+/**
+ * A topic or memory edit must be clear before generation/storage (#918). Like failHerTurn in
+ * turn.ts, an unavailable check fails with the fixed `unchecked` help line, never silently passes.
+ */
+export async function requireSafeText(
+  deps: Deps,
+  learner: { id: string; locale: string; birth_date: string },
+  text: string,
+): Promise<void> {
+  const found = await distressCheck(deps, learner.id, text);
+  if (found === 'clear') return;
+  const details: SafeguardingDetails = {
+    reason: 'safeguarding',
+    reply: safeguardingText(learner.locale, isMinor(learner, deps.now()), found),
+  };
+  throw new AppError(
+    found === 'unchecked' ? 'model_unavailable' : 'invalid_input',
+    'Text needs safeguarding',
+    details,
+  );
+}
 
 /** Her words of two letters or more: a lone letter is a variable ("2x = 8"), a choice or a unit. */
 export function wordsIn(text: string): string[] {

@@ -264,7 +264,7 @@ describe.skipIf(!dbReady)('cloze items', () => {
     expect(res.body.reply.text).toBe('Bei „11“ passt es noch nicht.');
     expect(env.llm.callsFor('tutor')).toHaveLength(0);
     // Her words were read for distress all the same (#747), and nothing was found.
-    expect(env.llm.callsFor('safeguard')).toHaveLength(1);
+    expect(env.llm.callsFor('safeguard')).toHaveLength(2); // Topic preflight plus this answer.
   });
 
   it.each([false, true])(
@@ -310,7 +310,7 @@ describe.skipIf(!dbReady)('cloze items', () => {
           : '4 von 5 Lücken stimmen schon. Bei „waren“ passt es noch nicht.',
       );
       expect(res.body.session.items[0]?.attempts).toBe(concern ? 0 : 1);
-      expect(env.llm.callsFor('safeguard')).toHaveLength(1);
+      expect(env.llm.callsFor('safeguard')).toHaveLength(2); // Topic preflight plus this answer.
       const overlap =
         Math.min(marks.gradeEnd!, marks.checkEnd!) - Math.max(marks.gradeStart!, marks.checkStart!);
       console.info(`#867 concern=${concern}: overlap=${Math.round(overlap)}ms`, marks);
@@ -335,7 +335,7 @@ describe.skipIf(!dbReady)('cloze items', () => {
       expect(res.body.reply.text).toBe(t('de', 'safeguarding.concern'));
       expect(res.body.verdict).toBe('not_an_attempt');
       expect(env.llm.callsFor('tutor')).toHaveLength(0);
-      expect(ScriptedGateway.textOf(env.llm.callsFor('safeguard')[0]!)).toContain(words);
+      expect(ScriptedGateway.textOf(env.llm.callsFor('safeguard').at(-1)!)).toContain(words);
       const row = await env.db.one<{ attempts: number; status: string }>(
         `select attempts, status from session_items where session_id = $1 and item_id = $2`,
         [session.id, si.item.id],
@@ -360,7 +360,7 @@ describe.skipIf(!dbReady)('cloze items', () => {
           : `Bei „11“ passt es noch nicht. ${t('de', 'safeguarding.unchecked')}`,
       );
       expect(res.body.session.items[0]?.attempts).toBe(kind === 'blocked' ? 0 : 1);
-      expect(env.llm.callsFor('safeguard')).toHaveLength(1);
+      expect(env.llm.callsFor('safeguard')).toHaveLength(2); // Topic preflight plus this answer.
     },
   );
 

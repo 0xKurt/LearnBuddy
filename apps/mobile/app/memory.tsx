@@ -8,7 +8,7 @@
 import type { MemoryView, UpdateMemoryRequest } from '@learnbuddy/shared-types/contracts';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useRef, useState } from 'react';
-import { RefreshControl, Text, View } from 'react-native';
+import { Keyboard, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -31,6 +31,9 @@ import { LIBRARY } from '../lib/theme/library.js';
 import { GUTTER_APP, SPACE } from '../lib/theme/space.js';
 import { useAnnounce } from '../lib/announce.js';
 import { KeyboardSafe } from '../components/lb/KeyboardSafe.js';
+import { Sheet, SHEET_TEXT } from '../components/lb/Sheet.js';
+import { SafeguardingReply } from '../components/buddy/SafeguardingReply.js';
+import { safeguardingReply } from '../lib/safeguarding.js';
 
 /** Temporary situations always carry an end; they expire by themselves. */
 const isTemporary = (m: MemoryView) => m.kind === 'constraint' || m.valid_until !== null;
@@ -76,6 +79,7 @@ export default function MemoryScreen() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const inFlight = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [help, setHelp] = useState<string | null>(null);
 
   async function refresh() {
     setRefreshing(true);
@@ -104,6 +108,12 @@ export default function MemoryScreen() {
       setEditingId(null);
       toast.show(done, 'info', undo ? { action: undo } : {});
     } catch (err) {
+      const reply = safeguardingReply(err);
+      if (reply !== null) {
+        Keyboard.dismiss();
+        setHelp(reply);
+        return;
+      }
       toast.show(messageFor(err), 'error');
       if (err instanceof ApiError && (err.code === 'stale' || err.code === 'not_found')) {
         setEditingId(null);
@@ -262,6 +272,13 @@ export default function MemoryScreen() {
           renderItem={({ item, index }) => renderRow(item, index)}
         />
       </KeyboardSafe>
+      <Sheet
+        visible={help !== null}
+        closeLabel={t('common:actions.close')}
+        onClose={() => setHelp(null)}
+      >
+        <View style={SHEET_TEXT}>{help !== null ? <SafeguardingReply text={help} /> : null}</View>
+      </Sheet>
     </Screen>
   );
 }

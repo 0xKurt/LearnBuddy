@@ -83,6 +83,13 @@ export const ApiErrorEnvelope = z.object({
 });
 export type ApiErrorEnvelope = z.infer<typeof ApiErrorEnvelope>;
 
+/** A refused free-text write: code's fixed help answer, never an engine's error message. */
+export const SafeguardingDetails = z.object({
+  reason: z.literal('safeguarding'),
+  reply: z.string().min(1),
+});
+export type SafeguardingDetails = z.infer<typeof SafeguardingDetails>;
+
 export const SubjectKind = z.enum([
   'math',
   'physics',
