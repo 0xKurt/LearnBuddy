@@ -412,3 +412,23 @@ Die einzigen bestehenden Eval-Ausnahmen sind explizit paketgenau:
 
 Neue Eval-/Testdateien sind keine automatische Ausnahme. Der Guard und seine Regressionstests
 laufen über `pnpm guards` in den unveränderten Hooks.
+
+## Migration gate (#915)
+
+`node tools/guards/migration-applied.mjs <base> [<head>]` prüft neue Migrationen des konkreten
+Commits gegen die feste Produktions-Health-URL. Jede Migration braucht einen lesbaren,
+vollständigen Nachweis; Nummernkollisionen, veränderte historische Migrationen, unbekannte
+Antworten und Ausfälle sind rot. SQL-Inhalts-Digests bleiben eine offene Grenze
+(`docs/architecture.md` §Delivery).
+
+Der Produktionsabruf läuft **nicht im pre-commit**. Die eigene Workflow-Datei
+`migration-gate.yml` startet nur bei `infra/supabase/migrations/**` oder `workflow_dispatch`,
+ohne pnpm-Installation. Die lokalen Regressionstests benutzen isolierte Git-Repositories,
+skriptierte HTTP-Antworten und den gemeinsamen Test-Postgres. `scripts/merge-pr.sh <pr> <sha>`
+verwendet denselben Guard nach grünem CI und verweigert einen inzwischen veränderten PR-Stand;
+`APPLIED=` hat keine Wirkung. Ein neuer Stand braucht eine neue Prüfung.
+
+Owner-Aufgabe: Pflicht-Check `migration-gate` im Ruleset für main einrichten; dabei das
+Pending-Verhalten pfadgefilterter Workflows auf PRs ohne Migration prüfen. Zuerst den neuen
+Health-Modus ausrollen: die bisherige Health-Antwort ist kein Migrationsnachweis. Kein neuer
+Dienst und keine neue Bibliothek: Node-Standardbibliothek, git, gh und vorhandener DB-Zugriff.

@@ -7258,8 +7258,31 @@ job, rather than silently skipping the vector search test. The shared local PG16
   it too (issue #342): `/v1/health` lists every migration of the running build
   (`apps/api/src/lib/migrations.ts`, kept equal to the folder by a test) that
   `supabase_migrations.schema_migrations` lacks, and goes 503. The Health workflow probes right
-  after each production deployment, not only every half hour. Owner rule since 03.10.: a merged
-  migration is applied to production at once, then the advisors and `/v1/health`.
+  after each production deployment, not only every half hour.
+- **Migration evidence before merge (#915):** apply candidate migrations to production before
+  merging the code that needs them. `tools/guards/migration-applied.mjs <base> [<head>]` diffs
+  immutable commits, rejects changed historical migrations and number collisions, and checks
+  every added migration at the fixed production `/v1/health?expect=<comma-separated names>`
+  (production URL reused from the versioned Health workflow, so provisioning rewrites it once).
+  This read-only mode returns `{expected, applied}` from `supabase_migrations.schema_migrations`,
+  including names the deployed build does not yet know. It accepts at most 20 unique names
+  (four-digit prefix, lowercase letters/digits/underscores, at most 100 characters each) per
+  request; the guard batches larger candidates. SQL parameters carry the prefixes; no input
+  becomes SQL. Missing records, missing privileges, network failures, redirects, malformed or
+  partial evidence block the gate. Unknown evidence is `applied: null` with HTTP 503, never
+  healthy; responses are not cached. Ordinary health monitoring remains unchanged.
+  `.github/workflows/migration-gate.yml` runs only for migration paths or manual dispatch,
+  with Node 22 and no dependency installation. `scripts/merge-pr.sh <pr> <full-reviewed-sha>`
+  waits for CI, calls the same guard, rechecks the PR head and main, and merges only with
+  `--match-head-commit`; it never updates a reviewed branch or accepts manual `APPLIED=` claims.
+  The owner must configure the main ruleset's required check **migration-gate**; path-filtered
+  workflows can remain pending on non-migration PRs, so verify that ruleset behavior before
+  rollout. Bootstrap: deploy this evidence endpoint before relying on it for migration PRs;
+  the old endpoint cannot provide proof and is deliberately rejected.
+  **Open boundary:** names/numbers prove recorded application, not SQL content equality; an
+  applied-content digest is not implemented. The fixed HTTPS production endpoint (no redirects
+  or URL override) is trusted to use the production database; a misconfigured deployment with
+  identical records cannot be distinguished by this evidence. No database writes occur here.
 - Rollback is asymmetric (issue #79): Vercel can roll a function back, the database cannot.
   Migrations are therefore **additive only** — new tables, new columns with defaults, widened
   constraints; never a drop or rename that yesterday's code would trip over. A column that must

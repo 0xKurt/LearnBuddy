@@ -110,23 +110,33 @@ export const EXPECTED_MIGRATIONS: readonly string[] = [
 ];
 
 /**
- * The expected migrations the database has not recorded, or null where nothing records them
- * (the test and dev databases are built from the files directly and have no Supabase
- * migration table — there is nothing to compare, and that must not read as a failure).
+ * Recorded migration names, optionally limited to candidate number prefixes. Null means
+ * no readable ledger, never positive evidence that a candidate migration was applied.
  */
-export async function missingMigrations(db: Db): Promise<string[] | null> {
+export async function recordedMigrations(
+  db: Db,
+  prefixes?: readonly string[],
+): Promise<string[] | null> {
   // Looked up in the catalog, which every role may read: `to_regclass` would need usage on
-  // the schema. Without the read grant (infra/supabase/templates/api-role.sql) there is
-  // nothing to compare either — an ungranted role must not take the whole API down as unhealthy.
+  // the schema. Without the read grant (infra/supabase/templates/api-role.sql), evidence
+  // is unknown. Monitoring and the strict candidate gate decide how to report that state.
   const table = await db.maybeOne<{ readable: boolean }>(
-    `select has_table_privilege(c.oid, 'select') as readable
+    `select has_table_privilege(c.oid, 'select') and has_schema_privilege(n.oid, 'usage') as readable
        from pg_class c join pg_namespace n on n.oid = c.relnamespace
       where n.nspname = 'supabase_migrations' and c.relname = 'schema_migrations'`,
   );
   if (!table?.readable) return null;
   const rows = await db.query<{ name: string }>(
-    `select name from supabase_migrations.schema_migrations`,
+    `select name from supabase_migrations.schema_migrations
+      where ($1::text[] is null or split_part(name, '_', 1) = any($1::text[]))`,
+    [prefixes ?? null],
   );
-  const applied = new Set(rows.map((r) => r.name));
+  return rows.map((r) => r.name);
+}
+
+export async function missingMigrations(db: Db): Promise<string[] | null> {
+  const recorded = await recordedMigrations(db);
+  if (recorded === null) return null;
+  const applied = new Set(recorded);
   return EXPECTED_MIGRATIONS.filter((m) => !applied.has(m));
 }
